@@ -1,0 +1,129 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+.card {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: #fff;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.card:hover {
+  border-color: var(--jd-green);
+  box-shadow: 0 6px 20px rgba(23, 51, 13, 0.08);
+}
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+.cardTitle {
+  font-family: var(--font-display-stack);
+  font-size: 19px;
+  color: var(--jd-green-deep);
+  line-height: 1.2;
+}
+.closes {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--jd-green);
+  white-space: nowrap;
+}
+.closesSoon {
+  color: var(--error);
+}
+.meta {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag {
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.cardFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.yourBid {
+  color: var(--jd-green-dark);
+  font-weight: 600;
+}
+
+/* Detail */
+.detailWrap {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.panel {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--cream);
+  padding: 24px;
+  margin-top: 24px;
+}
+.panelTitle {
+  font-family: var(--font-display-stack);
+  font-size: 20px;
+  color: var(--jd-green-deep);
+  margin-bottom: 6px;
+}
+.contact {
+  background: var(--jd-green-pale);
+  border-color: #b5d3a8;
+}
+.contactRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 16px;
+}
+.contactRow strong {
+  min-width: 90px;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.outcome {
+  border-radius: 6px;
+  padding: 18px 20px;
+  margin-top: 24px;
+  font-size: 15px;
+}
+.won {
+  background: var(--jd-green-pale);
+  border: 1px solid #b5d3a8;
+  color: var(--jd-green-dark);
+}
+.lost {
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  color: var(--ink-2);
+}
+.gate {
+  background: #fff9e0;
+  border: 1px solid #e8d98a;
+  color: #5c4d00;
+  border-radius: 6px;
+  padding: 20px;
+}

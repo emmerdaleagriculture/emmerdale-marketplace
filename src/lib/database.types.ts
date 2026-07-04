@@ -83,6 +83,13 @@ export type Database = {
             foreignKeyName: "bids_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "my_bid_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "public_jobs"
             referencedColumns: ["id"]
           },
@@ -123,6 +130,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_reveals_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "my_bid_jobs"
             referencedColumns: ["id"]
           },
           {
@@ -279,6 +293,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_notifications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "my_bid_jobs"
             referencedColumns: ["id"]
           },
           {
@@ -455,6 +476,35 @@ export type Database = {
       }
     }
     Views: {
+      my_bid_jobs: {
+        Row: {
+          awarded_bid_id: string | null
+          bidding_closes_at: string | null
+          budget_hint: string | null
+          county: string | null
+          county_id: number | null
+          description: string | null
+          id: string | null
+          my_amount_pence: number | null
+          my_bid_id: string | null
+          my_note: string | null
+          postcode_district: string | null
+          service_ids: number[] | null
+          status: string | null
+          title: string | null
+          town: string | null
+          won: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_county_id_fkey"
+            columns: ["county_id"]
+            isOneToOne: false
+            referencedRelation: "counties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_jobs: {
         Row: {
           bid_count: number | null
@@ -496,6 +546,7 @@ export type Database = {
       }
       is_active_subscriber: { Args: { p_contractor: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      notify_job_open: { Args: { p_job_id: string }; Returns: undefined }
       open_due_jobs: { Args: never; Returns: undefined }
       place_bid: {
         Args: { p_amount_pence: number; p_job_id: string; p_note?: string }

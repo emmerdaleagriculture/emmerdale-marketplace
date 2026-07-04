@@ -19,6 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           Emmerdale Agriculture
         </Link>
         <nav className={styles.nav}>
+          <Link href="/admin/jobs">Jobs</Link>
           <Link href="/admin/contractors">Contractors</Link>
           <form action="/auth/signout" method="post">
             <button type="submit" className={styles.signout}>

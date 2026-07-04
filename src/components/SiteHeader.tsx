@@ -24,10 +24,11 @@ export async function SiteHeader({ variant = 'solid' }: { variant?: 'overlay' | 
           {user ? (
             <>
               {admin && (
-                <Link href="/admin/contractors" className={styles.admin}>
+                <Link href="/admin/jobs" className={styles.admin}>
                   Admin
                 </Link>
               )}
+              <Link href="/jobs">Jobs</Link>
               <Link href="/account">Account</Link>
               <form action="/auth/signout" method="post">
                 <button type="submit" className={styles.linkButton}>
