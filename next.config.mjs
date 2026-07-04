@@ -1,5 +1,4 @@
 import { fileURLToPath } from 'url';
-import { withPayload } from '@payloadcms/next/withPayload';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -39,11 +38,6 @@ const nextConfig = {
       },
     ];
   },
-
-  experimental: {
-    // Required for Payload
-    reactCompiler: false,
-  },
 };
 
-export default withPayload(nextConfig, { devBundleServerPackages: false });
+export default nextConfig;

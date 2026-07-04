@@ -1,80 +1,78 @@
 # Emmerdale Marketplace
 
-A marketplace for the Emmerdale Agriculture community. Built with **Next.js 15**
-(App Router) and **Payload CMS 3** on **Postgres** — the same stack as the
-[hpm](https://github.com/Emmerdale-agriculture/hpm) site.
+The contractor marketplace for **Emmerdale Agriculture Ltd** — the company behind
+Hampshire Paddock Management (HPM). HPM receives more paddock/land jobs than it
+can service; overflow jobs are posted, matched to contractors by county, and
+awarded by competitive bid.
+
+Built to the standalone master build spec (`docs/spec.md`).
 
 ## Stack
 
-- **Next.js 15** — App Router, React 19
-- **Payload CMS 3** — admin, auth, and content API, mounted in-app
-- **Postgres** — via `@payloadcms/db-postgres`
-- **TypeScript**, ESLint (`next/core-web-vitals`)
-- Media uploads stored **locally** in dev (`/media`); swap in
-  `@payloadcms/storage-s3` for production object storage.
+- **Next.js 15** (App Router, React 19) — deployed to Vercel
+- **Supabase** — Postgres, Auth, Edge Functions, RLS (own project, not shared with HPM/Lumenira)
+- **Resend** — transactional email
+- **Stripe** — £20/mo subscription (Phase 4; schema + gating built in from day one)
+- **postcodes.io** — postcode → county resolution (server-side, no key)
+- **Styling:** plain global CSS variables + CSS Modules, design tokens copied
+  verbatim from the HPM site so the two are visually indistinguishable. **No Tailwind**
+  (HPM doesn't use it).
 
 ## Getting started
 
-1. **Install dependencies**
+```bash
+npm install
+cp .env.local.example .env.local   # fill in Supabase + Resend values
+npm run dev                        # http://localhost:3000
+```
 
-   ```bash
-   npm install
-   ```
-
-2. **Configure environment**
-
-   ```bash
-   cp .env.local.example .env.local
-   ```
-
-   Fill in:
-   - `PAYLOAD_SECRET` — `openssl rand -base64 48`
-   - `DATABASE_URL` — a running Postgres database
-
-3. **Run the dev server**
-
-   ```bash
-   npm run dev
-   ```
-
-   - Frontend: <http://localhost:3000>
-   - Admin: <http://localhost:3000/admin> (create the first user on first visit)
+Required env (see `.env.local.example`, spec §12.5): `NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`,
+`EMAIL_FROM`, `NEXT_PUBLIC_SITE_URL`, `ADMIN_EMAILS`.
 
 ## Project layout
 
 ```
 src/
   app/
-    (frontend)/        Public site — landing page, layout, global CSS
-    (payload)/         Payload admin (/admin) + REST/GraphQL API (/api)
+    (frontend)/        Public site — holding page, layout, globals.css
+    api/test-email/    Phase 0 Resend verification route
   lib/
-    env.ts             Boot-time env-var validation
-  payload/
-    payload.config.ts  Payload config (collections, db, auth)
-    collections/       Users, Media, Listings
+    env.ts             Boot-time env validation
+    site.ts            Brand constants (company no., straplines)
+    supabase/          Browser, server, service-role clients + middleware
+  middleware.ts        Supabase session refresh
+supabase/
+  config.toml          CLI config (linked project: vonleampyheafgrkbbai)
+  migrations/          Schema, RLS, views, RPCs, pg_cron  (Phase 0)
+  seed.sql             counties, district_county_map, services  (Phase 0)
 ```
 
-## Data model
+## Database workflow
 
-| Collection | Purpose                                             |
-| ---------- | --------------------------------------------------- |
-| `users`    | Admin/seller accounts (Payload auth)                |
-| `media`    | Image uploads with required alt text                |
-| `listings` | Core marketplace object — title, price, status, ... |
+The entire database must be reconstructable from the repo alone. Every schema
+change is a numbered migration in `supabase/migrations/`; seeds live in
+`supabase/seed.sql`; RLS policies are part of migrations, never dashboard clicks.
+
+```bash
+supabase db push          # apply migrations to the linked hosted project
+supabase db reset         # locally: rebuild from migrations + seed (proves it)
+```
+
+## Build phases (spec §9)
+
+- **Phase 0 — Ground:** domain, Supabase project, Resend DNS, schema + seeds + RLS, pg_cron, holding page. *(in progress)*
+- **Phase 1 — Supply side:** landing, signup (county/service selection), auth, account, admin approval queue.
+- **Phase 2 — Jobs + bidding:** admin intake + county resolution + consent gate, public_jobs view, job board, bidding, auto-award, contact reveal.
+- **Phase 3 — Polish:** closing-soon nudges, admin metrics, relist/expired flows.
+- **Phase 4 — Paid tier:** Stripe checkout/webhooks/portal, paid contact access, disclosure lines.
 
 ## Scripts
 
-| Script                   | Does                                       |
-| ------------------------ | ------------------------------------------ |
-| `npm run dev`            | Start the dev server                       |
-| `npm run build`          | Generate Payload types, then `next build`  |
-| `npm run start`          | Run the production build                   |
-| `npm run lint`           | ESLint                                     |
-| `npm run type-check`     | `tsc --noEmit`                             |
-| `npm run payload`        | Payload CLI                                |
-
-## Next steps
-
-- Add a `/listings` browse grid and `/listings/[slug]` detail page.
-- Wire up production media storage (`@payloadcms/storage-s3`).
-- Add categories, search, and seller onboarding.
+| Script               | Does                     |
+| -------------------- | ------------------------ |
+| `npm run dev`        | Dev server               |
+| `npm run build`      | Production build         |
+| `npm run start`      | Run the production build |
+| `npm run lint`       | ESLint                   |
+| `npm run type-check` | `tsc --noEmit`           |

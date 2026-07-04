@@ -1,36 +1,65 @@
+/* ==========================================================================
+   Emmerdale Marketplace — global styles
+   Design tokens copied verbatim from the Hampshire Paddock Management site
+   (sibling repo) so the two are visually indistinguishable. Palette derived
+   from the John Deere homepage mockup (hence the --jd- prefix).
+   ========================================================================== */
+
 :root {
-  --font-body: system-ui, sans-serif;
-  --bg: #0f1211;
-  --fg: #f2f5f3;
-  --muted: #9fb0a7;
-  --accent: #3fae6b;
-  --card: #171b19;
-  --border: #262d29;
+  /* John Deere palette */
+  --jd-green: #367c2b;
+  --jd-green-dark: #245018;
+  --jd-green-deep: #17330d;
+  --jd-green-light: #4a9a3a;
+  --jd-green-pale: #e8f0e3;
+  --jd-yellow: #ffde00;
+  --jd-yellow-dark: #e8c800;
+
+  /* Neutrals */
+  --ink: #1a1f15;
+  --ink-2: #4a4f45;
+  --ink-3: #7a7f75;
+  --cream: #fafaf5;
+  --white: #ffffff;
+  --rule: #d8dcd2;
+  --error: #c63b1f;
+
+  /* Typography (next/font sets --font-display / --font-body at the html root) */
+  --font-display-stack: var(--font-display), 'Tenor Sans', Georgia, serif;
+  --font-body-stack: var(--font-body), 'DM Sans', -apple-system, system-ui, sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html,
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
 body {
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: var(--font-body);
-  background: var(--bg);
-  color: var(--fg);
+  font-family: var(--font-body-stack);
+  background: var(--white);
+  color: var(--ink);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-a {
-  color: var(--accent);
-  text-decoration: none;
+img, svg, video { max-width: 100%; height: auto; display: block; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+
+.serif { font-family: var(--font-display-stack); }
+
+:focus-visible {
+  outline: 2px solid var(--jd-yellow);
+  outline-offset: 2px;
 }
 
-a:hover {
-  text-decoration: underline;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

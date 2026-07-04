@@ -1,15 +1,20 @@
 /**
- * Validates the environment variables Payload needs to boot. Importing this
+ * Validates the environment variables the app needs to boot. Importing this
  * module checks `process.env` once so a misconfigured deploy fails fast with a
- * clear, aggregated error — instead of silently starting with an empty
- * `PAYLOAD_SECRET` (insecure JWTs) or a broken `DATABASE_URL` that only fails
- * later with a confusing runtime error.
+ * clear, aggregated error instead of a confusing runtime failure later.
  *
  * The hard failure is gated to production (`NODE_ENV === 'production'`) so it
- * doesn't break env-less tooling such as `payload generate:types`, which loads
- * the config but needs no live DB. In non-production it warns and continues.
+ * doesn't break local tooling that loads the module without a full env. In
+ * non-production it warns and continues.
+ *
+ * Only boot-critical, always-required vars are checked here. The service-role
+ * key and Resend key are validated at their point of use (admin routes, email
+ * sends) so public pages can render without them.
  */
-const REQUIRED = ['DATABASE_URL', 'PAYLOAD_SECRET'] as const;
+const REQUIRED = [
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+] as const;
 
 const missing = REQUIRED.filter((key) => !process.env[key]);
 
@@ -24,6 +29,7 @@ if (missing.length > 0) {
 }
 
 export const env = {
-  DATABASE_URL: process.env.DATABASE_URL ?? '',
-  PAYLOAD_SECRET: process.env.PAYLOAD_SECRET ?? '',
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
 };
