@@ -1,0 +1,52 @@
+# ==============================================================================
+# .gitignore
+# ==============================================================================
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.*.local
+secrets.txt
+
+# Locally-stored media uploads (dev). In production these live in object storage.
+/media/
+
+# Payload auto-generated files
+/payload-types.ts
+# NOTE: importMap.js is NOT ignored — a seed version ships with the repo
+# and Payload overwrites it on first boot.
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.log
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Testing
+/coverage
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts

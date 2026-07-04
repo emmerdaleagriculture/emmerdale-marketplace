@@ -1,0 +1,36 @@
+:root {
+  --font-body: system-ui, sans-serif;
+  --bg: #0f1211;
+  --fg: #f2f5f3;
+  --muted: #9fb0a7;
+  --accent: #3fae6b;
+  --card: #171b19;
+  --border: #262d29;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
