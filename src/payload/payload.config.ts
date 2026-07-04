@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import { buildConfig } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import { resendAdapter } from '@payloadcms/email-resend';
 import { fileURLToPath } from 'url';
 
 import { env } from '../lib/env';
@@ -18,10 +19,13 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
  * Database:  Postgres via node-postgres
  * Storage:   local (/media) in dev — add @payloadcms/storage-s3 for production
  * Auth:      Payload's built-in (Users collection)
+ * Email:     Resend (transactional — password resets, verification)
  *
  * Env vars expected (see .env.local.example):
  *   DATABASE_URL
  *   PAYLOAD_SECRET
+ *   RESEND_API_KEY   (optional — email logs to console if unset)
+ *   EMAIL_FROM       (optional — defaults to Resend's sandbox sender)
  */
 export default buildConfig({
   admin: {
@@ -32,6 +36,20 @@ export default buildConfig({
   },
 
   editor: lexicalEditor({}),
+
+  // Transactional email via Resend. Only wired when RESEND_API_KEY is present
+  // so env-less tooling (e.g. `payload generate:types`) and local dev without
+  // a key fall back to Payload's console transport instead of erroring.
+  ...(process.env.RESEND_API_KEY
+    ? {
+        email: resendAdapter({
+          defaultFromAddress:
+            process.env.EMAIL_FROM_ADDRESS || 'onboarding@resend.dev',
+          defaultFromName: process.env.EMAIL_FROM_NAME || 'Emmerdale Marketplace',
+          apiKey: process.env.RESEND_API_KEY,
+        }),
+      }
+    : {}),
 
   sharp,
 
