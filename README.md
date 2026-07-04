@@ -59,6 +59,26 @@ supabase db push          # apply migrations to the linked hosted project
 supabase db reset         # locally: rebuild from migrations + seed (proves it)
 ```
 
+## Email (Edge Function)
+
+Transactional email is queued into `pending_emails` by DB functions (no network
+calls in transactions), then sent by the `send-emails` Edge Function on a
+1-minute pg_cron schedule (`drain-emails`). Failures retry (attempts++) and only
+give up after 5 tries — so anything queued before Resend DNS verification sends
+automatically once the domain is verified.
+
+One-time setup (outside migrations):
+
+```bash
+supabase functions deploy send-emails
+supabase secrets set RESEND_API_KEY=... EMAIL_FROM="Emmerdale Agriculture <network@emmerdaleagriculture.com>" \
+  ADMIN_EMAILS=... CRON_SECRET=<random>
+# Store the SAME CRON_SECRET in Vault so the scheduler can authenticate to the function:
+#   select vault.create_secret('<CRON_SECRET>', 'cron_secret');
+```
+
+The schedule itself is migration `...schedule_email_drain.sql`.
+
 ## Build phases (spec §9)
 
 - **Phase 0 — Ground:** domain, Supabase project, Resend DNS, schema + seeds + RLS, pg_cron, holding page. *(in progress)*
