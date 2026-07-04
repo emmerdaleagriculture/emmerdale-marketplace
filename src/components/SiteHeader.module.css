@@ -1,0 +1,78 @@
+.header {
+  width: 100%;
+  z-index: 20;
+}
+.solid {
+  background: var(--jd-green-deep);
+  color: var(--white);
+}
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: transparent;
+  color: var(--white);
+}
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.brand {
+  font-family: var(--font-display-stack);
+  font-size: 18px;
+  letter-spacing: 0.03em;
+  color: var(--white);
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.nav a {
+  color: var(--white);
+  opacity: 0.9;
+}
+.nav a:hover {
+  opacity: 1;
+}
+.linkButton {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white);
+  opacity: 0.9;
+}
+.linkButton:hover {
+  opacity: 1;
+}
+.admin {
+  color: var(--jd-yellow) !important;
+}
+.cta {
+  background: var(--jd-yellow);
+  color: var(--jd-green-deep) !important;
+  padding: 9px 16px;
+  border-radius: 2px;
+  font-weight: 600;
+  opacity: 1 !important;
+}
+.cta:hover {
+  background: var(--jd-yellow-dark);
+}
+@media (max-width: 620px) {
+  .nav {
+    gap: 14px;
+    font-size: 12px;
+  }
+  .nav a:first-child {
+    display: none; /* hide "How it works" on very small screens */
+  }
+}

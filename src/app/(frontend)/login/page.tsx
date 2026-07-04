@@ -1,0 +1,28 @@
+import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import { SiteHeader } from '@/components/SiteHeader';
+import { SiteFooter } from '@/components/SiteFooter';
+import { LoginForm } from './LoginForm';
+import { getUser } from '@/lib/auth';
+import a from '../auth.module.css';
+
+export const metadata: Metadata = { title: 'Log in' };
+
+export default async function LoginPage() {
+  if (await getUser()) redirect('/account');
+
+  return (
+    <div className={a.wrap}>
+      <SiteHeader />
+      <main className={a.main}>
+        <div className={a.narrow}>
+          <div className={a.eyebrow}>For contractors</div>
+          <h1 className={a.title}>Log in</h1>
+          <p className={a.sub}>Welcome back. Log in to manage your account and bid on jobs.</p>
+          <LoginForm />
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
+  );
+}

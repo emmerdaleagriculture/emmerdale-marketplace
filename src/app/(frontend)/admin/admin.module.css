@@ -1,0 +1,202 @@
+.shell {
+  min-height: 100dvh;
+  background: var(--cream);
+}
+.bar {
+  background: var(--jd-green-deep);
+  color: #fff;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand {
+  font-family: var(--font-display-stack);
+  font-size: 17px;
+  letter-spacing: 0.03em;
+  color: #fff;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.nav a {
+  color: #fff;
+  opacity: 0.9;
+}
+.signout {
+  color: #fff;
+  opacity: 0.9;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+.h1 {
+  font-family: var(--font-display-stack);
+  font-size: 32px;
+  color: var(--jd-green-deep);
+  margin-bottom: 6px;
+}
+.sub {
+  color: var(--ink-2);
+  margin-bottom: 28px;
+}
+.sectionLabel {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 600;
+  margin: 32px 0 12px;
+}
+
+/* Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 14px;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: middle;
+}
+.table th {
+  background: var(--cream);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.table tr:last-child td {
+  border-bottom: none;
+}
+.table a {
+  color: var(--jd-green);
+  font-weight: 600;
+}
+.empty {
+  padding: 24px;
+  color: var(--ink-3);
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+/* Status pill */
+.pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.pillPending {
+  background: #fff9e0;
+  color: #5c4d00;
+}
+.pillApproved {
+  background: var(--jd-green-pale);
+  color: var(--jd-green-dark);
+}
+.pillSuspended {
+  background: #fdecea;
+  color: #7a1c0e;
+}
+
+/* Action buttons row */
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.btnApprove {
+  background: var(--jd-green);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 2px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.btnApprove:hover {
+  background: var(--jd-green-dark);
+}
+.btnSuspend {
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 6px 13px;
+  border-radius: 2px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.btnSuspend:hover {
+  background: var(--error);
+  color: #fff;
+}
+
+/* Detail */
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 28px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 22px;
+  margin-bottom: 24px;
+}
+@media (max-width: 560px) {
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+}
+.dLabel {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.dValue {
+  font-size: 15px;
+  color: var(--ink);
+  margin-top: 2px;
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.tag {
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-size: 13px;
+}
+.back {
+  display: inline-block;
+  margin-bottom: 16px;
+  color: var(--jd-green);
+  font-size: 14px;
+}

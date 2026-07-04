@@ -1,0 +1,193 @@
+/* Shared form styling in the HPM visual language. */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.hint {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.input,
+.textarea {
+  font: inherit;
+  padding: 11px 13px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--white);
+  color: var(--ink);
+  width: 100%;
+}
+.input:focus,
+.textarea:focus {
+  outline: 2px solid var(--jd-green);
+  outline-offset: 0;
+  border-color: var(--jd-green);
+}
+.textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+/* Buttons */
+.btnPrimary {
+  background: var(--jd-green);
+  color: #fff;
+  padding: 14px 28px;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.15s, transform 0.1s;
+}
+.btnPrimary:hover {
+  background: var(--jd-green-dark);
+}
+.btnPrimary:active {
+  transform: translateY(1px);
+}
+.btnPrimary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btnYellow {
+  background: var(--jd-yellow);
+  color: var(--jd-green-deep);
+  padding: 14px 28px;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.btnYellow:hover {
+  background: var(--jd-yellow-dark);
+}
+.btnGhost {
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  padding: 13px 26px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+.btnGhost:hover {
+  border-color: var(--jd-green);
+  color: var(--jd-green);
+}
+.btnDanger {
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 8px 16px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+.btnDanger:hover {
+  background: var(--error);
+  color: #fff;
+}
+
+/* Checkbox rows + chips */
+.checkRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.checkRow input {
+  margin-top: 3px;
+}
+
+/* Region / county picker */
+.regionGroup {
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.regionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--cream);
+  border-bottom: 1px solid var(--rule);
+}
+.regionName {
+  font-weight: 600;
+  font-size: 14px;
+}
+.selectAll {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--jd-green);
+}
+.selectAll:hover {
+  text-decoration: underline;
+}
+.countyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px 16px;
+  padding: 14px;
+}
+
+/* Service chips */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+.chip input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.chipOn {
+  background: var(--jd-green);
+  color: #fff;
+  border-color: var(--jd-green);
+}
+
+/* Feedback */
+.error {
+  color: var(--error);
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+.success {
+  color: var(--jd-green-dark);
+  font-size: 14px;
+  margin-bottom: 14px;
+}
