@@ -75,13 +75,18 @@ export default async function JobsBoardPage() {
                         <div className={j.cardTop}>
                           <span className={j.cardTitle}>{job.title}</span>
                           <span className={`${j.closes} ${soon ? j.closesSoon : ''}`}>
-                            {closesIn(job.bidding_closes_at!)}
+                            {job.is_exclusive ? 'early access' : closesIn(job.bidding_closes_at!)}
                           </span>
                         </div>
                         <div className={j.meta}>
                           {job.town ? `${job.town}, ` : ''}
                           {job.postcode_district} · {job.county}
                         </div>
+                        {job.is_exclusive ? (
+                          <span className={`${j.badge} ${j.badgeExcl}`}>12h head start · contact available</span>
+                        ) : job.paid_access ? (
+                          <span className={`${j.badge} ${j.badgePaid}`}>Contact available</span>
+                        ) : null}
                         <div className={j.tags}>
                           {(job.service_ids ?? []).slice(0, 4).map((sid) => (
                             <span key={sid} className={j.tag}>

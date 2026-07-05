@@ -76,6 +76,22 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `No bids: ${title}`,
         text: `The job "${title}" closed with no bids. You can relist it or handle it internally.`,
       };
+    case 'exclusive_new':
+      return {
+        subject: `Exclusive access (12h head start): ${title}`,
+        text:
+          `As a paid member you get first access to this new job${where ? ` in ${where}` : ''}, ` +
+          `12 hours before it opens to bidding.\n\n` +
+          `${title}\n\nLog in to see the full details and the customer’s contact — no ` +
+          `bidding needed. If you take it, mark it booked so we can close it.`,
+      };
+    case 'booked_flag':
+      return {
+        subject: `Booked-in-window: ${title}`,
+        text:
+          `A paid member has marked "${title}" as booked during the exclusive window. ` +
+          `Review it in the admin panel and withdraw the job to confirm.`,
+      };
     case 'application_approved':
       return {
         subject: `You’re approved — welcome to the network`,

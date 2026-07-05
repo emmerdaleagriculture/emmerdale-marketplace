@@ -18,6 +18,8 @@ const JobSchema = z.object({
   budget_hint: z.string().trim().optional().or(z.literal('')),
   county_override: z.coerce.number().int().optional().or(z.literal('')),
   closes_at: z.string().trim().optional().or(z.literal('')),
+  // Paid-tier head-start window in hours (default 12; 0 = open to bidding now).
+  exclusive_hours: z.coerce.number().int().min(0).max(72).default(12),
 });
 
 export async function createJobAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -40,6 +42,7 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
     budget_hint: formData.get('budget_hint'),
     county_override: formData.get('county_override') || '',
     closes_at: formData.get('closes_at'),
+    exclusive_hours: formData.get('exclusive_hours') ?? 12,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Please check the form.' };
@@ -60,16 +63,18 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
   }
 
   const now = new Date();
+  // Paid head-start window: bidding opens after `exclusive_hours` (spec §5).
+  // 0h → opens immediately (skips the exclusive state).
+  const opensAt = new Date(now.getTime() + d.exclusive_hours * 3600 * 1000);
   const closesAt = d.closes_at
     ? new Date(d.closes_at)
-    : new Date(now.getTime() + 24 * 3600 * 1000);
-  if (isNaN(closesAt.getTime()) || closesAt <= now) {
-    return { error: 'Bidding close time must be in the future.' };
+    : new Date(opensAt.getTime() + 24 * 3600 * 1000);
+  if (isNaN(closesAt.getTime()) || closesAt <= opensAt) {
+    return { error: 'Bidding close time must be after the exclusive window opens.' };
   }
+  const isExclusive = d.exclusive_hours > 0;
 
   const admin = createServiceRoleClient();
-  // Pre-Phase-4: create directly as 'open' with bidding_opens_at = now()
-  // (acceptance #15 — skip the exclusive state entirely).
   const { data: job, error } = await admin
     .from('jobs')
     .insert({
@@ -87,8 +92,8 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
       consent_at: now.toISOString(),
       consent_wording_version: 'v2-multi',
       budget_hint: d.budget_hint || null,
-      status: 'open',
-      bidding_opens_at: now.toISOString(),
+      status: isExclusive ? 'exclusive' : 'open',
+      bidding_opens_at: opensAt.toISOString(),
       bidding_closes_at: closesAt.toISOString(),
       created_by: user.id,
     })
@@ -99,8 +104,14 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
     return { error: `Could not create the job: ${error?.message ?? 'unknown error'}` };
   }
 
-  // Queue free-tier notifications for matching contractors (idempotent).
-  await admin.rpc('notify_job_open', { p_job_id: job.id });
+  // Notify: exclusive → paid members now; open → free tier now. When an
+  // exclusive job later flips to open, the cron's open_due_jobs notifies the
+  // free tier then.
+  if (isExclusive) {
+    await admin.rpc('notify_paid_members', { p_job_id: job.id });
+  } else {
+    await admin.rpc('notify_job_open', { p_job_id: job.id });
+  }
 
   redirect(`/admin/jobs/${job.id}`);
 }

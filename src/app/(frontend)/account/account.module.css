@@ -30,3 +30,48 @@
   color: var(--ink-3);
   margin-bottom: 24px;
 }
+
+/* Subscription card */
+.subCard {
+  border: 1px solid var(--rule);
+  border-top: 4px solid var(--jd-yellow);
+  border-radius: 6px;
+  background: #fff;
+  padding: 22px 24px;
+  margin-bottom: 28px;
+}
+.subHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.subTitle {
+  font-family: var(--font-display-stack);
+  font-size: 20px;
+  color: var(--jd-green-deep);
+}
+.subPill {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.subActive {
+  background: var(--jd-green-pale);
+  color: var(--jd-green-dark);
+}
+.subInactive {
+  background: var(--cream);
+  color: var(--ink-3);
+  border: 1px solid var(--rule);
+}
+.subBody {
+  color: var(--ink-2);
+  font-size: 15px;
+  margin: 10px 0 16px;
+  line-height: 1.6;
+}

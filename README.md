@@ -79,6 +79,25 @@ supabase secrets set RESEND_API_KEY=... EMAIL_FROM="Emmerdale Agriculture <netwo
 
 The schedule itself is migration `...schedule_email_drain.sql`.
 
+## Paid tier (Stripe — Phase 4)
+
+Schema + gating (`subscriptions`, `is_active_subscriber`, exclusive-window
+visibility) ship regardless; the paid tier activates once these are set:
+
+```bash
+# One Product + one recurring Price (£20/month) in Stripe, then:
+STRIPE_SECRET_KEY=sk_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_...
+STRIPE_PRICE_ID=price_...            # the £20/mo price
+STRIPE_WEBHOOK_SECRET=whsec_...      # from the webhook endpoint below
+```
+
+Add a Stripe **webhook** → `https://emmerdaleagriculture.com/api/stripe/webhook`
+with events: `checkout.session.completed`, `customer.subscription.updated`,
+`customer.subscription.deleted`. Until the keys are set, the account page shows
+"launching soon" and the free tier is unaffected. Routes: `/api/stripe/checkout`
+(subscribe), `/api/stripe/portal` (manage), `/api/stripe/webhook` (sync).
+
 ## Build phases (spec §9)
 
 - **Phase 0 — Ground:** domain, Supabase project, Resend DNS, schema + seeds + RLS, pg_cron, holding page. *(in progress)*

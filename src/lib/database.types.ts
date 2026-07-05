@@ -514,6 +514,8 @@ export type Database = {
           county_id: number | null
           description: string | null
           id: string | null
+          is_exclusive: boolean | null
+          paid_access: boolean | null
           postcode_district: string | null
           service_ids: number[] | null
           title: string | null
@@ -547,8 +549,10 @@ export type Database = {
       }
       is_active_subscriber: { Args: { p_contractor: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      mark_booked: { Args: { p_job_id: string }; Returns: undefined }
       notify_closing_soon: { Args: never; Returns: undefined }
       notify_job_open: { Args: { p_job_id: string }; Returns: undefined }
+      notify_paid_members: { Args: { p_job_id: string }; Returns: undefined }
       open_due_jobs: { Args: never; Returns: undefined }
       place_bid: {
         Args: { p_amount_pence: number; p_job_id: string; p_note?: string }

@@ -84,9 +84,17 @@ export function NewJobForm({
           <input className={f.input} name="budget_hint" placeholder="e.g. £300–£450" />
         </label>
         <label className={f.field}>
+          <span className={f.label}>Paid head-start (hours)</span>
+          <input className={f.input} name="exclusive_hours" type="number" min="0" max="72" defaultValue="12" />
+          <span className={f.hint}>
+            Paid members see it this many hours before bidding opens. 0 = open to
+            bidding immediately.
+          </span>
+        </label>
+        <label className={f.field}>
           <span className={f.label}>Bidding closes</span>
           <input className={f.input} name="closes_at" type="datetime-local" />
-          <span className={f.hint}>Leave blank for 24 hours from now.</span>
+          <span className={f.hint}>Leave blank for 24h after the window opens.</span>
         </label>
       </div>
 

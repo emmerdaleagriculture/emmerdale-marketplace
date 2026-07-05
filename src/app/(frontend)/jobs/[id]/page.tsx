@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { BidPanel } from './BidPanel';
+import { PaidPanel } from './PaidPanel';
 import { createClient } from '@/lib/supabase/server';
 import { getServices } from '@/lib/reference';
 import { closesIn, formatDateTime, poundsFromPence } from '@/lib/time';
@@ -40,10 +41,13 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
   const serviceName = new Map(services.map((s) => [s.id, s.name]));
   const isOpen = !!pub;
+  const paidAccess = !!pub?.paid_access; // active subscriber viewing an open/exclusive job
+  const isExclusive = !!pub?.is_exclusive;
 
-  // Post-close outcome for a job we bid on.
+  // Reveal customer contact for: paid members (any visible job) or a bid winner
+  // after close. get_job_contact logs the reveal (paid_access / bid_won).
   let contact: { customer_name: string; customer_phone: string; customer_email: string | null } | null = null;
-  if (!isOpen && mine?.won) {
+  if (paidAccess || (!isOpen && mine?.won)) {
     const { data } = await supabase.rpc('get_job_contact', { p_job_id: id });
     contact = (data ?? [])[0] ?? null;
   }
@@ -61,7 +65,11 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           <p className={a.sub}>
             {job.town ? `${job.town}, ` : ''}
             {job.postcode_district}
-            {isOpen ? ` · closes ${closesIn(job.bidding_closes_at!)}` : ` · closed ${formatDateTime(job.bidding_closes_at!)}`}
+            {isExclusive
+              ? ' · paid early access'
+              : isOpen
+                ? ` · closes ${closesIn(job.bidding_closes_at!)}`
+                : ` · closed ${formatDateTime(job.bidding_closes_at!)}`}
           </p>
 
           <p style={{ lineHeight: 1.7, color: 'var(--ink)' }}>{job.description}</p>
@@ -79,7 +87,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             </p>
           )}
 
-          {isOpen ? (
+          {paidAccess ? (
+            <PaidPanel jobId={id} contact={contact} isExclusive={isExclusive} />
+          ) : isOpen ? (
             <BidPanel
               jobId={id}
               currentAmountPence={mine?.my_amount_pence ?? null}
