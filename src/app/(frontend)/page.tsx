@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { getServices } from '@/lib/reference';
@@ -37,6 +38,15 @@ export default async function LandingPage() {
   return (
     <div className={s.page}>
       <section className={s.hero}>
+        <Image
+          src="/john-deere-6250r.webp"
+          alt="A John Deere 6250R working in a Hampshire field"
+          fill
+          priority
+          sizes="100vw"
+          className={s.heroImg}
+        />
+        <div className={s.heroOverlay} />
         <SiteHeader variant="overlay" />
         <div className={s.heroInner}>
           <div className={s.eyebrow}>The network</div>

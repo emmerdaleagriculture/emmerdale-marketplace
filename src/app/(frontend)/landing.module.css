@@ -7,12 +7,27 @@
 .hero {
   position: relative;
   padding: 150px 24px 110px;
-  background:
-    radial-gradient(120% 120% at 50% 0%, rgba(54, 124, 43, 0.35) 0%, transparent 60%),
-    linear-gradient(180deg, var(--jd-green-dark) 0%, var(--jd-green-deep) 100%);
+  background: var(--jd-green-deep); /* fallback before the image paints */
   color: var(--white);
+  overflow: hidden;
+}
+.heroImg {
+  object-fit: cover;
+  object-position: center 60%;
+  z-index: 0;
+}
+/* Dark-green wash over the photo so the white headline stays legible. */
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(120% 120% at 50% 0%, rgba(54, 124, 43, 0.25) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(23, 51, 13, 0.72) 0%, rgba(23, 51, 13, 0.86) 100%);
 }
 .heroInner {
+  position: relative;
+  z-index: 2;
   max-width: 900px;
   margin: 0 auto;
   text-align: center;
