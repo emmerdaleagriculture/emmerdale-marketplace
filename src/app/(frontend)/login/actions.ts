@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
 
 export async function loginAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -17,5 +18,6 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
     return { error: 'Incorrect email or password, or your email isn’t confirmed yet.' };
   }
 
-  redirect('/account');
+  // Admins land in the admin panel; contractors in their account.
+  redirect(isAdminEmail(email) ? '/admin' : '/account');
 }

@@ -9,9 +9,9 @@ import s from './landing.module.css';
 import f from '@/components/forms/forms.module.css';
 
 export const metadata: Metadata = {
-  title: 'Emmerdale Agriculture — The contractor network',
+  title: 'Paddock & Agricultural Contractor Jobs | Emmerdale Agriculture',
   description:
-    'Paddock and land jobs across the country, passed to contractors who can actually do them. Sign up free, get matched by county, and bid to win the work.',
+    'Free-to-join network passing paddock maintenance and land jobs to agricultural contractors across England and Wales. Get matched by county, bid, and win the work — no commission.',
   alternates: { canonical: '/' },
 };
 
@@ -117,10 +117,10 @@ export default async function LandingPage() {
       <section className={`${s.section} ${s.sectionAlt}`}>
         <div className={s.sectionInner}>
           <div className={s.kicker}>The work</div>
-          <h2 className={s.sectionTitle}>Paddock &amp; land services</h2>
+          <h2 className={s.sectionTitle}>Paddock maintenance &amp; land services</h2>
           <p className={s.sectionLede}>
-            The jobs posted to the network span the full range of paddock and land
-            maintenance.
+            The jobs posted to the network span the full range of paddock
+            maintenance and land work.
           </p>
           <div className={s.services}>
             {services.map((svc) => (
@@ -145,6 +145,28 @@ export default async function LandingPage() {
           </p>
           <p className={s.credMeta}>
             {COMPANY_LEGAL_NAME} · Company No. {COMPANY_NUMBER}
+          </p>
+        </div>
+      </section>
+
+      <section className={s.section}>
+        <div className={s.sectionInner}>
+          <div className={s.kicker}>For contractors</div>
+          <h2 className={s.sectionTitle}>
+            Agricultural contracting work, found <em>for you.</em>
+          </h2>
+          <p className={s.sectionLede}>
+            Emmerdale Agriculture passes real, consented enquiries to agricultural
+            contractors across England and Wales — the everyday work of grassland
+            and paddock maintenance: topping, harrowing, rolling, spraying,
+            rotavating, land clearance and more, matched to the counties you choose.
+          </p>
+          <p className={s.sectionLede}>
+            Whether you’re an established contractor filling gaps in the diary or a
+            growing smallholder-services business, the network sends paddock
+            maintenance jobs in your area straight to your inbox. Free to join, no
+            obligation to bid, no commission — you win the job, you invoice the
+            customer.
           </p>
         </div>
       </section>

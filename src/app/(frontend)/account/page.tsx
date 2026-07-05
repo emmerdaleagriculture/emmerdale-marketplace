@@ -5,6 +5,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
 import { createClient } from '@/lib/supabase/server';
+import { isAdminEmail } from '@/lib/auth';
 import { getCounties, getServices } from '@/lib/reference';
 import { stripeConfigured } from '@/lib/stripe';
 import { formatDateTime } from '@/lib/time';
@@ -31,6 +32,9 @@ export default async function AccountPage({
     .select('*')
     .eq('id', user.id)
     .maybeSingle();
+  // Admins aren't contractors — without this, an admin with no contractor
+  // profile ping-pongs between /account and /signup forever.
+  if (!contractor && isAdminEmail(user.email)) redirect('/admin');
   if (!contractor) redirect('/signup');
 
   const [counties, services, ccRows, subRow] = await Promise.all([
