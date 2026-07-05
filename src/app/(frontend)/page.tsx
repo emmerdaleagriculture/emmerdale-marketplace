@@ -8,6 +8,10 @@ import { COMPANY_LEGAL_NAME, COMPANY_NUMBER, HPM_URL } from '@/lib/site';
 import s from './landing.module.css';
 import f from '@/components/forms/forms.module.css';
 
+// ISR: statically cached at the CDN, re-rendered at most hourly. The only data
+// on the page (the 15-service taxonomy) is effectively fixed.
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'Paddock & Agricultural Contractor Jobs | Emmerdale Agriculture',
   description:
@@ -65,6 +69,7 @@ export default async function LandingPage() {
           alt="A John Deere 6250R working in a Hampshire field"
           fill
           priority
+          quality={70}
           sizes="100vw"
           className={s.heroImg}
         />

@@ -8,6 +8,16 @@ import { NextResponse, type NextRequest } from 'next/server';
  * users) is layered on in later phases; for now this just keeps sessions alive.
  */
 export async function updateSession(request: NextRequest) {
+  // Fast path: no Supabase auth cookies at all → anonymous visitor, nothing to
+  // refresh. Skips a network round-trip to Supabase on every public-page view
+  // (protected pages still enforce auth themselves via redirect-to-login).
+  const hasAuthCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith('sb-'));
+  if (!hasAuthCookie) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
