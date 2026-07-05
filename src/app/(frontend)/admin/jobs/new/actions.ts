@@ -9,6 +9,7 @@ import type { FormState } from '@/lib/form';
 
 const JobSchema = z.object({
   customer_name: z.string().trim().min(1, 'Customer name is required.'),
+  customer_first_name: z.string().trim().optional().or(z.literal('')),
   customer_phone: z.string().trim().min(5, 'Customer phone is required.'),
   customer_email: z.string().trim().email('Enter a valid email.').optional().or(z.literal('')),
   title: z.string().trim().min(1, 'Job title is required.'),
@@ -33,6 +34,7 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
 
   const parsed = JobSchema.safeParse({
     customer_name: formData.get('customer_name'),
+    customer_first_name: formData.get('customer_first_name'),
     customer_phone: formData.get('customer_phone'),
     customer_email: formData.get('customer_email'),
     title: formData.get('title'),
@@ -86,6 +88,9 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
       town: r.town ?? null,
       county_id: countyId,
       customer_name: d.customer_name,
+      // Public first name — defaults to the first token of the full name;
+      // the surname never appears on the listing.
+      customer_first_name: d.customer_first_name || d.customer_name.split(/\s+/)[0],
       customer_phone: d.customer_phone,
       customer_email: d.customer_email || null,
       consent_to_share: true,
@@ -111,6 +116,16 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
     await admin.rpc('notify_paid_members', { p_job_id: job.id });
   } else {
     await admin.rpc('notify_job_open', { p_job_id: job.id });
+  }
+
+  // Published from a Facebook lead? Mark it converted and link the job.
+  const leadId = String(formData.get('lead_id') || '');
+  if (leadId) {
+    await admin
+      .from('leads')
+      .update({ status: 'converted', job_id: job.id })
+      .eq('id', leadId)
+      .eq('status', 'pending');
   }
 
   redirect(`/admin/jobs/${job.id}`);

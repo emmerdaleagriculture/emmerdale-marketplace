@@ -115,3 +115,17 @@ with events: `checkout.session.completed`, `customer.subscription.updated`,
 | `npm run start`      | Run the production build |
 | `npm run lint`       | ESLint                   |
 | `npm run type-check` | `tsc --noEmit`           |
+
+## Facebook leads intake
+
+Leads from Facebook Lead Ads land in an approval queue (`/admin/leads`) — nothing
+publishes automatically. On publish, the listing shows the customer's **first
+name**, the **postcode district**, and the job details; surname, phone, email and
+full postcode stay private until award.
+
+Endpoint: `POST /api/leads` with header `x-webhook-secret: <LEADS_WEBHOOK_SECRET>`
+and a JSON body. Field names are mapped loosely (`full_name`/`name`,
+`phone`/`phone_number`, `postcode`/`post_code`/`zip`,
+`job`/`message`/`description`/`what_do_you_need`) so Zapier/Make "Facebook Lead
+Ads → Webhooks POST" works unmodified. The raw payload is kept on the lead for
+audit. A `new_lead` email is queued to the admin on every arrival.

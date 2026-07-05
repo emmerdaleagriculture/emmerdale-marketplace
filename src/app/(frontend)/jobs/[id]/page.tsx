@@ -63,6 +63,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           <div className={a.eyebrow}>{job.county}</div>
           <h1 className={a.title}>{job.title}</h1>
           <p className={a.sub}>
+            {job.customer_first_name ? `For ${job.customer_first_name} · ` : ''}
             {job.town ? `${job.town}, ` : ''}
             {job.postcode_district}
             {isExclusive

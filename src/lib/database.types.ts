@@ -324,6 +324,7 @@ export type Database = {
           created_at: string
           created_by: string
           customer_email: string | null
+          customer_first_name: string | null
           customer_name: string
           customer_phone: string
           description: string
@@ -347,6 +348,7 @@ export type Database = {
           created_at?: string
           created_by: string
           customer_email?: string | null
+          customer_first_name?: string | null
           customer_name: string
           customer_phone: string
           description: string
@@ -370,6 +372,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           customer_email?: string | null
+          customer_first_name?: string | null
           customer_name?: string
           customer_phone?: string
           description?: string
@@ -387,6 +390,70 @@ export type Database = {
             columns: ["county_id"]
             isOneToOne: false
             referencedRelation: "counties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          created_at: string
+          details: Json
+          email: string | null
+          full_name: string
+          id: string
+          job_hint: string | null
+          job_id: string | null
+          phone: string | null
+          postcode: string | null
+          source: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          email?: string | null
+          full_name: string
+          id?: string
+          job_hint?: string | null
+          job_id?: string | null
+          phone?: string | null
+          postcode?: string | null
+          source?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          email?: string | null
+          full_name?: string
+          id?: string
+          job_hint?: string | null
+          job_id?: string | null
+          phone?: string | null
+          postcode?: string | null
+          source?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "my_bid_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "public_jobs"
             referencedColumns: ["id"]
           },
         ]
@@ -483,6 +550,7 @@ export type Database = {
           budget_hint: string | null
           county: string | null
           county_id: number | null
+          customer_first_name: string | null
           description: string | null
           id: string | null
           my_amount_pence: number | null
@@ -512,6 +580,7 @@ export type Database = {
           budget_hint: string | null
           county: string | null
           county_id: number | null
+          customer_first_name: string | null
           description: string | null
           id: string | null
           is_exclusive: boolean | null

@@ -8,12 +8,26 @@ import type { CountyOption } from '@/components/forms/CountyPicker';
 import f from '@/components/forms/forms.module.css';
 import a from '../../../auth.module.css';
 
+export type JobFormDefaults = {
+  customer_name?: string;
+  customer_first_name?: string;
+  customer_phone?: string;
+  customer_email?: string;
+  postcode?: string;
+  title?: string;
+  description?: string;
+};
+
 export function NewJobForm({
   services,
   counties,
+  defaults = {},
+  leadId,
 }: {
   services: ServiceOption[];
   counties: CountyOption[];
+  defaults?: JobFormDefaults;
+  leadId?: string;
 }) {
   const [state, action, pending] = useActionState(createJobAction, emptyFormState);
 
@@ -27,31 +41,38 @@ export function NewJobForm({
   return (
     <form action={action}>
       {state.error && <p className={f.error}>{state.error}</p>}
+      {leadId && <input type="hidden" name="lead_id" value={leadId} />}
 
       <div className={a.groupTitle}>Customer (private — never shown until award)</div>
       <div className={a.row2}>
         <label className={f.field}>
-          <span className={f.label}>Customer name</span>
-          <input className={f.input} name="customer_name" required />
+          <span className={f.label}>Customer full name</span>
+          <input className={f.input} name="customer_name" required defaultValue={defaults.customer_name} />
+          <span className={f.hint}>Private — surname is never shown publicly.</span>
+        </label>
+        <label className={f.field}>
+          <span className={f.label}>First name (shown publicly)</span>
+          <input className={f.input} name="customer_first_name" defaultValue={defaults.customer_first_name} />
+          <span className={f.hint}>Appears on the public listing, e.g. “for Sarah”.</span>
         </label>
         <label className={f.field}>
           <span className={f.label}>Customer phone</span>
-          <input className={f.input} name="customer_phone" required />
+          <input className={f.input} name="customer_phone" required defaultValue={defaults.customer_phone} />
         </label>
         <label className={f.field}>
           <span className={f.label}>Customer email (optional)</span>
-          <input className={f.input} name="customer_email" type="email" />
+          <input className={f.input} name="customer_email" type="email" defaultValue={defaults.customer_email} />
         </label>
       </div>
 
       <div className={a.groupTitle}>Job</div>
       <label className={f.field}>
         <span className={f.label}>Title</span>
-        <input className={f.input} name="title" required placeholder="e.g. Paddock topping — 6 acres" />
+        <input className={f.input} name="title" required placeholder="e.g. Paddock topping — 6 acres" defaultValue={defaults.title} />
       </label>
       <label className={f.field}>
         <span className={f.label}>Description</span>
-        <textarea className={f.textarea} name="description" required />
+        <textarea className={f.textarea} name="description" required defaultValue={defaults.description} />
       </label>
 
       <div className={a.groupTitle}>Services needed</div>
@@ -61,7 +82,7 @@ export function NewJobForm({
       <div className={a.row2}>
         <label className={f.field}>
           <span className={f.label}>Postcode</span>
-          <input className={f.input} name="postcode" required placeholder="SO23 9XX" />
+          <input className={f.input} name="postcode" required placeholder="SO23 9XX" defaultValue={defaults.postcode} />
           <span className={f.hint}>County is auto-detected. Full postcode stays private.</span>
         </label>
         <label className={f.field}>

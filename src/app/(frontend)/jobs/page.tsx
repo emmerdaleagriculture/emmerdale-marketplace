@@ -79,6 +79,7 @@ export default async function JobsBoardPage() {
                           </span>
                         </div>
                         <div className={j.meta}>
+                          {job.customer_first_name ? `For ${job.customer_first_name} · ` : ''}
                           {job.town ? `${job.town}, ` : ''}
                           {job.postcode_district} · {job.county}
                         </div>

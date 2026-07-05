@@ -85,6 +85,15 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `${title}\n\nLog in to see the full details and the customer’s contact — no ` +
           `bidding needed. If you take it, mark it booked so we can close it.`,
       };
+    case 'new_lead':
+      return {
+        subject: `New lead: ${p.full_name ?? 'enquiry'}`,
+        text:
+          `A new lead has arrived in the approval queue.\n\n` +
+          `Name: ${p.full_name ?? '?'}\n` +
+          (p.job_hint ? `Wants: ${p.job_hint}\n` : '') +
+          `\nReview it at /admin/leads — publish it as a job or dismiss it.`,
+      };
     case 'booked_flag':
       return {
         subject: `Booked-in-window: ${title}`,
