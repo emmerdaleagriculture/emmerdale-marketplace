@@ -71,7 +71,19 @@ export async function POST(request: Request) {
     [pick('first_name'), pick('last_name')].filter(Boolean).join(' ').trim() ||
     null;
   if (!fullName) {
-    return NextResponse.json({ ok: false, error: 'missing name' }, { status: 400 });
+    // Diagnostic: show what actually arrived so the mapping can be fixed.
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'missing name',
+        received_keys: Object.keys(body),
+        field_data_names: Array.isArray(fd)
+          ? fd.map((x) => x?.name).filter(Boolean)
+          : `not an array (type: ${typeof fd})`,
+        body_preview: JSON.stringify(body).slice(0, 500),
+      },
+      { status: 400 },
+    );
   }
 
   // Fold any unrecognised fields (custom form questions like "acreage",
