@@ -12,6 +12,24 @@ export const metadata: Metadata = {
   title: 'Emmerdale Agriculture — The contractor network',
   description:
     'Paddock and land jobs across the country, passed to contractors who can actually do them. Sign up free, get matched by county, and bid to win the work.',
+  alternates: { canonical: '/' },
+};
+
+// Organization schema — credibility signals (company number, HPM relationship).
+const orgJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Emmerdale Agriculture Ltd',
+  url: 'https://emmerdaleagriculture.com',
+  logo: 'https://emmerdaleagriculture.com/icon.svg',
+  identifier: {
+    '@type': 'PropertyValue',
+    propertyID: 'Company Number',
+    value: COMPANY_NUMBER,
+  },
+  sameAs: [HPM_URL],
+  description:
+    'The contractor network run by Emmerdale Agriculture Ltd, the company behind Hampshire Paddock Management. Paddock and land jobs matched to contractors by county and awarded by bid.',
 };
 
 const STEPS = [
@@ -37,6 +55,10 @@ export default async function LandingPage() {
 
   return (
     <div className={s.page}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+      />
       <section className={s.hero}>
         <Image
           src="/john-deere-6250r.webp"

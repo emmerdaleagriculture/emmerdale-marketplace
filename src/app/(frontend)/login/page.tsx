@@ -6,7 +6,11 @@ import { LoginForm } from './LoginForm';
 import { getUser } from '@/lib/auth';
 import a from '../auth.module.css';
 
-export const metadata: Metadata = { title: 'Log in' };
+export const metadata: Metadata = {
+  title: 'Log in',
+  description: 'Log in to your Emmerdale Agriculture contractor account.',
+  alternates: { canonical: '/login' },
+};
 
 export default async function LoginPage() {
   if (await getUser()) redirect('/account');

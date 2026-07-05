@@ -5,7 +5,11 @@ import { COMPANY_LEGAL_NAME, COMPANY_NUMBER } from '@/lib/site';
 import a from '../auth.module.css';
 import l from '../legal.module.css';
 
-export const metadata: Metadata = { title: 'Privacy policy' };
+export const metadata: Metadata = {
+  title: 'Privacy policy',
+  description: 'How Emmerdale Agriculture Ltd handles customer and contractor data.',
+  alternates: { canonical: '/privacy' },
+};
 
 export default function PrivacyPage() {
   return (

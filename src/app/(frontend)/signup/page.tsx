@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: 'Join the network',
   description:
     'Sign up as a contractor — get matched to paddock and land jobs by county and bid to win the work.',
+  alternates: { canonical: '/signup' },
 };
 
 export default async function SignupPage() {

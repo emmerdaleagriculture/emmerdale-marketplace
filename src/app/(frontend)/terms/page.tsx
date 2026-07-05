@@ -5,7 +5,11 @@ import { COMPANY_LEGAL_NAME, COMPANY_NUMBER } from '@/lib/site';
 import a from '../auth.module.css';
 import l from '../legal.module.css';
 
-export const metadata: Metadata = { title: 'Terms' };
+export const metadata: Metadata = {
+  title: 'Terms',
+  description: 'Contractor terms for the Emmerdale Agriculture network.',
+  alternates: { canonical: '/terms' },
+};
 
 export default function TermsPage() {
   return (
