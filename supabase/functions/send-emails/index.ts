@@ -64,6 +64,13 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Thanks for bidding on "${title}". It’s been awarded to another contractor this time.\n\n` +
           `Log in to see other open jobs in your counties.`,
       };
+    case 'closing_soon':
+      return {
+        subject: `Closing soon: ${title}`,
+        text:
+          `Bidding on "${title}"${where ? ` (${where})` : ''} closes within the next ` +
+          `few hours and you haven’t bid yet. Log in to put your price in before it closes.`,
+      };
     case 'job_expired':
       return {
         subject: `No bids: ${title}`,

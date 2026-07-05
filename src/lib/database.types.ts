@@ -531,6 +531,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_metrics: { Args: never; Returns: Json }
       award_job: {
         Args: { p_bid_id: string; p_job_id: string }
         Returns: undefined
@@ -546,6 +547,7 @@ export type Database = {
       }
       is_active_subscriber: { Args: { p_contractor: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      notify_closing_soon: { Args: never; Returns: undefined }
       notify_job_open: { Args: { p_job_id: string }; Returns: undefined }
       open_due_jobs: { Args: never; Returns: undefined }
       place_bid: {

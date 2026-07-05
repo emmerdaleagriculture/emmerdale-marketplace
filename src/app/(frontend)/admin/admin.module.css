@@ -200,3 +200,41 @@
   color: var(--jd-green);
   font-size: 14px;
 }
+
+/* Metrics dashboard */
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.metric {
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 18px 20px;
+}
+.metricValue {
+  font-family: var(--font-display-stack);
+  font-size: 32px;
+  line-height: 1.1;
+  color: var(--jd-green-deep);
+}
+.metricLabel {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-top: 6px;
+}
+.metricHint {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: 3px;
+}
+.quickLinks {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}

@@ -24,7 +24,7 @@ export async function SiteHeader({ variant = 'solid' }: { variant?: 'overlay' | 
           {user ? (
             <>
               {admin && (
-                <Link href="/admin/jobs" className={styles.admin}>
+                <Link href="/admin" className={styles.admin}>
                   Admin
                 </Link>
               )}

@@ -1,0 +1,85 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { createServiceRoleClient } from '@/lib/supabase/server';
+import s from './admin.module.css';
+import f from '@/components/forms/forms.module.css';
+
+export const metadata: Metadata = { title: 'Dashboard — Admin' };
+
+type Metrics = {
+  total_jobs: number;
+  open_jobs: number;
+  awarded_jobs: number;
+  expired_jobs: number;
+  withdrawn_jobs: number;
+  contractors_total: number;
+  contractors_approved: number;
+  contractors_pending: number;
+  fill_rate: number | null;
+  median_bids_per_closed_job: number | null;
+  median_hours_to_first_bid: number | null;
+};
+
+function Metric({ value, label, hint }: { value: string; label: string; hint?: string }) {
+  return (
+    <div className={s.metric}>
+      <div className={s.metricValue}>{value}</div>
+      <div className={s.metricLabel}>{label}</div>
+      {hint && <div className={s.metricHint}>{hint}</div>}
+    </div>
+  );
+}
+
+export default async function AdminDashboard() {
+  const admin = createServiceRoleClient();
+  const { data } = await admin.rpc('admin_metrics');
+  const m = (data ?? {}) as Metrics;
+
+  const pct = (v: number | null) => (v === null ? '—' : `${Math.round(v * 100)}%`);
+  const num = (v: number | null | undefined) => (v === null || v === undefined ? '—' : String(v));
+
+  return (
+    <div>
+      <h1 className={s.h1}>Dashboard</h1>
+      <p className={s.sub}>Overview of the network.</p>
+
+      <div className={s.sectionLabel}>Jobs</div>
+      <div className={s.metricGrid}>
+        <Metric value={num(m.total_jobs)} label="Total jobs" />
+        <Metric value={num(m.open_jobs)} label="Open now" />
+        <Metric value={num(m.awarded_jobs)} label="Awarded" />
+        <Metric value={num(m.expired_jobs)} label="Expired (no bids)" />
+        <Metric value={pct(m.fill_rate)} label="Fill rate" hint="awarded ÷ (awarded + expired)" />
+      </div>
+
+      <div className={s.sectionLabel}>Bidding</div>
+      <div className={s.metricGrid}>
+        <Metric value={num(m.median_bids_per_closed_job)} label="Median bids / job" hint="across closed jobs" />
+        <Metric
+          value={m.median_hours_to_first_bid === null ? '—' : `${m.median_hours_to_first_bid}h`}
+          label="Median time to first bid"
+        />
+      </div>
+
+      <div className={s.sectionLabel}>Contractors</div>
+      <div className={s.metricGrid}>
+        <Metric value={num(m.contractors_total)} label="Registered" />
+        <Metric value={num(m.contractors_approved)} label="Approved" />
+        <Metric value={num(m.contractors_pending)} label="Awaiting approval" />
+      </div>
+
+      <div className={s.sectionLabel}>Quick actions</div>
+      <div className={s.quickLinks}>
+        <Link href="/admin/jobs/new" className={f.btnPrimary}>
+          Post a job
+        </Link>
+        <Link href="/admin/jobs" className={f.btnGhost}>
+          All jobs
+        </Link>
+        <Link href="/admin/contractors" className={f.btnGhost}>
+          Contractors{m.contractors_pending ? ` (${m.contractors_pending} pending)` : ''}
+        </Link>
+      </div>
+    </div>
+  );
+}
