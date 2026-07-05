@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SignupForm } from './SignupForm';
-import { getCounties, getServices } from '@/lib/reference';
+import { getCounties } from '@/lib/reference';
 import { getUser } from '@/lib/auth';
 import a from '../auth.module.css';
 
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function SignupPage() {
   if (await getUser()) redirect('/account');
 
-  const [counties, services] = await Promise.all([getCounties(), getServices()]);
+  const counties = await getCounties();
 
   return (
     <div className={a.wrap}>
@@ -32,7 +32,7 @@ export default async function SignupPage() {
             and email you when you’re approved — then you’ll see jobs in your
             counties and can bid to win the work.
           </p>
-          <SignupForm counties={counties} services={services} />
+          <SignupForm counties={counties} />
         </div>
       </main>
       <SiteFooter />

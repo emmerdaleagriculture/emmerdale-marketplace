@@ -5,17 +5,10 @@ import Link from 'next/link';
 import { signUpAction } from './actions';
 import { emptyFormState } from '@/lib/form';
 import { CountyPicker, type CountyOption } from '@/components/forms/CountyPicker';
-import { ServicePicker, type ServiceOption } from '@/components/forms/ServicePicker';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
-export function SignupForm({
-  counties,
-  services,
-}: {
-  counties: CountyOption[];
-  services: ServiceOption[];
-}) {
+export function SignupForm({ counties }: { counties: CountyOption[] }) {
   const [state, action, pending] = useActionState(signUpAction, emptyFormState);
 
   if (state.ok) {
@@ -74,9 +67,6 @@ export function SignupForm({
           <span className={f.hint}>For our records only — not used to match jobs.</span>
         </label>
       </div>
-
-      <div className={a.groupTitle}>Services you offer</div>
-      <ServicePicker services={services} />
 
       <div className={a.groupTitle}>Counties you cover</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>
