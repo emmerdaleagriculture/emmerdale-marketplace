@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { dismissLeadAction, repenLeadAction } from './actions';
+import { LeadsIntakePanel } from './LeadsIntakePanel';
 import { formatDateTime } from '@/lib/time';
 import s from '../admin.module.css';
 
@@ -43,6 +44,8 @@ export default async function AdminLeadsPage() {
       <p className={s.sub}>
         Enquiries from Facebook ads land here for approval. {pending.length} waiting.
       </p>
+
+      <LeadsIntakePanel />
 
       <div className={s.sectionLabel}>Awaiting review</div>
       {pending.length === 0 ? (
