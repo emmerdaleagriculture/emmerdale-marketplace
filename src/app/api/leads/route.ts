@@ -66,25 +66,12 @@ export async function POST(request: Request) {
     return null;
   };
 
+  // Never drop a lead over an imperfect mapping — the full raw payload is always
+  // kept in details, so a name-less lead still lands and can be fixed at publish.
   const fullName =
     pick('full_name', 'name', 'fullname') ||
     [pick('first_name'), pick('last_name')].filter(Boolean).join(' ').trim() ||
-    null;
-  if (!fullName) {
-    // Diagnostic: show what actually arrived so the mapping can be fixed.
-    return NextResponse.json(
-      {
-        ok: false,
-        error: 'missing name',
-        received_keys: Object.keys(body),
-        field_data_names: Array.isArray(fd)
-          ? fd.map((x) => x?.name).filter(Boolean)
-          : `not an array (type: ${typeof fd})`,
-        body_preview: JSON.stringify(body).slice(0, 500),
-      },
-      { status: 400 },
-    );
-  }
+    'Facebook lead (name not mapped)';
 
   // Fold any unrecognised fields (custom form questions like "acreage",
   // "what do you need?") into the job hint so nothing is lost.
