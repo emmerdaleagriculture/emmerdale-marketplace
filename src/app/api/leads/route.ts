@@ -44,11 +44,18 @@ export async function POST(request: Request) {
   // collection), flatten it so custom questions become top-level fields.
   const fd = body.field_data;
   if (Array.isArray(fd)) {
+    // Graph API shape: [{ name, values: [...] }]
     for (const item of fd) {
       const name = (item?.name ?? '').toString().trim();
       const value = Array.isArray(item?.values) ? item.values[0] : item?.values;
+      if (name && value != null && body[name] === undefined) body[name] = value;
+    }
+  } else if (fd && typeof fd === 'object') {
+    // Make shape: { field_name: value | [value] }
+    for (const [name, raw] of Object.entries(fd as Record<string, unknown>)) {
+      const value = Array.isArray(raw) ? raw[0] : raw;
       if (name && value != null && body[name] === undefined) {
-        body[name] = value;
+        body[name] = typeof value === 'string' || typeof value === 'number' ? value : String(value);
       }
     }
   }
