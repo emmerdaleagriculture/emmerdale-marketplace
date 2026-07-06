@@ -53,7 +53,8 @@ export default async function AdminLeadsPage() {
           No leads waiting. New Facebook-form submissions appear here automatically.
         </div>
       ) : (
-        <table className={s.table}>
+        <div className={s.tableWrap}>
+          <table className={s.table}>
           <thead>
             <tr>
               <th>Name</th>
@@ -88,14 +89,16 @@ export default async function AdminLeadsPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
 
       <div className={s.sectionLabel}>History</div>
       {history.length === 0 ? (
         <div className={s.empty}>No processed leads yet.</div>
       ) : (
-        <table className={s.table}>
+        <div className={s.tableWrap}>
+          <table className={s.table}>
           <thead>
             <tr>
               <th>Name</th>
@@ -133,7 +136,8 @@ export default async function AdminLeadsPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
     </div>
   );

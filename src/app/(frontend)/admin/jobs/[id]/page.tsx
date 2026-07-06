@@ -111,7 +111,8 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
       {(bids ?? []).length === 0 ? (
         <div className={s.empty}>No bids yet.</div>
       ) : (
-        <table className={s.table}>
+        <div className={s.tableWrap}>
+          <table className={s.table}>
           <thead>
             <tr>
               <th>Contractor</th>
@@ -149,7 +150,8 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
               );
             })}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
 
       <div className={s.sectionLabel}>Actions</div>

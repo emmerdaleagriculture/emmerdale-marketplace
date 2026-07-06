@@ -1,6 +1,7 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  /* min(…, 100%) so the 320px floor can't overflow very narrow viewports */
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: 18px;
 }
 .card {
@@ -116,6 +117,8 @@
   gap: 10px;
   margin-top: 8px;
   font-size: 16px;
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
 }
 .contactRow strong {
   min-width: 90px;

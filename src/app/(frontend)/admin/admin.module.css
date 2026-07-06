@@ -9,6 +9,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px 20px;
+  flex-wrap: wrap;
 }
 .brand {
   font-family: var(--font-display-stack);
@@ -19,10 +21,29 @@
 .nav {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 8px 20px;
   font-size: 13px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  flex-wrap: wrap;
+}
+@media (max-width: 620px) {
+  .bar {
+    padding: 12px 16px;
+  }
+  .brand {
+    font-size: 15px;
+  }
+  .nav {
+    gap: 6px 14px;
+    font-size: 12px;
+  }
+  .signout {
+    font-size: 12px;
+  }
+  .main {
+    padding: 28px 16px 64px;
+  }
 }
 .nav a {
   color: #fff;
@@ -59,7 +80,12 @@
   margin: 32px 0 12px;
 }
 
-/* Table */
+/* Table — always inside .tableWrap so wide tables scroll instead of
+   stretching the page past the viewport on phones. */
+.tableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -180,6 +206,7 @@
   font-size: 15px;
   color: var(--ink);
   margin-top: 2px;
+  overflow-wrap: anywhere; /* long emails/URLs must not widen the page */
 }
 .tags {
   display: flex;

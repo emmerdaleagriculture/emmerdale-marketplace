@@ -20,7 +20,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 12px 24px;
+  flex-wrap: wrap;
 }
 .brand {
   font-family: var(--font-display-stack);
@@ -60,7 +61,7 @@
   background: var(--jd-yellow);
   color: var(--jd-green-deep) !important;
   padding: 9px 16px;
-  border-radius: 2px;
+  border-radius: 8px;
   font-weight: 600;
   opacity: 1 !important;
 }
@@ -68,11 +69,21 @@
   background: var(--jd-yellow-dark);
 }
 @media (max-width: 620px) {
+  .inner {
+    padding: 12px 16px;
+    gap: 8px 12px;
+  }
+  .brand {
+    font-size: 16px;
+  }
   .nav {
-    gap: 14px;
+    gap: 12px;
     font-size: 12px;
   }
   .nav a:first-child {
     display: none; /* hide "How it works" on very small screens */
+  }
+  .cta {
+    padding: 8px 12px;
   }
 }

@@ -48,7 +48,8 @@ export default async function AdminJobsPage() {
       {list.length === 0 ? (
         <div className={s.empty}>No jobs yet. Post the first one.</div>
       ) : (
-        <table className={s.table}>
+        <div className={s.tableWrap}>
+          <table className={s.table}>
           <thead>
             <tr>
               <th>Title</th>
@@ -82,7 +83,8 @@ export default async function AdminJobsPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
     </div>
   );

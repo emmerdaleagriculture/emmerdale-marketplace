@@ -92,7 +92,8 @@ export default async function AdminContractorsPage() {
       {pending.length === 0 ? (
         <div className={s.empty}>No contractors waiting for approval.</div>
       ) : (
-        <table className={s.table}>
+        <div className={s.tableWrap}>
+          <table className={s.table}>
           <thead>
             <tr>
               <th>Business</th>
@@ -108,14 +109,16 @@ export default async function AdminContractorsPage() {
               <Row key={c.id} c={c} />
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
 
       <div className={s.sectionLabel}>All contractors</div>
       {rest.length === 0 ? (
         <div className={s.empty}>No approved or suspended contractors yet.</div>
       ) : (
-        <table className={s.table}>
+        <div className={s.tableWrap}>
+          <table className={s.table}>
           <thead>
             <tr>
               <th>Business</th>
@@ -131,7 +134,8 @@ export default async function AdminContractorsPage() {
               <Row key={c.id} c={c} />
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
     </div>
   );
