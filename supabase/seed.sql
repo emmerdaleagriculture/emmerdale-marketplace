@@ -150,6 +150,11 @@ from (values
   ('Isle of Wight','Isle of Wight'),
   -- Kent
   ('Medway','Kent'),
+  -- East Sussex
+  ('Brighton and Hove','East Sussex'),
+  -- Lancashire
+  ('Blackburn with Darwen','Lancashire'),
+  ('Blackpool','Lancashire'),
   -- Leicestershire
   ('Leicester','Leicestershire'),
   -- Lincolnshire
