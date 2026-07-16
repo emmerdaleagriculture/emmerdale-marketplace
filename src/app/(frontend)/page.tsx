@@ -57,13 +57,37 @@ const STEPS = [
 
 export default async function LandingPage() {
   const [services, coverage] = await Promise.all([getServices(), getCountyCoverage()]);
-  const coveredCount = UK_COUNTY_NAMES.filter((n) => (coverage[n] ?? 0) > 0).length;
+  const coveredCounties = UK_COUNTY_NAMES.filter((n) => (coverage[n] ?? 0) > 0);
+  const coveredCount = coveredCounties.length;
+
+  // Service schema — the customer-search side: what work can be quoted, where,
+  // and the route to a quote. areaServed tracks live network coverage.
+  const serviceJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: 'Paddock maintenance & land services',
+    serviceType: services.map((svc) => svc.name),
+    description:
+      'Free, no-obligation quotes for paddock maintenance and agricultural contracting — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance — for paddock owners, equestrian yards, farms and estates across Hampshire and the South of England.',
+    url: HPM_CONTACT_URL,
+    provider: {
+      '@type': 'Organization',
+      name: COMPANY_LEGAL_NAME,
+      url: 'https://emmerdaleagriculture.com',
+      brand: { '@type': 'Brand', name: 'Hampshire Paddock Management' },
+    },
+    areaServed: coveredCounties.map((name) => ({ '@type': 'AdministrativeArea', name })),
+  };
 
   return (
     <div className={s.page}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
       <section className={s.hero}>
         <Image
