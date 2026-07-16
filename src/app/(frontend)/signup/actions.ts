@@ -16,7 +16,18 @@ const SignupSchema = z.object({
   accept: z.literal('on', { message: 'You must accept the terms and privacy policy.' }),
 });
 
+const SUCCESS_MESSAGE =
+  'Application received. Check your email to confirm your address — then we’ll review your application and email you when you’re approved.';
+
 export async function signUpAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  // Bot traps: a hidden field real users never see, and a minimum time-to-fill.
+  // Pretend success so bots can't tell they were caught.
+  const honeypot = String(formData.get('website') || '');
+  const renderedAt = Number(formData.get('form_ts') || 0);
+  if (honeypot || (renderedAt > 0 && Date.now() - renderedAt < 3000)) {
+    return { ok: true, message: SUCCESS_MESSAGE };
+  }
+
   const parsed = SignupSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
@@ -34,6 +45,10 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
   }
   const d = parsed.data;
 
+  // Supabase verifies the Turnstile token when captcha protection is enabled
+  // for the project; without a valid token it rejects the signup.
+  const captchaToken = String(formData.get('cf-turnstile-response') || '') || undefined;
+
   // Create the auth user (sends a confirmation email if the project requires it).
   const supabase = await createClient();
   const { data: signUp, error: signUpErr } = await supabase.auth.signUp({
@@ -41,6 +56,7 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
     password: d.password,
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+      captchaToken,
     },
   });
 
@@ -80,9 +96,5 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
       );
   }
 
-  return {
-    ok: true,
-    message:
-      'Application received. Check your email to confirm your address — then we’ll review your application and email you when you’re approved.',
-  };
+  return { ok: true, message: SUCCESS_MESSAGE };
 }

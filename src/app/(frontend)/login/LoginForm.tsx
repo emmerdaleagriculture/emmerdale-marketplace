@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 import Link from 'next/link';
 import { loginAction } from './actions';
 import { emptyFormState } from '@/lib/form';
+import { Turnstile } from '@/components/forms/Turnstile';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
@@ -28,6 +29,8 @@ export function LoginForm() {
           autoComplete="current-password"
         />
       </label>
+
+      <Turnstile resetOn={state} />
 
       <div className={a.actions}>
         <button className={f.btnPrimary} type="submit" disabled={pending}>

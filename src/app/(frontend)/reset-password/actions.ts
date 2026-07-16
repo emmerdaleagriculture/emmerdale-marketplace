@@ -7,9 +7,13 @@ export async function requestResetAction(_prev: FormState, formData: FormData): 
   const email = String(formData.get('email') || '').trim();
   if (!email) return { error: 'Enter your email address.' };
 
+  // Enabling captcha protection in Supabase covers password recovery too.
+  const captchaToken = String(formData.get('cf-turnstile-response') || '') || undefined;
+
   const supabase = await createClient();
   await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/reset-password/update`,
+    captchaToken,
   });
 
   // Always report success — never reveal whether an address is registered.

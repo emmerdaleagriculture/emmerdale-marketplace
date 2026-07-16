@@ -12,8 +12,16 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
     return { error: 'Enter your email and password.' };
   }
 
+  // Enabling captcha protection in Supabase covers sign-in too, so the token
+  // must be forwarded here as well.
+  const captchaToken = String(formData.get('cf-turnstile-response') || '') || undefined;
+
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+    options: { captchaToken },
+  });
   if (error) {
     return { error: 'Incorrect email or password, or your email isn’t confirmed yet.' };
   }

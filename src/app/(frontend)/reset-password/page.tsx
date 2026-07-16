@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 import Link from 'next/link';
 import { requestResetAction } from './actions';
 import { emptyFormState } from '@/lib/form';
+import { Turnstile } from '@/components/forms/Turnstile';
 import { SiteFooter } from '@/components/SiteFooter';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
@@ -45,6 +46,7 @@ export default function ResetPasswordPage() {
                 <span className={f.label}>Email</span>
                 <input className={f.input} type="email" name="email" required autoComplete="email" />
               </label>
+              <Turnstile resetOn={state} />
               <div className={a.actions}>
                 <button className={f.btnPrimary} type="submit" disabled={pending}>
                   {pending ? 'Sending…' : 'Send reset link'}

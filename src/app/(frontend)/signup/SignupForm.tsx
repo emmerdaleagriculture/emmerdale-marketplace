@@ -1,15 +1,20 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { signUpAction } from './actions';
 import { emptyFormState } from '@/lib/form';
 import { CountyPicker, type CountyOption } from '@/components/forms/CountyPicker';
+import { Turnstile } from '@/components/forms/Turnstile';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
 export function SignupForm({ counties }: { counties: CountyOption[] }) {
   const [state, action, pending] = useActionState(signUpAction, emptyFormState);
+  // Render timestamp for the server-side minimum-fill-time bot trap. Set after
+  // mount to avoid a server/client hydration mismatch.
+  const [formTs, setFormTs] = useState('');
+  useEffect(() => setFormTs(String(Date.now())), []);
 
   if (state.ok) {
     return (
@@ -27,6 +32,18 @@ export function SignupForm({ counties }: { counties: CountyOption[] }) {
   return (
     <form action={action}>
       {state.error && <p className={f.error}>{state.error}</p>}
+
+      <input type="hidden" name="form_ts" value={formTs} />
+      {/* Honeypot — real users never see or fill this. */}
+      <div
+        aria-hidden="true"
+        style={{ position: 'absolute', left: '-9999px', height: 0, overflow: 'hidden' }}
+      >
+        <label>
+          Website
+          <input type="text" name="website" tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
 
       <div className={a.groupTitle}>Your login</div>
       <div className={a.row2}>
@@ -91,6 +108,8 @@ export function SignupForm({ counties }: { counties: CountyOption[] }) {
           to the specific enquiry.
         </span>
       </label>
+
+      <Turnstile resetOn={state} />
 
       <div className={a.actions}>
         <button className={f.btnPrimary} type="submit" disabled={pending}>
