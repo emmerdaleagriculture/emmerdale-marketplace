@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { getCountyCoverage } from '@/lib/reference';
 import { setContractorStatus } from './actions';
 import { CoverageMap } from './CoverageMap';
 import s from '../admin.module.css';
@@ -73,22 +74,13 @@ type ContractorRow = {
 
 export default async function AdminContractorsPage() {
   const admin = createServiceRoleClient();
-  const [{ data }, { data: coverage }] = await Promise.all([
+  const [{ data }, coverageCounts] = await Promise.all([
     admin
       .from('contractors')
       .select('id, business_name, contact_name, email, base_postcode, status, created_at')
       .order('created_at', { ascending: false }),
-    admin
-      .from('contractor_counties')
-      .select('counties(name), contractors!inner(status)')
-      .eq('contractors.status', 'approved'),
+    getCountyCoverage(),
   ]);
-
-  const coverageCounts = new Map<string, number>();
-  for (const row of coverage ?? []) {
-    const name = (row.counties as unknown as { name: string } | null)?.name;
-    if (name) coverageCounts.set(name, (coverageCounts.get(name) ?? 0) + 1);
-  }
 
   const contractors = (data ?? []) as ContractorRow[];
   const pending = contractors.filter((c) => c.status === 'pending');

@@ -243,3 +243,51 @@
   color: var(--ink-3);
   margin-top: 14px;
 }
+
+/* ── Coverage map section ─────────────────────────────────────────────── */
+.coverage {
+  display: flex;
+  gap: 40px 64px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.coverageMapCol {
+  flex: 0 1 360px;
+  min-width: 260px;
+}
+.coverageMap {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.coverageCounty:hover {
+  filter: brightness(0.88);
+}
+.coverageLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.coverageLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.coverageSwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--rule);
+  flex: 0 0 auto;
+}
+.coverageText {
+  flex: 1 1 340px;
+  max-width: 520px;
+}
+.coverageText a {
+  margin-top: 8px;
+}

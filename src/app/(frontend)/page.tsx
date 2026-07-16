@@ -3,7 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
-import { getServices } from '@/lib/reference';
+import { UKCoverageMap, COVERAGE_BINS, UK_COUNTY_NAMES } from '@/components/UKCoverageMap';
+import { getServices, getCountyCoverage } from '@/lib/reference';
 import { COMPANY_LEGAL_NAME, COMPANY_NUMBER, HPM_URL } from '@/lib/site';
 import s from './landing.module.css';
 import f from '@/components/forms/forms.module.css';
@@ -55,7 +56,8 @@ const STEPS = [
 ];
 
 export default async function LandingPage() {
-  const services = await getServices();
+  const [services, coverage] = await Promise.all([getServices(), getCountyCoverage()]);
+  const coveredCount = UK_COUNTY_NAMES.filter((n) => (coverage[n] ?? 0) > 0).length;
 
   return (
     <div className={s.page}>
@@ -133,6 +135,47 @@ export default async function LandingPage() {
                 {svc.name}
               </span>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className={s.section}>
+        <div className={s.sectionInner}>
+          <div className={s.kicker}>Where we cover</div>
+          <h2 className={s.sectionTitle}>
+            Contractors in {coveredCount} counties — <em>and growing.</em>
+          </h2>
+          <div className={s.coverage}>
+            <div className={s.coverageMapCol}>
+              <UKCoverageMap
+                counts={coverage}
+                className={s.coverageMap}
+                pathClassName={s.coverageCounty}
+              />
+              <div className={s.coverageLegend}>
+                {COVERAGE_BINS.map((b) => (
+                  <span key={b.label} className={s.coverageLegendItem}>
+                    <span className={s.coverageSwatch} style={{ background: b.fill }} />
+                    {b.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className={s.coverageText}>
+              <p className={s.sectionLede}>
+                Every green county on the map has approved contractors in the
+                network today — deepest around our Hampshire heartland and
+                spreading across the South of England.
+              </p>
+              <p className={s.sectionLede}>
+                Work somewhere still grey? Even better. Jobs are matched to the
+                counties you choose, so contractors in new areas are first in
+                line the moment work comes up there.
+              </p>
+              <Link href="/signup" className={f.btnPrimary}>
+                Cover your county — join free
+              </Link>
+            </div>
           </div>
         </div>
       </section>
