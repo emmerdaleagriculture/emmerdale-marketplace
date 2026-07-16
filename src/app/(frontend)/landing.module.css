@@ -291,3 +291,9 @@
 .coverageText a {
   margin-top: 8px;
 }
+
+/* Centered CTA under the quote section's ledes. */
+.quoteCta {
+  text-align: center;
+  margin-top: -16px; /* pull back part of the lede's 48px bottom margin */
+}

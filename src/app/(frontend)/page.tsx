@@ -224,9 +224,11 @@ export default async function LandingPage() {
             handle paddock maintenance and agricultural contracting for private
             paddock owners, equestrian yards, farms and estates alike.
           </p>
-          <a href={HPM_CONTACT_URL} className={f.btnPrimary}>
-            Get a free quote
-          </a>
+          <div className={s.quoteCta}>
+            <a href={HPM_CONTACT_URL} className={f.btnYellow}>
+              Get a free quote
+            </a>
+          </div>
         </div>
       </section>
 
