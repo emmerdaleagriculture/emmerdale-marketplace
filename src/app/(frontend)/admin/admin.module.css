@@ -265,3 +265,87 @@
   flex-wrap: wrap;
   margin-top: 8px;
 }
+
+/* ── Coverage map (admin/contractors) ──────────────────────────────────── */
+.mapCard {
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 18px 20px;
+  margin: 18px 0 28px;
+}
+.mapHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.mapTitle {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mapStat {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.mapRow {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.map {
+  width: 320px;
+  max-width: 100%;
+  height: auto;
+  flex: 0 0 auto;
+}
+.mapCounty {
+  stroke: #fff;
+  stroke-width: 1;
+}
+.mapCounty:hover {
+  filter: brightness(0.88);
+}
+.mapLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+  padding-top: 4px;
+  min-width: 160px;
+}
+.mapLegendRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mapSwatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--rule);
+  flex: 0 0 auto;
+}
+.mapList {
+  margin-top: 10px;
+  font-size: 13px;
+}
+.mapList summary {
+  cursor: pointer;
+  color: var(--ink-3);
+}
+.mapList ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  columns: 2;
+  column-gap: 24px;
+}
+.mapList li {
+  margin-bottom: 2px;
+  break-inside: avoid;
+}
