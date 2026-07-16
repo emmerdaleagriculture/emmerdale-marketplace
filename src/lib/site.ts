@@ -16,5 +16,6 @@ export const COMPANY_NUMBER = '14950816';
 
 // The sibling site the network exists alongside.
 export const HPM_URL = 'https://hampshirepaddockmanagement.com';
+export const HPM_CONTACT_URL = 'https://hampshirepaddockmanagement.com/contact';
 
 export const SITE_LOCATION_LINE = 'Made with care in Hampshire';

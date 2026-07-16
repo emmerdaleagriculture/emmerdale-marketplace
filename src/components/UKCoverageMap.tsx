@@ -7,11 +7,12 @@ import { UK_COUNTY_PATHS, UK_MAP_VIEWBOX } from '@/lib/ukCountyPaths';
  */
 
 // Sequential brand-green ramp (validated): neutral for zero, light → dark.
+// `label` is for the admin; `publicLabel` keeps contractor counts private.
 export const COVERAGE_BINS = [
-  { min: 4, fill: '#245018', label: '4+ contractors' },
-  { min: 2, fill: '#5f9844', label: '2–3 contractors' },
-  { min: 1, fill: '#a5c887', label: '1 contractor' },
-  { min: 0, fill: '#eceee9', label: 'No coverage yet' },
+  { min: 4, fill: '#245018', label: '4+ contractors', publicLabel: 'Strong coverage' },
+  { min: 2, fill: '#5f9844', label: '2–3 contractors', publicLabel: 'Good coverage' },
+  { min: 1, fill: '#a5c887', label: '1 contractor', publicLabel: 'Covered' },
+  { min: 0, fill: '#eceee9', label: 'No coverage yet', publicLabel: 'Not covered yet' },
 ] as const;
 
 export const coverageFill = (n: number) => COVERAGE_BINS.find((b) => n >= b.min)!.fill;
@@ -22,10 +23,13 @@ export function UKCoverageMap({
   counts,
   className,
   pathClassName,
+  showCounts = false,
 }: {
   counts: Record<string, number>;
   className?: string;
   pathClassName?: string;
+  /** Admin only — public pages must not reveal per-county contractor numbers. */
+  showCounts?: boolean;
 }) {
   const covered = UK_COUNTY_NAMES.filter((n) => (counts[n] ?? 0) > 0).length;
   return (
@@ -46,7 +50,11 @@ export function UKCoverageMap({
             strokeWidth={1}
             className={pathClassName}
           >
-            <title>{`${name} — ${n === 0 ? 'no coverage yet' : `${n} contractor${n === 1 ? '' : 's'}`}`}</title>
+            <title>
+              {showCounts
+                ? `${name} — ${n === 0 ? 'no coverage yet' : `${n} contractor${n === 1 ? '' : 's'}`}`
+                : `${name} — ${n === 0 ? 'not covered yet' : 'covered'}`}
+            </title>
           </path>
         );
       })}

@@ -5,7 +5,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { UKCoverageMap, COVERAGE_BINS, UK_COUNTY_NAMES } from '@/components/UKCoverageMap';
 import { getServices, getCountyCoverage } from '@/lib/reference';
-import { COMPANY_LEGAL_NAME, COMPANY_NUMBER, HPM_URL } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, COMPANY_NUMBER, HPM_URL, HPM_CONTACT_URL } from '@/lib/site';
 import s from './landing.module.css';
 import f from '@/components/forms/forms.module.css';
 
@@ -156,7 +156,7 @@ export default async function LandingPage() {
                 {COVERAGE_BINS.map((b) => (
                   <span key={b.label} className={s.coverageLegendItem}>
                     <span className={s.coverageSwatch} style={{ background: b.fill }} />
-                    {b.label}
+                    {b.publicLabel}
                   </span>
                 ))}
               </div>
@@ -177,6 +177,32 @@ export default async function LandingPage() {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className={`${s.section} ${s.sectionAlt}`}>
+        <div className={s.sectionInner}>
+          <div className={s.kicker}>Need a job done?</div>
+          <h2 className={s.sectionTitle}>
+            Paddock or land work to be done? <em>Get a quote.</em>
+          </h2>
+          <p className={s.sectionLede}>
+            If you own a paddock, smallholding or grassland and need work done —
+            field topping, chain harrowing, rolling, weed spraying, hedge
+            cutting, fencing or land clearance — you don&apos;t need to join the
+            network. Request a free, no-obligation quote from{' '}
+            <a href={HPM_CONTACT_URL}>Hampshire Paddock Management</a>, the
+            contracting firm behind Emmerdale Agriculture, and we&apos;ll price
+            the job and put the right people on it.
+          </p>
+          <p className={s.sectionLede}>
+            Based in Hampshire and working across the South of England, we
+            handle paddock maintenance and agricultural contracting for private
+            paddock owners, equestrian yards, farms and estates alike.
+          </p>
+          <a href={HPM_CONTACT_URL} className={f.btnPrimary}>
+            Get a free quote
+          </a>
         </div>
       </section>
 

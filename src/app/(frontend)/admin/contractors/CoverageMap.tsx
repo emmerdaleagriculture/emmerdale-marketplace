@@ -18,7 +18,7 @@ export function CoverageMap({ counts }: { counts: Record<string, number> }) {
         </span>
       </div>
       <div className={s.mapRow}>
-        <UKCoverageMap counts={counts} className={s.map} pathClassName={s.mapCounty} />
+        <UKCoverageMap counts={counts} className={s.map} pathClassName={s.mapCounty} showCounts />
         <div className={s.mapLegend}>
           {COVERAGE_BINS.map((b) => (
             <div key={b.label} className={s.mapLegendRow}>
