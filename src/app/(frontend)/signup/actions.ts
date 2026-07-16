@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
+import { notifyAdmins } from '@/lib/adminNotify';
 import type { FormState } from '@/lib/form';
 
 const SignupSchema = z.object({
@@ -95,6 +96,26 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
         { onConflict: 'contractor_id,county_id', ignoreDuplicates: true },
       );
   }
+
+  // Tell the admins a new application is waiting. Best-effort — never blocks
+  // or fails the signup.
+  const { data: countyRows } = await admin
+    .from('counties')
+    .select('name')
+    .in('id', d.county_ids);
+  const countyNames = (countyRows ?? []).map((c) => c.name).join(', ');
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  await notifyAdmins(
+    `New contractor signup: ${d.business_name}`,
+    `A new contractor has applied to join the network and is awaiting approval.\n\n` +
+      `Business:  ${d.business_name}\n` +
+      `Contact:   ${d.contact_name}\n` +
+      `Email:     ${d.email}\n` +
+      `Phone:     ${d.phone}\n` +
+      `Postcode:  ${d.base_postcode}\n` +
+      `Counties:  ${countyNames || d.county_ids.length}\n\n` +
+      `Review and approve: ${siteUrl}/admin/contractors`,
+  );
 
   return { ok: true, message: SUCCESS_MESSAGE };
 }
