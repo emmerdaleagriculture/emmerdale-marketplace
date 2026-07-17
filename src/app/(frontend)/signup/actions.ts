@@ -75,7 +75,11 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
             'The security check could not be verified. This is a configuration issue on our end — please contact us so we can fix it.',
         };
       }
-      return { error: 'The security check failed. Please try again.' };
+      // TEMPORARY DIAGNOSTIC: surface the raw Cloudflare/GoTrue reason so we can
+      // see exactly why an otherwise-valid token is being rejected. Revert to a
+      // friendly message once the captcha config is confirmed working.
+      const reason = msg.match(/\(([^)]+)\)/)?.[1] ?? msg;
+      return { error: `Security check failed — reason: “${reason}”. Please tell us this exact text.` };
     }
     return { error: msg };
   }
