@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
 
@@ -12,17 +13,16 @@ async function assertAdmin() {
 }
 
 /**
- * Approve / suspend / re-pend a contractor (spec §7.1 approval queue). Uses the
- * service role (bypasses RLS) after re-checking the caller is an admin. When a
- * contractor is newly approved, queue the "application approved" email
- * (spec §8) into pending_emails for the Edge Function to send.
+ * Approve a contractor (spec §7.1 approval queue). Uses the service role
+ * (bypasses RLS) after re-checking the caller is an admin. On approval, queue
+ * the "application approved" email (spec §8) into pending_emails.
  */
 export async function setContractorStatus(formData: FormData) {
   await assertAdmin();
 
   const id = String(formData.get('id') || '');
   const status = String(formData.get('status') || '');
-  if (!id || !['pending', 'approved', 'suspended'].includes(status)) {
+  if (!id || !['pending', 'approved'].includes(status)) {
     throw new Error('Invalid request');
   }
 
@@ -47,4 +47,29 @@ export async function setContractorStatus(formData: FormData) {
 
   revalidatePath('/admin/contractors');
   revalidatePath(`/admin/contractors/${id}`);
+}
+
+/**
+ * Permanently remove a contractor — used both to reject a pending application
+ * and to delete an existing contractor. Deletes the underlying auth user, which
+ * cascades (contractors.id references auth.users on delete cascade) to the
+ * contractor row, their county coverage and bids. Falls back to deleting just
+ * the contractor row if the auth user can't be removed.
+ */
+export async function deleteContractor(formData: FormData) {
+  await assertAdmin();
+
+  const id = String(formData.get('id') || '');
+  if (!id) throw new Error('Invalid request');
+
+  const admin = createServiceRoleClient();
+  const { error: authErr } = await admin.auth.admin.deleteUser(id);
+  if (authErr) {
+    console.error('[admin] auth user delete failed, removing contractor row only:', authErr.message);
+    const { error: rowErr } = await admin.from('contractors').delete().eq('id', id);
+    if (rowErr) throw new Error(rowErr.message);
+  }
+
+  revalidatePath('/admin/contractors');
+  redirect('/admin/contractors');
 }

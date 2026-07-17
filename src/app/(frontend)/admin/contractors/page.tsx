@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getCountyCoverage } from '@/lib/reference';
 import { setContractorStatus } from './actions';
+import { DeleteContractorButton } from './DeleteContractorButton';
 import { CoverageMap } from './CoverageMap';
 import s from '../admin.module.css';
 
@@ -18,27 +19,23 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`${s.pill} ${pillClass[status] ?? ''}`}>{status}</span>;
 }
 
-function ActionButtons({ id, status }: { id: string; status: string }) {
+function ActionButtons({ c }: { c: ContractorRow }) {
   return (
     <div className={s.actions}>
-      {status !== 'approved' && (
+      {c.status !== 'approved' && (
         <form action={setContractorStatus}>
-          <input type="hidden" name="id" value={id} />
+          <input type="hidden" name="id" value={c.id} />
           <input type="hidden" name="status" value="approved" />
           <button type="submit" className={s.btnApprove}>
             Approve
           </button>
         </form>
       )}
-      {status !== 'suspended' && (
-        <form action={setContractorStatus}>
-          <input type="hidden" name="id" value={id} />
-          <input type="hidden" name="status" value="suspended" />
-          <button type="submit" className={s.btnSuspend}>
-            Suspend
-          </button>
-        </form>
-      )}
+      <DeleteContractorButton
+        id={c.id}
+        business={c.business_name}
+        pending={c.status === 'pending'}
+      />
     </div>
   );
 }
@@ -56,7 +53,7 @@ function Row({ c }: { c: ContractorRow }) {
         <StatusPill status={c.status} />
       </td>
       <td>
-        <ActionButtons id={c.id} status={c.status} />
+        <ActionButtons c={c} />
       </td>
     </tr>
   );
@@ -122,7 +119,7 @@ export default async function AdminContractorsPage() {
 
       <div className={s.sectionLabel}>All contractors</div>
       {rest.length === 0 ? (
-        <div className={s.empty}>No approved or suspended contractors yet.</div>
+        <div className={s.empty}>No approved contractors yet.</div>
       ) : (
         <div className={s.tableWrap}>
           <table className={s.table}>

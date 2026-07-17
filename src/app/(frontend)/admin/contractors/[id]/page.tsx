@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { setContractorStatus } from '../actions';
+import { DeleteContractorButton } from '../DeleteContractorButton';
 import s from '../../admin.module.css';
 
 export const metadata: Metadata = { title: 'Contractor — Admin' };
@@ -24,16 +25,14 @@ export default async function ContractorDetailPage({
   const { data: c } = await admin.from('contractors').select('*').eq('id', id).maybeSingle();
   if (!c) notFound();
 
-  const [{ data: ccRows }, { data: allServices }] = await Promise.all([
-    admin.from('contractor_counties').select('counties(name, region)').eq('contractor_id', id),
-    admin.from('services').select('id, name'),
-  ]);
+  const { data: ccRows } = await admin
+    .from('contractor_counties')
+    .select('counties(name, region)')
+    .eq('contractor_id', id);
 
   const countyNames = (ccRows ?? [])
     .map((r) => (r.counties as { name: string } | null)?.name)
     .filter(Boolean) as string[];
-  const serviceMap = new Map((allServices ?? []).map((sv) => [sv.id, sv.name]));
-  const serviceNames = (c.services ?? []).map((sid) => serviceMap.get(sid)).filter(Boolean) as string[];
 
   return (
     <div>
@@ -85,19 +84,6 @@ export default async function ContractorDetailPage({
         )}
       </div>
 
-      <div className={s.sectionLabel}>Services ({serviceNames.length})</div>
-      <div className={s.tags}>
-        {serviceNames.length ? (
-          serviceNames.map((n) => (
-            <span key={n} className={s.tag}>
-              {n}
-            </span>
-          ))
-        ) : (
-          <span className={s.dValue}>None selected</span>
-        )}
-      </div>
-
       <div className={s.sectionLabel}>Actions</div>
       <div className={s.actions}>
         {c.status !== 'approved' && (
@@ -109,24 +95,11 @@ export default async function ContractorDetailPage({
             </button>
           </form>
         )}
-        {c.status !== 'suspended' && (
-          <form action={setContractorStatus}>
-            <input type="hidden" name="id" value={c.id} />
-            <input type="hidden" name="status" value="suspended" />
-            <button type="submit" className={s.btnSuspend}>
-              Suspend
-            </button>
-          </form>
-        )}
-        {c.status === 'suspended' && (
-          <form action={setContractorStatus}>
-            <input type="hidden" name="id" value={c.id} />
-            <input type="hidden" name="status" value="pending" />
-            <button type="submit" className={s.btnSuspend} style={{ borderColor: 'var(--rule)', color: 'var(--ink-2)' }}>
-              Move to pending
-            </button>
-          </form>
-        )}
+        <DeleteContractorButton
+          id={c.id}
+          business={c.business_name}
+          pending={c.status === 'pending'}
+        />
       </div>
     </div>
   );
