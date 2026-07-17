@@ -30,13 +30,13 @@ export default function TermsPage() {
           <p>
             The Emmerdale Agriculture network passes overflow paddock and land jobs
             to registered contractors. Registration is free. We match jobs to
-            contractors by county and award work by competitive bid. We handle no
-            customer payments — you invoice the customer directly.
+            contractors by county, and jobs are taken on a first-come, first-served
+            basis. We handle no customer payments — you invoice the customer directly.
           </p>
 
           <h2>Use of customer details</h2>
           <p>
-            When you win a job (or, as a paid member, access a job’s details), you
+            When you claim a job, you
             receive the customer’s contact information. You agree to use those
             details <strong>solely to respond to and carry out that specific
             enquiry</strong>. You must not use customer details for marketing, pass
@@ -48,22 +48,23 @@ export default function TermsPage() {
           <h2>Approval and conduct</h2>
           <p>
             Registration is subject to approval, and we may suspend an account at our
-            discretion. You are responsible for carrying out work you win to a
+            discretion. You are responsible for carrying out work you take on to a
             professional standard, and for holding appropriate insurance.
           </p>
 
-          <h2>Bidding</h2>
+          <h2>Claiming jobs</h2>
           <p>
-            Bids are binding offers to carry out the work at the quoted price. At the
-            close of bidding, the lowest bid is awarded automatically unless an
-            administrator awards otherwise. You may revise your bid until bidding
-            closes.
+            Jobs are offered on a first-come, first-served basis. The first
+            registered contractor to claim a job is allocated it and receives the
+            customer’s details. Claiming a job is a commitment to carry out the work,
+            and you agree the price directly with the customer. Paid members may
+            claim a job during its early-access window before it opens to everyone.
           </p>
 
           <h2>No guarantee of work</h2>
           <p>
-            We do not guarantee any volume of jobs or that you will win any
-            particular job. The network exists to pass on work {COMPANY_LEGAL_NAME}
+            We do not guarantee any volume of jobs or that you will be able to claim
+            any particular job. The network exists to pass on work {COMPANY_LEGAL_NAME}
             cannot carry out itself.
           </p>
         </article>

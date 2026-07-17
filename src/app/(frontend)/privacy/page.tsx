@@ -53,10 +53,10 @@ export default function PrivacyPage() {
           <h2>Contractor data</h2>
           <p>
             If you register as a contractor, we hold your business name, contact
-            name, email, phone, base postcode, the services and counties you select,
-            and your bidding history. This is visible to our administrators and used
-            to match you to jobs. Your business details are not shared with customers
-            except where you win a job and choose to make contact.
+            name, email, phone, base postcode, the counties you cover, and the jobs
+            you claim. This is visible to our administrators and used to match you to
+            jobs. Your business details are not shared with customers except where
+            you claim a job and choose to make contact.
           </p>
 
           <h2>Retention</h2>

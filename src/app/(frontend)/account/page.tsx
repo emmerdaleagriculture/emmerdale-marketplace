@@ -111,7 +111,7 @@ export default async function AccountPage({
                 <>
                   <p className={ac.subBody}>
                     You get every job in your counties <strong>12 hours early</strong>,
-                    with customer contact and no bidding.
+                    with first pick of the work before the free tier.
                     {subscription?.status === 'canceled' && subscription.current_period_end && (
                       <> Your membership ends {formatDateTime(subscription.current_period_end)}.</>
                     )}
@@ -126,8 +126,8 @@ export default async function AccountPage({
                 <>
                   <p className={ac.subBody}>
                     See every job in your counties <strong>12 hours before anyone
-                    else</strong> — full details including customer contact, no
-                    bidding. <strong>£20/month.</strong>
+                    else</strong> and claim it first, before the free tier.{' '}
+                    <strong>£20/month.</strong>
                   </p>
                   {stripeConfigured() ? (
                     <form action="/api/stripe/checkout" method="post">

@@ -3,11 +3,10 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
-import { BidPanel } from './BidPanel';
-import { PaidPanel } from './PaidPanel';
+import { ClaimPanel } from './ClaimPanel';
 import { createClient } from '@/lib/supabase/server';
 import { getServices } from '@/lib/reference';
-import { closesIn, formatDateTime, poundsFromPence } from '@/lib/time';
+import { closesIn } from '@/lib/time';
 import a from '../../auth.module.css';
 import j from '../jobs.module.css';
 
@@ -29,10 +28,10 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   if (!contractor) redirect('/onboarding');
   if (contractor.status !== 'approved') redirect('/jobs');
 
-  // Open + in-county job (public view) and/or a job we've bid on (any status).
+  // A claimable job (public view) and/or a job we've already claimed.
   const [{ data: pub }, { data: mine }, services] = await Promise.all([
     supabase.from('public_jobs').select('*').eq('id', id).maybeSingle(),
-    supabase.from('my_bid_jobs').select('*').eq('id', id).maybeSingle(),
+    supabase.from('my_claimed_jobs').select('*').eq('id', id).maybeSingle(),
     getServices(),
   ]);
 
@@ -40,14 +39,13 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   if (!job) notFound();
 
   const serviceName = new Map(services.map((s) => [s.id, s.name]));
-  const isOpen = !!pub;
-  const paidAccess = !!pub?.paid_access; // active subscriber viewing an open/exclusive job
+  const claimable = !!pub;
   const isExclusive = !!pub?.is_exclusive;
+  const claimed = !!mine;
 
-  // Reveal customer contact for: paid members (any visible job) or a bid winner
-  // after close. get_job_contact logs the reveal (paid_access / bid_won).
+  // The claimant sees the customer's contact (get_job_contact gates on it).
   let contact: { customer_name: string; customer_phone: string; customer_email: string | null } | null = null;
-  if (paidAccess || (!isOpen && mine?.won)) {
+  if (claimed) {
     const { data } = await supabase.rpc('get_job_contact', { p_job_id: id });
     contact = (data ?? [])[0] ?? null;
   }
@@ -68,9 +66,11 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             {job.postcode_district}
             {isExclusive
               ? ' · paid early access'
-              : isOpen
-                ? ` · closes ${closesIn(job.bidding_closes_at!)}`
-                : ` · closed ${formatDateTime(job.bidding_closes_at!)}`}
+              : claimable
+                ? ` · available until ${closesIn(job.bidding_closes_at!)}`
+                : claimed
+                  ? ' · claimed by you'
+                  : ''}
           </p>
 
           <p style={{ lineHeight: 1.7, color: 'var(--ink)' }}>{job.description}</p>
@@ -88,20 +88,13 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             </p>
           )}
 
-          {paidAccess ? (
-            <PaidPanel jobId={id} contact={contact} isExclusive={isExclusive} />
-          ) : isOpen ? (
-            <BidPanel
-              jobId={id}
-              currentAmountPence={mine?.my_amount_pence ?? null}
-              currentNote={mine?.my_note ?? null}
-            />
-          ) : mine?.won ? (
+          {claimable ? (
+            <ClaimPanel jobId={id} isExclusive={isExclusive} />
+          ) : claimed ? (
             <>
               <div className={`${j.outcome} ${j.won}`}>
-                <strong>You won this job</strong> with a bid of{' '}
-                {poundsFromPence(mine.my_amount_pence!)}. Contact the customer to
-                arrange the work — you invoice them directly.
+                <strong>This job is yours.</strong> Contact the customer to arrange
+                the work — you invoice them directly.
               </div>
               {contact && (
                 <div className={`${j.panel} ${j.contact}`}>
@@ -123,14 +116,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 </div>
               )}
             </>
-          ) : mine?.status === 'awarded' ? (
-            <div className={`${j.outcome} ${j.lost}`}>
-              This job was awarded to another contractor. Your bid of{' '}
-              {poundsFromPence(mine.my_amount_pence!)} wasn’t selected this time.
-            </div>
           ) : (
             <div className={`${j.outcome} ${j.lost}`}>
-              This job is {mine?.status}. Bidding is closed.
+              This job is no longer available.
             </div>
           )}
         </div>

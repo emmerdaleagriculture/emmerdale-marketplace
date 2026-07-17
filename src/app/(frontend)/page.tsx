@@ -16,7 +16,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Paddock & Agricultural Contractor Jobs | Emmerdale Agriculture',
   description:
-    'Free-to-join network passing paddock maintenance and land jobs to agricultural contractors across England and Wales. Get matched by county, bid, and win the work — no commission.',
+    'Free-to-join network passing paddock maintenance and land jobs to agricultural contractors across England and Wales. Get matched by county and claim the work — first come, first served, no commission.',
   alternates: { canonical: '/' },
 };
 
@@ -46,7 +46,7 @@ const orgJsonLd = {
   },
   sameAs: [HPM_URL],
   description:
-    'The contractor network run by Emmerdale Agriculture Ltd, the company behind Hampshire Paddock Management. Paddock and land jobs matched to contractors by county across England and Wales and awarded by bid.',
+    'The contractor network run by Emmerdale Agriculture Ltd, the company behind Hampshire Paddock Management. Paddock and land jobs matched to contractors by county across England and Wales — first come, first served.',
 };
 
 // FAQ schema — mirrors the visible FAQ section below (Google requires the
@@ -54,15 +54,15 @@ const orgJsonLd = {
 const faqs = [
   {
     q: 'Does it cost anything to join the network?',
-    a: 'No. Joining is completely free and there’s no obligation to bid. You only ever deal directly with the customer when you win a job — Emmerdale Agriculture takes no commission.',
+    a: 'No. Joining is completely free and there’s no obligation to take any job. When you claim one you deal directly with the customer — Emmerdale Agriculture takes no commission.',
   },
   {
     q: 'How are jobs matched to me?',
-    a: 'By county. You choose the counties you cover when you join, and whenever a job is posted in one of them we email you the details — the town, the work needed, and when bidding closes.',
+    a: 'By county. You choose the counties you cover when you join, and whenever a job is posted in one of them we email you the details — the town, the work needed, and how long it’s available.',
   },
   {
     q: 'Do you take a cut of the work?',
-    a: 'No. When you win a job you get the customer’s details and arrange the work directly. You invoice them yourself and keep the full amount — we take no commission.',
+    a: 'No. When you claim a job you get the customer’s details and arrange the work directly. You invoice them yourself and keep the full amount — we take no commission.',
   },
   {
     q: 'Which parts of the country do you cover?',
@@ -93,12 +93,12 @@ const STEPS = [
   {
     n: 2,
     title: 'Get matched by county',
-    body: 'When a job lands in one of your counties, we email you the details — town, work needed, and when bidding closes.',
+    body: 'When a job lands in one of your counties, we email you the details — town, work needed, and how long it’s available.',
   },
   {
     n: 3,
-    title: 'Bid and win the work',
-    body: 'Put in your price. Win the job and you get the customer’s details to arrange it directly. You invoice them — we take no cut.',
+    title: 'Claim it — first come, first served',
+    body: 'See a job you want? Claim it. The first to claim gets it, along with the customer’s details to arrange the work directly. You invoice them — we take no cut.',
   },
 ];
 
@@ -161,7 +161,7 @@ export default async function LandingPage() {
           <p className={s.heroSub}>
             Hampshire Paddock Management turns away more work than it can service.
             That overflow goes to the network — matched to contractors by county,
-            awarded by bid.
+            first come, first served.
           </p>
           <div className={s.heroCtas}>
             <Link href="/signup" className={f.btnYellow}>
@@ -178,11 +178,11 @@ export default async function LandingPage() {
         <div className={s.sectionInner}>
           <div className={s.kicker}>How it works</div>
           <h2 className={s.sectionTitle}>
-            Three steps to <em>winning work.</em>
+            Three steps to <em>landing work.</em>
           </h2>
           <p className={s.sectionLede}>
-            No cost to join. No obligation to bid. Just jobs in your area when they
-            come up.
+            No cost to join. No obligation to take a job. Just jobs in your area
+            when they come up.
           </p>
           <div className={s.steps}>
             {STEPS.map((step) => (
@@ -316,8 +316,8 @@ export default async function LandingPage() {
             Whether you’re an established contractor filling gaps in the diary or a
             growing smallholder-services business, the network sends paddock
             maintenance jobs in your area straight to your inbox. Free to join, no
-            obligation to bid, no commission — you win the job, you invoice the
-            customer.
+            obligation to take a job, no commission — you claim the job, you invoice
+            the customer.
           </p>
         </div>
       </section>
@@ -329,11 +329,11 @@ export default async function LandingPage() {
           </div>
           <p className={s.teaserBody}>
             Paid members see every job in their counties 12 hours before anyone
-            else — full details including customer contact, no bidding.
+            else — and can claim it first.
           </p>
           <p className={s.teaserBody}>
-            <strong>£20/month.</strong> See every job twelve hours early — and skip
-            the bidding entirely.
+            <strong>£20/month.</strong> See every job twelve hours early — and get
+            first pick of the work.
           </p>
           <p className={s.teaserNote}>Coming soon. Join free now and we’ll tell you when it launches.</p>
         </div>

@@ -53,8 +53,9 @@ export async function setContractorStatus(formData: FormData) {
  * Permanently remove a contractor — used both to reject a pending application
  * and to delete an existing contractor. Deletes the underlying auth user, which
  * cascades (contractors.id references auth.users on delete cascade) to the
- * contractor row, their county coverage and bids. Falls back to deleting just
- * the contractor row if the auth user can't be removed.
+ * contractor row and their county coverage; any jobs they claimed have
+ * claimed_by set null. Falls back to deleting just the contractor row if the
+ * auth user can't be removed.
  */
 export async function deleteContractor(formData: FormData) {
   await assertAdmin();

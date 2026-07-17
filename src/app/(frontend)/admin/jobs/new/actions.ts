@@ -19,7 +19,7 @@ const JobSchema = z.object({
   budget_hint: z.string().trim().optional().or(z.literal('')),
   county_override: z.coerce.number().int().optional().or(z.literal('')),
   closes_at: z.string().trim().optional().or(z.literal('')),
-  // Paid-tier head-start window in hours (default 12; 0 = open to bidding now).
+  // Paid-tier head-start window in hours (default 12; 0 = open to everyone now).
   exclusive_hours: z.coerce.number().int().min(0).max(72).default(12),
 });
 
@@ -65,14 +65,14 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
   }
 
   const now = new Date();
-  // Paid head-start window: bidding opens after `exclusive_hours` (spec §5).
+  // Paid head-start window: the job opens to everyone after `exclusive_hours`.
   // 0h → opens immediately (skips the exclusive state).
   const opensAt = new Date(now.getTime() + d.exclusive_hours * 3600 * 1000);
   const closesAt = d.closes_at
     ? new Date(d.closes_at)
     : new Date(opensAt.getTime() + 24 * 3600 * 1000);
   if (isNaN(closesAt.getTime()) || closesAt <= opensAt) {
-    return { error: 'Bidding close time must be after the exclusive window opens.' };
+    return { error: 'The availability end time must be after the early-access window opens.' };
   }
   const isExclusive = d.exclusive_hours > 0;
 

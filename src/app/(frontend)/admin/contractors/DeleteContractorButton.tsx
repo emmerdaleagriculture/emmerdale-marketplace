@@ -20,7 +20,7 @@ export function DeleteContractorButton({
   const label = pending ? 'Reject' : 'Delete';
   const confirmText = pending
     ? `Reject and permanently remove the application from ${business}? This cannot be undone.`
-    : `Permanently delete ${business}? This removes their account, counties and bids and cannot be undone.`;
+    : `Permanently delete ${business}? This removes their account and county coverage and cannot be undone.`;
 
   return (
     <form

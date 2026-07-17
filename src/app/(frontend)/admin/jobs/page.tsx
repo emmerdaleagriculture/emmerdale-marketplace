@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: 'Jobs — Admin' };
 const pillFor: Record<string, string> = {
   open: s.pillApproved,
   exclusive: s.pillPending,
-  awarded: s.pillApproved,
+  claimed: s.pillApproved,
   expired: s.pillSuspended,
   withdrawn: s.pillSuspended,
   completed: s.pillApproved,
@@ -20,20 +20,17 @@ export default async function AdminJobsPage() {
   const admin = createServiceRoleClient();
   const { data: jobs } = await admin
     .from('jobs')
-    .select('id, title, town, postcode_district, status, bidding_closes_at, created_at, counties(name)')
+    .select('id, title, town, postcode_district, status, claimed_by, bidding_closes_at, created_at, counties(name)')
     .order('created_at', { ascending: false });
 
   const list = jobs ?? [];
 
-  // Bid + reveal counts per job (small dataset at launch; fine to fetch all).
-  const [{ data: bids }, { data: reveals }] = await Promise.all([
-    admin.from('bids').select('job_id'),
-    admin.from('contact_reveals').select('job_id'),
-  ]);
-  const bidCount = new Map<string, number>();
-  (bids ?? []).forEach((b) => bidCount.set(b.job_id, (bidCount.get(b.job_id) ?? 0) + 1));
-  const revealCount = new Map<string, number>();
-  (reveals ?? []).forEach((r) => revealCount.set(r.job_id, (revealCount.get(r.job_id) ?? 0) + 1));
+  // Resolve the business name of each claimant (small dataset at launch).
+  const claimerIds = Array.from(new Set(list.map((j) => j.claimed_by).filter(Boolean))) as string[];
+  const { data: claimers } = claimerIds.length
+    ? await admin.from('contractors').select('id, business_name').in('id', claimerIds)
+    : { data: [] as { id: string; business_name: string }[] };
+  const claimerName = new Map((claimers ?? []).map((c) => [c.id, c.business_name]));
 
   return (
     <div>
@@ -56,9 +53,8 @@ export default async function AdminJobsPage() {
               <th>Location</th>
               <th>County</th>
               <th>Status</th>
-              <th>Bids</th>
-              <th>Reveals</th>
-              <th>Closes</th>
+              <th>Claimed by</th>
+              <th>Available until</th>
             </tr>
           </thead>
           <tbody>
@@ -75,8 +71,7 @@ export default async function AdminJobsPage() {
                 <td>
                   <span className={`${s.pill} ${pillFor[j.status] ?? ''}`}>{j.status}</span>
                 </td>
-                <td>{bidCount.get(j.id) ?? 0}</td>
-                <td>{revealCount.get(j.id) ?? 0}</td>
+                <td>{j.claimed_by ? (claimerName.get(j.claimed_by) ?? '—') : '—'}</td>
                 <td>
                   {j.status === 'open' ? closesIn(j.bidding_closes_at) : formatDateTime(j.bidding_closes_at)}
                 </td>

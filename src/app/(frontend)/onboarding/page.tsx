@@ -42,7 +42,8 @@ export default async function OnboardingPage() {
           <p className={a.sub}>
             This is the last step. We’ll review your application and email you
             when you’re approved — then you’ll see jobs in your counties and can
-            bid to win the work. You can change any of this later in your account.
+            claim the work, first come, first served. You can change any of this
+            later in your account.
           </p>
           <OnboardingForm counties={counties} />
         </div>

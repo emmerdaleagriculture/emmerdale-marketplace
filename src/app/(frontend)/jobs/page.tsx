@@ -5,7 +5,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { createClient } from '@/lib/supabase/server';
 import { getServices } from '@/lib/reference';
-import { closesIn, poundsFromPence } from '@/lib/time';
+import { closesIn } from '@/lib/time';
 import a from '../auth.module.css';
 import j from './jobs.module.css';
 
@@ -30,14 +30,12 @@ export default async function JobsBoardPage() {
 
   const gated = contractor.status !== 'approved';
 
-  const [{ data: openJobs }, { data: myBids }] = gated
+  const [{ data: openJobs }, { data: myJobs }] = gated
     ? [{ data: [] as never[] }, { data: [] as never[] }]
     : await Promise.all([
         supabase.from('public_jobs').select('*').order('bidding_closes_at', { ascending: true }),
-        supabase.from('my_bid_jobs').select('*'),
+        supabase.from('my_claimed_jobs').select('*').order('claimed_at', { ascending: false }),
       ]);
-
-  const myBidByJob = new Map((myBids ?? []).map((b) => [b.id, b]));
 
   return (
     <div className={a.wrap}>
@@ -56,8 +54,8 @@ export default async function JobsBoardPage() {
           ) : (
             <>
               <p className={a.sub}>
-                Jobs in the counties you cover. Put in a bid — win it and you get
-                the customer’s details to arrange the work directly.
+                Jobs in the counties you cover. First come, first served — claim a
+                job and you get the customer’s details to arrange the work directly.
               </p>
 
               {(openJobs ?? []).length === 0 ? (
@@ -68,7 +66,6 @@ export default async function JobsBoardPage() {
               ) : (
                 <div className={j.grid}>
                   {(openJobs ?? []).map((job) => {
-                    const mine = myBidByJob.get(job.id!);
                     const soon = new Date(job.bidding_closes_at!).getTime() - Date.now() < 4 * 3600e3;
                     return (
                       <Link key={job.id} href={`/jobs/${job.id}`} className={j.card}>
@@ -84,9 +81,7 @@ export default async function JobsBoardPage() {
                           {job.postcode_district} · {job.county}
                         </div>
                         {job.is_exclusive ? (
-                          <span className={`${j.badge} ${j.badgeExcl}`}>12h head start · contact available</span>
-                        ) : job.paid_access ? (
-                          <span className={`${j.badge} ${j.badgePaid}`}>Contact available</span>
+                          <span className={`${j.badge} ${j.badgeExcl}`}>Paid early access · claim first</span>
                         ) : null}
                         <div className={j.tags}>
                           {(job.service_ids ?? []).slice(0, 4).map((sid) => (
@@ -97,16 +92,7 @@ export default async function JobsBoardPage() {
                         </div>
                         {job.budget_hint && <div className={j.meta}>Budget: {job.budget_hint}</div>}
                         <div className={j.cardFoot}>
-                          <span>
-                            {job.bid_count} bid{job.bid_count === 1 ? '' : 's'}
-                          </span>
-                          {mine ? (
-                            <span className={j.yourBid}>
-                              Your bid: {poundsFromPence(mine.my_amount_pence!)}
-                            </span>
-                          ) : (
-                            <span>Not yet bid</span>
-                          )}
+                          <span>{job.is_exclusive ? 'Claim before the free tier' : 'First come, first served'}</span>
                         </div>
                       </Link>
                     );
@@ -114,23 +100,22 @@ export default async function JobsBoardPage() {
                 </div>
               )}
 
-              {(myBids ?? []).length > 0 && (
+              {(myJobs ?? []).length > 0 && (
                 <>
-                  <div className={a.groupTitle}>Your bids</div>
+                  <div className={a.groupTitle}>Your jobs</div>
                   <div className={j.grid}>
-                    {(myBids ?? []).map((b) => (
-                      <Link key={b.id} href={`/jobs/${b.id}`} className={j.card}>
+                    {(myJobs ?? []).map((job) => (
+                      <Link key={job.id} href={`/jobs/${job.id}`} className={j.card}>
                         <div className={j.cardTop}>
-                          <span className={j.cardTitle}>{b.title}</span>
-                          <span className={j.closes}>{b.status}</span>
+                          <span className={j.cardTitle}>{job.title}</span>
+                          <span className={j.closes}>{job.status === 'completed' ? 'completed' : 'claimed'}</span>
                         </div>
                         <div className={j.meta}>
-                          {b.town ? `${b.town}, ` : ''}
-                          {b.postcode_district} · {b.county}
+                          {job.town ? `${job.town}, ` : ''}
+                          {job.postcode_district} · {job.county}
                         </div>
                         <div className={j.cardFoot}>
-                          <span className={j.yourBid}>{poundsFromPence(b.my_amount_pence!)}</span>
-                          <span>{b.won ? 'Won' : b.status === 'awarded' ? 'Not selected' : ''}</span>
+                          <span>Contact details available</span>
                         </div>
                       </Link>
                     ))}

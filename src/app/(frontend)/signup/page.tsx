@@ -9,7 +9,7 @@ import a from '../auth.module.css';
 export const metadata: Metadata = {
   title: 'Join the network',
   description:
-    'Sign up as a contractor — get matched to paddock and land jobs by county and bid to win the work.',
+    'Sign up as a contractor — get matched to paddock and land jobs by county and claim the work, first come, first served.',
   alternates: { canonical: '/signup' },
 };
 

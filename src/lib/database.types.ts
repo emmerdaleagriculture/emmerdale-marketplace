@@ -39,62 +39,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      bids: {
-        Row: {
-          amount_pence: number
-          contractor_id: string
-          created_at: string
-          id: string
-          job_id: string
-          note: string | null
-        }
-        Insert: {
-          amount_pence: number
-          contractor_id: string
-          created_at?: string
-          id?: string
-          job_id: string
-          note?: string | null
-        }
-        Update: {
-          amount_pence?: number
-          contractor_id?: string
-          created_at?: string
-          id?: string
-          job_id?: string
-          note?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bids_contractor_id_fkey"
-            columns: ["contractor_id"]
-            isOneToOne: false
-            referencedRelation: "contractors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bids_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "jobs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bids_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "my_bid_jobs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bids_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "public_jobs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       contact_reveals: {
         Row: {
           contractor_id: string
@@ -136,7 +80,7 @@ export type Database = {
             foreignKeyName: "contact_reveals_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
-            referencedRelation: "my_bid_jobs"
+            referencedRelation: "my_claimed_jobs"
             referencedColumns: ["id"]
           },
           {
@@ -299,7 +243,7 @@ export type Database = {
             foreignKeyName: "job_notifications_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
-            referencedRelation: "my_bid_jobs"
+            referencedRelation: "my_claimed_jobs"
             referencedColumns: ["id"]
           },
           {
@@ -313,10 +257,11 @@ export type Database = {
       }
       jobs: {
         Row: {
-          awarded_bid_id: string | null
           bidding_closes_at: string
           bidding_opens_at: string
           budget_hint: string | null
+          claimed_at: string | null
+          claimed_by: string | null
           consent_at: string | null
           consent_to_share: boolean
           consent_wording_version: string | null
@@ -337,10 +282,11 @@ export type Database = {
           town: string | null
         }
         Insert: {
-          awarded_bid_id?: string | null
           bidding_closes_at: string
           bidding_opens_at: string
           budget_hint?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
           consent_at?: string | null
           consent_to_share?: boolean
           consent_wording_version?: string | null
@@ -361,10 +307,11 @@ export type Database = {
           town?: string | null
         }
         Update: {
-          awarded_bid_id?: string | null
           bidding_closes_at?: string
           bidding_opens_at?: string
           budget_hint?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
           consent_at?: string | null
           consent_to_share?: boolean
           consent_wording_version?: string | null
@@ -446,7 +393,7 @@ export type Database = {
             foreignKeyName: "leads_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
-            referencedRelation: "my_bid_jobs"
+            referencedRelation: "my_claimed_jobs"
             referencedColumns: ["id"]
           },
           {
@@ -543,25 +490,21 @@ export type Database = {
       }
     }
     Views: {
-      my_bid_jobs: {
+      my_claimed_jobs: {
         Row: {
-          awarded_bid_id: string | null
           bidding_closes_at: string | null
           budget_hint: string | null
+          claimed_at: string | null
           county: string | null
           county_id: number | null
           customer_first_name: string | null
           description: string | null
           id: string | null
-          my_amount_pence: number | null
-          my_bid_id: string | null
-          my_note: string | null
           postcode_district: string | null
           service_ids: number[] | null
           status: string | null
           title: string | null
           town: string | null
-          won: boolean | null
         }
         Relationships: [
           {
@@ -575,7 +518,6 @@ export type Database = {
       }
       public_jobs: {
         Row: {
-          bid_count: number | null
           bidding_closes_at: string | null
           budget_hint: string | null
           county: string | null
@@ -603,9 +545,13 @@ export type Database = {
     }
     Functions: {
       admin_metrics: { Args: never; Returns: Json }
-      award_job: {
-        Args: { p_bid_id: string; p_job_id: string }
-        Returns: undefined
+      claim_job: {
+        Args: { p_job_id: string }
+        Returns: {
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+        }[]
       }
       close_due_jobs: { Args: never; Returns: undefined }
       get_job_contact: {
@@ -618,15 +564,10 @@ export type Database = {
       }
       is_active_subscriber: { Args: { p_contractor: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
-      mark_booked: { Args: { p_job_id: string }; Returns: undefined }
       notify_closing_soon: { Args: never; Returns: undefined }
       notify_job_open: { Args: { p_job_id: string }; Returns: undefined }
       notify_paid_members: { Args: { p_job_id: string }; Returns: undefined }
       open_due_jobs: { Args: never; Returns: undefined }
-      place_bid: {
-        Args: { p_amount_pence: number; p_job_id: string; p_note?: string }
-        Returns: string
-      }
     }
     Enums: {
       enum_listings_status: "draft" | "published" | "sold"

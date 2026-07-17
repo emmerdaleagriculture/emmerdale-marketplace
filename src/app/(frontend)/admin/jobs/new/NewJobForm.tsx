@@ -43,7 +43,7 @@ export function NewJobForm({
       {state.error && <p className={f.error}>{state.error}</p>}
       {leadId && <input type="hidden" name="lead_id" value={leadId} />}
 
-      <div className={a.groupTitle}>Customer (private — never shown until award)</div>
+      <div className={a.groupTitle}>Customer (private — never shown until claimed)</div>
       <div className={a.row2}>
         <label className={f.field}>
           <span className={f.label}>Customer full name</span>
@@ -108,14 +108,14 @@ export function NewJobForm({
           <span className={f.label}>Paid head-start (hours)</span>
           <input className={f.input} name="exclusive_hours" type="number" min="0" max="72" defaultValue="12" />
           <span className={f.hint}>
-            Paid members see it this many hours before bidding opens. 0 = open to
-            bidding immediately.
+            Paid members can claim it this many hours before it opens to everyone.
+            0 = open to all immediately.
           </span>
         </label>
         <label className={f.field}>
-          <span className={f.label}>Bidding closes</span>
+          <span className={f.label}>Available until</span>
           <input className={f.input} name="closes_at" type="datetime-local" />
-          <span className={f.hint}>Leave blank for 24h after the window opens.</span>
+          <span className={f.hint}>Leave blank for 24h after the job opens. Unclaimed jobs expire then.</span>
         </label>
       </div>
 

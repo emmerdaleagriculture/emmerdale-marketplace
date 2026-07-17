@@ -24,7 +24,7 @@ export default async function LoginPage() {
         <div className={a.narrow}>
           <div className={a.eyebrow}>For contractors</div>
           <h1 className={a.title}>Log in</h1>
-          <p className={a.sub}>Welcome back. Log in to manage your account and bid on jobs.</p>
+          <p className={a.sub}>Welcome back. Log in to manage your account and claim jobs.</p>
           <LoginForm />
         </div>
       </main>
