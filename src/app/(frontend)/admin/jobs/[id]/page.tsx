@@ -117,6 +117,9 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
             <div className={s.dValue}>{job.claimed_at ? formatDateTime(job.claimed_at) : '—'}</div>
           </div>
         </div>
+      ) : job.status === 'claimed' ? (
+        // Claimed but no claimant on record (e.g. the contractor was deleted).
+        <div className={s.empty}>Claimed — claimant no longer on record.</div>
       ) : (
         <div className={s.empty}>Not claimed yet.</div>
       )}
