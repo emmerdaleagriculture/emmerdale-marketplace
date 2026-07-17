@@ -4,12 +4,11 @@ import { useActionState, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { signUpAction } from './actions';
 import { emptyFormState } from '@/lib/form';
-import { CountyPicker, type CountyOption } from '@/components/forms/CountyPicker';
 import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
-export function SignupForm({ counties }: { counties: CountyOption[] }) {
+export function SignupForm() {
   const [state, action, pending] = useActionState(signUpAction, emptyFormState);
   const [captchaToken, setCaptchaToken] = useState('');
   // Render timestamp for the server-side minimum-fill-time bot trap. Set after
@@ -32,7 +31,7 @@ export function SignupForm({ counties }: { counties: CountyOption[] }) {
   }
 
   return (
-    <form action={action}>
+    <form action={action} className={a.card}>
       {state.error && <p className={f.error}>{state.error}</p>}
 
       <input type="hidden" name="form_ts" value={formTs} />
@@ -47,55 +46,24 @@ export function SignupForm({ counties }: { counties: CountyOption[] }) {
         </label>
       </div>
 
-      <div className={a.groupTitle}>Your login</div>
-      <div className={a.row2}>
-        <label className={f.field}>
-          <span className={f.label}>Email</span>
-          <input className={f.input} type="email" name="email" required autoComplete="email" />
-        </label>
-        <label className={f.field}>
-          <span className={f.label}>Password</span>
-          <input
-            className={f.input}
-            type="password"
-            name="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-          />
-        </label>
-      </div>
+      <label className={f.field}>
+        <span className={f.label}>Email</span>
+        <input className={f.input} type="email" name="email" required autoComplete="email" />
+      </label>
+      <label className={f.field}>
+        <span className={f.label}>Password</span>
+        <input
+          className={f.input}
+          type="password"
+          name="password"
+          required
+          minLength={8}
+          autoComplete="new-password"
+        />
+        <span className={f.hint}>At least 8 characters.</span>
+      </label>
 
-      <div className={a.groupTitle}>Your business</div>
-      <div className={a.row2}>
-        <label className={f.field}>
-          <span className={f.label}>Business name</span>
-          <input className={f.input} type="text" name="business_name" required />
-        </label>
-        <label className={f.field}>
-          <span className={f.label}>Contact name</span>
-          <input className={f.input} type="text" name="contact_name" required />
-        </label>
-        <label className={f.field}>
-          <span className={f.label}>Phone</span>
-          <input className={f.input} type="tel" name="phone" required autoComplete="tel" />
-        </label>
-        <label className={f.field}>
-          <span className={f.label}>Base postcode</span>
-          <input className={f.input} type="text" name="base_postcode" required />
-          <span className={f.hint}>For our records only — not used to match jobs.</span>
-        </label>
-      </div>
-
-      <div className={a.groupTitle}>Counties you cover</div>
-      <p className={f.hint} style={{ marginBottom: 12 }}>
-        You’ll be notified about jobs in the counties you select. Use “Select all”
-        to add a whole region at once.
-      </p>
-      <CountyPicker counties={counties} />
-
-      <div className={a.groupTitle}>Agreement</div>
-      <label className={f.checkRow}>
+      <label className={f.checkRow} style={{ marginTop: 8 }}>
         <input type="checkbox" name="accept" required />
         <span>
           I accept the{' '}
@@ -120,7 +88,7 @@ export function SignupForm({ counties }: { counties: CountyOption[] }) {
 
       <div className={a.actions}>
         <button className={f.btnPrimary} type="submit" disabled={pending || captchaPending}>
-          {pending ? 'Submitting…' : 'Join the network'}
+          {pending ? 'Creating account…' : 'Create account'}
         </button>
         <span className={a.altLink}>
           Already registered? <Link href="/login">Log in</Link>

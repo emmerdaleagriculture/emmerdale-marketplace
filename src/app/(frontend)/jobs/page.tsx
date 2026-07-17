@@ -23,7 +23,7 @@ export default async function JobsBoardPage() {
     .select('status, business_name')
     .eq('id', user.id)
     .maybeSingle();
-  if (!contractor) redirect('/signup');
+  if (!contractor) redirect('/onboarding');
 
   const services = await getServices();
   const serviceName = new Map(services.map((s) => [s.id, s.name]));

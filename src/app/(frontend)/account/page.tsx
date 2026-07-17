@@ -33,9 +33,10 @@ export default async function AccountPage({
     .eq('id', user.id)
     .maybeSingle();
   // Admins aren't contractors — without this, an admin with no contractor
-  // profile ping-pongs between /account and /signup forever.
+  // profile ping-pongs between /account and /onboarding forever.
   if (!contractor && isAdminEmail(user.email)) redirect('/admin');
-  if (!contractor) redirect('/signup');
+  // A confirmed contractor who hasn't completed onboarding has no profile yet.
+  if (!contractor) redirect('/onboarding');
 
   const [counties, services, ccRows, subRow] = await Promise.all([
     getCounties(),

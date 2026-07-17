@@ -26,7 +26,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
     .select('status')
     .eq('id', user.id)
     .maybeSingle();
-  if (!contractor) redirect('/signup');
+  if (!contractor) redirect('/onboarding');
   if (contractor.status !== 'approved') redirect('/jobs');
 
   // Open + in-county job (public view) and/or a job we've bid on (any status).
