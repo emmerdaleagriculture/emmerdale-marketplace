@@ -5,16 +5,18 @@ import Link from 'next/link';
 import { signUpAction } from './actions';
 import { emptyFormState } from '@/lib/form';
 import { CountyPicker, type CountyOption } from '@/components/forms/CountyPicker';
-import { Turnstile } from '@/components/forms/Turnstile';
+import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
 export function SignupForm({ counties }: { counties: CountyOption[] }) {
   const [state, action, pending] = useActionState(signUpAction, emptyFormState);
+  const [captchaToken, setCaptchaToken] = useState('');
   // Render timestamp for the server-side minimum-fill-time bot trap. Set after
   // mount to avoid a server/client hydration mismatch.
   const [formTs, setFormTs] = useState('');
   useEffect(() => setFormTs(String(Date.now())), []);
+  const captchaPending = turnstileEnabled && !captchaToken;
 
   if (state.ok) {
     return (
@@ -94,7 +96,7 @@ export function SignupForm({ counties }: { counties: CountyOption[] }) {
 
       <div className={a.groupTitle}>Agreement</div>
       <label className={f.checkRow}>
-        <input type="checkbox" name="accept" />
+        <input type="checkbox" name="accept" required />
         <span>
           I accept the{' '}
           <Link href="/terms" target="_blank">
@@ -109,10 +111,15 @@ export function SignupForm({ counties }: { counties: CountyOption[] }) {
         </span>
       </label>
 
-      <Turnstile resetOn={state} />
+      <Turnstile resetOn={state} onToken={setCaptchaToken} />
+      {captchaPending && (
+        <p className={f.hint} style={{ marginBottom: 12 }}>
+          Waiting for the security check to finish…
+        </p>
+      )}
 
       <div className={a.actions}>
-        <button className={f.btnPrimary} type="submit" disabled={pending}>
+        <button className={f.btnPrimary} type="submit" disabled={pending || captchaPending}>
           {pending ? 'Submitting…' : 'Join the network'}
         </button>
         <span className={a.altLink}>

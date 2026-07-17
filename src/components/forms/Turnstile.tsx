@@ -14,6 +14,13 @@ declare global {
 
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
+// Trimmed defensively: a stray space pasted into the env var makes render()
+// throw "Invalid input for parameter sitekey" and silently kills the widget.
+const SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '').trim();
+
+/** True when the widget will render — forms should hold submits until a token exists. */
+export const turnstileEnabled = Boolean(SITE_KEY);
+
 function loadTurnstileScript(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (window.turnstile) return resolve();
@@ -41,11 +48,23 @@ function loadTurnstileScript(): Promise<void> {
  *
  * Pass the server action's state as `resetOn`: tokens are also consumed by a
  * failed submit, so the widget must mint a fresh one before a retry.
+ *
+ * Tokens expire 300s after issuance — on long forms the token minted at page
+ * load is dead by the time the user submits. `onToken` reports every token
+ * change ('' while none is held) so forms can disable submit until one exists.
  */
-export function Turnstile({ resetOn }: { resetOn?: unknown }) {
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+export function Turnstile({
+  resetOn,
+  onToken,
+}: {
+  resetOn?: unknown;
+  onToken?: (token: string) => void;
+}) {
+  const siteKey = SITE_KEY;
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const onTokenRef = useRef(onToken);
+  onTokenRef.current = onToken;
 
   useEffect(() => {
     if (!siteKey || !containerRef.current) return;
@@ -57,11 +76,20 @@ export function Turnstile({ resetOn }: { resetOn?: unknown }) {
         widgetIdRef.current = window.turnstile!.render(containerRef.current, {
           sitekey: siteKey,
           theme: 'light',
+          // Auto re-solve when the token times out mid-form; the callbacks keep
+          // the form's view of the token in sync either way.
+          'refresh-expired': 'auto',
+          callback: (token: string) => onTokenRef.current?.(token),
+          'expired-callback': () => onTokenRef.current?.(''),
+          'error-callback': () => onTokenRef.current?.(''),
         });
       })
-      .catch(() => {
+      .catch((err) => {
         // Leave the form usable; Supabase will reject the submit if it
-        // requires a captcha token, and the action surfaces that error.
+        // requires a captcha token, and the action surfaces that error. But
+        // never swallow this silently — a synchronous render() throw (bad
+        // sitekey) is otherwise invisible and takes down every auth form.
+        console.error('[turnstile] widget failed to render:', err);
       });
 
     return () => {
@@ -74,7 +102,11 @@ export function Turnstile({ resetOn }: { resetOn?: unknown }) {
   }, [siteKey]);
 
   useEffect(() => {
-    if (widgetIdRef.current !== null) window.turnstile?.reset(widgetIdRef.current);
+    if (widgetIdRef.current !== null) {
+      // A reset clears the held token until the new challenge completes.
+      onTokenRef.current?.('');
+      window.turnstile?.reset(widgetIdRef.current);
+    }
   }, [resetOn]);
 
   if (!siteKey) return null;

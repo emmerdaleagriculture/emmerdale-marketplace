@@ -62,6 +62,11 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
   });
 
   if (signUpErr) {
+    // Raw GoTrue captcha errors ("captcha protection: request disallowed…")
+    // mean the token was missing or stale — tell the user what to actually do.
+    if (/captcha/i.test(signUpErr.message)) {
+      return { error: 'The security check expired. Please wait for it to refresh, then submit again.' };
+    }
     return { error: signUpErr.message };
   }
   const userId = signUp.user?.id;

@@ -1,16 +1,18 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { requestResetAction } from './actions';
 import { emptyFormState } from '@/lib/form';
-import { Turnstile } from '@/components/forms/Turnstile';
+import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
 import { SiteFooter } from '@/components/SiteFooter';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
 export default function ResetPasswordPage() {
   const [state, action, pending] = useActionState(requestResetAction, emptyFormState);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const captchaPending = turnstileEnabled && !captchaToken;
 
   return (
     <div className={a.wrap}>
@@ -46,9 +48,9 @@ export default function ResetPasswordPage() {
                 <span className={f.label}>Email</span>
                 <input className={f.input} type="email" name="email" required autoComplete="email" />
               </label>
-              <Turnstile resetOn={state} />
+              <Turnstile resetOn={state} onToken={setCaptchaToken} />
               <div className={a.actions}>
-                <button className={f.btnPrimary} type="submit" disabled={pending}>
+                <button className={f.btnPrimary} type="submit" disabled={pending || captchaPending}>
                   {pending ? 'Sending…' : 'Send reset link'}
                 </button>
                 <span className={a.altLink}>

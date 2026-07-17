@@ -1,15 +1,17 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { loginAction } from './actions';
 import { emptyFormState } from '@/lib/form';
-import { Turnstile } from '@/components/forms/Turnstile';
+import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
 export function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, emptyFormState);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const captchaPending = turnstileEnabled && !captchaToken;
 
   return (
     <form action={action} className={a.card}>
@@ -30,10 +32,10 @@ export function LoginForm() {
         />
       </label>
 
-      <Turnstile resetOn={state} />
+      <Turnstile resetOn={state} onToken={setCaptchaToken} />
 
       <div className={a.actions}>
-        <button className={f.btnPrimary} type="submit" disabled={pending}>
+        <button className={f.btnPrimary} type="submit" disabled={pending || captchaPending}>
           {pending ? 'Logging in…' : 'Log in'}
         </button>
         <span className={a.altLink}>
