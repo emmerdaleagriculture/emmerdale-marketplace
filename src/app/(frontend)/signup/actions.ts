@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { FormState } from '@/lib/form';
 
@@ -75,11 +76,7 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
             'The security check could not be verified. This is a configuration issue on our end — please contact us so we can fix it.',
         };
       }
-      // TEMPORARY DIAGNOSTIC: surface the raw Cloudflare/GoTrue reason so we can
-      // see exactly why an otherwise-valid token is being rejected. Revert to a
-      // friendly message once the captcha config is confirmed working.
-      const reason = msg.match(/\(([^)]+)\)/)?.[1] ?? msg;
-      return { error: `Security check failed — reason: “${reason}”. Please tell us this exact text.` };
+      return { error: 'The security check failed. Please try again.' };
     }
     return { error: msg };
   }
@@ -87,6 +84,15 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
   // "email already in use" rather than leaking which addresses are registered.
   if (!signUp.user?.id || (signUp.user && signUp.user.identities?.length === 0)) {
     return { error: 'That email is already registered. Try logging in instead.' };
+  }
+
+  // With email confirmation disabled in Supabase, signUp returns a live session
+  // and the SSR client has already written the auth cookies — the farmer is
+  // signed in, so send them straight to onboarding with no email step. If the
+  // project still requires confirmation, there's no session and we fall through
+  // to the "check your email" message instead.
+  if (signUp.session) {
+    redirect('/onboarding');
   }
 
   return { ok: true, message: SUCCESS_MESSAGE };
