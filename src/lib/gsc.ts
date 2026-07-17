@@ -215,6 +215,33 @@ export async function gscQuery(args: GscQueryArgs): Promise<GscRow[]> {
   return json.rows ?? [];
 }
 
+/**
+ * List the Search Console properties the connected account can access, with
+ * their exact property strings and permission levels. Used to diagnose the
+ * "insufficient permission for site" 403 — the caller can compare these against
+ * GSC_SITE_URL (URL-prefix `https://…/` vs domain `sc-domain:…` are different
+ * properties).
+ */
+export async function listSites(): Promise<Array<{ siteUrl: string; permissionLevel: string }>> {
+  const refreshToken = await getStoredRefreshToken();
+  if (!refreshToken) throw new Error('Not connected — visit /admin/seo/auth/connect');
+  const token = await getAccessTokenFromRefresh(refreshToken);
+  const res = await fetch('https://searchconsole.googleapis.com/webmasters/v3/sites', {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`sites.list failed: ${res.status} ${await res.text()}`);
+  const json = (await res.json()) as {
+    siteEntry?: Array<{ siteUrl: string; permissionLevel: string }>;
+  };
+  return json.siteEntry ?? [];
+}
+
+/** The configured GSC property string (for diagnostics). */
+export function configuredSiteUrl(): string {
+  return process.env.GSC_SITE_URL ?? '';
+}
+
 /** YYYY-MM-DD, n days before today (UTC). */
 export function isoDaysAgo(n: number): string {
   const d = new Date();

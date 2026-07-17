@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { gscQuery, isoDaysAgo, getConnectedEmail } from '@/lib/gsc';
+import { gscQuery, isoDaysAgo, getConnectedEmail, listSites, configuredSiteUrl } from '@/lib/gsc';
 import { seoGuard } from './guard';
 import { SubNav } from './SubNav';
 import styles from './seo.module.css';
@@ -82,6 +82,17 @@ export default async function SeoOverviewPage({
     errMsg = err instanceof Error ? err.message : String(err);
   }
 
+  // On error (typically a 403 property mismatch), list the properties this
+  // account can actually see so the right GSC_SITE_URL is obvious.
+  let accessibleSites: Array<{ siteUrl: string; permissionLevel: string }> | null = null;
+  if (errMsg) {
+    try {
+      accessibleSites = await listSites();
+    } catch {
+      /* ignore — show the primary error alone */
+    }
+  }
+
   return (
     <main className={styles.page}>
       <SubNav active="/admin/seo" />
@@ -100,6 +111,33 @@ export default async function SeoOverviewPage({
         <section className={styles.error}>
           <h2>Couldn&apos;t load stats</h2>
           <pre>{errMsg}</pre>
+          <p>
+            <code>GSC_SITE_URL</code> is currently set to{' '}
+            <code>{configuredSiteUrl() || '(unset)'}</code>.
+          </p>
+          {accessibleSites && accessibleSites.length > 0 ? (
+            <>
+              <p>
+                The connected account can access these properties — set{' '}
+                <code>GSC_SITE_URL</code> to exactly one of them (then redeploy):
+              </p>
+              <ul style={{ margin: '0.5rem 0 1rem 1.25rem', lineHeight: 1.8 }}>
+                {accessibleSites.map((s) => (
+                  <li key={s.siteUrl}>
+                    <code>{s.siteUrl}</code>{' '}
+                    <span className={styles.deltaFlat}>({s.permissionLevel})</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : accessibleSites ? (
+            <p>
+              This Google account has access to <strong>no</strong> Search Console
+              properties. Connect with an account that owns{' '}
+              <code>emmerdaleagriculture.com</code>, or add this account as a user in
+              Search Console → Settings → Users and permissions.
+            </p>
+          ) : null}
           <p>
             If the error mentions <code>invalid_grant</code> the refresh token has expired —{' '}
             <Link href="/admin/seo/auth/connect">re-connect</Link>.
