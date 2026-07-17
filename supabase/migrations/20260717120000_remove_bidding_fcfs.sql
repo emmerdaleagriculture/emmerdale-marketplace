@@ -28,7 +28,8 @@ drop function if exists mark_booked(uuid);
 do $$
 declare cn text;
 begin
-  update jobs set status = 'claimed' where status = 'awarded';
+  -- Drop the old status check first — it still forbids 'claimed', so the data
+  -- update below would violate it otherwise.
   for cn in
     select conname from pg_constraint
     where conrelid = 'jobs'::regclass and contype = 'c'
@@ -36,6 +37,7 @@ begin
   loop
     execute format('alter table jobs drop constraint %I', cn);
   end loop;
+  update jobs set status = 'claimed' where status = 'awarded';
   alter table jobs add constraint jobs_status_check
     check (status in ('exclusive','open','claimed','expired','withdrawn','completed'));
 end $$;
