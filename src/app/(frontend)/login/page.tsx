@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   title: 'Log in',
   description: 'Log in to your Emmerdale Agriculture contractor account.',
   alternates: { canonical: '/login' },
+  // A login form has no search value — keep it out of the index (and the sitemap).
+  robots: { index: false, follow: true },
 };
 
 export default async function LoginPage() {

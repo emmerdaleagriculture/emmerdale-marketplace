@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
       // Auth-gated or utility routes — nothing indexable behind these.
-      disallow: ['/admin', '/account', '/jobs', '/api/', '/auth/', '/reset-password'],
+      disallow: ['/admin', '/account', '/onboarding', '/jobs', '/api/', '/auth/', '/reset-password'],
     },
     sitemap: `${SITE}/sitemap.xml`,
   };

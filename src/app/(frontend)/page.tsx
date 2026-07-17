@@ -21,20 +21,67 @@ export const metadata: Metadata = {
 };
 
 // Organization schema — credibility signals (company number, HPM relationship).
+// The network itself is nationwide (England & Wales), so areaServed is national
+// — not the regional service area of the HPM contracting arm.
 const orgJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'Emmerdale Agriculture Ltd',
+  name: 'Emmerdale Agriculture',
+  legalName: COMPANY_LEGAL_NAME,
   url: 'https://emmerdaleagriculture.com',
-  logo: 'https://emmerdaleagriculture.com/icon.svg',
+  // Raster logo (PNG) — Google's logo guidelines don't reliably pick up SVG.
+  logo: 'https://emmerdaleagriculture.com/apple-icon.png',
   identifier: {
     '@type': 'PropertyValue',
     propertyID: 'Company Number',
     value: COMPANY_NUMBER,
   },
+  areaServed: { '@type': 'AdministrativeArea', name: 'England and Wales' },
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer service',
+    url: HPM_CONTACT_URL,
+    areaServed: 'GB',
+    availableLanguage: 'English',
+  },
   sameAs: [HPM_URL],
   description:
-    'The contractor network run by Emmerdale Agriculture Ltd, the company behind Hampshire Paddock Management. Paddock and land jobs matched to contractors by county and awarded by bid.',
+    'The contractor network run by Emmerdale Agriculture Ltd, the company behind Hampshire Paddock Management. Paddock and land jobs matched to contractors by county across England and Wales and awarded by bid.',
+};
+
+// FAQ schema — mirrors the visible FAQ section below (Google requires the
+// answers to be on-page). Kept nationwide in framing.
+const faqs = [
+  {
+    q: 'Does it cost anything to join the network?',
+    a: 'No. Joining is completely free and there’s no obligation to bid. You only ever deal directly with the customer when you win a job — Emmerdale Agriculture takes no commission.',
+  },
+  {
+    q: 'How are jobs matched to me?',
+    a: 'By county. You choose the counties you cover when you join, and whenever a job is posted in one of them we email you the details — the town, the work needed, and when bidding closes.',
+  },
+  {
+    q: 'Do you take a cut of the work?',
+    a: 'No. When you win a job you get the customer’s details and arrange the work directly. You invoice them yourself and keep the full amount — we take no commission.',
+  },
+  {
+    q: 'Which parts of the country do you cover?',
+    a: 'The network is nationwide across England and Wales. Coverage grows as more contractors join, and you’ll be matched to jobs in whichever counties you choose.',
+  },
+  {
+    q: 'Who runs Emmerdale Agriculture?',
+    a: `The network is run by ${COMPANY_LEGAL_NAME} (Company No. ${COMPANY_NUMBER}), the company behind Hampshire Paddock Management — a contracting firm that does this work every day and passes on the jobs it can’t take.`,
+  },
+];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
 };
 
 const STEPS = [
@@ -88,6 +135,10 @@ export default async function LandingPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <section className={s.hero}>
         <Image
@@ -285,6 +336,23 @@ export default async function LandingPage() {
             the bidding entirely.
           </p>
           <p className={s.teaserNote}>Coming soon. Join free now and we’ll tell you when it launches.</p>
+        </div>
+      </section>
+
+      <section className={s.section}>
+        <div className={s.sectionInner}>
+          <div className={s.kicker}>Common questions</div>
+          <h2 className={s.sectionTitle}>
+            Questions, <em>answered.</em>
+          </h2>
+          <dl className={s.faq}>
+            {faqs.map((f) => (
+              <div key={f.q} className={s.faqItem}>
+                <dt className={s.faqQ}>{f.q}</dt>
+                <dd className={s.faqA}>{f.a}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 

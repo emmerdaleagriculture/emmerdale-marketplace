@@ -297,3 +297,27 @@
   text-align: center;
   margin-top: -16px; /* pull back part of the lede's 48px bottom margin */
 }
+
+/* FAQ — visible answers backing the FAQPage structured data. */
+.faq {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.faqItem {
+  padding: 22px 0;
+  border-top: 1px solid var(--rule);
+}
+.faqItem:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+.faqQ {
+  font-family: var(--font-display-stack);
+  font-size: 19px;
+  color: var(--jd-green-deep);
+  margin-bottom: 8px;
+}
+.faqA {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
