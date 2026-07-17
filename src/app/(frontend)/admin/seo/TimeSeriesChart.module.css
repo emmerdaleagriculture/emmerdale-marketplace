@@ -1,0 +1,74 @@
+.chartWrap {
+  margin: 0 0 2.5rem;
+  background: #fff;
+  border: 1px solid #ece9dd;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.gridLine {
+  stroke: #ece9dd;
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.clicksLine {
+  stroke: #367c2b;
+  stroke-width: 2;
+}
+
+.imprLine {
+  stroke: #b8d4a4;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.axisLabel {
+  font-size: 11px;
+  fill: #5f5e5a;
+}
+
+.clicksLabel { fill: #2a5e22; }
+.imprLabel { fill: #5f5e5a; }
+
+.legend {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 13px;
+  color: #5f5e5a;
+  margin-top: 0.75rem;
+  padding-left: 1rem;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.swatch {
+  display: inline-block;
+  width: 22px;
+  height: 2px;
+}
+
+.clicksSwatch { background: #367c2b; }
+.imprSwatch {
+  background: #b8d4a4;
+  border-top: 1.5px dashed #b8d4a4;
+}
+
+.empty {
+  color: #5f5e5a;
+  text-align: center;
+  padding: 2rem;
+  background: #fafaf7;
+  border: 1px solid #ece9dd;
+  border-radius: 8px;
+}

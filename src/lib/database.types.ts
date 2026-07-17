@@ -205,6 +205,27 @@ export type Database = {
           },
         ]
       }
+      gsc_auth: {
+        Row: {
+          connected_at: string | null
+          connected_email: string | null
+          id: boolean
+          refresh_token: string | null
+        }
+        Insert: {
+          connected_at?: string | null
+          connected_email?: string | null
+          id?: boolean
+          refresh_token?: string | null
+        }
+        Update: {
+          connected_at?: string | null
+          connected_email?: string | null
+          id?: boolean
+          refresh_token?: string | null
+        }
+        Relationships: []
+      }
       job_notifications: {
         Row: {
           contractor_id: string

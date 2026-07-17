@@ -1,0 +1,35 @@
+.subnav {
+  border-bottom: 1px solid #ece9dd;
+  margin-bottom: 1.5rem;
+}
+
+.subnav ul {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.link,
+.activeLink {
+  display: inline-block;
+  padding: 0.625rem 0.875rem;
+  font-size: 14px;
+  text-decoration: none;
+  color: #5f5e5a;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.link:hover {
+  color: #1a1f15;
+}
+
+.activeLink {
+  color: #2a5e22;
+  border-bottom-color: #367c2b;
+  font-weight: 600;
+}

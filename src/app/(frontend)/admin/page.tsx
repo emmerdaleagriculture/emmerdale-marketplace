@@ -68,6 +68,9 @@ export default async function AdminDashboard() {
         <Link href="/admin/contractors" className={f.btnGhost}>
           Contractors{m.contractors_pending ? ` (${m.contractors_pending} pending)` : ''}
         </Link>
+        <Link href="/admin/seo" className={f.btnGhost}>
+          Search Console
+        </Link>
       </div>
     </div>
   );

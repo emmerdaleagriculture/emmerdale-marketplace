@@ -23,6 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/leads">Leads</Link>
           <Link href="/admin/jobs">Jobs</Link>
           <Link href="/admin/contractors">Contractors</Link>
+          <Link href="/admin/seo">SEO</Link>
           <form action="/auth/signout" method="post">
             <button type="submit" className={styles.signout}>
               Log out
