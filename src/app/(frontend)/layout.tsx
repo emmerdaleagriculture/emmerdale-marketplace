@@ -49,12 +49,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-GB" className={`${tenor.variable} ${dm.variable}`}>
       <body>{children}</body>
-      {/* Google Analytics (gtag.js) */}
+      {/* Google Analytics (gtag.js) — lazyOnload so it loads during idle and
+          doesn't compete with hydration or the LCP hero image. */}
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-        strategy="afterInteractive"
+        strategy="lazyOnload"
       />
-      <Script id="ga-gtag" strategy="afterInteractive">
+      <Script id="ga-gtag" strategy="lazyOnload">
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}

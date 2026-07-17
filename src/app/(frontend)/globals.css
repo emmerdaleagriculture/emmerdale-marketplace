@@ -18,7 +18,8 @@
   /* Neutrals */
   --ink: #1a1f15;
   --ink-2: #4a4f45;
-  --ink-3: #7a7f75;
+  /* Muted text — darkened from #7a7f75 to clear WCAG AA (4.5:1) on white. */
+  --ink-3: #6f7469;
   --cream: #fafaf5;
   --white: #ffffff;
   --rule: #d8dcd2;
