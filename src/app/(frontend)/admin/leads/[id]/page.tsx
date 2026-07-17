@@ -5,6 +5,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { NewJobForm } from '../../jobs/new/NewJobForm';
 import { dismissLeadAction } from '../actions';
 import { getCounties, getServices } from '@/lib/reference';
+import { tidyJobHint } from '@/lib/leads';
 import { formatDateTime } from '@/lib/time';
 import s from '../../admin.module.css';
 
@@ -21,6 +22,7 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
   const [services, counties] = await Promise.all([getServices(), getCounties()]);
 
   const firstName = lead.full_name.split(/\s+/)[0];
+  const cleanHint = tidyJobHint(lead.job_hint);
 
   return (
     <div>
@@ -47,7 +49,7 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
         </div>
         <div>
           <div className={s.dLabel}>Wants</div>
-          <div className={s.dValue}>{lead.job_hint ?? '—'}</div>
+          <div className={s.dValue}>{cleanHint ?? '—'}</div>
         </div>
         <div style={{ gridColumn: '1 / -1' }}>
           <div className={s.dLabel}>Raw form payload</div>
@@ -75,7 +77,7 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
           customer_phone: lead.phone ?? '',
           customer_email: lead.email ?? '',
           postcode: lead.postcode ?? '',
-          description: lead.job_hint ?? '',
+          description: cleanHint ?? '',
         }}
       />
 

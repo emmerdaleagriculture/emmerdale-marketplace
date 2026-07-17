@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
 
@@ -23,6 +24,9 @@ export async function dismissLeadAction(formData: FormData) {
     .eq('status', 'pending');
   if (error) throw new Error(error.message);
   revalidatePath('/admin/leads');
+  // Return to the queue so the dismissal is visibly reflected — the detail page
+  // otherwise re-renders unchanged and the click looks like it did nothing.
+  redirect('/admin/leads');
 }
 
 /** Put a dismissed lead back in the queue. */

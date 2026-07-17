@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { dismissLeadAction, repenLeadAction } from './actions';
 import { LeadsIntakePanel } from './LeadsIntakePanel';
+import { tidyJobHint } from '@/lib/leads';
 import { formatDateTime } from '@/lib/time';
 import s from '../admin.module.css';
 
@@ -70,7 +71,7 @@ export default async function AdminLeadsPage() {
                 <td>
                   <Link href={`/admin/leads/${l.id}`}>{l.full_name}</Link>
                 </td>
-                <td>{l.job_hint ? l.job_hint.slice(0, 60) : '—'}</td>
+                <td>{tidyJobHint(l.job_hint)?.slice(0, 60) ?? '—'}</td>
                 <td>{l.postcode ?? '—'}</td>
                 <td>{formatDateTime(l.created_at)}</td>
                 <td>
@@ -112,7 +113,7 @@ export default async function AdminLeadsPage() {
             {history.map((l) => (
               <tr key={l.id}>
                 <td>{l.full_name}</td>
-                <td>{l.job_hint ? l.job_hint.slice(0, 60) : '—'}</td>
+                <td>{tidyJobHint(l.job_hint)?.slice(0, 60) ?? '—'}</td>
                 <td>
                   <span className={`${s.pill} ${pillFor[l.status] ?? ''}`}>{l.status}</span>
                   {l.job_id && (

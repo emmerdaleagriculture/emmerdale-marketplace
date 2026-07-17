@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { tidyJobHint } from '@/lib/leads';
 import type { Json } from '@/lib/database.types';
 
 /**
@@ -67,7 +68,7 @@ function mapFields(fieldData: FieldDatum[]) {
     phone: get('phone_number', 'phone'),
     email: get('email'),
     postcode: get('post_code', 'postcode', 'zip_code'),
-    job_hint: extras.join('\n') || null,
+    job_hint: tidyJobHint(extras.join('\n')),
   };
 }
 

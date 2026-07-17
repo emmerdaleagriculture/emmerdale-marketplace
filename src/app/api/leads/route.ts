@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { tidyJobHint } from '@/lib/leads';
 import type { Json } from '@/lib/database.types';
 
 /**
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
       return !KNOWN.has(nk) && (typeof v === 'string' || typeof v === 'number') && String(v).trim();
     })
     .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`);
-  const jobHint = [explicitHint, ...extras].filter(Boolean).join('\n') || null;
+  const jobHint = tidyJobHint([explicitHint, ...extras].filter(Boolean).join('\n'));
 
   const admin = createServiceRoleClient();
   const { data: lead, error } = await admin
