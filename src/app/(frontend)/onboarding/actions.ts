@@ -12,7 +12,6 @@ const OnboardingSchema = z.object({
   contact_name: z.string().trim().min(1, 'Contact name is required.'),
   phone: z.string().trim().min(5, 'Phone number is required.'),
   base_postcode: z.string().trim().min(3, 'Base postcode is required.'),
-  service_ids: z.array(z.coerce.number().int()).default([]),
   county_ids: z.array(z.coerce.number().int()).min(1, 'Select at least one county.'),
 });
 
@@ -31,7 +30,6 @@ export async function completeOnboardingAction(
     contact_name: formData.get('contact_name'),
     phone: formData.get('phone'),
     base_postcode: formData.get('base_postcode'),
-    service_ids: formData.getAll('service_ids'),
     county_ids: formData.getAll('county_ids'),
   });
   if (!parsed.success) {
@@ -48,7 +46,6 @@ export async function completeOnboardingAction(
     phone: d.phone,
     email: user.email ?? '',
     base_postcode: d.base_postcode,
-    services: d.service_ids,
     status: 'pending',
   });
   // A duplicate means onboarding already ran (double submit / back button) —

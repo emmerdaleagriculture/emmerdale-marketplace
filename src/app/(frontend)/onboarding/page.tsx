@@ -5,7 +5,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { OnboardingForm } from './OnboardingForm';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/auth';
-import { getCounties, getServices } from '@/lib/reference';
+import { getCounties } from '@/lib/reference';
 import a from '../auth.module.css';
 
 export const metadata: Metadata = {
@@ -30,7 +30,7 @@ export default async function OnboardingPage() {
   if (contractor) redirect('/account');
   if (isAdminEmail(user.email)) redirect('/admin');
 
-  const [counties, services] = await Promise.all([getCounties(), getServices()]);
+  const counties = await getCounties();
 
   return (
     <div className={a.wrap}>
@@ -44,7 +44,7 @@ export default async function OnboardingPage() {
             when you’re approved — then you’ll see jobs in your counties and can
             bid to win the work. You can change any of this later in your account.
           </p>
-          <OnboardingForm counties={counties} services={services} />
+          <OnboardingForm counties={counties} />
         </div>
       </main>
       <SiteFooter />

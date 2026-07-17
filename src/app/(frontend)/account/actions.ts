@@ -10,7 +10,6 @@ const ProfileSchema = z.object({
   contact_name: z.string().trim().min(1, 'Contact name is required.'),
   phone: z.string().trim().min(5, 'Phone number is required.'),
   base_postcode: z.string().trim().min(3, 'Base postcode is required.'),
-  service_ids: z.array(z.coerce.number().int()).default([]),
   county_ids: z.array(z.coerce.number().int()).min(1, 'Select at least one county.'),
 });
 
@@ -26,7 +25,6 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
     contact_name: formData.get('contact_name'),
     phone: formData.get('phone'),
     base_postcode: formData.get('base_postcode'),
-    service_ids: formData.getAll('service_ids'),
     county_ids: formData.getAll('county_ids'),
   });
   if (!parsed.success) {
@@ -43,7 +41,6 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
       contact_name: d.contact_name,
       phone: d.phone,
       base_postcode: d.base_postcode,
-      services: d.service_ids,
       notify_new_jobs: notify,
     })
     .eq('id', user.id);

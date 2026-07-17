@@ -38,9 +38,8 @@ export default async function AccountPage({
   // A confirmed contractor who hasn't completed onboarding has no profile yet.
   if (!contractor) redirect('/onboarding');
 
-  const [counties, services, ccRows, subRow] = await Promise.all([
+  const [counties, ccRows, subRow] = await Promise.all([
     getCounties(),
-    getServices(),
     supabase.from('contractor_counties').select('county_id').eq('contractor_id', user.id),
     supabase.from('subscriptions').select('*').eq('contractor_id', user.id).maybeSingle(),
   ]);
@@ -147,7 +146,6 @@ export default async function AccountPage({
           <AccountForm
             contractor={contractor}
             counties={counties}
-            services={services}
             selectedCounties={selectedCounties}
           />
         </div>
