@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { gscQuery, isoDaysAgo, type GscRow } from '@/lib/gsc';
+import { fetchGa4PageMetrics, isGa4Configured } from '@/lib/ga4';
 import { seoGuard } from '../guard';
 import { SubNav } from '../SubNav';
 import styles from '../seo.module.css';
@@ -23,6 +24,12 @@ function pct(n: number) {
 function fmtPosition(n: number) {
   return n.toFixed(1);
 }
+function fmtSeconds(s: number) {
+  if (s < 60) return `${s.toFixed(0)}s`;
+  const m = Math.floor(s / 60);
+  const rem = Math.round(s - m * 60);
+  return `${m}m ${rem}s`;
+}
 function pathOf(url: string): string {
   try {
     return new URL(url).pathname || url;
@@ -44,7 +51,10 @@ export default async function PagesPage() {
 
   let rows: Row[] = [];
   let prev: Row[] = [];
+  let ga4Map: Awaited<ReturnType<typeof fetchGa4PageMetrics>> = new Map();
+  let ga4Err: string | null = null;
   let errMsg: string | null = null;
+  const ga4Configured = isGa4Configured();
 
   try {
     const [a, b] = await Promise.all([
@@ -57,8 +67,17 @@ export default async function PagesPage() {
     errMsg = err instanceof Error ? err.message : String(err);
   }
 
+  if (ga4Configured) {
+    try {
+      ga4Map = await fetchGa4PageMetrics(startDate, endDate);
+    } catch (err) {
+      ga4Err = err instanceof Error ? err.message : String(err);
+    }
+  }
+
   const prevByUrl = new Map(prev.map((r) => [r.keys?.[0] ?? '', r]));
   const sorted = [...rows].sort((a, b) => b.clicks - a.clicks);
+  const showGa4 = ga4Map.size > 0;
 
   return (
     <main className={styles.page}>
@@ -79,6 +98,26 @@ export default async function PagesPage() {
         </section>
       )}
 
+      {!ga4Configured && (
+        <section className={styles.notice}>
+          <strong>Tip:</strong> set <code>GA4_PROPERTY_ID</code> in env to add GA4
+          sessions, engaged sessions, and average session duration columns.
+        </section>
+      )}
+
+      {ga4Configured && ga4Err && (
+        <section className={styles.error}>
+          <h2>GA4 join failed</h2>
+          <pre>{ga4Err}</pre>
+          <p>
+            Common causes: the connected Google account can&apos;t access GA4 property{' '}
+            <code>{process.env.GA4_PROPERTY_ID}</code>, or the token predates the
+            Analytics scope — <a href="/admin/seo/auth/connect">re-connect</a> and grant
+            Analytics access, or add the account as a Viewer in GA4 admin.
+          </p>
+        </section>
+      )}
+
       <section className={styles.tableSection}>
         <div className={styles.tableHeader}>
           <h2>
@@ -87,7 +126,8 @@ export default async function PagesPage() {
         </div>
         <p className={styles.tableNote}>
           Every URL Google has shown for this site in the last {RANGE_DAYS} days, ordered by
-          clicks. Δ pos shows movement vs prior {RANGE_DAYS}d.
+          clicks. Δ pos shows movement vs prior {RANGE_DAYS}d
+          {showGa4 ? '. GA4 columns reflect the same window.' : '.'}
         </p>
         <div className={styles.tableScroll}>
           <table className={styles.table}>
@@ -99,6 +139,13 @@ export default async function PagesPage() {
                 <th className={styles.num}>CTR</th>
                 <th className={styles.num}>Pos.</th>
                 <th className={styles.num}>Δ pos</th>
+                {showGa4 && (
+                  <>
+                    <th className={styles.num}>Sessions</th>
+                    <th className={styles.num}>Engaged</th>
+                    <th className={styles.num}>Avg dur</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -107,6 +154,7 @@ export default async function PagesPage() {
                 const path = pathOf(url);
                 const before = prevByUrl.get(url);
                 const delta = before ? r.position - before.position : null;
+                const ga = ga4Map.get(path);
                 return (
                   <tr key={url}>
                     <td>
@@ -131,6 +179,13 @@ export default async function PagesPage() {
                     >
                       {delta == null ? '—' : delta > 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1)}
                     </td>
+                    {showGa4 && (
+                      <>
+                        <td className={styles.num}>{ga ? fmtNumber(ga.sessions) : '—'}</td>
+                        <td className={styles.num}>{ga ? fmtNumber(ga.engagedSessions) : '—'}</td>
+                        <td className={styles.num}>{ga ? fmtSeconds(ga.avgSessionDuration) : '—'}</td>
+                      </>
+                    )}
                   </tr>
                 );
               })}

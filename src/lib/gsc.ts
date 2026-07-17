@@ -27,6 +27,7 @@ const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const SCOPE = [
   'https://www.googleapis.com/auth/webmasters.readonly',
+  'https://www.googleapis.com/auth/analytics.readonly',
   'openid',
   'email',
 ].join(' ');
@@ -183,6 +184,17 @@ export async function getConnectedEmail(): Promise<string | null> {
 export async function isGscConnected(): Promise<boolean> {
   if (!isGscOAuthConfigured()) return false;
   return Boolean(await getStoredRefreshToken());
+}
+
+/**
+ * A usable Google access token for any scope the connected user granted
+ * (currently GSC + GA4). Shared by src/lib/ga4.ts so refresh + caching logic
+ * lives in one place.
+ */
+export async function getGoogleAccessToken(): Promise<string> {
+  const refreshToken = await getStoredRefreshToken();
+  if (!refreshToken) throw new Error('Not connected — visit /admin/seo/auth/connect');
+  return getAccessTokenFromRefresh(refreshToken);
 }
 
 export async function gscQuery(args: GscQueryArgs): Promise<GscRow[]> {
