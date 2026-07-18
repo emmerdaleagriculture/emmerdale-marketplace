@@ -33,3 +33,20 @@
   border-bottom-color: #367c2b;
   font-weight: 600;
 }
+
+.right {
+  margin-left: auto;
+}
+
+.reconnect {
+  display: inline-block;
+  padding: 0.625rem 0.875rem;
+  font-size: 13px;
+  color: #367c2b;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.reconnect:hover {
+  text-decoration: underline;
+}

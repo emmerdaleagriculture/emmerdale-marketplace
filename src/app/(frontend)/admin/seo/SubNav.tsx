@@ -26,6 +26,12 @@ export function SubNav({ active }: { active: string }) {
             </li>
           );
         })}
+        <li className={styles.right}>
+          {/* Always available — re-grant Google scopes (e.g. to add Analytics). */}
+          <Link href="/admin/seo/auth/connect" className={styles.reconnect}>
+            Reconnect Google →
+          </Link>
+        </li>
       </ul>
     </nav>
   );
