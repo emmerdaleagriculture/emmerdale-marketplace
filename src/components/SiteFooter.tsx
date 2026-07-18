@@ -40,6 +40,11 @@ export function SiteFooter() {
             <Link href="/login">Log in</Link>
           </nav>
 
+          <nav className={styles.linkCol} aria-label="Services">
+            <div className={styles.colTitle}>Looking for</div>
+            <Link href="/hay-bales">Hay, straw &amp; haylage</Link>
+          </nav>
+
           <nav className={styles.linkCol} aria-label="Company">
             <div className={styles.colTitle}>Company</div>
             <a href={HPM_URL}>Hampshire Paddock Management</a>
