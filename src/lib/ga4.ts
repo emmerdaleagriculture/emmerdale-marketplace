@@ -29,6 +29,42 @@ export function isGa4Configured(): boolean {
   return Boolean(process.env.GA4_PROPERTY_ID);
 }
 
+/** The configured GA4 property id (for diagnostics). */
+export function configuredGa4PropertyId(): string {
+  return process.env.GA4_PROPERTY_ID ?? '';
+}
+
+/**
+ * List the GA4 properties the connected account can access, with their numeric
+ * ids — so the dashboard can show exactly what to set GA4_PROPERTY_ID to. Uses
+ * the Admin API (covered by the analytics.readonly scope).
+ */
+export async function listGa4Properties(): Promise<Array<{ id: string; name: string; account: string }>> {
+  const token = await getGoogleAccessToken();
+  const res = await fetch('https://analyticsadmin.googleapis.com/v1beta/accountSummaries?pageSize=200', {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`GA4 property list failed: ${res.status} ${await res.text()}`);
+  const json = (await res.json()) as {
+    accountSummaries?: Array<{
+      displayName?: string;
+      propertySummaries?: Array<{ property: string; displayName?: string }>;
+    }>;
+  };
+  const out: Array<{ id: string; name: string; account: string }> = [];
+  for (const acc of json.accountSummaries ?? []) {
+    for (const p of acc.propertySummaries ?? []) {
+      out.push({
+        id: p.property.replace('properties/', ''),
+        name: p.displayName ?? p.property,
+        account: acc.displayName ?? '',
+      });
+    }
+  }
+  return out;
+}
+
 export async function runGa4Report(args: Ga4ReportArgs): Promise<Ga4Row[]> {
   const propertyId = process.env.GA4_PROPERTY_ID;
   if (!propertyId) throw new Error('GA4_PROPERTY_ID not set');

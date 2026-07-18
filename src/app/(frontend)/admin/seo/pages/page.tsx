@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { gscQuery, isoDaysAgo, type GscRow } from '@/lib/gsc';
-import { fetchGa4PageMetrics, isGa4Configured } from '@/lib/ga4';
+import { fetchGa4PageMetrics, isGa4Configured, listGa4Properties } from '@/lib/ga4';
 import { seoGuard } from '../guard';
 import { SubNav } from '../SubNav';
 import styles from '../seo.module.css';
@@ -67,11 +67,21 @@ export default async function PagesPage() {
     errMsg = err instanceof Error ? err.message : String(err);
   }
 
+  // When GA4 isn't wired up yet, list the connected account's properties so the
+  // admin can see exactly what to set GA4_PROPERTY_ID to.
+  let ga4Properties: Array<{ id: string; name: string; account: string }> | null = null;
+  let ga4SetupErr: string | null = null;
   if (ga4Configured) {
     try {
       ga4Map = await fetchGa4PageMetrics(startDate, endDate);
     } catch (err) {
       ga4Err = err instanceof Error ? err.message : String(err);
+    }
+  } else {
+    try {
+      ga4Properties = await listGa4Properties();
+    } catch (err) {
+      ga4SetupErr = err instanceof Error ? err.message : String(err);
     }
   }
 
@@ -100,8 +110,39 @@ export default async function PagesPage() {
 
       {!ga4Configured && (
         <section className={styles.notice}>
-          <strong>Tip:</strong> set <code>GA4_PROPERTY_ID</code> in env to add GA4
-          sessions, engaged sessions, and average session duration columns.
+          <strong>Add GA4 columns</strong> (sessions, engaged sessions, avg duration).
+          {ga4Properties && ga4Properties.length > 0 ? (
+            <>
+              <p style={{ margin: '0.5rem 0' }}>
+                Set <code>GA4_PROPERTY_ID</code> in the environment to one of these
+                property ids, then redeploy:
+              </p>
+              <ul style={{ margin: '0 0 0 1.25rem', lineHeight: 1.8 }}>
+                {ga4Properties.map((p) => (
+                  <li key={p.id}>
+                    <code>{p.id}</code> — {p.name}
+                    {p.account ? ` (${p.account})` : ''}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : ga4Properties ? (
+            <p style={{ margin: '0.5rem 0 0' }}>
+              The connected Google account has no GA4 properties. Connect an account
+              with GA4 access, or add it as a Viewer in GA4 → Admin → Property Access.
+            </p>
+          ) : ga4SetupErr && /403|insufficient|scope|permission/i.test(ga4SetupErr) ? (
+            <p style={{ margin: '0.5rem 0 0' }}>
+              Your connection doesn’t include Analytics access yet —{' '}
+              <a href="/admin/seo/auth/connect">re-connect to Google</a> and grant it,
+              then reload this page to see your property ids.
+            </p>
+          ) : (
+            <p style={{ margin: '0.5rem 0 0' }}>
+              Set <code>GA4_PROPERTY_ID</code> (the numeric id from GA4 → Admin →
+              Property settings) in the environment, then redeploy.
+            </p>
+          )}
         </section>
       )}
 
