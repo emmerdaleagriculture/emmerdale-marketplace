@@ -286,6 +286,46 @@ export default async function PagesPage() {
           </table>
         </div>
       </section>
+
+      {showGa4 && (
+        <section className={styles.tableSection}>
+          <div className={styles.tableHeader}>
+            <h2>
+              Traffic <span className={styles.badge}>GA4 · {ga4Map.size} pages</span>
+            </h2>
+          </div>
+          <p className={styles.tableNote}>
+            All pages by sessions from Google Analytics ({startDate} → {endDate}) — this
+            counts every visit, not just search traffic, so it shows data even before the
+            site ranks in Google.
+          </p>
+          <div className={styles.tableScroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th className={styles.num}>Sessions</th>
+                  <th className={styles.num}>Engaged</th>
+                  <th className={styles.num}>Avg dur</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...ga4Map.entries()]
+                  .sort((a, b) => b[1].sessions - a[1].sessions)
+                  .slice(0, 100)
+                  .map(([path, g]) => (
+                    <tr key={path}>
+                      <td>{path}</td>
+                      <td className={styles.num}>{fmtNumber(g.sessions)}</td>
+                      <td className={styles.num}>{fmtNumber(g.engagedSessions)}</td>
+                      <td className={styles.num}>{fmtSeconds(g.avgSessionDuration)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
