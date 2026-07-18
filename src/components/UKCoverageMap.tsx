@@ -37,7 +37,7 @@ export function UKCoverageMap({
       viewBox={UK_MAP_VIEWBOX}
       className={className}
       role="img"
-      aria-label={`Map of England and Wales showing contractor coverage: ${covered} of ${UK_COUNTY_NAMES.length} counties covered`}
+      aria-label={`Map of Great Britain showing contractor coverage: ${covered} of ${UK_COUNTY_NAMES.length} counties covered`}
     >
       {UK_COUNTY_NAMES.map((name) => {
         const n = counts[name] ?? 0;
