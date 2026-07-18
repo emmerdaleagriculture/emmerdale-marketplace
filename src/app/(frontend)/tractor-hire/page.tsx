@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
+import { CountyLinks } from '@/components/verticals/CountyLinks';
 import { COMPANY_LEGAL_NAME } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
@@ -157,6 +158,8 @@ export default function TractorHirePage() {
           </div>
         </div>
       </section>
+
+      <CountyLinks vertical="tractor-hire" heading="Tractor hire across the country" />
 
       <SiteFooter />
     </div>

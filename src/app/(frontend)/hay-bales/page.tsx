@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
+import { CountyLinks } from '@/components/verticals/CountyLinks';
 import { COMPANY_LEGAL_NAME } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
@@ -156,6 +157,8 @@ export default function HayBalesPage() {
           </div>
         </div>
       </section>
+
+      <CountyLinks vertical="hay-bales" heading="Find hay & straw in your county" />
 
       <SiteFooter />
     </div>
