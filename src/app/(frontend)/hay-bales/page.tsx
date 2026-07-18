@@ -1,3 +1,4 @@
+import { jsonLd } from '@/lib/jsonld';
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -67,8 +68,8 @@ const faqJsonLd = {
 export default function HayBalesPage() {
   return (
     <div className={a.wrap}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(serviceJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }} />
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>

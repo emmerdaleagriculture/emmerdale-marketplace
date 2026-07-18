@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
 
 const SignupSchema = z.object({
@@ -33,6 +34,15 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
     return { error: parsed.error.issues[0]?.message ?? 'Please check the form.' };
   }
   const d = parsed.data;
+
+  // Admin addresses are granted admin purely by matching ADMIN_EMAILS, and email
+  // confirmation is off — so a self-service signup with an unclaimed admin email
+  // would hand out admin. Never let an admin email be registered this way. Mirror
+  // the "already registered" response so we don't reveal which addresses are
+  // privileged (no admin-email enumeration).
+  if (isAdminEmail(d.email)) {
+    return { error: 'That email is already registered. Try logging in instead.' };
+  }
 
   // Supabase verifies the Turnstile token when captcha protection is enabled
   // for the project; without a valid token it rejects the signup.

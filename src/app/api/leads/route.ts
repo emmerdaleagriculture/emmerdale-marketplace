@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'node:crypto';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { tidyJobHint } from '@/lib/leads';
 import type { Json } from '@/lib/database.types';
@@ -28,8 +29,12 @@ export async function POST(request: Request) {
   }
   const given =
     request.headers.get('x-webhook-secret') ??
-    request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-  if (given !== secret) {
+    request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ??
+    '';
+  // Constant-time comparison to avoid leaking the secret via response timing.
+  const a = Buffer.from(given);
+  const b = Buffer.from(secret);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
     return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 });
   }
 
