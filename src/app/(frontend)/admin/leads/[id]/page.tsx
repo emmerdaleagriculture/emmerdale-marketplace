@@ -23,6 +23,9 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
 
   const firstName = lead.full_name.split(/\s+/)[0];
   const cleanHint = tidyJobHint(lead.job_hint);
+  // County auto-resolved from the postcode when the enquiry was submitted.
+  const detectedCounty =
+    (lead.details as { county?: string | null } | null)?.county ?? null;
 
   return (
     <div>
@@ -46,6 +49,10 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
         <div>
           <div className={s.dLabel}>Postcode</div>
           <div className={s.dValue}>{lead.postcode ?? '—'}</div>
+        </div>
+        <div>
+          <div className={s.dLabel}>County (auto-detected)</div>
+          <div className={s.dValue}>{detectedCounty ?? '—'}</div>
         </div>
         <div>
           <div className={s.dLabel}>Wants</div>

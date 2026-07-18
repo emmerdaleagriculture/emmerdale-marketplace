@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
+import { resolveCounty } from '@/lib/postcodes';
 import type { FormState } from '@/lib/form';
 
 /** New-vertical enquiry categories → the label used in admin notifications. */
@@ -48,6 +49,11 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
   const d = parsed.data;
   const label = CATEGORIES[d.category];
 
+  // Resolve the county from the postcode now, so the admin sees the location and
+  // coverage on the lead and publishing to the contractor network is one click.
+  // Never blocks the enquiry — an unresolvable postcode just stores no county.
+  const geo = await resolveCounty(d.postcode);
+
   const admin = createServiceRoleClient();
   const { error } = await admin.from('leads').insert({
     source: d.category,
@@ -63,6 +69,9 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
       email: d.email || null,
       postcode: d.postcode,
       details: d.details,
+      county_id: geo.county_id ?? null,
+      county: geo.county_name ?? null,
+      town: geo.town ?? null,
     },
   });
   if (error) {
@@ -77,6 +86,7 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
       `Phone:     ${d.phone}\n` +
       `Email:     ${d.email || '—'}\n` +
       `Postcode:  ${d.postcode}\n` +
+      `County:    ${geo.county_name ?? '(not resolved — check the postcode)'}\n` +
       `Wants:     ${d.details}\n\n` +
       `Review in the leads queue: ${siteUrl}/admin/leads`,
   );
