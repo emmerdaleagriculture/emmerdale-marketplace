@@ -131,12 +131,28 @@ export default async function PagesPage() {
               The connected Google account has no GA4 properties. Connect an account
               with GA4 access, or add it as a Viewer in GA4 → Admin → Property Access.
             </p>
-          ) : ga4SetupErr && /403|insufficient|scope|permission/i.test(ga4SetupErr) ? (
-            <p style={{ margin: '0.5rem 0 0' }}>
-              Your connection doesn’t include Analytics access yet —{' '}
-              <a href="/admin/seo/auth/connect">re-connect to Google</a> and grant it,
-              then reload this page to see your property ids.
-            </p>
+          ) : ga4SetupErr ? (
+            <>
+              {/(has not been used|SERVICE_DISABLED|is disabled|not been used in project|accessNotConfigured)/i.test(ga4SetupErr) ? (
+                <p style={{ margin: '0.5rem 0' }}>
+                  Enable the <strong>Google Analytics Admin API</strong> and{' '}
+                  <strong>Google Analytics Data API</strong> in your Google Cloud
+                  project (APIs &amp; Services → Library), then reload. The link in the
+                  error below opens the exact page.
+                </p>
+              ) : /insufficient.*scope|ACCESS_TOKEN_SCOPE|invalid_scope/i.test(ga4SetupErr) ? (
+                <p style={{ margin: '0.5rem 0' }}>
+                  Your connection doesn’t include Analytics access —{' '}
+                  <a href="/admin/seo/auth/connect">re-connect to Google</a> and grant
+                  it, then reload.
+                </p>
+              ) : (
+                <p style={{ margin: '0.5rem 0' }}>Couldn’t list GA4 properties. Details:</p>
+              )}
+              <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 12, color: '#c63b1f', margin: 0 }}>
+                {ga4SetupErr}
+              </pre>
+            </>
           ) : (
             <p style={{ margin: '0.5rem 0 0' }}>
               Set <code>GA4_PROPERTY_ID</code> (the numeric id from GA4 → Admin →

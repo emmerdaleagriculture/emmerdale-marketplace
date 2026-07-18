@@ -32,7 +32,9 @@ const SCOPE = [
   'email',
 ].join(' ');
 
-let cachedToken: { value: string; expiresAt: number } | null = null;
+// Keyed on the refresh token so a re-connect (new refresh token, new scopes)
+// always mints a fresh access token instead of returning a stale-scope one.
+let cachedToken: { value: string; expiresAt: number; forRefresh: string } | null = null;
 
 export type GscRow = {
   keys?: string[];
@@ -125,7 +127,9 @@ export async function fetchUserEmail(accessToken: string): Promise<string | null
 
 async function getAccessTokenFromRefresh(refreshToken: string): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  if (cachedToken && cachedToken.expiresAt - 60 > now) return cachedToken.value;
+  if (cachedToken && cachedToken.forRefresh === refreshToken && cachedToken.expiresAt - 60 > now) {
+    return cachedToken.value;
+  }
 
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
@@ -142,7 +146,7 @@ async function getAccessTokenFromRefresh(refreshToken: string): Promise<string> 
     throw new Error(`OAuth refresh failed: ${res.status} ${await res.text()}`);
   }
   const json = (await res.json()) as { access_token: string; expires_in: number };
-  cachedToken = { value: json.access_token, expiresAt: now + json.expires_in };
+  cachedToken = { value: json.access_token, expiresAt: now + json.expires_in, forRefresh: refreshToken };
   return json.access_token;
 }
 
