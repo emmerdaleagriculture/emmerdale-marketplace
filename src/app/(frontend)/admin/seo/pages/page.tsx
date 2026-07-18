@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { gscQuery, isoDaysAgo, type GscRow } from '@/lib/gsc';
-import { fetchGa4PageMetrics, isGa4Configured, listGa4Properties } from '@/lib/ga4';
+import { fetchGa4PageMetrics, isGa4Configured, listGa4Properties, configuredGa4PropertyId } from '@/lib/ga4';
 import { seoGuard } from '../guard';
 import { SubNav } from '../SubNav';
 import styles from '../seo.module.css';
@@ -67,15 +67,24 @@ export default async function PagesPage() {
     errMsg = err instanceof Error ? err.message : String(err);
   }
 
-  // When GA4 isn't wired up yet, list the connected account's properties so the
-  // admin can see exactly what to set GA4_PROPERTY_ID to.
+  // List the connected account's properties for cross-check: when GA4 isn't
+  // wired up yet, and also when it IS configured but returns nothing/errors —
+  // so a wrong or empty property id is obvious.
   let ga4Properties: Array<{ id: string; name: string; account: string }> | null = null;
   let ga4SetupErr: string | null = null;
+  const ga4PropId = configuredGa4PropertyId();
   if (ga4Configured) {
     try {
       ga4Map = await fetchGa4PageMetrics(startDate, endDate);
     } catch (err) {
       ga4Err = err instanceof Error ? err.message : String(err);
+    }
+    if (ga4Err || ga4Map.size === 0) {
+      try {
+        ga4Properties = await listGa4Properties();
+      } catch (err) {
+        ga4SetupErr = err instanceof Error ? err.message : String(err);
+      }
     }
   } else {
     try {
@@ -84,10 +93,22 @@ export default async function PagesPage() {
       ga4SetupErr = err instanceof Error ? err.message : String(err);
     }
   }
+  const showGa4 = ga4Map.size > 0;
+  const propertyList =
+    ga4Properties && ga4Properties.length > 0 ? (
+      <ul style={{ margin: '0.5rem 0 0 1.25rem', lineHeight: 1.8 }}>
+        {ga4Properties.map((p) => (
+          <li key={p.id}>
+            <code>{p.id}</code> — {p.name}
+            {p.account ? ` (${p.account})` : ''}
+            {p.id === ga4PropId ? ' ← currently configured' : ''}
+          </li>
+        ))}
+      </ul>
+    ) : null;
 
   const prevByUrl = new Map(prev.map((r) => [r.keys?.[0] ?? '', r]));
   const sorted = [...rows].sort((a, b) => b.clicks - a.clicks);
-  const showGa4 = ga4Map.size > 0;
 
   return (
     <main className={styles.page}>
@@ -167,11 +188,26 @@ export default async function PagesPage() {
           <h2>GA4 join failed</h2>
           <pre>{ga4Err}</pre>
           <p>
-            Common causes: the connected Google account can&apos;t access GA4 property{' '}
-            <code>{process.env.GA4_PROPERTY_ID}</code>, or the token predates the
-            Analytics scope — <a href="/admin/seo/auth/connect">re-connect</a> and grant
-            Analytics access, or add the account as a Viewer in GA4 admin.
+            Configured <code>GA4_PROPERTY_ID</code> = <code>{ga4PropId || '(empty)'}</code>.
+            Common causes: the property id is wrong, the account can’t access it, or the
+            Analytics Data API isn’t enabled. Your accessible properties:
           </p>
+          {propertyList ?? <p style={{ margin: 0 }}>Couldn’t list properties: {ga4SetupErr}</p>}
+        </section>
+      )}
+
+      {ga4Configured && !ga4Err && !showGa4 && (
+        <section className={styles.notice}>
+          <strong>GA4 is connected but returned no page data</strong> for {startDate} → {endDate}.
+          Configured <code>GA4_PROPERTY_ID</code> = <code>{ga4PropId || '(empty)'}</code>.
+          Make sure that’s the property collecting this site’s traffic (the one behind the{' '}
+          <code>G-</code> tag on the site), not an empty or different property. Your accessible
+          properties:
+          {propertyList ?? (
+            <p style={{ margin: '0.5rem 0 0' }}>
+              {ga4SetupErr ? `Couldn’t list properties: ${ga4SetupErr}` : 'No properties found.'}
+            </p>
+          )}
         </section>
       )}
 
