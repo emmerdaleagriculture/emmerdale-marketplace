@@ -16,10 +16,13 @@ export function CountyVerticalPage({
   vertical,
   county,
   siblings,
+  coverage,
 }: {
   vertical: VerticalKey;
   county: CountyRef;
   siblings: CountyRef[];
+  /** Approved contractors covering this county — real per-county signal. */
+  coverage: number;
 }) {
   const v = VERTICALS[vertical];
   const name = county.name;
@@ -64,6 +67,24 @@ export function CountyVerticalPage({
             {v.h1Main(name)} <em>{v.h1Em}</em>
           </h1>
           <p className={a.sub}>{v.intro(name)}</p>
+
+          <p className={a.sub} style={{ marginTop: -6 }}>
+            {coverage > 0 ? (
+              <>
+                <strong>
+                  {coverage} {coverage === 1 ? 'contractor' : 'contractors'}
+                </strong>{' '}
+                in our network already cover {name}, in the {county.region} — send your
+                enquiry and it goes straight to them, first come, first served.
+              </>
+            ) : (
+              <>
+                We’re expanding our network across the {county.region}. Send your
+                enquiry and we’ll match you with someone as coverage in {name} grows —
+                there’s no obligation.
+              </>
+            )}
+          </p>
 
           <div className={a.groupTitle}>Send an enquiry</div>
           <EnquiryForm
