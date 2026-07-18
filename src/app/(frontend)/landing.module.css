@@ -287,6 +287,9 @@
 .coverageText {
   flex: 1 1 340px;
   max-width: 520px;
+  /* Ledes are centered (.sectionLede); centre the CTA button to match, so it
+     isn't left-aligned — most noticeable once the columns stack on mobile. */
+  text-align: center;
 }
 .coverageText a {
   margin-top: 8px;
