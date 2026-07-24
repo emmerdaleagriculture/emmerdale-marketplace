@@ -10,6 +10,25 @@
  */
 const GREETING = /how can we help|save time and money|please select|which service|what (do|are) you|tell us/i;
 
+/**
+ * Service to pre-select when a lead is published as a job, keyed by lead
+ * source (the enquiry category). Resolved against the services list by name
+ * so a reseed with different ids can't mis-tag jobs.
+ */
+const SOURCE_SERVICE: Record<string, string> = {
+  hay: 'Hay, straw & haylage',
+  'tractor-hire': 'Tractor hire (events)',
+};
+
+export function leadServiceIds(
+  source: string | null | undefined,
+  services: { id: number; name: string }[],
+): number[] {
+  const name = source ? SOURCE_SERVICE[source] : undefined;
+  const id = services.find((s) => s.name === name)?.id;
+  return id ? [id] : [];
+}
+
 function tidy(s: string): string {
   return s.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
 }

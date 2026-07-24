@@ -16,6 +16,8 @@ export type JobFormDefaults = {
   postcode?: string;
   title?: string;
   description?: string;
+  service_ids?: number[];
+  county_id?: number;
 };
 
 export function NewJobForm({
@@ -76,7 +78,7 @@ export function NewJobForm({
       </label>
 
       <div className={a.groupTitle}>Services needed</div>
-      <ServicePicker services={services} />
+      <ServicePicker services={services} selected={defaults.service_ids} />
 
       <div className={a.groupTitle}>Location &amp; timing</div>
       <div className={a.row2}>
@@ -87,7 +89,7 @@ export function NewJobForm({
         </label>
         <label className={f.field}>
           <span className={f.label}>County (override — leave blank to auto-detect)</span>
-          <select className={f.input} name="county_override" defaultValue="">
+          <select className={f.input} name="county_override" defaultValue={defaults.county_id ?? ''}>
             <option value="">Auto-detect from postcode</option>
             {Array.from(regions.entries()).map(([region, list]) => (
               <optgroup key={region} label={region}>

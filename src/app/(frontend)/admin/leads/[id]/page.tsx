@@ -5,7 +5,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { NewJobForm } from '../../jobs/new/NewJobForm';
 import { dismissLeadAction } from '../actions';
 import { getCounties, getServices } from '@/lib/reference';
-import { tidyJobHint } from '@/lib/leads';
+import { tidyJobHint, leadServiceIds } from '@/lib/leads';
 import { formatDateTime } from '@/lib/time';
 import s from '../../admin.module.css';
 
@@ -24,8 +24,9 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
   const firstName = lead.full_name.split(/\s+/)[0];
   const cleanHint = tidyJobHint(lead.job_hint);
   // County auto-resolved from the postcode when the enquiry was submitted.
-  const detectedCounty =
-    (lead.details as { county?: string | null } | null)?.county ?? null;
+  const details = lead.details as { county?: string | null; county_id?: number | null } | null;
+  const detectedCounty = details?.county ?? null;
+  const detectedCountyId = details?.county_id ?? undefined;
 
   return (
     <div>
@@ -85,6 +86,8 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
           customer_email: lead.email ?? '',
           postcode: lead.postcode ?? '',
           description: cleanHint ?? '',
+          service_ids: leadServiceIds(lead.source, services),
+          county_id: detectedCountyId,
         }}
       />
 

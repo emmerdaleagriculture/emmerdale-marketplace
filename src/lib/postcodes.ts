@@ -33,6 +33,18 @@ export function normalisePostcode(raw: string): { full: string | null; outcode: 
 type SupabaseClient = ReturnType<typeof createServiceRoleClient>;
 
 /**
+ * postcodes.io fetch with a timeout and one retry — a transient blip must not
+ * force a manual county pick.
+ */
+async function fetchPostcodesIo(url: string): Promise<Response> {
+  try {
+    return await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(4000) });
+  } catch {
+    return await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(4000) });
+  }
+}
+
+/**
  * Match candidate ONS names against our counties. admin_county names are
  * matched on counties.name; admin_district names go through
  * district_county_map. Returns the distinct county ids found.
@@ -99,9 +111,8 @@ export async function resolveCounty(postcode: string): Promise<CountyResolution>
     } | null = null;
 
     try {
-      const res = await fetch(
+      const res = await fetchPostcodesIo(
         `https://api.postcodes.io/postcodes/${encodeURIComponent(norm.full)}`,
-        { cache: 'no-store' },
       );
       if (res.ok) {
         const json = await res.json();
@@ -145,9 +156,8 @@ export async function resolveCounty(postcode: string): Promise<CountyResolution>
   //    (mistyped inward code, terminated postcode).
   if (norm.outcode) {
     try {
-      const res = await fetch(
+      const res = await fetchPostcodesIo(
         `https://api.postcodes.io/outcodes/${encodeURIComponent(norm.outcode)}`,
-        { cache: 'no-store' },
       );
       if (res.ok) {
         const json = await res.json();

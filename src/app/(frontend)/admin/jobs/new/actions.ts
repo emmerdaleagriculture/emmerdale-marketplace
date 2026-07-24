@@ -51,11 +51,22 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
   }
   const d = parsed.data;
 
+  const admin = createServiceRoleClient();
+  const leadId = String(formData.get('lead_id') || '');
+
   // Resolve the county (postcodes.io → district map). Manual override wins.
   const r = await resolveCounty(d.postcode);
   const override = typeof d.county_override === 'number' ? d.county_override : undefined;
-  const countyId = override ?? r.county_id;
+  let countyId = override ?? r.county_id;
   const outcode = r.outcode;
+
+  // Publishing a lead must not be blocked by a live-lookup blip: the county
+  // was already resolved and stored on the lead at enquiry time — reuse it.
+  if (!countyId && leadId) {
+    const { data: lead } = await admin.from('leads').select('details').eq('id', leadId).maybeSingle();
+    const stored = (lead?.details as { county_id?: number | null } | null)?.county_id;
+    if (stored) countyId = stored;
+  }
 
   if (!countyId) {
     return { error: r.error ?? 'Could not resolve a county — pick one manually below.' };
@@ -76,7 +87,6 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
   }
   const isExclusive = d.exclusive_hours > 0;
 
-  const admin = createServiceRoleClient();
   const { data: job, error } = await admin
     .from('jobs')
     .insert({
@@ -118,8 +128,7 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
     await admin.rpc('notify_job_open', { p_job_id: job.id });
   }
 
-  // Published from a Facebook lead? Mark it converted and link the job.
-  const leadId = String(formData.get('lead_id') || '');
+  // Published from a lead? Mark it converted and link the job.
   if (leadId) {
     await admin
       .from('leads')
