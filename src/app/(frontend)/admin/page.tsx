@@ -10,12 +10,10 @@ type Metrics = {
   total_jobs: number;
   open_jobs: number;
   claimed_jobs: number;
-  expired_jobs: number;
   withdrawn_jobs: number;
   contractors_total: number;
   contractors_approved: number;
   contractors_pending: number;
-  fill_rate: number | null;
 };
 
 function Metric({ value, label, hint }: { value: string; label: string; hint?: string }) {
@@ -33,7 +31,6 @@ export default async function AdminDashboard() {
   const { data } = await admin.rpc('admin_metrics');
   const m = (data ?? {}) as Metrics;
 
-  const pct = (v: number | null) => (v === null ? '—' : `${Math.round(v * 100)}%`);
   const num = (v: number | null | undefined) => (v === null || v === undefined ? '—' : String(v));
 
   return (
@@ -46,8 +43,7 @@ export default async function AdminDashboard() {
         <Metric value={num(m.total_jobs)} label="Total jobs" />
         <Metric value={num(m.open_jobs)} label="Open now" />
         <Metric value={num(m.claimed_jobs)} label="Claimed" />
-        <Metric value={num(m.expired_jobs)} label="Expired (unclaimed)" />
-        <Metric value={pct(m.fill_rate)} label="Fill rate" hint="claimed ÷ (claimed + expired)" />
+        <Metric value={num(m.withdrawn_jobs)} label="Withdrawn" />
       </div>
 
       <div className={s.sectionLabel}>Contractors</div>

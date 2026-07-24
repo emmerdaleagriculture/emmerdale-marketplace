@@ -18,6 +18,15 @@
   border-color: var(--jd-green);
   box-shadow: 0 6px 20px rgba(23, 51, 13, 0.08);
 }
+/* Activity-feed card: not claimable, so no link affordance. */
+.cardClaimed {
+  background: var(--cream);
+  opacity: 0.85;
+}
+.cardClaimed:hover {
+  border-color: var(--rule);
+  box-shadow: none;
+}
 .cardTop {
   display: flex;
   justify-content: space-between;
@@ -36,9 +45,6 @@
   text-transform: uppercase;
   color: var(--jd-green);
   white-space: nowrap;
-}
-.closesSoon {
-  color: var(--error);
 }
 .meta {
   font-size: 14px;
@@ -66,10 +72,6 @@
   border-top: 1px solid var(--rule);
   font-size: 13px;
   color: var(--ink-3);
-}
-.yourBid {
-  color: var(--jd-green-dark);
-  font-weight: 600;
 }
 .badge {
   display: inline-block;

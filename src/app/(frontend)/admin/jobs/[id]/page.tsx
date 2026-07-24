@@ -2,10 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { extendCloseAction, withdrawJobAction, relistJobAction } from '../actions';
-import { closesIn, formatDateTime } from '@/lib/time';
+import { withdrawJobAction, relistJobAction } from '../actions';
+import { formatDateTime } from '@/lib/time';
 import s from '../../admin.module.css';
-import f from '@/components/forms/forms.module.css';
 
 export const metadata: Metadata = { title: 'Job — Admin' };
 
@@ -13,7 +12,6 @@ const pillFor: Record<string, string> = {
   open: s.pillApproved,
   exclusive: s.pillPending,
   claimed: s.pillApproved,
-  expired: s.pillSuspended,
   withdrawn: s.pillSuspended,
   completed: s.pillApproved,
 };
@@ -38,7 +36,6 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
 
   const serviceMap = new Map((allServices ?? []).map((sv) => [sv.id, sv.name]));
   const serviceNames = (job.service_ids ?? []).map((sid) => serviceMap.get(sid)).filter(Boolean);
-  const isOpen = job.status === 'open';
   const county = (job.counties as { name: string } | null)?.name;
 
   return (
@@ -52,8 +49,7 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
       </div>
       <p className={s.sub}>
         {county} · {job.town ? `${job.town}, ` : ''}
-        {job.postcode_district} ·{' '}
-        {isOpen ? `available until ${closesIn(job.bidding_closes_at)}` : formatDateTime(job.bidding_closes_at)}
+        {job.postcode_district} · posted {formatDateTime(job.created_at)}
       </p>
 
       <div className={s.detailGrid}>
@@ -126,19 +122,7 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
 
       <div className={s.sectionLabel}>Actions</div>
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-        {isOpen && (
-          <form action={extendCloseAction} className={f.field} style={{ marginBottom: 0 }}>
-            <span className={f.label}>Extend availability</span>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input type="hidden" name="job_id" value={job.id} />
-              <input className={f.input} type="datetime-local" name="closes_at" required />
-              <button type="submit" className={f.btnGhost}>
-                Extend
-              </button>
-            </div>
-          </form>
-        )}
-        {['exclusive', 'open', 'expired'].includes(job.status) && (
+        {['exclusive', 'open'].includes(job.status) && (
           <form action={withdrawJobAction}>
             <input type="hidden" name="job_id" value={job.id} />
             <button type="submit" className={s.btnSuspend}>
@@ -146,11 +130,11 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
             </button>
           </form>
         )}
-        {['expired', 'withdrawn'].includes(job.status) && (
+        {job.status === 'withdrawn' && (
           <form action={relistJobAction}>
             <input type="hidden" name="job_id" value={job.id} />
             <button type="submit" className={s.btnApprove}>
-              Relist (24h)
+              Relist
             </button>
           </form>
         )}

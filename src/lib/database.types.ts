@@ -278,7 +278,6 @@ export type Database = {
       }
       jobs: {
         Row: {
-          bidding_closes_at: string
           bidding_opens_at: string
           budget_hint: string | null
           claimed_at: string | null
@@ -303,7 +302,6 @@ export type Database = {
           town: string | null
         }
         Insert: {
-          bidding_closes_at: string
           bidding_opens_at: string
           budget_hint?: string | null
           claimed_at?: string | null
@@ -328,7 +326,6 @@ export type Database = {
           town?: string | null
         }
         Update: {
-          bidding_closes_at?: string
           bidding_opens_at?: string
           budget_hint?: string | null
           claimed_at?: string | null
@@ -513,7 +510,6 @@ export type Database = {
     Views: {
       my_claimed_jobs: {
         Row: {
-          bidding_closes_at: string | null
           budget_hint: string | null
           claimed_at: string | null
           county: string | null
@@ -539,15 +535,36 @@ export type Database = {
       }
       public_jobs: {
         Row: {
-          bidding_closes_at: string | null
           budget_hint: string | null
           county: string | null
           county_id: number | null
+          created_at: string | null
           customer_first_name: string | null
           description: string | null
           id: string | null
           is_exclusive: boolean | null
           paid_access: boolean | null
+          postcode_district: string | null
+          service_ids: number[] | null
+          title: string | null
+          town: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_county_id_fkey"
+            columns: ["county_id"]
+            isOneToOne: false
+            referencedRelation: "counties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recently_claimed_jobs: {
+        Row: {
+          claimed_at: string | null
+          county: string | null
+          county_id: number | null
+          id: string | null
           postcode_district: string | null
           service_ids: number[] | null
           title: string | null
@@ -574,7 +591,6 @@ export type Database = {
           customer_phone: string
         }[]
       }
-      close_due_jobs: { Args: never; Returns: undefined }
       get_job_contact: {
         Args: { p_job_id: string }
         Returns: {
@@ -585,7 +601,6 @@ export type Database = {
       }
       is_active_subscriber: { Args: { p_contractor: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
-      notify_closing_soon: { Args: never; Returns: undefined }
       notify_job_open: { Args: { p_job_id: string }; Returns: undefined }
       notify_paid_members: { Args: { p_job_id: string }; Returns: undefined }
       open_due_jobs: { Args: never; Returns: undefined }

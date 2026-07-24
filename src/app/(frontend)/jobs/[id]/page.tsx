@@ -6,7 +6,6 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { ClaimPanel } from './ClaimPanel';
 import { createClient } from '@/lib/supabase/server';
 import { getServices } from '@/lib/reference';
-import { closesIn } from '@/lib/time';
 import a from '../../auth.module.css';
 import j from '../jobs.module.css';
 
@@ -64,13 +63,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             {job.customer_first_name ? `For ${job.customer_first_name} · ` : ''}
             {job.town ? `${job.town}, ` : ''}
             {job.postcode_district}
-            {isExclusive
-              ? ' · paid early access'
-              : claimable
-                ? ` · available until ${closesIn(job.bidding_closes_at!)}`
-                : claimed
-                  ? ' · claimed by you'
-                  : ''}
+            {isExclusive ? ' · paid early access' : claimed ? ' · claimed by you' : ''}
           </p>
 
           <p style={{ lineHeight: 1.7, color: 'var(--ink)' }}>{job.description}</p>

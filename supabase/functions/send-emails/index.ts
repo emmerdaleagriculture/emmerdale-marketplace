@@ -1,6 +1,6 @@
 // Edge Function: drain the pending_emails queue via Resend (spec §4, §8).
 //
-// State transitions (open_due_jobs / close_due_jobs / admin actions) only ever
+// State transitions (open_due_jobs / admin actions) only ever
 // INSERT into pending_emails — never make network calls. This function, run on a
 // schedule (pg_cron → pg_net), does the sending, so the DB stays fast and
 // transactional.
@@ -23,14 +23,13 @@ type PendingEmail = {
   attempts: number;
 };
 
-function poundsFromPence(p: unknown): string {
-  const n = typeof p === 'number' ? p : Number(p ?? 0);
-  return `£${(n / 100).toLocaleString('en-GB')}`;
-}
+const SITE_URL = (Deno.env.get('SITE_URL') ?? 'https://emmerdaleagriculture.com').replace(/\/$/, '');
 
 function render(kind: string, p: Record<string, unknown>): { subject: string; text: string } {
   const title = String(p.title ?? 'a job');
   const where = [p.town, p.postcode_district].filter(Boolean).join(', ');
+  const jobLink = p.job_id ? `${SITE_URL}/jobs/${p.job_id}` : `${SITE_URL}/jobs`;
+  const signIn = `Sign in to view it: ${jobLink}`;
   switch (kind) {
     case 'new_job':
       return {
@@ -38,52 +37,16 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `A new job has been posted in one of your counties.\n\n` +
           `${title}\n${where}\n\n` +
-          `Log in to see the details and place a bid before bidding closes.`,
-      };
-    case 'bid_won': {
-      const extra =
-        typeof p.paid_reveal_count === 'number' && p.paid_reveal_count > 0
-          ? `\n\nNote: ${p.paid_reveal_count} paid members have also had access to this enquiry.`
-          : '';
-      return {
-        subject: `You won: ${title}`,
-        text:
-          `Congratulations — you won "${title}" with a bid of ${poundsFromPence(p.amount_pence)}.\n\n` +
-          `Customer contact:\n` +
-          `  Name:  ${p.customer_name ?? ''}\n` +
-          `  Phone: ${p.customer_phone ?? ''}\n` +
-          (p.customer_email ? `  Email: ${p.customer_email}\n` : '') +
-          `\nThese details are for this enquiry only.` +
-          extra,
-      };
-    }
-    case 'bid_lost':
-      return {
-        subject: `Not selected this time: ${title}`,
-        text:
-          `Thanks for bidding on "${title}". It’s been awarded to another contractor this time.\n\n` +
-          `Log in to see other open jobs in your counties.`,
-      };
-    case 'closing_soon':
-      return {
-        subject: `Closing soon: ${title}`,
-        text:
-          `Bidding on "${title}"${where ? ` (${where})` : ''} closes within the next ` +
-          `few hours and you haven’t bid yet. Log in to put your price in before it closes.`,
-      };
-    case 'job_expired':
-      return {
-        subject: `No bids: ${title}`,
-        text: `The job "${title}" closed with no bids. You can relist it or handle it internally.`,
+          `First come, first served — the first contractor to claim it gets the ` +
+          `customer's details.\n\n${signIn}`,
       };
     case 'exclusive_new':
       return {
         subject: `Exclusive access (12h head start): ${title}`,
         text:
           `As a paid member you get first access to this new job${where ? ` in ${where}` : ''}, ` +
-          `12 hours before it opens to bidding.\n\n` +
-          `${title}\n\nLog in to see the full details and the customer’s contact — no ` +
-          `bidding needed. If you take it, mark it booked so we can close it.`,
+          `before it opens to the rest of the network.\n\n` +
+          `${title}\n\nThe first claim wins.\n\n${signIn}`,
       };
     case 'new_lead':
       return {
@@ -92,21 +55,22 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `A new lead has arrived in the approval queue.\n\n` +
           `Name: ${p.full_name ?? '?'}\n` +
           (p.job_hint ? `Wants: ${p.job_hint}\n` : '') +
-          `\nReview it at /admin/leads — publish it as a job or dismiss it.`,
+          `\nReview it at ${SITE_URL}/admin/leads — publish it as a job or dismiss it.`,
       };
     case 'booked_flag':
       return {
         subject: `Booked-in-window: ${title}`,
         text:
           `A paid member has marked "${title}" as booked during the exclusive window. ` +
-          `Review it in the admin panel and withdraw the job to confirm.`,
+          `Review it at ${SITE_URL}/admin/jobs and withdraw the job to confirm.`,
       };
     case 'application_approved':
       return {
         subject: `You’re approved — welcome to the network`,
         text:
           `Your application has been approved. You’ll now be emailed when a job is ` +
-          `posted in one of your counties. Log in to see the job board.`,
+          `posted in one of your counties.\n\n` +
+          `Sign in to see the job board: ${SITE_URL}/jobs`,
       };
     default:
       return { subject: 'Emmerdale Agriculture', text: 'You have a notification.' };

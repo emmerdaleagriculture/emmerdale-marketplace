@@ -5,7 +5,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { createClient } from '@/lib/supabase/server';
 import { getServices } from '@/lib/reference';
-import { closesIn } from '@/lib/time';
+import { timeAgo } from '@/lib/time';
 import a from '../auth.module.css';
 import j from './jobs.module.css';
 
@@ -30,12 +30,22 @@ export default async function JobsBoardPage() {
 
   const gated = contractor.status !== 'approved';
 
-  const [{ data: openJobs }, { data: myJobs }] = gated
-    ? [{ data: [] as never[] }, { data: [] as never[] }]
+  const [{ data: openJobs }, { data: myJobs }, { data: recentClaims }] = gated
+    ? [{ data: [] as never[] }, { data: [] as never[] }, { data: [] as never[] }]
     : await Promise.all([
-        supabase.from('public_jobs').select('*').order('bidding_closes_at', { ascending: true }),
+        supabase.from('public_jobs').select('*').order('created_at', { ascending: false }),
         supabase.from('my_claimed_jobs').select('*').order('claimed_at', { ascending: false }),
+        supabase
+          .from('recently_claimed_jobs')
+          .select('*')
+          .order('claimed_at', { ascending: false })
+          .limit(12),
       ]);
+
+  // The activity feed is network-wide; a contractor's own claims already appear
+  // under "Your jobs".
+  const myIds = new Set((myJobs ?? []).map((job) => job.id));
+  const claimedFeed = (recentClaims ?? []).filter((job) => !myIds.has(job.id));
 
   return (
     <div className={a.wrap}>
@@ -65,38 +75,35 @@ export default async function JobsBoardPage() {
                 </div>
               ) : (
                 <div className={j.grid}>
-                  {(openJobs ?? []).map((job) => {
-                    const soon = new Date(job.bidding_closes_at!).getTime() - Date.now() < 4 * 3600e3;
-                    return (
-                      <Link key={job.id} href={`/jobs/${job.id}`} className={j.card}>
-                        <div className={j.cardTop}>
-                          <span className={j.cardTitle}>{job.title}</span>
-                          <span className={`${j.closes} ${soon ? j.closesSoon : ''}`}>
-                            {job.is_exclusive ? 'early access' : closesIn(job.bidding_closes_at!)}
+                  {(openJobs ?? []).map((job) => (
+                    <Link key={job.id} href={`/jobs/${job.id}`} className={j.card}>
+                      <div className={j.cardTop}>
+                        <span className={j.cardTitle}>{job.title}</span>
+                        <span className={j.closes}>
+                          {job.is_exclusive ? 'early access' : `posted ${timeAgo(job.created_at!)}`}
+                        </span>
+                      </div>
+                      <div className={j.meta}>
+                        {job.customer_first_name ? `For ${job.customer_first_name} · ` : ''}
+                        {job.town ? `${job.town}, ` : ''}
+                        {job.postcode_district} · {job.county}
+                      </div>
+                      {job.is_exclusive ? (
+                        <span className={`${j.badge} ${j.badgeExcl}`}>Paid early access · claim first</span>
+                      ) : null}
+                      <div className={j.tags}>
+                        {(job.service_ids ?? []).slice(0, 4).map((sid) => (
+                          <span key={sid} className={j.tag}>
+                            {serviceName.get(sid) ?? sid}
                           </span>
-                        </div>
-                        <div className={j.meta}>
-                          {job.customer_first_name ? `For ${job.customer_first_name} · ` : ''}
-                          {job.town ? `${job.town}, ` : ''}
-                          {job.postcode_district} · {job.county}
-                        </div>
-                        {job.is_exclusive ? (
-                          <span className={`${j.badge} ${j.badgeExcl}`}>Paid early access · claim first</span>
-                        ) : null}
-                        <div className={j.tags}>
-                          {(job.service_ids ?? []).slice(0, 4).map((sid) => (
-                            <span key={sid} className={j.tag}>
-                              {serviceName.get(sid) ?? sid}
-                            </span>
-                          ))}
-                        </div>
-                        {job.budget_hint && <div className={j.meta}>Budget: {job.budget_hint}</div>}
-                        <div className={j.cardFoot}>
-                          <span>{job.is_exclusive ? 'Claim before the free tier' : 'First come, first served'}</span>
-                        </div>
-                      </Link>
-                    );
-                  })}
+                        ))}
+                      </div>
+                      {job.budget_hint && <div className={j.meta}>Budget: {job.budget_hint}</div>}
+                      <div className={j.cardFoot}>
+                        <span>{job.is_exclusive ? 'Claim before the free tier' : 'First come, first served'}</span>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               )}
 
@@ -118,6 +125,40 @@ export default async function JobsBoardPage() {
                           <span>Contact details available</span>
                         </div>
                       </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {claimedFeed.length > 0 && (
+                <>
+                  <div className={a.groupTitle}>Recently claimed on the network</div>
+                  <p className={a.sub}>
+                    Jobs other contractors have already taken — sign in often, the
+                    fastest claim wins.
+                  </p>
+                  <div className={j.grid}>
+                    {claimedFeed.map((job) => (
+                      <div key={job.id} className={`${j.card} ${j.cardClaimed}`}>
+                        <div className={j.cardTop}>
+                          <span className={j.cardTitle}>{job.title}</span>
+                          <span className={j.closes}>claimed {timeAgo(job.claimed_at!)}</span>
+                        </div>
+                        <div className={j.meta}>
+                          {job.town ? `${job.town}, ` : ''}
+                          {job.postcode_district} · {job.county}
+                        </div>
+                        <div className={j.tags}>
+                          {(job.service_ids ?? []).slice(0, 4).map((sid) => (
+                            <span key={sid} className={j.tag}>
+                              {serviceName.get(sid) ?? sid}
+                            </span>
+                          ))}
+                        </div>
+                        <div className={j.cardFoot}>
+                          <span>Taken by another contractor</span>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </>
