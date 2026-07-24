@@ -57,8 +57,7 @@ export default function TermsPage() {
             Jobs are offered on a first-come, first-served basis. The first
             registered contractor to claim a job is allocated it and receives the
             customer’s details. Claiming a job is a commitment to carry out the work,
-            and you agree the price directly with the customer. Paid members may
-            claim a job during its early-access window before it opens to everyone.
+            and you agree the price directly with the customer.
           </p>
 
           <h2>No guarantee of work</h2>

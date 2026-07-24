@@ -39,7 +39,6 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
   const serviceName = new Map(services.map((s) => [s.id, s.name]));
   const claimable = !!pub;
-  const isExclusive = !!pub?.is_exclusive;
   const claimed = !!mine;
 
   // The claimant sees the customer's contact (get_job_contact gates on it).
@@ -63,7 +62,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             {job.customer_first_name ? `For ${job.customer_first_name} · ` : ''}
             {job.town ? `${job.town}, ` : ''}
             {job.postcode_district}
-            {isExclusive ? ' · paid early access' : claimed ? ' · claimed by you' : ''}
+            {claimed ? ' · claimed by you' : ''}
           </p>
 
           <p style={{ lineHeight: 1.7, color: 'var(--ink)' }}>{job.description}</p>
@@ -82,7 +81,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           )}
 
           {claimable ? (
-            <ClaimPanel jobId={id} isExclusive={isExclusive} />
+            <ClaimPanel jobId={id} />
           ) : claimed ? (
             <>
               <div className={`${j.outcome} ${j.won}`}>

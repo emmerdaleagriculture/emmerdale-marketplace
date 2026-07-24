@@ -40,8 +40,10 @@ const JobSchema = z.object({
   postcode: z.string().trim().min(3, 'Postcode is required.'),
   budget_hint: z.string().trim().optional().or(z.literal('')),
   county_override: z.coerce.number().int().optional().or(z.literal('')),
-  // Paid-tier head-start window in hours (default 12; 0 = open to everyone now).
-  exclusive_hours: z.coerce.number().int().min(0).max(72).default(12),
+  // Paid-tier head-start window in hours. Defaults to 0 (open to everyone now)
+  // while the paid tier is shelved — with no subscribers, a head start would
+  // just hide the job from the whole network for that window.
+  exclusive_hours: z.coerce.number().int().min(0).max(72).default(0),
 });
 
 export async function createJobAction(_prev: JobFormState, formData: FormData): Promise<JobFormState> {
@@ -79,7 +81,7 @@ export async function createJobAction(_prev: JobFormState, formData: FormData): 
     postcode: formData.get('postcode'),
     budget_hint: formData.get('budget_hint'),
     county_override: formData.get('county_override') || '',
-    exclusive_hours: formData.get('exclusive_hours') ?? 12,
+    exclusive_hours: formData.get('exclusive_hours') ?? 0,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Please check the form.', values };

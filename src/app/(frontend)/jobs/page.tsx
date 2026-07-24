@@ -79,18 +79,13 @@ export default async function JobsBoardPage() {
                     <Link key={job.id} href={`/jobs/${job.id}`} className={j.card}>
                       <div className={j.cardTop}>
                         <span className={j.cardTitle}>{job.title}</span>
-                        <span className={j.closes}>
-                          {job.is_exclusive ? 'early access' : `posted ${timeAgo(job.created_at!)}`}
-                        </span>
+                        <span className={j.closes}>posted {timeAgo(job.created_at!)}</span>
                       </div>
                       <div className={j.meta}>
                         {job.customer_first_name ? `For ${job.customer_first_name} · ` : ''}
                         {job.town ? `${job.town}, ` : ''}
                         {job.postcode_district} · {job.county}
                       </div>
-                      {job.is_exclusive ? (
-                        <span className={`${j.badge} ${j.badgeExcl}`}>Paid early access · claim first</span>
-                      ) : null}
                       <div className={j.tags}>
                         {(job.service_ids ?? []).slice(0, 4).map((sid) => (
                           <span key={sid} className={j.tag}>
@@ -100,7 +95,7 @@ export default async function JobsBoardPage() {
                       </div>
                       {job.budget_hint && <div className={j.meta}>Budget: {job.budget_hint}</div>}
                       <div className={j.cardFoot}>
-                        <span>{job.is_exclusive ? 'Claim before the free tier' : 'First come, first served'}</span>
+                        <span>First come, first served</span>
                       </div>
                     </Link>
                   ))}

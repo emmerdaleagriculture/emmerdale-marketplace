@@ -8,19 +8,17 @@ import j from '../jobs.module.css';
 
 /**
  * First-come-first-served claim. One button — the first contractor to claim
- * wins the job outright and gets the customer's contact. Paid members see this
- * during the exclusive head-start window; everyone else once the job is open.
+ * wins the job outright and gets the customer's contact.
  */
-export function ClaimPanel({ jobId, isExclusive }: { jobId: string; isExclusive: boolean }) {
+export function ClaimPanel({ jobId }: { jobId: string }) {
   const [state, action, pending] = useActionState(claimJobAction, emptyFormState);
 
   return (
     <div className={j.panel}>
-      <div className={j.panelTitle}>{isExclusive ? 'Paid early access' : 'Claim this job'}</div>
+      <div className={j.panelTitle}>Claim this job</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>
-        {isExclusive
-          ? 'You’re seeing this before the free tier. First to claim it gets the job and the customer’s details.'
-          : 'First come, first served. Claim it and the customer’s details are yours to arrange the work directly — you invoice them, we take no cut.'}
+        First come, first served. Claim it and the customer’s details are yours to
+        arrange the work directly — you invoice them, we take no cut.
       </p>
       <form action={action}>
         {state.error && <p className={f.error}>{state.error}</p>}

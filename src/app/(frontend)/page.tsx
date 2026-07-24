@@ -323,23 +323,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section className={`${s.section} ${s.sectionAlt}`}>
-        <div className={s.teaser}>
-          <div className={s.teaserTitle}>
-            Or get <em>direct access</em> to every job
-          </div>
-          <p className={s.teaserBody}>
-            Paid members see every job in their counties 12 hours before anyone
-            else — and can claim it first.
-          </p>
-          <p className={s.teaserBody}>
-            <strong>£20/month.</strong> See every job twelve hours early — and get
-            first pick of the work.
-          </p>
-          <p className={s.teaserNote}>Coming soon. Join free now and we’ll tell you when it launches.</p>
-        </div>
-      </section>
-
       <section className={s.section}>
         <div className={s.sectionInner}>
           <div className={s.kicker}>Common questions</div>

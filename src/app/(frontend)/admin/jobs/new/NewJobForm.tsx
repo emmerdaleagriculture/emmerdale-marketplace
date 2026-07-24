@@ -118,10 +118,11 @@ export function NewJobForm({
         </label>
         <label className={f.field}>
           <span className={f.label}>Paid head-start (hours)</span>
-          <input className={f.input} name="exclusive_hours" type="number" min="0" max="72" defaultValue={v?.exclusive_hours ?? '12'} />
+          <input className={f.input} name="exclusive_hours" type="number" min="0" max="72" defaultValue={v?.exclusive_hours ?? '0'} />
           <span className={f.hint}>
-            Paid members can claim it this many hours before it opens to everyone.
-            0 = open to all immediately. Jobs stay live until claimed.
+            Leave at 0 while the paid tier is shelved — a head start hides the job
+            from the whole network until it opens, and there are no paid members
+            to see it early.
           </span>
         </label>
       </div>
