@@ -7,6 +7,28 @@ import { getUser, isAdminEmail } from '@/lib/auth';
 import { resolveCounty } from '@/lib/postcodes';
 import type { FormState } from '@/lib/form';
 
+/**
+ * Submitted values echoed back on error. React 19 resets uncontrolled fields
+ * once a form action completes, so without these the whole form wipes on a
+ * validation/lookup failure — the form re-seeds its defaultValues from here.
+ */
+export type JobFormValues = {
+  customer_name: string;
+  customer_first_name: string;
+  customer_phone: string;
+  customer_email: string;
+  title: string;
+  description: string;
+  service_ids: number[];
+  postcode: string;
+  budget_hint: string;
+  county_override: string;
+  exclusive_hours: string;
+  consent: boolean;
+};
+
+export type JobFormState = FormState & { values?: JobFormValues };
+
 const JobSchema = z.object({
   customer_name: z.string().trim().min(1, 'Customer name is required.'),
   customer_first_name: z.string().trim().optional().or(z.literal('')),
@@ -18,18 +40,32 @@ const JobSchema = z.object({
   postcode: z.string().trim().min(3, 'Postcode is required.'),
   budget_hint: z.string().trim().optional().or(z.literal('')),
   county_override: z.coerce.number().int().optional().or(z.literal('')),
-  closes_at: z.string().trim().optional().or(z.literal('')),
   // Paid-tier head-start window in hours (default 12; 0 = open to everyone now).
   exclusive_hours: z.coerce.number().int().min(0).max(72).default(12),
 });
 
-export async function createJobAction(_prev: FormState, formData: FormData): Promise<FormState> {
+export async function createJobAction(_prev: JobFormState, formData: FormData): Promise<JobFormState> {
   const user = await getUser();
   if (!user || !isAdminEmail(user.email)) return { error: 'Not authorised.' };
 
+  const values: JobFormValues = {
+    customer_name: String(formData.get('customer_name') ?? ''),
+    customer_first_name: String(formData.get('customer_first_name') ?? ''),
+    customer_phone: String(formData.get('customer_phone') ?? ''),
+    customer_email: String(formData.get('customer_email') ?? ''),
+    title: String(formData.get('title') ?? ''),
+    description: String(formData.get('description') ?? ''),
+    service_ids: formData.getAll('service_ids').map(Number).filter(Number.isFinite),
+    postcode: String(formData.get('postcode') ?? ''),
+    budget_hint: String(formData.get('budget_hint') ?? ''),
+    county_override: String(formData.get('county_override') ?? ''),
+    exclusive_hours: String(formData.get('exclusive_hours') ?? '12'),
+    consent: formData.get('consent') === 'on',
+  };
+
   // Consent is a blocking gate (spec §6): no consent → the job cannot be posted.
   if (formData.get('consent') !== 'on') {
-    return { error: 'You must confirm the customer has consented to share their details.' };
+    return { error: 'You must confirm the customer has consented to share their details.', values };
   }
 
   const parsed = JobSchema.safeParse({
@@ -43,11 +79,10 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
     postcode: formData.get('postcode'),
     budget_hint: formData.get('budget_hint'),
     county_override: formData.get('county_override') || '',
-    closes_at: formData.get('closes_at'),
     exclusive_hours: formData.get('exclusive_hours') ?? 12,
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? 'Please check the form.' };
+    return { error: parsed.error.issues[0]?.message ?? 'Please check the form.', values };
   }
   const d = parsed.data;
 
@@ -69,22 +104,17 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
   }
 
   if (!countyId) {
-    return { error: r.error ?? 'Could not resolve a county — pick one manually below.' };
+    return { error: r.error ?? 'Could not resolve a county — pick one manually below.', values };
   }
   if (!outcode) {
-    return { error: 'That postcode looks invalid. Check it and try again.' };
+    return { error: 'That postcode looks invalid. Check it and try again.', values };
   }
 
   const now = new Date();
   // Paid head-start window: the job opens to everyone after `exclusive_hours`.
-  // 0h → opens immediately (skips the exclusive state).
+  // 0h → opens immediately (skips the exclusive state). Once open, the job
+  // stays on the board until a contractor claims it.
   const opensAt = new Date(now.getTime() + d.exclusive_hours * 3600 * 1000);
-  const closesAt = d.closes_at
-    ? new Date(d.closes_at)
-    : new Date(opensAt.getTime() + 24 * 3600 * 1000);
-  if (isNaN(closesAt.getTime()) || closesAt <= opensAt) {
-    return { error: 'The availability end time must be after the early-access window opens.' };
-  }
   const isExclusive = d.exclusive_hours > 0;
 
   const { data: job, error } = await admin
@@ -109,14 +139,13 @@ export async function createJobAction(_prev: FormState, formData: FormData): Pro
       budget_hint: d.budget_hint || null,
       status: isExclusive ? 'exclusive' : 'open',
       bidding_opens_at: opensAt.toISOString(),
-      bidding_closes_at: closesAt.toISOString(),
       created_by: user.id,
     })
     .select('id')
     .single();
 
   if (error || !job) {
-    return { error: `Could not create the job: ${error?.message ?? 'unknown error'}` };
+    return { error: `Could not create the job: ${error?.message ?? 'unknown error'}`, values };
   }
 
   // Notify: exclusive → paid members now; open → free tier now. When an

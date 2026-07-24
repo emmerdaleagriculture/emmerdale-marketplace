@@ -1,8 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { createJobAction } from './actions';
-import { emptyFormState } from '@/lib/form';
+import { createJobAction, type JobFormState } from './actions';
 import { ServicePicker, type ServiceOption } from '@/components/forms/ServicePicker';
 import type { CountyOption } from '@/components/forms/CountyPicker';
 import f from '@/components/forms/forms.module.css';
@@ -31,7 +30,11 @@ export function NewJobForm({
   defaults?: JobFormDefaults;
   leadId?: string;
 }) {
-  const [state, action, pending] = useActionState(createJobAction, emptyFormState);
+  const [state, action, pending] = useActionState(createJobAction, {} as JobFormState);
+
+  // On error the action echoes back what was submitted; re-seed the fields from
+  // it so React 19's automatic post-action form reset doesn't wipe the page.
+  const v = state.values;
 
   // Group counties by region for the manual-override dropdown.
   const regions = new Map<string, CountyOption[]>();
@@ -49,47 +52,54 @@ export function NewJobForm({
       <div className={a.row2}>
         <label className={f.field}>
           <span className={f.label}>Customer full name</span>
-          <input className={f.input} name="customer_name" required defaultValue={defaults.customer_name} />
+          <input className={f.input} name="customer_name" required defaultValue={v?.customer_name ?? defaults.customer_name} />
           <span className={f.hint}>Private — surname is never shown publicly.</span>
         </label>
         <label className={f.field}>
           <span className={f.label}>First name (shown publicly)</span>
-          <input className={f.input} name="customer_first_name" defaultValue={defaults.customer_first_name} />
+          <input className={f.input} name="customer_first_name" defaultValue={v?.customer_first_name ?? defaults.customer_first_name} />
           <span className={f.hint}>Appears on the public listing, e.g. “for Sarah”.</span>
         </label>
         <label className={f.field}>
           <span className={f.label}>Customer phone</span>
-          <input className={f.input} name="customer_phone" required defaultValue={defaults.customer_phone} />
+          <input className={f.input} name="customer_phone" required defaultValue={v?.customer_phone ?? defaults.customer_phone} />
         </label>
         <label className={f.field}>
           <span className={f.label}>Customer email (optional)</span>
-          <input className={f.input} name="customer_email" type="email" defaultValue={defaults.customer_email} />
+          <input className={f.input} name="customer_email" type="email" defaultValue={v?.customer_email ?? defaults.customer_email} />
         </label>
       </div>
 
       <div className={a.groupTitle}>Job</div>
       <label className={f.field}>
         <span className={f.label}>Title</span>
-        <input className={f.input} name="title" required placeholder="e.g. Paddock topping — 6 acres" defaultValue={defaults.title} />
+        <input className={f.input} name="title" required placeholder="e.g. Paddock topping — 6 acres" defaultValue={v?.title ?? defaults.title} />
       </label>
       <label className={f.field}>
         <span className={f.label}>Description</span>
-        <textarea className={f.textarea} name="description" required defaultValue={defaults.description} />
+        <textarea className={f.textarea} name="description" required defaultValue={v?.description ?? defaults.description} />
       </label>
 
       <div className={a.groupTitle}>Services needed</div>
-      <ServicePicker services={services} selected={defaults.service_ids} />
+      <ServicePicker services={services} selected={v?.service_ids ?? defaults.service_ids} />
 
       <div className={a.groupTitle}>Location &amp; timing</div>
       <div className={a.row2}>
         <label className={f.field}>
           <span className={f.label}>Postcode</span>
-          <input className={f.input} name="postcode" required placeholder="SO23 9XX" defaultValue={defaults.postcode} />
+          <input className={f.input} name="postcode" required placeholder="SO23 9XX" defaultValue={v?.postcode ?? defaults.postcode} />
           <span className={f.hint}>County is auto-detected. Full postcode stays private.</span>
         </label>
         <label className={f.field}>
           <span className={f.label}>County (override — leave blank to auto-detect)</span>
-          <select className={f.input} name="county_override" defaultValue={defaults.county_id ?? ''}>
+          {/* Keyed: a select only applies defaultValue at mount, so remount it
+              when the echoed-back choice changes. */}
+          <select
+            key={v?.county_override ?? 'initial'}
+            className={f.input}
+            name="county_override"
+            defaultValue={v?.county_override ?? defaults.county_id ?? ''}
+          >
             <option value="">Auto-detect from postcode</option>
             {Array.from(regions.entries()).map(([region, list]) => (
               <optgroup key={region} label={region}>
@@ -104,26 +114,21 @@ export function NewJobForm({
         </label>
         <label className={f.field}>
           <span className={f.label}>Budget hint (optional, public)</span>
-          <input className={f.input} name="budget_hint" placeholder="e.g. £300–£450" />
+          <input className={f.input} name="budget_hint" placeholder="e.g. £300–£450" defaultValue={v?.budget_hint} />
         </label>
         <label className={f.field}>
           <span className={f.label}>Paid head-start (hours)</span>
-          <input className={f.input} name="exclusive_hours" type="number" min="0" max="72" defaultValue="12" />
+          <input className={f.input} name="exclusive_hours" type="number" min="0" max="72" defaultValue={v?.exclusive_hours ?? '12'} />
           <span className={f.hint}>
             Paid members can claim it this many hours before it opens to everyone.
-            0 = open to all immediately.
+            0 = open to all immediately. Jobs stay live until claimed.
           </span>
-        </label>
-        <label className={f.field}>
-          <span className={f.label}>Available until</span>
-          <input className={f.input} name="closes_at" type="datetime-local" />
-          <span className={f.hint}>Leave blank for 24h after the job opens. Unclaimed jobs expire then.</span>
         </label>
       </div>
 
       <div className={a.groupTitle}>Consent (required)</div>
       <label className={f.checkRow}>
-        <input type="checkbox" name="consent" />
+        <input type="checkbox" name="consent" defaultChecked={v?.consent} />
         <span>
           The customer has consented to us passing their name and contact details
           to one or more vetted contractors in our network so they can contact the
