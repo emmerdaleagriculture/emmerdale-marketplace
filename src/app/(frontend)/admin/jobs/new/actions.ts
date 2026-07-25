@@ -92,9 +92,11 @@ export async function createJobAction(_prev: JobFormState, formData: FormData): 
   const leadId = String(formData.get('lead_id') || '');
 
   // Location: a postcode auto-detects the county; a manually picked county wins
-  // and makes the postcode optional.
+  // and makes the postcode optional. The empty select value coerces to 0, so a
+  // positive check is what distinguishes "Auto-detect" from a real pick.
   const postcode = d.postcode?.trim() ?? '';
-  const override = typeof d.county_override === 'number' ? d.county_override : undefined;
+  const override =
+    typeof d.county_override === 'number' && d.county_override > 0 ? d.county_override : undefined;
   const r = postcode ? await resolveCounty(postcode) : null;
   let countyId = override ?? r?.county_id;
   const outcode = r?.outcode ?? null;

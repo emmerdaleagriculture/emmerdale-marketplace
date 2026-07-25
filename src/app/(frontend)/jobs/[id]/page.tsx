@@ -43,7 +43,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const { data: contactRows } = await supabase.rpc('open_job', { p_job_id: id });
   const contact = (contactRows ?? [])[0] ?? null;
 
-  const filled = mine?.status === 'completed';
+  // Withdrawn or filled: the contractor keeps the details they were shown, but
+  // shouldn't be urged to chase the customer.
+  const closed = mine != null && ['completed', 'withdrawn'].includes(mine.status ?? '');
   const location = [job.town, job.postcode_district].filter(Boolean).join(', ');
 
   return (
@@ -60,7 +62,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             {job.customer_first_name ? `For ${job.customer_first_name}` : ''}
             {job.customer_first_name && location ? ' · ' : ''}
             {location}
-            {filled ? ' · no longer open' : ''}
+            {closed ? ' · no longer open' : ''}
           </p>
 
           <p style={{ lineHeight: 1.7, color: 'var(--ink)' }}>{job.description}</p>
@@ -93,7 +95,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 </div>
               )}
               <p className={a.sub} style={{ marginTop: 14, marginBottom: 0, fontSize: 13 }}>
-                {filled
+                {closed
                   ? 'This job is no longer open, but you keep the details you were shown.'
                   : 'Other contractors in the area can see this job too — the customer decides who to hire, so get in touch soon. You arrange the work and invoice them directly. These details are for this enquiry only.'}
               </p>

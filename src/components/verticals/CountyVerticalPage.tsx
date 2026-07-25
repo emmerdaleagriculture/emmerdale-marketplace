@@ -76,7 +76,7 @@ export function CountyVerticalPage({
                   {coverage} {coverage === 1 ? 'contractor' : 'contractors'}
                 </strong>{' '}
                 in our network already cover {name}, in the {county.region} — send your
-                enquiry and it goes straight to them, first come, first served.
+                enquiry and it goes straight to them, and whoever’s keen gets in touch.
               </>
             ) : (
               <>

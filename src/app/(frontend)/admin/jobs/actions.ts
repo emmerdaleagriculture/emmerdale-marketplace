@@ -59,6 +59,9 @@ export async function relistJobAction(formData: FormData) {
     .eq('id', jobId)
     .in('status', ['withdrawn', 'completed']);
   if (error) throw new Error(error.message);
+  // Clear the idempotency keys so contractors notified at the original posting
+  // hear about the relist too — without this, notify_job_open would skip them.
+  await admin.from('job_notifications').delete().eq('job_id', jobId).eq('kind', 'new_job');
   await admin.rpc('notify_job_open', { p_job_id: jobId });
   revalidatePath(`/admin/jobs/${jobId}`);
   revalidatePath('/admin/jobs');

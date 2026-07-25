@@ -27,7 +27,9 @@ const SITE_URL = (Deno.env.get('SITE_URL') ?? 'https://emmerdaleagriculture.com'
 
 function render(kind: string, p: Record<string, unknown>): { subject: string; text: string } {
   const title = String(p.title ?? 'a job');
-  const where = [p.town, p.postcode_district].filter(Boolean).join(', ');
+  // County-only jobs carry no town/postcode district — fall back to the county
+  // name so the email always says where the work is.
+  const where = [p.town, p.postcode_district].filter(Boolean).join(', ') || String(p.county ?? '');
   const jobLink = p.job_id ? `${SITE_URL}/jobs/${p.job_id}` : `${SITE_URL}/jobs`;
   const signIn = `Sign in to view it: ${jobLink}`;
   switch (kind) {

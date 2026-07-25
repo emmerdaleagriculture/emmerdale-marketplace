@@ -162,7 +162,7 @@ export default async function LandingPage() {
           <p className={s.heroSub}>
             Hampshire Paddock Management turns away more work than it can service.
             That overflow goes to the network — matched to contractors by county,
-            first come, first served.
+            straight to your inbox.
           </p>
           <div className={s.heroCtas}>
             <Link href="/signup" className={f.btnYellow}>
