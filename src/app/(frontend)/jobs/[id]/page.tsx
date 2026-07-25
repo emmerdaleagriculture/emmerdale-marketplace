@@ -3,7 +3,6 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
-import { ClaimPanel } from './ClaimPanel';
 import { createClient } from '@/lib/supabase/server';
 import { getServices } from '@/lib/reference';
 import a from '../../auth.module.css';
@@ -27,10 +26,10 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   if (!contractor) redirect('/onboarding');
   if (contractor.status !== 'approved') redirect('/jobs');
 
-  // A claimable job (public view) and/or a job we've already claimed.
+  // A live job in our counties (public view) and/or one we've already opened.
   const [{ data: pub }, { data: mine }, services] = await Promise.all([
     supabase.from('public_jobs').select('*').eq('id', id).maybeSingle(),
-    supabase.from('my_claimed_jobs').select('*').eq('id', id).maybeSingle(),
+    supabase.from('my_opened_jobs').select('*').eq('id', id).maybeSingle(),
     getServices(),
   ]);
 
@@ -38,15 +37,14 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   if (!job) notFound();
 
   const serviceName = new Map(services.map((s) => [s.id, s.name]));
-  const claimable = !!pub;
-  const claimed = !!mine;
 
-  // The claimant sees the customer's contact (get_job_contact gates on it).
-  let contact: { customer_name: string; customer_phone: string; customer_email: string | null } | null = null;
-  if (claimed) {
-    const { data } = await supabase.rpc('get_job_contact', { p_job_id: id });
-    contact = (data ?? [])[0] ?? null;
-  }
+  // Opening the page IS the tracked event: open_job logs who viewed the
+  // customer's details (first call only) and returns the contact.
+  const { data: contactRows } = await supabase.rpc('open_job', { p_job_id: id });
+  const contact = (contactRows ?? [])[0] ?? null;
+
+  const filled = mine?.status === 'completed';
+  const location = [job.town, job.postcode_district].filter(Boolean).join(', ');
 
   return (
     <div className={a.wrap}>
@@ -59,10 +57,10 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           <div className={a.eyebrow}>{job.county}</div>
           <h1 className={a.title}>{job.title}</h1>
           <p className={a.sub}>
-            {job.customer_first_name ? `For ${job.customer_first_name} · ` : ''}
-            {job.town ? `${job.town}, ` : ''}
-            {job.postcode_district}
-            {claimed ? ' · claimed by you' : ''}
+            {job.customer_first_name ? `For ${job.customer_first_name}` : ''}
+            {job.customer_first_name && location ? ' · ' : ''}
+            {location}
+            {filled ? ' · no longer open' : ''}
           </p>
 
           <p style={{ lineHeight: 1.7, color: 'var(--ink)' }}>{job.description}</p>
@@ -80,34 +78,26 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             </p>
           )}
 
-          {claimable ? (
-            <ClaimPanel jobId={id} />
-          ) : claimed ? (
-            <>
-              <div className={`${j.outcome} ${j.won}`}>
-                <strong>This job is yours.</strong> Contact the customer to arrange
-                the work — you invoice them directly.
+          {contact ? (
+            <div className={`${j.panel} ${j.contact}`}>
+              <div className={j.panelTitle}>Customer contact</div>
+              <div className={j.contactRow}>
+                <strong>Name</strong> {contact.customer_name}
               </div>
-              {contact && (
-                <div className={`${j.panel} ${j.contact}`}>
-                  <div className={j.panelTitle}>Customer contact</div>
-                  <div className={j.contactRow}>
-                    <strong>Name</strong> {contact.customer_name}
-                  </div>
-                  <div className={j.contactRow}>
-                    <strong>Phone</strong> {contact.customer_phone}
-                  </div>
-                  {contact.customer_email && (
-                    <div className={j.contactRow}>
-                      <strong>Email</strong> {contact.customer_email}
-                    </div>
-                  )}
-                  <p className={a.sub} style={{ marginTop: 14, marginBottom: 0, fontSize: 13 }}>
-                    These details are for this enquiry only.
-                  </p>
+              <div className={j.contactRow}>
+                <strong>Phone</strong> {contact.customer_phone}
+              </div>
+              {contact.customer_email && (
+                <div className={j.contactRow}>
+                  <strong>Email</strong> {contact.customer_email}
                 </div>
               )}
-            </>
+              <p className={a.sub} style={{ marginTop: 14, marginBottom: 0, fontSize: 13 }}>
+                {filled
+                  ? 'This job is no longer open, but you keep the details you were shown.'
+                  : 'Other contractors in the area can see this job too — the customer decides who to hire, so get in touch soon. You arrange the work and invoice them directly. These details are for this enquiry only.'}
+              </p>
+            </div>
           ) : (
             <div className={`${j.outcome} ${j.lost}`}>
               This job is no longer available.

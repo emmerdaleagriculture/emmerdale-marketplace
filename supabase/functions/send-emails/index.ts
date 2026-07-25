@@ -37,8 +37,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `A new job has been posted in one of your counties.\n\n` +
           `${title}\n${where}\n\n` +
-          `First come, first served — the first contractor to claim it gets the ` +
-          `customer's details.\n\n${signIn}`,
+          `Open it to see the full details and the customer's contact — the ` +
+          `customer chooses who they hire, so it pays to get in touch early.\n\n${signIn}`,
       };
     case 'exclusive_new':
       return {
@@ -46,7 +46,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `As a paid member you get first access to this new job${where ? ` in ${where}` : ''}, ` +
           `before it opens to the rest of the network.\n\n` +
-          `${title}\n\nThe first claim wins.\n\n${signIn}`,
+          `${title}\n\nGet in touch with the customer before anyone else.\n\n${signIn}`,
       };
     case 'new_lead':
       return {

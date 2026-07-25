@@ -16,8 +16,9 @@ export default async function NewJobPage() {
       </Link>
       <h1 className={s.h1}>Post a job</h1>
       <p className={s.sub}>
-        Enter the enquiry. The postcode resolves to a county; matching contractors
-        are notified when it opens for claiming.
+        Enter the enquiry. A postcode resolves to a county automatically (or pick
+        the county yourself); matching contractors are notified when the job goes
+        live.
       </p>
       <NewJobForm services={services} counties={counties} />
     </div>

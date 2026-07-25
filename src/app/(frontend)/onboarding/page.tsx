@@ -41,8 +41,8 @@ export default async function OnboardingPage() {
           <h1 className={a.title}>Tell us about your business</h1>
           <p className={a.sub}>
             This is the last step. We’ll review your application and email you
-            when you’re approved — then you’ll see jobs in your counties and can
-            claim the work, first come, first served. You can change any of this
+            when you’re approved — then you’ll see jobs in your counties, with the
+            customer’s details to get in touch directly. You can change any of this
             later in your account.
           </p>
           <OnboardingForm counties={counties} />

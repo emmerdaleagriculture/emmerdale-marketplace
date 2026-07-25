@@ -30,13 +30,14 @@ export default function TermsPage() {
           <p>
             The Emmerdale Agriculture network passes overflow paddock and land jobs
             to registered contractors. Registration is free. We match jobs to
-            contractors by county, and jobs are taken on a first-come, first-served
-            basis. We handle no customer payments — you invoice the customer directly.
+            contractors by county; each job is visible to the registered contractors
+            covering its area, and the customer chooses who they hire. We handle no
+            customer payments — you invoice the customer directly.
           </p>
 
           <h2>Use of customer details</h2>
           <p>
-            When you claim a job, you
+            When you open a job, you
             receive the customer’s contact information. You agree to use those
             details <strong>solely to respond to and carry out that specific
             enquiry</strong>. You must not use customer details for marketing, pass
@@ -52,17 +53,19 @@ export default function TermsPage() {
             professional standard, and for holding appropriate insurance.
           </p>
 
-          <h2>Claiming jobs</h2>
+          <h2>Opening jobs</h2>
           <p>
-            Jobs are offered on a first-come, first-served basis. The first
-            registered contractor to claim a job is allocated it and receives the
-            customer’s details. Claiming a job is a commitment to carry out the work,
-            and you agree the price directly with the customer.
+            Opening a job shows you its full details and the customer’s contact
+            information, and we record which contractors have opened each job. A job
+            is not allocated to any one contractor: other contractors covering the
+            area can open it too, and the customer decides who to engage. If you want
+            the work, contact the customer promptly and agree the price directly with
+            them.
           </p>
 
           <h2>No guarantee of work</h2>
           <p>
-            We do not guarantee any volume of jobs or that you will be able to claim
+            We do not guarantee any volume of jobs or that you will win
             any particular job. The network exists to pass on work {COMPANY_LEGAL_NAME}
             cannot carry out itself.
           </p>

@@ -9,8 +9,9 @@ export const metadata: Metadata = { title: 'Dashboard — Admin' };
 type Metrics = {
   total_jobs: number;
   open_jobs: number;
-  claimed_jobs: number;
+  completed_jobs: number;
   withdrawn_jobs: number;
+  job_opens: number;
   contractors_total: number;
   contractors_approved: number;
   contractors_pending: number;
@@ -42,8 +43,9 @@ export default async function AdminDashboard() {
       <div className={s.metricGrid}>
         <Metric value={num(m.total_jobs)} label="Total jobs" />
         <Metric value={num(m.open_jobs)} label="Open now" />
-        <Metric value={num(m.claimed_jobs)} label="Claimed" />
+        <Metric value={num(m.completed_jobs)} label="Filled" />
         <Metric value={num(m.withdrawn_jobs)} label="Withdrawn" />
+        <Metric value={num(m.job_opens)} label="Contact opens" hint="Contractor views of customer details" />
       </div>
 
       <div className={s.sectionLabel}>Contractors</div>

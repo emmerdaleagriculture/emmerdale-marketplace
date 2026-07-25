@@ -11,6 +11,12 @@ import j from './jobs.module.css';
 
 export const metadata: Metadata = { title: 'Jobs' };
 
+/** "Winchester, SO23 · Hampshire" — any of town/district may be missing. */
+function jobLocation(job: { town?: string | null; postcode_district?: string | null; county?: string | null }) {
+  const place = [job.town, job.postcode_district].filter(Boolean).join(', ');
+  return [place, job.county].filter(Boolean).join(' · ');
+}
+
 export default async function JobsBoardPage() {
   const supabase = await createClient();
   const {
@@ -30,22 +36,16 @@ export default async function JobsBoardPage() {
 
   const gated = contractor.status !== 'approved';
 
-  const [{ data: openJobs }, { data: myJobs }, { data: recentClaims }] = gated
-    ? [{ data: [] as never[] }, { data: [] as never[] }, { data: [] as never[] }]
+  const [{ data: liveJobs }, { data: openedJobs }] = gated
+    ? [{ data: [] as never[] }, { data: [] as never[] }]
     : await Promise.all([
         supabase.from('public_jobs').select('*').order('created_at', { ascending: false }),
-        supabase.from('my_claimed_jobs').select('*').order('claimed_at', { ascending: false }),
-        supabase
-          .from('recently_claimed_jobs')
-          .select('*')
-          .order('claimed_at', { ascending: false })
-          .limit(12),
+        supabase.from('my_opened_jobs').select('*').order('opened_at', { ascending: false }),
       ]);
 
-  // The activity feed is network-wide; a contractor's own claims already appear
-  // under "Your jobs".
-  const myIds = new Set((myJobs ?? []).map((job) => job.id));
-  const claimedFeed = (recentClaims ?? []).filter((job) => !myIds.has(job.id));
+  // Jobs the contractor has already opened live under "Jobs you've opened";
+  // the top list is what's new to them.
+  const newJobs = (liveJobs ?? []).filter((job) => !job.opened_at);
 
   return (
     <div className={a.wrap}>
@@ -64,27 +64,30 @@ export default async function JobsBoardPage() {
           ) : (
             <>
               <p className={a.sub}>
-                Jobs in the counties you cover. First come, first served — claim a
-                job and you get the customer’s details to arrange the work directly.
+                Jobs in the counties you cover. Open one to see the full details and
+                the customer’s contact — then get in touch directly. The customer
+                chooses who they hire, so a quick call goes a long way.
               </p>
 
-              {(openJobs ?? []).length === 0 ? (
+              {newJobs.length === 0 ? (
                 <div className={j.gate} style={{ background: 'var(--cream)', borderColor: 'var(--rule)', color: 'var(--ink-2)' }}>
-                  No open jobs in your counties right now. We’ll email you when one
+                  No new jobs in your counties right now. We’ll email you when one
                   comes up.
                 </div>
               ) : (
                 <div className={j.grid}>
-                  {(openJobs ?? []).map((job) => (
-                    <Link key={job.id} href={`/jobs/${job.id}`} className={j.card}>
+                  {newJobs.map((job) => (
+                    // prefetch={false}: opening a job page reveals the customer's
+                    // contact and logs who viewed it — that must only happen on a
+                    // real click, never a hover/viewport prefetch.
+                    <Link key={job.id} href={`/jobs/${job.id}`} prefetch={false} className={j.card}>
                       <div className={j.cardTop}>
                         <span className={j.cardTitle}>{job.title}</span>
                         <span className={j.closes}>posted {timeAgo(job.created_at!)}</span>
                       </div>
                       <div className={j.meta}>
                         {job.customer_first_name ? `For ${job.customer_first_name} · ` : ''}
-                        {job.town ? `${job.town}, ` : ''}
-                        {job.postcode_district} · {job.county}
+                        {jobLocation(job)}
                       </div>
                       <div className={j.tags}>
                         {(job.service_ids ?? []).slice(0, 4).map((sid) => (
@@ -95,65 +98,38 @@ export default async function JobsBoardPage() {
                       </div>
                       {job.budget_hint && <div className={j.meta}>Budget: {job.budget_hint}</div>}
                       <div className={j.cardFoot}>
-                        <span>First come, first served</span>
+                        <span>Open for details &amp; contact</span>
                       </div>
                     </Link>
                   ))}
                 </div>
               )}
 
-              {(myJobs ?? []).length > 0 && (
+              {(openedJobs ?? []).length > 0 && (
                 <>
-                  <div className={a.groupTitle}>Your jobs</div>
+                  <div className={a.groupTitle}>Jobs you’ve opened</div>
+                  <p className={a.sub}>
+                    You’ve seen the customer’s details for these — get in touch if
+                    you haven’t already.
+                  </p>
                   <div className={j.grid}>
-                    {(myJobs ?? []).map((job) => (
-                      <Link key={job.id} href={`/jobs/${job.id}`} className={j.card}>
+                    {(openedJobs ?? []).map((job) => (
+                      <Link key={job.id} href={`/jobs/${job.id}`} prefetch={false} className={j.card}>
                         <div className={j.cardTop}>
                           <span className={j.cardTitle}>{job.title}</span>
-                          <span className={j.closes}>{job.status === 'completed' ? 'completed' : 'claimed'}</span>
+                          <span className={j.closes}>
+                            {job.status === 'completed'
+                              ? 'filled'
+                              : job.status === 'withdrawn'
+                                ? 'withdrawn'
+                                : `opened ${timeAgo(job.opened_at!)}`}
+                          </span>
                         </div>
-                        <div className={j.meta}>
-                          {job.town ? `${job.town}, ` : ''}
-                          {job.postcode_district} · {job.county}
-                        </div>
+                        <div className={j.meta}>{jobLocation(job)}</div>
                         <div className={j.cardFoot}>
                           <span>Contact details available</span>
                         </div>
                       </Link>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {claimedFeed.length > 0 && (
-                <>
-                  <div className={a.groupTitle}>Recently claimed on the network</div>
-                  <p className={a.sub}>
-                    Jobs other contractors have already taken — sign in often, the
-                    fastest claim wins.
-                  </p>
-                  <div className={j.grid}>
-                    {claimedFeed.map((job) => (
-                      <div key={job.id} className={`${j.card} ${j.cardClaimed}`}>
-                        <div className={j.cardTop}>
-                          <span className={j.cardTitle}>{job.title}</span>
-                          <span className={j.closes}>claimed {timeAgo(job.claimed_at!)}</span>
-                        </div>
-                        <div className={j.meta}>
-                          {job.town ? `${job.town}, ` : ''}
-                          {job.postcode_district} · {job.county}
-                        </div>
-                        <div className={j.tags}>
-                          {(job.service_ids ?? []).slice(0, 4).map((sid) => (
-                            <span key={sid} className={j.tag}>
-                              {serviceName.get(sid) ?? sid}
-                            </span>
-                          ))}
-                        </div>
-                        <div className={j.cardFoot}>
-                          <span>Taken by another contractor</span>
-                        </div>
-                      </div>
                     ))}
                   </div>
                 </>

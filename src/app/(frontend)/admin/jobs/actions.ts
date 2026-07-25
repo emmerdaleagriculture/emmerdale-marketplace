@@ -26,7 +26,24 @@ export async function withdrawJobAction(formData: FormData) {
   revalidatePath('/admin/jobs');
 }
 
-/** Relist a withdrawn job — back on the board until someone claims it. */
+/** Mark a job filled — the customer has chosen a contractor; off the board. */
+export async function completeJobAction(formData: FormData) {
+  await assertAdmin();
+  const jobId = String(formData.get('job_id') || '');
+  if (!jobId) throw new Error('Invalid request');
+
+  const admin = createServiceRoleClient();
+  const { error } = await admin
+    .from('jobs')
+    .update({ status: 'completed' })
+    .eq('id', jobId)
+    .in('status', ['exclusive', 'open']);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/jobs/${jobId}`);
+  revalidatePath('/admin/jobs');
+}
+
+/** Relist a withdrawn or filled job — back on the board for everyone. */
 export async function relistJobAction(formData: FormData) {
   await assertAdmin();
   const jobId = String(formData.get('job_id') || '');
@@ -37,12 +54,10 @@ export async function relistJobAction(formData: FormData) {
     .from('jobs')
     .update({
       status: 'open',
-      claimed_by: null,
-      claimed_at: null,
       bidding_opens_at: new Date().toISOString(),
     })
     .eq('id', jobId)
-    .eq('status', 'withdrawn');
+    .in('status', ['withdrawn', 'completed']);
   if (error) throw new Error(error.message);
   await admin.rpc('notify_job_open', { p_job_id: jobId });
   revalidatePath(`/admin/jobs/${jobId}`);

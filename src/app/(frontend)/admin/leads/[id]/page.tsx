@@ -72,8 +72,8 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
       <div className={s.sectionLabel}>Publish as a job</div>
       <p className={s.sub}>
         The listing will show the first name, the postcode district, the job and
-        its details. Surname and contact stay private until the job is claimed.
-        Confirm consent before publishing.
+        its details. Surname and contact are only shown to contractors who open
+        the job, and every open is logged. Confirm consent before publishing.
       </p>
       <NewJobForm
         services={services}

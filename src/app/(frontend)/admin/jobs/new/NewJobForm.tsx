@@ -48,7 +48,7 @@ export function NewJobForm({
       {state.error && <p className={f.error}>{state.error}</p>}
       {leadId && <input type="hidden" name="lead_id" value={leadId} />}
 
-      <div className={a.groupTitle}>Customer (private — never shown until claimed)</div>
+      <div className={a.groupTitle}>Customer (private — only shown to contractors who open the job)</div>
       <div className={a.row2}>
         <label className={f.field}>
           <span className={f.label}>Customer full name</span>
@@ -86,12 +86,12 @@ export function NewJobForm({
       <div className={a.groupTitle}>Location &amp; timing</div>
       <div className={a.row2}>
         <label className={f.field}>
-          <span className={f.label}>Postcode</span>
-          <input className={f.input} name="postcode" required placeholder="SO23 9XX" defaultValue={v?.postcode ?? defaults.postcode} />
-          <span className={f.hint}>County is auto-detected. Full postcode stays private.</span>
+          <span className={f.label}>Postcode (optional if you pick a county)</span>
+          <input className={f.input} name="postcode" placeholder="SO23 9XX" defaultValue={v?.postcode ?? defaults.postcode} />
+          <span className={f.hint}>Auto-detects the county. Full postcode stays private.</span>
         </label>
         <label className={f.field}>
-          <span className={f.label}>County (override — leave blank to auto-detect)</span>
+          <span className={f.label}>County</span>
           {/* Keyed: a select only applies defaultValue at mount, so remount it
               when the echoed-back choice changes. */}
           <select
@@ -111,6 +111,10 @@ export function NewJobForm({
               </optgroup>
             ))}
           </select>
+          <span className={f.hint}>
+            Pick one to post without a postcode. A chosen county always wins over
+            auto-detect.
+          </span>
         </label>
         <label className={f.field}>
           <span className={f.label}>Budget hint (optional, public)</span>

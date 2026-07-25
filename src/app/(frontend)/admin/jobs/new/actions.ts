@@ -37,7 +37,7 @@ const JobSchema = z.object({
   title: z.string().trim().min(1, 'Job title is required.'),
   description: z.string().trim().min(1, 'Description is required.'),
   service_ids: z.array(z.coerce.number().int()).default([]),
-  postcode: z.string().trim().min(3, 'Postcode is required.'),
+  postcode: z.string().trim().optional().or(z.literal('')),
   budget_hint: z.string().trim().optional().or(z.literal('')),
   county_override: z.coerce.number().int().optional().or(z.literal('')),
   // Paid-tier head-start window in hours. Defaults to 0 (open to everyone now)
@@ -91,11 +91,14 @@ export async function createJobAction(_prev: JobFormState, formData: FormData): 
   const admin = createServiceRoleClient();
   const leadId = String(formData.get('lead_id') || '');
 
-  // Resolve the county (postcodes.io → district map). Manual override wins.
-  const r = await resolveCounty(d.postcode);
+  // Location: a postcode auto-detects the county; a manually picked county wins
+  // and makes the postcode optional.
+  const postcode = d.postcode?.trim() ?? '';
   const override = typeof d.county_override === 'number' ? d.county_override : undefined;
-  let countyId = override ?? r.county_id;
-  const outcode = r.outcode;
+  const r = postcode ? await resolveCounty(postcode) : null;
+  let countyId = override ?? r?.county_id;
+  const outcode = r?.outcode ?? null;
+  const town = r?.town ?? null;
 
   // Publishing a lead must not be blocked by a live-lookup blip: the county
   // was already resolved and stored on the lead at enquiry time — reuse it.
@@ -106,16 +109,19 @@ export async function createJobAction(_prev: JobFormState, formData: FormData): 
   }
 
   if (!countyId) {
-    return { error: r.error ?? 'Could not resolve a county — pick one manually below.', values };
+    return {
+      error: r?.error ?? 'Enter a postcode or pick a county — one of the two is needed.',
+      values,
+    };
   }
-  if (!outcode) {
-    return { error: 'That postcode looks invalid. Check it and try again.', values };
+  if (postcode && !outcode) {
+    return { error: 'That postcode looks invalid. Check it, or clear it and pick a county.', values };
   }
 
   const now = new Date();
   // Paid head-start window: the job opens to everyone after `exclusive_hours`.
   // 0h → opens immediately (skips the exclusive state). Once open, the job
-  // stays on the board until a contractor claims it.
+  // stays on the board until admin marks it filled or withdraws it.
   const opensAt = new Date(now.getTime() + d.exclusive_hours * 3600 * 1000);
   const isExclusive = d.exclusive_hours > 0;
 
@@ -125,9 +131,9 @@ export async function createJobAction(_prev: JobFormState, formData: FormData): 
       title: d.title,
       description: d.description,
       service_ids: d.service_ids,
-      postcode: d.postcode.toUpperCase(),
+      postcode: postcode ? postcode.toUpperCase() : null,
       postcode_district: outcode,
-      town: r.town ?? null,
+      town,
       county_id: countyId,
       customer_name: d.customer_name,
       // Public first name — defaults to the first token of the full name;

@@ -10,26 +10,27 @@ export const metadata: Metadata = { title: 'Jobs — Admin' };
 const pillFor: Record<string, string> = {
   open: s.pillApproved,
   exclusive: s.pillPending,
-  claimed: s.pillApproved,
   withdrawn: s.pillSuspended,
   completed: s.pillApproved,
 };
 
 export default async function AdminJobsPage() {
   const admin = createServiceRoleClient();
-  const { data: jobs } = await admin
-    .from('jobs')
-    .select('id, title, town, postcode_district, status, claimed_by, created_at, counties(name)')
-    .order('created_at', { ascending: false });
+  const [{ data: jobs }, { data: reveals }] = await Promise.all([
+    admin
+      .from('jobs')
+      .select('id, title, town, postcode_district, status, created_at, counties(name)')
+      .order('created_at', { ascending: false }),
+    admin.from('contact_reveals').select('job_id'),
+  ]);
 
   const list = jobs ?? [];
 
-  // Resolve the business name of each claimant (small dataset at launch).
-  const claimerIds = Array.from(new Set(list.map((j) => j.claimed_by).filter(Boolean))) as string[];
-  const { data: claimers } = claimerIds.length
-    ? await admin.from('contractors').select('id, business_name').in('id', claimerIds)
-    : { data: [] as { id: string; business_name: string }[] };
-  const claimerName = new Map((claimers ?? []).map((c) => [c.id, c.business_name]));
+  // How many contractors have opened each job (small dataset at launch).
+  const opensFor = new Map<string, number>();
+  for (const r of reveals ?? []) {
+    opensFor.set(r.job_id, (opensFor.get(r.job_id) ?? 0) + 1);
+  }
 
   return (
     <div>
@@ -52,7 +53,7 @@ export default async function AdminJobsPage() {
               <th>Location</th>
               <th>County</th>
               <th>Status</th>
-              <th>Claimed by</th>
+              <th>Opened by</th>
               <th>Posted</th>
             </tr>
           </thead>
@@ -64,13 +65,13 @@ export default async function AdminJobsPage() {
                 </td>
                 <td>
                   {j.town ? `${j.town}, ` : ''}
-                  {j.postcode_district}
+                  {j.postcode_district ?? '—'}
                 </td>
                 <td>{(j.counties as { name: string } | null)?.name}</td>
                 <td>
                   <span className={`${s.pill} ${pillFor[j.status] ?? ''}`}>{j.status}</span>
                 </td>
-                <td>{j.claimed_by ? (claimerName.get(j.claimed_by) ?? '—') : '—'}</td>
+                <td>{opensFor.get(j.id) ? `${opensFor.get(j.id)} contractor${opensFor.get(j.id) === 1 ? '' : 's'}` : '—'}</td>
                 <td>{formatDateTime(j.created_at)}</td>
               </tr>
             ))}

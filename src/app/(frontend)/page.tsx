@@ -17,7 +17,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Paddock & Agricultural Contractor Jobs | Emmerdale Agriculture',
   description:
-    'Free-to-join network passing paddock maintenance and land jobs to agricultural contractors across England and Wales. Get matched by county and claim the work — first come, first served, no commission.',
+    'Free-to-join network passing paddock maintenance and land jobs to agricultural contractors across England and Wales. Get matched by county, contact the customer directly — no commission.',
   alternates: { canonical: '/' },
 };
 
@@ -47,7 +47,7 @@ const orgJsonLd = {
   },
   sameAs: [HPM_URL],
   description:
-    'The contractor network run by Emmerdale Agriculture Ltd, the company behind Hampshire Paddock Management. Paddock and land jobs matched to contractors by county across England and Wales — first come, first served.',
+    'The contractor network run by Emmerdale Agriculture Ltd, the company behind Hampshire Paddock Management. Paddock and land jobs matched to contractors by county across England and Wales.',
 };
 
 // FAQ schema — mirrors the visible FAQ section below (Google requires the
@@ -55,15 +55,15 @@ const orgJsonLd = {
 const faqs = [
   {
     q: 'Does it cost anything to join the network?',
-    a: 'No. Joining is completely free and there’s no obligation to take any job. When you claim one you deal directly with the customer — Emmerdale Agriculture takes no commission.',
+    a: 'No. Joining is completely free and there’s no obligation to take any job. When you open one you deal directly with the customer — Emmerdale Agriculture takes no commission.',
   },
   {
     q: 'How are jobs matched to me?',
-    a: 'By county. You choose the counties you cover when you join, and whenever a job is posted in one of them we email you the details — the town, the work needed, and how long it’s available.',
+    a: 'By county. You choose the counties you cover when you join, and whenever a job is posted in one of them we email you the details — the area and the work needed.',
   },
   {
     q: 'Do you take a cut of the work?',
-    a: 'No. When you claim a job you get the customer’s details and arrange the work directly. You invoice them yourself and keep the full amount — we take no commission.',
+    a: 'No. When you open a job you get the customer’s details and arrange the work directly. You invoice them yourself and keep the full amount — we take no commission.',
   },
   {
     q: 'Which parts of the country do you cover?',
@@ -94,12 +94,12 @@ const STEPS = [
   {
     n: 2,
     title: 'Get matched by county',
-    body: 'When a job lands in one of your counties, we email you the details — town, work needed, and how long it’s available.',
+    body: 'When a job lands in one of your counties, we email you the details — the area and the work needed.',
   },
   {
     n: 3,
-    title: 'Claim it — first come, first served',
-    body: 'See a job you want? Claim it. The first to claim gets it, along with the customer’s details to arrange the work directly. You invoice them — we take no cut.',
+    title: 'Open it & win the work',
+    body: 'See a job you want? Open it for the full details and the customer’s contact, then get in touch. The customer chooses who they hire. You invoice them — we take no cut.',
   },
 ];
 
@@ -317,8 +317,8 @@ export default async function LandingPage() {
             Whether you’re an established contractor filling gaps in the diary or a
             growing smallholder-services business, the network sends paddock
             maintenance jobs in your area straight to your inbox. Free to join, no
-            obligation to take a job, no commission — you claim the job, you invoice
-            the customer.
+            obligation to take a job, no commission — you deal with the customer
+            directly and invoice them yourself.
           </p>
         </div>
       </section>
