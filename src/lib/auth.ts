@@ -27,6 +27,17 @@ export function isAdminEmail(email: string | null | undefined): boolean {
   return admins.includes(email.toLowerCase());
 }
 
+/**
+ * Validate a post-login return path (`/login?next=…`). Only same-site relative
+ * paths pass — anything else (absolute URLs, protocol-relative `//host`,
+ * backslash tricks) would turn the login page into an open redirect.
+ */
+export function safeInternalPath(next: string | null | undefined): string | null {
+  if (!next) return null;
+  if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) return null;
+  return next;
+}
+
 /** The current user's contractor profile row, or null if none exists yet. */
 export async function getContractor(): Promise<Contractor | null> {
   const supabase = await createClient();

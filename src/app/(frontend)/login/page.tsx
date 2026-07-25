@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { LoginForm } from './LoginForm';
-import { getUser } from '@/lib/auth';
+import { getUser, safeInternalPath } from '@/lib/auth';
 import a from '../auth.module.css';
 
 export const metadata: Metadata = {
@@ -14,8 +14,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-export default async function LoginPage() {
-  if (await getUser()) redirect('/account');
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const next = safeInternalPath((await searchParams).next);
+  if (await getUser()) redirect(next ?? '/account');
 
   return (
     <div className={a.wrap}>
@@ -25,7 +30,7 @@ export default async function LoginPage() {
           <div className={a.eyebrow}>For contractors</div>
           <h1 className={a.title}>Log in</h1>
           <p className={a.sub}>Welcome back. Log in to manage your account and view jobs.</p>
-          <LoginForm />
+          <LoginForm next={next ?? undefined} />
         </div>
       </main>
       <SiteFooter />

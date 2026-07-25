@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { isAdminEmail } from '@/lib/auth';
+import { isAdminEmail, safeInternalPath } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
 
 export async function loginAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -26,6 +26,8 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
     return { error: 'Incorrect email or password, or your email isn’t confirmed yet.' };
   }
 
-  // Admins land in the admin panel; contractors in their account.
-  redirect(isAdminEmail(email) ? '/admin' : '/account');
+  // A ?next= destination (e.g. the job page from a notification email) wins;
+  // otherwise admins land in the admin panel, contractors in their account.
+  const next = safeInternalPath(String(formData.get('next') || ''));
+  redirect(next ?? (isAdminEmail(email) ? '/admin' : '/account'));
 }

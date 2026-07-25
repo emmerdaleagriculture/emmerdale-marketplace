@@ -22,7 +22,7 @@ export default async function JobsBoardPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  if (!user) redirect('/login?next=/jobs');
 
   const { data: contractor } = await supabase
     .from('contractors')

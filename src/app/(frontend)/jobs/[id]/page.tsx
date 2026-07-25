@@ -16,7 +16,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  // Carry the destination through login — notification emails deep-link here.
+  if (!user) redirect(`/login?next=${encodeURIComponent(`/jobs/${id}`)}`);
 
   const { data: contractor } = await supabase
     .from('contractors')

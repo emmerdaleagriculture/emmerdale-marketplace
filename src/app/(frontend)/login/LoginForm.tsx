@@ -8,7 +8,7 @@ import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(loginAction, emptyFormState);
   const [captchaToken, setCaptchaToken] = useState('');
   const captchaPending = turnstileEnabled && !captchaToken;
@@ -16,6 +16,7 @@ export function LoginForm() {
   return (
     <form action={action} className={a.card}>
       {state.error && <p className={f.error}>{state.error}</p>}
+      {next && <input type="hidden" name="next" value={next} />}
 
       <label className={f.field}>
         <span className={f.label}>Email</span>

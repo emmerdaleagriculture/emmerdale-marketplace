@@ -25,6 +25,26 @@ type PendingEmail = {
 
 const SITE_URL = (Deno.env.get('SITE_URL') ?? 'https://emmerdaleagriculture.com').replace(/\/$/, '');
 
+/**
+ * HTML twin of the plain-text body. We used to send text-only, and some mail
+ * clients don't linkify bare URLs in plain text — the "sign in" link looked
+ * like it was missing. Escapes the text, turns URLs into real anchors, and
+ * keeps the text version as the fallback part.
+ */
+function toHtml(text: string): string {
+  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const linked = escaped.replace(
+    /https?:\/\/[^\s]+/g,
+    (url) => `<a href="${url}" style="color:#2f6f3e;">${url}</a>`,
+  );
+  return (
+    `<div style="font-family:-apple-system,'Segoe UI',Roboto,sans-serif;` +
+    `font-size:15px;line-height:1.65;color:#1f2a1f;max-width:560px;">` +
+    linked.replace(/\n/g, '<br>') +
+    `</div>`
+  );
+}
+
 function render(kind: string, p: Record<string, unknown>): { subject: string; text: string } {
   const title = String(p.title ?? 'a job');
   // County-only jobs carry no town/postcode district — fall back to the county
@@ -119,7 +139,7 @@ Deno.serve(async (req) => {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from, to, subject, text }),
+        body: JSON.stringify({ from, to, subject, text, html: toHtml(text) }),
       });
       success = res.ok;
     } catch {
