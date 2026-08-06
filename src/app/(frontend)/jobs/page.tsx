@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getServices } from '@/lib/reference';
 import { timeAgo } from '@/lib/time';
 import a from '../auth.module.css';
+import f from '@/components/forms/forms.module.css';
 import j from './jobs.module.css';
 
 export const metadata: Metadata = { title: 'Jobs' };
@@ -53,7 +54,14 @@ export default async function JobsBoardPage() {
       <main className={a.main}>
         <div className={a.wide}>
           <div className={a.eyebrow}>The network</div>
-          <h1 className={a.title}>Open jobs</h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
+            <h1 className={a.title}>Open jobs</h1>
+            {contractor.status !== 'suspended' && (
+              <Link href="/jobs/new" className={f.btnGhost}>
+                Post a job
+              </Link>
+            )}
+          </div>
 
           {gated ? (
             <div className={j.gate}>

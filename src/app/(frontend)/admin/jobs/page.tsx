@@ -8,6 +8,7 @@ import f from '@/components/forms/forms.module.css';
 export const metadata: Metadata = { title: 'Jobs — Admin' };
 
 const pillFor: Record<string, string> = {
+  pending: s.pillPending,
   open: s.pillApproved,
   exclusive: s.pillPending,
   withdrawn: s.pillSuspended,
@@ -24,7 +25,11 @@ export default async function AdminJobsPage() {
     admin.from('contact_reveals').select('job_id'),
   ]);
 
-  const list = jobs ?? [];
+  // Member-posted jobs awaiting review float to the top of the list.
+  const list = [...(jobs ?? [])].sort(
+    (x, y) => Number(y.status === 'pending') - Number(x.status === 'pending'),
+  );
+  const awaiting = list.filter((x) => x.status === 'pending').length;
 
   // How many contractors have opened each job (small dataset at launch).
   const opensFor = new Map<string, number>();
@@ -40,7 +45,10 @@ export default async function AdminJobsPage() {
           Post a job
         </Link>
       </div>
-      <p className={s.sub}>{list.length} total</p>
+      <p className={s.sub}>
+        {list.length} total
+        {awaiting > 0 ? ` · ${awaiting} awaiting review` : ''}
+      </p>
 
       {list.length === 0 ? (
         <div className={s.empty}>No jobs yet. Post the first one.</div>

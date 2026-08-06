@@ -9,7 +9,33 @@ async function assertAdmin() {
   if (!user || !isAdminEmail(user.email)) throw new Error('Not authorised');
 }
 
-/** Withdraw a job (never reaches / leaves the board). */
+/** Approve a member-posted job: onto the board, network notified. */
+export async function approveJobAction(formData: FormData) {
+  await assertAdmin();
+  const jobId = String(formData.get('job_id') || '');
+  if (!jobId) throw new Error('Invalid request');
+
+  const admin = createServiceRoleClient();
+  const { data, error } = await admin
+    .from('jobs')
+    .update({
+      status: 'open',
+      // The job opens on approval, not on submission — reset the clock.
+      bidding_opens_at: new Date().toISOString(),
+    })
+    .eq('id', jobId)
+    .eq('status', 'pending')
+    .select('id');
+  if (error) throw new Error(error.message);
+  // Only notify if this call did the flip — a double-click must not double-send.
+  if (data && data.length > 0) {
+    await admin.rpc('notify_job_open', { p_job_id: jobId });
+  }
+  revalidatePath(`/admin/jobs/${jobId}`);
+  revalidatePath('/admin/jobs');
+}
+
+/** Withdraw a job (never reaches / leaves the board; rejects a pending one). */
 export async function withdrawJobAction(formData: FormData) {
   await assertAdmin();
   const jobId = String(formData.get('job_id') || '');
@@ -20,7 +46,7 @@ export async function withdrawJobAction(formData: FormData) {
     .from('jobs')
     .update({ status: 'withdrawn' })
     .eq('id', jobId)
-    .in('status', ['exclusive', 'open']);
+    .in('status', ['pending', 'exclusive', 'open']);
   if (error) throw new Error(error.message);
   revalidatePath(`/admin/jobs/${jobId}`);
   revalidatePath('/admin/jobs');

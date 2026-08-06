@@ -8,6 +8,7 @@ export const metadata: Metadata = { title: 'Dashboard — Admin' };
 
 type Metrics = {
   total_jobs: number;
+  pending_jobs: number;
   open_jobs: number;
   completed_jobs: number;
   withdrawn_jobs: number;
@@ -42,6 +43,7 @@ export default async function AdminDashboard() {
       <div className={s.sectionLabel}>Jobs</div>
       <div className={s.metricGrid}>
         <Metric value={num(m.total_jobs)} label="Total jobs" />
+        <Metric value={num(m.pending_jobs)} label="Awaiting review" hint="Member-posted, not yet live" />
         <Metric value={num(m.open_jobs)} label="Open now" />
         <Metric value={num(m.completed_jobs)} label="Filled" />
         <Metric value={num(m.withdrawn_jobs)} label="Withdrawn" />
@@ -61,7 +63,7 @@ export default async function AdminDashboard() {
           Post a job
         </Link>
         <Link href="/admin/jobs" className={f.btnGhost}>
-          All jobs
+          All jobs{m.pending_jobs ? ` (${m.pending_jobs} to review)` : ''}
         </Link>
         <Link href="/admin/contractors" className={f.btnGhost}>
           Contractors{m.contractors_pending ? ` (${m.contractors_pending} pending)` : ''}

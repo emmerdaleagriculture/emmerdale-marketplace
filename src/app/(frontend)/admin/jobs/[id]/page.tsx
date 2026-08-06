@@ -2,13 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { withdrawJobAction, relistJobAction, completeJobAction } from '../actions';
+import { approveJobAction, withdrawJobAction, relistJobAction, completeJobAction } from '../actions';
 import { formatDateTime } from '@/lib/time';
 import s from '../../admin.module.css';
 
 export const metadata: Metadata = { title: 'Job — Admin' };
 
 const pillFor: Record<string, string> = {
+  pending: s.pillPending,
   open: s.pillApproved,
   exclusive: s.pillPending,
   withdrawn: s.pillSuspended,
@@ -26,13 +27,19 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
     .maybeSingle();
   if (!job) notFound();
 
-  const [{ data: allServices }, { data: reveals }] = await Promise.all([
+  const [{ data: allServices }, { data: reveals }, { data: poster }] = await Promise.all([
     admin.from('services').select('id, name'),
     admin
       .from('contact_reveals')
       .select('revealed_at, route, contractors(business_name, contact_name, phone, email)')
       .eq('job_id', id)
       .order('revealed_at', { ascending: true }),
+    // Member-posted jobs: created_by is a contractor. Admin-posted: no match.
+    admin
+      .from('contractors')
+      .select('business_name, contact_name')
+      .eq('id', job.created_by)
+      .maybeSingle(),
   ]);
 
   const serviceMap = new Map((allServices ?? []).map((sv) => [sv.id, sv.name]));
@@ -52,6 +59,7 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
       <p className={s.sub}>
         {county} · {job.town ? `${job.town}, ` : ''}
         {job.postcode_district ?? 'no postcode'} · posted {formatDateTime(job.created_at)}
+        {poster ? ` by ${poster.business_name} (${poster.contact_name})` : ''}
       </p>
 
       <div className={s.detailGrid}>
@@ -133,6 +141,22 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
 
       <div className={s.sectionLabel}>Actions</div>
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        {job.status === 'pending' && (
+          <>
+            <form action={approveJobAction}>
+              <input type="hidden" name="job_id" value={job.id} />
+              <button type="submit" className={s.btnApprove}>
+                Approve &amp; publish
+              </button>
+            </form>
+            <form action={withdrawJobAction}>
+              <input type="hidden" name="job_id" value={job.id} />
+              <button type="submit" className={s.btnSuspend}>
+                Reject
+              </button>
+            </form>
+          </>
+        )}
         {['exclusive', 'open'].includes(job.status) && (
           <>
             <form action={completeJobAction}>
