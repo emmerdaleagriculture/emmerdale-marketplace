@@ -62,6 +62,10 @@ const faqs = [
     a: 'By county. You choose the counties you cover when you join, and whenever a job is posted in one of them we email you the details — the area and the work needed.',
   },
   {
+    q: 'Can I post a job to the network myself?',
+    a: 'Yes — any member can. Post work of your own that needs doing, or a job you’ve been offered but can’t take on, and contractors covering that county will be notified and get in touch directly with whoever you name as the contact. We check every job before it goes out, and it’s free to do.',
+  },
+  {
     q: 'Do you take a cut of the work?',
     a: 'No. When you open a job you get the customer’s details and arrange the work directly. You invoice them yourself and keep the full amount — we take no commission.',
   },
@@ -161,8 +165,8 @@ export default async function LandingPage() {
           </h1>
           <p className={s.heroSub}>
             Hampshire Paddock Management turns away more work than it can service.
-            That overflow goes to the network — matched to contractors by county,
-            straight to your inbox.
+            That overflow — and jobs posted by members themselves — goes to the
+            network, matched to contractors by county, straight to your inbox.
           </p>
           <div className={s.heroCtas}>
             <Link href="/signup" className={f.btnYellow}>
@@ -194,6 +198,13 @@ export default async function LandingPage() {
               </div>
             ))}
           </div>
+          <p className={s.sectionLede} style={{ marginTop: 32 }}>
+            And it works both ways. Got a job of your own that needs doing, or
+            been offered work you can&apos;t take on?{' '}
+            <Link href="/jobs/new">Post it to the network</Link> — we check it,
+            then contractors covering the county get in touch directly with
+            whoever you name as the contact. Free to do.
+          </p>
         </div>
       </section>
 
