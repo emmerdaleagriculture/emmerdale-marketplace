@@ -22,6 +22,10 @@ export const metadata: Metadata = {
 export default function StartPage() {
   return (
     <div className={a.wrap}>
+      {/* Turnstile's challenge round-trip is the last thing between the
+          customer and a working submit — start its connection immediately.
+          React hoists these into <head>. */}
+      <link rel="preconnect" href="https://challenges.cloudflare.com" />
       <MinimalHeader />
       <main className={a.main}>
         <div className={a.narrow}>

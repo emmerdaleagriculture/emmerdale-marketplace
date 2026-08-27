@@ -39,6 +39,28 @@ export function LandingFlow() {
   const [state, action, pending] = useActionState(parseJobAction, EMPTY);
   const [formTs, setFormTs] = useState('');
   const [captchaToken, setCaptchaToken] = useState('');
+  const [awaitingToken, setAwaitingToken] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const tokenRef = useRef('');
+  tokenRef.current = captchaToken;
+
+  // The security check finishing while the customer waits → submit for them.
+  useEffect(() => {
+    if (awaitingToken && captchaToken) {
+      setAwaitingToken(false);
+      formRef.current?.requestSubmit();
+    }
+  }, [awaitingToken, captchaToken]);
+  // Never hold a paid click hostage to a slow challenge: after 8s, submit
+  // anyway and let the server-side verification decide.
+  useEffect(() => {
+    if (!awaitingToken) return;
+    const t = setTimeout(() => {
+      setAwaitingToken(false);
+      formRef.current?.requestSubmit();
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [awaitingToken]);
   const [utm, setUtm] = useState({ source: '', medium: '', campaign: '', gclid: '' });
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
@@ -183,7 +205,19 @@ export function LandingFlow() {
   }
 
   return (
-    <form action={action} className={a.card}>
+    <form
+      ref={formRef}
+      action={action}
+      className={a.card}
+      onSubmit={(e) => {
+        // The button is never disabled waiting for Turnstile — if the token
+        // hasn't arrived yet, hold THIS submit and fire it the moment it does.
+        if (turnstileEnabled && !tokenRef.current && !awaitingToken) {
+          e.preventDefault();
+          setAwaitingToken(true);
+        }
+      }}
+    >
       {state.error && <p className={f.error}>{state.error}</p>}
 
       <input type="hidden" name="form_ts" value={formTs} />
@@ -268,9 +302,9 @@ export function LandingFlow() {
         <button
           className={f.btnYellow}
           type="submit"
-          disabled={pending || (turnstileEnabled && !captchaToken)}
+          disabled={pending || awaitingToken}
         >
-          Get started
+          {awaitingToken ? 'One moment…' : pending ? 'Working…' : 'Get started'}
         </button>
       </div>
     </form>
