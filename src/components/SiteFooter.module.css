@@ -74,3 +74,12 @@
   justify-content: space-between;
   flex-wrap: wrap;
 }
+
+/* Stacked full-width links on phones need breathing room or mis-taps hit
+   the neighbour. */
+@media (max-width: 640px) {
+  .footer a {
+    display: inline-block;
+    padding: 8px 0;
+  }
+}

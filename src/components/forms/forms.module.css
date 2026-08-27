@@ -115,7 +115,11 @@
   line-height: 1.5;
 }
 .checkRow input {
-  margin-top: 3px;
+  margin-top: 1px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--jd-green);
 }
 
 /* Region / county picker */
@@ -163,8 +167,9 @@
 .chip {
   border: 1px solid var(--rule);
   border-radius: 999px;
-  padding: 7px 14px;
-  font-size: 13px;
+  /* 44px-ish tap height — chips are the main control on phones. */
+  padding: 12px 16px;
+  font-size: 14px;
   cursor: pointer;
   user-select: none;
 }

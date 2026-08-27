@@ -7,3 +7,12 @@
   background: var(--jd-green-pale);
   margin-bottom: 20px;
 }
+
+/* Leaflet's default 30px zoom buttons are small for field thumbs. */
+.map :global(.leaflet-control-zoom a) {
+  /* !important: leaflet.css loads after module CSS and wins the tie. */
+  width: 38px !important;
+  height: 38px !important;
+  line-height: 38px !important;
+  font-size: 20px !important;
+}
