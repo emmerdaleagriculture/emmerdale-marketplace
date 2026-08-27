@@ -88,6 +88,9 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
 
   return (
     <form action={action} className={a.card}>
+      {/* Tiles come from Mapbox the moment the map mounts — start the TLS
+          handshake now. React hoists this into <head>. */}
+      {result.lat !== null && <link rel="preconnect" href="https://api.mapbox.com" />}
       {state.error && <p className={f.error}>{state.error}</p>}
 
       <input type="hidden" name="submission_id" value={result.submission_id} />

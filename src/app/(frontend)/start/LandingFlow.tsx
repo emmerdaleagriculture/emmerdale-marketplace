@@ -1,9 +1,14 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { parseJobAction, recordLandingView, type ParseActionState } from './actions';
-import { ConfirmStep } from './ConfirmStep';
 import { downscalePhoto } from './photoDownscale';
+
+// The confirm step (and the map machinery it pulls in) is dead weight on
+// first paint — split it out, and warm the chunk during the parse wait so
+// it's ready the moment the result arrives.
+const ConfirmStep = dynamic(() => import('./ConfirmStep').then((m) => m.ConfirmStep));
 import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
 import f from '@/components/forms/forms.module.css';
 import a from '@/app/(frontend)/auth.module.css';
@@ -129,9 +134,13 @@ export function LandingFlow() {
   };
 
   // The parse skeleton replaces the form in place — put the viewport back at
-  // the top so the customer watches the skeleton, not empty space.
+  // the top so the customer watches the skeleton, not empty space. The parse
+  // takes a couple of seconds: spend them downloading the confirm-step chunk.
   useEffect(() => {
-    if (pending) window.scrollTo({ top: 0 });
+    if (pending) {
+      window.scrollTo({ top: 0 });
+      void import('./ConfirmStep');
+    }
   }, [pending]);
 
   const viewLogged = useRef(false);

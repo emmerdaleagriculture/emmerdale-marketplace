@@ -32,17 +32,20 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   const invitation = await getInvitationByToken(token);
   if (!invitation || !invitation.submission) notFound();
 
-  const admin = createServiceRoleClient();
-  await admin.rpc('record_invitation_view', { p_token: token }).then(
-    () => undefined,
-    (e) => console.error('[sq] record view failed:', e),
-  );
-
   const js = invitation.submission;
   const service = js.service as { id: number; name: string; area_priced: boolean } | null;
   const county = (js.county as { name: string } | null)?.name ?? null;
-  const live = await getLiveQuote(js.id, invitation.contractor_id);
-  const photos = await signPhotos(js.photo_paths);
+
+  // One round-trip of latency, not three: the view event, the live quote and
+  // the photo signing are independent.
+  const admin = createServiceRoleClient();
+  const [, live, photos] = await Promise.all([
+    admin
+      .rpc('record_invitation_view', { p_token: token })
+      .then(() => undefined, (e) => console.error('[sq] record view failed:', e)),
+    getLiveQuote(js.id, invitation.contractor_id),
+    signPhotos(js.photo_paths),
+  ]);
   const jobOpen =
     ['distributed', 'quotes_receiving', 'accepted_awaiting_payment'].includes(js.status) &&
     !['declined', 'closed_awarded', 'closed_stale'].includes(invitation.status);
@@ -69,6 +72,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
   return (
     <div className={a.wrap}>
+      {js.lat !== null && <link rel="preconnect" href="https://api.mapbox.com" />}
       <MinimalHeader />
       <main className={a.main}>
         <div className={a.narrow}>

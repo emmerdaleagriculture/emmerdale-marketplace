@@ -81,6 +81,23 @@ export async function getClientQuotes(submissionId: string) {
   return data ?? [];
 }
 
+/**
+ * One quote by id, same explicit column set — used for the accepted quote on
+ * awarded/paid jobs, where validity filtering must NOT apply (an award
+ * outlives its quote's valid-until date).
+ */
+export async function getClientQuoteById(id: string) {
+  const admin = createServiceRoleClient();
+  const { data } = await admin
+    .from('client_quotes')
+    .select(
+      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status',
+    )
+    .eq('id', id)
+    .maybeSingle();
+  return data ?? null;
+}
+
 const PHOTO_LABELS: Record<string, string> = {
   field: 'The field',
   access: 'Gateway / access',
@@ -89,15 +106,15 @@ const PHOTO_LABELS: Record<string, string> = {
 export async function signPhotos(paths: string[] | null): Promise<JobSpecPhoto[]> {
   if (!paths?.length) return [];
   const admin = createServiceRoleClient();
-  const out: JobSpecPhoto[] = [];
-  for (const path of paths) {
-    const { data } = await admin.storage.from('job-photos').createSignedUrl(path, 3600);
-    if (data?.signedUrl) {
+  const signed = await Promise.all(
+    paths.map(async (path) => {
+      const { data } = await admin.storage.from('job-photos').createSignedUrl(path, 3600);
+      if (!data?.signedUrl) return null;
       const stem = path.split('/').pop()?.split('.')[0] ?? 'photo';
-      out.push({ url: data.signedUrl, label: PHOTO_LABELS[stem] ?? 'Photo' });
-    }
-  }
-  return out;
+      return { url: data.signedUrl, label: PHOTO_LABELS[stem] ?? 'Photo' };
+    }),
+  );
+  return signed.filter((p): p is JobSpecPhoto => p !== null);
 }
 
 export async function getCompositeWeight(): Promise<number> {

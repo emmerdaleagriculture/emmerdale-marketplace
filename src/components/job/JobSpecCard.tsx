@@ -96,7 +96,7 @@ export function JobSpecCard({ spec }: { spec: JobSpec }) {
           {spec.photos.map((p) => (
             <a key={p.url} href={p.url} target="_blank" rel="noreferrer">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt={p.label} className={s.photo} />
+              <img src={p.url} alt={p.label} className={s.photo} loading="lazy" />
             </a>
           ))}
         </div>

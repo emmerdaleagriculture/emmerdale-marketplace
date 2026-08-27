@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
+  getClientQuoteById,
   getClientQuotes,
   getCompositeWeight,
   getSubmissionByClientToken,
@@ -43,16 +44,18 @@ export default async function ClientPortalPage({
   const county = (js.county as { name: string } | null)?.name ?? null;
   const first = js.contact_name?.split(/\s+/)[0] ?? 'there';
 
-  const quotes = ['quotes_receiving', 'accepted_awaiting_payment'].includes(js.status)
-    ? await getClientQuotes(js.id)
-    : [];
-  const ratingWeight = quotes.length ? await getCompositeWeight() : 0.3;
-  const photos = await signPhotos(js.photo_paths);
-
-  const accepted = js.accepted_client_quote_id
-    ? quotes.find((q) => q.id === js.accepted_client_quote_id) ??
-      (await getClientQuotes(js.id)).find((q) => q.id === js.accepted_client_quote_id) ?? null
-    : null;
+  // Everything after the token lookup is independent — one round-trip of
+  // latency. The accepted quote is fetched by id with no validity filter:
+  // an award outlives its quote's valid-until date.
+  const needQuotes = ['quotes_receiving', 'accepted_awaiting_payment'].includes(js.status);
+  const [quotes, ratingWeight, photos, accepted] = await Promise.all([
+    needQuotes ? getClientQuotes(js.id) : Promise.resolve([]),
+    needQuotes ? getCompositeWeight() : Promise.resolve(0.3),
+    signPhotos(js.photo_paths),
+    js.accepted_client_quote_id
+      ? getClientQuoteById(js.accepted_client_quote_id)
+      : Promise.resolve(null),
+  ]);
 
   const spec = {
     service,
