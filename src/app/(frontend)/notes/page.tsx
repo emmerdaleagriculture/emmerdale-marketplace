@@ -100,8 +100,10 @@ export default async function NotesIndexPage() {
 
       {/* ===== TOPIC LINKS + GRID + LOAD MORE (first page of cards renders
            in server HTML; chips link to crawlable /notes/tag/* hubs) ===== */}
-      <FilterBar counts={counts} active={null} shownCount={grid.length} />
-      <NotesClient posts={grid} />
+      <FilterBar counts={counts} active={null} shownCount={all.length} />
+      {/* When the only post is the featured one above, an empty grid saying
+          "no posts yet" reads as a contradiction — skip it. */}
+      {(grid.length > 0 || all.length === 0) && <NotesClient posts={grid} />}
 
       {/* ===== FULL ARCHIVE (server-rendered) =====
            Every published post gets a crawlable link from /notes — the
