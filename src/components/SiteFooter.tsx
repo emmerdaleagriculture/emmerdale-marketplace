@@ -36,6 +36,7 @@ export function SiteFooter() {
           <nav className={styles.linkCol} aria-label="Network">
             <div className={styles.colTitle}>The network</div>
             <Link href="/#how-it-works">How it works</Link>
+            <Link href="/notes">Notes from the field</Link>
             <Link href="/signup">Join as a contractor</Link>
             <Link href="/login">Log in</Link>
           </nav>

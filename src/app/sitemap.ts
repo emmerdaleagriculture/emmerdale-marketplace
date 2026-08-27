@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { allCountyRefs } from '@/lib/verticals';
 import { getCountyCoverage } from '@/lib/reference';
+import { getNotesData, countByTag } from '@/lib/notes/data';
+import { CURATED_TAGS } from '@/lib/notes/tags';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://emmerdaleagriculture.com';
 
@@ -15,7 +17,11 @@ export const revalidate = 86400;
 // login is noindex (no search value), so it's excluded here too. The homepage
 // uses the bare origin (no trailing slash) to match its rendered canonical.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [counties, coverage] = await Promise.all([allCountyRefs(), getCountyCoverage()]);
+  const [counties, coverage, notes] = await Promise.all([
+    allCountyRefs(),
+    getCountyCoverage(),
+    getNotesData(),
+  ]);
   // Only list county pages we actually cover — matches the per-page index rule,
   // so we never submit thin, no-coverage pages to Google.
   const countyPages: MetadataRoute.Sitemap = counties
@@ -25,6 +31,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: `${SITE}/tractor-hire/${c.slug}`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.5 },
     ]);
 
+  // Notes: index + every published post + non-empty tag hubs (same gating as
+  // the hub pages themselves, which 404 while empty).
+  const allNotes = [...(notes.featured ? [notes.featured] : []), ...notes.grid];
+  const tagCounts = countByTag(allNotes);
+  const notePages: MetadataRoute.Sitemap =
+    allNotes.length === 0
+      ? []
+      : [
+          { url: `${SITE}/notes`, changeFrequency: 'weekly' as const, priority: 0.7 },
+          ...allNotes.map((n) => ({
+            url: `${SITE}/notes/${n.slug}`,
+            lastModified: n.publishedAt ? new Date(n.publishedAt) : undefined,
+            changeFrequency: 'monthly' as const,
+            priority: 0.6,
+          })),
+          ...CURATED_TAGS.filter((t) => (tagCounts.get(t.slug) ?? 0) > 0).map((t) => ({
+            url: `${SITE}/notes/tag/${t.slug}`,
+            changeFrequency: 'monthly' as const,
+            priority: 0.5,
+          })),
+        ];
+
   return [
     { url: SITE, lastModified: LAST_UPDATED, changeFrequency: 'weekly', priority: 1 },
     { url: `${SITE}/hay-bales`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.8 },
@@ -33,5 +61,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/privacy`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE}/terms`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
     ...countyPages,
+    ...notePages,
   ];
 }

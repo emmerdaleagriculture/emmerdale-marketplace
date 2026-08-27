@@ -18,6 +18,7 @@ export function SiteHeader({ variant = 'solid' }: { variant?: 'overlay' | 'solid
 
         <nav className={styles.nav} aria-label="Primary">
           <Link href="/#how-it-works">How it works</Link>
+          <Link href="/notes">Notes</Link>
           <HeaderAuthNav />
         </nav>
       </div>

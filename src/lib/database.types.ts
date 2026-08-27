@@ -1308,6 +1308,57 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          content_md: string
+          created_at: string
+          excerpt: string | null
+          featured: boolean
+          hero_alt: string | null
+          hero_path: string | null
+          id: string
+          primary_tag: string | null
+          published: boolean
+          published_at: string | null
+          slug: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_md?: string
+          created_at?: string
+          excerpt?: string | null
+          featured?: boolean
+          hero_alt?: string | null
+          hero_path?: string | null
+          id?: string
+          primary_tag?: string | null
+          published?: boolean
+          published_at?: string | null
+          slug: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_md?: string
+          created_at?: string
+          excerpt?: string | null
+          featured?: boolean
+          hero_alt?: string | null
+          hero_path?: string | null
+          id?: string
+          primary_tag?: string | null
+          published?: boolean
+          published_at?: string | null
+          slug?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pending_emails: {
         Row: {
           attempts: number

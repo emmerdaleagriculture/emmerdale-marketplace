@@ -20,6 +20,14 @@ const nextConfig = {
   images: {
     // Modern formats — Next serves AVIF/WebP to browsers that support them
     formats: ['image/avif', 'image/webp'],
+    // Notes hero/inline images live in the public notes-media bucket.
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
   },
 
   // Security headers applied to every response
