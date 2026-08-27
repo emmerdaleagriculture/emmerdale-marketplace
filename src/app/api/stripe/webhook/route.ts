@@ -51,12 +51,18 @@ export async function POST(request: Request) {
           });
           if (error) throw error; // 500 → Stripe retries
           const res = data as { ok: boolean; reason?: string };
-          if (!res.ok && res.reason === 'job_closed_manual_refund') {
-            // Money into a closed job: held, never auto-refunded — operator
-            // decides (§28). The RPC queued the alert; this is belt-and-braces.
+          if (!res.ok) {
+            // ANY failed award after a successful charge needs a human — a
+            // silent 200 here is a customer charged with no job and no alert.
+            // (unknown_session = no job_payments row was ever written.)
             await notifyAdmins(
-              'MANUAL REFUND NEEDED: payment into a closed job',
-              `Stripe session ${session.id} paid for submission ${session.metadata?.submission_id} but the job was no longer awardable. Decide and refund in Stripe.`,
+              res.reason === 'job_closed_manual_refund'
+                ? 'MANUAL REFUND NEEDED: payment into a closed job'
+                : `PAYMENT NEEDS A HUMAN: award failed (${res.reason ?? 'unknown'})`,
+              `Stripe session ${session.id} completed payment for submission ` +
+                `${session.metadata?.submission_id ?? '(unknown)'} but the award did not ` +
+                `happen (reason: ${res.reason ?? 'unknown'}). The money has been taken — ` +
+                `investigate and refund or award manually.`,
             );
           }
         } else if (session.subscription) {

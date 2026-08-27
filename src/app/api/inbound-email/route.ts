@@ -46,6 +46,19 @@ function extractToken(addresses: string[]): string | null {
   return null;
 }
 
+/**
+ * The bare address from a From header ("Dave <dave@x.com>" → "dave@x.com").
+ * Sender authorisation must compare exact addresses — a substring match lets
+ * "bigdave@x.com", or anyone putting the contractor's address in a display
+ * name, act on the invitation.
+ */
+function bareAddress(from: string): string {
+  const angled = /<([^<>\s]+@[^<>\s]+)>/.exec(from);
+  if (angled) return angled[1].toLowerCase();
+  const plain = /([^\s<>,"']+@[^\s<>,"']+)/.exec(from);
+  return (plain?.[1] ?? '').toLowerCase();
+}
+
 export async function POST(request: Request) {
   const secret = process.env.RESEND_INBOUND_WEBHOOK_SECRET;
   if (!secret) {
@@ -112,9 +125,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, outcome: 'unknown_token' });
   }
 
-  // Only the invited contractor's address may act on this token by email.
+  // Only the invited contractor's exact address may act on this token by email.
   const contractorEmail = (invitation.contractor as { email: string } | null)?.email ?? '';
-  if (!from.toLowerCase().includes(contractorEmail.toLowerCase()) || !contractorEmail) {
+  if (!contractorEmail || bareAddress(from) !== contractorEmail.toLowerCase()) {
     await log(invitation.id, 'unknown_sender');
     await notifyAdmins(
       'Inbound reply from an unexpected sender',
@@ -153,6 +166,20 @@ export async function POST(request: Request) {
       p_token: token,
       p_reason: 'not_interested',
     });
+    const res = declined as { ok: boolean; reason?: string } | null;
+    if (!res?.ok) {
+      // Most likely already_priced: the contractor wants to WITHDRAW a live
+      // price. The customer could accept a contractor who's walked away —
+      // that needs a human, not a silent 200.
+      await log(invitation.id, 'error', { parse, decline_result: res });
+      await notifyAdmins(
+        'Contractor wants out of a priced job',
+        `Invitation ${invitation.id} (${contractorEmail}) replied declining, but ` +
+          `decline was refused (${res?.reason ?? 'unknown'}) — they likely want to ` +
+          `withdraw a live price. Handle before the customer accepts it.\n\n${excerpt.slice(0, 800)}`,
+      );
+      return NextResponse.json({ received: true, outcome: 'decline_needs_human' });
+    }
     await log(invitation.id, 'declined', parse);
     return NextResponse.json({ received: true, outcome: 'declined', result: declined });
   }

@@ -56,10 +56,12 @@ export default async function AdminSubmissionsPage() {
     .limit(200);
 
   const rows = (data ?? []) as unknown as SubmissionRow[];
-  const confirmed = rows.filter((r) => r.status === 'confirmed');
+  // status moves past 'confirmed' once distributed — bucket on whether the
+  // customer ever completed confirmation.
+  const confirmed = rows.filter((r) => !['draft', 'abandoned'].includes(r.status));
   const needsReview = confirmed.filter((r) => !r.service || r.service_confirmed === false);
   const rest = confirmed.filter((r) => r.service && r.service_confirmed !== false);
-  const draftCount = rows.filter((r) => r.status !== 'confirmed').length;
+  const draftCount = rows.filter((r) => ['draft', 'abandoned'].includes(r.status)).length;
 
   const table = (list: SubmissionRow[]) => (
     <div className={s.tableWrap}>

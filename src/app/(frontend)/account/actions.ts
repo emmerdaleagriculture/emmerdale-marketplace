@@ -36,7 +36,9 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   const d = parsed.data;
   const notify = formData.get('notify_new_jobs') === 'on';
 
-  // Refresh display-only base coords when the postcode changes (§15).
+  // Refresh display-only base coords when the geocode succeeds (§15). A
+  // transient postcodes.io failure must not wipe previously stored coords —
+  // that would strip distances from every future invitation.
   const geo = await resolveCounty(d.base_postcode);
 
   // Update own profile (RLS: contractors_update_own; status is trigger-guarded).
@@ -48,8 +50,7 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
       phone: d.phone,
       base_postcode: d.base_postcode,
       services: d.service_ids,
-      base_lat: geo.lat ?? null,
-      base_lng: geo.lng ?? null,
+      ...(geo.lat != null && geo.lng != null ? { base_lat: geo.lat, base_lng: geo.lng } : {}),
       notify_new_jobs: notify,
     })
     .eq('id', user.id);

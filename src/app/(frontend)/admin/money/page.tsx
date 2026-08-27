@@ -64,7 +64,7 @@ export default async function MoneyPage() {
           <div className={s.metricValue}>
             {formatGBP(rows.filter((r) => r.status === 'paid').reduce((s2, r) => s2 + r.amount_pence, 0))}
           </div>
-          <div className={s.metricLabel}>Taken all-time</div>
+          <div className={s.metricLabel}>Taken (recent)</div>
           <div className={s.metricHint}>last {rows.length} payments shown below</div>
         </div>
       </div>

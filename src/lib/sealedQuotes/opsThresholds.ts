@@ -14,6 +14,7 @@ export type OpsState =
   | 'in_progress'
   | 'completed_by_contractor'
   | 'disputed'
+  | 'variation_pending'
   | 'variation_declined';
 
 const HOUR = 60 * 60 * 1000;
@@ -30,6 +31,7 @@ export const OPS_THRESHOLDS_MS: Record<OpsState, number | null> = {
   in_progress: null,
   completed_by_contractor: 3 * 24 * HOUR, // unconfirmed 3 days (auto-confirm at 5, Part 3)
   disputed: 4 * HOUR,
+  variation_pending: 4 * HOUR,
   variation_declined: 4 * HOUR,
 };
 

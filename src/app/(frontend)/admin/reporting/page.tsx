@@ -64,7 +64,9 @@ export default async function ReportingPage() {
   const parses = (parsesQ.data ?? []) as ParseRow[];
   const viewsMissing = Boolean(viewsQ.error);
 
-  const confirmed = subs.filter((r) => r.status === 'confirmed');
+  // Part 2 moves status past 'confirmed' (distributed, awarded, …): a
+  // confirmed submission is one that reached confirmation, ever.
+  const confirmed = subs.filter((r) => r.confirmed_at !== null);
   const window = (days: number) => ({
     views: views.filter((v) => within(v.created_at, days)).length,
     parses: subs.filter((r) => within(r.created_at, days)).length,

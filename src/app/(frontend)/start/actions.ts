@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
-import { resolveCounty, type CountyResolution } from '@/lib/postcodes';
+import { normalisePostcode, resolveCounty, type CountyResolution } from '@/lib/postcodes';
 import { getServices } from '@/lib/reference';
 import { verifyTurnstile } from '@/lib/turnstile';
 import type { FormState } from '@/lib/form';
@@ -394,7 +394,11 @@ export async function confirmJobAction(
   const editedPostcode = d.postcode?.trim() ?? '';
   if (editedPostcode && editedPostcode.toUpperCase() !== (draft.postcode ?? '').toUpperCase()) {
     const geo = await resolveCounty(editedPostcode);
-    postcode = editedPostcode.toUpperCase();
+    // Store the canonical spaced form: the pre-award district redaction is
+    // split_part(postcode, ' ', 1), so an unspaced "SO249AA" would leak the
+    // FULL postcode to every invited contractor.
+    const norm = normalisePostcode(editedPostcode);
+    postcode = norm.full ?? norm.outcode ?? editedPostcode.toUpperCase().slice(0, 4);
     countyId = geo.county_id ?? null;
     countyName = geo.county_name ?? null;
     lat = geo.lat ?? null;

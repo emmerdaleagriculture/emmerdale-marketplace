@@ -24,8 +24,11 @@ function pinIcon(L: typeof Leaflet) {
 const MAPBOX_TOKEN = (process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? '').trim();
 
 export type BoundaryState = {
-  lat: number;
-  lng: number;
+  /** Pin coords — null until the customer actually drags the pin. An
+      untouched pin is just the parse-time geocode and must never override a
+      postcode corrected on the confirm step. */
+  lat: number | null;
+  lng: number | null;
   boundary: BoundaryPolygon | null;
   mappedAcres: number | null;
 };
@@ -53,8 +56,9 @@ export function BoundaryMap({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
-  const stateRef = useRef<{ pin: [number, number]; points: LngLat[] }>({
+  const stateRef = useRef<{ pin: [number, number]; pinMoved: boolean; points: LngLat[] }>({
     pin: [lat, lng],
+    pinMoved: false,
     points: [],
   });
   const redrawRef = useRef<() => void>(() => {});
@@ -122,6 +126,7 @@ export function BoundaryMap({
       pin.on('dragend', () => {
         const p = pin.getLatLng();
         stateRef.current.pin = [p.lat, p.lng];
+        stateRef.current.pinMoved = true;
         emit();
       });
 
@@ -154,8 +159,8 @@ export function BoundaryMap({
       const emit = () => {
         const pts = stateRef.current.points;
         onChangeRef.current({
-          lat: stateRef.current.pin[0],
-          lng: stateRef.current.pin[1],
+          lat: stateRef.current.pinMoved ? stateRef.current.pin[0] : null,
+          lng: stateRef.current.pinMoved ? stateRef.current.pin[1] : null,
           boundary:
             pts.length >= 3 ? { type: 'Polygon', coordinates: [[...pts, pts[0]]] } : null,
           mappedAcres: pts.length >= 3 ? Number(ringAreaAcres(pts).toFixed(2)) : null,
