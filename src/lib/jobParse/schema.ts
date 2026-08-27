@@ -28,6 +28,7 @@ export const CANONICAL_SERVICES = [
   'Manure sweeping',
   'Hay, straw & haylage',
   'Tractor hire (events)',
+  'Hedge cutting',
 ] as const;
 
 export type CanonicalService = (typeof CANONICAL_SERVICES)[number];

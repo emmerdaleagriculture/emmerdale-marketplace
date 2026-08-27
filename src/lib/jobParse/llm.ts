@@ -12,7 +12,7 @@ import { LlmParseSchema, RECORD_JOB_PARSE_TOOL, type LlmParse } from './schema';
  */
 
 export const MODEL_VERSION = 'claude-haiku-4-5';
-export const PROMPT_VERSION = 'v1';
+export const PROMPT_VERSION = 'v2'; // v2: Hedge cutting added; hedges removed from Flailing
 
 /** Hard latency ceiling on the parse call (spec §4 step 2). */
 const LLM_TIMEOUT_MS = 8000;
@@ -23,7 +23,7 @@ The customer's wording is unconstrained — they will not use trade terms. "Chop
 
 Services (choose exactly one, or "unmatched"):
 - Paddock topping — cutting long or overgrown grass in a field or paddock back to height
-- Flailing — heavy-duty flail cutting of rough vegetation, scrub, brambles or hedges
+- Flailing — heavy-duty flail cutting of rough ground vegetation, scrub or brambles (NOT hedges — that is Hedge cutting)
 - Flail collecting — flail cutting where the cuttings are collected and removed
 - Finish mowing — fine, lawn-quality mowing for a neat finish
 - Harrowing — dragging harrows over grassland to level, aerate or pull out dead thatch
@@ -39,6 +39,7 @@ Services (choose exactly one, or "unmatched"):
 - Manure sweeping — sweeping or collecting droppings from paddocks
 - Hay, straw & haylage — supplying or delivering hay, straw or haylage bales
 - Tractor hire (events) — hiring a tractor (with driver) for an event or show
+- Hedge cutting — cutting or trimming hedges, usually with a tractor-mounted flail arm; measured in metres of hedge
 
 Rules:
 - "unmatched" is a legitimate, first-class answer. Prefer it over a poor fit — a wrong confident classification is worse than an honest unmatched.

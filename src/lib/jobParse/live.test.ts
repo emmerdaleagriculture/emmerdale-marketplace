@@ -43,6 +43,18 @@ describe.skipIf(!process.env.LIVE_PARSE_TEST)('live claude-haiku-4-5 strict tool
     }
   }, 15000);
 
+  it('hedge cutting is Hedge cutting, not Flailing (prompt v2)', async () => {
+    const r = await callParseModel(
+      'need about 300m of hedge cutting along the paddock, overgrown hawthorn',
+      'SO51',
+      NOW,
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.parse.service).toBe('Hedge cutting');
+    }
+  }, 20000);
+
   it('nonsense input prefers unmatched over a poor fit', async () => {
     const r = await callParseModel(
       'I need someone to repair the slate roof on my barn before winter',

@@ -64,6 +64,7 @@ export function conditionsFor(service: string | null): ConditionQuestion[] {
 const NON_AREA_PRICED: ReadonlySet<string> = new Set([
   'Hay, straw & haylage',
   'Tractor hire (events)',
+  'Hedge cutting', // linear work: per-metre, no field boundary to draw
 ]);
 
 export function isAreaPriced(service: string | null): boolean {
