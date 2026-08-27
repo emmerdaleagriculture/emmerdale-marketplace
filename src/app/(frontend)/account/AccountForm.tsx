@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 import { updateProfileAction } from './actions';
 import { emptyFormState } from '@/lib/form';
 import { CountyPicker, type CountyOption } from '@/components/forms/CountyPicker';
+import { ServicePicker, type ServiceOption } from '@/components/forms/ServicePicker';
 import type { Contractor } from '@/lib/auth';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
@@ -12,10 +13,12 @@ export function AccountForm({
   contractor,
   counties,
   selectedCounties,
+  services,
 }: {
   contractor: Contractor;
   counties: CountyOption[];
   selectedCounties: number[];
+  services: ServiceOption[];
 }) {
   const [state, action, pending] = useActionState(updateProfileAction, emptyFormState);
 
@@ -43,6 +46,13 @@ export function AccountForm({
           <input className={f.input} name="base_postcode" defaultValue={contractor.base_postcode} required />
         </label>
       </div>
+
+      <div className={a.groupTitle}>What work do you do?</div>
+      <p className={f.hint} style={{ marginBottom: 12 }}>
+        Fewer services means fewer irrelevant invitations — keep this accurate and
+        you&rsquo;ll only hear about work you actually want.
+      </p>
+      <ServicePicker services={services} selected={contractor.services ?? []} />
 
       <div className={a.groupTitle}>Counties you cover</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>

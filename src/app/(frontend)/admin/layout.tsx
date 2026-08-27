@@ -19,7 +19,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           Emmerdale Agriculture
         </Link>
         <nav className={styles.nav}>
-          <Link href="/admin">Dashboard</Link>
+          <Link href="/admin/ops">Ops</Link>
+          <Link href="/admin/queues">Queues</Link>
+          <Link href="/admin/money">Money</Link>
+          <Link href="/admin/submissions">Submissions</Link>
+          <Link href="/admin/reporting">Reporting</Link>
+          <Link href="/admin/metrics">Metrics</Link>
           <Link href="/admin/leads">Leads</Link>
           <Link href="/admin/jobs">Jobs</Link>
           <Link href="/admin/contractors">Contractors</Link>

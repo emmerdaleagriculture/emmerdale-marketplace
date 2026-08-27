@@ -6,7 +6,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/auth';
-import { getCounties } from '@/lib/reference';
+import { getCounties, getServices } from '@/lib/reference';
 import a from '../auth.module.css';
 import ac from './account.module.css';
 
@@ -30,8 +30,9 @@ export default async function AccountPage() {
   // A confirmed contractor who hasn't completed onboarding has no profile yet.
   if (!contractor) redirect('/onboarding');
 
-  const [counties, ccRows] = await Promise.all([
+  const [counties, services, ccRows] = await Promise.all([
     getCounties(),
+    getServices(),
     supabase.from('contractor_counties').select('county_id').eq('contractor_id', user.id),
   ]);
   const selectedCounties = (ccRows.data ?? []).map((r) => r.county_id!).filter(Boolean);
@@ -74,6 +75,7 @@ export default async function AccountPage() {
             contractor={contractor}
             counties={counties}
             selectedCounties={selectedCounties}
+            services={services}
           />
         </div>
       </main>

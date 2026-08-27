@@ -5,7 +5,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { OnboardingForm } from './OnboardingForm';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/auth';
-import { getCounties } from '@/lib/reference';
+import { getCounties, getServices } from '@/lib/reference';
 import a from '../auth.module.css';
 
 export const metadata: Metadata = {
@@ -30,7 +30,7 @@ export default async function OnboardingPage() {
   if (contractor) redirect('/account');
   if (isAdminEmail(user.email)) redirect('/admin');
 
-  const counties = await getCounties();
+  const [counties, services] = await Promise.all([getCounties(), getServices()]);
 
   return (
     <div className={a.wrap}>
@@ -45,7 +45,7 @@ export default async function OnboardingPage() {
             customer’s details to get in touch directly. You can change any of this
             later in your account.
           </p>
-          <OnboardingForm counties={counties} />
+          <OnboardingForm counties={counties} services={services} />
         </div>
       </main>
       <SiteFooter />

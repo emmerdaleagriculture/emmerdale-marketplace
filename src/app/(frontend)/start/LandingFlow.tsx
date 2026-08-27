@@ -1,0 +1,269 @@
+'use client';
+
+import { useActionState, useEffect, useRef, useState } from 'react';
+import { parseJobAction, recordLandingView, type ParseActionState } from './actions';
+import { ConfirmStep } from './ConfirmStep';
+import { downscalePhoto } from './photoDownscale';
+import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
+import f from '@/components/forms/forms.module.css';
+import a from '@/app/(frontend)/auth.module.css';
+import s from './start.module.css';
+
+const EMPTY: ParseActionState = {};
+
+/** Swap a file input's contents for the downscaled version, in place. */
+async function downscaleInput(input: HTMLInputElement) {
+  const file = input.files?.[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const small = await downscalePhoto(file);
+  if (small === file) return;
+  const dt = new DataTransfer();
+  dt.items.add(small);
+  input.files = dt.files;
+}
+
+/**
+ * The landing-page step machine. Step 1 (describe) is a real form that
+ * server-renders; submitting runs the parse server action and, while pending,
+ * renders a skeleton of the job spec in its place. A successful parse hands
+ * over to <ConfirmStep> (steps 3–4). The parse result always renders — a
+ * failed LLM call arrives as a deterministic-fallback result, never an error
+ * page (spec §6.4).
+ */
+export function LandingFlow() {
+  const [state, action, pending] = useActionState(parseJobAction, EMPTY);
+  const [formTs, setFormTs] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [utm, setUtm] = useState({ source: '', medium: '', campaign: '', gclid: '' });
+  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [geoHint, setGeoHint] = useState('');
+  const locationRef = useRef<HTMLInputElement>(null);
+
+  // "Use my location" (spec §4 step 1): browser geolocation → nearest postcode
+  // via postcodes.io reverse lookup. The raw coords are kept as a fallback so
+  // a failed reverse lookup still geocodes the submission.
+  //
+  // Accuracy handling: a silently-wrong postcode routes the job to the wrong
+  // county, so a good fix (phones with GPS — the actual ad audience) fills
+  // the box with a double-check nudge, while a coarse fix (desktops locating
+  // by IP/Wi-Fi, kilometres out) declines to guess and says why. High
+  // accuracy is tried first; desktops without location services time out on
+  // it, so a coarse low-accuracy attempt follows before giving up.
+  const GEO_ACCURACY_LIMIT_M = 1500;
+
+  const getPosition = (highAccuracy: boolean) =>
+    new Promise<GeolocationPosition>((resolve, reject) =>
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: highAccuracy,
+        timeout: 8000,
+        maximumAge: 60000,
+      }),
+    );
+
+  const useMyLocation = async () => {
+    if (!navigator.geolocation) {
+      setGeoHint('This browser can’t share your location — type a postcode instead.');
+      return;
+    }
+    setLocating(true);
+    setGeoHint('');
+
+    let pos: GeolocationPosition | null = null;
+    let denied = false;
+    try {
+      pos = await getPosition(true);
+    } catch (err) {
+      denied = (err as GeolocationPositionError)?.code === 1;
+      if (!denied) {
+        try {
+          pos = await getPosition(false); // desktops: coarse beats nothing
+        } catch (err2) {
+          denied = (err2 as GeolocationPositionError)?.code === 1;
+        }
+      }
+    }
+
+    if (!pos) {
+      setGeoHint(
+        denied
+          ? 'Location is blocked for this site — allow it in your browser, or type a postcode.'
+          : 'Couldn’t get a location fix — type a postcode instead.',
+      );
+      setLocating(false);
+      return;
+    }
+
+    const { latitude, longitude, accuracy } = pos.coords;
+    if (accuracy > GEO_ACCURACY_LIMIT_M) {
+      const km = Math.max(2, Math.round(accuracy / 1000));
+      setGeoHint(
+        `Your device could only place you to within about ${km}km (usually a computer without GPS) — type the postcode instead.`,
+      );
+      setLocating(false);
+      return;
+    }
+
+    setGeo({ lat: latitude, lng: longitude });
+    try {
+      // radius: the default 100m finds nothing in open countryside — a field
+      // is routinely further than that from any postcode centroid. 2km (the
+      // API maximum) trades precision for a hit; the customer can edit it,
+      // and the raw coords are kept regardless.
+      const res = await fetch(
+        `https://api.postcodes.io/postcodes?lon=${longitude}&lat=${latitude}&limit=1&radius=2000`,
+        { signal: AbortSignal.timeout(5000) },
+      );
+      const json = await res.json();
+      const postcode: string | undefined = json?.result?.[0]?.postcode;
+      if (postcode && locationRef.current) {
+        locationRef.current.value = postcode;
+        setGeoHint('Double-check that’s right — it’s the nearest postcode to your position.');
+      } else {
+        setGeoHint('Got your location — add the postcode if you know it.');
+      }
+    } catch {
+      setGeoHint('Got your location — add the postcode if you know it.');
+    }
+    setLocating(false);
+  };
+
+  // The parse skeleton replaces the form in place — put the viewport back at
+  // the top so the customer watches the skeleton, not empty space.
+  useEffect(() => {
+    if (pending) window.scrollTo({ top: 0 });
+  }, [pending]);
+
+  const viewLogged = useRef(false);
+  useEffect(() => {
+    setFormTs(String(Date.now()));
+    const q = new URLSearchParams(window.location.search);
+    setUtm({
+      source: q.get('utm_source') ?? '',
+      medium: q.get('utm_medium') ?? '',
+      campaign: q.get('utm_campaign') ?? '',
+      gclid: q.get('gclid') ?? '',
+    });
+    // One view per pageload — the ref guards React strict mode's double effect.
+    if (!viewLogged.current) {
+      viewLogged.current = true;
+      void recordLandingView({
+        referrer: document.referrer,
+        utm_source: q.get('utm_source') ?? undefined,
+        utm_medium: q.get('utm_medium') ?? undefined,
+        utm_campaign: q.get('utm_campaign') ?? undefined,
+        gclid: q.get('gclid') ?? undefined,
+      });
+    }
+  }, []);
+
+  if (state.ok && state.result) {
+    return <ConfirmStep result={state.result} />;
+  }
+
+  if (pending) {
+    return (
+      <div className={a.card} aria-busy="true" aria-label="Working out the details of your job">
+        <p className={s.skeletonNote}>Reading your description…</p>
+        <div className={s.skeletonRow} style={{ width: '55%' }} />
+        <div className={s.skeletonRow} style={{ width: '80%' }} />
+        <div className={s.skeletonRow} style={{ width: '40%' }} />
+        <div className={s.skeletonRow} style={{ width: '65%' }} />
+      </div>
+    );
+  }
+
+  return (
+    <form action={action} className={a.card}>
+      {state.error && <p className={f.error}>{state.error}</p>}
+
+      <input type="hidden" name="form_ts" value={formTs} />
+      <input type="hidden" name="utm_source" value={utm.source} />
+      <input type="hidden" name="utm_medium" value={utm.medium} />
+      <input type="hidden" name="utm_campaign" value={utm.campaign} />
+      <input type="hidden" name="gclid" value={utm.gclid} />
+      {/* Honeypot — real users never see or fill this. */}
+      <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', height: 0, overflow: 'hidden' }}>
+        <label>
+          Website
+          <input type="text" name="website" tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
+
+      <label className={f.field}>
+        <span className={f.label}>What needs doing?</span>
+        <textarea
+          className={f.textarea}
+          name="raw_text"
+          required
+          minLength={10}
+          maxLength={2000}
+          rows={5}
+          placeholder="e.g. I need my 7 acre field topped, it’s just off the A31 near Alresford"
+          defaultValue={state.values?.raw_text}
+        />
+        <span className={f.hint}>Your own words are fine — no need for the technical term.</span>
+      </label>
+
+      <input type="hidden" name="geo_lat" value={geo?.lat ?? ''} />
+      <input type="hidden" name="geo_lng" value={geo?.lng ?? ''} />
+
+      <label className={f.field}>
+        <span className={f.label}>Where is it? (postcode is ideal)</span>
+        <div className={s.locationRow}>
+          <input
+            ref={locationRef}
+            className={f.input}
+            type="text"
+            name="location_raw"
+            autoComplete="postal-code"
+            placeholder="e.g. SO24, or the nearest town"
+            defaultValue={state.values?.location_raw}
+          />
+          <button type="button" className={f.btnGhost} onClick={useMyLocation} disabled={locating}>
+            {locating ? 'Finding…' : 'Use my location'}
+          </button>
+        </div>
+        {geoHint && <span className={f.hint}>{geoHint}</span>}
+      </label>
+
+      {/* Photos (spec §26a.3): optional, prompted specifically — a contractor
+          reads more from one gateway photo than three paragraphs. Stored,
+          never parsed; shown to contractors in Part 2. */}
+      <div className={a.row2}>
+        <label className={f.field}>
+          <span className={f.label}>Photo of the field (optional)</span>
+          <input
+            className={f.input}
+            type="file"
+            name="photo_field"
+            accept="image/*"
+            onChange={(e) => downscaleInput(e.currentTarget)}
+          />
+        </label>
+        <label className={f.field}>
+          <span className={f.label}>Photo of the gateway or access (optional)</span>
+          <input
+            className={f.input}
+            type="file"
+            name="photo_access"
+            accept="image/*"
+            onChange={(e) => downscaleInput(e.currentTarget)}
+          />
+        </label>
+      </div>
+
+      <Turnstile resetOn={state} onToken={setCaptchaToken} />
+
+      <div className={a.actions}>
+        <button
+          className={f.btnYellow}
+          type="submit"
+          disabled={pending || (turnstileEnabled && !captchaToken)}
+        >
+          Get started
+        </button>
+      </div>
+    </form>
+  );
+}

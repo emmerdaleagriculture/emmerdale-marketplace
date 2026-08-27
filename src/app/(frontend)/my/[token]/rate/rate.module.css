@@ -1,0 +1,15 @@
+.starRow {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.star {
+  background: none;
+  border: none;
+  font-size: 34px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--jd-yellow-dark);
+  padding: 4px;
+}

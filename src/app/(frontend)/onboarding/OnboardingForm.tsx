@@ -4,10 +4,17 @@ import { useActionState } from 'react';
 import { completeOnboardingAction } from './actions';
 import { emptyFormState } from '@/lib/form';
 import { CountyPicker, type CountyOption } from '@/components/forms/CountyPicker';
+import { ServicePicker, type ServiceOption } from '@/components/forms/ServicePicker';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
-export function OnboardingForm({ counties }: { counties: CountyOption[] }) {
+export function OnboardingForm({
+  counties,
+  services,
+}: {
+  counties: CountyOption[];
+  services: ServiceOption[];
+}) {
   const [state, action, pending] = useActionState(completeOnboardingAction, emptyFormState);
 
   return (
@@ -34,6 +41,13 @@ export function OnboardingForm({ counties }: { counties: CountyOption[] }) {
           <span className={f.hint}>For our records only — not used to match jobs.</span>
         </label>
       </div>
+
+      <div className={a.groupTitle}>What work do you do?</div>
+      <p className={f.hint} style={{ marginBottom: 12 }}>
+        Pick the services you offer. You&rsquo;ll only be sent jobs for these — you
+        can change them any time.
+      </p>
+      <ServicePicker services={services} />
 
       <div className={a.groupTitle}>Counties you cover</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>

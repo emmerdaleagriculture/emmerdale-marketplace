@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { resolveCounty } from '@/lib/postcodes';
 import type { FormState } from '@/lib/form';
 
 const ProfileSchema = z.object({
@@ -11,6 +12,7 @@ const ProfileSchema = z.object({
   phone: z.string().trim().min(5, 'Phone number is required.'),
   base_postcode: z.string().trim().min(3, 'Base postcode is required.'),
   county_ids: z.array(z.coerce.number().int()).min(1, 'Select at least one county.'),
+  service_ids: z.array(z.coerce.number().int()).min(1, 'Pick at least one service.'),
 });
 
 export async function updateProfileAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -26,12 +28,16 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
     phone: formData.get('phone'),
     base_postcode: formData.get('base_postcode'),
     county_ids: formData.getAll('county_ids'),
+    service_ids: formData.getAll('service_ids'),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Please check the form.' };
   }
   const d = parsed.data;
   const notify = formData.get('notify_new_jobs') === 'on';
+
+  // Refresh display-only base coords when the postcode changes (§15).
+  const geo = await resolveCounty(d.base_postcode);
 
   // Update own profile (RLS: contractors_update_own; status is trigger-guarded).
   const { error: upErr } = await supabase
@@ -41,6 +47,9 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
       contact_name: d.contact_name,
       phone: d.phone,
       base_postcode: d.base_postcode,
+      services: d.service_ids,
+      base_lat: geo.lat ?? null,
+      base_lng: geo.lng ?? null,
       notify_new_jobs: notify,
     })
     .eq('id', user.id);

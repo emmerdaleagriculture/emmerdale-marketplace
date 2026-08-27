@@ -18,3 +18,24 @@ export function formatDateTime(iso: string): string {
     minute: '2-digit',
   });
 }
+
+/** "3 days left", "closes today", "closed" — invitation/payment deadlines. */
+export function timeLeft(iso: string): string {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return 'closed';
+  const hours = Math.floor(ms / 3600000);
+  if (hours < 1) return 'closes within the hour';
+  if (hours < 24) return `${hours}h left`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? '1 day left' : `${days} days left`;
+}
+
+/** "4h 12m", "3d 2h" — time spent in a state, for the ops board. */
+export function dwell(iso: string): string {
+  const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ${mins % 60}m`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ${hours % 24}h`;
+}

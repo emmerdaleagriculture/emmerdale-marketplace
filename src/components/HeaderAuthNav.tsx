@@ -23,6 +23,8 @@ export function HeaderAuthNav() {
     return (
       <>
         <Link href="/jobs">Jobs</Link>
+        <Link href="/invitations">Invitations</Link>
+        <Link href="/won">Won jobs</Link>
         <Link href="/account">Account</Link>
         <form action="/auth/signout" method="post">
           <button type="submit" className={styles.linkButton}>

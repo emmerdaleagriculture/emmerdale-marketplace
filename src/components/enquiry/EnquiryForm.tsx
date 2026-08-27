@@ -59,8 +59,8 @@ export function EnquiryForm({
           <input className={f.input} type="tel" name="phone" required autoComplete="tel" />
         </label>
         <label className={f.field}>
-          <span className={f.label}>Email (optional)</span>
-          <input className={f.input} type="email" name="email" autoComplete="email" />
+          <span className={f.label}>Email</span>
+          <input className={f.input} type="email" name="email" required autoComplete="email" />
         </label>
         <label className={f.field}>
           <span className={f.label}>Postcode</span>

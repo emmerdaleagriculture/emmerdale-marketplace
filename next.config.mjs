@@ -9,6 +9,14 @@ const nextConfig = {
   // React 19 strict mode — catches accidental side-effects
   reactStrictMode: true,
 
+  experimental: {
+    serverActions: {
+      // /start step 1 posts photos (client-downscaled ~0.5MB each) through a
+      // server action; the 1MB default would reject them.
+      bodySizeLimit: '8mb',
+    },
+  },
+
   images: {
     // Modern formats — Next serves AVIF/WebP to browsers that support them
     formats: ['image/avif', 'image/webp'],
@@ -31,8 +39,10 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           {
+            // geolocation=(self): /start's "use my location" button needs the
+            // browser geolocation API (spec §4 step 1).
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
           },
         ],
       },

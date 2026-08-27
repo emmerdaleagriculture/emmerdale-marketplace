@@ -6,6 +6,11 @@ export type CountyResolution = {
   county_name?: string;
   outcode?: string;
   town?: string | null;
+  // Centroid of the postcode (or outcode) from postcodes.io. Populated
+  // whenever the lookup found the postcode, even if no county resolved —
+  // the geocode is useful on its own and must not be thrown away.
+  lat?: number;
+  lng?: number;
   via?: 'admin_county' | 'district_map' | 'outcode' | 'manual' | 'none';
   error?: string;
 };
@@ -16,16 +21,48 @@ export type CountyResolution = {
  * Returns the canonical full postcode when the input contains one, else the
  * outcode when the input is (or starts with) a valid outward code.
  */
+const FULL_RE = /^[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}$/;
+const OUTCODE_RE = /^[A-Z]{1,2}[0-9][A-Z0-9]?$/;
+
+/**
+ * 0/O and 1/I are visually interchangeable and constantly mistyped ("s051"
+ * for SO51). When the literal string doesn't parse, try every combination of
+ * swapping those characters (≤8 chars, so a handful of candidates) and accept
+ * the first that forms a valid postcode shape.
+ */
+function ambiguityCandidates(compact: string): string[] {
+  const swaps: Record<string, string> = { '0': 'O', O: '0', '1': 'I', I: '1' };
+  const positions = [...compact].flatMap((ch, i) => (swaps[ch] ? [i] : []));
+  if (positions.length === 0 || positions.length > 4) return [];
+  const out: string[] = [];
+  for (let mask = 1; mask < 1 << positions.length; mask++) {
+    const chars = [...compact];
+    positions.forEach((pos, bit) => {
+      if (mask & (1 << bit)) chars[pos] = swaps[chars[pos]];
+    });
+    out.push(chars.join(''));
+  }
+  return out;
+}
+
 export function normalisePostcode(raw: string): { full: string | null; outcode: string | null } {
   const compact = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  // Full postcode: outward code + inward code (always digit + 2 letters).
-  if (/^[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}$/.test(compact)) {
-    const outcode = compact.slice(0, -3);
-    return { full: `${outcode} ${compact.slice(-3)}`, outcode };
-  }
-  // Outward code only ("HG1", "SO23").
-  if (/^[A-Z]{1,2}[0-9][A-Z0-9]?$/.test(compact)) {
-    return { full: null, outcode: compact };
+  const attempt = (s: string): { full: string | null; outcode: string | null } | null => {
+    // Full postcode: outward code + inward code (always digit + 2 letters).
+    if (FULL_RE.test(s)) {
+      const outcode = s.slice(0, -3);
+      return { full: `${outcode} ${s.slice(-3)}`, outcode };
+    }
+    // Outward code only ("HG1", "SO23").
+    if (OUTCODE_RE.test(s)) return { full: null, outcode: s };
+    return null;
+  };
+
+  const direct = attempt(compact);
+  if (direct) return direct;
+  for (const candidate of ambiguityCandidates(compact)) {
+    const fixed = attempt(candidate);
+    if (fixed) return fixed;
   }
   return { full: null, outcode: null };
 }
@@ -98,6 +135,8 @@ export async function resolveCounty(postcode: string): Promise<CountyResolution>
 
   const supabase = createServiceRoleClient();
   let town: string | null = null;
+  let lat: number | undefined;
+  let lng: number | undefined;
   let unresolvedDistrict: string | null = null;
 
   // 1) Full-postcode lookup.
@@ -108,6 +147,8 @@ export async function resolveCounty(postcode: string): Promise<CountyResolution>
       admin_district?: string | null;
       admin_ward?: string | null;
       parish?: string | null;
+      latitude?: number | null;
+      longitude?: number | null;
     } | null = null;
 
     try {
@@ -132,18 +173,20 @@ export async function resolveCounty(postcode: string): Promise<CountyResolution>
     if (result) {
       const outcode = result.outcode ?? norm.outcode ?? undefined;
       town = result.admin_ward || result.parish || result.admin_district || null;
+      lat = result.latitude ?? undefined;
+      lng = result.longitude ?? undefined;
       if (result.admin_county) {
         const byCounty = await matchCounties(supabase, [result.admin_county], []);
         const [first] = byCounty.entries();
         if (first) {
-          return { ok: true, county_id: first[0], county_name: first[1], outcode, town, via: 'admin_county' };
+          return { ok: true, county_id: first[0], county_name: first[1], outcode, town, lat, lng, via: 'admin_county' };
         }
       }
       if (result.admin_district) {
         const byDistrict = await matchCounties(supabase, [], [result.admin_district]);
         const [first] = byDistrict.entries();
         if (first) {
-          return { ok: true, county_id: first[0], county_name: first[1], outcode, town, via: 'district_map' };
+          return { ok: true, county_id: first[0], county_name: first[1], outcode, town, lat, lng, via: 'district_map' };
         }
       }
       // Known postcode but its district isn't in our map — fall through to
@@ -161,7 +204,16 @@ export async function resolveCounty(postcode: string): Promise<CountyResolution>
       );
       if (res.ok) {
         const json = await res.json();
-        const result: { admin_county?: string[]; admin_district?: string[] } | null = json.result;
+        const result: {
+          admin_county?: string[];
+          admin_district?: string[];
+          latitude?: number | null;
+          longitude?: number | null;
+        } | null = json.result;
+        // Outcode centroid is coarser than a full-postcode fix — only use it
+        // when the full lookup gave us nothing.
+        lat = lat ?? result?.latitude ?? undefined;
+        lng = lng ?? result?.longitude ?? undefined;
         const matched = await matchCounties(
           supabase,
           result?.admin_county ?? [],
@@ -170,13 +222,15 @@ export async function resolveCounty(postcode: string): Promise<CountyResolution>
         // Only trust the outcode when it doesn't straddle a county border.
         if (matched.size === 1) {
           const [[id, name]] = matched.entries();
-          return { ok: true, county_id: id, county_name: name, outcode: norm.outcode, town, via: 'outcode' };
+          return { ok: true, county_id: id, county_name: name, outcode: norm.outcode, town, lat, lng, via: 'outcode' };
         }
         if (matched.size > 1) {
           return {
             ok: false,
             via: 'none',
             outcode: norm.outcode,
+            lat,
+            lng,
             error: `“${norm.outcode}” spans more than one county (${[...matched.values()].join(', ')}). Pick one manually.`,
           };
         }
@@ -191,12 +245,14 @@ export async function resolveCounty(postcode: string): Promise<CountyResolution>
     }
   }
 
-  // 3) Unresolved — caller must pick manually.
+  // 3) Unresolved — caller must pick manually. Keep any geocode we did get.
   return {
     ok: false,
     via: 'none',
     outcode: norm.outcode ?? undefined,
     town,
+    lat,
+    lng,
     error: `Could not resolve a county for “${unresolvedDistrict ?? pc}”. Pick one manually.`,
   };
 }

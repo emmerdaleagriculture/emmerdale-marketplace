@@ -1,0 +1,101 @@
+.gate,
+.empty {
+  padding: 18px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--cream);
+  color: var(--ink-2);
+  font-size: 15px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  display: block;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--white);
+  color: inherit;
+  text-decoration: none;
+}
+
+.card:hover {
+  border-color: var(--jd-green);
+}
+
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.service {
+  font-family: var(--font-display-stack);
+  font-size: 17px;
+}
+
+.pillOpen,
+.pillPriced {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.pillOpen {
+  background: #fdf7dd;
+  border: 1px solid var(--jd-yellow-dark);
+}
+
+.pillPriced {
+  background: var(--jd-green-pale);
+  border: 1px solid var(--rule);
+  color: var(--jd-green-dark);
+}
+
+.meta {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.deadline {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--jd-green-dark);
+}
+
+.historyList {
+  display: grid;
+  gap: 8px;
+}
+
+.historyRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  font-size: 14px;
+  align-items: baseline;
+}
+
+.historyStatus {
+  color: var(--ink-2);
+}
+
+@media (max-width: 560px) {
+  .historyRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}

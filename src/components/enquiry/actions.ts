@@ -16,7 +16,8 @@ const EnquirySchema = z.object({
   category: z.string().refine((c) => c in CATEGORIES, 'Unknown enquiry type.'),
   name: z.string().trim().min(1, 'Your name is required.'),
   phone: z.string().trim().min(5, 'A phone number is required.'),
-  email: z.string().trim().email('Enter a valid email.').optional().or(z.literal('')),
+  // Required: quotes and follow-ups go out by email.
+  email: z.string().trim().email('An email address is required.'),
   postcode: z.string().trim().min(3, 'A postcode is required.'),
   details: z.string().trim().min(1, 'Tell us a little about what you need.'),
 });
@@ -59,14 +60,14 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
     source: d.category,
     full_name: d.name,
     phone: d.phone,
-    email: d.email || null,
+    email: d.email,
     postcode: d.postcode,
     job_hint: d.details,
     details: {
       category: d.category,
       name: d.name,
       phone: d.phone,
-      email: d.email || null,
+      email: d.email,
       postcode: d.postcode,
       details: d.details,
       county_id: geo.county_id ?? null,
@@ -84,7 +85,7 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
     `A customer has submitted a ${label} enquiry via the website.\n\n` +
       `Name:      ${d.name}\n` +
       `Phone:     ${d.phone}\n` +
-      `Email:     ${d.email || '—'}\n` +
+      `Email:     ${d.email}\n` +
       `Postcode:  ${d.postcode}\n` +
       `County:    ${geo.county_name ?? '(not resolved — check the postcode)'}\n` +
       `Wants:     ${d.details}\n\n` +

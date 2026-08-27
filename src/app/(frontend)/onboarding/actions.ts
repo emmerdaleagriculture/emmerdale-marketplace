@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { getCounties } from '@/lib/reference';
+import { resolveCounty } from '@/lib/postcodes';
 import type { FormState } from '@/lib/form';
 
 const OnboardingSchema = z.object({
@@ -13,6 +14,7 @@ const OnboardingSchema = z.object({
   phone: z.string().trim().min(5, 'Phone number is required.'),
   base_postcode: z.string().trim().min(3, 'Base postcode is required.'),
   county_ids: z.array(z.coerce.number().int()).min(1, 'Select at least one county.'),
+  service_ids: z.array(z.coerce.number().int()).min(1, 'Pick at least one service.'),
 });
 
 export async function completeOnboardingAction(
@@ -31,11 +33,16 @@ export async function completeOnboardingAction(
     phone: formData.get('phone'),
     base_postcode: formData.get('base_postcode'),
     county_ids: formData.getAll('county_ids'),
+    service_ids: formData.getAll('service_ids'),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Please check the form.' };
   }
   const d = parsed.data;
+
+  // Base coords for display-only distance in invitations (§15) — never a
+  // match filter. An unresolvable postcode just stores no coords.
+  const geo = await resolveCounty(d.base_postcode);
 
   // Create the pending contractor profile as the signed-in user
   // (RLS: contractors_insert_self requires id = auth.uid()).
@@ -46,6 +53,9 @@ export async function completeOnboardingAction(
     phone: d.phone,
     email: user.email ?? '',
     base_postcode: d.base_postcode,
+    services: d.service_ids,
+    base_lat: geo.lat ?? null,
+    base_lng: geo.lng ?? null,
     status: 'pending',
   });
   // A duplicate means onboarding already ran (double submit / back button) —
