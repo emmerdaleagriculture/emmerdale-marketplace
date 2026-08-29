@@ -66,6 +66,7 @@ export function LandingFlow() {
   const [locating, setLocating] = useState(false);
   const [geoHint, setGeoHint] = useState('');
   const locationRef = useRef<HTMLInputElement>(null);
+  const rawTextRef = useRef<HTMLTextAreaElement>(null);
 
   // "Use my location" (spec §4 step 1): browser geolocation → nearest postcode
   // via postcodes.io reverse lookup. The raw coords are kept as a fallback so
@@ -169,21 +170,44 @@ export function LandingFlow() {
   useEffect(() => {
     setFormTs(String(Date.now()));
     const q = new URLSearchParams(window.location.search);
-    setUtm({
-      source: q.get('utm_source') ?? '',
-      medium: q.get('utm_medium') ?? '',
-      campaign: q.get('utm_campaign') ?? '',
-      gclid: q.get('gclid') ?? '',
-    });
+
+    // Handoff from the customer front page (/paddock-maintenance): it asks
+    // these same two questions, so arrive with them already answered rather
+    // than making the customer type it twice. Filled through the DOM, not
+    // defaultValue, so the page stays statically renderable — and only into an
+    // empty field, so it never clobbers what someone has started typing.
+    // Capped like the fields themselves: maxLength only blocks typing, so a
+    // hand-edited or shared URL would otherwise fill the box with more than
+    // ParseSchema accepts and fail server-side after a full round trip.
+    const prefill = (
+      el: HTMLTextAreaElement | HTMLInputElement | null,
+      value: string | null,
+      max: number,
+    ) => {
+      if (el && !el.value && value?.trim()) el.value = value.trim().slice(0, max);
+    };
+    prefill(rawTextRef.current, q.get('job'), 2000);
+    prefill(locationRef.current, q.get('loc'), 120);
+
+    // `src` marks an internal hand-off (the paddock pages). It stands in as the
+    // source only when there's no real ad attribution, so organic arrivals stop
+    // counting as "(direct)" against the paid funnel — without ever putting a
+    // utm_* param on an internal link, which would reset the GA4 session.
+    const src = q.get('src');
+    const source = q.get('utm_source') ?? (src ? `site:${src}` : '');
+    const medium = q.get('utm_medium') ?? (src ? 'organic' : '');
+    const campaign = q.get('utm_campaign') ?? '';
+    const gclid = q.get('gclid') ?? '';
+    setUtm({ source, medium, campaign, gclid });
     // One view per pageload — the ref guards React strict mode's double effect.
     if (!viewLogged.current) {
       viewLogged.current = true;
       void recordLandingView({
         referrer: document.referrer,
-        utm_source: q.get('utm_source') ?? undefined,
-        utm_medium: q.get('utm_medium') ?? undefined,
-        utm_campaign: q.get('utm_campaign') ?? undefined,
-        gclid: q.get('gclid') ?? undefined,
+        utm_source: source || undefined,
+        utm_medium: medium || undefined,
+        utm_campaign: campaign || undefined,
+        gclid: gclid || undefined,
       });
     }
   }, []);
@@ -236,6 +260,7 @@ export function LandingFlow() {
       <label className={f.field}>
         <span className={f.label}>What needs doing?</span>
         <textarea
+          ref={rawTextRef}
           className={f.textarea}
           name="raw_text"
           required

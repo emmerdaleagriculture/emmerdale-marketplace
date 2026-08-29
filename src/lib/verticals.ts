@@ -7,6 +7,13 @@ import { getCounties } from '@/lib/reference';
  */
 export type VerticalKey = 'hay-bales' | 'tractor-hire';
 
+/**
+ * Path segments that have per-county pages beneath them. Paddock maintenance
+ * has county pages too, but it isn't an EnquiryForm vertical — it feeds the
+ * /start flow — so it lives outside VerticalKey.
+ */
+export type CountyPageBase = VerticalKey | 'paddock-maintenance';
+
 export type VerticalConfig = {
   slug: VerticalKey;
   category: 'hay' | 'tractor-hire';
@@ -108,6 +115,23 @@ export function countySlug(name: string): string {
 }
 
 export type CountyRef = { name: string; slug: string; region: string };
+
+/**
+ * A region in the form that reads correctly after "in", "across" or "the rest
+ * of". Most of the English regions take a definite article — "in the South
+ * East" — but the nations and the two that already carry their own wording do
+ * not: "in Wales", "in Yorkshire and the Humber", not "in the Wales".
+ */
+const REGIONS_WITHOUT_ARTICLE = new Set([
+  'London',
+  'Wales',
+  'Scotland',
+  'Yorkshire and the Humber',
+]);
+
+export function regionPhrase(region: string): string {
+  return REGIONS_WITHOUT_ARTICLE.has(region) ? region : `the ${region}`;
+}
 
 /** All counties as slug refs (for generateStaticParams and sitemaps). */
 export async function allCountyRefs(): Promise<CountyRef[]> {

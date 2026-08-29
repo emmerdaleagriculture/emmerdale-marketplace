@@ -43,6 +43,7 @@ export function SiteFooter() {
 
           <nav className={styles.linkCol} aria-label="Services">
             <div className={styles.colTitle}>Looking for</div>
+            <Link href="/paddock-maintenance">Paddock maintenance</Link>
             <Link href="/hay-bales">Hay, straw &amp; haylage</Link>
             <Link href="/tractor-hire">Tractor hire</Link>
           </nav>
