@@ -120,8 +120,9 @@ export default async function LandingPage() {
     name: 'Paddock maintenance & land services',
     serviceType: services.map((svc) => svc.name),
     description:
-      'Free, no-obligation quotes for paddock maintenance and agricultural contracting — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance — for paddock owners, equestrian yards, farms and estates across Hampshire and the South of England.',
-    url: HPM_CONTACT_URL,
+      'Free, no-obligation quotes for paddock maintenance and agricultural contracting — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance — for paddock owners, equestrian yards, farms and estates across England and Wales.',
+    // The route to a quote is now our own funnel, not HPM's contact form.
+    url: 'https://emmerdaleagriculture.com/paddock-maintenance',
     provider: {
       '@type': 'Organization',
       name: COMPANY_LEGAL_NAME,
@@ -277,20 +278,22 @@ export default async function LandingPage() {
             If you own a paddock, smallholding or grassland and need work done —
             field topping, chain harrowing, rolling, weed spraying, hedge
             cutting, fencing or land clearance — you don&apos;t need to join the
-            network. Request a free, no-obligation quote from{' '}
-            <a href={HPM_CONTACT_URL}>Hampshire Paddock Management</a>, the
-            contracting firm behind Emmerdale Agriculture, and we&apos;ll price
-            the job and put the right people on it.
+            network. Just{' '}
+            <Link href="/paddock-maintenance">tell us what needs doing</Link> in
+            your own words, and we&apos;ll pass the job to contractors covering
+            your area. Free, with no obligation to accept a quote.
           </p>
           <p className={s.sectionLede}>
-            Based in Hampshire and working across the South of England, we
-            handle paddock maintenance and agricultural contracting for private
-            paddock owners, equestrian yards, farms and estates alike.
+            The network handles paddock maintenance and agricultural contracting
+            for private paddock owners, equestrian yards, farms and estates
+            alike, across England and Wales — run by the people behind{' '}
+            <a href={HPM_CONTACT_URL}>Hampshire Paddock Management</a> in
+            Hampshire.
           </p>
           <div className={s.quoteCta}>
-            <a href={HPM_CONTACT_URL} className={f.btnYellow}>
+            <Link href="/paddock-maintenance" className={f.btnYellow}>
               Get a free quote
-            </a>
+            </Link>
           </div>
         </div>
       </section>

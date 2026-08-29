@@ -22,14 +22,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getCountyCoverage(),
     getNotesData(),
   ]);
-  // Only list county pages we actually cover — matches the per-page index rule,
-  // so we never submit thin, no-coverage pages to Google.
+  // Only list hay/tractor county pages we actually cover — matches the per-page
+  // index rule, so we never submit thin, no-coverage pages to Google.
   const countyPages: MetadataRoute.Sitemap = counties
     .filter((c) => (coverage[c.name] ?? 0) > 0)
     .flatMap((c) => [
       { url: `${SITE}/hay-bales/${c.slug}`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.6 },
       { url: `${SITE}/tractor-hire/${c.slug}`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.5 },
     ]);
+
+  // Paddock county pages list every county, covered or not — see the indexing
+  // note on the page itself. A job in an uncovered county still has somewhere
+  // to go, and that demand is what recruits contractors into the area.
+  const paddockCountyPages: MetadataRoute.Sitemap = counties.map((c) => ({
+    url: `${SITE}/paddock-maintenance/${c.slug}`,
+    lastModified: LAST_UPDATED,
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  }));
 
   // Notes: index + every published post + non-empty tag hubs (same gating as
   // the hub pages themselves, which 404 while empty).
@@ -55,11 +65,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     { url: SITE, lastModified: LAST_UPDATED, changeFrequency: 'weekly', priority: 1 },
+    { url: `${SITE}/paddock-maintenance`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE}/hay-bales`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE}/tractor-hire`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE}/signup`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE}/privacy`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE}/terms`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
+    ...paddockCountyPages,
     ...countyPages,
     ...notePages,
   ];

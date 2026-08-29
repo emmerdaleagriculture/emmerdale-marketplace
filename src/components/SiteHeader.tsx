@@ -17,7 +17,11 @@ export function SiteHeader({ variant = 'solid' }: { variant?: 'overlay' | 'solid
         </Link>
 
         <nav className={styles.nav} aria-label="Primary">
+          {/* "How it works" stays first: the mobile rule in SiteHeader.module.css
+              hides .nav a:first-child, and it's the link we can afford to lose
+              on a small screen — not the customer route in. */}
           <Link href="/#how-it-works">How it works</Link>
+          <Link href="/paddock-maintenance">Need work done?</Link>
           <Link href="/notes">Notes</Link>
           <HeaderAuthNav />
         </nav>

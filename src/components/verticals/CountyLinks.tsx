@@ -1,13 +1,13 @@
 import Link from 'next/link';
-import { allCountyRefs, type VerticalKey, type CountyRef } from '@/lib/verticals';
+import { allCountyRefs, type CountyPageBase, type CountyRef } from '@/lib/verticals';
 import s from '@/app/(frontend)/landing.module.css';
 
 /**
- * Region-grouped links to every per-county page for a vertical. Rendered on the
- * top-level vertical page so the county pages are internally linked (and thus
+ * Region-grouped links to every per-county page under a section. Rendered on the
+ * top-level page so the county pages are internally linked (and thus
  * crawlable / rank-able), and so visitors can jump straight to their area.
  */
-export async function CountyLinks({ vertical, heading }: { vertical: VerticalKey; heading: string }) {
+export async function CountyLinks({ vertical, heading }: { vertical: CountyPageBase; heading: string }) {
   const refs = await allCountyRefs();
   const byRegion = new Map<string, CountyRef[]>();
   for (const c of refs) {
