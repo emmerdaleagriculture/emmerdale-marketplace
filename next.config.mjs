@@ -30,6 +30,32 @@ const nextConfig = {
     ],
   },
 
+  async redirects() {
+    return [
+      // The two imported notes shipped with slugs hard-truncated at 80 chars,
+      // mid-word. Renamed to readable, keyword-bearing URLs; these keep the
+      // originals alive for anything already shared.
+      //
+      // The rename itself is a data change — the notes.slug rows were updated
+      // in Supabase on 2026-09-01, so it leaves no trace in the repo. Both
+      // destinations below resolve today; if you ever restore an older
+      // snapshot of the notes table, these redirects go to 404 until it's
+      // re-applied.
+      {
+        source:
+          '/notes/need-paddock-work-done-emmerdale-agriculture-can-help-you-find-a-contractor-anyw',
+        destination: '/notes/find-a-paddock-contractor-anywhere-in-the-uk',
+        permanent: true,
+      },
+      {
+        source:
+          '/notes/agricultural-contractor-looking-for-more-work-join-the-emmerdale-agriculture-con',
+        destination: '/notes/agricultural-contractor-looking-for-more-work',
+        permanent: true,
+      },
+    ];
+  },
+
   // Security headers applied to every response
   async headers() {
     return [

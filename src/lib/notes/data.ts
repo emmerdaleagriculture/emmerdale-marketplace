@@ -139,3 +139,38 @@ export function noteWordCount(md: string): number {
     .split(/\s+/)
     .filter(Boolean).length;
 }
+
+/**
+ * Notes worth showing on a service page — the reverse of the article pages'
+ * service links. Strict tag matches first (ranked by how many of the page's
+ * tags a post carries, then recency); `fillWithRecent` tops the list up with
+ * the newest posts, which is right for the broad paddock pages and wrong for
+ * a narrow vertical like tractor hire (better an empty section than an
+ * off-topic one).
+ */
+export function pickNotesForTags(
+  posts: NoteCard[],
+  tags: string[],
+  limit = 3,
+  fillWithRecent = false,
+): NoteCard[] {
+  const wanted = new Set(tags);
+  // Sort on the date explicitly rather than leaning on input order: callers
+  // pass [featured, ...grid], and `featured` is a pinned boolean, not a date —
+  // so a deliberately pinned older post would otherwise lead every equal-score
+  // group and be the first "recent" filler.
+  const time = (p: NoteCard) => (p.publishedAt ? new Date(p.publishedAt).getTime() : 0);
+  const byDate = [...posts].sort((a, b) => time(b) - time(a));
+
+  const matched = byDate
+    .map((p) => ({ p, score: p.tags.filter((t) => wanted.has(t)).length }))
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map((r) => r.p)
+    .slice(0, limit);
+
+  if (!fillWithRecent || matched.length >= limit) return matched;
+
+  const have = new Set(matched.map((p) => p.id));
+  return [...matched, ...byDate.filter((p) => !have.has(p.id)).slice(0, limit - matched.length)];
+}

@@ -101,8 +101,11 @@ export function tagDef(slug: string | null | undefined): TagDef | null {
 }
 
 /**
- * Per-tag call-to-action for the article pages. The hay and tractor-hire
- * verticals have their own landing pages; everything else routes to /start.
+ * Per-tag call-to-action for the article pages. Each vertical has its own
+ * indexable landing page, and the default routes to /paddock-maintenance —
+ * not /start, which is noindex + robots-disallowed (the paid-ads entry
+ * point), so linking to it from an article strands the reader's click.
+ * /paddock-maintenance carries the same step-1 form.
  */
 export type NoteCta = {
   href: string;
@@ -133,10 +136,117 @@ export function ctaForTag(slug: string | null | undefined): NoteCta {
     };
   }
   return {
-    href: '/start',
+    href: '/paddock-maintenance',
     label: 'Post your job →',
     title: 'Contractors who cover',
     titleEm: 'your area',
     sub: 'Describe the job in your own words — we sort the details and pass it to contractors who can actually do it.',
   };
 }
+
+/* ────────────────────────────────────────────────────────────────────────
+   Notes ↔ service pages
+   The two link directions share one map, so a new tag or a new vertical only
+   has to be described once:
+     - serviceLinksForTags()  note  → the service pages it belongs to
+     - SERVICE_NOTE_TAGS      page  → the note tags worth surfacing on it
+   ──────────────────────────────────────────────────────────────────────── */
+
+export type ServiceLink = {
+  href: string;
+  label: string;
+  /** One line of context, so the link block reads as editorial, not a nav. */
+  blurb: string;
+};
+
+const PADDOCK_LINK: ServiceLink = {
+  href: '/paddock-maintenance',
+  label: 'Paddock maintenance & field work',
+  blurb:
+    'Topping, harrowing, rolling, spraying, hedge cutting and clearance — describe the field and we pass it to contractors covering your area.',
+};
+
+const HAY_LINK: ServiceLink = {
+  href: '/hay-bales',
+  label: 'Hay, straw & haylage',
+  blurb:
+    'Big bales or small, delivered or collected — matched to a producer near you.',
+};
+
+const TRACTOR_LINK: ServiceLink = {
+  href: '/tractor-hire',
+  label: 'Tractor & operator hire',
+  blurb:
+    'A tractor and an experienced operator for the day, or for a wedding, prom or photoshoot.',
+};
+
+const JOIN_LINK: ServiceLink = {
+  href: '/signup',
+  label: 'Join the contractor network',
+  blurb:
+    'Free to join. Pick the counties you cover and get the jobs posted in them.',
+};
+
+/**
+ * Which service pages a note about each tag should point readers at. Order
+ * matters — the first entry is the closest match.
+ */
+const TAG_SERVICE_LINKS: Record<string, ServiceLink[]> = {
+  topping: [PADDOCK_LINK],
+  weeds: [PADDOCK_LINK],
+  drainage: [PADDOCK_LINK],
+  'ground-care': [PADDOCK_LINK],
+  hedges: [PADDOCK_LINK],
+  clearance: [PADDOCK_LINK],
+  seasonal: [PADDOCK_LINK],
+  advice: [PADDOCK_LINK],
+  equipment: [TRACTOR_LINK, PADDOCK_LINK],
+  hay: [HAY_LINK, PADDOCK_LINK],
+  'tractor-hire': [TRACTOR_LINK, PADDOCK_LINK],
+};
+
+/**
+ * The service pages to link from a note, deduped and closest-match first.
+ * Untagged posts still get the paddock front door rather than nothing —
+ * an article with no onward link to an indexable service page is a dead end
+ * for both readers and internal link equity.
+ */
+export function serviceLinksForTags(tags: string[], includeJoin = false): ServiceLink[] {
+  const out: ServiceLink[] = [];
+  const seen = new Set<string>();
+  for (const t of tags) {
+    for (const link of TAG_SERVICE_LINKS[t] ?? []) {
+      if (seen.has(link.href)) continue;
+      seen.add(link.href);
+      out.push(link);
+    }
+  }
+  if (out.length === 0) {
+    out.push(PADDOCK_LINK);
+    seen.add(PADDOCK_LINK.href);
+  }
+  if (includeJoin && !seen.has(JOIN_LINK.href)) out.push(JOIN_LINK);
+  return out;
+}
+
+/**
+ * The reverse direction: note tags worth surfacing on each service page, so
+ * /paddock-maintenance, /hay-bales and /tractor-hire link *into* the notes
+ * rather than only being linked from them. Keyed by the page's path segment
+ * (matches CountyPageBase in @/lib/verticals).
+ */
+export const SERVICE_NOTE_TAGS: Record<string, string[]> = {
+  'paddock-maintenance': [
+    'topping',
+    'weeds',
+    'drainage',
+    'ground-care',
+    'hedges',
+    'clearance',
+    'seasonal',
+    'advice',
+    'equipment',
+  ],
+  'hay-bales': ['hay'],
+  'tractor-hire': ['tractor-hire', 'equipment'],
+};

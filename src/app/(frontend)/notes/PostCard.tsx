@@ -3,12 +3,11 @@ import Link from 'next/link';
 import type { NoteCard } from '@/lib/notes/data';
 import styles from './notes.module.css';
 
-export function formatMonth(dateStr: string | null): string {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-}
+// Re-exported so the notes pages can keep importing it from here; the
+// implementation lives in lib so shared components can use it without
+// pulling notes.module.css into unrelated pages.
+import { formatMonth } from '@/lib/notes/format';
+export { formatMonth };
 
 // No 'use client' — renders server-side on the tag hubs (crawlable HTML)
 // and hydrates fine when imported from the client grid on /notes.

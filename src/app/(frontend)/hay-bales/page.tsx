@@ -2,16 +2,22 @@ import { jsonLd } from '@/lib/jsonld';
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
 import { CountyLinks } from '@/components/verticals/CountyLinks';
-import { COMPANY_LEGAL_NAME } from '@/lib/site';
+import { NotesTeaser } from '@/components/notes/NotesTeaser';
+import { COMPANY_LEGAL_NAME, SERVICE_AREA } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
+
+// ISR: the copy is static, but the notes teaser below picks up newly
+// published posts — so re-render hourly rather than freezing at build.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Hay, Straw & Haylage Suppliers — Matched Near You',
   description:
-    'Looking for hay, straw or haylage? Tell us what you need and we’ll match you with a supplier near you across England and Wales — big bales or small, delivered or collected.',
+    `Looking for hay, straw or haylage? Tell us what you need and we’ll match you with a supplier near you across ${SERVICE_AREA} — big bales or small, delivered or collected.`,
   alternates: { canonical: '/hay-bales' },
   openGraph: {
     title: 'Hay, Straw & Haylage Suppliers — Matched Near You',
@@ -26,8 +32,8 @@ const serviceJsonLd = {
   name: 'Hay, straw & haylage supply',
   serviceType: ['Hay supply', 'Straw supply', 'Haylage supply'],
   description:
-    'Sourcing hay, straw and haylage for horse owners, smallholders, farms and equestrian yards — matched to suppliers by area across England and Wales.',
-  areaServed: { '@type': 'AdministrativeArea', name: 'England and Wales' },
+    `Sourcing hay, straw and haylage for horse owners, smallholders, farms and equestrian yards — matched to suppliers by area across ${SERVICE_AREA}.`,
+  areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
   provider: {
     '@type': 'Organization',
     name: 'Emmerdale Agriculture',
@@ -51,7 +57,7 @@ const faqs = [
   },
   {
     q: 'Which areas do you cover?',
-    a: `We match hay, straw and haylage enquiries with suppliers across England and Wales. ${COMPANY_LEGAL_NAME} runs the network and passes your enquiry to the right supplier for your area.`,
+    a: `We match hay, straw and haylage enquiries with suppliers across ${SERVICE_AREA}. ${COMPANY_LEGAL_NAME} runs the network and passes your enquiry to the right supplier for your area.`,
   },
 ];
 
@@ -73,6 +79,7 @@ export default function HayBalesPage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
+          <Breadcrumb items={[{ label: 'Hay, straw & haylage' }]} />
           <div className={a.eyebrow}>Hay · Straw · Haylage</div>
           <h1 className={a.title}>
             Hay, straw &amp; haylage — <em>matched to a supplier near you.</em>
@@ -80,7 +87,7 @@ export default function HayBalesPage() {
           <p className={a.sub}>
             Whether you need a few small bales for the ponies or a full load of big
             bales for the yard, tell us what you’re after and we’ll match you with a
-            supplier near you. Delivered or collected, across England and Wales — no
+            supplier near you. Delivered or collected, across {SERVICE_AREA} — no
             obligation.
           </p>
 
@@ -158,6 +165,16 @@ export default function HayBalesPage() {
           </div>
         </div>
       </section>
+
+      <NotesTeaser
+        service="hay-bales"
+        heading={
+          <>
+            Hay, straw & haylage, <em>explained.</em>
+          </>
+        }
+        lede="Bale types, cut timing and what good forage actually looks like — notes from people who make it."
+      />
 
       <CountyLinks vertical="hay-bales" heading="Find hay & straw in your county" />
 

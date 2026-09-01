@@ -3,15 +3,25 @@ import { allCountyRefs } from '@/lib/verticals';
 import { getCountyCoverage } from '@/lib/reference';
 import { getNotesData, countByTag } from '@/lib/notes/data';
 import { CURATED_TAGS } from '@/lib/notes/tags';
+import { siteUrl } from '@/lib/site';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://emmerdaleagriculture.com';
+const SITE = siteUrl();
 
 // Bumped when the indexable pages get a meaningful content change, so crawlers
 // get a stable lastmod signal rather than a churning per-build timestamp.
-const LAST_UPDATED = new Date('2026-07-18');
+const LAST_UPDATED = new Date('2026-09-01');
 
 // Refresh daily so covered-county entries track the network as it grows.
 export const revalidate = 86400;
+
+/** Most recent of a set of ISO dates, or undefined if there are none. */
+function latestDate(dates: (string | null)[]): Date | undefined {
+  const times = dates
+    .filter((d): d is string => Boolean(d))
+    .map((d) => new Date(d).getTime())
+    .filter((t) => !Number.isNaN(t));
+  return times.length ? new Date(Math.max(...times)) : undefined;
+}
 
 // Public, indexable pages only. Job pages are auth-gated so they stay out, and
 // login is noindex (no search value), so it's excluded here too. The homepage
@@ -45,11 +55,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // the hub pages themselves, which 404 while empty).
   const allNotes = [...(notes.featured ? [notes.featured] : []), ...notes.grid];
   const tagCounts = countByTag(allNotes);
+  // Newest publish date per tag (and overall) — a hub's lastmod is the date of
+  // the most recent post on it, which is what actually changed the page.
+  const newestOverall = latestDate(allNotes.map((n) => n.publishedAt));
   const notePages: MetadataRoute.Sitemap =
     allNotes.length === 0
       ? []
       : [
-          { url: `${SITE}/notes`, changeFrequency: 'weekly' as const, priority: 0.7 },
+          {
+            url: `${SITE}/notes`,
+            lastModified: newestOverall,
+            changeFrequency: 'weekly' as const,
+            priority: 0.7,
+          },
           ...allNotes.map((n) => ({
             url: `${SITE}/notes/${n.slug}`,
             lastModified: n.publishedAt ? new Date(n.publishedAt) : undefined,
@@ -58,6 +76,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           })),
           ...CURATED_TAGS.filter((t) => (tagCounts.get(t.slug) ?? 0) > 0).map((t) => ({
             url: `${SITE}/notes/tag/${t.slug}`,
+            lastModified: latestDate(
+              allNotes.filter((n) => n.tags.includes(t.slug)).map((n) => n.publishedAt),
+            ),
             changeFrequency: 'monthly' as const,
             priority: 0.5,
           })),

@@ -5,6 +5,7 @@ import { jsonLd } from '@/lib/jsonld';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
+import { NotesTeaser } from '@/components/notes/NotesTeaser';
 import { StartJobForm } from '../StartJobForm';
 import {
   ServicesSection,
@@ -223,6 +224,17 @@ export default async function PaddockCountyPage({
             Paddock work in {name}, <em>answered.</em>
           </>
         }
+      />
+
+      <NotesTeaser
+        service="paddock-maintenance"
+        fillWithRecent
+        heading={
+          <>
+            Written from <em>the seat of a tractor.</em>
+          </>
+        }
+        lede={`What paddocks need through the year — the same jobs the contractors covering ${name} are doing this month.`}
       />
 
       {siblings.length > 0 && (

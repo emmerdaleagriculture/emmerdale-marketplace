@@ -2,9 +2,12 @@ import { jsonLd } from '@/lib/jsonld';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { Breadcrumb } from '@/components/Breadcrumb';
+import { NotesTeaser } from '@/components/notes/NotesTeaser';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
 import { COMPANY_LEGAL_NAME } from '@/lib/site';
 import { VERTICALS, type VerticalKey, type CountyRef } from '@/lib/verticals';
+import { verticalNote, verticalNoteHeading } from '@/lib/verticalRegions';
 import a from '@/app/(frontend)/auth.module.css';
 import s from '@/app/(frontend)/landing.module.css';
 
@@ -28,6 +31,10 @@ export function CountyVerticalPage({
   const v = VERTICALS[vertical];
   const name = county.name;
   const faqs = v.faqs(name);
+  // Real per-county substance. Without it these 148 pages were the template
+  // with a proper noun swapped in — see verticalRegions.ts.
+  const note = verticalNote(vertical, name, county.region);
+  const noteHeading = verticalNoteHeading(vertical, name);
 
   const serviceJsonLd = {
     '@context': 'https://schema.org',
@@ -60,9 +67,11 @@ export function CountyVerticalPage({
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
-          <p className={a.altLink} style={{ marginBottom: 8 }}>
-            <Link href={`/${vertical}`}>← {v.eyebrow}</Link>
-          </p>
+          {/* Real breadcrumb (with BreadcrumbList JSON-LD) rather than the
+              bare back-link these pages used to carry. */}
+          <Breadcrumb
+            items={[{ label: v.crumbLabel, href: `/${vertical}` }, { label: name }]}
+          />
           <div className={a.eyebrow}>{v.eyebrow} · {name}</div>
           <h1 className={a.title}>
             {v.h1Main(name)} <em>{v.h1Em}</em>
@@ -97,6 +106,19 @@ export function CountyVerticalPage({
         </div>
       </main>
 
+      <section className={s.section}>
+        <div className={s.sectionInner}>
+          <div className={s.kicker}>{noteHeading.kicker}</div>
+          <h2 className={s.sectionTitle}>
+            {noteHeading.title} <em>{noteHeading.titleEm}</em>
+          </h2>
+          <div className={s.sectionInner} style={{ maxWidth: 760 }}>
+            <p className={s.sectionLede}>{note.supply}</p>
+            <p className={s.sectionLede}>{note.practical}</p>
+          </div>
+        </div>
+      </section>
+
       <section className={`${s.section} ${s.sectionAlt}`}>
         <div className={s.sectionInner}>
           <div className={s.kicker}>Common questions</div>
@@ -117,6 +139,15 @@ export function CountyVerticalPage({
           </div>
         </div>
       </section>
+
+      <NotesTeaser
+        service={vertical}
+        heading={
+          <>
+            More on <em>{v.crumbLabel.toLowerCase()}.</em>
+          </>
+        }
+      />
 
       {siblings.length > 0 && (
         <section className={s.section}>

@@ -187,7 +187,7 @@ export function LandingFlow() {
       if (el && !el.value && value?.trim()) el.value = value.trim().slice(0, max);
     };
     prefill(rawTextRef.current, q.get('job'), 2000);
-    prefill(locationRef.current, q.get('loc'), 120);
+    prefill(locationRef.current, q.get('loc'), 200);
 
     // `src` marks an internal hand-off (the paddock pages). It stands in as the
     // source only when there's no real ad attribution, so organic arrivals stop
