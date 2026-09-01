@@ -1,0 +1,68 @@
+/* Service pages → notes. Card grid in the same visual language as the
+   /notes index, sized to sit inside a landing-page section. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+.card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--white);
+  transition: border-color 0.2s ease;
+}
+.card:hover {
+  border-color: var(--jd-green);
+}
+.photo {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--jd-green-pale);
+}
+.body {
+  padding: 18px 20px 22px;
+}
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+}
+.tag {
+  color: var(--jd-green);
+}
+.heading {
+  font-family: var(--font-display-stack);
+  font-size: 19px;
+  line-height: 1.25;
+  color: var(--jd-green-deep);
+  margin: 0 0 8px;
+}
+.card:hover .heading {
+  color: var(--jd-green);
+}
+.excerpt {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.more {
+  text-align: center;
+  margin-top: 34px;
+}

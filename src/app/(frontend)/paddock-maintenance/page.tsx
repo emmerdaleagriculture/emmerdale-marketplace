@@ -3,8 +3,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import { StartJobForm } from './StartJobForm';
 import { CountyLinks } from '@/components/verticals/CountyLinks';
+import { NotesTeaser } from '@/components/notes/NotesTeaser';
 import {
   ServicesSection,
   HowItWorksSection,
@@ -14,7 +16,7 @@ import {
 } from '@/components/paddock/PaddockSections';
 import { getServices, getCountyCoverage } from '@/lib/reference';
 import { UK_COUNTY_NAMES } from '@/components/UKCoverageMap';
-import { COMPANY_LEGAL_NAME, COMPANY_NUMBER } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, COMPANY_NUMBER, SERVICE_AREA } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
 
@@ -84,9 +86,9 @@ export default async function PaddockMaintenancePage() {
     name: 'Paddock maintenance & field work',
     serviceType: services.map((svc) => svc.name),
     description:
-      'Paddock maintenance and agricultural contracting for paddock owners, equestrian yards, smallholdings, farms and estates — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance, matched to contractors by county across England and Wales.',
+      `Paddock maintenance and agricultural contracting for paddock owners, equestrian yards, smallholdings, farms and estates — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance, matched to contractors by county across ${SERVICE_AREA}.`,
     url: 'https://emmerdaleagriculture.com/paddock-maintenance',
-    areaServed: { '@type': 'AdministrativeArea', name: 'England and Wales' },
+    areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
     provider: {
       '@type': 'Organization',
       name: 'Emmerdale Agriculture',
@@ -102,6 +104,7 @@ export default async function PaddockMaintenancePage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
+          <Breadcrumb items={[{ label: 'Paddock maintenance' }]} />
           <div className={a.eyebrow}>Paddock &amp; field work</div>
           <h1 className={a.title}>
             Paddock maintenance — <em>tell us what needs doing.</em>
@@ -149,7 +152,7 @@ export default async function PaddockMaintenancePage() {
             Contractors in {coveredCount} counties — <em>and growing.</em>
           </h2>
           <p className={s.sectionLede}>
-            The network runs across England and Wales, deepest around our
+            The network runs across {SERVICE_AREA}, deepest around our
             Hampshire heartland and spreading out from there. If your county is
             thin on the ground we&rsquo;ll tell you straight rather than leave
             you waiting — and it costs nothing to ask.
@@ -174,6 +177,18 @@ export default async function PaddockMaintenancePage() {
           <Link href="/signup">join the network</Link> — it&rsquo;s free.
         </p>
       </FaqSection>
+
+      <NotesTeaser
+        service="paddock-maintenance"
+        alt
+        fillWithRecent
+        heading={
+          <>
+            Written from <em>the seat of a tractor.</em>
+          </>
+        }
+        lede="What paddocks actually need, season by season — the same work the contractors in the network do every week."
+      />
 
       <CountyLinks
         vertical="paddock-maintenance"

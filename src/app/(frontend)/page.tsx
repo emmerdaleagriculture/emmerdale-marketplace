@@ -6,7 +6,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { UKCoverageMap, COVERAGE_BINS, UK_COUNTY_NAMES } from '@/components/UKCoverageMap';
 import { getServices, getCountyCoverage } from '@/lib/reference';
-import { COMPANY_LEGAL_NAME, COMPANY_NUMBER, HPM_URL, HPM_CONTACT_URL } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, COMPANY_NUMBER, HPM_URL, HPM_CONTACT_URL, SERVICE_AREA } from '@/lib/site';
 import s from './landing.module.css';
 import f from '@/components/forms/forms.module.css';
 
@@ -17,7 +17,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Paddock & Agricultural Contractor Jobs | Emmerdale Agriculture',
   description:
-    'Free-to-join network passing paddock maintenance and land jobs to agricultural contractors across England and Wales. Get matched by county, contact the customer directly — no commission.',
+    `Free-to-join network passing paddock maintenance and land jobs to agricultural contractors across ${SERVICE_AREA}. Get matched by county, contact the customer directly — no commission.`,
   alternates: { canonical: '/' },
 };
 
@@ -37,7 +37,7 @@ const orgJsonLd = {
     propertyID: 'Company Number',
     value: COMPANY_NUMBER,
   },
-  areaServed: { '@type': 'AdministrativeArea', name: 'England and Wales' },
+  areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'customer service',
@@ -47,7 +47,7 @@ const orgJsonLd = {
   },
   sameAs: [HPM_URL],
   description:
-    'The contractor network run by Emmerdale Agriculture Ltd, the company behind Hampshire Paddock Management. Paddock and land jobs matched to contractors by county across England and Wales.',
+    `The contractor network run by Emmerdale Agriculture Ltd, the company behind Hampshire Paddock Management. Paddock and land jobs matched to contractors by county across ${SERVICE_AREA}.`,
 };
 
 // FAQ schema — mirrors the visible FAQ section below (Google requires the
@@ -71,7 +71,7 @@ const faqs = [
   },
   {
     q: 'Which parts of the country do you cover?',
-    a: 'The network is nationwide across England and Wales. Coverage grows as more contractors join, and you’ll be matched to jobs in whichever counties you choose.',
+    a: `The network is nationwide across ${SERVICE_AREA}. Coverage grows as more contractors join, and you’ll be matched to jobs in whichever counties you choose.`,
   },
   {
     q: 'Who runs Emmerdale Agriculture?',
@@ -120,7 +120,7 @@ export default async function LandingPage() {
     name: 'Paddock maintenance & land services',
     serviceType: services.map((svc) => svc.name),
     description:
-      'Free, no-obligation quotes for paddock maintenance and agricultural contracting — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance — for paddock owners, equestrian yards, farms and estates across England and Wales.',
+      `Free, no-obligation quotes for paddock maintenance and agricultural contracting — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance — for paddock owners, equestrian yards, farms and estates across ${SERVICE_AREA}.`,
     // The route to a quote is now our own funnel, not HPM's contact form.
     url: 'https://emmerdaleagriculture.com/paddock-maintenance',
     provider: {
@@ -286,7 +286,7 @@ export default async function LandingPage() {
           <p className={s.sectionLede}>
             The network handles paddock maintenance and agricultural contracting
             for private paddock owners, equestrian yards, farms and estates
-            alike, across England and Wales — run by the people behind{' '}
+            alike, across {SERVICE_AREA} — run by the people behind{' '}
             <a href={HPM_CONTACT_URL}>Hampshire Paddock Management</a> in
             Hampshire.
           </p>
@@ -323,7 +323,7 @@ export default async function LandingPage() {
           </h2>
           <p className={s.sectionLede}>
             Emmerdale Agriculture passes real, consented enquiries to agricultural
-            contractors across England and Wales — the everyday work of grassland
+            contractors across {SERVICE_AREA} — the everyday work of grassland
             and paddock maintenance: topping, harrowing, rolling, spraying,
             rotavating, land clearance and more, matched to the counties you choose.
           </p>

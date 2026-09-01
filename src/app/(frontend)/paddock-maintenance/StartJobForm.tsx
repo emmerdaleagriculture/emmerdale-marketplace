@@ -24,12 +24,18 @@ import a from '@/app/(frontend)/auth.module.css';
  * The ad params below are read from the current URL, so they can only be
  * forwarded once hydrated: someone who lands here from an ad and submits in the
  * gap keeps `src` but loses the gclid. Reading them during render would mean
- * making all 89 of these pages dynamic, which isn't worth that window.
+ * making every one of these county pages dynamic, which isn't worth that window.
  */
 
-/** Mirrors the /start textarea, so we never hand over text the flow rejects. */
+/**
+ * Matched to what the /start flow actually accepts, so we never truncate text
+ * the flow would have taken: MAX_JOB mirrors the textarea's own maxLength,
+ * MAX_LOC the server action's `location_raw` cap (start/actions.ts). The
+ * /start location input carries no maxLength of its own — 200 is the real
+ * ceiling, and this used to sit at 120, cutting full addresses short.
+ */
 const MAX_JOB = 2000;
-const MAX_LOC = 120;
+const MAX_LOC = 200;
 const SOURCE = 'paddock';
 const FORWARD = ['utm_source', 'utm_medium', 'utm_campaign', 'gclid'] as const;
 

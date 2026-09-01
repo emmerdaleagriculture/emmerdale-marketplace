@@ -21,7 +21,7 @@ export function SiteHeader({ variant = 'solid' }: { variant?: 'overlay' | 'solid
               hides .nav a:first-child, and it's the link we can afford to lose
               on a small screen — not the customer route in. */}
           <Link href="/#how-it-works">How it works</Link>
-          <Link href="/paddock-maintenance">Need work done?</Link>
+          <Link href="/paddock-maintenance">Paddock maintenance</Link>
           <Link href="/notes">Notes</Link>
           <HeaderAuthNav />
         </nav>

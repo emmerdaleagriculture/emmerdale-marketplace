@@ -18,6 +18,8 @@ export type VerticalConfig = {
   slug: VerticalKey;
   category: 'hay' | 'tractor-hire';
   eyebrow: string;
+  /** Breadcrumb label for the top-level page (the eyebrow is too decorative). */
+  crumbLabel: string;
   /** metadata (the layout appends " | Emmerdale Agriculture") */
   metaTitle: (county: string) => string;
   metaDescription: (county: string) => string;
@@ -41,6 +43,7 @@ export const VERTICALS: Record<VerticalKey, VerticalConfig> = {
     slug: 'hay-bales',
     category: 'hay',
     eyebrow: 'Hay · Straw · Haylage',
+    crumbLabel: 'Hay, straw & haylage',
     metaTitle: (c) => `Hay, Straw & Haylage Suppliers in ${c}`,
     metaDescription: (c) =>
       `Looking for hay, straw or haylage in ${c}? Tell us what you need and we’ll match you with a supplier near you — big bales or small, delivered or collected.`,
@@ -74,6 +77,7 @@ export const VERTICALS: Record<VerticalKey, VerticalConfig> = {
     slug: 'tractor-hire',
     category: 'tractor-hire',
     eyebrow: 'Tractor hire · Events',
+    crumbLabel: 'Tractor hire',
     metaTitle: (c) => `Tractor Hire in ${c} — Weddings, Proms & Events`,
     metaDescription: (c) =>
       `Hire a tractor and trailer in ${c} for a wedding, prom, photoshoot or parade — matched with an experienced operator near you. Driver included, no obligation.`,
@@ -133,10 +137,30 @@ export function regionPhrase(region: string): string {
   return REGIONS_WITHOUT_ARTICLE.has(region) ? region : `the ${region}`;
 }
 
-/** All counties as slug refs (for generateStaticParams and sitemaps). */
+/**
+ * Counties that exist in the reference table (so a postcode can still resolve
+ * to them, and a contractor can still tick them) but must not get a landing
+ * page of their own. The City of London is 1.12 square miles of offices: an
+ * indexable page telling its readers that overgrazing and poaching are the
+ * common problems there is the definition of a thin doorway page.
+ *
+ * Deliberately narrow. Greater London, Bristol and the metropolitan counties
+ * keep their pages — green-belt and urban-fringe paddocks are real, and the
+ * copy already says so.
+ */
+const NO_LANDING_PAGE = new Set(['City of London']);
+
+/**
+ * All counties as slug refs (for generateStaticParams and sitemaps).
+ *
+ * Page layer only — `getCounties()` stays complete, so postcode matching and
+ * contractor coverage are unaffected by the exclusion above.
+ */
 export async function allCountyRefs(): Promise<CountyRef[]> {
   const counties = await getCounties();
-  return counties.map((c) => ({ name: c.name, slug: countySlug(c.name), region: c.region }));
+  return counties
+    .filter((c) => !NO_LANDING_PAGE.has(c.name))
+    .map((c) => ({ name: c.name, slug: countySlug(c.name), region: c.region }));
 }
 
 /** Resolve a county slug to its name/region plus its same-region siblings. */

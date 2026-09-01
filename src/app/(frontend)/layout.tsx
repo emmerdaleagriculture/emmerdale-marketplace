@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import { Tenor_Sans, DM_Sans } from 'next/font/google';
 import './globals.css';
-import { SITE_NAME, SITE_STRAPLINE } from '@/lib/site';
+import { SITE_NAME, SITE_STRAPLINE, siteUrl } from '@/lib/site';
 
 const GA_ID = 'G-869MBRK9FD';
 
@@ -27,7 +27,9 @@ const dm = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  // Every relative canonical on the site resolves against this, so it goes
+  // through siteUrl() — which refuses a localhost value in a production build.
+  metadataBase: new URL(siteUrl()),
   title: {
     default: `${SITE_NAME} — ${SITE_STRAPLINE}`,
     template: `%s | ${SITE_NAME}`,

@@ -1,0 +1,49 @@
+/* Notes → service pages. Deliberately quieter than the big CTA panel that
+   sits alongside it: this is a "where to go next" block, not a shout. */
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 56px 24px 8px;
+}
+.heading {
+  font-family: var(--font-display-stack);
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--jd-green-deep);
+  margin-bottom: 18px;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.item {
+  border-top: 1px solid var(--rule);
+}
+.item:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+.link {
+  display: block;
+  padding: 16px 0;
+  text-decoration: none;
+  color: inherit;
+}
+.label {
+  font-family: var(--font-display-stack);
+  font-size: 18px;
+  color: var(--jd-green);
+  margin-bottom: 4px;
+}
+.link:hover .label {
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+}
+.blurb {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}

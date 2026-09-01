@@ -21,13 +21,23 @@ const HERO_TYPES: Record<string, string> = {
 };
 const HERO_MAX_BYTES = 8 * 1024 * 1024;
 
+const SLUG_MAX = 80;
+
+/**
+ * Title → URL slug. Long titles are cut back to the last whole word inside
+ * the limit — a hard .slice() left slugs ending mid-word ("...find-a-
+ * contractor-anyw"), which is both ugly in a SERP and a weaker keyword match.
+ */
 function slugify(input: string): string {
-  return input
+  const base = input
     .toLowerCase()
     .replace(/['’]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80);
+    .replace(/^-+|-+$/g, '');
+  if (base.length <= SLUG_MAX) return base;
+  const cut = base.slice(0, SLUG_MAX + 1);
+  const lastDash = cut.lastIndexOf('-');
+  return (lastDash > 0 ? cut.slice(0, lastDash) : base.slice(0, SLUG_MAX)).replace(/-+$/, '');
 }
 
 /** Refresh the public pages a post touches (ISR + the shared cached query). */

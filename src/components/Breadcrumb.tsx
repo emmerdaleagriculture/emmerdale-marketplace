@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { jsonLd as serializeJsonLd } from '@/lib/jsonld';
 import styles from './Breadcrumb.module.css';
+import { siteUrl as resolveSiteUrl } from '@/lib/site';
 
 export type Crumb = {
   /** Display label */
@@ -27,16 +28,12 @@ type Props = {
 };
 
 /** Ported from the HPM site — same markup, marketplace default site URL. */
-export function Breadcrumb({ items, skipHome = false, jsonLd = true, siteUrl }: Props) {
+export function Breadcrumb({ items, skipHome = false, jsonLd = true, siteUrl: siteUrlProp }: Props) {
   const trail: Crumb[] = skipHome ? items : [{ label: 'Home', href: '/' }, ...items];
 
   const lastIndex = trail.length - 1;
   // Always absolute: Google rejects BreadcrumbList items with relative URLs.
-  const base = (
-    siteUrl ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    'https://emmerdaleagriculture.com'
-  ).replace(/\/$/, '');
+  const base = siteUrlProp ?? resolveSiteUrl();
 
   const itemListElement = trail.map((c, i) => ({
     '@type': 'ListItem',

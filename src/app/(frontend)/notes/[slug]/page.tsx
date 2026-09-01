@@ -7,8 +7,9 @@ import { marked } from 'marked';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
+import { ServiceLinks } from '@/components/notes/ServiceLinks';
 import { jsonLd } from '@/lib/jsonld';
-import { tagDef, ctaForTag } from '@/lib/notes/tags';
+import { tagDef, ctaForTag, serviceLinksForTags } from '@/lib/notes/tags';
 import {
   getNoteBySlug,
   getNotesData,
@@ -19,6 +20,7 @@ import {
 import { createStaticClient } from '@/lib/supabase/static';
 import { formatMonth } from '../PostCard';
 import styles from './post.module.css';
+import { siteUrl } from '@/lib/site';
 
 type Params = { slug: string };
 
@@ -116,15 +118,25 @@ export default async function NotePostPage({
 
   const primaryTag = post.primary_tag ?? post.tags[0] ?? null;
   const cta = ctaForTag(primaryTag);
+  // Primary tag first, so the closest service leads the list. Contractors
+  // read these posts too, so /signup rides along at the bottom. The CTA panel
+  // below already pushes cta.href hard — repeating it as the first item of the
+  // list directly underneath is noise, so this block is genuinely "the rest".
+  const serviceLinks = serviceLinksForTags(
+    [primaryTag, ...post.tags].filter((t): t is string => Boolean(t)),
+    true,
+  ).filter((l) => l.href !== cta.href);
 
   // Related posts from the shared cached index query — no extra round-trip.
   const { featured, grid } = await getNotesData();
   const all = [...(featured ? [featured] : []), ...grid];
   const related = rankRelated(post, all);
 
-  const siteUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL || 'https://emmerdaleagriculture.com'
-  ).replace(/\/$/, '');
+  const site = siteUrl();
+
+  // Curated tags link to their crawlable hub; anything else falls back to
+  // the index.
+  const primaryDef = tagDef(primaryTag);
 
   const articleSchema = {
     '@context': 'https://schema.org',
@@ -134,10 +146,13 @@ export default async function NotePostPage({
     datePublished: post.published_at ?? undefined,
     dateModified: post.updated_at ?? post.published_at ?? undefined,
     wordCount: noteWordCount(post.content_md) || undefined,
+    // Topic signals straight off the post's own taxonomy.
+    articleSection: primaryDef?.label ?? primaryTag ?? undefined,
+    keywords: post.tags.length ? post.tags.join(', ') : undefined,
     author: {
       '@type': 'Person',
       name: 'Tom Oswald',
-      url: siteUrl,
+      url: site,
     },
     publisher: {
       '@type': 'Organization',
@@ -145,17 +160,14 @@ export default async function NotePostPage({
       // Google requires publisher.logo for Article rich-result eligibility.
       logo: {
         '@type': 'ImageObject',
-        url: `${siteUrl}/apple-icon.png`,
+        url: `${site}/apple-icon.png`,
         width: 180,
         height: 180,
       },
     },
-    mainEntityOfPage: `${siteUrl}/notes/${post.slug}`,
+    mainEntityOfPage: `${site}/notes/${post.slug}`,
   };
 
-  // Curated tags link to their crawlable hub; anything else falls back to
-  // the index.
-  const primaryDef = tagDef(primaryTag);
   const breadcrumbHref = primaryDef ? `/notes/tag/${primaryDef.slug}` : '/notes';
   const breadcrumbLabel = primaryDef
     ? primaryDef.label
@@ -225,6 +237,12 @@ export default async function NotePostPage({
           </Link>
         </div>
       </section>
+
+      {/* ===== SERVICE LINKS =====
+           In-content links from the article to the pages that do the work it
+           describes, chosen from the post's tags. The CTA panel above pushes
+           one destination; this gives the reader (and the crawler) the rest. */}
+      <ServiceLinks links={serviceLinks} heading="Elsewhere in the network" />
 
       {/* ===== SIGN-OFF ===== */}
       <div className={styles.signoff}>

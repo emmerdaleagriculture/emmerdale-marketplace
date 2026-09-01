@@ -7,19 +7,19 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { jsonLd } from '@/lib/jsonld';
-import { CURATED_TAGS, tagDef } from '@/lib/notes/tags';
+import { CURATED_TAGS, tagDef, ctaForTag, serviceLinksForTags } from '@/lib/notes/tags';
 import { getNotesData, countByTag } from '@/lib/notes/data';
+import { ServiceLinks } from '@/components/notes/ServiceLinks';
 import { PostCard } from '../../PostCard';
 import { FilterBar } from '../../FilterBar';
 import styles from '../../notes.module.css';
+import { siteUrl } from '@/lib/site';
 
 type Params = { tag: string };
 
 export const revalidate = 3600;
 
-const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://emmerdaleagriculture.com'
-).replace(/\/$/, '');
+const SITE_URL = siteUrl();
 
 export function generateStaticParams() {
   return CURATED_TAGS.map((t) => ({ tag: t.slug }));
@@ -55,6 +55,7 @@ export default async function TagHubPage({ params }: { params: Promise<Params> }
 
   // Hub hero borrows the first post's photo (matches the index behaviour).
   const heroPhoto = posts.find((p) => p.hero)?.hero ?? null;
+  const cta = ctaForTag(def.slug);
 
   const itemListSchema = {
     '@context': 'https://schema.org',
@@ -113,17 +114,25 @@ export default async function TagHubPage({ params }: { params: Promise<Params> }
         </div>
       </section>
 
+      {/* ===== SERVICE LINKS =====
+           The hub's topic mapped onto the pages that actually do the work,
+           so each tag hub links onward to its service page rather than
+           dead-ending in the blog. */}
+      <ServiceLinks
+        links={serviceLinksForTags([def.slug])}
+        heading={`${def.label} — get it done`}
+      />
+
       {/* ===== CTA BAND ===== */}
+      {/* Copy and button both come from ctaForTag — on /notes/tag/hay the band
+          has to read as a hay CTA, not paddock copy above a hay button. */}
       <section className={styles.ctaBand}>
         <h3 className={styles.ctaTitle}>
-          Reading is fine. <em>Doing is better.</em>
+          {cta.title} <em>{cta.titleEm}</em>
         </h3>
-        <p className={styles.ctaBody}>
-          If your field or paddock needs work and you&rsquo;d rather someone
-          else handled it, tell us what needs doing.
-        </p>
-        <Link href="/start" className={styles.btnPrimary}>
-          Post your job →
+        <p className={styles.ctaBody}>{cta.sub}</p>
+        <Link href={cta.href} className={styles.btnPrimary}>
+          {cta.label}
         </Link>
       </section>
 

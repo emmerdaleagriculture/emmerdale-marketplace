@@ -2,16 +2,22 @@ import { jsonLd } from '@/lib/jsonld';
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
 import { CountyLinks } from '@/components/verticals/CountyLinks';
-import { COMPANY_LEGAL_NAME } from '@/lib/site';
+import { NotesTeaser } from '@/components/notes/NotesTeaser';
+import { COMPANY_LEGAL_NAME, SERVICE_AREA } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
+
+// ISR: the copy is static, but the notes teaser below picks up newly
+// published posts — so re-render hourly rather than freezing at build.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Tractor Hire for Weddings, Proms & Events',
   description:
-    'Hire a tractor and trailer for a wedding, prom, photoshoot or parade — matched with an experienced operator near you across England and Wales. Tell us the occasion and we’ll sort it.',
+    `Hire a tractor and trailer for a wedding, prom, photoshoot or parade — matched with an experienced operator near you across ${SERVICE_AREA}. Tell us the occasion and we’ll sort it.`,
   alternates: { canonical: '/tractor-hire' },
   openGraph: {
     title: 'Tractor Hire for Weddings, Proms & Events',
@@ -26,8 +32,8 @@ const serviceJsonLd = {
   name: 'Tractor & trailer hire for events',
   serviceType: ['Wedding tractor hire', 'Prom tractor hire', 'Event tractor hire'],
   description:
-    'Hire a tractor and trailer with an experienced operator for weddings, proms, photoshoots and events — matched to an operator by area across England and Wales.',
-  areaServed: { '@type': 'AdministrativeArea', name: 'England and Wales' },
+    `Hire a tractor and trailer with an experienced operator for weddings, proms, photoshoots and events — matched to an operator by area across ${SERVICE_AREA}.`,
+  areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
   provider: {
     '@type': 'Organization',
     name: 'Emmerdale Agriculture',
@@ -51,7 +57,7 @@ const faqs = [
   },
   {
     q: 'Which areas do you cover?',
-    a: `We match tractor-hire enquiries with operators across England and Wales. ${COMPANY_LEGAL_NAME} runs the network and passes your enquiry to an operator near you.`,
+    a: `We match tractor-hire enquiries with operators across ${SERVICE_AREA}. ${COMPANY_LEGAL_NAME} runs the network and passes your enquiry to an operator near you.`,
   },
 ];
 
@@ -73,6 +79,7 @@ export default function TractorHirePage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
+          <Breadcrumb items={[{ label: 'Tractor hire' }]} />
           <div className={a.eyebrow}>Tractor hire · Events</div>
           <h1 className={a.title}>
             A tractor for your big day — <em>matched to an operator near you.</em>
@@ -81,7 +88,7 @@ export default function TractorHirePage() {
             Arriving at your wedding on a tractor and trailer, a vintage tractor for
             the prom, or a proper farm tractor for a photoshoot or parade — tell us
             the occasion and we’ll match you with an experienced operator near you,
-            across England and Wales. Driver included, no obligation.
+            across {SERVICE_AREA}. Driver included, no obligation.
           </p>
 
           <div className={a.groupTitle}>Send an enquiry</div>
@@ -159,6 +166,16 @@ export default function TractorHirePage() {
           </div>
         </div>
       </section>
+
+      <NotesTeaser
+        service="tractor-hire"
+        heading={
+          <>
+            Tractor hire, <em>explained.</em>
+          </>
+        }
+        lede="What a day’s hire covers, what jobs suit hired kit, and how to get the most out of an operator."
+      />
 
       <CountyLinks vertical="tractor-hire" heading="Tractor hire across the country" />
 

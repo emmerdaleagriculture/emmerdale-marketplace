@@ -5,18 +5,28 @@ import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
+import { jsonLd } from '@/lib/jsonld';
 import { getNotesData, countByTag } from '@/lib/notes/data';
 import { NotesClient } from './NotesClient';
 import { FilterBar } from './FilterBar';
 import { formatMonth } from './PostCard';
 import styles from './notes.module.css';
+import { siteUrl } from '@/lib/site';
+
+const DESCRIPTION =
+  'Practical advice on paddocks, weeds, kit, and seasonal jobs — written from the seat of a tractor.';
 
 export const metadata: Metadata = {
   // Bare title — the layout template appends " | Emmerdale Agriculture".
   title: 'Notes from the field',
-  description:
-    'Practical advice on paddocks, weeds, kit, and seasonal jobs — written from the seat of a tractor.',
+  description: DESCRIPTION,
   alternates: { canonical: '/notes' },
+  openGraph: {
+    title: 'Notes from the field',
+    description: DESCRIPTION,
+    type: 'website',
+    url: '/notes',
+  },
 };
 
 // ISR so newly published posts (revalidateTag('notes') from the admin editor)
@@ -32,8 +42,35 @@ export default async function NotesIndexPage() {
   // library here) — with no posts it degrades to the plain deep-green band.
   const heroPhoto = featured?.hero ?? null;
 
+  // Blog + ItemList so the index reads as a real content hub rather than an
+  // untyped page, and every post is enumerated for crawlers in the markup.
+  const site = siteUrl();
+  const blogSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    name: 'Notes from the field',
+    description: DESCRIPTION,
+    url: `${site}/notes`,
+    publisher: {
+      '@type': 'Organization',
+      name: 'Emmerdale Agriculture',
+      url: site,
+    },
+    blogPost: all.map((p) => ({
+      '@type': 'BlogPosting',
+      headline: p.title,
+      url: `${site}/notes/${p.slug}`,
+      datePublished: p.publishedAt ?? undefined,
+      image: p.hero ? [p.hero.url] : undefined,
+    })),
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(blogSchema) }}
+      />
       {/* ===== HERO ===== */}
       <section className={styles.hero}>
         <SiteHeader variant="overlay" />
@@ -131,7 +168,7 @@ export default async function NotesIndexPage() {
           If your field or paddock needs work and you&rsquo;d rather someone
           else handled it, tell us what needs doing.
         </p>
-        <Link href="/start" className={styles.btnPrimary}>
+        <Link href="/paddock-maintenance" className={styles.btnPrimary}>
           Post your job →
         </Link>
       </section>
