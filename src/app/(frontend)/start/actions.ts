@@ -7,6 +7,7 @@ import { normalisePostcode, resolveCounty, type CountyResolution } from '@/lib/p
 import { getServices } from '@/lib/reference';
 import { verifyTurnstile } from '@/lib/turnstile';
 import type { FormState } from '@/lib/form';
+import { CONFIRM_SUCCESS } from './copy';
 import type { Json } from '@/lib/database.types';
 import { deterministicParse, toAcres } from '@/lib/jobParse/deterministic';
 import { callParseModel, MODEL_VERSION, PROMPT_VERSION } from '@/lib/jobParse/llm';
@@ -308,10 +309,6 @@ const ConfirmSchema = z.object({
   obstacles: z.string().trim().max(1000).optional().or(z.literal('')),
 });
 
-// Approved wording. No timescale promised — must hold for uncovered counties
-// (spec §9) — and none of the banned commercial vocabulary anywhere (§10).
-const CONFIRM_SUCCESS =
-  'Thanks — we’ve got everything we need. Your job will be passed to contractors who cover your area, and we’ll be in touch.';
 
 /**
  * Step 4: attach contact details and confirm the record. Only ever updates an

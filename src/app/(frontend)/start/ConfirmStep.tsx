@@ -1,6 +1,8 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { START_COMPLETE_PATH } from './copy';
 import { confirmJobAction, type ConfirmActionState } from './actions';
 import type { ParseResult } from '@/lib/jobParse/schema';
 import { conditionsFor, isAreaPriced } from '@/lib/jobParse/conditions';
@@ -32,6 +34,7 @@ const EMPTY: ConfirmActionState = {};
  */
 export function ConfirmStep({ result }: { result: ParseResult }) {
   const [state, action, pending] = useActionState(confirmJobAction, EMPTY);
+  const router = useRouter();
   const [view, setView] = useState<'suggested' | 'accepted' | 'alternatives'>(
     result.service ? 'suggested' : 'alternatives',
   );
@@ -58,6 +61,11 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
   useEffect(() => {
     if (state.ok || state.error) window.scrollTo({ top: 0 });
   }, [state]);
+  // A sent job lands on its own URL so ad platforms can count it. The inline
+  // success card below stays as the fallback while the navigation happens.
+  useEffect(() => {
+    if (state.ok) router.replace(START_COMPLETE_PATH);
+  }, [state.ok, router]);
 
   const missing = (k: string) => result.missing_fields.includes(k);
   const low = (k: string) => (result.parse_confidence[k] ?? 0) < 0.6;
