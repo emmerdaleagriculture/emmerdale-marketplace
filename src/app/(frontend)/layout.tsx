@@ -5,6 +5,7 @@ import './globals.css';
 import { COMPANY_LEGAL_NAME, SITE_NAME, SITE_STRAPLINE, siteUrl } from '@/lib/site';
 
 const GA_ID = 'G-869MBRK9FD';
+const META_PIXEL_ID = '1714644666891790';
 
 // Typography stack copied from the HPM site so the two brands match.
 // Tenor Sans = display headings (gentle, editorial).
@@ -67,7 +68,19 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-GB" className={`${tenor.variable} ${dm.variable} ${inter.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Meta Pixel — noscript fallback for browsers without JS. */}
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: 'none' }}
+            alt=""
+            src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
+          />
+        </noscript>
+      </body>
       {/* Google Analytics (gtag.js) — lazyOnload so it loads during idle and
           doesn't compete with hydration or the LCP hero image. */}
       <Script
@@ -80,6 +93,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', '${GA_ID}');
+        `}
+      </Script>
+      {/* Meta Pixel — same lazyOnload treatment as GA. The snippet is Meta's
+          standard loader, fires PageView once fbevents.js is in. */}
+      <Script id="meta-pixel" strategy="lazyOnload">
+        {`
+          !function(f,b,e,v,n,t,s)
+          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+          n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t,s)}(window, document,'script',
+          'https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', '${META_PIXEL_ID}');
+          fbq('track', 'PageView');
         `}
       </Script>
     </html>
