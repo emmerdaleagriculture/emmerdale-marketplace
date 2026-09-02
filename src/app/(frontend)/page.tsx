@@ -74,9 +74,12 @@ const orgJsonLd = {
 /** Where the service cards send people — the describe-your-job flow. */
 const START_HREF = '/start';
 
-// Photo strip under the intro. Mixed aspect ratios in the originals, shown
-// as uniform 4:3 crops; `pos` nudges the crop so the tractor stays in frame.
-const GALLERY = [
+// Photo strips: one under the intro, one under the service board. Mixed
+// aspect ratios in the originals, shown as uniform 4:3 crops; `pos` nudges
+// the crop so the machine stays in frame.
+type GalleryPhoto = { src: string; alt: string; pos: string };
+
+const GALLERY: GalleryPhoto[] = [
   {
     src: '/harvest-work.jpg',
     alt: 'A John Deere tractor and trailer running alongside a combine at harvest',
@@ -98,6 +101,54 @@ const GALLERY = [
     pos: '50% 55%',
   },
 ];
+
+const GALLERY_2: GalleryPhoto[] = [
+  {
+    src: '/jcb-fastrac.jpg',
+    alt: 'A JCB Fastrac in a field margin, in black and white',
+    pos: '50% 60%',
+  },
+  {
+    src: '/john-deere-4066m-pitch.jpg',
+    alt: 'A John Deere 4066M with a seeder beside rugby posts on a sports pitch',
+    pos: '50% 72%',
+  },
+  {
+    src: '/john-deere-6130r-kuhn.jpg',
+    alt: 'A John Deere 6130R with a Kuhn flail mower beside a hedge',
+    pos: '50% 50%',
+  },
+  {
+    src: '/honda-trx520.jpg',
+    alt: 'A Honda TRX520 quad towing a paddock sweeper under a stormy sky',
+    pos: '50% 62%',
+  },
+];
+
+function PhotoStrip({ photos, label }: { photos: GalleryPhoto[]; label: string }) {
+  return (
+    <section className={s.gallery} aria-label={label}>
+      <div className={s.container}>
+        <ul className={s.galleryGrid}>
+          {photos.map((g) => (
+            <li key={g.src} className={s.galleryItem}>
+              <DeferredImage
+                src={g.src}
+                alt={g.alt}
+                fill
+                quality={70}
+                sizes="(min-width: 1024px) 300px, 50vw"
+                rootMargin="400px"
+                className={s.galleryImg}
+                style={{ objectPosition: g.pos }}
+              />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
 
 const TRUST = ['Prices upfront', 'Pay online', 'Vetted and fully trained operators', 'Fully insured'];
 
@@ -196,27 +247,7 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* Photo strip. */}
-        <section className={s.gallery} aria-label="Our work">
-          <div className={s.container}>
-            <ul className={s.galleryGrid}>
-              {GALLERY.map((g) => (
-                <li key={g.src} className={s.galleryItem}>
-                  <DeferredImage
-                    src={g.src}
-                    alt={g.alt}
-                    fill
-                    quality={70}
-                    sizes="(min-width: 1024px) 300px, 50vw"
-                    rootMargin="400px"
-                    className={s.galleryImg}
-                    style={{ objectPosition: g.pos }}
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
+        <PhotoStrip photos={GALLERY} label="Our work" />
 
         {/* Full service board. */}
         <section id="services" className={s.services}>
@@ -246,6 +277,8 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+
+        <PhotoStrip photos={GALLERY_2} label="More of our work" />
 
         {/* Editorial photo band. */}
         <section className={s.band} aria-label="Approved operators">
