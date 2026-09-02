@@ -337,6 +337,17 @@
 .services {
   padding: clamp(48px, 6vw, 84px) 0;
 }
+.servicesIntro {
+  max-width: 62ch;
+  margin: 0 0 28px;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+@media (max-width: 1023px) {
+  .servicesIntro {
+    font-size: 1.0625rem;
+  }
+}
 .servicesSub {
   color: var(--muted);
   margin: 0 0 22px;
