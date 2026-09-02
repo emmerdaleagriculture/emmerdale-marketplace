@@ -15,7 +15,9 @@ export const MODEL_VERSION = 'claude-haiku-4-5';
 export const PROMPT_VERSION = 'v2'; // v2: Hedge cutting added; hedges removed from Flailing
 
 /** Hard latency ceiling on the parse call (spec §4 step 2). */
-const LLM_TIMEOUT_MS = 8000;
+// 15 s, up from 8: Haiku averages ~2.7 s here, but one live customer hit the
+// 8 s cutoff and landed on the no-service fallback. A slow answer beats none.
+const LLM_TIMEOUT_MS = 15000;
 
 const SYSTEM_PROMPT = `You interpret a customer's free-text description of land, paddock or agricultural work in the UK and record it in structured form via the record_job_parse tool. Always call the tool exactly once.
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { confirmJobAction, type ConfirmActionState } from './actions';
 import type { ParseResult } from '@/lib/jobParse/schema';
 import { conditionsFor, isAreaPriced } from '@/lib/jobParse/conditions';
@@ -43,6 +43,11 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
   const [mapStatus, setMapStatus] = useState<'pending' | 'ready' | 'unavailable'>('pending');
   const [keepStated, setKeepStated] = useState(false);
   const [gateWidth, setGateWidth] = useState('');
+  // Boundary nudge: pressing Send without a boundary scrolls to the map and
+  // asks for one, once. The customer can still send without it.
+  const [drawRequest, setDrawRequest] = useState(0);
+  const formRef = useRef<HTMLFormElement>(null);
+  const sendWithoutBoundary = useRef(false);
 
   // Step changes are state swaps, not navigations — the browser keeps the
   // old scroll position, leaving the customer mid-page. Reset on mount (the
@@ -78,16 +83,30 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
   const mappedAcres = mapState?.mappedAcres ?? null;
   const showDiscrepancy = !keepStated && areaDiscrepancy(statedAcres, mappedAcres);
 
-  // §7: boundary drawing is mandatory for area-priced services — while the
-  // map is actually usable. An unavailable map never blocks.
-  const boundaryRequired =
+  // §7: boundary drawing is expected for area-priced services — while the
+  // map is actually usable. An unavailable map never blocks. It is a nudge,
+  // not a gate: a disabled Send button reads as "nothing happened" (a live
+  // customer reported exactly that), so the first press without a boundary
+  // scrolls to the map and asks; the customer can then draw, or send anyway.
+  const boundaryWanted =
     isAreaPriced(currentService) &&
     mapStatus === 'ready' &&
     result.lat !== null &&
     !mapState?.boundary;
+  const nudged = drawRequest > 0 && boundaryWanted;
 
   return (
-    <form action={action} className={a.card}>
+    <form
+      ref={formRef}
+      action={action}
+      className={a.card}
+      onSubmit={(e) => {
+        if (boundaryWanted && !sendWithoutBoundary.current) {
+          e.preventDefault();
+          setDrawRequest((n) => n + 1);
+        }
+      }}
+    >
       {/* Tiles come from Mapbox the moment the map mounts — start the TLS
           handshake now. React hoists this into <head>. */}
       {result.lat !== null && <link rel="preconnect" href="https://api.mapbox.com" />}
@@ -256,7 +275,30 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           lng={result.lng}
           onChange={setMapState}
           onStatus={setMapStatus}
+          drawRequest={drawRequest}
         />
+      )}
+
+      {nudged && (
+        <div className={s.discrepancy} role="alert">
+          <p className={s.servicePrompt}>
+            <strong>One more thing before we send it:</strong> tap the corners of the
+            area on the map above, one by one, so contractors can see exactly what
+            they&rsquo;re quoting for. Then press <strong>Send my job</strong> again.
+          </p>
+          <div className={s.serviceButtons}>
+            <button
+              type="button"
+              className={f.btnGhost}
+              onClick={() => {
+                sendWithoutBoundary.current = true;
+                formRef.current?.requestSubmit();
+              }}
+            >
+              I can&rsquo;t draw it, send anyway
+            </button>
+          </div>
+        </div>
       )}
 
       {showDiscrepancy && (
@@ -410,13 +452,14 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
       </div>
 
       <div className={a.actions}>
-        {boundaryRequired && (
+        {boundaryWanted && (
           <p className={f.hint}>
-            Trace round the area on the map first — contractors can&rsquo;t give a
-            straight answer without seeing it.
+            {nudged
+              ? 'Trace round the area on the map above, then press Send again.'
+              : 'Tip: tracing round the area on the map gets you straighter quotes.'}
           </p>
         )}
-        <button className={f.btnYellow} type="submit" disabled={pending || boundaryRequired}>
+        <button className={f.btnYellow} type="submit" disabled={pending}>
           {pending ? 'Sending…' : 'Send my job'}
         </button>
       </div>

@@ -48,13 +48,18 @@ export function BoundaryMap({
   lng,
   onChange,
   onStatus,
+  drawRequest = 0,
 }: {
   lat: number;
   lng: number;
   onChange: (state: BoundaryState) => void;
   onStatus: (status: 'ready' | 'unavailable') => void;
+  /** Bump to scroll the map into view and switch it to drawing mode — used
+      when the customer presses Send without having traced a boundary. */
+  drawRequest?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
   const stateRef = useRef<{ pin: [number, number]; pinMoved: boolean; points: LngLat[] }>({
     pin: [lat, lng],
@@ -72,6 +77,13 @@ export function BoundaryMap({
   onChangeRef.current = onChange;
   const onStatusRef = useRef(onStatus);
   onStatusRef.current = onStatus;
+
+  useEffect(() => {
+    if (!drawRequest) return;
+    wrapperRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setDrawing(true);
+    drawingRef.current = true;
+  }, [drawRequest]);
 
   useEffect(() => {
     if (!MAPBOX_TOKEN) {
@@ -189,7 +201,7 @@ export function BoundaryMap({
     // The cursor toggle lives on the wrapper: React must never rewrite the
     // map div's className, because Leaflet adds its own classes to that
     // element and React's reconciliation would wipe them.
-    <div className={drawing ? `${s.mapBlock} ${s.mapDrawing}` : s.mapBlock}>
+    <div ref={wrapperRef} className={drawing ? `${s.mapBlock} ${s.mapDrawing}` : s.mapBlock}>
       <div ref={containerRef} className={s.map} />
       <div className={s.mapControls}>
         {!drawing ? (
