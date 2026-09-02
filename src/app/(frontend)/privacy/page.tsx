@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
-import { COMPANY_LEGAL_NAME, COMPANY_NUMBER } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, COMPANY_REG_LINE, COMPANY_REG_PROSE } from '@/lib/site';
 import a from '../auth.module.css';
 import l from '../legal.module.css';
 
 export const metadata: Metadata = {
   title: 'Privacy policy',
-  description: 'How Emmerdale Agriculture Ltd handles customer and contractor data.',
+  description: `How ${COMPANY_LEGAL_NAME} handles customer and contractor data.`,
   alternates: { canonical: '/privacy' },
 };
 
@@ -18,7 +18,7 @@ export default function PrivacyPage() {
       <main className={a.main}>
         <article className={l.prose}>
           <h1>Privacy policy</h1>
-          <p className={l.updated}>{COMPANY_LEGAL_NAME} · Company No. {COMPANY_NUMBER}</p>
+          <p className={l.updated}>{COMPANY_REG_LINE}</p>
 
           <div className={l.note}>
             Draft for review. This page states the disclosure, names the categories
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
           <h2>Who we are</h2>
           <p>
             The Emmerdale Agriculture contractor network is operated by{' '}
-            {COMPANY_LEGAL_NAME} (Company No. {COMPANY_NUMBER}), the company behind
+            {COMPANY_REG_PROSE}, the company behind
             Hampshire Paddock Management. We are the data controller for the personal
             data described here.
           </p>

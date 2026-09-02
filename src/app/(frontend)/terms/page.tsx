@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
-import { COMPANY_LEGAL_NAME, COMPANY_NUMBER } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, COMPANY_REG_LINE } from '@/lib/site';
 import a from '../auth.module.css';
 import l from '../legal.module.css';
 
@@ -18,7 +18,7 @@ export default function TermsPage() {
       <main className={a.main}>
         <article className={l.prose}>
           <h1>Contractor terms</h1>
-          <p className={l.updated}>{COMPANY_LEGAL_NAME} · Company No. {COMPANY_NUMBER}</p>
+          <p className={l.updated}>{COMPANY_REG_LINE}</p>
 
           <div className={l.note}>
             Draft for review. Covers the controller-to-controller obligation and the
