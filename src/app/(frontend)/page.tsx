@@ -253,6 +253,13 @@ export default async function LandingPage() {
         <section id="services" className={s.services}>
           <div className={s.container}>
             <p className={s.eyebrow}>What we do</p>
+            <p className={s.servicesIntro}>
+              If you own a paddock or a bit of land, finding someone reliable to
+              do the job usually means trawling Facebook groups and hoping for
+              the best. We do that part for you. Tell us what needs doing and we
+              match it against our database of vetted contractors, so the right
+              person for the job gets in touch, not whoever replied first.
+            </p>
             <h2 className={s.sectionH} style={{ marginBottom: 6 }}>
               Everything we do
             </h2>
