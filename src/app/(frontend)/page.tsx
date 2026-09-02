@@ -2,28 +2,35 @@ import { jsonLd } from '@/lib/jsonld';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { SiteHeader } from '@/components/SiteHeader';
-import { SiteFooter } from '@/components/SiteFooter';
-import { UKCoverageMap, COVERAGE_BINS, UK_COUNTY_NAMES } from '@/components/UKCoverageMap';
-import { getServices, getCountyCoverage } from '@/lib/reference';
-import { COMPANY_LEGAL_NAME, COMPANY_NUMBER, HPM_URL, HPM_CONTACT_URL, SERVICE_AREA } from '@/lib/site';
-import s from './landing.module.css';
-import f from '@/components/forms/forms.module.css';
+import { HomeHeader, BOOK_HREF } from '@/components/home/HomeHeader';
+import { HomeFooter } from '@/components/home/HomeFooter';
+import { StickyBar } from '@/components/home/StickyBar';
+import { DeferredImage } from '@/components/home/DeferredImage';
+import { ServiceIcon } from '@/components/home/ServiceIcons';
+import { UK_COUNTY_NAMES } from '@/components/UKCoverageMap';
+import { HOME_SERVICES } from '@/lib/home/services';
+import { getCountyCoverage } from '@/lib/reference';
+import {
+  COMPANY_LEGAL_NAME,
+  COMPANY_NUMBER,
+  HPM_URL,
+  PHONE_TEL,
+  SERVICE_AREA,
+} from '@/lib/site';
+import s from '@/components/home/home.module.css';
 
-// ISR: statically cached at the CDN, re-rendered at most hourly. The only data
-// on the page (the 15-service taxonomy) is effectively fixed.
+// ISR: statically cached at the CDN, re-rendered at most hourly. The only
+// live data on the page is the county coverage feeding the Service schema.
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Paddock & Agricultural Contractor Jobs | Emmerdale Agriculture',
+  title: 'Paddock, land and equestrian jobs, priced upfront',
   description:
-    `Free-to-join network passing paddock maintenance and land jobs to agricultural contractors across ${SERVICE_AREA}. Get matched by county, contact the customer directly — no commission.`,
+    'A managed marketplace for rural land. Paddock, land and equestrian jobs, priced upfront, booked online, completed by approved operators near you.',
   alternates: { canonical: '/' },
 };
 
 // Organization schema — credibility signals (company number, HPM relationship).
-// The network itself is nationwide (England & Wales), so areaServed is national
-// — not the regional service area of the HPM contracting arm.
 const orgJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
@@ -32,97 +39,82 @@ const orgJsonLd = {
   url: 'https://emmerdaleagriculture.com',
   // Raster logo (PNG) — Google's logo guidelines don't reliably pick up SVG.
   logo: 'https://emmerdaleagriculture.com/apple-icon.png',
-  identifier: {
-    '@type': 'PropertyValue',
-    propertyID: 'Company Number',
-    value: COMPANY_NUMBER,
+  ...(COMPANY_NUMBER
+    ? {
+        identifier: {
+          '@type': 'PropertyValue',
+          propertyID: 'Company Number',
+          value: COMPANY_NUMBER,
+        },
+      }
+    : {}),
+  telephone: PHONE_TEL,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'The Old Poultry Shed, Upper Slackstead Farm, Farley Lane',
+    addressLocality: 'Braishfield',
+    addressRegion: 'Hampshire',
+    postalCode: 'SO51 0QL',
+    addressCountry: 'GB',
   },
+  founder: { '@type': 'Person', name: 'Tom Oswald', jobTitle: 'Managing Director' },
   areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'customer service',
-    url: HPM_CONTACT_URL,
+    telephone: PHONE_TEL,
     areaServed: 'GB',
     availableLanguage: 'English',
   },
   sameAs: [HPM_URL],
   description:
-    `The contractor network run by Emmerdale Agriculture Ltd, the company behind Hampshire Paddock Management. Paddock and land jobs matched to contractors by county across ${SERVICE_AREA}.`,
+    `A managed marketplace for rural land, run by ${COMPANY_LEGAL_NAME}, the company behind Hampshire Paddock Management. Paddock, land and equestrian jobs priced upfront and completed by approved operators across ${SERVICE_AREA}.`,
 };
 
-// FAQ schema — mirrors the visible FAQ section below (Google requires the
-// answers to be on-page). Kept nationwide in framing.
-const faqs = [
+/** Where the service cards send people — the describe-your-job flow. */
+const START_HREF = '/start';
+
+// Photo strip under the intro. Mixed aspect ratios in the originals, shown
+// as uniform 4:3 crops; `pos` nudges the crop so the tractor stays in frame.
+const GALLERY = [
   {
-    q: 'Does it cost anything to join the network?',
-    a: 'No. Joining is completely free and there’s no obligation to take any job. When you open one you deal directly with the customer — Emmerdale Agriculture takes no commission.',
+    src: '/harvest-work.jpg',
+    alt: 'A John Deere tractor and trailer running alongside a combine at harvest',
+    pos: '50% 50%',
   },
   {
-    q: 'How are jobs matched to me?',
-    a: 'By county. You choose the counties you cover when you join, and whenever a job is posted in one of them we email you the details — the area and the work needed.',
+    src: '/john-deere-6130r.jpg',
+    alt: 'A John Deere 6130R with a spreader in a freshly mown field under a stormy sky',
+    pos: '50% 68%',
   },
   {
-    q: 'Can I post a job to the network myself?',
-    a: 'Yes — any member can. Post work of your own that needs doing, or a job you’ve been offered but can’t take on, and contractors covering that county will be notified and get in touch directly with whoever you name as the contact. We check every job before it goes out, and it’s free to do.',
+    src: '/woolton-house.jpg',
+    alt: 'A John Deere 4066M compact tractor with a flail mower on the lawns of a country house',
+    pos: '50% 55%',
   },
   {
-    q: 'Do you take a cut of the work?',
-    a: 'No. When you open a job you get the customer’s details and arrange the work directly. You invoice them yourself and keep the full amount — we take no commission.',
-  },
-  {
-    q: 'Which parts of the country do you cover?',
-    a: `The network is nationwide across ${SERVICE_AREA}. Coverage grows as more contractors join, and you’ll be matched to jobs in whichever counties you choose.`,
-  },
-  {
-    q: 'Who runs Emmerdale Agriculture?',
-    a: `The network is run by ${COMPANY_LEGAL_NAME} (Company No. ${COMPANY_NUMBER}), the company behind Hampshire Paddock Management — a contracting firm that does this work every day and passes on the jobs it can’t take.`,
+    src: '/john-deere-6250r-kuhn.jpg',
+    alt: 'A John Deere 6250R with a Kuhn flail mower on grassland',
+    pos: '50% 55%',
   },
 ];
 
-const faqJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: faqs.map((f) => ({
-    '@type': 'Question',
-    name: f.q,
-    acceptedAnswer: { '@type': 'Answer', text: f.a },
-  })),
-};
+const TRUST = ['Prices upfront', 'Pay online', 'Vetted and fully trained operators', 'Fully insured'];
 
-const STEPS = [
-  {
-    n: 1,
-    title: 'Sign up & choose your counties',
-    body: 'Tell us what you do and where you work. Pick your counties by region in a couple of clicks.',
-  },
-  {
-    n: 2,
-    title: 'Get matched by county',
-    body: 'When a job lands in one of your counties, we email you the details — the area and the work needed.',
-  },
-  {
-    n: 3,
-    title: 'Open it & win the work',
-    body: 'See a job you want? Open it for the full details and the customer’s contact, then get in touch. The customer chooses who they hire. You invoice them — we take no cut.',
-  },
-];
 
 export default async function LandingPage() {
-  const [services, coverage] = await Promise.all([getServices(), getCountyCoverage()]);
+  const coverage = await getCountyCoverage();
   const coveredCounties = UK_COUNTY_NAMES.filter((n) => (coverage[n] ?? 0) > 0);
-  const coveredCount = coveredCounties.length;
 
-  // Service schema — the customer-search side: what work can be quoted, where,
-  // and the route to a quote. areaServed tracks live network coverage.
+  // Service schema — what can be booked, where, and the route to a price.
   const serviceJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
     name: 'Paddock maintenance & land services',
-    serviceType: services.map((svc) => svc.name),
+    serviceType: HOME_SERVICES.map((svc) => svc.name),
     description:
-      `Free, no-obligation quotes for paddock maintenance and agricultural contracting — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance — for paddock owners, equestrian yards, farms and estates across ${SERVICE_AREA}.`,
-    // The route to a quote is now our own funnel, not HPM's contact form.
-    url: 'https://emmerdaleagriculture.com/paddock-maintenance',
+      `Paddock maintenance and agricultural contracting, including topping, harrowing, rolling, overseeding, hedge cutting, fencing and land clearance, for paddock owners, equestrian yards, farms and estates across ${SERVICE_AREA}. Priced upfront and completed by approved operators.`,
+    url: `https://emmerdaleagriculture.com${BOOK_HREF}`,
     provider: {
       '@type': 'Organization',
       name: COMPANY_LEGAL_NAME,
@@ -142,219 +134,171 @@ export default async function LandingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(serviceJsonLd) }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }}
-      />
-      <section className={s.hero}>
-        <Image
-          src="/john-deere-6250r.webp"
-          alt="A John Deere 6250R working in a Hampshire field"
-          fill
-          priority
-          quality={70}
-          sizes="100vw"
-          className={s.heroImg}
-        />
-        <div className={s.heroOverlay} />
-        <SiteHeader variant="overlay" />
-        <div className={s.heroInner}>
-          <div className={s.eyebrow}>The network</div>
-          <h1 className={s.h1}>
-            Paddock and land jobs across the country, passed to contractors who can{' '}
-            <em>actually do them.</em>
-          </h1>
-          <p className={s.heroSub}>
-            Hampshire Paddock Management turns away more work than it can service.
-            That overflow — and jobs posted by members themselves — goes to the
-            network, matched to contractors by county, straight to your inbox.
-          </p>
-          <div className={s.heroCtas}>
-            <Link href="/signup" className={f.btnYellow}>
-              Join the network — free
-            </Link>
-            <Link href="/#how-it-works" className={f.btnGhost} style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.4)' }}>
-              See how it works
-            </Link>
-          </div>
-        </div>
-      </section>
 
-      <section id="how-it-works" className={s.section}>
-        <div className={s.sectionInner}>
-          <div className={s.kicker}>How it works</div>
-          <h2 className={s.sectionTitle}>
-            Three steps to <em>landing work.</em>
-          </h2>
-          <p className={s.sectionLede}>
-            No cost to join. No obligation to take a job. Just jobs in your area
-            when they come up.
-          </p>
-          <div className={s.steps}>
-            {STEPS.map((step) => (
-              <div key={step.n} className={s.step}>
-                <div className={s.stepNum}>{step.n}</div>
-                <div className={s.stepTitle}>{step.title}</div>
-                <p className={s.stepBody}>{step.body}</p>
-              </div>
+      <a className={s.skip} href="#main">
+        Skip to main content
+      </a>
+
+      <HomeHeader />
+
+      <div className={s.trust} role="region" aria-label="Trust signals">
+        <div className={s.container}>
+          <ul className={s.trustList}>
+            {TRUST.map((t) => (
+              <li key={t}>{t}</li>
             ))}
-          </div>
-          <p className={s.sectionLede} style={{ marginTop: 32 }}>
-            And it works both ways. Got a job of your own that needs doing, or
-            been offered work you can&apos;t take on?{' '}
-            <Link href="/jobs/new">Post it to the network</Link> — we check it,
-            then contractors covering the county get in touch directly with
-            whoever you name as the contact. Free to do.
-          </p>
+          </ul>
         </div>
-      </section>
+      </div>
 
-      <section className={`${s.section} ${s.sectionAlt}`}>
-        <div className={s.sectionInner}>
-          <div className={s.kicker}>The work</div>
-          <h2 className={s.sectionTitle}>Paddock maintenance &amp; land services</h2>
-          <p className={s.sectionLede}>
-            The jobs posted to the network span the full range of paddock
-            maintenance and land work.
-          </p>
-          <div className={s.services}>
-            {services.map((svc) => (
-              <span key={svc.id} className={s.serviceTag}>
-                {svc.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className={s.section}>
-        <div className={s.sectionInner}>
-          <div className={s.kicker}>Where we cover</div>
-          <h2 className={s.sectionTitle}>
-            Contractors in {coveredCount} counties — <em>and growing.</em>
-          </h2>
-          <div className={s.coverage}>
-            <div className={s.coverageMapCol}>
-              <UKCoverageMap
-                counts={coverage}
-                className={s.coverageMap}
-                pathClassName={s.coverageCounty}
-              />
-              <div className={s.coverageLegend}>
-                {COVERAGE_BINS.map((b) => (
-                  <span key={b.label} className={s.coverageLegendItem}>
-                    <span className={s.coverageSwatch} style={{ background: b.fill }} />
-                    {b.publicLabel}
-                  </span>
-                ))}
+      <main id="main">
+        {/* Tom leads the page. */}
+        <section className={s.intro} id="about">
+          <div className={s.container}>
+            <div className={s.founder}>
+              <figure className={s.founderPhoto}>
+                <Image
+                  src="/tom-oswald.jpg"
+                  alt="Tom Oswald standing in front of a John Deere 9RX 830 tractor"
+                  fill
+                  priority
+                  quality={65}
+                  sizes="(min-width: 900px) 420px, 100vw"
+                  className={s.founderImg}
+                />
+              </figure>
+              <div className={s.founderText}>
+                <p className={s.eyebrow}>A managed marketplace for rural land</p>
+                <h1 className={s.founderH1}>Hi, I&rsquo;m Tom Oswald.</h1>
+                <p>
+                  I&rsquo;m the managing director of Emmerdaleagriculture.com. I
+                  started{' '}
+                  <a href={HPM_URL} className={s.founderLink}>
+                    <strong>Hampshire Paddock Management</strong>
+                  </a>{' '}
+                  looking
+                  after paddocks, smallholdings and grassland across the South
+                  of England, topping, harrowing, rolling, hedges, the everyday
+                  work that keeps land in good order.
+                </p>
+                <p>
+                  The enquiries never stopped coming, and one firm can only be
+                  in so many fields at once. So we grew into{' '}
+                  <strong>Emmerdale Agriculture</strong>, the same standard
+                  of work, delivered across the UK by approved
+                  operators we know and trust. You get one price, one booking
+                  and one place to come back to; they do the work they&rsquo;re
+                  best at, close to home.
+                </p>
+                <p className={s.founderSig}>Tom Oswald · Managing Director</p>
               </div>
             </div>
-            <div className={s.coverageText}>
-              <p className={s.sectionLede}>
-                Every green county on the map has approved contractors in the
-                network today — deepest around our Hampshire heartland and
-                spreading across the South of England.
+          </div>
+        </section>
+
+        {/* Photo strip. */}
+        <section className={s.gallery} aria-label="Our work">
+          <div className={s.container}>
+            <ul className={s.galleryGrid}>
+              {GALLERY.map((g) => (
+                <li key={g.src} className={s.galleryItem}>
+                  <DeferredImage
+                    src={g.src}
+                    alt={g.alt}
+                    fill
+                    quality={70}
+                    sizes="(min-width: 1024px) 300px, 50vw"
+                    rootMargin="400px"
+                    className={s.galleryImg}
+                    style={{ objectPosition: g.pos }}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* Full service board. */}
+        <section id="services" className={s.services}>
+          <div className={s.container}>
+            <p className={s.eyebrow}>What we do</p>
+            <h2 className={s.sectionH} style={{ marginBottom: 6 }}>
+              Everything we do
+            </h2>
+            <p className={s.servicesSub}>
+              Tap a card, tell us what needs doing and we&rsquo;ll come back
+              with a price. Free, and no obligation.
+            </p>
+            <div className={s.servicesGrid}>
+              {HOME_SERVICES.map((svc) => (
+                <article key={svc.slug} className={s.service}>
+                  <div className={s.serviceIcon}>
+                    <ServiceIcon icon={svc.icon} />
+                  </div>
+                  <h3 className={s.serviceName}>{svc.name}</h3>
+                  <p className={s.serviceBlurb}>{svc.blurb}</p>
+                  <Link href={START_HREF} className={s.serviceLink}>
+                    <span className={s.serviceLinkText}>Get a price →</span>
+                    <span className={s.visuallyHidden}> for {svc.label}</span>
+                  </Link>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Editorial photo band. */}
+        <section className={s.band} aria-label="Approved operators">
+          {/* Deferred until near the viewport so it never competes with the
+              founder photo (the LCP) for bandwidth. Under a dark scrim and
+              cropped to a 420px strip, so a 1200px source at modest quality
+              is indistinguishable from the 1920px one Lighthouse flagged. */}
+          <DeferredImage
+            src="/john-deere-6250r.webp"
+            alt="A John Deere 6250R working in a Hampshire field"
+            fill
+            quality={60}
+            sizes="(min-width: 1200px) 1200px, 100vw"
+            className={s.bandImg}
+          />
+          <div className={s.bandScrim} />
+          <div className={`${s.container} ${s.bandInner}`}>
+            <blockquote className={s.bandQuote}>
+              Every job is done by an operator we&rsquo;ve vetted, insured and
+              reviewed.
+            </blockquote>
+          </div>
+        </section>
+
+        {/* Operators band. */}
+        <section id="operators" className={s.operators}>
+          <div className={`${s.container} ${s.operatorsGrid}`}>
+            <div>
+              <p className={`${s.eyebrow} ${s.eyebrowLight}`}>For operators</p>
+              <h2 className={`${s.sectionH} ${s.operatorsH}`}>
+                Do you run an agricultural contracting business?
+              </h2>
+              <p className={s.operatorsCopy}>
+                Join our network of approved operators. We bring you the
+                customer and handle the payment, you set your own price and do
+                the work you&rsquo;re good at.
               </p>
-              <p className={s.sectionLede}>
-                Work somewhere still grey? Even better. Jobs are matched to the
-                counties you choose, so contractors in new areas are first in
-                line the moment work comes up there.
-              </p>
-              <Link href="/signup" className={f.btnPrimary}>
-                Cover your county — join free
+            </div>
+            <div className={s.operatorsCta}>
+              <Link href="/signup" className={`${s.btn} ${s.btnLg} ${s.btnOutlineLight}`}>
+                Apply to join
               </Link>
+              <p className={s.operatorsMeta}>
+                No fee, you receive 100% of what you quoted
+                <a href="#footnote-fees" aria-label="See note on card and transfer charges">*</a>
+              </p>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      <section className={`${s.section} ${s.sectionAlt}`}>
-        <div className={s.sectionInner}>
-          <div className={s.kicker}>Need a job done?</div>
-          <h2 className={s.sectionTitle}>
-            Paddock or land work to be done? <em>Get a quote.</em>
-          </h2>
-          <p className={s.sectionLede}>
-            If you own a paddock, smallholding or grassland and need work done —
-            field topping, chain harrowing, rolling, weed spraying, hedge
-            cutting, fencing or land clearance — you don&apos;t need to join the
-            network. Just{' '}
-            <Link href="/paddock-maintenance">tell us what needs doing</Link> in
-            your own words, and we&apos;ll pass the job to contractors covering
-            your area. Free, with no obligation to accept a quote.
-          </p>
-          <p className={s.sectionLede}>
-            The network handles paddock maintenance and agricultural contracting
-            for private paddock owners, equestrian yards, farms and estates
-            alike, across {SERVICE_AREA} — run by the people behind{' '}
-            <a href={HPM_CONTACT_URL}>Hampshire Paddock Management</a> in
-            Hampshire.
-          </p>
-          <div className={s.quoteCta}>
-            <Link href="/paddock-maintenance" className={f.btnYellow}>
-              Get a free quote
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className={s.cred}>
-        <div className={s.credInner}>
-          <h2 className={s.credTitle}>
-            Run by a firm that does this work <em>every day.</em>
-          </h2>
-          <p className={s.credBody}>
-            The network exists because {COMPANY_LEGAL_NAME} — the company behind{' '}
-            <a href={HPM_URL}>Hampshire Paddock Management</a> — receives more
-            enquiries than it can take on. Rather than turn good jobs away, we pass
-            them to vetted contractors who can do them.
-          </p>
-          <p className={s.credMeta}>
-            {COMPANY_LEGAL_NAME} · Company No. {COMPANY_NUMBER}
-          </p>
-        </div>
-      </section>
-
-      <section className={s.section}>
-        <div className={s.sectionInner}>
-          <div className={s.kicker}>For contractors</div>
-          <h2 className={s.sectionTitle}>
-            Agricultural contracting work, found <em>for you.</em>
-          </h2>
-          <p className={s.sectionLede}>
-            Emmerdale Agriculture passes real, consented enquiries to agricultural
-            contractors across {SERVICE_AREA} — the everyday work of grassland
-            and paddock maintenance: topping, harrowing, rolling, spraying,
-            rotavating, land clearance and more, matched to the counties you choose.
-          </p>
-          <p className={s.sectionLede}>
-            Whether you’re an established contractor filling gaps in the diary or a
-            growing smallholder-services business, the network sends paddock
-            maintenance jobs in your area straight to your inbox. Free to join, no
-            obligation to take a job, no commission — you deal with the customer
-            directly and invoice them yourself.
-          </p>
-        </div>
-      </section>
-
-      <section className={s.section}>
-        <div className={s.sectionInner}>
-          <div className={s.kicker}>Common questions</div>
-          <h2 className={s.sectionTitle}>
-            Questions, <em>answered.</em>
-          </h2>
-          <dl className={s.faq}>
-            {faqs.map((f) => (
-              <div key={f.q} className={s.faqItem}>
-                <dt className={s.faqQ}>{f.q}</dt>
-                <dd className={s.faqA}>{f.a}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
-
-      <SiteFooter />
+      <HomeFooter />
+      <StickyBar href={BOOK_HREF} watch="about" />
     </div>
   );
 }
