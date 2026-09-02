@@ -71,9 +71,6 @@ const orgJsonLd = {
     `A managed marketplace for rural land, run by ${COMPANY_LEGAL_NAME}, the company behind Hampshire Paddock Management. Paddock, land and equestrian jobs priced upfront and completed by approved operators across ${SERVICE_AREA}.`,
 };
 
-/** Where the service cards send people — the describe-your-job flow. */
-const START_HREF = '/start';
-
 // Photo strips: one under the intro, one under the service board. Mixed
 // aspect ratios in the originals, shown as uniform 4:3 crops; `pos` nudges
 // the crop so the machine stays in frame.
@@ -275,7 +272,7 @@ export default async function LandingPage() {
                   </div>
                   <h3 className={s.serviceName}>{svc.name}</h3>
                   <p className={s.serviceBlurb}>{svc.blurb}</p>
-                  <Link href={START_HREF} className={s.serviceLink}>
+                  <Link href={BOOK_HREF} className={s.serviceLink}>
                     <span className={s.serviceLinkText}>Get a price →</span>
                     <span className={s.visuallyHidden}> for {svc.label}</span>
                   </Link>

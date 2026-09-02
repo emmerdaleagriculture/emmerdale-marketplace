@@ -11,8 +11,8 @@ const LINKS = [
   { href: '/notes', label: 'Notes' },
 ];
 
-/** Where a customer goes to get a price — the indexable job form. */
-export const BOOK_HREF = '/paddock-maintenance';
+/** Where every customer CTA on the front page goes: the describe-your-job flow. */
+export const BOOK_HREF = '/start';
 
 /**
  * Front-page navigation: sticky brand-green bar with the EA monogram, section
