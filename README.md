@@ -1,6 +1,6 @@
 # Emmerdale Marketplace
 
-The contractor marketplace for **Emmerdale Agriculture Ltd** — the company behind
+The contractor marketplace for **Emmerdale Agriculture Group Ltd** — the company behind
 Hampshire Paddock Management (HPM). HPM receives more paddock/land jobs than it
 can service; overflow jobs are posted, matched to contractors by county, and
 awarded by competitive bid.

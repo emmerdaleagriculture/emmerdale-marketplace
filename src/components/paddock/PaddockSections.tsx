@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { ServiceOption } from '@/components/forms/ServicePicker';
-import { COMPANY_LEGAL_NAME, COMPANY_NUMBER, HPM_URL } from '@/lib/site';
+import { COMPANY_REG_LINE, HPM_URL } from '@/lib/site';
 import s from '@/app/(frontend)/landing.module.css';
 
 /**
@@ -118,7 +118,7 @@ export function CredSection({ children }: { children?: ReactNode }) {
           )}
         </p>
         <p className={s.credMeta}>
-          {COMPANY_LEGAL_NAME} · Company No. {COMPANY_NUMBER}
+          {COMPANY_REG_LINE}
         </p>
       </div>
     </section>

@@ -11,14 +11,38 @@ export const SITE_STRAPLINE = 'The contractor network';
 // Footer strapline, in the HPM register ("Paddocks, put right.").
 export const SITE_FOOTER_STRAPLINE = 'Work, passed on properly.';
 
-export const COMPANY_LEGAL_NAME = 'Emmerdale Agriculture Ltd';
-export const COMPANY_NUMBER = '14950816';
+// Emmerdale Agriculture Group Ltd — the spin-off company this project belongs
+// to. NOT Emmerdale Agriculture Ltd (14950816), which is a different,
+// pre-existing company. The number is null until incorporation completes; set
+// it here and every "Company No." line on the site picks it up.
+export const COMPANY_LEGAL_NAME = 'Emmerdale Agriculture Group Ltd';
+export const COMPANY_NUMBER: string | null = null;
+
+/** "Emmerdale Agriculture Group Ltd · Company No. 12345678" (number omitted while pending). */
+export const COMPANY_REG_LINE = COMPANY_NUMBER
+  ? `${COMPANY_LEGAL_NAME} · Company No. ${COMPANY_NUMBER}`
+  : COMPANY_LEGAL_NAME;
+
+/** "Emmerdale Agriculture Group Ltd (Company No. 12345678)" for running prose. */
+export const COMPANY_REG_PROSE = COMPANY_NUMBER
+  ? `${COMPANY_LEGAL_NAME} (Company No. ${COMPANY_NUMBER})`
+  : COMPANY_LEGAL_NAME;
 
 // The sibling site the network exists alongside.
 export const HPM_URL = 'https://hampshirepaddockmanagement.com';
 export const HPM_CONTACT_URL = 'https://hampshirepaddockmanagement.com/contact';
 
 export const SITE_LOCATION_LINE = 'Made with care in Hampshire';
+
+// Front-page contact details. Display form and tel: form kept together so the
+// two can't drift apart.
+export const PHONE_DISPLAY = '07825 156062';
+export const PHONE_TEL = '+447825156062';
+
+export const COMPANY_ADDRESS_LINES = [
+  'The Old Poultry Shed, Upper Slackstead Farm,',
+  'Farley Lane, Braishfield, Hampshire, SO51 0QL',
+] as const;
 
 /**
  * Where the network actually operates. One constant because the claim appears

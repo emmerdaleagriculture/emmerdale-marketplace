@@ -16,7 +16,7 @@ import {
 } from '@/components/paddock/PaddockSections';
 import { getServices, getCountyCoverage } from '@/lib/reference';
 import { UK_COUNTY_NAMES } from '@/components/UKCoverageMap';
-import { COMPANY_LEGAL_NAME, COMPANY_NUMBER, SERVICE_AREA } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, COMPANY_REG_PROSE, SERVICE_AREA } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
 
@@ -72,7 +72,7 @@ const faqs = [
   },
   {
     q: 'Who actually does the work?',
-    a: `The work is done by agricultural contractors in our network, which is run by ${COMPANY_LEGAL_NAME} (Company No. ${COMPANY_NUMBER}) — the company behind Hampshire Paddock Management. You deal with the contractor directly and pay them directly.`,
+    a: `The work is done by agricultural contractors in our network, which is run by ${COMPANY_REG_PROSE} — the company behind Hampshire Paddock Management. You deal with the contractor directly and pay them directly.`,
   },
 ];
 

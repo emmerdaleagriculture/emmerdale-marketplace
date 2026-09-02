@@ -3,7 +3,7 @@ import styles from './SiteFooter.module.css';
 import {
   SITE_FOOTER_STRAPLINE,
   COMPANY_LEGAL_NAME,
-  COMPANY_NUMBER,
+  COMPANY_REG_LINE,
   HPM_URL,
   SITE_LOCATION_LINE,
 } from '@/lib/site';
@@ -58,7 +58,7 @@ export function SiteFooter() {
 
         <div className={styles.bottom}>
           <span>
-            © {year} {COMPANY_LEGAL_NAME} · Company No. {COMPANY_NUMBER}
+            © {year} {COMPANY_REG_LINE}
           </span>
           <span>{SITE_LOCATION_LINE}</span>
         </div>
