@@ -10,14 +10,12 @@ import type { FormState } from '@/lib/form';
 import { CONFIRM_SUCCESS } from './copy';
 import type { Json } from '@/lib/database.types';
 import { deterministicParse, toAcres } from '@/lib/jobParse/deterministic';
-import { callParseModel, MODEL_VERSION, PROMPT_VERSION } from '@/lib/jobParse/llm';
 import { reconcile } from '@/lib/jobParse/reconcile';
 import { parseBoundary, ringAreaAcres } from '@/lib/jobParse/geometry';
 import { conditionAnswers } from '@/lib/jobParse/conditions';
 import { GATE_WIDTH_VALUES, gateWidthLabel, normaliseW3w } from '@/lib/jobParse/access';
 import {
   clientIp,
-  dailyParseBudgetExceeded,
   logParseEvent,
   rateLimited,
   CONFIRM_LIMIT_PER_HOUR,
@@ -123,10 +121,16 @@ export async function recordLandingView(data: {
 
 /**
  * Step 1 → 3: parse the customer's free text into an editable job spec.
- * Four layers, one request (spec §6): deterministic extraction always runs,
- * the LLM handles what regex can't, the geocode settles location, and any
- * LLM failure falls through to the deterministic result. The page never
- * dead-ends — a failed parse on a paid click is a wasted click.
+ * Two layers, one request: deterministic extraction pulls anything with a
+ * hard format (postcode, quantities, explicit dates, phone, email) and the
+ * geocode settles location. Everything it can't read with certainty is left
+ * blank for the customer to fill in on the confirm step, which they see and
+ * correct either way. The page never dead-ends — a failed parse on a paid
+ * click is a wasted click.
+ *
+ * There is deliberately no model here. Job routing is by county alone
+ * (20260904180000), so nothing downstream depends on interpreting the
+ * wording; contractors read the customer's own words.
  */
 export async function parseJobAction(
   _prev: ParseActionState,
@@ -145,10 +149,10 @@ export async function parseJobAction(
   const locationRaw = d.location_raw ?? '';
   const ip = await clientIp();
 
-  // Bot traps (honeypot + minimum fill time, as on the enquiry form) — but a
-  // trapped submission degrades to the free deterministic pipeline instead of
-  // being faked away: a false-positive human still gets a working flow, and a
-  // bot spends none of our LLM budget.
+  // Bot traps (honeypot + minimum fill time, as on the enquiry form). A
+  // trapped submission still gets a working flow rather than being faked
+  // away, so a false-positive human is never dead-ended; the trap is now
+  // recorded for signal rather than to protect a per-call spend.
   const honeypot = String(formData.get('website') || '');
   const renderedAt = Number(formData.get('form_ts') || 0);
   const botSuspect = Boolean(honeypot) || (renderedAt > 0 && Date.now() - renderedAt < 3000);
@@ -203,14 +207,13 @@ export async function parseJobAction(
   // Photos (§26a.3) — stored, never parsed, never blocking.
   const photoPaths = await storePhotos(admin, draft.id, formData);
 
-  // LLM extraction, unless a bot trap fired or the daily budget is spent.
-  const skipLlm = botSuspect || (await dailyParseBudgetExceeded());
-  const llm = skipLlm
-    ? null
-    : await callParseModel(d.raw_text, locationRaw, now);
-  const llmParse = llm?.ok ? llm.parse : null;
-
-  const merged = reconcile(det, llmParse, geo);
+  // No model in job creation: the deterministic layer is the whole parse.
+  // It already pulls anything with a hard format — postcode, quantities,
+  // explicit dates, phone, email — and the customer reviews and corrects
+  // every field on the confirm step. reconcile() has always supported a null
+  // model result (bot traps and budget caps took this path), so this is the
+  // existing, tested branch rather than a new one.
+  const merged = reconcile(det, null, geo);
 
   // "Use my location" fallback: when no postcode geocoded, the browser's own
   // coordinates still pin the map on the confirm step.
@@ -250,8 +253,8 @@ export async function parseJobAction(
       service_attributes: merged.service_attributes,
       parse_confidence: merged.parse_confidence,
       missing_fields: merged.missing_fields,
-      model_version: llmParse ? MODEL_VERSION : null,
-      prompt_version: llmParse ? PROMPT_VERSION : null,
+      model_version: null,
+      prompt_version: null,
       parsed_at: new Date().toISOString(),
       parse_source: merged.parse_source,
       photo_paths: photoPaths,
@@ -262,21 +265,21 @@ export async function parseJobAction(
   // Immutable parse log — the eval corpus (§5.1). Insert-only, never pruned.
   const { error: logError } = await admin.from('job_submission_parses').insert({
     submission_id: draft.id,
-    model_output: llm && 'raw' in llm && llm.raw !== undefined ? (llm.raw as Json) : null,
+    model_output: null,
     deterministic_output: det,
     parse_source: merged.parse_source,
-    model_version: llmParse ? MODEL_VERSION : null,
-    prompt_version: llmParse ? PROMPT_VERSION : null,
-    error: llm && !llm.ok ? llm.error : botSuspect ? 'skipped:bot_suspect' : skipLlm ? 'skipped:daily_cap' : null,
-    latency_ms: llm?.latencyMs ?? null,
+    model_version: null,
+    prompt_version: null,
+    error: botSuspect ? 'skipped:bot_suspect' : null,
+    latency_ms: null,
   });
   if (logError) console.error('[jobParse] parse log insert failed:', logError);
 
   await logParseEvent(
     ip,
     'parse',
-    botSuspect ? 'rejected' : merged.parse_source === 'llm' ? 'ok' : 'fallback',
-    botSuspect ? 'honeypot' : llm && !llm.ok ? llm.error : skipLlm && !botSuspect ? 'daily_cap' : undefined,
+    botSuspect ? 'rejected' : 'ok',
+    botSuspect ? 'honeypot' : undefined,
   );
 
   return {
