@@ -6,6 +6,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { formatDateTime } from '@/lib/time';
 import { FirstContactButton } from './FirstContactButton';
+import { MarkDoneButton } from './MarkDoneButton';
 import a from '../auth.module.css';
 import s from './won.module.css';
 
@@ -19,7 +20,7 @@ const STATUS_LABELS: Record<string, string> = {
   contacted: 'Contact logged',
   scheduled: 'Scheduled',
   in_progress: 'In progress',
-  completed_by_contractor: 'Awaiting confirmation',
+  completed_by_contractor: 'Done — awaiting the customer’s confirmation',
   completed: 'Complete — paid out on release',
   paid: 'Paid',
 };
@@ -116,6 +117,10 @@ export default async function WonJobsPage() {
                   {job.status === 'awarded' && job.id && (
                     <FirstContactButton submissionId={job.id} />
                   )}
+                  {['awarded', 'contacted', 'scheduled', 'in_progress'].includes(
+                    job.status ?? '',
+                  ) &&
+                    job.id && <MarkDoneButton submissionId={job.id} />}
                 </div>
               ))}
             </div>

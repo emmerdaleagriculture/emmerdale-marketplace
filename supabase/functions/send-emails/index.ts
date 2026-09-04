@@ -286,6 +286,24 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `${portal}/rate`,
       };
 
+    case 'sq_completion_confirm':
+      return {
+        subject: `${p.contractor_business_name ?? 'Your contractor'} says your job is done`,
+        text:
+          `Hi ${first},\n\n${p.contractor_business_name ?? 'Your contractor'} has marked your ` +
+          `job as finished. Have a look, and if you're happy, confirm it — that's what ` +
+          `releases their payment:\n${portal}\n\n` +
+          `If it isn't finished, don't confirm. Reply to this email and we'll sort it out.`,
+      };
+
+    case 'sq_completion_confirmed':
+      return {
+        subject: `Job confirmed complete — your payment is released`,
+        text:
+          `${p.contact_name ?? 'The customer'} has confirmed the work is done, so your ` +
+          `payment is released and on its way.\n\nYour won jobs: ${SITE_URL}/won`,
+      };
+
     // ── Sealed-quote funnel: operator alerts ──────────────────────────────
     case 'sq_unmatched_needs_classification':
       return {
