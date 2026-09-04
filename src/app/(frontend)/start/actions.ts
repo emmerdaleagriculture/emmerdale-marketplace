@@ -215,6 +215,12 @@ export async function parseJobAction(
   // existing, tested branch rather than a new one.
   const merged = reconcile(det, null, geo);
 
+  // The customer's own words ARE the job description now. Without a model
+  // there is nothing to summarise them into, and service_verbatim is what the
+  // contractor actually reads on the quote page — so carry step 1's text
+  // through rather than showing an empty box and asking for it twice.
+  if (!merged.service_verbatim) merged.service_verbatim = d.raw_text;
+
   // "Use my location" fallback: when no postcode geocoded, the browser's own
   // coordinates still pin the map on the confirm step.
   const geoLat = Number(formData.get('geo_lat'));

@@ -133,7 +133,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `Job to price: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
         text:
           `A job in your area needs pricing.\n\n` +
-          `Work:      ${p.service ?? '—'}\n` +
+          `In their words: “${p.description ?? '—'}”\n\n` +
+          (p.service ? `Work:      ${p.service}\n` : '') +
           `Area:      ${areaLine(p)}\n` +
           `Where:     ${p.postcode_district ?? '—'}, ${p.county ?? ''} — the full address comes if you win the job\n` +
           `When:      ${p.urgency ?? 'not stated'}${p.target_date ? ` (by ${p.target_date})` : ''}\n` +
