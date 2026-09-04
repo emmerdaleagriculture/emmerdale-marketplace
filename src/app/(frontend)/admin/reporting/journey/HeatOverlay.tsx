@@ -31,6 +31,7 @@ export function HeatOverlay({
   useEffect(() => {
     const frame = frameRef.current;
     if (!frame) return;
+    setBlocked(false);
     const measure = () => {
       try {
         const doc = frame.contentDocument;
@@ -53,6 +54,13 @@ export function HeatOverlay({
   }, [path]);
 
   return (
+    <>
+      {blocked && (
+        <p className="heat-warn" style={{ fontSize: 13, margin: '0 0 8px' }}>
+          Couldn&rsquo;t measure the page height, so the overlay is scaled to a default —
+          click positions below may not line up with the page.
+        </p>
+      )}
     <div
       style={{
         width: WIDTH * SCALE,
@@ -86,7 +94,7 @@ export function HeatOverlay({
             position: 'absolute',
             inset: 0,
             pointerEvents: 'none',
-            mixBlendMode: 'multiply',
+            mixBlendMode: 'screen',
           }}
         >
           {points.map((p, i) => (
@@ -102,17 +110,13 @@ export function HeatOverlay({
                 marginTop: -45,
                 borderRadius: '50%',
                 background:
-                  'radial-gradient(circle, rgba(255,80,0,0.55) 0%, rgba(255,190,0,0.28) 45%, rgba(255,230,0,0) 70%)',
+                  'radial-gradient(circle, rgba(255,120,0,0.5) 0%, rgba(200,60,0,0.22) 45%, rgba(0,0,0,0) 70%)',
               }}
             />
           ))}
         </div>
       </div>
-      {blocked && (
-        <p style={{ padding: 12, fontSize: 13 }}>
-          Couldn&rsquo;t measure the page height — the overlay is showing a default.
-        </p>
-      )}
     </div>
+    </>
   );
 }

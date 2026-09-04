@@ -226,8 +226,16 @@ export async function parseJobAction(
   // with county_id null, which matches no contractor and tells the customer
   // "nobody covers your area" — untrue, and invisible. Offer the choice
   // instead: the candidates when we know them, every county when we don't.
-  if (merged.county_id === null && merged.county_candidates.length === 0) {
-    merged.county_candidates = (await getCounties()).map((c) => ({ id: c.id, name: c.name }));
+  if (merged.county_id === null) {
+    if (merged.county_candidates.length > 0) {
+      merged.county_choice_reason = 'border';
+    } else {
+      // Finding 14: an unnarrowed list of every county is read, not scanned.
+      merged.county_candidates = (await getCounties())
+        .map((c) => ({ id: c.id, name: c.name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      merged.county_choice_reason = 'unplaced';
+    }
   }
 
   // "Use my location" fallback: when no postcode geocoded, the browser's own
@@ -416,7 +424,12 @@ export async function confirmJobAction(
     // FULL postcode to every invited contractor.
     const norm = normalisePostcode(editedPostcode);
     postcode = norm.full ?? norm.outcode ?? editedPostcode.toUpperCase().slice(0, 4);
-    countyId = geo.county_id ?? null;
+    // Keep the county we already had when the edit doesn't resolve. Nulling it
+    // here is the same dead job this flow exists to prevent — matches nobody,
+    // tells the customer nobody covers them — and the confirm step shows no
+    // county picker in this path, because at parse time there was nothing to
+    // pick. A slightly stale county beats a job that can never be seen.
+    countyId = geo.county_id ?? countyId;
     countyName = geo.county_name ?? null;
     lat = geo.lat ?? null;
     lng = geo.lng ?? null;

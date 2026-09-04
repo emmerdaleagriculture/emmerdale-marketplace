@@ -203,6 +203,9 @@ export function LandingFlow() {
     // One view per pageload — the ref guards React strict mode's double effect.
     if (!viewLogged.current) {
       viewLogged.current = true;
+      // Not from inside the admin heat overlay's iframe: looking at the
+      // report must not manufacture the arrivals it reports.
+      if (window.self !== window.top) return;
       void recordLandingView({
         referrer: document.referrer,
         utm_source: source || undefined,
