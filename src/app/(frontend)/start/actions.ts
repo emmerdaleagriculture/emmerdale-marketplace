@@ -183,11 +183,18 @@ export async function parseJobAction(
   // Geocode → county/lat/lng. Never blocks; an unresolvable location just
   // stores nothing and the confirm step asks for a postcode.
   const postcodeCandidate = det.postcode_full ?? det.postcode_outcode;
-  let geo: CountyResolution | null = null;
-  if (postcodeCandidate) geo = await resolveCounty(postcodeCandidate);
+
+  // The geocode, the reference list and the draft row need nothing from each
+  // other, and every one of them is a round trip. Started together they cost
+  // the slowest, not the sum — which matters most on the step the customer is
+  // sitting and waiting through.
+  const geoPromise: Promise<CountyResolution | null> = postcodeCandidate
+    ? resolveCounty(postcodeCandidate)
+    : Promise.resolve(null);
+  const servicesPromise = getServices();
 
   const admin = createServiceRoleClient();
-  const { data: draft, error: draftError } = await admin
+  const draftPromise = admin
     .from('job_submissions')
     .insert({
       raw_text: d.raw_text,
@@ -199,6 +206,11 @@ export async function parseJobAction(
     })
     .select('id')
     .single();
+
+  const [geo, { data: draft, error: draftError }] = await Promise.all([
+    geoPromise,
+    draftPromise,
+  ]);
   if (draftError || !draft) {
     console.error('[jobParse] draft insert failed:', draftError);
     return { error: 'Something went wrong — please try again.', values };
@@ -249,7 +261,7 @@ export async function parseJobAction(
 
   // Resolve the canonical name to a service id by name, so a reseed with
   // different ids can't mis-tag submissions (same rule as leadServiceIds).
-  const services = await getServices();
+  const services = await servicesPromise;
   const serviceId = merged.service
     ? (services.find((s) => s.name === merged.service)?.id ?? null)
     : null;
