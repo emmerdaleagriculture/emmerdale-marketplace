@@ -1636,6 +1636,14 @@ export type Database = {
         Returns: Json
       }
       drain_emails_tick: { Args: never; Returns: number }
+      email_drain_health: {
+        Args: { p_limit?: number }
+        Returns: {
+          body: string
+          called_at: string
+          status_code: number
+        }[]
+      }
       haversine_miles: {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
