@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getUser, isAdminEmail } from '@/lib/auth';
+import { AdminNav } from './AdminNav';
 import styles from './admin.module.css';
 
 /**
@@ -15,27 +16,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className={styles.shell}>
       <header className={styles.bar}>
-        <Link href="/" className={styles.brand}>
-          Emmerdale Agriculture
-        </Link>
-        <nav className={styles.nav}>
-          <Link href="/admin/ops">Ops</Link>
-          <Link href="/admin/queues">Queues</Link>
-          <Link href="/admin/money">Money</Link>
-          <Link href="/admin/submissions">Submissions</Link>
-          <Link href="/admin/reporting">Reporting</Link>
-          <Link href="/admin/metrics">Metrics</Link>
-          <Link href="/admin/leads">Leads</Link>
-          <Link href="/admin/jobs">Jobs</Link>
-          <Link href="/admin/contractors">Contractors</Link>
-          <Link href="/admin/notes">Notes</Link>
-          <Link href="/admin/seo">SEO</Link>
+        <div className={styles.barTop}>
+          <Link href="/" className={styles.brand}>
+            Emmerdale Agriculture
+          </Link>
           <form action="/auth/signout" method="post">
             <button type="submit" className={styles.signout}>
               Log out
             </button>
           </form>
-        </nav>
+        </div>
+        <AdminNav />
       </header>
       <main className={styles.main}>{children}</main>
     </div>
