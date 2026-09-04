@@ -20,12 +20,6 @@ export default function TermsPage() {
           <h1>Contractor terms</h1>
           <p className={l.updated}>{COMPANY_REG_LINE}</p>
 
-          <div className={l.note}>
-            Draft for review. Covers the controller-to-controller obligation and the
-            basic terms of using the network. Have it reviewed by a solicitor before
-            launch.
-          </div>
-
           <h2>The network</h2>
           <p>
             The Emmerdale Agriculture network passes overflow paddock and land jobs
