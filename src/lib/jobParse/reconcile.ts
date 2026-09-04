@@ -20,6 +20,8 @@ import type {
 export type Reconciled = Omit<ParseResult, 'submission_id' | 'parse_source'> & {
   parse_source: 'llm' | 'deterministic_fallback';
   county_id: number | null;
+  /** Populated only when no county resolved — what to offer the customer. */
+  county_candidates: { id: number; name: string }[];
   lat: number | null;
   lng: number | null;
   town: string | null;
@@ -81,6 +83,7 @@ export function reconcile(
     area_unit: area?.unit ?? null,
     postcode,
     county_id: geo?.county_id ?? null,
+    county_candidates: geo?.candidates ?? [],
     county_name: geo?.county_name ?? null,
     lat: geo?.lat ?? null,
     lng: geo?.lng ?? null,

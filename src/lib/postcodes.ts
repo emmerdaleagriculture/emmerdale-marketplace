@@ -12,6 +12,9 @@ export type CountyResolution = {
   lat?: number;
   lng?: number;
   via?: 'admin_county' | 'district_map' | 'outcode' | 'manual' | 'none';
+  /** On an ambiguous outcode, the counties it straddles — so the caller can
+   *  offer them rather than only naming them in an error string. */
+  candidates?: { id: number; name: string }[];
   error?: string;
 };
 
@@ -229,6 +232,7 @@ export async function resolveCounty(postcode: string): Promise<CountyResolution>
             ok: false,
             via: 'none',
             outcode: norm.outcode,
+            candidates: [...matched.entries()].map(([id, name]) => ({ id, name })),
             lat,
             lng,
             error: `“${norm.outcode}” spans more than one county (${[...matched.values()].join(', ')}). Pick one manually.`,
