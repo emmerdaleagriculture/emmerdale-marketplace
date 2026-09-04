@@ -31,13 +31,3 @@
   padding-left: 22px;
   margin-bottom: 12px;
 }
-.note {
-  background: var(--cream);
-  border: 1px solid var(--rule);
-  border-left: 3px solid var(--jd-yellow);
-  border-radius: 3px;
-  padding: 14px 16px;
-  font-size: 14px;
-  color: var(--ink-2);
-  margin: 20px 0;
-}
