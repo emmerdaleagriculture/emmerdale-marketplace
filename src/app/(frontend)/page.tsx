@@ -2,6 +2,7 @@ import { jsonLd } from '@/lib/jsonld';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
+import { PageTracker } from '@/components/PageTracker';
 import { HomeHeader, BOOK_HREF } from '@/components/home/HomeHeader';
 import { HomeFooter } from '@/components/home/HomeFooter';
 import { StickyBar } from '@/components/home/StickyBar';
@@ -174,6 +175,7 @@ export default async function LandingPage() {
 
   return (
     <div className={s.page}>
+      <PageTracker path="/" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(orgJsonLd) }}
