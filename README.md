@@ -43,7 +43,7 @@ src/
     supabase/          Browser, server, service-role clients + middleware
   middleware.ts        Supabase session refresh
 supabase/
-  config.toml          CLI config (linked project: vonleampyheafgrkbbai)
+  config.toml          CLI config (the linked project ref lives in .supabase/ or `supabase link`)
   migrations/          Schema, RLS, views, RPCs, pg_cron  (Phase 0)
   seed.sql             counties, district_county_map, services  (Phase 0)
 ```
@@ -72,12 +72,40 @@ One-time setup (outside migrations):
 ```bash
 supabase functions deploy send-emails
 supabase secrets set RESEND_API_KEY=... EMAIL_FROM="Emmerdale Agriculture <network@emmerdaleagriculture.com>" \
-  ADMIN_EMAILS=... CRON_SECRET=<random>
-# Store the SAME CRON_SECRET in Vault so the scheduler can authenticate to the function:
-#   select vault.create_secret('<CRON_SECRET>', 'cron_secret');
+  ADMIN_EMAILS=... CRON_SECRET=<random> SITE_URL=https://emmerdaleagriculture.com \
+  SQ_INBOUND_REPLY_DOMAIN=<resend inbound domain>
+# Two Vault secrets let the scheduler reach the function — the cron command
+# hardcodes neither, so the schedule is portable to a new project:
+#   select vault.create_secret('<CRON_SECRET>',                 'cron_secret');
+#   select vault.create_secret('https://<ref>.supabase.co',     'project_url');
 ```
 
-The schedule itself is migration `...schedule_email_drain.sql`.
+The schedule itself is migration `...schedule_email_drain.sql`; the command it
+runs is `public.drain_emails_tick()` (`...portable_email_drain.sql`), which
+reads both secrets at tick time and raises a clear error if either is missing.
+
+## Moving to a new Supabase project
+
+The schema is never copied — it is rebuilt from `supabase/migrations` on the new
+project, which is the point of the rule above. Only the rows migrations can't
+produce get carried across, by `scripts/migrate-supabase.sh`:
+
+```bash
+supabase db push                        # schema, RLS, cron, storage buckets
+./scripts/migrate-supabase.sh dump      # auth users (password hashes), public, storage manifest
+./scripts/migrate-supabase.sh restore   # truncate + load into the new project
+./scripts/migrate-supabase.sh storage   # copy the bucket objects
+./scripts/migrate-supabase.sh verify    # row counts, old vs new
+```
+
+Logins survive: `auth.users.encrypted_password` and `auth.identities` come
+across, so nobody resets a password. Sessions do not — the new project signs
+JWTs with a different secret, so everyone is logged out once.
+
+Things that live outside both the repo and the database, and so have to be
+re-done by hand on the new project: the Vault secrets above, the Edge Function
+secrets, and every Auth dashboard setting (Site URL, redirect allowlist, the
+Turnstile captcha secret under Attack Protection, SMTP, email templates).
 
 ## Paid tier (Stripe — Phase 4)
 
