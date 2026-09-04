@@ -7,6 +7,11 @@
 --   • Edge Function `send-emails` deployed
 --   • Function secrets set: RESEND_API_KEY, EMAIL_FROM, ADMIN_EMAILS, CRON_SECRET
 --   • Vault secret `cron_secret` created with the same value as CRON_SECRET
+--   • Vault secret `project_url` = https://<project-ref>.supabase.co
+--
+-- The project URL is read from Vault rather than inlined so this migration is
+-- portable to a new Supabase project; 20260904120000 moves the whole command
+-- into public.drain_emails_tick().
 -- ============================================================================
 
 create extension if not exists pg_net;
@@ -19,7 +24,8 @@ begin
       '* * * * *',
       $ct$
         select net.http_post(
-          url     := 'https://vonleampyheafgrkbbai.supabase.co/functions/v1/send-emails',
+          url     := rtrim((select decrypted_secret from vault.decrypted_secrets where name = 'project_url'), '/')
+                     || '/functions/v1/send-emails',
           headers := jsonb_build_object(
             'Content-Type', 'application/json',
             'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')

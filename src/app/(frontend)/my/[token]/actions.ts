@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getStripe } from '@/lib/stripe';
@@ -166,4 +167,40 @@ export async function submitRatingAction(
     return { error: 'This link is no longer valid.' };
   }
   return { ok: true, message: 'Thank you — your rating helps the next customer choose.' };
+}
+
+/**
+ * The customer's half of completion (§25). Only valid from
+ * completed_by_contractor — confirming means agreeing with the contractor's
+ * claim, so there has to be one. The admin override remains for a customer
+ * who never comes back, so a contractor is never stranded by silence.
+ */
+export async function confirmCompletionAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const token = String(formData.get('token') ?? '');
+  if (!isTokenFormat(token)) return { error: 'This link is no longer valid.' };
+
+  const admin = createServiceRoleClient();
+  const { data: js } = await admin
+    .from('job_submissions')
+    .select('id')
+    .eq('client_token', token)
+    .is('client_token_revoked_at', null)
+    .maybeSingle();
+  if (!js) return { error: 'This link is no longer valid.' };
+
+  const { data, error } = await admin.rpc('confirm_completion_by_client', {
+    p_submission_id: js.id,
+  });
+  if (error) {
+    console.error('[sq] confirm_completion_by_client failed:', error);
+    return { error: 'That didn\u2019t go through — please try again.' };
+  }
+  const res = data as { ok: boolean; reason?: string };
+  if (!res.ok) return { error: 'This job has moved on — refresh to see where it is.' };
+
+  revalidatePath(`/my/${token}`);
+  return { ok: true, message: 'Confirmed — thank you. Your contractor will be paid.' };
 }

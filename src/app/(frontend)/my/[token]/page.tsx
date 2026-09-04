@@ -14,6 +14,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { JobSpecCard } from '@/components/job/JobSpecCard';
 import { StatusTimeline } from './StatusTimeline';
 import { PriceList, type ClientQuoteView } from './PriceList';
+import { ConfirmDone } from './ConfirmDone';
 import { PayNow } from './PayNow';
 import a from '../../auth.module.css';
 import m from './my.module.css';
@@ -120,9 +121,7 @@ export default async function ClientPortalPage({
           )}
 
           {/* ── Booked ─────────────────────────────────────────────── */}
-          {['awarded', 'contacted', 'scheduled', 'in_progress', 'completed_by_contractor'].includes(
-            js.status,
-          ) && (
+          {['awarded', 'contacted', 'scheduled', 'in_progress'].includes(js.status) && (
             <div className={m.awardPanel}>
               <p>
                 <strong>{accepted?.contractor_real_name ?? 'Your contractor'}</strong> has
@@ -132,6 +131,14 @@ export default async function ClientPortalPage({
               </p>
               <p>They&rsquo;ll be in touch within 24 hours to arrange it.</p>
             </div>
+          )}
+
+          {/* ── Contractor says it's finished ──────────────────────── */}
+          {js.status === 'completed_by_contractor' && (
+            <ConfirmDone
+              token={token}
+              contractorName={accepted?.contractor_real_name ?? 'Your contractor'}
+            />
           )}
 
           {/* ── Done ───────────────────────────────────────────────── */}
