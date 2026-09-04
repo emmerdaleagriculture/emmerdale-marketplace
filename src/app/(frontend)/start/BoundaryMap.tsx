@@ -134,8 +134,18 @@ export function BoundaryMap({
       tiles.addTo(map);
       onStatusRef.current('ready');
 
-      const pin = L.marker([lat, lng], { draggable: true, icon: pinIcon(L) }).addTo(map);
+      // bubblingMouseEvents: Leaflet defaults markers and paths to swallowing
+      // clicks. The pin is dragged to the middle of the very field the customer
+      // then traces, and the polygon covers it once drawing starts — so without
+      // this, tapping the field does nothing and drawing looks broken.
+      const pin = L.marker([lat, lng], {
+        draggable: true,
+        icon: pinIcon(L),
+        bubblingMouseEvents: true,
+      }).addTo(map);
+      let lastDragEndAt = 0;
       pin.on('dragend', () => {
+        lastDragEndAt = Date.now();
         const p = pin.getLatLng();
         stateRef.current.pin = [p.lat, p.lng];
         stateRef.current.pinMoved = true;
@@ -154,12 +164,17 @@ export function BoundaryMap({
           pts.length >= 2
             ? L.polygon(
                 pts.map(([plng, plat]) => [plat, plng] as [number, number]),
-                { color: '#ffde00', weight: 2, fillOpacity: 0.15 },
+                { color: '#ffde00', weight: 2, fillOpacity: 0.15, bubblingMouseEvents: true },
               ).addTo(map!)
             : null;
         for (const [plng, plat] of pts) {
           vertexMarkers.push(
-            L.circleMarker([plat, plng], { radius: 5, color: '#ffde00', fillOpacity: 1 }).addTo(map!),
+            L.circleMarker([plat, plng], {
+              radius: 5,
+              color: '#ffde00',
+              fillOpacity: 1,
+              bubblingMouseEvents: true,
+            }).addTo(map!),
           );
         }
         setPointCount(pts.length);
@@ -181,6 +196,8 @@ export function BoundaryMap({
 
       map.on('click', (e: Leaflet.LeafletMouseEvent) => {
         if (!drawingRef.current) return;
+        // Releasing the pin shouldn't also drop a corner where it landed.
+        if (Date.now() - lastDragEndAt < 300) return;
         stateRef.current.points = [...stateRef.current.points, [e.latlng.lng, e.latlng.lat]];
         redraw();
       });
