@@ -344,9 +344,9 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
             ))}
           </select>
           <span className={f.hint}>
-            {result.county_candidates.length <= 4
+            {result.county_choice_reason === 'border'
               ? 'That postcode sits on a county border — tell us which side your land is on.'
-              : 'We couldn’t place that postcode, so pick the county your land is in.'}
+              : 'We couldn’t place that from what you gave us, so pick the county your land is in.'}
           </span>
         </label>
       )}

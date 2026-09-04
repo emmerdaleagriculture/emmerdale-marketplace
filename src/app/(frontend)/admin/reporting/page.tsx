@@ -86,13 +86,13 @@ export default async function ReportingPage() {
   const AFTER_DISTRIBUTE = new Set([
     'distributed', 'quotes_receiving', 'accepted_awaiting_payment', 'awarded',
     'contacted', 'scheduled', 'in_progress', 'completed_by_contractor', 'completed',
-    'paid', 'no_quotes', 'expired', 'cancelled', 'variation_pending',
-    'variation_declined', 'disputed',
+    'paid', 'no_quotes', 'expired', 'variation_pending', 'variation_declined',
+    'disputed',
   ]);
   const AFTER_QUOTE = new Set([
     'quotes_receiving', 'accepted_awaiting_payment', 'awarded', 'contacted',
     'scheduled', 'in_progress', 'completed_by_contractor', 'completed', 'paid',
-    'expired', 'cancelled', 'variation_pending', 'variation_declined', 'disputed',
+    'expired', 'variation_pending', 'variation_declined', 'disputed',
   ]);
   const AFTER_ACCEPT = new Set([
     'accepted_awaiting_payment', 'awarded', 'contacted', 'scheduled', 'in_progress',
@@ -219,6 +219,13 @@ export default async function ReportingPage() {
       </div>
 
       <div className={s.sectionLabel}>Where people are lost — last 30 days</div>
+      {(viewsMissing || funnel[1].n > funnel[0].n) && (
+        <div className={s.empty}>
+          More jobs than landings recorded, so the first step is under-counting —
+          the view beacon is blocked, failing, or these jobs arrived before it was
+          live. Steps below it are still sound; the landing→job rate is not.
+        </div>
+      )}
       <div className={s.tableWrap}>
         <table className={s.table}>
           <thead>
@@ -234,7 +241,9 @@ export default async function ReportingPage() {
                   <td>{row.step}<div className={s.metricHint}>{row.note}</div></td>
                   <td>{row.n}</td>
                   <td>{prev === null ? '—' : pct(row.n, prev)}</td>
-                  <td>{lost === null ? '—' : lost > 0 ? `−${lost}` : '0'}</td>
+                  <td>
+                    {lost === null ? '—' : lost > 0 ? `−${lost}` : lost < 0 ? '?' : '0'}
+                  </td>
                   <td style={{ width: '30%' }}>
                     <span style={{ display: 'block', height: 8, width: `${share}%`,
                       background: 'var(--jd-green-deep)', minWidth: share > 0 ? 2 : 0 }} />

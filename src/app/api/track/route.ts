@@ -26,6 +26,13 @@ const num = (v: unknown, lo: number, hi: number): number | null => {
   return Math.min(hi, Math.max(lo, n));
 };
 
+/** depth_pct, viewport_w and doc_h are int columns: a fraction from a
+ *  hand-crafted POST would fail the whole batch on coercion. */
+const int = (v: unknown, lo: number, hi: number): number | null => {
+  const n = num(v, lo, hi);
+  return n === null ? null : Math.round(n);
+};
+
 export async function POST(request: Request) {
   let body: Incoming;
   try {
@@ -51,9 +58,9 @@ export async function POST(request: Request) {
         session_key: session,
         x_pct: kind === 'click' ? num(e.x, 0, 1) : null,
         y_pct: kind === 'click' ? num(e.y, 0, 1) : null,
-        depth_pct: kind === 'depth' ? num(e.depth, 0, 100) : null,
-        viewport_w: num(e.vw, 0, 10000),
-        doc_h: num(e.dh, 0, 200000),
+        depth_pct: kind === 'depth' ? int(e.depth, 0, 100) : null,
+        viewport_w: int(e.vw, 0, 10000),
+        doc_h: int(e.dh, 0, 200000),
         label: typeof e.label === 'string' ? e.label.slice(0, 80) : null,
       };
     })
@@ -62,9 +69,13 @@ export async function POST(request: Request) {
   if (rows.length === 0) return new NextResponse(null, { status: 204 });
 
   try {
-    await createServiceRoleClient().from('page_events').insert(rows);
+    const { error } = await createServiceRoleClient().from('page_events').insert(rows);
+    // supabase-js resolves with an error rather than throwing: without reading
+    // it, an RLS change or schema drift would drop every beacon silently and
+    // the admin pages would just say "nothing recorded yet".
+    if (error) console.error('[track] insert failed:', error.message);
   } catch (err) {
-    console.error('[track] insert failed:', err);
+    console.error('[track] insert threw:', err);
   }
   return new NextResponse(null, { status: 204 });
 }

@@ -209,6 +209,9 @@ export type ParseResult = {
    *  the counties an ambiguous outcode straddles, or every county when the
    *  postcode didn't resolve at all. Empty when the county is known. */
   county_candidates: { id: number; name: string }[];
+  /** Why we're asking: a postcode that straddles a border, or one we couldn't
+   *  place at all (including no postcode given). null when we didn't ask. */
+  county_choice_reason: 'border' | 'unplaced' | null;
   lat: number | null;
   lng: number | null;
   urgency: Urgency | null;

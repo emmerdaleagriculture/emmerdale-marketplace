@@ -22,6 +22,7 @@ export type Reconciled = Omit<ParseResult, 'submission_id' | 'parse_source'> & {
   county_id: number | null;
   /** Populated only when no county resolved — what to offer the customer. */
   county_candidates: { id: number; name: string }[];
+  county_choice_reason: 'border' | 'unplaced' | null;
   lat: number | null;
   lng: number | null;
   town: string | null;
@@ -84,6 +85,7 @@ export function reconcile(
     postcode,
     county_id: geo?.county_id ?? null,
     county_candidates: geo?.candidates ?? [],
+    county_choice_reason: null,
     county_name: geo?.county_name ?? null,
     lat: geo?.lat ?? null,
     lng: geo?.lng ?? null,

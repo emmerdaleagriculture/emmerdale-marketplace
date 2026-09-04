@@ -32,7 +32,7 @@ export default async function JourneyPage({
   const [clicksQ, depthsQ] = await Promise.all([
     admin
       .from('page_events')
-      .select('x_pct, y_pct, label')
+      .select('x_pct, y_pct, label, viewport_w')
       .eq('path', path)
       .eq('kind', 'click')
       .order('created_at', { ascending: false })
@@ -47,11 +47,21 @@ export default async function JourneyPage({
   ]);
 
   const clicks = (clicksQ.data ?? []).filter(
-    (c): c is { x_pct: number; y_pct: number; label: string | null } =>
+    (c): c is { x_pct: number; y_pct: number; label: string | null; viewport_w: number | null } =>
       c.x_pct !== null && c.y_pct !== null,
   );
   const depths = (depthsQ.data ?? []).filter((d) => d.depth_pct !== null);
-  const visits = depths.length;
+  // Visits are distinct tabs, not rows: /start unmounts and remounts the
+  // tracker around a failed parse, so one tab can flush twice.
+  const visits = new Set(depths.map((d) => d.session_key)).size;
+
+  // The overlay draws on a desktop render of the page. A phone click at x=0.5
+  // of a 390px viewport is not at 640px of a 1280px layout — the element it hit
+  // may not even be in the same place — so plotting both together would draw a
+  // heat map of two different pages.
+  const DESKTOP_MIN = 700;
+  const desktopClicks = clicks.filter((c) => (c.viewport_w ?? DESKTOP_MIN) >= DESKTOP_MIN);
+  const phoneClicks = clicks.length - desktopClicks.length;
 
   // How many visits reached at least this far — a retention curve down the
   // page. The last band that holds up is where the page stops earning
@@ -171,7 +181,16 @@ export default async function JourneyPage({
             The page as it is now, not a screenshot — so if the layout has changed since
             these clicks, they sit where the old layout put them.
           </p>
-          <HeatOverlay path={path} points={clicks.map((c) => ({ x: c.x_pct, y: c.y_pct }))} />
+          <p className={s.metricHint} style={{ marginBottom: 8 }}>
+            {desktopClicks.length} desktop click{desktopClicks.length === 1 ? '' : 's'} shown.
+            {phoneClicks > 0
+              ? ` ${phoneClicks} from narrow screens are left out — they were made on a different layout, so they'd land in the wrong place here.`
+              : ''}
+          </p>
+          <HeatOverlay
+            path={path}
+            points={desktopClicks.map((c) => ({ x: c.x_pct, y: c.y_pct }))}
+          />
         </>
       )}
     </div>
