@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { PageTracker } from '@/components/PageTracker';
 import { parseJobAction, recordLandingView, type ParseActionState } from './actions';
 import { downscalePhoto } from './photoDownscale';
 
@@ -242,6 +243,7 @@ export function LandingFlow() {
         }
       }}
     >
+      <PageTracker path="/start" />
       {state.error && <p className={f.error}>{state.error}</p>}
 
       <input type="hidden" name="form_ts" value={formTs} />

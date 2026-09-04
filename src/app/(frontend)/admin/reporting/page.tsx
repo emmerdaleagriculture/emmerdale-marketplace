@@ -72,6 +72,65 @@ export default async function ReportingPage() {
     parses: subs.filter((r) => within(r.created_at, days)).length,
     confirms: confirmed.filter((r) => r.confirmed_at && within(r.confirmed_at, days)).length,
   });
+  // The whole funnel, not just the landing slice: a submission that reached
+  // 'awarded' also passed every step before it, so each stage counts everything
+  // at or beyond it. Statuses that leave the ladder — no_matches, no_quotes,
+  // expired — are counted separately below, because a job that stops there
+  // stopped for a reason worth naming rather than being an anonymous gap.
+  const AFTER_CONFIRM = new Set([
+    'confirmed', 'distributed', 'quotes_receiving', 'accepted_awaiting_payment',
+    'awarded', 'contacted', 'scheduled', 'in_progress', 'completed_by_contractor',
+    'completed', 'paid', 'no_matches', 'no_quotes', 'expired', 'cancelled',
+    'variation_pending', 'variation_declined', 'disputed',
+  ]);
+  const AFTER_DISTRIBUTE = new Set([
+    'distributed', 'quotes_receiving', 'accepted_awaiting_payment', 'awarded',
+    'contacted', 'scheduled', 'in_progress', 'completed_by_contractor', 'completed',
+    'paid', 'no_quotes', 'expired', 'cancelled', 'variation_pending',
+    'variation_declined', 'disputed',
+  ]);
+  const AFTER_QUOTE = new Set([
+    'quotes_receiving', 'accepted_awaiting_payment', 'awarded', 'contacted',
+    'scheduled', 'in_progress', 'completed_by_contractor', 'completed', 'paid',
+    'expired', 'cancelled', 'variation_pending', 'variation_declined', 'disputed',
+  ]);
+  const AFTER_ACCEPT = new Set([
+    'accepted_awaiting_payment', 'awarded', 'contacted', 'scheduled', 'in_progress',
+    'completed_by_contractor', 'completed', 'paid', 'variation_pending',
+    'variation_declined', 'disputed',
+  ]);
+  const AFTER_PAY = new Set([
+    'awarded', 'contacted', 'scheduled', 'in_progress', 'completed_by_contractor',
+    'completed', 'paid', 'variation_pending', 'variation_declined', 'disputed',
+  ]);
+  const DONE = new Set(['completed', 'paid']);
+  const reached = (set: Set<string>) => subs.filter((r) => set.has(r.status)).length;
+
+  const funnel = [
+    { step: 'Landed on /start', n: views.length, note: 'the beacon on first render' },
+    { step: 'Started a description', n: subs.length, note: 'a draft was created' },
+    { step: 'Confirmed the job', n: reached(AFTER_CONFIRM), note: 'contact details given' },
+    { step: 'Went out to contractors', n: reached(AFTER_DISTRIBUTE), note: 'at least one invitation sent' },
+    { step: 'Got a price', n: reached(AFTER_QUOTE), note: 'at least one confirmed quote' },
+    { step: 'Accepted one', n: reached(AFTER_ACCEPT), note: 'chose a price' },
+    { step: 'Paid', n: reached(AFTER_PAY), note: 'payment cleared, contractor awarded' },
+    { step: 'Finished', n: reached(DONE), note: 'work confirmed complete' },
+  ];
+
+  const LEAKS: [string, string][] = [
+    ['abandoned', 'Started, never confirmed'],
+    ['draft', 'Still a draft'],
+    ['no_matches', 'No contractor covered the county'],
+    ['no_quotes', 'Went out, nobody priced it'],
+    ['expired', 'Ran out of time'],
+    ['cancelled', 'Cancelled'],
+  ];
+  const leaks = LEAKS.map(([status, label]) => ({
+    label,
+    status,
+    n: subs.filter((r) => r.status === status).length,
+  })).filter((l) => l.n > 0);
+
   const d1 = window(1);
   const d7 = window(7);
   const d30 = window(30);
@@ -125,6 +184,7 @@ export default async function ReportingPage() {
       <h1 className={s.h1}>Landing page reporting</h1>
       <p className={s.sub}>
         The /start funnel: views → parses → confirmed jobs, last 30 days.{' '}
+        <Link href="/admin/reporting/journey">Clicks &amp; scroll depth →</Link>{' '}
         <Link href="/admin/submissions">Submissions queue →</Link>
       </p>
 
@@ -157,6 +217,54 @@ export default async function ReportingPage() {
           <div className={s.metricHint}>the number ads are buying</div>
         </div>
       </div>
+
+      <div className={s.sectionLabel}>Where people are lost — last 30 days</div>
+      <div className={s.tableWrap}>
+        <table className={s.table}>
+          <thead>
+            <tr><th>Step</th><th>Reached</th><th>Of the step before</th><th>Lost here</th><th /></tr>
+          </thead>
+          <tbody>
+            {funnel.map((row, i) => {
+              const prev = i === 0 ? null : funnel[i - 1].n;
+              const lost = prev === null ? null : prev - row.n;
+              const share = funnel[0].n > 0 ? (100 * row.n) / funnel[0].n : 0;
+              return (
+                <tr key={row.step}>
+                  <td>{row.step}<div className={s.metricHint}>{row.note}</div></td>
+                  <td>{row.n}</td>
+                  <td>{prev === null ? '—' : pct(row.n, prev)}</td>
+                  <td>{lost === null ? '—' : lost > 0 ? `−${lost}` : '0'}</td>
+                  <td style={{ width: '30%' }}>
+                    <span style={{ display: 'block', height: 8, width: `${share}%`,
+                      background: 'var(--jd-green-deep)', minWidth: share > 0 ? 2 : 0 }} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {leaks.length > 0 && (
+        <>
+          <div className={s.sectionLabel}>Why they stopped</div>
+          <div className={s.tableWrap}>
+            <table className={s.table}>
+              <thead><tr><th>Reason</th><th>Jobs</th><th>Status</th></tr></thead>
+              <tbody>
+                {leaks.map((l) => (
+                  <tr key={l.status}>
+                    <td>{l.label}</td>
+                    <td>{l.n}</td>
+                    <td>{l.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       <div className={s.sectionLabel}>Daily — last 14 days</div>
       <div className={s.tableWrap}>

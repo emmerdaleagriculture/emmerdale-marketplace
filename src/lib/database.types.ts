@@ -1359,6 +1359,48 @@ export type Database = {
         }
         Relationships: []
       }
+      page_events: {
+        Row: {
+          created_at: string
+          depth_pct: number | null
+          doc_h: number | null
+          id: number
+          kind: string
+          label: string | null
+          path: string
+          session_key: string
+          viewport_w: number | null
+          x_pct: number | null
+          y_pct: number | null
+        }
+        Insert: {
+          created_at?: string
+          depth_pct?: number | null
+          doc_h?: number | null
+          id?: never
+          kind: string
+          label?: string | null
+          path: string
+          session_key: string
+          viewport_w?: number | null
+          x_pct?: number | null
+          y_pct?: number | null
+        }
+        Update: {
+          created_at?: string
+          depth_pct?: number | null
+          doc_h?: number | null
+          id?: never
+          kind?: string
+          label?: string | null
+          path?: string
+          session_key?: string
+          viewport_w?: number | null
+          x_pct?: number | null
+          y_pct?: number | null
+        }
+        Relationships: []
+      }
       pending_emails: {
         Row: {
           attempts: number
