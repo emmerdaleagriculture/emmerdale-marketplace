@@ -330,6 +330,27 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
         </div>
       )}
 
+      {result.county_candidates.length > 0 && (
+        <label className={f.field}>
+          <span className={f.label}>Which county?</span>
+          <select className={f.input} name="county_id" defaultValue="" required>
+            <option value="" disabled>
+              Choose…
+            </option>
+            {result.county_candidates.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <span className={f.hint}>
+            {result.county_candidates.length <= 4
+              ? 'That postcode sits on a county border — tell us which side your land is on.'
+              : 'We couldn’t place that postcode, so pick the county your land is in.'}
+          </span>
+        </label>
+      )}
+
       <label className={fieldClass('location')}>
         <span className={f.label}>Postcode</span>
         <input

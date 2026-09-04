@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { normalisePostcode, resolveCounty, type CountyResolution } from '@/lib/postcodes';
-import { getServices } from '@/lib/reference';
+import { getCounties, getServices } from '@/lib/reference';
 import { verifyTurnstile } from '@/lib/turnstile';
 import type { FormState } from '@/lib/form';
 import { CONFIRM_SUCCESS } from './copy';
@@ -221,6 +221,15 @@ export async function parseJobAction(
   // through rather than showing an empty box and asking for it twice.
   if (!merged.service_verbatim) merged.service_verbatim = d.raw_text;
 
+  // A postcode that straddles a border (SO51 is Hampshire and Wiltshire) or is
+  // only an outcode resolves to no county at all. That used to confirm a job
+  // with county_id null, which matches no contractor and tells the customer
+  // "nobody covers your area" — untrue, and invisible. Offer the choice
+  // instead: the candidates when we know them, every county when we don't.
+  if (merged.county_id === null && merged.county_candidates.length === 0) {
+    merged.county_candidates = (await getCounties()).map((c) => ({ id: c.id, name: c.name }));
+  }
+
   // "Use my location" fallback: when no postcode geocoded, the browser's own
   // coordinates still pin the map on the confirm step.
   const geoLat = Number(formData.get('geo_lat'));
@@ -302,6 +311,7 @@ const ConfirmSchema = z.object({
   // Required: everything we send the customer after this goes by email.
   contact_email: z.string().trim().email('An email address is required.'),
   contact_preference: z.enum(['phone', 'email', 'either']).default('either'),
+  county_id: z.coerce.number().int().positive().optional().or(z.literal('')),
   service_choice: z.string().trim(),
   service_confirmed: z.enum(['yes', 'no']),
   service_other_text: z.string().trim().max(300).optional().or(z.literal('')),
@@ -341,6 +351,7 @@ export async function confirmJobAction(
     contact_phone: formData.get('contact_phone'),
     contact_email: formData.get('contact_email'),
     contact_preference: formData.get('contact_preference') || 'either',
+    county_id: formData.get('county_id') || '',
     service_choice: formData.get('service_choice'),
     service_confirmed: formData.get('service_confirmed'),
     // Only rendered when "something else" is open — absent means null, and
@@ -410,6 +421,20 @@ export async function confirmJobAction(
     lat = geo.lat ?? null;
     lng = geo.lng ?? null;
   }
+  // The customer's own pick, offered when the postcode couldn't settle it.
+  // Only ever fills a gap: a resolved county is never overridden by the form.
+  if (!countyId && typeof d.county_id === 'number') {
+    const { data: picked } = await admin
+      .from('counties')
+      .select('id, name')
+      .eq('id', d.county_id)
+      .maybeSingle();
+    if (picked) {
+      countyId = picked.id;
+      countyName = picked.name;
+    }
+  }
+
   // The kept parse-time county arrives as an id only — name it for the email.
   if (countyId && !countyName) {
     const { data: county } = await admin

@@ -205,6 +205,10 @@ export type ParseResult = {
   area_unit: AreaUnit | null;
   postcode: string | null;
   county_name: string | null;
+  /** Offered to the customer when the postcode couldn't settle the county:
+   *  the counties an ambiguous outcode straddles, or every county when the
+   *  postcode didn't resolve at all. Empty when the county is known. */
+  county_candidates: { id: number; name: string }[];
   lat: number | null;
   lng: number | null;
   urgency: Urgency | null;
