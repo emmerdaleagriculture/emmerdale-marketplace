@@ -5,12 +5,70 @@
 .bar {
   background: var(--jd-green-deep);
   color: #fff;
-  padding: 14px 24px;
+  padding: 14px 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.barTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px 20px;
   flex-wrap: wrap;
+}
+
+/* Two tiers: sections always visible, the current section's pages beneath.
+   The page row keeps its height when a section holds one page, so the bar
+   doesn't jump as you move between sections. */
+.navWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.groupRow {
+  display: flex;
+  gap: 4px 18px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.group {
+  color: #fff;
+  opacity: 0.55;
+  padding: 2px 0 6px;
+  border-bottom: 2px solid transparent;
+}
+.group:hover {
+  opacity: 0.85;
+}
+.groupOn,
+.groupOn:hover {
+  opacity: 1;
+  border-bottom-color: var(--jd-yellow, #ffde00);
+}
+.pageRow {
+  display: flex;
+  gap: 4px 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  min-height: 34px;
+  align-items: center;
+}
+.page {
+  color: #fff;
+  opacity: 0.7;
+}
+.page:hover {
+  opacity: 1;
+}
+.pageOn,
+.pageOn:hover {
+  opacity: 1;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .brand {
   font-family: var(--font-display-stack);
@@ -29,7 +87,7 @@
 }
 @media (max-width: 620px) {
   .bar {
-    padding: 12px 16px;
+    padding: 12px 16px 0;
   }
   .brand {
     font-size: 15px;
@@ -37,6 +95,15 @@
   .nav {
     gap: 6px 14px;
     font-size: 12px;
+  }
+  .groupRow {
+    gap: 4px 12px;
+    font-size: 11px;
+  }
+  .pageRow {
+    gap: 4px 12px;
+    font-size: 12px;
+    min-height: 30px;
   }
   .signout {
     font-size: 12px;
