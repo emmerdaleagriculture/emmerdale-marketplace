@@ -20,12 +20,6 @@ export default function PrivacyPage() {
           <h1>Privacy policy</h1>
           <p className={l.updated}>{COMPANY_REG_LINE}</p>
 
-          <div className={l.note}>
-            Draft for review. This page states the disclosure, names the categories
-            of recipient, and states retention as required. Have it reviewed by a
-            solicitor before launch.
-          </div>
-
           <h2>Who we are</h2>
           <p>
             The Emmerdale Agriculture contractor network is operated by{' '}
