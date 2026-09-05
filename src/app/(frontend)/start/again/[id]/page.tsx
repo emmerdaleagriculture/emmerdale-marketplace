@@ -31,46 +31,17 @@ export default async function OrderAgainPage({ params }: { params: Promise<{ id:
   if (!user) redirect(`/login?next=${encodeURIComponent(`/start/again/${id}`)}`);
 
   const admin = createServiceRoleClient();
+  // Read-only: the draft was minted by startReorderAction on the click that
+  // sent the customer here. Rendering must not write, or a refresh would mint
+  // another one every time.
   const { data: src } = await admin
     .from('job_submissions')
     .select('*, service:services(name)')
     .eq('id', id)
     .eq('customer_id', user.id)
+    .eq('status', 'draft')
     .maybeSingle();
   if (!src) notFound();
-
-  // A fresh draft, not an edit of the old one: the previous job keeps its own
-  // history, and the confirm action only ever updates a draft it minted.
-  const { data: draft, error } = await admin
-    .from('job_submissions')
-    .insert({
-      customer_id: user.id,
-      raw_text: src.raw_text,
-      location_raw: src.location_raw,
-      service_id: src.service_id,
-      service_verbatim: src.service_verbatim,
-      area_value: src.area_value,
-      area_unit: src.area_unit,
-      area_source: src.area_source,
-      area_mapped_value: src.area_mapped_value,
-      boundary: src.boundary,
-      postcode: src.postcode,
-      lat: src.lat,
-      lng: src.lng,
-      county_id: src.county_id,
-      access_notes: src.access_notes,
-      obstacles: src.obstacles,
-      service_attributes: src.service_attributes,
-      gate_w3w: src.gate_w3w,
-      gate_width: src.gate_width,
-      photo_paths: src.photo_paths,
-    })
-    .select('id')
-    .single();
-  if (error || !draft) {
-    console.error('[reorder] draft insert failed:', error);
-    notFound();
-  }
 
   const countyName = src.county_id
     ? ((await admin.from('counties').select('name').eq('id', src.county_id).maybeSingle()).data
@@ -78,7 +49,7 @@ export default async function OrderAgainPage({ params }: { params: Promise<{ id:
     : null;
 
   const result: ParseResult = {
-    submission_id: draft.id,
+    submission_id: src.id,
     parse_source: 'deterministic_fallback',
     // The stored service_id came from the canonical list, so its name is a
     // CanonicalService — but the join types it as plain text.

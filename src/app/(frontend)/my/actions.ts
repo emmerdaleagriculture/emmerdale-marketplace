@@ -139,3 +139,64 @@ export async function cancelScheduleAction(
   revalidatePath('/my');
   return { ok: true, message: 'Stopped. Nothing further will go out.' };
 }
+
+/**
+ * Start a repeat: copy a finished job into a fresh draft, then hand the
+ * customer to the confirm step.
+ *
+ * A POST rather than a link, because it writes. Doing this on the page render
+ * meant every refresh of the confirm step minted another abandoned draft, and
+ * a customer re-reading their own job would quietly fill the table.
+ */
+export async function startReorderAction(formData: FormData): Promise<void> {
+  const sourceId = String(formData.get('submission_id') ?? '');
+  if (!sourceId) redirect('/my');
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect(`/login?next=${encodeURIComponent('/my')}`);
+
+  const admin = createServiceRoleClient();
+  const { data: src } = await admin
+    .from('job_submissions')
+    .select('*')
+    .eq('id', sourceId)
+    .eq('customer_id', user.id)
+    .maybeSingle();
+  if (!src) redirect('/my');
+
+  const { data: draft, error } = await admin
+    .from('job_submissions')
+    .insert({
+      customer_id: user.id,
+      raw_text: src.raw_text,
+      location_raw: src.location_raw,
+      service_id: src.service_id,
+      service_verbatim: src.service_verbatim,
+      area_value: src.area_value,
+      area_unit: src.area_unit,
+      area_source: src.area_source,
+      area_mapped_value: src.area_mapped_value,
+      boundary: src.boundary,
+      postcode: src.postcode,
+      lat: src.lat,
+      lng: src.lng,
+      county_id: src.county_id,
+      access_notes: src.access_notes,
+      obstacles: src.obstacles,
+      service_attributes: src.service_attributes,
+      gate_w3w: src.gate_w3w,
+      gate_width: src.gate_width,
+      photo_paths: src.photo_paths,
+    })
+    .select('id')
+    .single();
+  if (error || !draft) {
+    console.error('[reorder] draft insert failed:', error);
+    redirect('/my');
+  }
+
+  redirect(`/start/again/${draft.id}`);
+}

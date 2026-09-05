@@ -6,6 +6,8 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/time';
 import { CancelRepeat, RepeatSetup } from './RepeatControls';
+import { startReorderAction } from './actions';
+import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
 export const metadata: Metadata = { title: 'Your jobs', robots: { index: false, follow: false } };
@@ -116,11 +118,12 @@ export default async function MyJobsPage() {
 
                       {DONE.has(j.status) && (
                         <div style={{ display: 'grid', gap: 12 }}>
-                          <div>
-                            <Link className={a.altLink} href={`/start/again/${j.id}`}>
-                              Order it again →
-                            </Link>
-                          </div>
+                          <form action={startReorderAction}>
+                            <input type="hidden" name="submission_id" value={j.id} />
+                            <button className={f.btnPrimary} type="submit">
+                              Order it again
+                            </button>
+                          </form>
                           {repeat ? (
                             <div style={{ display: 'grid', gap: 6 }}>
                               <span>
