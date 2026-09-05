@@ -26,11 +26,36 @@ export async function cancellationQuote(
 
   const { data: payment } = await admin
     .from('job_payments')
-    .select('amount_pence, stripe_payment_intent_id, client_quote_id')
+    .select('amount_pence, stripe_payment_intent_id, stripe_checkout_session_id, client_quote_id')
     .eq('submission_id', submissionId)
     .eq('status', 'paid')
     .maybeSingle();
-  if (!payment?.stripe_payment_intent_id) return null;
+  if (!payment) return null;
+
+  // Payments taken before the webhook stored the intent have only a session.
+  // Recovering it costs one call and is the difference between a customer
+  // being able to cancel and being told their payment cannot be found.
+  let intentId = payment.stripe_payment_intent_id;
+  if (!intentId && payment.stripe_checkout_session_id) {
+    try {
+      const session = await getStripe().checkout.sessions.retrieve(
+        payment.stripe_checkout_session_id,
+      );
+      intentId =
+        typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : (session.payment_intent?.id ?? null);
+      if (intentId) {
+        await admin
+          .from('job_payments')
+          .update({ stripe_payment_intent_id: intentId })
+          .eq('stripe_checkout_session_id', payment.stripe_checkout_session_id);
+      }
+    } catch (err) {
+      console.error('[sq] could not recover the payment intent:', err);
+    }
+  }
+  if (!intentId) return null;
 
   const [{ data: quote }, { data: rateRow }] = await Promise.all([
     admin
@@ -53,7 +78,7 @@ export async function cancellationQuote(
 
   let stripeFee = estimateStripeFee(payment.amount_pence);
   try {
-    const pi = await getStripe().paymentIntents.retrieve(payment.stripe_payment_intent_id, {
+    const pi = await getStripe().paymentIntents.retrieve(intentId, {
       expand: ['latest_charge.balance_transaction'],
     });
     const charge = pi.latest_charge as { balance_transaction?: { fee?: number } } | null;
@@ -71,7 +96,7 @@ export async function cancellationQuote(
       stripeFee,
       Number.isFinite(rate) ? rate : DEFAULT_CANCELLATION_FEE_RATE,
     ),
-    paymentIntentId: payment.stripe_payment_intent_id,
+    paymentIntentId: intentId,
     amountPence: payment.amount_pence,
   };
 }
