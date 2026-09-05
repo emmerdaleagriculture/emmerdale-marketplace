@@ -136,3 +136,33 @@
   line-height: 38px !important;
   font-size: 20px !important;
 }
+
+/* Reassurance under the step-1 button. Quiet by design — it answers the
+   hesitation of someone who would otherwise ask in a Facebook group, without
+   competing with the form above it. */
+.reassure {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 18px 0 0;
+  border-top: 1px solid var(--rule);
+  display: grid;
+  gap: 9px;
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.reassure li {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+.reassure li::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: var(--jd-yellow, #ffde00);
+  border: 1px solid var(--jd-green-deep);
+}
