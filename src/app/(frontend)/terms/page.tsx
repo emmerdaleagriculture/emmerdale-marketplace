@@ -28,7 +28,7 @@ export default function TermsPage() {
             you price a job. They sit alongside our{' '}
             <a href="/legal/customer-terms-and-conditions.pdf">customer terms</a> and{' '}
             <a href="/legal/customer-service-charter.pdf">service charter</a>, which set
-            out what we promise the customer — and therefore what we need from you.
+            out what we promise the customer on every job you take on.
           </p>
 
           <h2>1. How this works now</h2>
@@ -87,39 +87,7 @@ export default function TermsPage() {
             You do not invoice the customer and must not ask them for payment.
           </p>
 
-          <h2>5. What we need from you on a job that is yours</h2>
-          <p>
-            We promise the customer the things below, so we need them from you:
-          </p>
-          <ul>
-            <li>Contact the customer within 24 hours to agree a date and an arrival window.</li>
-            <li>Confirm the appointment the working day before.</li>
-            <li>
-              Arrive within the agreed window. If you are going to be more than 30
-              minutes late, or cannot attend, tell the customer and us before the window
-              starts, and offer a new date within 7 days.
-            </li>
-            <li>
-              Walk the site with the customer if they are there — boundaries, gates,
-              hazards, livestock.
-            </li>
-            <li>
-              Take before and after photographs, from the same angles, and upload them
-              to the job the same day.
-            </li>
-            <li>
-              Work with reasonable skill and care. Close gates. Keep to agreed routes.
-              No rutting or damage outside the job. Never work around horses or livestock
-              without a plan agreed with the customer. No smoking, vaping or alcohol on
-              their land. Leave the site clean.
-            </li>
-            <li>
-              Report any damage the same day — to the customer and to us. Never leave it
-              to be discovered.
-            </li>
-          </ul>
-
-          <h2>6. Changes, extras and problems</h2>
+          <h2>5. Changes, extras and problems</h2>
           <p>
             If the site is materially different from the description, stop and tell us.
             We will re-price it with the customer, and work continues once they have
@@ -136,7 +104,7 @@ export default function TermsPage() {
             accordingly.
           </p>
 
-          <h2>7. Cancellations</h2>
+          <h2>6. Cancellations</h2>
           <p>
             A customer can cancel before work starts. If you have already been booked and
             have incurred a call-out, tell us and we will agree what is owed to you out
@@ -149,7 +117,7 @@ export default function TermsPage() {
             work is grounds for removal.
           </p>
 
-          <h2>8. Customer information</h2>
+          <h2>7. Customer information</h2>
           <p>
             When a job becomes yours we share only what you need to do it: the
             customer&rsquo;s name, contact details, the site address and access details,
@@ -162,7 +130,7 @@ export default function TermsPage() {
             controller for what you hold.
           </p>
 
-          <h2>9. Working off the platform</h2>
+          <h2>8. Working off the platform</h2>
           <p>
             Do not solicit a customer introduced through us for work outside the platform,
             and do not accept work from them off-platform for six months after a job. It
@@ -170,20 +138,20 @@ export default function TermsPage() {
             record, and no protection for either of you.
           </p>
 
-          <h2>10. Ratings</h2>
+          <h2>9. Ratings</h2>
           <p>
             Customers may rate and review work. Reviews are theirs, and we publish them
             with a first name and county. We will not remove a review for being
             unfavourable, but tell us if you believe one is untrue or not about your work.
           </p>
 
-          <h2>11. No guarantee of work</h2>
+          <h2>10. No guarantee of work</h2>
           <p>
             We do not guarantee any volume of jobs, or that you will win any particular
             job. Customers choose from the prices they are shown.
           </p>
 
-          <h2>12. General</h2>
+          <h2>11. General</h2>
           <p>
             Either of us can end this arrangement at any time. Jobs already accepted are
             seen through. We may update these terms; the version in force when you
