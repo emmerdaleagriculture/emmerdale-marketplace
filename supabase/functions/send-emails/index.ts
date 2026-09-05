@@ -317,6 +317,38 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `look at what else is going out in your area.\n\n${SITE_URL}/won`,
       };
 
+    // A one-off announcement to existing contractors. Deliberately NOT an
+    // sq_ contractor kind: those are redirected to the test allowlist, and
+    // this one is meant to reach the real list.
+    case 'contractor_announcement':
+      return {
+        subject: `Changes to how Emmerdale Agriculture sends you work`,
+        text:
+          `Hello${p.business_name ? ` ${p.business_name}` : ''},\n\n` +
+          `We've secured investment from a partner who has come in to help us build ` +
+          `this out properly and faster. Part of that has been rebuilding how the ` +
+          `site works, and it changes things for you in three ways.\n\n` +
+          `1. Jobs arrive with far more detail.\n` +
+          `Location, acreage — often measured from a boundary the customer drew on a ` +
+          `map — access notes, gate width, what3words for the gateway, and photos. ` +
+          `Enough to price it without a site visit or a phone call.\n\n` +
+          `2. You price it only if you want it.\n` +
+          `Each job comes with a link. Open it, send a price, or pass. No obligation ` +
+          `and no cost to you — you keep the price you quote, and our margin sits on ` +
+          `top and is paid by the customer.\n\n` +
+          `3. We take the money up front and hold it.\n` +
+          `The customer pays us in full before you start, so the money is there from ` +
+          `day one. It's released to you once the job is done and they've confirmed ` +
+          `it — and if they don't respond, it's released automatically after three ` +
+          `working days. No invoicing, no chasing.\n\n` +
+          `We're starting in Dorset and Oxfordshire before opening it up nationally, ` +
+          `and we have advertising running, so we expect a fair volume of work.\n\n` +
+          `You don't need to do anything — your account and the counties you cover ` +
+          `are as they were. The next job in your area will just arrive.\n\n` +
+          `Any questions, reply to this email or write to tom@emmerdaleagriculture.com.\n\n` +
+          `Tom\nEmmerdale Agriculture`,
+      };
+
     // ── Sealed-quote funnel: operator alerts ──────────────────────────────
     case 'sq_unmatched_needs_classification':
       return {
