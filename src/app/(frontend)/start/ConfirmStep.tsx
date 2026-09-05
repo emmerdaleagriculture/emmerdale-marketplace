@@ -45,7 +45,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
   const [mapState, setMapState] = useState<BoundaryState | null>(null);
   const [mapStatus, setMapStatus] = useState<'pending' | 'ready' | 'unavailable'>('pending');
   const [keepStated, setKeepStated] = useState(false);
-  const [gateWidth, setGateWidth] = useState('');
+  const [gateWidth, setGateWidth] = useState(result.gate_width ?? '');
   // Boundary nudge: pressing Send without a boundary scrolls to the map and
   // asks for one, once. The customer can still send without it.
   const [drawRequest, setDrawRequest] = useState(0);
@@ -131,7 +131,13 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
       <input
         type="hidden"
         name="boundary"
-        value={mapState?.boundary ? JSON.stringify(mapState.boundary) : ''}
+        value={
+          mapState?.boundary
+            ? JSON.stringify(mapState.boundary)
+            : result.boundary
+              ? JSON.stringify(result.boundary)
+              : ''
+        }
       />
       {Object.entries(conditionValues).map(([k, v]) => (
         <input key={k} type="hidden" name={`condition_${k}`} value={v} />
@@ -424,6 +430,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           spellCheck={false}
           maxLength={60}
           placeholder="e.g. filled.count.soap"
+          defaultValue={result.gate_w3w ?? ''}
         />
         <span className={f.hint}>
           The three words for the entrance itself — from the what3words app.
