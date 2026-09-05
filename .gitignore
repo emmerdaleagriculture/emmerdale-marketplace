@@ -55,3 +55,6 @@ next-env.d.ts
 # Supabase project migration working directory (scripts/migrate-supabase.sh).
 # Contains auth password hashes and customer PII — never commit it.
 migration-dump/
+
+# Stray capture files from curl -w / -o typos.
+-w
