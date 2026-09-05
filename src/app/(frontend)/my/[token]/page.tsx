@@ -16,6 +16,8 @@ import { StatusTimeline } from './StatusTimeline';
 import { PriceList, type ClientQuoteView } from './PriceList';
 import { ConfirmDone } from './ConfirmDone';
 import { PayNow } from './PayNow';
+import { SaveToAccount } from './SaveToAccount';
+import { createClient } from '@/lib/supabase/server';
 import a from '../../auth.module.css';
 import m from './my.module.css';
 
@@ -40,6 +42,14 @@ export default async function ClientPortalPage({
   const { token } = await params;
   const js = await getSubmissionByClientToken(token);
   if (!js) notFound();
+
+  // Who's looking. Signed in and the job unclaimed is the one moment an
+  // account can start, because holding this link is the only proof there is.
+  const {
+    data: { user },
+  } = await (await createClient()).auth.getUser();
+  const claimable = Boolean(user) && !js.customer_id;
+  const mine = Boolean(user) && js.customer_id === user?.id;
 
   const service = (js.service as { id: number; name: string } | null)?.name ?? js.service_verbatim;
   const county = (js.county as { name: string } | null)?.name ?? null;
@@ -139,6 +149,13 @@ export default async function ClientPortalPage({
               token={token}
               contractorName={accepted?.contractor_real_name ?? 'Your contractor'}
             />
+          )}
+
+          {claimable && <SaveToAccount token={token} />}
+          {mine && (
+            <p className={a.sub}>
+              This job is on your account. <Link href="/my">See all your jobs →</Link>
+            </p>
           )}
 
           {/* ── Done ───────────────────────────────────────────────── */}

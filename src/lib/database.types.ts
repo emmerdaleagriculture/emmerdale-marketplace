@@ -477,6 +477,30 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          contact_name: string | null
+          created_at: string
+          email: string
+          id: string
+          phone: string | null
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string
+          email: string
+          id: string
+          phone?: string | null
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
       district_county_map: {
         Row: {
           admin_district: string
@@ -885,6 +909,71 @@ export type Database = {
           },
         ]
       }
+      job_schedules: {
+        Row: {
+          active: boolean
+          created_at: string
+          customer_id: string
+          id: string
+          interval_months: number
+          last_run_at: string | null
+          next_run_at: string
+          runs: number
+          source_submission_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          customer_id: string
+          id?: string
+          interval_months: number
+          last_run_at?: string | null
+          next_run_at: string
+          runs?: number
+          source_submission_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          customer_id?: string
+          id?: string
+          interval_months?: number
+          last_run_at?: string | null
+          next_run_at?: string
+          runs?: number
+          source_submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_schedules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_schedules_source_submission_id_fkey"
+            columns: ["source_submission_id"]
+            isOneToOne: false
+            referencedRelation: "job_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_schedules_source_submission_id_fkey"
+            columns: ["source_submission_id"]
+            isOneToOne: false
+            referencedRelation: "my_sq_invitations"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "job_schedules_source_submission_id_fkey"
+            columns: ["source_submission_id"]
+            isOneToOne: false
+            referencedRelation: "my_sq_won_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_submission_parses: {
         Row: {
           created_at: string
@@ -966,6 +1055,7 @@ export type Database = {
           contact_preference: string | null
           county_id: number | null
           created_at: string
+          customer_id: string | null
           distributed_at: string | null
           expires_at: string | null
           gate_w3w: string | null
@@ -1017,6 +1107,7 @@ export type Database = {
           contact_preference?: string | null
           county_id?: number | null
           created_at?: string
+          customer_id?: string | null
           distributed_at?: string | null
           expires_at?: string | null
           gate_w3w?: string | null
@@ -1068,6 +1159,7 @@ export type Database = {
           contact_preference?: string | null
           county_id?: number | null
           created_at?: string
+          customer_id?: string | null
           distributed_at?: string | null
           expires_at?: string | null
           gate_w3w?: string | null
@@ -1120,6 +1212,13 @@ export type Database = {
             columns: ["county_id"]
             isOneToOne: false
             referencedRelation: "counties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_submissions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
           {
@@ -1660,6 +1759,10 @@ export type Database = {
         }
         Returns: Json
       }
+      claim_submission_for_customer: {
+        Args: { p_customer_id: string; p_token: string }
+        Returns: Json
+      }
       client_price_pence: {
         Args: { p_contractor_pence: number; p_rate: number }
         Returns: number
@@ -1733,6 +1836,7 @@ export type Database = {
         }[]
       }
       record_invitation_view: { Args: { p_token: string }; Returns: Json }
+      run_due_job_schedules: { Args: never; Returns: number }
       sealed_quote_tick: { Args: never; Returns: undefined }
       sq_job_facts: { Args: { p_submission_id: string }; Returns: Json }
       sq_notify_once: {
