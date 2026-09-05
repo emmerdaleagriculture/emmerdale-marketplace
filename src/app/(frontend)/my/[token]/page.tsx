@@ -120,6 +120,17 @@ export default async function ClientPortalPage({
                 quotes={quotes as ClientQuoteView[]}
                 ratingWeight={ratingWeight}
               />
+              {/* The terms open with "read these before you accept a price",
+                  so this is where they have to be — not only in the footer. */}
+              <p className={a.sub}>
+                Accepting a price means agreeing to our{' '}
+                <a href="/legal/customer-terms-and-conditions.pdf">
+                  customer terms and conditions
+                </a>{' '}
+                and{' '}
+                <a href="/legal/customer-service-charter.pdf">service charter</a>, which
+                set out what we do if anything goes wrong.
+              </p>
             </>
           )}
 

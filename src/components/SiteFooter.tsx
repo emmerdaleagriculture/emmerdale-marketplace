@@ -52,7 +52,11 @@ export function SiteFooter() {
             <div className={styles.colTitle}>Company</div>
             <a href={HPM_URL}>Hampshire Paddock Management</a>
             <Link href="/privacy">Privacy policy</Link>
-            <Link href="/terms">Terms</Link>
+            {/* Customer-facing documents are PDFs; /terms is the contractor
+                agreement, which is a different audience entirely. */}
+            <a href="/legal/customer-terms-and-conditions.pdf">Customer terms (PDF)</a>
+            <a href="/legal/customer-service-charter.pdf">Service charter (PDF)</a>
+            <Link href="/terms">Contractor terms</Link>
           </nav>
         </div>
 

@@ -59,7 +59,13 @@ export function HomeFooter() {
             <h4 className={s.footerHeading}>Legal</h4>
             <ul className={s.footerList}>
               <li>
-                <Link href="/terms">Terms</Link>
+                <a href="/legal/customer-terms-and-conditions.pdf">Customer terms</a>
+              </li>
+              <li>
+                <a href="/legal/customer-service-charter.pdf">Service charter</a>
+              </li>
+              <li>
+                <Link href="/terms">Contractor terms</Link>
               </li>
               <li>
                 <Link href="/privacy">Privacy</Link>
