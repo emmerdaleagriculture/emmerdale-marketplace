@@ -381,9 +381,19 @@
   gap: 10px;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
-.service:hover {
-  border-color: var(--border-strong);
-  box-shadow: 0 1px 2px rgba(26, 43, 30, 0.05);
+/* Scoped to pointer devices: a phone never fires :hover, so this was the
+   card's only "I'm interactive" cue and it was invisible on exactly the
+   screen where the grid is two-up and the cards are smallest. */
+@media (hover: hover) {
+  .service:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 1px 2px rgba(26, 43, 30, 0.05);
+  }
+}
+/* What a phone gets instead: feedback on the tap itself. */
+.service:active {
+  border-color: var(--green);
+  background: var(--green-tint);
 }
 .service:focus-within {
   border-color: var(--green);
@@ -430,6 +440,14 @@
   position: absolute;
   inset: 0;
   border-radius: var(--radius);
+}
+/* Underlined so it reads as a control rather than a caption. On a narrow
+   two-up card this is the whole affordance — there is no hover to fall back
+   on and no button chrome anywhere else on the card. */
+.serviceLinkText {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
 }
 .visuallyHidden {
   position: absolute;
