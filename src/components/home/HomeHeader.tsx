@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BrandMark } from './BrandMark';
-import { PHONE_DISPLAY, PHONE_TEL } from '@/lib/site';
 import s from './home.module.css';
 
 const LINKS = [
@@ -65,9 +64,6 @@ export function HomeHeader() {
           <Link href={BOOK_HREF} className={s.navBook}>
             Book online
           </Link>
-          <a href={`tel:${PHONE_TEL}`} className={s.navPhone}>
-            or call <strong>{PHONE_DISPLAY}</strong>
-          </a>
         </div>
 
         <button
@@ -103,7 +99,6 @@ export function HomeHeader() {
         <Link href={BOOK_HREF} className={s.mobileMenuBook} onClick={close}>
           Book online
         </Link>
-        <a href={`tel:${PHONE_TEL}`}>Call {PHONE_DISPLAY}</a>
         <Link href="/login" onClick={close}>
           Contractor log in
         </Link>
