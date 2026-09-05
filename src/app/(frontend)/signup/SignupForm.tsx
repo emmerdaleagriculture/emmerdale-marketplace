@@ -8,7 +8,7 @@ import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
-export function SignupForm() {
+export function SignupForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(signUpAction, emptyFormState);
   const [captchaToken, setCaptchaToken] = useState('');
   // Render timestamp for the server-side minimum-fill-time bot trap. Set after
@@ -35,6 +35,7 @@ export function SignupForm() {
       {state.error && <p className={f.error}>{state.error}</p>}
 
       <input type="hidden" name="form_ts" value={formTs} />
+      {next && <input type="hidden" name="next" value={next} />}
       {/* Honeypot — real users never see or fill this. */}
       <div
         aria-hidden="true"

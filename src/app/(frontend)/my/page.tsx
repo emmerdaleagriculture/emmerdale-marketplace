@@ -58,6 +58,9 @@ export default async function MyJobsPage() {
       .from('job_submissions')
       .select('id, status, created_at, postcode, service_verbatim, raw_text, client_token, service:services(name), county:counties(name)')
       .eq('customer_id', user.id)
+      // A repeat the customer started and backed out of is a draft they never
+      // sent. It is not one of their jobs and has nothing to show.
+      .not('status', 'in', '(draft,abandoned)')
       .order('created_at', { ascending: false })
       .limit(100),
     admin

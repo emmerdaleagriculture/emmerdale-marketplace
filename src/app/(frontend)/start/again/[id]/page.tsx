@@ -72,6 +72,12 @@ export default async function OrderAgainPage({ params }: { params: Promise<{ id:
     access_notes: src.access_notes ?? '',
     obstacles: src.obstacles ?? '',
     service_attributes: (src.service_attributes as Record<string, string>) ?? {},
+    // The field was mapped and the gate measured last time. Asking again — and
+    // silently dropping both if they don't — is not "copied from last time".
+    boundary: src.boundary ?? null,
+    area_mapped_value: src.area_mapped_value ?? null,
+    gate_w3w: src.gate_w3w ?? null,
+    gate_width: src.gate_width ?? null,
     parse_confidence: {},
     missing_fields: [],
   };

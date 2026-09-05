@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SignupForm } from './SignupForm';
-import { getUser } from '@/lib/auth';
+import { getUser, safeInternalPath } from '@/lib/auth';
 import a from '../auth.module.css';
 
 export const metadata: Metadata = {
@@ -13,8 +13,15 @@ export const metadata: Metadata = {
   alternates: { canonical: '/signup' },
 };
 
-export default async function SignupPage() {
-  if (await getUser()) redirect('/account');
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const next = safeInternalPath((await searchParams).next);
+  // Already signed in: a customer arriving from a job link goes back to it,
+  // a contractor goes to their account as before.
+  if (await getUser()) redirect(next ?? '/account');
 
   return (
     <div className={a.wrap}>
@@ -30,7 +37,7 @@ export default async function SignupPage() {
             business and the counties you cover — then we review your application
             and email you when you’re approved.
           </p>
-          <SignupForm />
+          <SignupForm next={next ?? undefined} />
         </div>
       </main>
       <SiteFooter />

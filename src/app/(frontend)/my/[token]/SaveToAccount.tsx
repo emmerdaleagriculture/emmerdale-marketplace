@@ -14,7 +14,7 @@ const EMPTY: FormState = {};
  * only place an account can start — and once one job is attached, the rest of
  * that email's jobs come with it.
  */
-export function SaveToAccount({ token }: { token: string }) {
+export function SaveToAccount({ token, signedIn }: { token: string; signedIn: boolean }) {
   const [state, action, pending] = useActionState(claimJobAction, EMPTY);
 
   return (
@@ -23,7 +23,16 @@ export function SaveToAccount({ token }: { token: string }) {
         <strong>Keep this job.</strong> Save it to an account and you can order the same
         work again in a couple of taps, or have it go out on its own every few months.
       </p>
-      {state.ok ? (
+      {!signedIn ? (
+        <p>
+          <Link className={f.btnPrimary} href={`/signup?next=${encodeURIComponent(`/my/${token}`)}`}>
+            Create an account
+          </Link>{' '}
+          <Link href={`/login?next=${encodeURIComponent(`/my/${token}`)}`}>
+            or log in if you already have one
+          </Link>
+        </p>
+      ) : state.ok ? (
         <p className={f.success}>
           {state.message} <Link href="/my">See your jobs →</Link>
         </p>

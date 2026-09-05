@@ -48,7 +48,10 @@ export default async function ClientPortalPage({
   const {
     data: { user },
   } = await (await createClient()).auth.getUser();
-  const claimable = Boolean(user) && !js.customer_id;
+  // Shown to signed-out customers too: they are the whole audience for it,
+  // and gating on a session made the feature reachable only by people who
+  // already had a contractor login.
+  const claimable = !js.customer_id;
   const mine = Boolean(user) && js.customer_id === user?.id;
 
   const service = (js.service as { id: number; name: string } | null)?.name ?? js.service_verbatim;
@@ -151,7 +154,7 @@ export default async function ClientPortalPage({
             />
           )}
 
-          {claimable && <SaveToAccount token={token} />}
+          {claimable && <SaveToAccount token={token} signedIn={Boolean(user)} />}
           {mine && (
             <p className={a.sub}>
               This job is on your account. <Link href="/my">See all your jobs →</Link>

@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
+import { safeInternalPath } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
@@ -102,7 +103,11 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
   // project still requires confirmation, there's no session and we fall through
   // to the "check your email" message instead.
   if (signUp.session) {
-    redirect('/onboarding');
+    // A customer signing up from their job link is not becoming a contractor:
+    // onboarding writes a contractors row with NOT NULL business columns and
+    // would strand them. Send them back where they came from.
+    const next = safeInternalPath(String(formData.get('next') ?? '')) ;
+    redirect(next ?? '/onboarding');
   }
 
   return { ok: true, message: SUCCESS_MESSAGE };

@@ -219,6 +219,13 @@ export type ParseResult = {
   access_notes: string;
   obstacles: string;
   service_attributes: Record<string, string>;
+  /** Carried through a repeat order, where the customer mapped the field and
+   *  gave the gate details once and should not be asked again. Empty on a
+   *  first-time parse — nothing has been drawn yet. */
+  boundary: unknown | null;
+  area_mapped_value: number | null;
+  gate_w3w: string | null;
+  gate_width: string | null;
   parse_confidence: Record<string, number>;
   missing_fields: string[];
 };

@@ -34,15 +34,29 @@ export async function claimJobAction(_prev: FormState, formData: FormData): Prom
     .eq('client_token', token)
     .maybeSingle();
 
-  await admin.from('customers').upsert(
+  const { data: existing } = await admin
+    .from('customers')
+    .select('contact_name, phone')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  // Fill gaps, never overwrite: claiming a second job whose contact fields are
+  // blank must not wipe the name and phone the first one supplied.
+  const { error: customerError } = await admin.from('customers').upsert(
     {
       id: user.id,
       email: user.email ?? js?.contact_email ?? '',
-      contact_name: js?.contact_name ?? null,
-      phone: js?.contact_phone ?? null,
+      contact_name: existing?.contact_name ?? js?.contact_name ?? null,
+      phone: existing?.phone ?? js?.contact_phone ?? null,
     },
     { onConflict: 'id' },
   );
+  if (customerError) {
+    // Unread, this surfaced later as a foreign-key failure on the claim, which
+    // says nothing about what actually went wrong.
+    console.error('[customer] upsert failed:', customerError);
+    return { error: 'That didn’t go through — please try again.' };
+  }
 
   const { data, error } = await admin.rpc('claim_submission_for_customer', {
     p_token: token,
@@ -97,8 +111,22 @@ export async function scheduleJobAction(_prev: FormState, formData: FormData): P
     .maybeSingle();
   if (!owned) return { error: 'That job isn’t on your account.' };
 
+  const { data: already } = await admin
+    .from('job_schedules')
+    .select('id')
+    .eq('source_submission_id', submissionId)
+    .eq('active', true)
+    .maybeSingle();
+  if (already) return { error: 'This job is already set to repeat.' };
+
+  // Day arithmetic in JS overflows — 31 August plus 6 months is 31 February,
+  // which becomes 2 or 3 March — while the SQL side uses make_interval, which
+  // clamps. Clamping here keeps the first run consistent with every one after.
   const next = new Date();
+  const day = next.getDate();
+  next.setDate(1);
   next.setMonth(next.getMonth() + months);
+  next.setDate(Math.min(day, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
 
   const { error } = await admin.from('job_schedules').insert({
     customer_id: user.id,
@@ -129,12 +157,18 @@ export async function cancelScheduleAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: 'Sign in to change this.' };
 
-  const { error } = await createServiceRoleClient()
+  const { data: stopped, error } = await createServiceRoleClient()
     .from('job_schedules')
     .update({ active: false })
     .eq('id', id)
-    .eq('customer_id', user.id);
+    .eq('customer_id', user.id)
+    .select('id');
   if (error) return { error: 'That didn’t go through — please try again.' };
+  // Zero rows is not success: a stale page would otherwise say "Stopped" about
+  // a schedule that is still running.
+  if (!stopped || stopped.length === 0) {
+    return { error: 'That repeat is no longer here — refresh to see what’s set.' };
+  }
 
   revalidatePath('/my');
   return { ok: true, message: 'Stopped. Nothing further will go out.' };
@@ -184,6 +218,7 @@ export async function startReorderAction(formData: FormData): Promise<void> {
       lat: src.lat,
       lng: src.lng,
       county_id: src.county_id,
+      urgency: src.urgency,
       access_notes: src.access_notes,
       obstacles: src.obstacles,
       service_attributes: src.service_attributes,
