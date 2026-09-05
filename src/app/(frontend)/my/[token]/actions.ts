@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getStripe } from '@/lib/stripe';
 import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
-import { cancellationSplit } from '@/lib/sealedQuotes/money';
+import { cancellationQuote } from '@/lib/sealedQuotes/cancellation';
 import type { FormState } from '@/lib/form';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -236,21 +236,16 @@ export async function cancelJobAction(_prev: FormState, formData: FormData): Pro
     };
   }
 
-  const { data: payment } = await admin
-    .from('job_payments')
-    .select('id, amount_pence, stripe_payment_intent_id, status')
-    .eq('submission_id', js.id)
-    .eq('status', 'paid')
-    .maybeSingle();
-  if (!payment?.stripe_payment_intent_id) {
+  const quote = await cancellationQuote(js.id);
+  if (!quote) {
     return { error: 'We couldn\u2019t find the payment for this job — please contact us and we\u2019ll cancel it by hand.' };
   }
-
-  const { fee, refund } = cancellationSplit(payment.amount_pence);
+  const { fee, refund, paymentIntentId } = quote;
+  const stripe = getStripe();
 
   try {
-    await getStripe().refunds.create({
-      payment_intent: payment.stripe_payment_intent_id,
+    await stripe.refunds.create({
+      payment_intent: paymentIntentId,
       amount: refund,
       reason: 'requested_by_customer',
       metadata: { submission_id: js.id, kind: 'sq_client_cancellation' },

@@ -8,7 +8,8 @@ import {
   getSubmissionByClientToken,
   signPhotos,
 } from '@/lib/sealedQuotes/data';
-import { cancellationSplit, formatGBP } from '@/lib/sealedQuotes/money';
+import { formatGBP } from '@/lib/sealedQuotes/money';
+import { cancellationQuote } from '@/lib/sealedQuotes/cancellation';
 import { MinimalHeader } from '@/components/MinimalHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { JobSpecCard } from '@/components/job/JobSpecCard';
@@ -54,6 +55,12 @@ export default async function ClientPortalPage({
   // already had a contractor login.
   const claimable = !js.customer_id;
   const mine = Boolean(user) && js.customer_id === user?.id;
+
+  // Only quoted while cancelling is actually on offer — 9.1 is "before the
+  // work starts", and after that 9.3 needs a person, not a button.
+  const cancelQuote = ['awarded', 'contacted', 'scheduled'].includes(js.status)
+    ? await cancellationQuote(js.id)
+    : null;
 
   const service = (js.service as { id: number; name: string } | null)?.name ?? js.service_verbatim;
   const county = (js.county as { name: string } | null)?.name ?? null;
@@ -159,11 +166,11 @@ export default async function ClientPortalPage({
           )}
 
           {/* ── Cancelling before work starts (terms 9.1) ──────────── */}
-          {['awarded', 'contacted', 'scheduled'].includes(js.status) && accepted && (
+          {cancelQuote && (
             <CancelJob
               token={token}
-              refundLabel={formatGBP(cancellationSplit(accepted.client_price_pence).refund)}
-              feeLabel={formatGBP(cancellationSplit(accepted.client_price_pence).fee)}
+              refundLabel={formatGBP(cancelQuote.refund)}
+              feeLabel={formatGBP(cancelQuote.fee)}
             />
           )}
 
