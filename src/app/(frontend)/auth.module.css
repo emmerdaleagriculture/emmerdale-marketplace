@@ -83,3 +83,38 @@
   border-radius: 4px;
   padding: 28px;
 }
+
+/* What the network actually does for a contractor, on the signup page. Four
+   plain statements, not a feature grid — the reader is deciding whether to
+   bother, and the answer is short. */
+.benefits {
+  list-style: none;
+  margin: 0 0 28px;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.benefits li {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 12px;
+  align-items: start;
+  line-height: 1.55;
+}
+.benefits li::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  margin-top: 8px;
+  border-radius: 50%;
+  background: var(--jd-yellow, #ffde00);
+  border: 1px solid var(--jd-green-deep);
+}
+.benefits strong {
+  display: block;
+  color: var(--ink);
+}
+.benefits span {
+  color: var(--ink-2);
+  font-size: 14.5px;
+}
