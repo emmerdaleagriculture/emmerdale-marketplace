@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getStripe } from '@/lib/stripe';
 import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
+import { cancellationQuote } from '@/lib/sealedQuotes/cancellation';
 import type { FormState } from '@/lib/form';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -203,4 +204,80 @@ export async function confirmCompletionAction(
 
   revalidatePath(`/my/${token}`);
   return { ok: true, message: 'Confirmed — thank you. Your contractor will be paid.' };
+}
+
+/**
+ * Cancelling before work starts (terms 9.1, 9.2).
+ *
+ * The refund goes first. If Stripe declines, the job stays live and the
+ * customer is told — cancelling the job and then failing to return the money
+ * is the one order of operations that leaves them worse off than doing
+ * nothing, and it is the state nobody would notice.
+ *
+ * Cancelling after work has started is 9.3 and needs someone to value the work
+ * done, so it is not offered here.
+ */
+export async function cancelJobAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const token = String(formData.get('token') ?? '');
+  if (!isTokenFormat(token)) return { error: 'This link is no longer valid.' };
+
+  const admin = createServiceRoleClient();
+  const { data: js } = await admin
+    .from('job_submissions')
+    .select('id, status')
+    .eq('client_token', token)
+    .is('client_token_revoked_at', null)
+    .maybeSingle();
+  if (!js) return { error: 'This link is no longer valid.' };
+  if (!['awarded', 'contacted', 'scheduled'].includes(js.status)) {
+    return {
+      error:
+        'This job has moved on — once work has started we settle it with you directly. Reply to any email from us and we\u2019ll sort it.',
+    };
+  }
+
+  const quote = await cancellationQuote(js.id);
+  if (!quote) {
+    return { error: 'We couldn\u2019t find the payment for this job — please contact us and we\u2019ll cancel it by hand.' };
+  }
+  const { fee, refund, paymentIntentId } = quote;
+  const stripe = getStripe();
+
+  try {
+    await stripe.refunds.create({
+      payment_intent: paymentIntentId,
+      amount: refund,
+      reason: 'requested_by_customer',
+      metadata: { submission_id: js.id, kind: 'sq_client_cancellation' },
+    });
+  } catch (err) {
+    console.error('[sq] refund failed:', err);
+    return {
+      error:
+        'We couldn\u2019t process the refund just now, so nothing has been cancelled. Try again shortly, or contact us and we\u2019ll do it by hand.',
+    };
+  }
+
+  const { data, error } = await admin.rpc('cancel_job_by_client', {
+    p_submission_id: js.id,
+    p_refund_pence: refund,
+    p_fee_pence: fee,
+  });
+  if (error) {
+    // The money is already back with them, so this is an operator problem, not
+    // a customer one — say so plainly rather than asking them to try again.
+    console.error('[sq] cancel_job_by_client failed AFTER refund:', error);
+    return {
+      error:
+        'Your refund has been sent, but something went wrong finishing the cancellation. We\u2019ve been alerted and will confirm shortly.',
+    };
+  }
+  const res = data as { ok: boolean };
+  if (!res.ok) return { error: 'This job has moved on — refresh to see where it is.' };
+
+  revalidatePath(`/my/${token}`);
+  return {
+    ok: true,
+    message: `Cancelled. £${(refund / 100).toFixed(2)} is on its way back to your card, usually within 5 working days.`,
+  };
 }

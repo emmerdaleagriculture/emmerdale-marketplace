@@ -50,3 +50,47 @@ export function poundsInputToPence(raw: string): number | null {
   const pence = Math.round(Number(cleaned) * 100);
   return pence > 0 ? pence : null;
 }
+
+/**
+ * Cancellation fee (terms 9.2 and the Cancellation Schedule).
+ *
+ * Charged on OUR MARGIN, not on the whole price. 15% of the gross would retain
+ * more than the job earns — £9,075 against a £5,500 margin on a £60,500 job —
+ * which is a penalty, not a pre-estimate of loss.
+ *
+ * The Stripe fee is added because Stripe keeps it on a refund. Without it the
+ * fee is 1.36% of the gross against a 1.5% + 20p charge, so every cancellation
+ * would lose money on every job size. Each part is a cost actually incurred,
+ * which is what makes the total defensible rather than arbitrary.
+ */
+export const DEFAULT_CANCELLATION_FEE_RATE = 0.15;
+
+export type CancellationSplit = {
+  /** Retained: the share of margin, plus the processing fee Stripe keeps. */
+  fee: number;
+  /** Refunded to the customer's card. */
+  refund: number;
+  marginShare: number;
+  stripeFee: number;
+};
+
+export function cancellationSplit(
+  pricePence: number,
+  marginPence: number,
+  stripeFeePence: number,
+  rate: number = DEFAULT_CANCELLATION_FEE_RATE,
+): CancellationSplit {
+  // Never more than the margin itself, whatever the rate is set to, and never
+  // negative on a job priced at or below cost.
+  const marginShare = Math.max(0, Math.round(Math.max(0, marginPence) * rate));
+  const stripeFee = Math.max(0, Math.round(stripeFeePence));
+  // The refund can never exceed what they paid, and the fee can never swallow
+  // the whole payment: a customer is always refunded something.
+  const fee = Math.min(marginShare + stripeFee, Math.max(0, pricePence));
+  return { fee, refund: pricePence - fee, marginShare, stripeFee };
+}
+
+/** Stripe's UK card pricing, used only when the real figure can't be read. */
+export function estimateStripeFee(pricePence: number): number {
+  return Math.round(pricePence * 0.015) + 20;
+}

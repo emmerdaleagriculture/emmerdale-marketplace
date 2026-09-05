@@ -46,6 +46,24 @@ export async function POST(request: Request) {
         if (isJobPayment(session)) {
           // Payment cleared → transactional award. Idempotent on replay.
           const admin = createServiceRoleClient();
+          // The payment intent is the only handle a refund can be issued
+          // against, and the column for it had never been written — so a
+          // cancellation had nothing to refund. Stored before the award so a
+          // failure here is visible in the same alert.
+          const intentId =
+            typeof session.payment_intent === 'string'
+              ? session.payment_intent
+              : (session.payment_intent?.id ?? null);
+          if (intentId) {
+            const { error: intentError } = await admin
+              .from('job_payments')
+              .update({ stripe_payment_intent_id: intentId })
+              .eq('stripe_checkout_session_id', session.id);
+            if (intentError) {
+              console.error('[stripe] could not store the payment intent:', intentError);
+            }
+          }
+
           const { data, error } = await admin.rpc('award_submission', {
             p_session_id: session.id,
           });

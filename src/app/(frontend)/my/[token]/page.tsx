@@ -9,6 +9,7 @@ import {
   signPhotos,
 } from '@/lib/sealedQuotes/data';
 import { formatGBP } from '@/lib/sealedQuotes/money';
+import { cancellationQuote } from '@/lib/sealedQuotes/cancellation';
 import { MinimalHeader } from '@/components/MinimalHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { JobSpecCard } from '@/components/job/JobSpecCard';
@@ -17,6 +18,7 @@ import { PriceList, type ClientQuoteView } from './PriceList';
 import { ConfirmDone } from './ConfirmDone';
 import { PayNow } from './PayNow';
 import { SaveToAccount } from './SaveToAccount';
+import { CancelJob } from './CancelJob';
 import { createClient } from '@/lib/supabase/server';
 import a from '../../auth.module.css';
 import m from './my.module.css';
@@ -53,6 +55,12 @@ export default async function ClientPortalPage({
   // already had a contractor login.
   const claimable = !js.customer_id;
   const mine = Boolean(user) && js.customer_id === user?.id;
+
+  // Only quoted while cancelling is actually on offer — 9.1 is "before the
+  // work starts", and after that 9.3 needs a person, not a button.
+  const cancelQuote = ['awarded', 'contacted', 'scheduled'].includes(js.status)
+    ? await cancellationQuote(js.id)
+    : null;
 
   const service = (js.service as { id: number; name: string } | null)?.name ?? js.service_verbatim;
   const county = (js.county as { name: string } | null)?.name ?? null;
@@ -120,6 +128,17 @@ export default async function ClientPortalPage({
                 quotes={quotes as ClientQuoteView[]}
                 ratingWeight={ratingWeight}
               />
+              {/* The terms open with "read these before you accept a price",
+                  so this is where they have to be — not only in the footer. */}
+              <p className={a.sub}>
+                Accepting a price means agreeing to our{' '}
+                <a href="/legal/customer-terms-and-conditions.pdf">
+                  customer terms and conditions
+                </a>{' '}
+                and{' '}
+                <a href="/legal/customer-service-charter.pdf">service charter</a>, which
+                set out what we do if anything goes wrong.
+              </p>
             </>
           )}
 
@@ -144,6 +163,15 @@ export default async function ClientPortalPage({
               </p>
               <p>They&rsquo;ll be in touch within 24 hours to arrange it.</p>
             </div>
+          )}
+
+          {/* ── Cancelling before work starts (terms 9.1) ──────────── */}
+          {cancelQuote && (
+            <CancelJob
+              token={token}
+              refundLabel={formatGBP(cancelQuote.refund)}
+              feeLabel={formatGBP(cancelQuote.fee)}
+            />
           )}
 
           {/* ── Contractor says it's finished ──────────────────────── */}

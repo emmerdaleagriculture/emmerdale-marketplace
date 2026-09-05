@@ -81,6 +81,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
   const signIn = `Sign in to view it: ${jobLink}`;
   const first = p.contact_name ? String(p.contact_name).split(/\s+/)[0] : 'there';
   const portal = `${SITE_URL}/my/${p.client_token ?? ''}`;
+  const gbp = (pence: unknown) =>
+    typeof pence === 'number' ? `£${(pence / 100).toFixed(2)}` : '—';
 
   switch (kind) {
     // ── Open-access board (existing) ──────────────────────────────────────
@@ -305,6 +307,16 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `payment is released and on its way.\n\nYour won jobs: ${SITE_URL}/won`,
       };
 
+    case 'sq_job_cancelled_contractor':
+      return {
+        subject: `Job cancelled — ${p.contact_name ?? 'the customer'}`,
+        text:
+          `${p.contact_name ?? 'The customer'} has cancelled the job you were booked ` +
+          `for, before work started. You don't need to do anything, and nothing is ` +
+          `owed by you.\n\nIf you'd already set aside a date, let us know — we'll ` +
+          `look at what else is going out in your area.\n\n${SITE_URL}/won`,
+      };
+
     // ── Sealed-quote funnel: operator alerts ──────────────────────────────
     case 'sq_unmatched_needs_classification':
       return {
@@ -314,6 +326,18 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `distributed. In their words: “${p.service_verbatim ?? '—'}”.\n\n` +
           `Classify it: ${SITE_URL}/admin/submissions/${p.submission_id}`,
       };
+    case 'sq_job_cancelled_admin':
+      return {
+        subject: `Cancelled after payment — refund due`,
+        text:
+          `A customer cancelled a paid job on their job page (terms 9.1).\n\n` +
+          `Refunded to them: ${gbp(p.refund_pence)}\n` +
+          `Retained (15% fee):  ${gbp(p.fee_pence)}\n\n` +
+          `The Stripe refund was requested automatically — check it cleared, and ` +
+          `that the contractor has been stood down.\n` +
+          `${SITE_URL}/admin/submissions/${p.submission_id}`,
+      };
+
     case 'sq_payment_needs_refund':
       return {
         subject: `MANUAL REFUND NEEDED: payment into a closed job`,
