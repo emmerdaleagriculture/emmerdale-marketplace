@@ -191,7 +191,15 @@ export async function parseJobAction(
   const geoPromise: Promise<CountyResolution | null> = postcodeCandidate
     ? resolveCounty(postcodeCandidate)
     : Promise.resolve(null);
-  const servicesPromise = getServices();
+  // Started here, awaited well below — and there is an early return between
+  // the two. Left floating, a rejection in that window has no handler, which
+  // under Node's default takes the process down instead of returning the error
+  // state the caller expects. Reference data is already tolerant of coming back
+  // empty, so absorb it the same way.
+  const servicesPromise = getServices().catch((err) => {
+    console.error('[jobParse] services read failed:', err);
+    return [];
+  });
 
   const admin = createServiceRoleClient();
   const draftPromise = admin
