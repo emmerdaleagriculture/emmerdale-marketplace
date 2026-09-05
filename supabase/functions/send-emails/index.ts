@@ -413,6 +413,13 @@ Deno.serve(async (req) => {
     if (Array.isArray(data?.value)) sqAllowlist = data.value.map((v: unknown) => String(v).toLowerCase());
   } catch { /* table may not exist yet — no redirect */ }
 
+  // Addresses proven undeliverable, read once per drain.
+  const dead = new Set<string>();
+  try {
+    const { data } = await supabase.from('undeliverable_emails').select('email');
+    for (const r of data ?? []) dead.add(String(r.email).toLowerCase());
+  } catch { /* table may not exist yet — send as before */ }
+
   const { data: pending } = await supabase
     .from('pending_emails')
     .select('id, kind, to_email, payload, attempts')
@@ -456,7 +463,21 @@ Deno.serve(async (req) => {
         ? `quotes+${e.payload.token}@${REPLY_DOMAIN}`
         : undefined;
 
+    // An address that has already hard-bounced will bounce again. Sending
+    // anyway costs reputation and buries the real failures.
+    if (dead.has(to.toLowerCase())) {
+      await supabase
+        .from('pending_emails')
+        .update({ status: 'failed', delivery_status: 'bounced',
+                  delivery_detail: 'not sent — address has already hard-bounced',
+                  delivery_at: new Date().toISOString() })
+        .eq('id', e.id);
+      failed++;
+      continue;
+    }
+
     let success = false;
+    let messageId: string | null = null;
     try {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -467,6 +488,14 @@ Deno.serve(async (req) => {
         }),
       });
       success = res.ok;
+      // The id is how a later bounce webhook finds its way back to this row.
+      // Losing it costs the delivery record, not the send.
+      if (success) {
+        try {
+          const body = await res.json();
+          messageId = typeof body?.id === 'string' ? body.id : null;
+        } catch { /* accepted but unparseable — still sent */ }
+      }
     } catch {
       success = false;
     }
@@ -474,7 +503,8 @@ Deno.serve(async (req) => {
     if (success) {
       await supabase
         .from('pending_emails')
-        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .update({ status: 'sent', sent_at: new Date().toISOString(),
+                  provider_message_id: messageId })
         .eq('id', e.id);
       sent++;
     } else {

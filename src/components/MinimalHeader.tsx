@@ -3,7 +3,7 @@ import h from '@/components/SiteHeader.module.css';
 
 /**
  * Static brand bar for anonymous, token-addressed pages (/start, /quote/…,
- * /my/…). Deliberately NOT <SiteHeader>: its HeaderAuthNav statically imports
+ * /my/…). Deliberately NOT <SiteHeader>: its SiteNav statically imports
  * the Supabase browser client (~50kB gz of client JS) that an anonymous
  * visitor never needs.
  */

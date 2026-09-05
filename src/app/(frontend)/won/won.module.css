@@ -57,3 +57,36 @@
   color: var(--ink-3);
   margin-bottom: 2px;
 }
+
+/*
+ * The details are for acting on, not reading: phone dials, email composes,
+ * postcode opens directions, the gate opens what3words. On a phone — where
+ * this page is mostly opened, standing next to a truck — a number you have to
+ * memorise and retype is a number that doesn't get rung.
+ */
+.detailGrid > div > div:not(.dLabel) {
+  overflow-wrap: anywhere;
+}
+
+.dLink {
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.dLink:hover {
+  text-decoration: none;
+}
+
+@media (max-width: 620px) {
+  .card {
+    padding: 14px;
+  }
+  /* Tap targets, not text: give each value room for a finger. */
+  .detailGrid {
+    gap: 14px 18px;
+  }
+  .dLink {
+    display: inline-block;
+    padding: 3px 0;
+  }
+}

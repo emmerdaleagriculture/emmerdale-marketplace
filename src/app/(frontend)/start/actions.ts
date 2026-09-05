@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import { emailDeliveryError } from '@/lib/email/deliverable';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { normalisePostcode, resolveCounty, type CountyResolution } from '@/lib/postcodes';
@@ -397,6 +398,13 @@ export async function confirmJobAction(
     return { error: parsed.error.issues[0]?.message ?? 'Please check the form.' };
   }
   const d = parsed.data;
+
+  // Every promise we make from here — portal link, quote alert, payment link,
+  // completion — is delivered by email. An address that parses but does not
+  // exist loses all of it silently, so a dead domain stops the submission
+  // here, while the customer is still on the page to fix it.
+  const emailError = await emailDeliveryError(d.contact_email);
+  if (emailError) return { error: emailError };
 
   const admin = createServiceRoleClient();
   const { data: draft } = await admin

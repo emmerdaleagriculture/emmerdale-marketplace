@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import { emailDeliveryError } from '@/lib/email/deliverable';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { resolveCounty } from '@/lib/postcodes';
@@ -47,6 +48,14 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Please check the form.' };
   }
+
+  // A quote we can't deliver is a lead we never had — check the domain exists
+  // while they can still correct it.
+  const emailError = await emailDeliveryError(
+    parsed.data.email,
+    'Our reply goes to this address',
+  );
+  if (emailError) return { error: emailError };
   const d = parsed.data;
   const label = CATEGORIES[d.category];
 

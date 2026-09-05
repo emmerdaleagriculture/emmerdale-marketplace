@@ -1,9 +1,9 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
 import { parseReplyEmail, stripReply } from '@/lib/quoteParse/replyLlm';
 import { notifyAdmins } from '@/lib/adminNotify';
+import { verifySvixSignature } from '@/lib/webhooks/svix';
 
 /**
  * POST /api/inbound-email — Resend inbound webhook for contractor replies to
@@ -19,24 +19,6 @@ import { notifyAdmins } from '@/lib/adminNotify';
 const CONFIDENCE_THRESHOLD = 0.7;
 const MAX_LLM_CALLS_PER_INVITATION = 3;
 
-function verifySvix(body: string, headers: Headers, secret: string): boolean {
-  const id = headers.get('svix-id');
-  const timestamp = headers.get('svix-timestamp');
-  const sigHeader = headers.get('svix-signature');
-  if (!id || !timestamp || !sigHeader) return false;
-  // Reject stale timestamps (5 min tolerance) to blunt replays.
-  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
-
-  const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
-  const expected = createHmac('sha256', key).update(`${id}.${timestamp}.${body}`).digest();
-  for (const part of sigHeader.split(' ')) {
-    const [, sig] = part.split(',');
-    if (!sig) continue;
-    const given = Buffer.from(sig, 'base64');
-    if (given.length === expected.length && timingSafeEqual(given, expected)) return true;
-  }
-  return false;
-}
 
 function extractToken(addresses: string[]): string | null {
   for (const addr of addresses) {
@@ -66,7 +48,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.text();
-  if (!verifySvix(body, request.headers, secret)) {
+  if (!verifySvixSignature(body, request.headers, secret)) {
     return NextResponse.json({ error: 'bad signature' }, { status: 401 });
   }
 
