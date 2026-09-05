@@ -847,6 +847,8 @@ export type Database = {
           expires_at: string
           id: string
           paid_at: string | null
+          refunded_at: string | null
+          refunded_pence: number | null
           status: string
           stripe_checkout_session_id: string
           stripe_payment_intent_id: string | null
@@ -860,6 +862,8 @@ export type Database = {
           expires_at: string
           id?: string
           paid_at?: string | null
+          refunded_at?: string | null
+          refunded_pence?: number | null
           status?: string
           stripe_checkout_session_id: string
           stripe_payment_intent_id?: string | null
@@ -873,6 +877,8 @@ export type Database = {
           expires_at?: string
           id?: string
           paid_at?: string | null
+          refunded_at?: string | null
+          refunded_pence?: number | null
           status?: string
           stripe_checkout_session_id?: string
           stripe_payment_intent_id?: string | null
@@ -1048,6 +1054,7 @@ export type Database = {
           boundary: Json | null
           client_token: string | null
           client_token_revoked_at: string | null
+          completed_by_contractor_at: string | null
           confirmed_at: string | null
           contact_email: string | null
           contact_name: string | null
@@ -1100,6 +1107,7 @@ export type Database = {
           boundary?: Json | null
           client_token?: string | null
           client_token_revoked_at?: string | null
+          completed_by_contractor_at?: string | null
           confirmed_at?: string | null
           contact_email?: string | null
           contact_name?: string | null
@@ -1152,6 +1160,7 @@ export type Database = {
           boundary?: Json | null
           client_token?: string | null
           client_token_revoked_at?: string | null
+          completed_by_contractor_at?: string | null
           confirmed_at?: string | null
           contact_email?: string | null
           contact_name?: string | null
@@ -1748,6 +1757,7 @@ export type Database = {
         Args: { p_default: number; p_key: string }
         Returns: number
       }
+      auto_confirm_due_completions: { Args: never; Returns: number }
       award_submission: { Args: { p_session_id: string }; Returns: Json }
       begin_acceptance: {
         Args: {
@@ -1756,6 +1766,14 @@ export type Database = {
           p_client_token: string
           p_session_expires_at: string
           p_session_id: string
+        }
+        Returns: Json
+      }
+      cancel_job_by_client: {
+        Args: {
+          p_fee_pence: number
+          p_refund_pence: number
+          p_submission_id: string
         }
         Returns: Json
       }
@@ -1871,6 +1889,7 @@ export type Database = {
         Returns: Json
       }
       void_acceptance: { Args: { p_session_id: string }; Returns: Json }
+      working_days_since: { Args: { p_from: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never

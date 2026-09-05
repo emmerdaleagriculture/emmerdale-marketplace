@@ -50,3 +50,15 @@ export function poundsInputToPence(raw: string): number | null {
   const pence = Math.round(Number(cleaned) * 100);
   return pence > 0 ? pence : null;
 }
+
+/**
+ * Cancellation fee (terms 9.2 and the Cancellation Schedule): we retain 15%
+ * and refund 85%. Here rather than beside the action so the page can quote the
+ * customer the exact figure before they commit to it.
+ */
+export const CANCELLATION_FEE_RATE = 0.15;
+
+export function cancellationSplit(pricePence: number): { fee: number; refund: number } {
+  const fee = Math.round(pricePence * CANCELLATION_FEE_RATE);
+  return { fee, refund: pricePence - fee };
+}

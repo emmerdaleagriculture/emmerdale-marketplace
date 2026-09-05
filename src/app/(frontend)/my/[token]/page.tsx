@@ -8,7 +8,7 @@ import {
   getSubmissionByClientToken,
   signPhotos,
 } from '@/lib/sealedQuotes/data';
-import { formatGBP } from '@/lib/sealedQuotes/money';
+import { cancellationSplit, formatGBP } from '@/lib/sealedQuotes/money';
 import { MinimalHeader } from '@/components/MinimalHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { JobSpecCard } from '@/components/job/JobSpecCard';
@@ -17,6 +17,7 @@ import { PriceList, type ClientQuoteView } from './PriceList';
 import { ConfirmDone } from './ConfirmDone';
 import { PayNow } from './PayNow';
 import { SaveToAccount } from './SaveToAccount';
+import { CancelJob } from './CancelJob';
 import { createClient } from '@/lib/supabase/server';
 import a from '../../auth.module.css';
 import m from './my.module.css';
@@ -155,6 +156,15 @@ export default async function ClientPortalPage({
               </p>
               <p>They&rsquo;ll be in touch within 24 hours to arrange it.</p>
             </div>
+          )}
+
+          {/* ── Cancelling before work starts (terms 9.1) ──────────── */}
+          {['awarded', 'contacted', 'scheduled'].includes(js.status) && accepted && (
+            <CancelJob
+              token={token}
+              refundLabel={formatGBP(cancellationSplit(accepted.client_price_pence).refund)}
+              feeLabel={formatGBP(cancellationSplit(accepted.client_price_pence).fee)}
+            />
           )}
 
           {/* ── Contractor says it's finished ──────────────────────── */}
