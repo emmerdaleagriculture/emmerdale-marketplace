@@ -1,11 +1,18 @@
 /**
  * Clear ALL sealed-quote funnel data — submissions, invitations, quotes,
- * payments, events, emails, photos — and reset contractor ratings that test
- * runs produced. For the test period, when every row in this funnel is test
+ * payments, events, emails, photos — plus the page-interaction beacons, and
+ * reset contractor ratings that test runs produced. For the test period, when every row in this funnel is test
  * data. Touches NOTHING outside the funnel (jobs, leads, contractors'
  * profiles stay).
  *
- * Run between test rounds:  npx tsx scripts/clearSealedQuoteTestData.ts
+ * Run between test rounds:
+ *   npx tsx scripts/clearSealedQuoteTestData.ts
+ *
+ * IT READS .env.local, which after the 2026-09-04 migration still points at
+ * the OLD project kept for rollback. Pass the live project explicitly, or this
+ * wipes the rollback and leaves production untouched:
+ *
+ *   NEXT_PUBLIC_SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… npx tsx scripts/…
  */
 import { readFileSync } from 'node:fs';
 import ws from 'ws';
@@ -75,6 +82,11 @@ async function main() {
   // Funnel emails (leave open-access board kinds alone).
   const { error: mailErr } = await admin.from('pending_emails').delete().like('kind', 'sq_%');
   console.log(mailErr ? `  ✗ pending_emails: ${mailErr.message}` : '  ✓ pending_emails (sq_* kinds)');
+
+  // Browsing recorded while testing: clicks and scroll depth on / and /start.
+  // Not part of the funnel, but it is test data by the same argument, and
+  // leaving it makes the first real heat map a map of us.
+  await wipe('page_events');
 
   // Ratings produced by tests are gone — reset the denormalised columns.
   const { error: ctErr } = await admin
