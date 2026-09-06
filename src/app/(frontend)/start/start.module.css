@@ -167,6 +167,28 @@
   border: 1px solid var(--jd-green-deep);
 }
 
+/* On a phone the list now sits above the box, and seven lines at desktop
+   spacing push the box below the fold for exactly the ad traffic this page
+   exists for. Tighter leading, smaller gaps, less padding — the words stay. */
+@media (max-width: 620px) {
+  .reassure {
+    gap: 5px;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .reassure li {
+    grid-template-columns: 12px 1fr;
+    gap: 7px;
+  }
+  .reassure li::before {
+    width: 6px;
+    height: 6px;
+    margin-top: 5px;
+  }
+}
+
 /*
  * The way out of the form. Quiet enough not to compete with the submit
  * button, present enough that someone stuck at 9pm with an odd job can see
