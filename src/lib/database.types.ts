@@ -1513,9 +1513,13 @@ export type Database = {
         Row: {
           attempts: number
           created_at: string
+          delivery_at: string | null
+          delivery_detail: string | null
+          delivery_status: string | null
           id: string
           kind: string
           payload: Json
+          provider_message_id: string | null
           sent_at: string | null
           status: string
           to_email: string
@@ -1523,9 +1527,13 @@ export type Database = {
         Insert: {
           attempts?: number
           created_at?: string
+          delivery_at?: string | null
+          delivery_detail?: string | null
+          delivery_status?: string | null
           id?: string
           kind: string
           payload?: Json
+          provider_message_id?: string | null
           sent_at?: string | null
           status?: string
           to_email: string
@@ -1533,9 +1541,13 @@ export type Database = {
         Update: {
           attempts?: number
           created_at?: string
+          delivery_at?: string | null
+          delivery_detail?: string | null
+          delivery_status?: string | null
           id?: string
           kind?: string
           payload?: Json
+          provider_message_id?: string | null
           sent_at?: string | null
           status?: string
           to_email?: string
@@ -1637,6 +1649,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      undeliverable_emails: {
+        Row: {
+          bounces: number
+          email: string
+          first_seen_at: string
+          last_detail: string | null
+          last_kind: string | null
+          last_seen_at: string
+        }
+        Insert: {
+          bounces?: number
+          email: string
+          first_seen_at?: string
+          last_detail?: string | null
+          last_kind?: string | null
+          last_seen_at?: string
+        }
+        Update: {
+          bounces?: number
+          email?: string
+          first_seen_at?: string
+          last_detail?: string | null
+          last_kind?: string | null
+          last_seen_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -1857,6 +1896,10 @@ export type Database = {
       run_due_job_schedules: { Args: never; Returns: number }
       sealed_quote_tick: { Args: never; Returns: undefined }
       sq_job_facts: { Args: { p_submission_id: string }; Returns: Json }
+      record_undeliverable_email: {
+        Args: { p_detail: string; p_email: string; p_kind: string }
+        Returns: undefined
+      }
       sq_notify_once: {
         Args: {
           p_kind: string

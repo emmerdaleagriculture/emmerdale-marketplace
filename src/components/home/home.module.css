@@ -673,24 +673,6 @@
   border-color: #fbfaf6;
   color: #fff;
 }
-.navPhone {
-  color: rgba(251, 250, 246, 0.85);
-  font-size: 0.875rem;
-  white-space: nowrap;
-  min-height: 48px;
-  display: inline-flex;
-  align-items: center;
-}
-.navPhone strong {
-  color: #fff;
-  font-weight: 700;
-  margin-left: 4px;
-  font-variant-numeric: tabular-nums;
-}
-.navPhone:hover strong {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
 .navToggle {
   display: none;
   background: transparent;

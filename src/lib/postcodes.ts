@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { memoize, REFERENCE_TTL_MS } from '@/lib/memo';
 
 export type CountyResolution = {
   ok: boolean;
@@ -77,40 +78,65 @@ type SupabaseClient = ReturnType<typeof createServiceRoleClient>;
  * force a manual county pick.
  */
 async function fetchPostcodesIo(url: string): Promise<Response> {
+  // A postcode's district and centroid do not change, so there was nothing for
+  // 'no-store' to protect and a full round trip to postcodes.io sat on the
+  // /start critical path for every submission. Cached for a day, the second
+  // customer in an outcode we have already seen waits for nothing — and we
+  // work two counties at a time, so that repeats far more than it looks.
+  const opts = { next: { revalidate: 86400 }, signal: AbortSignal.timeout(4000) } as const;
   try {
-    return await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(4000) });
+    return await fetch(url, opts);
   } catch {
-    return await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(4000) });
+    // One retry: postcodes.io blips, and a paid click must not dead-end on it.
+    return await fetch(url, { ...opts, signal: AbortSignal.timeout(4000) });
   }
 }
 
 /**
- * Match candidate ONS names against our counties. admin_county names are
- * matched on counties.name; admin_district names go through
- * district_county_map. Returns the distinct county ids found.
+ * Match candidate ONS names against our counties: admin_county names against
+ * counties.name, admin_district names through district_county_map.
+ *
+ * counties (88 rows) and district_county_map (186) are fixed taxonomy, so
+ * they are loaded once and matched in memory. This used to be one or two
+ * database round trips per postcode lookup, on the critical path of the step
+ * the customer waits on.
  */
+const countyIndex = memoize(async () => {
+  const supabase = createServiceRoleClient();
+  const [{ data: counties }, { data: districts }] = await Promise.all([
+    supabase.from('counties').select('id, name'),
+    supabase.from('district_county_map').select('county_id, admin_district, counties(name)'),
+  ]);
+
+  const byName = new Map<string, { id: number; name: string }>();
+  for (const c of counties ?? []) byName.set(c.name.toLowerCase(), { id: c.id, name: c.name });
+
+  const byDistrict = new Map<string, { id: number; name: string }>();
+  for (const d of districts ?? []) {
+    if (!d.county_id || !d.admin_district) continue;
+    byDistrict.set(d.admin_district.toLowerCase(), {
+      id: d.county_id,
+      name: (d.counties as { name: string } | null)?.name ?? '',
+    });
+  }
+  return { byName, byDistrict };
+}, REFERENCE_TTL_MS);
+
 async function matchCounties(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   adminCounties: string[],
   adminDistricts: string[],
 ): Promise<Map<number, string>> {
   const found = new Map<number, string>();
+  const { byName, byDistrict } = await countyIndex();
 
-  if (adminCounties.length) {
-    const { data } = await supabase
-      .from('counties')
-      .select('id, name')
-      .in('name', adminCounties);
-    for (const c of data ?? []) found.set(c.id, c.name);
+  for (const name of adminCounties) {
+    const hit = name ? byName.get(name.toLowerCase()) : undefined;
+    if (hit) found.set(hit.id, hit.name);
   }
-  if (adminDistricts.length) {
-    const { data } = await supabase
-      .from('district_county_map')
-      .select('county_id, counties(name)')
-      .in('admin_district', adminDistricts);
-    for (const d of data ?? []) {
-      if (d.county_id) found.set(d.county_id, (d.counties as { name: string } | null)?.name ?? '');
-    }
+  for (const district of adminDistricts) {
+    const hit = district ? byDistrict.get(district.toLowerCase()) : undefined;
+    if (hit) found.set(hit.id, hit.name);
   }
   return found;
 }

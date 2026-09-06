@@ -9,6 +9,7 @@ import { conditionsFor, isAreaPriced } from '@/lib/jobParse/conditions';
 import { GATE_WIDTH_OPTIONS } from '@/lib/jobParse/access';
 import { areaDiscrepancy } from '@/lib/jobParse/geometry';
 import { BoundaryMap, type BoundaryState } from './BoundaryMap';
+import { EmailField } from '@/components/forms/EmailField';
 import f from '@/components/forms/forms.module.css';
 import a from '@/app/(frontend)/auth.module.css';
 import s from './start.module.css';
@@ -473,10 +474,11 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           <span className={f.label}>Phone</span>
           <input className={f.input} type="tel" name="contact_phone" required autoComplete="tel" />
         </label>
-        <label className={f.field}>
-          <span className={f.label}>Email</span>
-          <input className={f.input} type="email" name="contact_email" required autoComplete="email" />
-        </label>
+        <EmailField
+          name="contact_email"
+          required
+          hint="Your prices and payment link go here."
+        />
         <label className={f.field}>
           <span className={f.label}>Best way to reach you</span>
           <select className={f.input} name="contact_preference" defaultValue="either">

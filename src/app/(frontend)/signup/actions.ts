@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import { emailDeliveryError } from '@/lib/email/deliverable';
 import { redirect } from 'next/navigation';
 import { safeInternalPath } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
@@ -35,6 +36,15 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
     return { error: parsed.error.issues[0]?.message ?? 'Please check the form.' };
   }
   const d = parsed.data;
+
+  // A contractor whose address does not exist never gets the confirmation
+  // mail, never gets an invitation, and looks to us like someone who signed
+  // up and lost interest.
+  const emailError = await emailDeliveryError(
+    d.email,
+    'Your confirmation link and every job invitation go to this address',
+  );
+  if (emailError) return { error: emailError };
 
   // Admin addresses are granted admin purely by matching ADMIN_EMAILS, and email
   // confirmation is off — so a self-service signup with an unclaimed admin email

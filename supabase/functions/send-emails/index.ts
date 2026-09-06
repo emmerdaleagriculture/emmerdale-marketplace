@@ -413,6 +413,13 @@ Deno.serve(async (req) => {
     if (Array.isArray(data?.value)) sqAllowlist = data.value.map((v: unknown) => String(v).toLowerCase());
   } catch { /* table may not exist yet — no redirect */ }
 
+  // Addresses proven undeliverable, read once per drain.
+  const dead = new Set<string>();
+  try {
+    const { data } = await supabase.from('undeliverable_emails').select('email');
+    for (const r of data ?? []) dead.add(String(r.email).toLowerCase());
+  } catch { /* table may not exist yet — send as before */ }
+
   const { data: pending } = await supabase
     .from('pending_emails')
     .select('id, kind, to_email, payload, attempts')
@@ -456,7 +463,21 @@ Deno.serve(async (req) => {
         ? `quotes+${e.payload.token}@${REPLY_DOMAIN}`
         : undefined;
 
+    // An address that has already hard-bounced will bounce again. Sending
+    // anyway costs reputation and buries the real failures.
+    if (dead.has(to.toLowerCase())) {
+      await supabase
+        .from('pending_emails')
+        .update({ status: 'failed', delivery_status: 'bounced',
+                  delivery_detail: 'not sent — address has already hard-bounced',
+                  delivery_at: new Date().toISOString() })
+        .eq('id', e.id);
+      failed++;
+      continue;
+    }
+
     let success = false;
+    let messageId: string | null = null;
     try {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -467,15 +488,36 @@ Deno.serve(async (req) => {
         }),
       });
       success = res.ok;
+      // The id is how a later bounce webhook finds its way back to this row.
+      // Losing it costs the delivery record, not the send.
+      if (success) {
+        try {
+          const body = await res.json();
+          messageId = typeof body?.id === 'string' ? body.id : null;
+        } catch { /* accepted but unparseable — still sent */ }
+      }
     } catch {
       success = false;
     }
 
     if (success) {
-      await supabase
+      // The message is gone whatever happens next, so this row MUST come off
+      // the queue. If provider_message_id isn't there yet — this function
+      // deployed ahead of its migration — the write would fail, the row would
+      // stay pending, and the drain would send the whole batch again a minute
+      // later. Retry without the new column rather than mail everyone twice.
+      const marked = await supabase
         .from('pending_emails')
-        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .update({ status: 'sent', sent_at: new Date().toISOString(),
+                  provider_message_id: messageId })
         .eq('id', e.id);
+      if (marked.error) {
+        console.error('[send-emails] marking sent failed, retrying minimal:', marked.error.message);
+        await supabase
+          .from('pending_emails')
+          .update({ status: 'sent', sent_at: new Date().toISOString() })
+          .eq('id', e.id);
+      }
       sent++;
     } else {
       const attempts = (e.attempts ?? 0) + 1;

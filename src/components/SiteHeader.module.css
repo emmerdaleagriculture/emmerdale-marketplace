@@ -68,22 +68,85 @@
 .cta:hover {
   background: var(--jd-yellow-dark);
 }
-@media (max-width: 620px) {
+.nav form {
+  display: contents;
+}
+
+/* Burger — only ever visible once .nav has been put away. */
+.navToggle {
+  display: none;
+  background: none;
+  border: 0;
+  padding: 6px;
+  margin: -6px;
+  color: var(--white);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.mobileMenu {
+  display: none;
+  flex-basis: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 8px 0 4px;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+.mobileMenu a,
+.mobileMenu button {
+  display: block;
+  width: 100%;
+  padding: 11px 2px;
+  color: var(--white);
+  text-align: left;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+.mobileMenu form {
+  width: 100%;
+}
+.mobileMenu button {
+  background: none;
+  border-width: 0 0 1px 0;
+  cursor: pointer;
+}
+.mobileMenu a:last-child,
+.mobileMenu form:last-child button {
+  border-bottom: 0;
+}
+/* The join CTA keeps its button shape rather than becoming another row. */
+.mobileMenu .cta {
+  width: auto;
+  margin-top: 10px;
+  padding: 11px 18px;
+  border-bottom: 0;
+  text-align: center;
+}
+
+/*
+ * A signed-in contractor carries seven links. They stopped fitting long before
+ * 620px — the row simply overflowed the viewport and took "Log out" with it —
+ * so the switch to a menu happens while there is still room to make it.
+ */
+@media (max-width: 820px) {
   .inner {
     padding: 12px 16px;
-    gap: 8px 12px;
+    gap: 0 12px;
   }
   .brand {
     font-size: 16px;
   }
   .nav {
-    gap: 12px;
-    font-size: 12px;
+    display: none;
   }
-  .nav a:first-child {
-    display: none; /* hide "How it works" on very small screens */
+  .navToggle {
+    display: block;
   }
-  .cta {
-    padding: 8px 12px;
+  .mobileMenu:not([hidden]) {
+    display: flex;
   }
 }

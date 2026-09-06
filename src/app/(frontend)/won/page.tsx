@@ -85,20 +85,58 @@ export default async function WonJobsPage() {
                     </div>
                     <div>
                       <div className={s.dLabel}>Phone</div>
-                      <div>{job.contact_phone}</div>
+                      {/* This page exists to get the contractor talking to the
+                          customer, and most of them open it on a phone. */}
+                      <div>
+                        {job.contact_phone ? (
+                          <a className={s.dLink} href={`tel:${job.contact_phone.replace(/\s+/g, '')}`}>
+                            {job.contact_phone}
+                          </a>
+                        ) : (
+                          '—'
+                        )}
+                      </div>
                     </div>
                     <div>
                       <div className={s.dLabel}>Email</div>
-                      <div>{job.contact_email ?? '—'}</div>
+                      <div>
+                        {job.contact_email ? (
+                          <a className={s.dLink} href={`mailto:${job.contact_email}`}>
+                            {job.contact_email}
+                          </a>
+                        ) : (
+                          '—'
+                        )}
+                      </div>
                     </div>
                     <div>
                       <div className={s.dLabel}>Postcode</div>
-                      <div>{job.postcode ?? '—'}</div>
+                      <div>
+                        {job.postcode ? (
+                          <a
+                            className={s.dLink}
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.postcode)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {job.postcode}
+                          </a>
+                        ) : (
+                          '—'
+                        )}
+                      </div>
                     </div>
                     {job.gate_w3w && (
                       <div>
                         <div className={s.dLabel}>Gate</div>
-                        <div>{`///${job.gate_w3w}`}</div>
+                        <div>
+                          <a
+                            className={s.dLink}
+                            href={`https://what3words.com/${job.gate_w3w}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >{`///${job.gate_w3w}`}</a>
+                        </div>
                       </div>
                     )}
                     <div>
