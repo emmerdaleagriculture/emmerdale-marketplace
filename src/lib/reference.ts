@@ -1,4 +1,5 @@
 import { createStaticClient } from '@/lib/supabase/static';
+import { memoize, REFERENCE_TTL_MS } from '@/lib/memo';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { CountyOption } from '@/components/forms/CountyPicker';
 import type { ServiceOption } from '@/components/forms/ServicePicker';
@@ -9,20 +10,20 @@ import type { ServiceOption } from '@/components/forms/ServicePicker';
  * world-readable (RLS policies counties_read / services_read) and effectively
  * fixed taxonomy, so no per-request fetch is warranted.
  */
-export async function getCounties(): Promise<CountyOption[]> {
+export const getCounties = memoize<CountyOption[]>(async () => {
   const supabase = createStaticClient();
   const { data } = await supabase
     .from('counties')
     .select('id, name, region')
     .order('id');
   return data ?? [];
-}
+}, REFERENCE_TTL_MS);
 
-export async function getServices(): Promise<ServiceOption[]> {
+export const getServices = memoize<ServiceOption[]>(async () => {
   const supabase = createStaticClient();
   const { data } = await supabase.from('services').select('id, name').order('id');
   return data ?? [];
-}
+}, REFERENCE_TTL_MS);
 
 /**
  * Approved-contractor count per county name, for the coverage map. Needs the

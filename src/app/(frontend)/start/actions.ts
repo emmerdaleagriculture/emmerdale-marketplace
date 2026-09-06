@@ -1,5 +1,6 @@
 'use server';
 
+import { after } from 'next/server';
 import { z } from 'zod';
 import { emailDeliveryError } from '@/lib/email/deliverable';
 import { createServiceRoleClient } from '@/lib/supabase/server';
@@ -41,15 +42,18 @@ const PHOTO_TYPES: Record<string, string> = {
 const PHOTO_MAX_BYTES = 8 * 1024 * 1024;
 
 /**
- * Store step-1 photos (spec §26a.3) in the private job-photos bucket. Never
- * parsed, never blocking — a failed upload just means no photo on the record.
+ * Step-1 photos (spec §26a.3), in two halves.
+ *
+ * Reading the bytes out of the form is memory and no network, so it happens
+ * on the request. Pushing several megabytes into the private job-photos
+ * bucket is pure network, and the customer was made to wait through it before
+ * step 2 would render — for files nothing on that step even shows. So the
+ * upload runs after the response, and the paths are recorded when it lands.
  */
-async function storePhotos(
-  admin: ReturnType<typeof createServiceRoleClient>,
-  submissionId: string,
-  formData: FormData,
-): Promise<string[]> {
-  const paths: string[] = [];
+type PendingPhoto = { path: string; contentType: string; bytes: Buffer };
+
+function readPhotos(submissionId: string, formData: FormData): Promise<PendingPhoto[]> {
+  const jobs: Promise<PendingPhoto | null>[] = [];
   for (const [field, label] of [
     ['photo_field', 'field'],
     ['photo_access', 'access'],
@@ -62,25 +66,48 @@ async function storePhotos(
     }
     const ext = PHOTO_TYPES[file.type];
     if (!ext) continue;
-    const path = `${submissionId}/${label}.${ext}`;
-    try {
-      const { error } = await admin.storage
-        .from('job-photos')
-        .upload(path, Buffer.from(await file.arrayBuffer()), {
+    jobs.push(
+      file
+        .arrayBuffer()
+        .then((buf) => ({
+          path: `${submissionId}/${label}.${ext}`,
           contentType: file.type,
-          upsert: true,
-        });
-      if (error) {
-        console.error(`[jobParse] photo upload failed (${path}):`, error.message);
-      } else {
-        paths.push(path);
-      }
-    } catch (err) {
-      console.error(`[jobParse] photo upload failed (${path}):`, err);
-    }
+          bytes: Buffer.from(buf),
+        }))
+        .catch((err) => {
+          console.error(`[jobParse] could not read ${field}:`, err);
+          return null;
+        }),
+    );
   }
-  return paths;
+  return Promise.all(jobs).then((r) => r.filter((p): p is PendingPhoto => p !== null));
 }
+
+/** Both photos at once: two uploads that wait on each other is two waits. */
+async function uploadPhotos(
+  admin: ReturnType<typeof createServiceRoleClient>,
+  photos: PendingPhoto[],
+): Promise<string[]> {
+  const results = await Promise.all(
+    photos.map(async (photo) => {
+      try {
+        const { error } = await admin.storage
+          .from('job-photos')
+          .upload(photo.path, photo.bytes, { contentType: photo.contentType, upsert: true });
+        if (error) {
+          console.error(`[jobParse] photo upload failed (${photo.path}):`, error.message);
+          return null;
+        }
+        return photo.path;
+      } catch (err) {
+        console.error(`[jobParse] photo upload failed (${photo.path}):`, err);
+        return null;
+      }
+    }),
+  );
+  return results.filter((p): p is string => p !== null);
+}
+
 
 const ParseSchema = z.object({
   raw_text: z
@@ -158,19 +185,24 @@ export async function parseJobAction(
   const renderedAt = Number(formData.get('form_ts') || 0);
   const botSuspect = Boolean(honeypot) || (renderedAt > 0 && Date.now() - renderedAt < 3000);
 
-  if (!botSuspect) {
-    const token = String(formData.get('cf-turnstile-response') || '');
-    const turnstile = await verifyTurnstile(token, ip);
-    if (!turnstile.ok) {
-      await logParseEvent(ip, 'parse', 'rejected', `turnstile:${turnstile.error}`);
-      return {
-        error: 'We couldn’t verify you’re human just then — please try again.',
-        values,
-      };
-    }
-  }
+  // Both gates need only the IP, and one is a round trip to Cloudflare while
+  // the other is a round trip to the database. Run back to back they were two
+  // waits the customer paid for; started together they cost the slower one.
+  const [turnstile, limited] = await Promise.all([
+    botSuspect
+      ? Promise.resolve<{ ok: boolean; error?: string }>({ ok: true })
+      : verifyTurnstile(String(formData.get('cf-turnstile-response') || ''), ip),
+    rateLimited(ip, 'parse', PARSE_LIMIT_PER_HOUR),
+  ]);
 
-  if (await rateLimited(ip, 'parse', PARSE_LIMIT_PER_HOUR)) {
+  if (!turnstile.ok) {
+    await logParseEvent(ip, 'parse', 'rejected', `turnstile:${turnstile.error}`);
+    return {
+      error: 'We couldn’t verify you’re human just then — please try again.',
+      values,
+    };
+  }
+  if (limited) {
     await logParseEvent(ip, 'parse', 'rejected', 'rate_limit');
     return {
       error: 'You’ve sent a few of these in a row — give it a little while and try again.',
@@ -185,48 +217,21 @@ export async function parseJobAction(
   // stores nothing and the confirm step asks for a postcode.
   const postcodeCandidate = det.postcode_full ?? det.postcode_outcode;
 
-  // The geocode, the reference list and the draft row need nothing from each
-  // other, and every one of them is a round trip. Started together they cost
-  // the slowest, not the sum — which matters most on the step the customer is
-  // sitting and waiting through.
+  // The geocode and the service list need nothing from each other, so they
+  // run together and cost the slower one rather than the sum. The services
+  // read is usually already in memory; the geocode is the real wait, and it
+  // is now the only one left before the insert.
   const geoPromise: Promise<CountyResolution | null> = postcodeCandidate
     ? resolveCounty(postcodeCandidate)
     : Promise.resolve(null);
-  // Started here, awaited well below — and there is an early return between
-  // the two. Left floating, a rejection in that window has no handler, which
-  // under Node's default takes the process down instead of returning the error
-  // state the caller expects. Reference data is already tolerant of coming back
-  // empty, so absorb it the same way.
+  // Reference data is tolerant of coming back empty, so a failure here is
+  // absorbed rather than left to reject an already-settled Promise.all.
   const servicesPromise = getServices().catch((err) => {
     console.error('[jobParse] services read failed:', err);
     return [];
   });
 
-  const admin = createServiceRoleClient();
-  const draftPromise = admin
-    .from('job_submissions')
-    .insert({
-      raw_text: d.raw_text,
-      location_raw: locationRaw || null,
-      utm_source: String(formData.get('utm_source') || '') || null,
-      utm_medium: String(formData.get('utm_medium') || '') || null,
-      utm_campaign: String(formData.get('utm_campaign') || '') || null,
-      gclid: String(formData.get('gclid') || '') || null,
-    })
-    .select('id')
-    .single();
-
-  const [geo, { data: draft, error: draftError }] = await Promise.all([
-    geoPromise,
-    draftPromise,
-  ]);
-  if (draftError || !draft) {
-    console.error('[jobParse] draft insert failed:', draftError);
-    return { error: 'Something went wrong — please try again.', values };
-  }
-
-  // Photos (§26a.3) — stored, never parsed, never blocking.
-  const photoPaths = await storePhotos(admin, draft.id, formData);
+  const [geo, services] = await Promise.all([geoPromise, servicesPromise]);
 
   // No model in job creation: the deterministic layer is the whole parse.
   // It already pulls anything with a hard format — postcode, quantities,
@@ -270,7 +275,6 @@ export async function parseJobAction(
 
   // Resolve the canonical name to a service id by name, so a reseed with
   // different ids can't mis-tag submissions (same rule as leadServiceIds).
-  const services = await servicesPromise;
   const serviceId = merged.service
     ? (services.find((s) => s.name === merged.service)?.id ?? null)
     : null;
@@ -278,9 +282,23 @@ export async function parseJobAction(
     console.error(`[jobParse] canonical service "${merged.service}" not found in services table`);
   }
 
-  const { error: updateError } = await admin
+  // One insert, holding the whole parse.
+  //
+  // It used to be an insert of the bare text followed by an update with the
+  // parsed fields — two round trips where the second carried everything the
+  // first was missing. The insert was started early to overlap the geocode,
+  // but the update then had to wait for both anyway, so the overlap bought
+  // nothing and cost a trip.
+  const admin = createServiceRoleClient();
+  const { data: draft, error: draftError } = await admin
     .from('job_submissions')
-    .update({
+    .insert({
+      raw_text: d.raw_text,
+      location_raw: locationRaw || null,
+      utm_source: String(formData.get('utm_source') || '') || null,
+      utm_medium: String(formData.get('utm_medium') || '') || null,
+      utm_campaign: String(formData.get('utm_campaign') || '') || null,
+      gclid: String(formData.get('gclid') || '') || null,
       service_id: serviceId,
       service_verbatim: merged.service_verbatim || null,
       service_alternatives: merged.service_alternatives,
@@ -301,30 +319,46 @@ export async function parseJobAction(
       prompt_version: null,
       parsed_at: new Date().toISOString(),
       parse_source: merged.parse_source,
-      photo_paths: photoPaths,
     })
-    .eq('id', draft.id);
-  if (updateError) console.error('[jobParse] draft update failed:', updateError);
+    .select('id')
+    .single();
+  if (draftError || !draft) {
+    console.error('[jobParse] draft insert failed:', draftError);
+    return { error: 'Something went wrong — please try again.', values };
+  }
 
-  // Immutable parse log — the eval corpus (§5.1). Insert-only, never pruned.
-  const { error: logError } = await admin.from('job_submission_parses').insert({
-    submission_id: draft.id,
-    model_output: null,
-    deterministic_output: det,
-    parse_source: merged.parse_source,
-    model_version: null,
-    prompt_version: null,
-    error: botSuspect ? 'skipped:bot_suspect' : null,
-    latency_ms: null,
+  // Read the photo bytes here — memory, no network — so the form is not
+  // needed once the response has gone.
+  const photos = await readPhotos(draft.id, formData);
+
+  // Everything below this line happens after the customer already has step 2.
+  // None of it is read by that step: the photos are stored and never shown
+  // back, the parse log is the eval corpus, and the event log is a counter.
+  // Making the customer wait on three writes and two uploads for a screen
+  // that needs none of them was the whole of the delay.
+  after(async () => {
+    try {
+      const [photoPaths] = await Promise.all([
+        uploadPhotos(admin, photos),
+        admin.from('job_submission_parses').insert({
+          submission_id: draft.id,
+          model_output: null,
+          deterministic_output: det,
+          parse_source: merged.parse_source,
+          model_version: null,
+          prompt_version: null,
+          error: botSuspect ? 'skipped:bot_suspect' : null,
+          latency_ms: null,
+        }),
+        logParseEvent(ip, 'parse', botSuspect ? 'rejected' : 'ok', botSuspect ? 'honeypot' : undefined),
+      ]);
+      if (photoPaths.length > 0) {
+        await admin.from('job_submissions').update({ photo_paths: photoPaths }).eq('id', draft.id);
+      }
+    } catch (err) {
+      console.error('[jobParse] post-response work failed:', err);
+    }
   });
-  if (logError) console.error('[jobParse] parse log insert failed:', logError);
-
-  await logParseEvent(
-    ip,
-    'parse',
-    botSuspect ? 'rejected' : 'ok',
-    botSuspect ? 'honeypot' : undefined,
-  );
 
   return {
     ok: true,
