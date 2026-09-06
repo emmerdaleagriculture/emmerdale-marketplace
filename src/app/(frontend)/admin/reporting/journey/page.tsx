@@ -29,7 +29,7 @@ export default async function JourneyPage({
   const path = PATHS.some((p) => p.path === sp.path) ? sp.path! : '/';
   const admin = createServiceRoleClient();
 
-  const [clicksQ, depthsQ] = await Promise.all([
+  const [clicksQ, depthsQ, stepsQ] = await Promise.all([
     admin
       .from('page_events')
       .select('x_pct, y_pct, label, viewport_w')
@@ -44,6 +44,13 @@ export default async function JourneyPage({
       .eq('kind', 'depth')
       .order('created_at', { ascending: false })
       .limit(5000),
+    admin
+      .from('page_events')
+      .select('label, session_key, seconds')
+      .eq('path', path)
+      .eq('kind', 'step')
+      .order('created_at', { ascending: false })
+      .limit(10000),
   ]);
 
   const clicks = (clicksQ.data ?? []).filter(
@@ -79,6 +86,40 @@ export default async function JourneyPage({
   const topLabels = [...byLabel.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15);
 
   const phones = depths.filter((d) => (d.viewport_w ?? 0) > 0 && (d.viewport_w ?? 0) < 700).length;
+
+  // Milestones, as a retention curve through the flow. Each is counted once
+  // per visit (the beacon dedupes) and ordered the way the flow runs, so the
+  // first big drop is where people stop. Median seconds says how long they
+  // spent getting there.
+  const MILESTONES: { key: string; label: string }[] = [
+    { key: 'typed', label: 'Started typing' },
+    { key: 'send', label: 'Pressed Send' },
+    { key: 'parsed', label: 'Saw step 2' },
+    { key: 'map_drawn', label: 'Drew the field' },
+    { key: 'contact', label: 'Started contact details' },
+    { key: 'sent', label: 'Sent the job' },
+  ];
+  const ERRORS: { key: string; label: string }[] = [
+    { key: 'parse_error', label: 'Step 1 came back with an error' },
+    { key: 'confirm_error', label: 'Step 2 came back with an error' },
+  ];
+  const steps = stepsQ.data ?? [];
+  const stepVisits = new Set(steps.map((r) => r.session_key));
+  const allVisits = new Set([...depths.map((d) => d.session_key), ...stepVisits]).size;
+  const median = (xs: number[]) => {
+    if (xs.length === 0) return null;
+    const a = [...xs].sort((x, y) => x - y);
+    return a[Math.floor(a.length / 2)];
+  };
+  const milestone = (key: string) => {
+    const rows = steps.filter((r) => r.label === key);
+    return {
+      visits: new Set(rows.map((r) => r.session_key)).size,
+      seconds: median(rows.map((r) => r.seconds).filter((x): x is number => x !== null)),
+    };
+  };
+  const fmtSecs = (sec: number | null) =>
+    sec === null ? '—' : sec < 90 ? `${sec}s` : `${Math.round(sec / 60)}m`;
 
   return (
     <div>
@@ -122,6 +163,53 @@ export default async function JourneyPage({
         </div>
       ) : (
         <>
+          {path === '/start' && (
+            <>
+              <div className={s.sectionLabel}>How far through the job people got</div>
+              {stepVisits.size === 0 ? (
+                <div className={s.empty}>
+                  No milestones yet. They are recorded from visits that started after this
+                  was added; the first rows appear once those visits end.
+                </div>
+              ) : (
+                <div className={s.tableWrap}>
+                  <table className={s.table}>
+                    <thead>
+                      <tr><th>Milestone</th><th>Visits</th><th>Of all visits</th><th>Of previous</th><th>Median time in</th></tr>
+                    </thead>
+                    <tbody>
+                      {MILESTONES.map((m, i) => {
+                        const cur = milestone(m.key);
+                        const prev = i === 0 ? allVisits : milestone(MILESTONES[i - 1].key).visits;
+                        return (
+                          <tr key={m.key}>
+                            <td>{m.label}</td>
+                            <td>{cur.visits}</td>
+                            <td>{allVisits > 0 ? `${Math.round((100 * cur.visits) / allVisits)}%` : '—'}</td>
+                            <td>{prev > 0 ? `${Math.round((100 * cur.visits) / prev)}%` : '—'}</td>
+                            <td>{fmtSecs(cur.seconds)}</td>
+                          </tr>
+                        );
+                      })}
+                      {ERRORS.map((m) => {
+                        const cur = milestone(m.key);
+                        return cur.visits === 0 ? null : (
+                          <tr key={m.key}>
+                            <td style={{ color: '#a02a2a' }}>{m.label}</td>
+                            <td>{cur.visits}</td>
+                            <td>{allVisits > 0 ? `${Math.round((100 * cur.visits) / allVisits)}%` : '—'}</td>
+                            <td>—</td>
+                            <td>{fmtSecs(cur.seconds)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+
           <div className={s.sectionLabel}>How far down people got</div>
           <div className={s.tableWrap}>
             <table className={s.table}>

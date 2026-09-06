@@ -16,14 +16,41 @@ import { useEffect } from 'react';
  */
 
 type Event = {
-  kind: 'click' | 'depth';
+  kind: 'click' | 'depth' | 'step';
   x?: number;
   y?: number;
   depth?: number;
   vw: number;
   dh: number;
   label?: string;
+  seconds?: number;
 };
+
+/**
+ * Milestones a page can report about its own flow — "they pressed Send",
+ * "the parse came back", "they drew the field". Clicks and scroll say what a
+ * visit looked like; these say how far through the job it got, which for a
+ * form paid for by ad clicks is the question.
+ *
+ * One buffer per tracked page, held at module level so the step components
+ * (which mount and unmount as the flow moves) can report into it without
+ * owning it. Each milestone is recorded once per visit: the first time it
+ * happens is the fact, and a retry is not a second visitor.
+ */
+type Buffer = { events: Event[]; startedAt: number; seen: Set<string> };
+let active: Buffer | null = null;
+
+export function trackStep(label: string): void {
+  if (!active || active.seen.has(label)) return;
+  active.seen.add(label);
+  active.events.push({
+    kind: 'step',
+    label: label.slice(0, 80),
+    seconds: Math.round((performance.now() - active.startedAt) / 1000),
+    vw: window.innerWidth,
+    dh: Math.max(document.documentElement.scrollHeight, 1),
+  });
+}
 
 /** A short, stable description of what was clicked — never page text. */
 function labelFor(el: Element | null): string | undefined {
@@ -72,7 +99,9 @@ export function PageTracker({ path }: { path: string }) {
     const session = sessionKey();
     if (!session) return;
 
-    const events: Event[] = [];
+    const buffer: Buffer = { events: [], startedAt: performance.now(), seen: new Set() };
+    active = buffer;
+    const events = buffer.events;
     let deepestPx = 0;
     let sent = false;
 
@@ -82,7 +111,8 @@ export function PageTracker({ path }: { path: string }) {
       Math.max(document.documentElement.scrollWidth, document.body?.scrollWidth ?? 0, 1);
 
     const onClick = (e: MouseEvent) => {
-      if (events.length >= 30) return;
+      // Cap clicks only; a handful of milestones must always fit.
+      if (events.filter((ev) => ev.kind === 'click').length >= 30) return;
       events.push({
         kind: 'click',
         // Both fractions of the DOCUMENT: pageX against clientWidth overflows
@@ -139,6 +169,7 @@ export function PageTracker({ path }: { path: string }) {
       window.removeEventListener('pagehide', flush);
       document.removeEventListener('visibilitychange', onVisibility);
       flush();
+      if (active === buffer) active = null;
     };
   }, [path]);
 
