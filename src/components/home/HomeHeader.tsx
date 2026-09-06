@@ -5,19 +5,27 @@ import Link from 'next/link';
 import { BrandMark } from './BrandMark';
 import s from './home.module.css';
 
+// Root-relative, not bare fragments: this header is no longer front-page
+// only, and "#services" from /contact scrolls to nothing.
 const LINKS = [
-  { href: '#services', label: 'Services' },
+  { href: '/#services', label: 'Services' },
   { href: '/notes', label: 'Notes' },
 ];
+
+const CONTRACTOR_HREF = '/#operators';
 
 /** Where every customer CTA on the front page goes: the describe-your-job flow. */
 export const BOOK_HREF = '/start';
 
 /**
- * Front-page navigation: sticky brand-green bar with the EA monogram, section
- * links, the "Book online" outline button and the phone number. Collapses to a
+ * The customer-facing navigation: sticky brand-green bar with the EA
+ * monogram, section links, "Book online" and "Log in". Collapses to a
  * hamburger below 1024px. Client component only for the menu toggle and the
  * scrolled shadow; it renders identically on the server.
+ *
+ * Started as front-page-only, which left /contact — reached from the front
+ * page's own footer — wearing a completely different header. Its section
+ * links are root-relative so it works anywhere a customer might be.
  */
 export function HomeHeader() {
   const [open, setOpen] = useState(false);
@@ -55,9 +63,9 @@ export function HomeHeader() {
               {l.label}
             </Link>
           ))}
-          <a href="#operators" className={s.navContractor}>
+          <Link href={CONTRACTOR_HREF} className={s.navContractor}>
             Are you a contractor?
-          </a>
+          </Link>
         </nav>
 
         <div className={s.navCta}>
@@ -98,9 +106,9 @@ export function HomeHeader() {
             {l.label}
           </Link>
         ))}
-        <a href="#operators" onClick={close}>
+        <Link href={CONTRACTOR_HREF} onClick={close}>
           Are you a contractor?
-        </a>
+        </Link>
         <Link href={BOOK_HREF} className={s.mobileMenuBook} onClick={close}>
           Book online
         </Link>

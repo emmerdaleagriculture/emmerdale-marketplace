@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SiteHeader } from '@/components/SiteHeader';
-import { SiteFooter } from '@/components/SiteFooter';
+import { HomeHeader } from '@/components/home/HomeHeader';
+import { HomeFooter } from '@/components/home/HomeFooter';
 import {
   COMPANY_ADDRESS_LINES,
   COMPANY_LEGAL_NAME,
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <div className={a.wrap}>
-      <SiteHeader />
+      <HomeHeader />
       <main className={a.main}>
         <div className={a.narrow}>
           <div className={a.eyebrow}>Emmerdale Agriculture</div>
@@ -86,7 +86,7 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
+      <HomeFooter />
     </div>
   );
 }
