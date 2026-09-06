@@ -18,15 +18,26 @@ import { useEffect, useRef, useState } from 'react';
 export function HeatOverlay({
   path,
   points,
+  width = 1280,
+  scale = 0.42,
 }: {
   path: string;
   points: { x: number; y: number }[];
+  /** Viewport the page is rendered at. A phone-width frame makes the page
+      lay itself out as a phone would, so phone clicks land on the right
+      elements — the desktop render is a different page for them. */
+  width?: number;
+  scale?: number;
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(2400);
   const [blocked, setBlocked] = useState(false);
-  const WIDTH = 1280;
-  const SCALE = 0.42;
+  const WIDTH = width;
+  const SCALE = scale;
+  // Blob radius follows the render width so a cluster reads the same on a
+  // 390px phone as on a 1280px desktop, instead of one blob covering a
+  // quarter of the phone.
+  const BLOB = Math.round(WIDTH * 0.07);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -104,10 +115,10 @@ export function HeatOverlay({
                 position: 'absolute',
                 left: `${p.x * 100}%`,
                 top: `${p.y * 100}%`,
-                width: 90,
-                height: 90,
-                marginLeft: -45,
-                marginTop: -45,
+                width: BLOB,
+                height: BLOB,
+                marginLeft: -BLOB / 2,
+                marginTop: -BLOB / 2,
                 borderRadius: '50%',
                 background:
                   'radial-gradient(circle, rgba(255,120,0,0.5) 0%, rgba(200,60,0,0.22) 45%, rgba(0,0,0,0) 70%)',

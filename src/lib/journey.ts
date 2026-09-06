@@ -31,6 +31,7 @@ export type Journey = {
   phoneShare: number;
   clicks: number;
   desktopPoints: { x: number; y: number }[];
+  phonePoints: { x: number; y: number }[];
   bands: { mark: number; reached: number }[];
   milestones: { key: string; label: string; visits: number; seconds: number | null; error: boolean }[];
 };
@@ -95,6 +96,10 @@ export async function loadJourney(path: string, days = 30): Promise<Journey> {
     clicks: clicks.length,
     desktopPoints: clicks
       .filter((c) => (c.viewport_w ?? DESKTOP_MIN) >= DESKTOP_MIN)
+      .map((c) => ({ x: c.x_pct, y: c.y_pct })),
+    // A click with no recorded viewport is an old row; it is neither.
+    phonePoints: clicks
+      .filter((c) => (c.viewport_w ?? 0) > 0 && (c.viewport_w ?? 0) < DESKTOP_MIN)
       .map((c) => ({ x: c.x_pct, y: c.y_pct })),
     bands: [10, 25, 50, 75, 90, 100].map((mark) => ({
       mark,
