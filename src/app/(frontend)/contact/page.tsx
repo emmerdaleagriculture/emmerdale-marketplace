@@ -7,6 +7,8 @@ import {
   COMPANY_LEGAL_NAME,
   COMPANY_REG_LINE,
   CONTACT_EMAIL,
+  PHONE_DISPLAY,
+  PHONE_TEL,
 } from '@/lib/site';
 import a from '../auth.module.css';
 
@@ -48,6 +50,14 @@ export default function ContactPage() {
               Contractors: for anything about an invitation, a price you&rsquo;ve
               given or an invoice, email us here or reply to any email we&rsquo;ve
               sent you — replies reach the same place.
+            </p>
+          </div>
+
+          <div className={a.card} style={{ marginTop: 20 }}>
+            <h2 className={a.cardTitle}>Phone</h2>
+            <p>
+              {/* Tappable: most people reading this are on a phone already. */}
+              <a href={`tel:${PHONE_TEL}`}>{PHONE_DISPLAY}</a>
             </p>
           </div>
 
