@@ -41,14 +41,31 @@ async function wipe(table: string, timeColumn = 'created_at') {
 async function main() {
   console.log('Clearing sealed-quote funnel test data…');
 
-  // Photos first (paths come from the rows we're about to delete).
-  const { data: subs } = await admin.from('job_submissions').select('photo_paths');
+  // Stored files first: their paths live on the rows we're about to delete,
+  // so after the deletes there is nothing left to tell us what to remove and
+  // the objects sit in the bucket forever.
+  const { data: subs } = await admin
+    .from('job_submissions')
+    .select('photo_paths, contractor_invoice_path');
+
   const paths = (subs ?? []).flatMap((s) => (s.photo_paths ?? []) as string[]);
   if (paths.length) {
     const { error } = await admin.storage.from('job-photos').remove(paths);
     console.log(error ? `  ✗ photos: ${error.message}` : `  ✓ photos (${paths.length})`);
   } else {
     console.log('  ✓ photos (none)');
+  }
+
+  const invoices = (subs ?? [])
+    .map((s) => s.contractor_invoice_path)
+    .filter((p): p is string => Boolean(p));
+  if (invoices.length) {
+    const { error } = await admin.storage.from('contractor-invoices').remove(invoices);
+    console.log(
+      error ? `  ✗ invoices: ${error.message}` : `  ✓ invoices (${invoices.length})`,
+    );
+  } else {
+    console.log('  ✓ invoices (none)');
   }
 
   // job_submissions points back into client_quotes via the accepted-quote
