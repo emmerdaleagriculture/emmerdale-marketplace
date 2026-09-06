@@ -7,6 +7,7 @@ export const metadata: Metadata = { title: 'Email — Admin' };
 export const dynamic = 'force-dynamic';
 
 const GIVE_UP_AT = 5; // send-emails stops retrying here
+const PROBLEM = new Set(['bounced', 'complained']);
 
 /**
  * The email queue. Every notification in the funnel — invitations, quote
@@ -18,16 +19,21 @@ const GIVE_UP_AT = 5; // send-emails stops retrying here
  * with psql. An empty queue looks the same whether the drain is healthy or
  * dead, so the drain reports separately from the queue — that distinction is
  * the whole point of the page.
+ *
+ * Delivery is a third thing again. `status` says Resend accepted the message;
+ * `delivery_status`, filled in by the webhook at /api/email-events, says
+ * whether it reached anyone. A job once went to a domain that did not exist
+ * and showed two green rows here while the customer waited.
  */
 export default async function AdminEmailPage() {
   const admin = createServiceRoleClient();
   const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
 
-  const [counts, recent, stuck, drain] = await Promise.all([
+  const [counts, recent, stuck, undelivered, drain] = await Promise.all([
     admin.from('pending_emails').select('status, attempts, created_at'),
     admin
       .from('pending_emails')
-      .select('id, kind, to_email, status, attempts, created_at, sent_at')
+      .select('id, kind, to_email, status, attempts, created_at, sent_at, delivery_status')
       .order('created_at', { ascending: false })
       .limit(30),
     admin
@@ -37,6 +43,15 @@ export default async function AdminEmailPage() {
       .gte('attempts', GIVE_UP_AT)
       .order('created_at', { ascending: true })
       .limit(50),
+    // Accepted by Resend and then rejected by the recipient. The row reads
+    // "sent" either way, which is exactly how a customer at a domain that does
+    // not exist went unnoticed.
+    admin
+      .from('pending_emails')
+      .select('id, kind, to_email, delivery_status, delivery_detail, delivery_at')
+      .in('delivery_status', ['bounced', 'complained'])
+      .order('delivery_at', { ascending: false })
+      .limit(25),
     admin.rpc('email_drain_health', { p_limit: 5 }),
   ]);
 
@@ -60,8 +75,8 @@ export default async function AdminEmailPage() {
     <div>
       <h1 className={s.h1}>Email</h1>
       <p className={s.sub}>
-        What the funnel has sent, what it is waiting to send, and whether the drain is
-        running at all.
+        What the funnel has sent, what it is waiting to send, whether any of it
+        actually arrived, and whether the drain is running at all.
       </p>
 
       <div className={s.sectionLabel}>The drain</div>
@@ -124,6 +139,32 @@ export default async function AdminEmailPage() {
         </>
       )}
 
+      {(undelivered.data ?? []).length > 0 && (
+        <>
+          <div className={s.sectionLabel}>
+            Did not arrive — accepted by Resend, then rejected by the recipient
+          </div>
+          <div className={s.tableWrap}>
+            <table className={s.table}>
+              <thead>
+                <tr><th>Kind</th><th>To</th><th>What happened</th><th>Reason</th><th>When</th></tr>
+              </thead>
+              <tbody>
+                {(undelivered.data ?? []).map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.kind}</td>
+                    <td>{r.to_email ?? '—'}</td>
+                    <td>{r.delivery_status}</td>
+                    <td>{r.delivery_detail ?? '—'}</td>
+                    <td>{r.delivery_at ? timeAgo(r.delivery_at) : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
       <div className={s.sectionLabel}>Recent messages</div>
       {(recent.data ?? []).length === 0 ? (
         <div className={s.empty}>Nothing queued yet.</div>
@@ -131,7 +172,7 @@ export default async function AdminEmailPage() {
         <div className={s.tableWrap}>
           <table className={s.table}>
             <thead>
-              <tr><th>Kind</th><th>To</th><th>Status</th><th>Attempts</th><th>Queued</th><th>Sent</th></tr>
+              <tr><th>Kind</th><th>To</th><th>Status</th><th>Delivery</th><th>Attempts</th><th>Queued</th><th>Sent</th></tr>
             </thead>
             <tbody>
               {(recent.data ?? []).map((r) => (
@@ -139,6 +180,9 @@ export default async function AdminEmailPage() {
                   <td>{r.kind}</td>
                   <td>{r.to_email ?? '—'}</td>
                   <td>{r.status}</td>
+                  <td style={PROBLEM.has(r.delivery_status ?? '') ? { color: '#a02a2a', fontWeight: 600 } : undefined}>
+                    {r.status === 'sent' ? (r.delivery_status ?? 'no report yet') : '—'}
+                  </td>
                   <td>{r.attempts}</td>
                   <td>{timeAgo(r.created_at)}</td>
                   <td>{r.sent_at ? timeAgo(r.sent_at) : '—'}</td>

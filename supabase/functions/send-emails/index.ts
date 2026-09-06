@@ -501,11 +501,23 @@ Deno.serve(async (req) => {
     }
 
     if (success) {
-      await supabase
+      // The message is gone whatever happens next, so this row MUST come off
+      // the queue. If provider_message_id isn't there yet — this function
+      // deployed ahead of its migration — the write would fail, the row would
+      // stay pending, and the drain would send the whole batch again a minute
+      // later. Retry without the new column rather than mail everyone twice.
+      const marked = await supabase
         .from('pending_emails')
         .update({ status: 'sent', sent_at: new Date().toISOString(),
                   provider_message_id: messageId })
         .eq('id', e.id);
+      if (marked.error) {
+        console.error('[send-emails] marking sent failed, retrying minimal:', marked.error.message);
+        await supabase
+          .from('pending_emails')
+          .update({ status: 'sent', sent_at: new Date().toISOString() })
+          .eq('id', e.id);
+      }
       sent++;
     } else {
       const attempts = (e.attempts ?? 0) + 1;
