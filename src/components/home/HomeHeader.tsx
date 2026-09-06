@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BrandMark } from './BrandMark';
+import { SocialLinks } from '@/components/SocialLinks';
 import s from './home.module.css';
 
 // Root-relative, not bare fragments: this header is no longer front-page
@@ -67,6 +68,10 @@ export function HomeHeader() {
             Are you a contractor?
           </Link>
         </nav>
+
+        {/* Instagram and TikTok. Not inside navCta, which is put away below
+            1024px — the icons stay up beside the burger on a phone. */}
+        <SocialLinks className={s.navSocial} />
 
         <div className={s.navCta}>
           <Link href={BOOK_HREF} className={s.navBook}>

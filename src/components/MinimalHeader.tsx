@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import h from '@/components/SiteHeader.module.css';
+import { SocialLinks } from '@/components/SocialLinks';
 
 /**
  * Static brand bar for anonymous, token-addressed pages (/start, /quote/…,
@@ -14,6 +15,7 @@ export function MinimalHeader() {
         <Link href="/" className={h.brand}>
           Emmerdale Agriculture
         </Link>
+        <SocialLinks className={h.social} />
       </div>
     </header>
   );

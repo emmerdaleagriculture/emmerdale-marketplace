@@ -652,6 +652,10 @@
   align-items: center;
   gap: 14px;
 }
+.navSocial {
+  color: #fbfaf6;
+  margin-right: 4px;
+}
 .navBook {
   display: inline-flex;
   align-items: center;
@@ -749,6 +753,11 @@
   }
   .navInner {
     justify-content: space-between;
+  }
+  /* Brand left, icons and burger right. */
+  .navSocial {
+    margin-left: auto;
+    margin-right: 0;
   }
   .brandWordmark {
     font-size: 16px;

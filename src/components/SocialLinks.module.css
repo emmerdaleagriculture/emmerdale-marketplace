@@ -1,0 +1,35 @@
+/*
+ * Social icons in the header. Colour comes from the surrounding bar
+ * (currentColor), so the same component works on the deep-green interior
+ * bar, the front-page bar and the transparent overlay over a hero.
+ */
+.list {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 40px hit area around a 20px glyph — comfortably tappable, visually light. */
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  color: inherit;
+  opacity: 0.88;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.link:hover,
+.link:focus-visible {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
+}
+.icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
