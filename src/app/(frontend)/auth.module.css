@@ -201,3 +201,11 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* A heading inside a card — smaller than the page title, louder than body. */
+.cardTitle {
+  margin: 0 0 8px;
+  font-family: var(--font-display-stack);
+  font-size: 20px;
+  line-height: 1.25;
+}

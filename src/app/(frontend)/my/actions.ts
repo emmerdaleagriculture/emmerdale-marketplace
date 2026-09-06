@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
+import { claimJobForUser, claimMessage } from '@/lib/customers/claim';
 import type { FormState } from '@/lib/form';
 
 /**
@@ -24,66 +25,18 @@ export async function claimJobAction(_prev: FormState, formData: FormData): Prom
   } = await supabase.auth.getUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(`/my/${token}`)}`);
 
-  const admin = createServiceRoleClient();
-
-  // The customer row is created on first claim rather than at signup: an
-  // account only becomes a customer account when a job is attached to it.
-  const { data: js } = await admin
-    .from('job_submissions')
-    .select('contact_name, contact_phone, contact_email')
-    .eq('client_token', token)
-    .maybeSingle();
-
-  const { data: existing } = await admin
-    .from('customers')
-    .select('contact_name, phone')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  // Fill gaps, never overwrite: claiming a second job whose contact fields are
-  // blank must not wipe the name and phone the first one supplied.
-  const { error: customerError } = await admin.from('customers').upsert(
-    {
-      id: user.id,
-      email: user.email ?? js?.contact_email ?? '',
-      contact_name: existing?.contact_name ?? js?.contact_name ?? null,
-      phone: existing?.phone ?? js?.contact_phone ?? null,
-    },
-    { onConflict: 'id' },
-  );
-  if (customerError) {
-    // Unread, this surfaced later as a foreign-key failure on the claim, which
-    // says nothing about what actually went wrong.
-    console.error('[customer] upsert failed:', customerError);
-    return { error: 'That didn’t go through — please try again.' };
-  }
-
-  const { data, error } = await admin.rpc('claim_submission_for_customer', {
-    p_token: token,
-    p_customer_id: user.id,
-  });
-  if (error) {
-    console.error('[customer] claim failed:', error);
-    return { error: 'That didn’t go through — please try again.' };
-  }
-  const res = data as { ok: boolean; reason?: string; also_claimed?: number };
-  if (!res.ok) {
-    if (res.reason === 'already_claimed') {
+  const outcome = await claimJobForUser(user.id, user.email, token);
+  if (!outcome.ok) {
+    if (outcome.reason === 'already_claimed') {
       return { error: 'This job is already on another account.' };
     }
-    return { error: 'This link is no longer valid.' };
+    if (outcome.reason === 'invalid') return { error: 'This link is no longer valid.' };
+    return { error: 'That didn’t go through — please try again.' };
   }
 
   revalidatePath('/my');
   revalidatePath(`/my/${token}`);
-  const also = res.also_claimed ?? 0;
-  return {
-    ok: true,
-    message:
-      also > 0
-        ? `Saved. ${also} earlier job${also === 1 ? '' : 's'} at this address came with it.`
-        : 'Saved to your account.',
-  };
+  return { ok: true, message: claimMessage(outcome.alsoClaimed) };
 }
 
 /** Repeat this job every N months until they stop it. */

@@ -15,8 +15,9 @@ import a from '../auth.module.css';
  *
  * Same form, same auth, different explanation.
  */
-function isCustomerSignup(next: string | null): boolean {
-  return !!next && next.startsWith('/my/');
+function isCustomerSignup(next: string | null, from: string | undefined): boolean {
+  // ?from=job is the thank-you page, which has no token to put in ?next=.
+  return from === 'job' || (!!next && next.startsWith('/my/'));
 }
 
 export const metadata: Metadata = {
@@ -29,9 +30,10 @@ export const metadata: Metadata = {
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; from?: string }>;
 }) {
-  const next = safeInternalPath((await searchParams).next);
+  const params = await searchParams;
+  const next = safeInternalPath(params.next);
   // Already signed in: a customer arriving from a job link goes back to it,
   // a contractor goes to their account as before.
   if (await getUser()) redirect(next ?? '/account');
@@ -41,7 +43,7 @@ export default async function SignupPage({
       <SiteHeader />
       <main className={a.main}>
         <div className={a.narrow}>
-          {isCustomerSignup(next) ? (
+          {isCustomerSignup(next, params.from) ? (
             <>
               <div className={a.eyebrow}>For customers</div>
               <h1 className={a.title}>Create your account</h1>
