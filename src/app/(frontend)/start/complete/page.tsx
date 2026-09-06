@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { MinimalHeader } from '@/components/MinimalHeader';
-import { SiteFooter } from '@/components/SiteFooter';
+import { HomeHeader } from '@/components/home/HomeHeader';
+import { HomeFooter } from '@/components/home/HomeFooter';
 import { CONFIRM_SUCCESS } from '../copy';
 import { CompleteTracker } from './CompleteTracker';
 import { justSentJob } from '@/lib/jobCookie';
@@ -27,7 +27,7 @@ export default async function StartCompletePage() {
   const token = await justSentJob();
   return (
     <div className={a.wrap}>
-      <MinimalHeader />
+      <HomeHeader />
       <main className={a.main}>
         <div className={a.narrow}>
           <div className={a.eyebrow}>Field &amp; paddock work</div>
@@ -69,7 +69,7 @@ export default async function StartCompletePage() {
           </p>
         </div>
       </main>
-      <SiteFooter />
+      <HomeFooter />
       <CompleteTracker />
     </div>
   );

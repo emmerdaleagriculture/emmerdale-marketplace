@@ -248,6 +248,24 @@ export function LandingFlow() {
     >
       <PageTracker path="/start" />
       {state.error && <p className={f.error}>{state.error}</p>}
+      {/* Why bother, for someone weighing this against asking in a Facebook
+          group. At the top, before the box: the case is made before anyone
+          is asked to type. */}
+      <ul className={s.reassure}>
+        <li>No trawling Facebook groups hoping someone answers.</li>
+        <li>Insured contractors, vetted before they see a single job.</li>
+        <li>Several prices to choose from, not whoever replies first.</li>
+        <li>Booked for when you actually want it, and it gets done.</li>
+        <li>
+          Your own job page — a private link with the prices, the contractor and
+          where it&rsquo;s up to.
+        </li>
+        <li>We&rsquo;re on the end of the phone if you need us.</li>
+        <li>
+          We hold your payment and only release it once you and the contractor have
+          both signed the job off.
+        </li>
+      </ul>
 
       <input type="hidden" name="form_ts" value={formTs} />
       <input type="hidden" name="utm_source" value={utm.source} />
@@ -338,24 +356,6 @@ export function LandingFlow() {
         </button>
       </div>
 
-      {/* Why bother, for someone weighing this against asking in a Facebook
-          group. Below the button deliberately: it reassures the hesitant
-          without delaying anyone already convinced. */}
-      <ul className={s.reassure}>
-        <li>No trawling Facebook groups hoping someone answers.</li>
-        <li>Insured contractors, vetted before they see a single job.</li>
-        <li>Several prices to choose from, not whoever replies first.</li>
-        <li>Booked for when you actually want it, and it gets done.</li>
-        <li>
-          Your own job page — a private link with the prices, the contractor and
-          where it&rsquo;s up to.
-        </li>
-        <li>We&rsquo;re on the end of the phone if you need us.</li>
-        <li>
-          We hold your payment and only release it once you and the contractor have
-          both signed the job off.
-        </li>
-      </ul>
     </form>
   );
 }
