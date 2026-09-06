@@ -104,3 +104,36 @@
   font-size: 13px;
   color: var(--ink-3);
 }
+
+/*
+ * Rating, inline in the done panel. The stars are the whole ask — big enough
+ * to hit with a thumb without turning the panel into a form.
+ */
+.ratePrompt {
+  margin: 4px 0 2px;
+  font-weight: 600;
+}
+
+.starRow {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.star {
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--jd-yellow-dark, #b8860b);
+  cursor: pointer;
+}
+.star:hover {
+  transform: scale(1.06);
+}
+.star:focus-visible {
+  outline: 2px solid var(--jd-green-dark);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

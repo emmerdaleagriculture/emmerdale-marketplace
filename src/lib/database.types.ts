@@ -1060,6 +1060,9 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           contact_preference: string | null
+          contractor_invoice_at: string | null
+          contractor_invoice_name: string | null
+          contractor_invoice_path: string | null
           county_id: number | null
           created_at: string
           customer_id: string | null
@@ -1113,6 +1116,9 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           contact_preference?: string | null
+          contractor_invoice_at?: string | null
+          contractor_invoice_name?: string | null
+          contractor_invoice_path?: string | null
           county_id?: number | null
           created_at?: string
           customer_id?: string | null
@@ -1166,6 +1172,9 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           contact_preference?: string | null
+          contractor_invoice_at?: string | null
+          contractor_invoice_name?: string | null
+          contractor_invoice_path?: string | null
           county_id?: number | null
           created_at?: string
           customer_id?: string | null
@@ -1745,6 +1754,8 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           contact_preference: string | null
+          contractor_invoice_at: string | null
+          contractor_invoice_name: string | null
           contractor_price_pence: number | null
           county: string | null
           gate_w3w: string | null
