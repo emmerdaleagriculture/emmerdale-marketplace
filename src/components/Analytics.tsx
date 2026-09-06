@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 import { usePathname } from 'next/navigation';
 import { isSensitivePath, redactPath } from '@/lib/analyticsPaths';
@@ -42,9 +42,17 @@ export function Analytics() {
   // the moment someone clicked through to it.
   const loadable = useRef(!isSensitivePath(pathname));
   const first = useRef(true);
+  // The admin heat overlay renders /start and / inside an iframe. Tags in
+  // there would count every look at the report as a visit and a PageView —
+  // the report manufacturing the traffic it reports. Decided in an effect
+  // because the server cannot know it is being framed.
+  const [framed, setFramed] = useState<boolean | null>(null);
+  useEffect(() => {
+    setFramed(window.self !== window.top);
+  }, []);
 
   useEffect(() => {
-    if (!loadable.current) return;
+    if (!loadable.current || framed !== false) return;
     const sensitive = isSensitivePath(pathname);
     const page = redactPath(pathname);
 
@@ -61,9 +69,9 @@ export function Analytics() {
 
     window.gtag?.('event', 'page_view', { page_path: page });
     window.fbq?.('track', 'PageView');
-  }, [pathname]);
+  }, [pathname, framed]);
 
-  if (!loadable.current) return null;
+  if (!loadable.current || framed !== false) return null;
 
   return (
     <>

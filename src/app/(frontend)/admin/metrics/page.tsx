@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { UKCoverageMap } from '@/components/UKCoverageMap';
+import { HeatOverlay } from '../reporting/journey/HeatOverlay';
+import { fmtSeconds, loadJourney } from '@/lib/journey';
 import s from '../admin.module.css';
 import f from '@/components/forms/forms.module.css';
 
@@ -80,7 +82,10 @@ function Attention({ count, label, href }: { count: number; label: string; href:
 
 export default async function AdminDashboard() {
   const admin = createServiceRoleClient();
-  const { data, error } = await admin.rpc('admin_dashboard');
+  const [{ data, error }, start] = await Promise.all([
+    admin.rpc('admin_dashboard'),
+    loadJourney('/start'),
+  ]);
   if (error || !data) {
     return (
       <div>
@@ -158,6 +163,69 @@ export default async function AdminDashboard() {
         <Metric value={n(fu.completed_all)} label="Jobs completed, all time" />
         <Metric value={n(d.unplaced_jobs)} label="Jobs with no county" hint="Could not be routed" />
       </div>
+
+      {/* ── Behaviour on /start ───────────────────────────────────────── */}
+      <div className={s.sectionLabel}>Behaviour on /start — last 30 days</div>
+      {start.visits === 0 ? (
+        <div className={s.empty}>
+          No visits recorded yet. The beacon sends when a tab closes, so the first
+          numbers appear after real visits end — not while you look at the page
+          yourself, and never from inside this overlay.
+        </div>
+      ) : (
+        <div className={s.mapRow}>
+          {/* Clicks drawn over the live page, desktop visits only: a phone tap
+              at x=0.5 of a 390px screen is not the same element at 1280px. */}
+          <HeatOverlay path="/start" points={start.desktopPoints} />
+          <div>
+            <div className={s.metricGrid}>
+              <Metric value={n(start.visits)} label="Visits" hint={`${Math.round(100 * start.phoneShare)}% on a phone`} />
+              <Metric value={n(start.clicks)} label="Clicks" hint={`${n(start.desktopPoints.length)} drawn (desktop)`} />
+            </div>
+            <div className={s.tableWrap}>
+              <table className={s.table}>
+                <thead>
+                  <tr><th>Got as far as</th><th>Visits</th><th>Of all</th><th>Of previous</th><th>Median time</th></tr>
+                </thead>
+                <tbody>
+                  {start.milestones.map((m, i) => {
+                    const prev = i === 0 ? start.visits : start.milestones[i - 1].visits;
+                    return (
+                      <tr key={m.key}>
+                        <td style={m.error ? { color: '#a02a2a' } : undefined}>{m.label}</td>
+                        <td>{n(m.visits)}</td>
+                        <td>{pct(m.visits, start.visits)}</td>
+                        <td>{m.error ? '—' : pct(m.visits, prev)}</td>
+                        <td>{fmtSeconds(m.seconds)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className={s.tableWrap}>
+              <table className={s.table}>
+                <thead>
+                  <tr><th>Scrolled to</th><th>Visits</th><th>Share</th></tr>
+                </thead>
+                <tbody>
+                  {start.bands.map((b) => (
+                    <tr key={b.mark}>
+                      <td>{b.mark}% of the page</td>
+                      <td>{n(b.reached)}</td>
+                      <td>{pct(b.reached, start.visits)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className={s.metricHint}>
+              Aggregated per visit — a visit is one browser tab and nothing here identifies anyone.{' '}
+              <Link href="/admin/reporting/journey?path=%2Fstart">Full journey report</Link>.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Live pipeline ─────────────────────────────────────────────── */}
       <div className={s.sectionLabel}>In flight right now</div>
