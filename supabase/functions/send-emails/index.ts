@@ -37,7 +37,12 @@ const REPLY_DOMAIN = (Deno.env.get('SQ_INBOUND_REPLY_DOMAIN') ?? '').trim();
 // Kinds addressed to contractors within the sealed-quote funnel — the set the
 // test-mode redirect applies to. (Open-access kinds like new_job belong to the
 // live board and are untouched.)
-const SQ_CONTRACTOR_KINDS = new Set(['sq_invitation', 'sq_award_won', 'sq_award_lost', 'sq_quote_confirm']);
+// Kinds that go to a contractor, so test mode can redirect them. sq_invoice_chase
+// belongs here for the same reason as the rest: during testing it must not
+// reach a real contractor.
+const SQ_CONTRACTOR_KINDS = new Set([
+  'sq_invitation', 'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
+]);
 
 /** "£1,250" / "£1,252.50" from pence. */
 function gbp(pence: unknown): string {
@@ -297,6 +302,38 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `job as finished. Have a look, and if you're happy, confirm it — that's what ` +
           `releases their payment:\n${portal}\n\n` +
           `If it isn't finished, don't confirm. Reply to this email and we'll sort it out.`,
+      };
+
+    // Two working days after the contractor marked it done, one before
+    // auto-confirm carries it. Says the deadline out loud: a job that
+    // completes itself without the customer ever knowing they were asked is
+    // an ambush, not a policy.
+    case 'sq_completion_confirm_chase':
+      return {
+        subject: `Still need a yes on your job — one more working day`,
+        text:
+          `Hi ${first},\n\n${p.contractor_business_name ?? 'Your contractor'} marked your ` +
+          `job as finished a couple of days ago, and we haven't heard from you.\n\n` +
+          `If you're happy with the work, confirm it here and their payment goes out:\n` +
+          `${portal}\n\n` +
+          `If we don't hear anything, the job confirms itself after three working days ` +
+          `— so if something isn't right, tell us now. Reply to this email and we'll ` +
+          `sort it out.`,
+      };
+
+    // The job is finished, the customer has confirmed and the money is sitting
+    // here. Say that plainly: it is not a demand for paperwork, it is us
+    // telling them we are trying to pay them.
+    case 'sq_invoice_chase':
+      return {
+        subject: `We owe you for the ${p.service ?? 'job'} — send your invoice`,
+        text:
+          `Your ${p.service ?? 'job'} job${p.postcode_district ? ` in ${p.postcode_district}` : ''}` +
+          `${p.contact_name ? ` for ${p.contact_name}` : ''} is finished and confirmed, ` +
+          `and the money is here waiting.\n\n` +
+          `We just need your invoice before we can pay it. A PDF or a photo of a paper ` +
+          `one is fine — upload it on the job:\n${SITE_URL}/won\n\n` +
+          `Already sent it another way? Reply and tell us and we'll match it up.`,
       };
 
     case 'sq_completion_confirmed':
