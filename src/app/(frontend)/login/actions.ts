@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { postLoginPath, safeInternalPath } from '@/lib/auth';
+import { postLoginPath, safeInternalPath, type LoginSide } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
 
 export async function loginAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -26,9 +26,11 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
     return { error: 'Incorrect email or password, or your email isn’t confirmed yet.' };
   }
 
-  // A ?next= destination (e.g. the job page from a notification email) wins;
-  // otherwise it depends on who has just logged in — this one page serves
-  // customers as well as contractors.
+  // A ?next= destination (e.g. the job page from a notification email) wins.
+  // Failing that, what they have decides, and the side they picked on the
+  // form only breaks the tie when they have neither kind of account yet.
   const next = safeInternalPath(String(formData.get('next') || ''));
-  redirect(next ?? (await postLoginPath(data.user.id, email)));
+  const raw = String(formData.get('side') || '');
+  const side: LoginSide = raw === 'customer' || raw === 'contractor' ? raw : null;
+  redirect(next ?? (await postLoginPath(data.user.id, email, side)));
 }

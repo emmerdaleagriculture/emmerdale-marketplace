@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -33,18 +32,10 @@ export default async function LoginPage({
           <div className={a.eyebrow}>Customers and contractors</div>
           <h1 className={a.title}>Log in</h1>
           <p className={a.sub}>
-            One login for both. Customers see the jobs they&rsquo;ve booked and can
-            order one again; contractors see their invitations and the jobs they&rsquo;ve
-            won. We&rsquo;ll take you to the right place.
+            One login for both sides. Tell us which you are and we&rsquo;ll take you
+            to the right place.
           </p>
           <LoginForm next={next ?? undefined} />
-          <p className={a.sub} style={{ marginTop: 24 }}>
-            No account yet? Contractors can{' '}
-            <Link href="/signup">join the network</Link> — it&rsquo;s free. Customers get
-            an account by saving a job from the link we email them, so there&rsquo;s
-            nothing to set up first: just{' '}
-            <Link href="/start">tell us about the job</Link>.
-          </p>
         </div>
       </main>
       <SiteFooter />
