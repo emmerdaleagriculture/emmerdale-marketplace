@@ -50,6 +50,7 @@ export function SiteFooter() {
 
           <nav className={styles.linkCol} aria-label="Company">
             <div className={styles.colTitle}>Company</div>
+            <Link href="/contact">Contact us</Link>
             <a href={HPM_URL}>Hampshire Paddock Management</a>
             <Link href="/privacy">Privacy policy</Link>
             {/* Customer-facing documents are PDFs; /terms is the contractor

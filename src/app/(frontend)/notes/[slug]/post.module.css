@@ -1,16 +1,18 @@
 /* Ported from the HPM blog — same visual language, shared design tokens. */
 
 /* ===== POST HERO ===== */
+/* Clip the photo, not the section — the overlay header's mobile menu opens
+   inside this box and was being cut off. See notes.module.css .hero. */
 .postHero {
   position: relative;
   height: 56vh;
   min-height: 420px;
   background: var(--jd-green-dark);
-  overflow: hidden;
 }
 .postHeroPhoto {
   position: absolute;
   inset: 0;
+  overflow: hidden;
 }
 .postHeroPhoto::after {
   content: '';

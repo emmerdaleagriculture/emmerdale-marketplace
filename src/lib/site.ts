@@ -36,6 +36,10 @@ export const SITE_LOCATION_LINE = 'Made with care in Hampshire';
 
 // Front-page contact details. Display form and tel: form kept together so the
 // two can't drift apart.
+// The address the site tells people to write to. One constant so the footer,
+// the contact page and the funnel can't drift apart.
+export const CONTACT_EMAIL = 'tom@emmerdaleagriculture.com';
+
 export const PHONE_DISPLAY = '07825 156062';
 export const PHONE_TEL = '+447825156062';
 

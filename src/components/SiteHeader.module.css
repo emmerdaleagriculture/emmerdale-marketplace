@@ -84,8 +84,19 @@
   line-height: 0;
 }
 
+/*
+ * Its own background and its own stacking. In the solid header this is the
+ * same green it already sat on; over a transparent overlay header — the notes
+ * hero — it is the difference between a menu and white-on-photograph.
+ */
 .mobileMenu {
   display: none;
+  position: relative;
+  z-index: 1;
+  background: var(--jd-green-deep);
+  margin: 0 -16px -12px;
+  padding-left: 16px;
+  padding-right: 16px;
   flex-basis: 100%;
   flex-direction: column;
   align-items: flex-start;
