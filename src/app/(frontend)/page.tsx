@@ -20,6 +20,9 @@ import {
 } from '@/lib/site';
 import s from '@/components/home/home.module.css';
 
+/** Tom's public profile — the founder card links his name to it. */
+const LINKEDIN_URL = 'https://www.linkedin.com/in/tom-oswald-a7233619/';
+
 // ISR: statically cached at the CDN, re-rendered at most hourly. The only
 // live data on the page is the county coverage feeding the Service schema.
 export const revalidate = 3600;
@@ -58,7 +61,7 @@ const orgJsonLd = {
     postalCode: 'SO51 0QL',
     addressCountry: 'GB',
   },
-  founder: { '@type': 'Person', name: 'Tom Oswald', jobTitle: 'Managing Director' },
+  founder: { '@type': 'Person', name: 'Tom Oswald', jobTitle: 'Managing Director', sameAs: [LINKEDIN_URL] },
   areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
   contactPoint: {
     '@type': 'ContactPoint',
@@ -219,11 +222,17 @@ export default async function LandingPage() {
               </figure>
               <div className={s.founderText}>
                 <p className={s.eyebrow}>A managed marketplace for rural land</p>
-                <h1 className={s.founderH1}>Hi, I&rsquo;m Tom Oswald.</h1>
+                <h1 className={s.founderH1}>
+                  Hi, I&rsquo;m{' '}
+                  <a href={LINKEDIN_URL} className={s.founderName} target="_blank" rel="noopener noreferrer">
+                    Tom Oswald
+                  </a>
+                  .
+                </h1>
                 <p>
                   I&rsquo;m the managing director of Emmerdaleagriculture.com. I
                   started{' '}
-                  <a href={HPM_URL} className={s.founderLink}>
+                  <a href={HPM_URL} className={s.founderLink} target="_blank" rel="noopener noreferrer">
                     <strong>Hampshire Paddock Management</strong>
                   </a>{' '}
                   looking
@@ -240,7 +249,9 @@ export default async function LandingPage() {
                   and one place to come back to; they do the work they&rsquo;re
                   best at, close to home.
                 </p>
-                <p className={s.founderSig}>Tom Oswald · Managing Director</p>
+                <p className={s.founderSig}>
+                  <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">Tom Oswald</a> · Managing Director
+                </p>
               </div>
             </div>
           </div>
