@@ -591,3 +591,16 @@
 .behaviourRow .metricHint {
   text-align: center;
 }
+
+/* One overlay per device class, each labelled with what it is drawn from. */
+.overlayPane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.overlayTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}

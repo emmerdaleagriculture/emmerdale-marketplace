@@ -174,13 +174,26 @@ export default async function AdminDashboard() {
         </div>
       ) : (
         <div className={s.behaviourRow}>
-          {/* Clicks drawn over the live page, desktop visits only: a phone tap
-              at x=0.5 of a 390px screen is not the same element at 1280px. */}
-          <HeatOverlay path="/start" points={start.desktopPoints} />
+          {/* Two renders, because they are two different pages: the same
+              fraction of the document is a different element at 390px than
+              at 1280px. Phone clicks go on the phone render and desktop
+              clicks on the desktop one, and each blob scales to its page. */}
+          <div className={s.overlayPane}>
+            <div className={s.overlayTitle}>
+              Phone <span className={s.metricHint}>{n(start.phonePoints.length)} clicks · 390px</span>
+            </div>
+            <HeatOverlay path="/start" points={start.phonePoints} width={390} scale={0.72} />
+          </div>
+          <div className={s.overlayPane}>
+            <div className={s.overlayTitle}>
+              Desktop <span className={s.metricHint}>{n(start.desktopPoints.length)} clicks · 1280px</span>
+            </div>
+            <HeatOverlay path="/start" points={start.desktopPoints} />
+          </div>
           <div>
             <div className={s.metricGrid}>
               <Metric value={n(start.visits)} label="Visits" hint={`${Math.round(100 * start.phoneShare)}% on a phone`} />
-              <Metric value={n(start.clicks)} label="Clicks" hint={`${n(start.desktopPoints.length)} drawn (desktop)`} />
+              <Metric value={n(start.clicks)} label="Clicks" />
             </div>
             <div className={s.tableWrap}>
               <table className={s.table}>
