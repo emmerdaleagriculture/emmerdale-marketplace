@@ -118,3 +118,55 @@
   color: var(--ink-2);
   font-size: 14.5px;
 }
+
+/*
+ * The two routes through one login. Both sides use the same credentials, so
+ * this picks a destination rather than a form — which is why it sits above
+ * the fields as a choice, not beside them as two competing forms.
+ */
+.sideChoice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.sideOption {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 13px 14px;
+  text-align: left;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--white);
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink-2);
+}
+.sideOption strong {
+  font-size: 15px;
+  color: var(--ink);
+  font-weight: 600;
+}
+.sideOption span {
+  font-size: 13px;
+  line-height: 1.35;
+}
+.sideOption:hover {
+  border-color: var(--jd-green-dark);
+}
+.sideOptionOn {
+  border-color: var(--jd-green-dark);
+  box-shadow: inset 0 0 0 1px var(--jd-green-dark);
+  background: var(--jd-green-pale);
+}
+.sideOptionOn strong {
+  color: var(--jd-green-dark);
+}
+
+@media (max-width: 460px) {
+  .sideChoice {
+    grid-template-columns: 1fr;
+  }
+}

@@ -54,6 +54,9 @@ export async function getContractor(): Promise<Contractor | null> {
   return data ?? null;
 }
 
+/** What the login form's side chooser asked for, when it was asked. */
+export type LoginSide = 'customer' | 'contractor' | null;
+
 /**
  * Where a person belongs once they are signed in.
  *
@@ -61,17 +64,22 @@ export async function getContractor(): Promise<Contractor | null> {
  * has arrived. It used to send everyone to /account — the contractor's
  * account — which for a customer is somebody else's front door.
  *
- * Identity is decided by what exists rather than by what was typed, and the
- * order matters. A contractors row makes you a contractor. Failing that, a
- * customers row makes you a customer. Anyone with neither goes the contractor
- * way, because that is what they almost certainly are: a contractor who
- * signed up and has not finished onboarding has no contractors row yet, and
- * /account sends them on to /onboarding. Routing them by absence would drop
- * every new contractor into the customer area on their first login.
+ * Identity is decided by what exists, and that beats what was clicked: a
+ * contractors row means contractor, a customers row means customer, and
+ * neither of those can be talked out of by the chooser on the form. The
+ * chooser only settles the case the rows cannot — somebody with an account
+ * and no rows at all, which is a contractor part-way through onboarding
+ * (/account forwards them to /onboarding) or a customer who signed up but
+ * has not saved a job yet. Defaulting that case to contractor is what the
+ * page did before the chooser existed.
  *
- * A ?next= from the email they followed still wins over all of it.
+ * A ?next= from the email they followed wins over all of it, upstream.
  */
-export async function postLoginPath(userId: string, email: string | null | undefined): Promise<string> {
+export async function postLoginPath(
+  userId: string,
+  email: string | null | undefined,
+  side: LoginSide = null,
+): Promise<string> {
   if (isAdminEmail(email)) return '/admin';
   try {
     const admin = createServiceRoleClient();
@@ -81,7 +89,7 @@ export async function postLoginPath(userId: string, email: string | null | undef
     ]);
     if (contractor.data) return '/account';
     if (customer.data) return '/my';
-    return '/account';
+    return side === 'customer' ? '/my' : '/account';
   } catch (err) {
     // Never strand someone at a blank page over a failed lookup.
     console.error('[auth] post-login routing lookup failed:', err);
