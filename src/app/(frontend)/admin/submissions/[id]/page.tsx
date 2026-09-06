@@ -68,6 +68,15 @@ export default async function SubmissionDetailPage({
 
   // Private bucket — photos are only ever reachable through short-lived
   // signed URLs minted here for the admin.
+  // The contractor's invoice for the payout, same private-bucket treatment.
+  let invoiceUrl: string | null = null;
+  if (sub.contractor_invoice_path) {
+    const { data } = await admin.storage
+      .from('contractor-invoices')
+      .createSignedUrl(sub.contractor_invoice_path, 3600);
+    invoiceUrl = data?.signedUrl ?? null;
+  }
+
   const photoPaths = (sub.photo_paths ?? []) as string[];
   const photos: { path: string; url: string }[] = [];
   for (const path of photoPaths) {
@@ -158,6 +167,28 @@ export default async function SubmissionDetailPage({
                 />
               </a>
             ))}
+          </div>
+        </>
+      )}
+
+      {['completed', 'paid'].includes(sub.status) && (
+        <>
+          <div className={s.sectionLabel}>Contractor invoice</div>
+          <div className={s.empty}>
+            {invoiceUrl ? (
+              <>
+                <a href={invoiceUrl} target="_blank" rel="noopener noreferrer">
+                  {sub.contractor_invoice_name ?? 'Invoice'}
+                </a>{' '}
+                — sent{' '}
+                {sub.contractor_invoice_at
+                  ? new Date(sub.contractor_invoice_at).toLocaleString('en-GB')
+                  : ''}
+                . Link is good for an hour.
+              </>
+            ) : (
+              <>Not sent yet. The job is finished and the payout is owed.</>
+            )}
           </div>
         </>
       )}

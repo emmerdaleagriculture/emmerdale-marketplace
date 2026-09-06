@@ -16,10 +16,11 @@ import { JobSpecCard } from '@/components/job/JobSpecCard';
 import { StatusTimeline } from './StatusTimeline';
 import { PriceList, type ClientQuoteView } from './PriceList';
 import { ConfirmDone } from './ConfirmDone';
+import { InlineRating } from './InlineRating';
 import { PayNow } from './PayNow';
 import { SaveToAccount } from './SaveToAccount';
 import { CancelJob } from './CancelJob';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import a from '../../auth.module.css';
 import m from './my.module.css';
 
@@ -55,6 +56,18 @@ export default async function ClientPortalPage({
   // already had a contractor login.
   const claimable = !js.customer_id;
   const mine = Boolean(user) && js.customer_id === user?.id;
+
+  // One rating per job (§18a). Read here so the done panel can show what they
+  // said rather than asking again.
+  const rated = ['completed', 'paid'].includes(js.status)
+    ? (
+        await createServiceRoleClient()
+          .from('contractor_ratings')
+          .select('stars')
+          .eq('submission_id', js.id)
+          .maybeSingle()
+      ).data
+    : null;
 
   // Only quoted while cancelling is actually on offer — 9.1 is "before the
   // work starts", and after that 9.3 needs a person, not a button.
@@ -196,11 +209,17 @@ export default async function ClientPortalPage({
                 All done — {accepted?.contractor_real_name ?? 'your contractor'} has been
                 paid.
               </p>
-              <p>
-                If you&rsquo;ve got 30 seconds:{' '}
-                <Link href={`/my/${token}/rate`}>rate how it went</Link> — it helps the
-                next customer choose.
-              </p>
+              {rated ? (
+                <p>
+                  You rated this job {'★'.repeat(rated.stars)}
+                  {'☆'.repeat(5 - rated.stars)}. Thank you.
+                </p>
+              ) : (
+                <>
+                  <p>A rating helps the next customer choose — it takes a moment.</p>
+                  <InlineRating token={token} />
+                </>
+              )}
             </div>
           )}
 

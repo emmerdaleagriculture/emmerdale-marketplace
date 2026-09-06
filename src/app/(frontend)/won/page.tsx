@@ -7,6 +7,7 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
 import { formatDateTime } from '@/lib/time';
 import { FirstContactButton } from './FirstContactButton';
 import { MarkDoneButton } from './MarkDoneButton';
+import { InvoiceUpload } from './InvoiceUpload';
 import a from '../auth.module.css';
 import s from './won.module.css';
 
@@ -159,6 +160,15 @@ export default async function WonJobsPage() {
                     job.status ?? '',
                   ) &&
                     job.id && <MarkDoneButton submissionId={job.id} />}
+                  {/* The customer has confirmed and the money is ours to
+                      release — all that is missing is their invoice. */}
+                  {['completed', 'paid'].includes(job.status ?? '') && job.id && (
+                    <InvoiceUpload
+                      submissionId={job.id}
+                      sentName={job.contractor_invoice_name}
+                      sentAt={job.contractor_invoice_at}
+                    />
+                  )}
                 </div>
               ))}
             </div>
