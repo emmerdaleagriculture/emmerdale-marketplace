@@ -343,7 +343,7 @@ export function LandingFlow() {
           without delaying anyone already convinced. */}
       <ul className={s.reassure}>
         <li>No trawling Facebook groups hoping someone answers.</li>
-        <li>Insured contractors, vetted before they can quote.</li>
+        <li>Insured contractors, vetted before they see a single job.</li>
         <li>Several prices to choose from, not whoever replies first.</li>
         <li>Booked for when you actually want it, and it gets done.</li>
         <li>

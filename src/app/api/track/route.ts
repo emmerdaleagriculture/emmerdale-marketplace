@@ -34,6 +34,15 @@ const int = (v: unknown, lo: number, hi: number): number | null => {
 };
 
 export async function POST(request: Request) {
+  // Beacons carry an Origin header. This does not stop anyone with curl, and
+  // is not meant to; it stops the cheap version — a page somewhere else
+  // firing our endpoint from a browser — from padding the heat map for free.
+  const origin = request.headers.get('origin');
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  if (origin && site && !origin.startsWith(site.replace(/\/$/, ''))) {
+    return new NextResponse(null, { status: 204 });
+  }
+
   let body: Incoming;
   try {
     body = (await request.json()) as Incoming;

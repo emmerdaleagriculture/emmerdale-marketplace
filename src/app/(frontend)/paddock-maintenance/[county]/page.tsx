@@ -249,7 +249,7 @@ export default async function PaddockCountyPage({
               style={{ maxWidth: 760, display: 'flex', flexWrap: 'wrap', gap: '10px 18px' }}
             >
               {siblings.map((c: CountyRef) => (
-                <Link key={c.slug} href={`/paddock-maintenance/${c.slug}`}>
+                <Link key={c.slug} href={`/paddock-maintenance/${c.slug}`} prefetch={false}>
                   {c.name}
                 </Link>
               ))}

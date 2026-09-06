@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import styles from './SiteHeader.module.css';
 
 /**
@@ -19,6 +18,13 @@ import styles from './SiteHeader.module.css';
  * Auth still resolves in the browser, so pages carrying this header stay
  * statically cacheable: the logged-out links render first and swap on
  * hydration.
+ *
+ * The check is gated on a cookie. Importing the Supabase browser client just
+ * to ask "is anyone signed in?" cost every page wearing this header ~65 kB of
+ * gzipped JavaScript — /terms, /privacy, all 170 county pages — and for the
+ * anonymous visitor who is nearly everyone the answer was always no. With no
+ * `sb-` cookie there is no session to find, so nothing is loaded; only a
+ * browser that actually holds one pays for the client, and only once.
  */
 export function SiteNav() {
   const [signedIn, setSignedIn] = useState(false);
@@ -26,8 +32,19 @@ export function SiteNav() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
+    // @supabase/ssr writes its session cookies readable by the page, so their
+    // absence is a reliable "nobody here" without a round trip or a download.
+    if (!/(^|;\s*)sb-[^=]+=/.test(document.cookie)) return;
+    let cancelled = false;
+    import('@/lib/supabase/client')
+      .then(({ createClient }) => createClient().auth.getUser())
+      .then(({ data }) => {
+        if (!cancelled) setSignedIn(!!data.user);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // A menu left open across a navigation covers the page you asked for.

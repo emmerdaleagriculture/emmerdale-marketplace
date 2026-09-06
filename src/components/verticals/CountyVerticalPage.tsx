@@ -158,7 +158,7 @@ export function CountyVerticalPage({
             </h2>
             <div className={s.sectionInner} style={{ maxWidth: 760, display: 'flex', flexWrap: 'wrap', gap: '10px 18px' }}>
               {siblings.map((c) => (
-                <Link key={c.slug} href={`/${vertical}/${c.slug}`}>
+                <Link key={c.slug} href={`/${vertical}/${c.slug}`} prefetch={false}>
                   {c.name}
                 </Link>
               ))}

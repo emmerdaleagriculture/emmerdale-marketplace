@@ -26,7 +26,7 @@ export async function CountyLinks({ vertical, heading }: { vertical: CountyPageB
               <div className={s.kicker} style={{ marginBottom: 8 }}>{region}</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 18px' }}>
                 {list.map((c) => (
-                  <Link key={c.slug} href={`/${vertical}/${c.slug}`}>
+                  <Link key={c.slug} href={`/${vertical}/${c.slug}`} prefetch={false}>
                     {c.name}
                   </Link>
                 ))}
