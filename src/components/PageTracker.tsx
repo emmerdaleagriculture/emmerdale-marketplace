@@ -99,7 +99,19 @@ export function PageTracker({ path }: { path: string }) {
     const session = sessionKey();
     if (!session) return;
 
-    const buffer: Buffer = { events: [], startedAt: performance.now(), seen: new Set() };
+    // The clock starts when the tab first landed, not when this mount
+    // happened. The tracker remounts as the flow moves — step 1, the parse
+    // skeleton, step 2 — so a per-mount clock would report "saw step 2" at
+    // roughly zero seconds every time. Keyed on the tab like the session is.
+    let startedAt = performance.now();
+    try {
+      const stored = Number(sessionStorage.getItem('ea_t0'));
+      if (stored > 0 && stored <= startedAt) startedAt = stored;
+      else sessionStorage.setItem('ea_t0', String(startedAt));
+    } catch {
+      /* no storage: seconds are since this mount, which is the best we have */
+    }
+    const buffer: Buffer = { events: [], startedAt, seen: new Set() };
     active = buffer;
     const events = buffer.events;
     let deepestPx = 0;
