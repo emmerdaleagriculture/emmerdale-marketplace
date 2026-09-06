@@ -13,15 +13,27 @@ import { CANONICAL_SERVICES, LLM_SERVICE_VALUES, RECORD_JOB_PARSE_TOOL } from '.
  */
 
 const START_DIR = path.resolve(import.meta.dirname, '../../app/(frontend)/start');
-// Whole words only: "area-priced" (an internal term) is not the word "price".
-const BANNED = /\b(quotes?|proposals?|estimates?|prices?)\b/i;
+// Whole words only. The bidding vocabulary — quote, proposal, estimate — is
+// what §10 is guarding against: the landing record is a job specification, not
+// a request for offers. "Price" is deliberately NOT here: it is the platform's
+// own word everywhere the customer meets money (§19: "language says price,
+// never quote"), and the step-1 bullets promise "several prices to choose
+// from" because that is the product. Banning it made the test fight the copy
+// the site is built around.
+const BANNED = /\b(quotes?|proposals?|estimates?)\b/i;
+
+// The constraint is on what the customer reads. A code comment that mentions
+// the contractor's quote page is not customer-facing, and failing on it only
+// teaches people to phrase comments around the test.
+const stripComments = (src: string) =>
+  src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`])\/\/.*$/gm, '$1');
 
 describe('spec §10 language constraints', () => {
   it('no banned vocabulary in the landing flow source', () => {
     for (const file of readdirSync(START_DIR)) {
       if (!/\.(tsx?|css)$/.test(file)) continue;
       const source = readFileSync(path.join(START_DIR, file), 'utf8');
-      const hits = source.match(BANNED);
+      const hits = stripComments(source).match(BANNED);
       expect(hits, `${file} contains banned word "${hits?.[0]}"`).toBeNull();
     }
   });

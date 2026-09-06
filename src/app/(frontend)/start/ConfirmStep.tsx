@@ -477,7 +477,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
         <EmailField
           name="contact_email"
           required
-          hint="Your prices and payment link go here."
+          hint="Everything about your job comes to this address."
         />
         <label className={f.field}>
           <span className={f.label}>Best way to reach you</span>
@@ -494,7 +494,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           <p className={f.hint}>
             {nudged
               ? 'Trace round the area on the map above, then press Send again.'
-              : 'Tip: tracing round the area on the map gets you straighter quotes.'}
+              : 'Tip: tracing round the area on the map means contractors know exactly what they are looking at.'}
           </p>
         )}
         <button className={f.btnYellow} type="submit" disabled={pending}>
