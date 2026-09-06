@@ -16,9 +16,12 @@ import {
 } from '@/components/paddock/PaddockSections';
 import { getServices, getCountyCoverage } from '@/lib/reference';
 import { UK_COUNTY_NAMES } from '@/components/UKCoverageMap';
-import { COMPANY_LEGAL_NAME, COMPANY_REG_PROSE, SERVICE_AREA } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, COMPANY_REG_PROSE, SERVICE_AREA, siteUrl } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
+
+// Canonical origin for structured data — www in production.
+const SITE = siteUrl();
 
 /**
  * The customer front page: the indexable front door for people who need
@@ -87,13 +90,13 @@ export default async function PaddockMaintenancePage() {
     serviceType: services.map((svc) => svc.name),
     description:
       `Paddock maintenance and agricultural contracting for paddock owners, equestrian yards, smallholdings, farms and estates — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance, matched to contractors by county across ${SERVICE_AREA}.`,
-    url: 'https://emmerdaleagriculture.com/paddock-maintenance',
+    url: `${SITE}/paddock-maintenance`,
     areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
     provider: {
       '@type': 'Organization',
       name: 'Emmerdale Agriculture',
       legalName: COMPANY_LEGAL_NAME,
-      url: 'https://emmerdaleagriculture.com',
+      url: SITE,
     },
   };
 

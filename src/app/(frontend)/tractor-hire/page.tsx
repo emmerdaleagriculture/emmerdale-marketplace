@@ -6,9 +6,12 @@ import { Breadcrumb } from '@/components/Breadcrumb';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
 import { CountyLinks } from '@/components/verticals/CountyLinks';
 import { NotesTeaser } from '@/components/notes/NotesTeaser';
-import { COMPANY_LEGAL_NAME, SERVICE_AREA } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, SERVICE_AREA, siteUrl } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
+
+// Canonical origin for structured data — www in production.
+const SITE = siteUrl();
 
 // ISR: the copy is static, but the notes teaser below picks up newly
 // published posts — so re-render hourly rather than freezing at build.
@@ -38,7 +41,7 @@ const serviceJsonLd = {
     '@type': 'Organization',
     name: 'Emmerdale Agriculture',
     legalName: COMPANY_LEGAL_NAME,
-    url: 'https://emmerdaleagriculture.com',
+    url: SITE,
   },
 };
 

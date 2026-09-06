@@ -5,11 +5,14 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { NotesTeaser } from '@/components/notes/NotesTeaser';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
-import { COMPANY_LEGAL_NAME } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, siteUrl } from '@/lib/site';
 import { VERTICALS, type VerticalKey, type CountyRef } from '@/lib/verticals';
 import { verticalNote, verticalNoteHeading } from '@/lib/verticalRegions';
 import a from '@/app/(frontend)/auth.module.css';
 import s from '@/app/(frontend)/landing.module.css';
+
+// Canonical origin for structured data — www in production.
+const SITE = siteUrl();
 
 /**
  * Shared renderer for a per-county vertical landing page, e.g.
@@ -47,7 +50,7 @@ export function CountyVerticalPage({
       '@type': 'Organization',
       name: 'Emmerdale Agriculture',
       legalName: COMPANY_LEGAL_NAME,
-      url: 'https://emmerdaleagriculture.com',
+      url: SITE,
     },
   };
   const faqJsonLd = {
