@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { emailDeliveryError } from '@/lib/email/deliverable';
 import { redirect } from 'next/navigation';
 import { safeInternalPath } from '@/lib/auth';
+import { forgetJustSentJob, justSentJob } from '@/lib/jobCookie';
+import { claimJobForUser } from '@/lib/customers/claim';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
@@ -116,7 +118,23 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
     // A customer signing up from their job link is not becoming a contractor:
     // onboarding writes a contractors row with NOT NULL business columns and
     // would strand them. Send them back where they came from.
-    const next = safeInternalPath(String(formData.get('next') ?? '')) ;
+    //
+    // Someone coming off the thank-you page has no ?next= to send them back
+    // with — the job token lives in a cookie rather than the URL, because the
+    // pixel and the analytics tag would otherwise hand it to Facebook and
+    // Google as the page address. So look there instead.
+    const next = safeInternalPath(String(formData.get('next') ?? ''));
+    const justSent = next ? null : await justSentJob();
+    if (justSent) {
+      // The thank-you page said "add a password and this job is saved to it".
+      // Landing them on the job with another button to press would be very
+      // nearly keeping that promise. A failure here is not worth blocking on:
+      // they arrive at the job page, which still offers the button.
+      const claim = await claimJobForUser(signUp.user.id, signUp.user.email, justSent);
+      if (!claim.ok) console.error('[signup] auto-claim failed:', claim.reason);
+      await forgetJustSentJob();
+      redirect(`/my/${justSent}`);
+    }
     redirect(next ?? '/onboarding');
   }
 

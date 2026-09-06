@@ -3,6 +3,7 @@
 import { after } from 'next/server';
 import { z } from 'zod';
 import { emailDeliveryError } from '@/lib/email/deliverable';
+import { rememberJustSentJob } from '@/lib/jobCookie';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { normalisePostcode, resolveCounty, type CountyResolution } from '@/lib/postcodes';
@@ -597,13 +598,17 @@ export async function confirmJobAction(
     })
     .eq('id', d.submission_id)
     .eq('status', 'draft')
-    .select('id')
+    .select('id, client_token')
     .maybeSingle();
   if (error || !updated) {
     if (!error) return { ok: true, message: CONFIRM_SUCCESS }; // raced with itself — already confirmed
     console.error('[jobParse] confirm update failed:', error);
     return { error: 'Something went wrong saving your details — please try again.' };
   }
+
+  // Carried to the thank-you page so it can offer them an account for the job
+  // they just sent, rather than a generic invitation to sign up for nothing.
+  if (updated.client_token) await rememberJustSentJob(updated.client_token);
 
   await logParseEvent(ip, 'confirm', 'ok');
 
