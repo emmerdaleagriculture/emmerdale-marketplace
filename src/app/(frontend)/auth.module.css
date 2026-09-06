@@ -123,12 +123,30 @@
  * The two routes through one login. Both sides use the same credentials, so
  * this picks a destination rather than a form — which is why it sits above
  * the fields as a choice, not beside them as two competing forms.
+ *
+ * Real radios, visually hidden: the label is the target, the ring is drawn
+ * from :focus-visible on the input, and keyboard and screen-reader behaviour
+ * is the browser's rather than ours to reimplement.
  */
+.sideFieldset {
+  margin: 0 0 22px;
+  padding: 0;
+  border: 0;
+}
+
 .sideChoice {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-bottom: 22px;
+}
+
+.sideLegend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
 
 .sideOption {
@@ -136,13 +154,22 @@
   flex-direction: column;
   gap: 3px;
   padding: 13px 14px;
-  text-align: left;
   border: 1px solid var(--rule);
   border-radius: 8px;
   background: var(--white);
   cursor: pointer;
-  font: inherit;
   color: var(--ink-2);
+}
+.sideOption input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 .sideOption strong {
   font-size: 15px;
@@ -155,6 +182,10 @@
 }
 .sideOption:hover {
   border-color: var(--jd-green-dark);
+}
+.sideOption:has(input:focus-visible) {
+  outline: 2px solid var(--jd-green-dark);
+  outline-offset: 2px;
 }
 .sideOptionOn {
   border-color: var(--jd-green-dark);
