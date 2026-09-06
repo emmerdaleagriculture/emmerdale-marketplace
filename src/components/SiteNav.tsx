@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './SiteHeader.module.css';
+import { SocialLinks } from './SocialLinks';
 
 /**
  * The header's links, and the menu they collapse into.
@@ -77,6 +78,11 @@ export function SiteNav() {
   return (
     <>
       <nav className={styles.nav} aria-label="Primary">{links}</nav>
+
+      {/* Instagram and TikTok. Outside the collapsing nav on purpose: two
+          icons fit beside the burger, and a phone visitor is the one most
+          likely to want them. */}
+      <SocialLinks className={styles.social} />
 
       <button
         type="button"

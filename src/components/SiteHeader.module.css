@@ -44,6 +44,13 @@
 .nav a:hover {
   opacity: 1;
 }
+/* Links then icons, together at the right; the brand keeps the left. */
+.nav {
+  margin-left: auto;
+}
+.social {
+  color: var(--white);
+}
 .linkButton {
   font-size: 13px;
   letter-spacing: 0.06em;
@@ -153,6 +160,10 @@
   }
   .nav {
     display: none;
+  }
+  /* With the links put away, the icons take over the right-hand side. */
+  .social {
+    margin-left: auto;
   }
   .navToggle {
     display: block;
