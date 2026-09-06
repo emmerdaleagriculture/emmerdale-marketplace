@@ -1485,6 +1485,7 @@ export type Database = {
           kind: string
           label: string | null
           path: string
+          seconds: number | null
           session_key: string
           viewport_w: number | null
           x_pct: number | null
@@ -1498,6 +1499,7 @@ export type Database = {
           kind: string
           label?: string | null
           path: string
+          seconds: number | null
           session_key: string
           viewport_w?: number | null
           x_pct?: number | null
@@ -1511,6 +1513,7 @@ export type Database = {
           kind?: string
           label?: string | null
           path?: string
+          seconds?: number | null
           session_key?: string
           viewport_w?: number | null
           x_pct?: number | null

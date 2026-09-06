@@ -9,6 +9,7 @@ import { conditionsFor, isAreaPriced } from '@/lib/jobParse/conditions';
 import { GATE_WIDTH_OPTIONS } from '@/lib/jobParse/access';
 import { areaDiscrepancy } from '@/lib/jobParse/geometry';
 import { BoundaryMap, type BoundaryState } from './BoundaryMap';
+import { trackStep } from '@/components/PageTracker';
 import { EmailField } from '@/components/forms/EmailField';
 import f from '@/components/forms/forms.module.css';
 import a from '@/app/(frontend)/auth.module.css';
@@ -44,6 +45,19 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
   const [areaValue, setAreaValue] = useState(result.area_value?.toString() ?? '');
   const [conditionValues, setConditionValues] = useState<Record<string, string>>({});
   const [mapState, setMapState] = useState<BoundaryState | null>(null);
+
+  // Milestones for the journey report: the parse came back, they drew the
+  // field, they started on contact details, they finished (or hit an error).
+  useEffect(() => {
+    trackStep('parsed');
+  }, []);
+  useEffect(() => {
+    if (mapState?.mappedAcres) trackStep('map_drawn');
+  }, [mapState?.mappedAcres]);
+  useEffect(() => {
+    if (state.ok) trackStep('sent');
+    else if (state.error) trackStep('confirm_error');
+  }, [state.ok, state.error]);
   const [mapStatus, setMapStatus] = useState<'pending' | 'ready' | 'unavailable'>('pending');
   const [keepStated, setKeepStated] = useState(false);
   const [gateWidth, setGateWidth] = useState(result.gate_width ?? '');
@@ -468,7 +482,14 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
       <div className={a.row2}>
         <label className={f.field}>
           <span className={f.label}>Your name</span>
-          <input className={f.input} type="text" name="contact_name" required autoComplete="name" />
+          <input
+            className={f.input}
+            type="text"
+            name="contact_name"
+            required
+            autoComplete="name"
+            onInput={() => trackStep('contact')}
+          />
         </label>
         <label className={f.field}>
           <span className={f.label}>Phone</span>

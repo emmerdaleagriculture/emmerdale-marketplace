@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { PageTracker } from '@/components/PageTracker';
+import { PageTracker, trackStep } from '@/components/PageTracker';
 import { parseJobAction, recordLandingView, type ParseActionState } from './actions';
 import { downscalePhoto } from './photoDownscale';
 
@@ -38,6 +38,10 @@ async function downscaleInput(input: HTMLInputElement) {
  */
 export function LandingFlow() {
   const [state, action, pending] = useActionState(parseJobAction, EMPTY);
+  // A parse error is a milestone too: it is where the flow broke for them.
+  useEffect(() => {
+    if (state.error) trackStep('parse_error');
+  }, [state.error]);
   const [formTs, setFormTs] = useState('');
   const [captchaToken, setCaptchaToken] = useState('');
   const [awaitingToken, setAwaitingToken] = useState(false);
@@ -216,13 +220,22 @@ export function LandingFlow() {
     }
   }, []);
 
+  // The beacon lives above every branch: it has to still be there when the
+  // confirm step reports its milestones, and one tab is one visit whichever
+  // step it is on.
   if (state.ok && state.result) {
-    return <ConfirmStep result={state.result} />;
+    return (
+      <>
+        <PageTracker path="/start" />
+        <ConfirmStep result={state.result} />
+      </>
+    );
   }
 
   if (pending) {
     return (
       <div className={a.card} aria-busy="true" aria-label="Working out the details of your job">
+        <PageTracker path="/start" />
         <p className={s.skeletonNote}>Reading your description…</p>
         <div className={s.skeletonRow} style={{ width: '55%' }} />
         <div className={s.skeletonRow} style={{ width: '80%' }} />
@@ -238,6 +251,7 @@ export function LandingFlow() {
       action={action}
       className={a.card}
       onSubmit={(e) => {
+        trackStep('send');
         // The button is never disabled waiting for Turnstile — if the token
         // hasn't arrived yet, hold THIS submit and fire it the moment it does.
         if (turnstileEnabled && !tokenRef.current && !awaitingToken) {
@@ -284,6 +298,7 @@ export function LandingFlow() {
         <span className={f.label}>What needs doing?</span>
         <textarea
           ref={rawTextRef}
+          onInput={() => trackStep('typed')}
           className={f.textarea}
           name="raw_text"
           required

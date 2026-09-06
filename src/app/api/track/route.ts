@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   const rows = (body.events as Record<string, unknown>[])
     .slice(0, MAX_EVENTS)
     .map((e) => {
-      const kind = e.kind === 'click' || e.kind === 'depth' ? e.kind : null;
+      const kind = e.kind === 'click' || e.kind === 'depth' || e.kind === 'step' ? e.kind : null;
       if (!kind) return null;
       return {
         path,
@@ -68,6 +68,9 @@ export async function POST(request: Request) {
         x_pct: kind === 'click' ? num(e.x, 0, 1) : null,
         y_pct: kind === 'click' ? num(e.y, 0, 1) : null,
         depth_pct: kind === 'depth' ? int(e.depth, 0, 100) : null,
+        // How far into the visit a milestone came. A day is plenty; the
+        // constraint says the same thing in SQL.
+        seconds: kind === 'step' ? int(e.seconds, 0, 86400) : null,
         viewport_w: int(e.vw, 0, 10000),
         doc_h: int(e.dh, 0, 200000),
         label: typeof e.label === 'string' ? e.label.slice(0, 80) : null,
