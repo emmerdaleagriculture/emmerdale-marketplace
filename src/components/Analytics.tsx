@@ -71,7 +71,23 @@ export function Analytics() {
     window.fbq?.('track', 'PageView');
   }, [pathname, framed]);
 
-  if (!loadable.current || framed !== false) return null;
+  if (!loadable.current) return null;
+
+  // Server-rendered whatever happens next: a browser with scripts off never
+  // reaches the framed check, and one with scripts on ignores <noscript>.
+  const noscript = (
+    <noscript>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        height="1"
+        width="1"
+        style={{ display: 'none' }}
+        alt=""
+        src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
+      />
+    </noscript>
+  );
+  if (framed !== false) return noscript;
 
   return (
     <>
@@ -100,16 +116,7 @@ export function Analytics() {
           fbq('track', 'PageView');
         `}
       </Script>
-      <noscript>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          height="1"
-          width="1"
-          style={{ display: 'none' }}
-          alt=""
-          src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
-        />
-      </noscript>
+      {noscript}
     </>
   );
 }

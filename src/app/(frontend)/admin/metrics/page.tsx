@@ -4,7 +4,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { UKCoverageMap } from '@/components/UKCoverageMap';
 import { HeatOverlay } from '../reporting/journey/HeatOverlay';
-import { fmtSeconds, loadJourney } from '@/lib/journey';
+import { fmtSeconds, loadJourney, type Journey } from '@/lib/journey';
 import s from '../admin.module.css';
 import f from '@/components/forms/forms.module.css';
 
@@ -84,7 +84,12 @@ export default async function AdminDashboard() {
   const admin = createServiceRoleClient();
   const [{ data, error }, start] = await Promise.all([
     admin.rpc('admin_dashboard'),
-    loadJourney('/start'),
+    // The behaviour section is a bonus on this page; a failed read of it
+    // renders as "no visits", not as a dead dashboard.
+    loadJourney('/start').catch((err): Journey => {
+      console.error('[dashboard] journey load failed:', err);
+      return { visits: 0, phoneShare: 0, clicks: 0, desktopPoints: [], phonePoints: [], bands: [], milestones: [] };
+    }),
   ]);
   if (error || !data) {
     return (

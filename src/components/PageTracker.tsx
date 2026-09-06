@@ -46,7 +46,7 @@ export function trackStep(label: string): void {
   active.events.push({
     kind: 'step',
     label: label.slice(0, 80),
-    seconds: Math.round((performance.now() - active.startedAt) / 1000),
+    seconds: Math.round((Date.now() - active.startedAt) / 1000),
     vw: window.innerWidth,
     dh: Math.max(document.documentElement.scrollHeight, 1),
   });
@@ -103,7 +103,11 @@ export function PageTracker({ path }: { path: string }) {
     // happened. The tracker remounts as the flow moves — step 1, the parse
     // skeleton, step 2 — so a per-mount clock would report "saw step 2" at
     // roughly zero seconds every time. Keyed on the tab like the session is.
-    let startedAt = performance.now();
+    // Wall-clock, not performance.now(): that clock restarts on every page
+    // load, so a stored value from before a reload would be nonsense against
+    // it. Date.now() stored beside the session key means "seconds since this
+    // tab first landed", across remounts and reloads alike.
+    let startedAt = Date.now();
     try {
       const stored = Number(sessionStorage.getItem('ea_t0'));
       if (stored > 0 && stored <= startedAt) startedAt = stored;
