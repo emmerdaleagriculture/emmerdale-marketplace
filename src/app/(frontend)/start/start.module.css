@@ -166,3 +166,23 @@
   background: var(--jd-yellow, #ffde00);
   border: 1px solid var(--jd-green-deep);
 }
+
+/*
+ * The way out of the form. Quiet enough not to compete with the submit
+ * button, present enough that someone stuck at 9pm with an odd job can see
+ * there is a person at the other end.
+ */
+.contact {
+  margin-top: 28px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+.contact a {
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.contact a:hover {
+  text-decoration: none;
+}
