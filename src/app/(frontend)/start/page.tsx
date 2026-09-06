@@ -3,6 +3,7 @@ import { MinimalHeader } from '@/components/MinimalHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { LandingFlow } from './LandingFlow';
 import a from '../auth.module.css';
+import s from './start.module.css';
 
 /**
  * Paid-ads landing page. One job: convert a paid click into a complete,
@@ -37,6 +38,13 @@ export default function StartPage() {
             details and pass it to contractors who cover your area.
           </p>
           <LandingFlow />
+          {/* Outside <LandingFlow> on purpose: it renders one of three things
+              depending on where the customer is, and the way to reach a human
+              should not depend on which. */}
+          <p className={s.contact}>
+            If you need to contact us directly, email{' '}
+            <a href="mailto:tom@emmerdaleagriculture.com">tom@emmerdaleagriculture.com</a>.
+          </p>
         </div>
       </main>
       <SiteFooter />
