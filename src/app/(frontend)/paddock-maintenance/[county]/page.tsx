@@ -18,9 +18,12 @@ import {
 import { allCountyRefs, resolveCountyBySlug, regionPhrase, type CountyRef } from '@/lib/verticals';
 import { getServices, getCountyCoverage } from '@/lib/reference';
 import { paddockNote } from '@/lib/paddockRegions';
-import { COMPANY_LEGAL_NAME } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, siteUrl } from '@/lib/site';
 import a from '../../auth.module.css';
 import s from '../../landing.module.css';
+
+// Canonical origin for structured data — www in production.
+const SITE = siteUrl();
 
 /**
  * Per-county paddock maintenance pages — the organic catch for "paddock
@@ -113,13 +116,13 @@ export default async function PaddockCountyPage({
     name: `Paddock maintenance in ${name}`,
     serviceType: services.map((svc) => svc.name),
     description: `Paddock maintenance and agricultural contracting in ${name} — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance for paddock owners, equestrian yards, smallholdings, farms and estates.`,
-    url: `https://emmerdaleagriculture.com/paddock-maintenance/${county}`,
+    url: `${SITE}/paddock-maintenance/${county}`,
     areaServed: { '@type': 'AdministrativeArea', name },
     provider: {
       '@type': 'Organization',
       name: 'Emmerdale Agriculture',
       legalName: COMPANY_LEGAL_NAME,
-      url: 'https://emmerdaleagriculture.com',
+      url: SITE,
     },
   };
 

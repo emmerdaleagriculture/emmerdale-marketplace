@@ -63,7 +63,10 @@ export const SERVICE_AREA = 'England, Wales and Scotland';
 /** The same claim where a sentence needs it short — "across Britain". */
 export const SERVICE_AREA_SHORT = 'Britain';
 
-const FALLBACK_SITE_URL = 'https://emmerdaleagriculture.com';
+// www, matching the canonical tag, the sitemap and the apex→www redirect. It
+// was the apex until 2026-09-06; that mismatch had every JSON-LD block on the
+// site telling Google the entity lived at the address we redirect away from.
+const FALLBACK_SITE_URL = 'https://www.emmerdaleagriculture.com';
 
 /**
  * The site's canonical origin, without a trailing slash.

@@ -17,8 +17,12 @@ import {
   HPM_URL,
   PHONE_TEL,
   SERVICE_AREA,
+  siteUrl,
 } from '@/lib/site';
 import s from '@/components/home/home.module.css';
+
+// Canonical origin for structured data — www in production.
+const SITE = siteUrl();
 
 /** Tom's public profile — the founder card links his name to it. */
 const LINKEDIN_URL = 'https://www.linkedin.com/in/tom-oswald-a7233619/';
@@ -40,9 +44,9 @@ const orgJsonLd = {
   '@type': 'Organization',
   name: 'Emmerdale Agriculture',
   legalName: COMPANY_LEGAL_NAME,
-  url: 'https://emmerdaleagriculture.com',
+  url: SITE,
   // Raster logo (PNG) — Google's logo guidelines don't reliably pick up SVG.
-  logo: 'https://emmerdaleagriculture.com/apple-icon.png',
+  logo: `${SITE}/apple-icon.png`,
   ...(COMPANY_NUMBER
     ? {
         identifier: {
@@ -166,11 +170,11 @@ export default async function LandingPage() {
     serviceType: HOME_SERVICES.map((svc) => svc.name),
     description:
       `Paddock maintenance and agricultural contracting, including topping, harrowing, rolling, overseeding, hedge cutting, fencing and land clearance, for paddock owners, equestrian yards, farms and estates across ${SERVICE_AREA}. Priced upfront and completed by approved operators.`,
-    url: `https://emmerdaleagriculture.com${BOOK_HREF}`,
+    url: `${SITE}${BOOK_HREF}`,
     provider: {
       '@type': 'Organization',
       name: COMPANY_LEGAL_NAME,
-      url: 'https://emmerdaleagriculture.com',
+      url: SITE,
       brand: { '@type': 'Brand', name: 'Hampshire Paddock Management' },
     },
     areaServed: coveredCounties.map((name) => ({ '@type': 'AdministrativeArea', name })),
