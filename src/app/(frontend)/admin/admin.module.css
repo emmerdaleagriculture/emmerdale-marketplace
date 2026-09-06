@@ -564,3 +564,30 @@
 @media (max-width: 900px) {
   .two { grid-template-columns: 1fr; }
 }
+
+/* The behaviour row: overlay and tables centred as a pair, and each column
+   centred within itself, rather than everything hugging the left edge. */
+.behaviourRow {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  text-align: center;
+}
+.behaviourRow > * {
+  flex: 0 1 auto;
+}
+.behaviourRow .metricGrid {
+  justify-content: center;
+}
+.behaviourRow .table {
+  margin: 0 auto;
+}
+.behaviourRow .table th,
+.behaviourRow .table td {
+  text-align: center;
+}
+.behaviourRow .metricHint {
+  text-align: center;
+}

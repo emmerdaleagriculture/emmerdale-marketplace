@@ -173,7 +173,7 @@ export default async function AdminDashboard() {
           yourself, and never from inside this overlay.
         </div>
       ) : (
-        <div className={s.mapRow}>
+        <div className={s.behaviourRow}>
           {/* Clicks drawn over the live page, desktop visits only: a phone tap
               at x=0.5 of a 390px screen is not the same element at 1280px. */}
           <HeatOverlay path="/start" points={start.desktopPoints} />
