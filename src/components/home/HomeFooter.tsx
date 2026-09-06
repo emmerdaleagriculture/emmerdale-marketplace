@@ -50,7 +50,12 @@ export function HomeFooter() {
                 <a href="#operators">Are you a contractor?</a>
               </li>
               <li>
-                <Link href="/login">Contractor log in</Link>
+                {/* One login for both sides now, so it is no longer the
+                    contractors' door. */}
+                <Link href="/login">Log in</Link>
+              </li>
+              <li>
+                <Link href="/contact">Contact us</Link>
               </li>
             </ul>
           </div>
