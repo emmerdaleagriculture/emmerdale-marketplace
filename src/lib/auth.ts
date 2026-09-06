@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import type { User } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
 
@@ -52,4 +52,39 @@ export async function getContractor(): Promise<Contractor | null> {
     .eq('id', user.id)
     .maybeSingle();
   return data ?? null;
+}
+
+/**
+ * Where a person belongs once they are signed in.
+ *
+ * One login page serves contractors and customers, so it cannot assume which
+ * has arrived. It used to send everyone to /account — the contractor's
+ * account — which for a customer is somebody else's front door.
+ *
+ * Identity is decided by what exists rather than by what was typed, and the
+ * order matters. A contractors row makes you a contractor. Failing that, a
+ * customers row makes you a customer. Anyone with neither goes the contractor
+ * way, because that is what they almost certainly are: a contractor who
+ * signed up and has not finished onboarding has no contractors row yet, and
+ * /account sends them on to /onboarding. Routing them by absence would drop
+ * every new contractor into the customer area on their first login.
+ *
+ * A ?next= from the email they followed still wins over all of it.
+ */
+export async function postLoginPath(userId: string, email: string | null | undefined): Promise<string> {
+  if (isAdminEmail(email)) return '/admin';
+  try {
+    const admin = createServiceRoleClient();
+    const [contractor, customer] = await Promise.all([
+      admin.from('contractors').select('id').eq('id', userId).maybeSingle(),
+      admin.from('customers').select('id').eq('id', userId).maybeSingle(),
+    ]);
+    if (contractor.data) return '/account';
+    if (customer.data) return '/my';
+    return '/account';
+  } catch (err) {
+    // Never strand someone at a blank page over a failed lookup.
+    console.error('[auth] post-login routing lookup failed:', err);
+    return '/account';
+  }
 }
