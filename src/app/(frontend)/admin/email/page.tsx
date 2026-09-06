@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: 'Email — Admin' };
 export const dynamic = 'force-dynamic';
 
 const GIVE_UP_AT = 5; // send-emails stops retrying here
-const PROBLEM = new Set(['bounced', 'complained']);
+const PROBLEM = new Set(['bounced', 'complained', 'failed', 'suppressed']);
 
 /**
  * The email queue. Every notification in the funnel — invitations, quote
@@ -49,7 +49,7 @@ export default async function AdminEmailPage() {
     admin
       .from('pending_emails')
       .select('id, kind, to_email, delivery_status, delivery_detail, delivery_at')
-      .in('delivery_status', ['bounced', 'complained'])
+      .in('delivery_status', ['bounced', 'complained', 'failed', 'suppressed'])
       .order('delivery_at', { ascending: false })
       .limit(25),
     admin.rpc('email_drain_health', { p_limit: 5 }),

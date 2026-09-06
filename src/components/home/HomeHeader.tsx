@@ -64,6 +64,11 @@ export function HomeHeader() {
           <Link href={BOOK_HREF} className={s.navBook}>
             Book online
           </Link>
+          {/* One login for both sides. Labelling it "Contractor log in" hid it
+              from the customers who now have accounts of their own. */}
+          <Link href="/login" className={s.navLogin}>
+            Log in
+          </Link>
         </div>
 
         <button
@@ -100,7 +105,7 @@ export function HomeHeader() {
           Book online
         </Link>
         <Link href="/login" onClick={close}>
-          Contractor log in
+          Log in
         </Link>
       </div>
     </header>

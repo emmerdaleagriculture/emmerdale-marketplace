@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { isAdminEmail, safeInternalPath } from '@/lib/auth';
+import { postLoginPath, safeInternalPath } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
 
 export async function loginAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -17,17 +17,18 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
   const captchaToken = String(formData.get('cf-turnstile-response') || '') || undefined;
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
     options: { captchaToken },
   });
-  if (error) {
+  if (error || !data.user) {
     return { error: 'Incorrect email or password, or your email isn’t confirmed yet.' };
   }
 
   // A ?next= destination (e.g. the job page from a notification email) wins;
-  // otherwise admins land in the admin panel, contractors in their account.
+  // otherwise it depends on who has just logged in — this one page serves
+  // customers as well as contractors.
   const next = safeInternalPath(String(formData.get('next') || ''));
-  redirect(next ?? (isAdminEmail(email) ? '/admin' : '/account'));
+  redirect(next ?? (await postLoginPath(data.user.id, email)));
 }
