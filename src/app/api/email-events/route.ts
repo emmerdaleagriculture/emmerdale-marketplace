@@ -13,18 +13,36 @@ import { verifySvixSignature } from '@/lib/webhooks/svix';
  * two green rows while the customer waited for a quote that had already
  * arrived. This is the other half of that fact.
  *
- * Subscribe in Resend to: email.delivered, email.bounced, email.complained,
- * email.delivery_delayed. Signature secret in RESEND_WEBHOOK_SECRET.
+ * Subscribe in Resend to the events that say whether a message arrived:
+ * email.delivered, email.bounced, email.complained, email.delivery_delayed,
+ * email.failed and email.suppressed. Signature secret in
+ * RESEND_WEBHOOK_SECRET.
+ *
+ * email.sent / opened / clicked are acknowledged and ignored — sent is what
+ * the queue already knows, and we do not track engagement. email.received is
+ * the INBOUND event and belongs to /api/inbound-email; it is ignored here so
+ * that pointing it at the wrong endpoint fails quietly rather than eating a
+ * contractor's reply.
  */
 
 export const dynamic = 'force-dynamic';
 
-const EVENTS: Record<string, 'delivered' | 'bounced' | 'complained' | 'delayed'> = {
+type Delivery = 'delivered' | 'bounced' | 'complained' | 'delayed' | 'failed' | 'suppressed';
+
+const EVENTS: Record<string, Delivery> = {
   'email.delivered': 'delivered',
   'email.bounced': 'bounced',
   'email.complained': 'complained',
   'email.delivery_delayed': 'delayed',
+  // The provider could not send it at all.
+  'email.failed': 'failed',
+  // Resend refused to try: the address is on its suppression list, which is
+  // where addresses land after they have already hard-bounced.
+  'email.suppressed': 'suppressed',
 };
+
+/** Reached nobody. Everything here is worth a human knowing about. */
+const DID_NOT_ARRIVE = new Set<Delivery>(['bounced', 'complained', 'failed', 'suppressed']);
 
 /** The kinds a customer or contractor is actively waiting on. */
 const LOUD_KINDS = /^(sq_|customer_|job_|contractor_announcement)/;
@@ -101,7 +119,9 @@ export async function POST(request: Request) {
   // dashboard, and anything sent before this webhook existed.
   if (!row) return NextResponse.json({ received: true, matched: false });
 
-  if (status === 'bounced' && isHardBounce(event)) {
+  // Suppression is Resend telling us the address is already known bad, which
+  // is the same conclusion a hard bounce reaches, one step earlier.
+  if (status === 'suppressed' || (status === 'bounced' && isHardBounce(event))) {
     await admin.rpc('record_undeliverable_email', {
       p_email: row.to_email,
       p_kind: row.kind,
@@ -111,17 +131,16 @@ export async function POST(request: Request) {
 
   // Someone has to be told. A bounced invitation is a contractor who never
   // saw the job; a bounced quote alert is a customer who thinks we forgot.
-  if ((status === 'bounced' || status === 'complained') && LOUD_KINDS.test(row.kind)) {
+  if (DID_NOT_ARRIVE.has(status) && LOUD_KINDS.test(row.kind)) {
+    const consequence =
+      status === 'complained'
+        ? 'They marked it as spam. Do not send to this address again without asking.'
+        : status === 'suppressed'
+          ? 'Resend would not send to this address — it is on the suppression list from an earlier failure. It needs clearing there before anything else will reach them.'
+          : 'They did not receive it. If this is a customer mid-job, they need contacting another way.';
     await notifyAdmins(
       `Email ${status}: ${row.kind}`,
-      [
-        `${row.kind} to ${row.to_email} was ${status}.`,
-        detail,
-        '',
-        status === 'bounced'
-          ? 'They did not receive it. If this is a customer mid-job, they need contacting another way.'
-          : 'They marked it as spam. Do not send to this address again without asking.',
-      ].join('\n'),
+      [`${row.kind} to ${row.to_email} was ${status}.`, detail, '', consequence].join('\n'),
     );
   }
 
