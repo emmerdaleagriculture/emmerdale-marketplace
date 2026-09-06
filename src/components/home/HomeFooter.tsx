@@ -64,10 +64,10 @@ export function HomeFooter() {
             <h4 className={s.footerHeading}>Legal</h4>
             <ul className={s.footerList}>
               <li>
-                <a href="/legal/customer-terms-and-conditions.pdf">Customer terms</a>
+                <a href="/legal/customer-terms-and-conditions.pdf" target="_blank" rel="noopener noreferrer">Customer terms</a>
               </li>
               <li>
-                <a href="/legal/customer-service-charter.pdf">Service charter</a>
+                <a href="/legal/customer-service-charter.pdf" target="_blank" rel="noopener noreferrer">Service charter</a>
               </li>
               <li>
                 <Link href="/terms">Contractor terms</Link>

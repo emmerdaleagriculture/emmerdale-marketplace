@@ -884,3 +884,17 @@
     display: none !important;
   }
 }
+
+/* Tom's name links to his LinkedIn. It is a heading first and a link second:
+   heading colour, no underline until hovered, so the card does not read as a
+   button that happens to be a sentence. */
+.founderName,
+.founderSig a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(26, 43, 30, 0.25);
+}
+.founderName:hover,
+.founderSig a:hover {
+  border-bottom-color: currentColor;
+}
