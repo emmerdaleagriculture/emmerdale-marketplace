@@ -1,16 +1,23 @@
 /* Ported from the HPM blog — same visual language, shared design tokens. */
 
 /* ===== HERO ===== */
+/*
+ * No overflow:hidden here. The overlay header lives inside this section, so
+ * clipping the section clipped the mobile menu when it opened — on /notes the
+ * burger looked broken because the menu was being cut off at the bottom of
+ * the hero. The thing that actually needs clipping is the photo, so the clip
+ * lives on the photo.
+ */
 .hero {
   position: relative;
   height: 38vh;
   min-height: 300px;
   background: var(--jd-green-dark);
-  overflow: hidden;
 }
 .heroPhoto {
   position: absolute;
   inset: 0;
+  overflow: hidden;
 }
 .heroPhoto::after {
   content: '';
