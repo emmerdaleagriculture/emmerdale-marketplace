@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { MinimalHeader } from '@/components/MinimalHeader';
-import { SiteFooter } from '@/components/SiteFooter';
+import { HomeHeader } from '@/components/home/HomeHeader';
+import { HomeFooter } from '@/components/home/HomeFooter';
 import { LandingFlow } from './LandingFlow';
 import a from '../auth.module.css';
 import s from './start.module.css';
@@ -27,7 +27,7 @@ export default function StartPage() {
           customer and a working submit — start its connection immediately.
           React hoists these into <head>. */}
       <link rel="preconnect" href="https://challenges.cloudflare.com" />
-      <MinimalHeader />
+      <HomeHeader />
       <main className={a.main}>
         <div className={a.narrow}>
           <div className={a.eyebrow}>Field &amp; paddock work</div>
@@ -47,7 +47,7 @@ export default function StartPage() {
           </p>
         </div>
       </main>
-      <SiteFooter />
+      <HomeFooter />
     </div>
   );
 }
