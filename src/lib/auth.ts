@@ -64,14 +64,19 @@ export type LoginSide = 'customer' | 'contractor' | null;
  * has arrived. It used to send everyone to /account — the contractor's
  * account — which for a customer is somebody else's front door.
  *
- * Identity is decided by what exists, and that beats what was clicked: a
- * contractors row means contractor, a customers row means customer, and
- * neither of those can be talked out of by the chooser on the form. The
- * chooser only settles the case the rows cannot — somebody with an account
- * and no rows at all, which is a contractor part-way through onboarding
- * (/account forwards them to /onboarding) or a customer who signed up but
- * has not saved a job yet. Defaulting that case to contractor is what the
- * page did before the chooser existed.
+ * The rows say what a person CAN be; the chooser says which they came here
+ * to be. So the rows constrain and the chooser decides within them:
+ *
+ *   both rows      → whichever they picked. A contractor who books work
+ *                    through the site is one account with two sides, and
+ *                    letting the contractor row always win would leave the
+ *                    jobs they saved unreachable from the login page.
+ *   one row        → that one, whatever they picked. The chooser cannot
+ *                    conjure an account that isn't there.
+ *   neither row    → whichever they picked, defaulting to contractor: that
+ *                    case is a contractor part-way through onboarding
+ *                    (/account forwards them to /onboarding), and it is what
+ *                    the page did before the chooser existed.
  *
  * A ?next= from the email they followed wins over all of it, upstream.
  */
@@ -87,9 +92,11 @@ export async function postLoginPath(
       admin.from('contractors').select('id').eq('id', userId).maybeSingle(),
       admin.from('customers').select('id').eq('id', userId).maybeSingle(),
     ]);
+    const asCustomer = side === 'customer' ? '/my' : '/account';
+    if (contractor.data && customer.data) return asCustomer;
     if (contractor.data) return '/account';
     if (customer.data) return '/my';
-    return side === 'customer' ? '/my' : '/account';
+    return asCustomer;
   } catch (err) {
     // Never strand someone at a blank page over a failed lookup.
     console.error('[auth] post-login routing lookup failed:', err);

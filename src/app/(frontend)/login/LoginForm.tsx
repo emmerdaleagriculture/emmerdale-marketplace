@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useActionState, useState } from "react";
-import Link from "next/link";
-import { loginAction } from "./actions";
-import { emptyFormState } from "@/lib/form";
-import { Turnstile, turnstileEnabled } from "@/components/forms/Turnstile";
-import f from "@/components/forms/forms.module.css";
-import a from "../auth.module.css";
+import { useActionState, useState } from 'react';
+import Link from 'next/link';
+import { loginAction } from './actions';
+import { emptyFormState } from '@/lib/form';
+import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
+import f from '@/components/forms/forms.module.css';
+import a from '../auth.module.css';
 
 /**
  * One page, both routes.
@@ -31,11 +31,11 @@ import a from "../auth.module.css";
  * Native radios rather than styled buttons: arrow keys, screen readers and a
  * form that still carries a choice without JavaScript, all for free.
  */
-type Side = "customer" | "contractor";
+type Side = 'customer' | 'contractor';
 
 export function LoginForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(loginAction, emptyFormState);
-  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaToken, setCaptchaToken] = useState('');
   const [side, setSide] = useState<Side | null>(null);
   const captchaPending = turnstileEnabled && !captchaToken;
 
@@ -51,13 +51,13 @@ export function LoginForm({ next }: { next?: string }) {
         <div className={a.sideChoice}>
           {(
             [
-              ["customer", "I booked a job", "Your jobs, and order one again"],
-              ["contractor", "I do the work", "Your invitations and won jobs"],
+              ['customer', 'I booked a job', 'Your jobs, and order one again'],
+              ['contractor', 'I do the work', 'Your invitations and won jobs'],
             ] as const
           ).map(([value, label, blurb]) => (
             <label
               key={value}
-              className={`${a.sideOption} ${side === value ? a.sideOptionOn : ""}`}
+              className={`${a.sideOption} ${side === value ? a.sideOptionOn : ''}`}
             >
               <input
                 type="radio"
@@ -102,19 +102,19 @@ export function LoginForm({ next }: { next?: string }) {
           type="submit"
           disabled={pending || captchaPending}
         >
-          {pending ? "Logging in…" : "Log in"}
+          {pending ? 'Logging in…' : 'Log in'}
         </button>
         <span className={a.altLink}>
           <Link href="/reset-password">Forgot password?</Link>
         </span>
       </div>
       <p className={a.altLink} style={{ marginTop: 18 }}>
-        {side === "contractor" ? (
+        {side === 'contractor' ? (
           <>
             New here? <Link href="/signup">Join the network</Link> — it&rsquo;s
             free.
           </>
-        ) : side === "customer" ? (
+        ) : side === 'customer' ? (
           <>
             No account yet? You get one by saving a job from the link we email
             you — <Link href="/start">tell us about the job</Link>.
