@@ -2,12 +2,7 @@
 
 import { useEffect } from 'react';
 
-declare global {
-  interface Window {
-    fbq?: (...args: unknown[]) => void;
-    gtag?: (...args: unknown[]) => void;
-  }
-}
+// Window.fbq / Window.gtag are declared once, in @/components/Analytics.
 
 /**
  * Fires the conversion events once the thank-you page is on screen. The URL
