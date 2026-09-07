@@ -16,10 +16,13 @@ const pillClass: Record<string, string> = {
 
 export default async function ContractorDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const { blocked } = await searchParams;
   const admin = createServiceRoleClient();
 
   const { data: c } = await admin.from('contractors').select('*').eq('id', id).maybeSingle();
@@ -85,13 +88,29 @@ export default async function ContractorDetailPage({
       </div>
 
       <div className={s.sectionLabel}>Actions</div>
+      {blocked === 'history' && (
+        <p className={s.blocked}>
+          Not deleted. {c.business_name} has quotes, ratings or awarded jobs on file, and those
+          carry customer prices and payments. Suspend them instead: it stops every email and
+          hides every job, and keeps the history.
+        </p>
+      )}
       <div className={s.actions}>
         {c.status !== 'approved' && (
           <form action={setContractorStatus}>
             <input type="hidden" name="id" value={c.id} />
             <input type="hidden" name="status" value="approved" />
             <button type="submit" className={s.btnApprove}>
-              Approve
+              {c.status === 'suspended' ? 'Reinstate' : 'Approve'}
+            </button>
+          </form>
+        )}
+        {c.status === 'approved' && (
+          <form action={setContractorStatus}>
+            <input type="hidden" name="id" value={c.id} />
+            <input type="hidden" name="status" value="suspended" />
+            <button type="submit" className={s.btnSuspend}>
+              Suspend
             </button>
           </form>
         )}
