@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   COVERAGE_BINS,
   UK_COUNTY_NAMES,
+  coverageBinsInUse,
   coverageFill,
   coverageMapLabel,
   coverageShapes,
@@ -46,5 +47,21 @@ describe('coverageMapLabel', () => {
     expect(coverageMapLabel(counts)).toBe(
       `Map of Great Britain showing contractor coverage: 3 of ${UK_COUNTY_NAMES.length} counties covered`,
     );
+  });
+});
+
+describe('coverageBinsInUse', () => {
+  it('drops the bins nothing on the map falls into', () => {
+    expect(coverageBinsInUse(counts).map((b) => b.publicLabel)).toEqual([
+      'Strong coverage',
+      'Good coverage',
+      'Covered',
+      'Not covered yet',
+    ]);
+  });
+
+  it('drops "not covered yet" once every county has an operator', () => {
+    const all = Object.fromEntries(UK_COUNTY_NAMES.map((n) => [n, 1]));
+    expect(coverageBinsInUse(all).map((b) => b.publicLabel)).toEqual(['Covered']);
   });
 });

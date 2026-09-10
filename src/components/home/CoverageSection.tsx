@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { COVERAGE_BINS, UK_COUNTY_NAMES } from '@/lib/coverage';
+import { UK_COUNTY_NAMES, coverageBinsInUse } from '@/lib/coverage';
 import type { CountyRef } from '@/lib/verticals';
 import s from './home.module.css';
 
@@ -27,6 +27,7 @@ export function CoverageSection({
 }) {
   // Counted off the map's own county list, so the heading and the map agree.
   const coveredCount = UK_COUNTY_NAMES.filter((n) => (coverage[n] ?? 0) > 0).length;
+  const everywhere = coveredCount === UK_COUNTY_NAMES.length;
   const linked = counties
     .filter((c) => (coverage[c.name] ?? 0) > 0)
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -37,15 +38,30 @@ export function CoverageSection({
         <div>
           <p className={s.eyebrow}>Where we work</p>
           <h2 className={s.sectionH}>
-            Approved operators in {coveredCount} of {UK_COUNTY_NAMES.length} counties.
+            {everywhere
+              ? 'Approved operators in every county.'
+              : `Approved operators in ${coveredCount} of ${UK_COUNTY_NAMES.length} counties.`}
           </h2>
+          {/* Two states, because the map has two: still filling in, or full. */}
           <p className={s.coverageCopy}>
-            We cover England, Wales and Scotland, and the map fills in as more
-            operators join. If your county is still pale, send the job anyway —
-            demand is exactly how we get an operator into a new area.
+            {everywhere ? (
+              <>
+                Every county in England, Wales and Scotland has an approved
+                operator on it, and the darker the county the more of them there
+                are. Tell us what needs doing and the job goes to the operators
+                covering your patch.
+              </>
+            ) : (
+              <>
+                We cover England, Wales and Scotland, and the map fills in as
+                more operators join. If your county is still pale, send the job
+                anyway — demand is exactly how we get an operator into a new
+                area.
+              </>
+            )}
           </p>
           <ul className={s.coverageLegend}>
-            {COVERAGE_BINS.map((b) => (
+            {coverageBinsInUse(coverage).map((b) => (
               <li key={b.publicLabel}>
                 <span className={s.coverageSwatch} style={{ background: b.fill }} />
                 {b.publicLabel}

@@ -36,6 +36,16 @@ export function coverageShapes(counts: Record<string, number>, showCounts = fals
   });
 }
 
+/**
+ * The bins the map actually uses. A legend row for a shade that appears
+ * nowhere on the map — "Not covered yet" once every county is covered — sends
+ * the reader hunting for something that isn't there.
+ */
+export function coverageBinsInUse(counts: Record<string, number>) {
+  const fills = new Set(UK_COUNTY_NAMES.map((n) => coverageFill(counts[n] ?? 0)));
+  return COVERAGE_BINS.filter((b) => fills.has(b.fill));
+}
+
 /** Alt/aria text for the whole map. */
 export function coverageMapLabel(counts: Record<string, number>) {
   const covered = UK_COUNTY_NAMES.filter((n) => (counts[n] ?? 0) > 0).length;
