@@ -10,6 +10,11 @@ export function timeAgo(iso: string): string {
   return `${weeks}w ago`;
 }
 
+/** "17 Sept" — a deadline stated as a day, where the hour would be noise. */
+export function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString('en-GB', {
     day: 'numeric',

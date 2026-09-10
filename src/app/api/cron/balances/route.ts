@@ -10,16 +10,18 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
  * Why a worker and not an inline charge at sign-off: the two things that sign a
  * job off are a SQL function behind a server action and an hourly pg_cron job,
  * and neither can call Stripe. Both open a 'due' row instead; this drains it.
- * That also gives retries, a back-off, and the emailed fallback link somewhere
- * to live, which an off-session charge always eventually needs.
+ * That also gives retries and a back-off somewhere to live. When it gives up,
+ * the customer is emailed to their job page, where "Pay balance" mints a
+ * Checkout session on demand — a link that is made when pressed cannot lapse.
  *
  * Claiming is transactional (SELECT … FOR UPDATE SKIP LOCKED plus an immediate
  * attempts bump), so two overlapping runs can never charge the same card
  * twice. A row this run has claimed but not yet resolved is invisible to the
- * next one.
+ * next one. And only 'due' rows are ever claimed: a retryable failure stays
+ * 'due'; 'failed' means this worker has given up for good and the customer's
+ * own "Pay balance" button has taken over — the two never overlap.
  */
 
-const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 const BATCH = 20;
 
 /** Vercel Cron sends a bearer token; the SQL scheduler sends a header. */
@@ -43,45 +45,6 @@ type Claim = {
   contact_email: string | null;
   client_token: string | null;
 };
-
-/**
- * The last resort: a hosted page for a balance we could not take ourselves.
- * Its metadata carries the payment id so the webhook settles the same row this
- * worker gave up on, rather than opening a second one.
- */
-async function sendPaymentLink(stripe: Stripe, claim: Claim): Promise<string | null> {
-  try {
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [
-        {
-          price_data: {
-            currency: 'gbp',
-            unit_amount: claim.amount_pence,
-            product_data: { name: 'Balance due — completed job' },
-          },
-          quantity: 1,
-        },
-      ],
-      customer: claim.stripe_customer_id ?? undefined,
-      customer_email: claim.stripe_customer_id ? undefined : (claim.contact_email ?? undefined),
-      metadata: {
-        kind: 'sq_balance_payment',
-        payment_id: claim.payment_id,
-        submission_id: claim.submission_id,
-      },
-      payment_intent_data: {
-        metadata: { kind: 'sq_balance_payment', payment_id: claim.payment_id },
-      },
-      success_url: `${SITE()}/my/${claim.client_token ?? ''}?paid=1`,
-      cancel_url: `${SITE()}/my/${claim.client_token ?? ''}`,
-    });
-    return session.url ?? null;
-  } catch (err) {
-    console.error('[balances] could not mint a fallback link:', err);
-    return null;
-  }
-}
 
 async function run(request: Request) {
   if (!authorised(request)) {
@@ -109,13 +72,13 @@ async function run(request: Request) {
   let failed = 0;
 
   for (const claim of claims) {
-    // No saved card — nothing to attempt. Go straight to the link rather than
-    // burning an attempt on a charge that cannot be made.
+    // No saved card — nothing to attempt. Final straight away rather than
+    // burning attempts on a charge that cannot be made; the customer is
+    // emailed to the job page, where "Pay balance" mints a session on demand.
     if (!claim.stripe_customer_id || !claim.stripe_payment_method_id) {
-      const url = await sendPaymentLink(stripe, claim);
       await admin.rpc('sq_fail_balance', {
         p_payment_id: claim.payment_id,
-        p_error: `no saved card on file${url ? ` — link sent` : ''}`,
+        p_error: 'no saved card on file',
         p_final: true,
       });
       failed += 1;
@@ -152,7 +115,6 @@ async function run(request: Request) {
         // requires_action and friends: the cardholder has to be present, which
         // by definition this worker is not. That is the link's job.
         const isFinal = claim.attempts >= claim.max_attempts;
-        if (isFinal) await sendPaymentLink(stripe, claim);
         await admin.rpc('sq_fail_balance', {
           p_payment_id: claim.payment_id,
           p_error: `intent ${intent.status}`,
@@ -163,7 +125,6 @@ async function run(request: Request) {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const isFinal = claim.attempts >= claim.max_attempts;
-      if (isFinal) await sendPaymentLink(stripe, claim);
       await admin.rpc('sq_fail_balance', {
         p_payment_id: claim.payment_id,
         p_error: message,

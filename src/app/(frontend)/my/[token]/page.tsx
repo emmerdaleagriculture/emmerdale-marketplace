@@ -20,6 +20,8 @@ import { InlineRating } from './InlineRating';
 import { PayNow } from './PayNow';
 import { SaveToAccount } from './SaveToAccount';
 import { CancelJob } from './CancelJob';
+import { PayBalance } from './PayBalance';
+import { formatDate } from '@/lib/time';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import a from '../../auth.module.css';
 import m from './my.module.css';
@@ -65,6 +67,22 @@ export default async function ClientPortalPage({
           .from('contractor_ratings')
           .select('stars')
           .eq('submission_id', js.id)
+          .maybeSingle()
+      ).data
+    : null;
+
+  // The balance after sign-off (terms 7.2): due, failed, or already settled.
+  // Read only for finished jobs — nothing else can have one.
+  const balance = ['completed', 'paid'].includes(js.status)
+    ? (
+        await createServiceRoleClient()
+          .from('job_payments')
+          .select('amount_pence, status, due_at')
+          .eq('submission_id', js.id)
+          .eq('kind', 'balance')
+          .in('status', ['due', 'failed'])
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle()
       ).data
     : null;
@@ -212,6 +230,14 @@ export default async function ClientPortalPage({
                 All done{js.status === 'paid' ? ' and paid in full' : ''} —{' '}
                 {accepted?.contractor_real_name ?? 'your contractor'} did the work.
               </p>
+              {balance && (
+                <PayBalance
+                  token={token}
+                  amountLabel={formatGBP(balance.amount_pence)}
+                  dueLabel={balance.due_at ? formatDate(balance.due_at) : null}
+                  failed={balance.status === 'failed'}
+                />
+              )}
               {rated ? (
                 <p>
                   You rated this job {'★'.repeat(rated.stars)}

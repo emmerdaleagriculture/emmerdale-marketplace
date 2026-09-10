@@ -113,9 +113,14 @@ begin
   end if;
 end $$;
 
--- 'due' = the money is owed but no charge has been attempted yet. Only a
--- balance row is ever in it; a deposit is 'pending' from the moment its
--- Checkout session exists.
+-- 'due'    = owed and still the worker's to collect — including after a
+--            failed attempt it means to retry. Only a balance row is ever in it;
+--            a deposit is 'pending' from the moment its Checkout session exists.
+-- 'failed' = the worker has GIVEN UP and the customer has to act. The two are
+--            kept strictly apart because the job page offers a "pay it yourself"
+--            button on 'failed' and nothing on 'due': a row the worker might
+--            still charge must never also be payable by hand, or one balance
+--            can be taken twice.
 do $$
 declare v_name text;
 begin
@@ -400,7 +405,7 @@ begin
     select p.id
       from job_payments p
      where p.kind = 'balance'
-       and p.status in ('due', 'failed')
+       and p.status = 'due'
        and p.attempts < v_max
        -- Back off between attempts: an hour per attempt already made. A card
        -- declined a minute ago declines again a minute later.
@@ -461,9 +466,10 @@ $$;
 revoke execute on function sq_settle_balance(uuid, text) from public, anon, authenticated;
 grant execute on function sq_settle_balance(uuid, text) to service_role;
 
--- A failed attempt. p_final says the worker has given up on charging silently
--- and the customer now has to act — that is the moment they get the link, and
--- the moment an operator wants to know.
+-- A failed attempt. Not final: the row stays 'due' with the error recorded and
+-- the worker retries after its back-off. Final: the worker has given up, the
+-- row becomes 'failed', and the customer is pointed at the job page — the only
+-- place a balance can be paid by hand, and only in this state.
 create or replace function sq_fail_balance(
   p_payment_id uuid, p_error text, p_final boolean default false
 ) returns jsonb
@@ -476,7 +482,9 @@ begin
   if not found then return jsonb_build_object('ok', false, 'reason', 'not_found'); end if;
   if v_pay.status = 'paid' then return jsonb_build_object('ok', true, 'idempotent', true); end if;
 
-  update job_payments set status = 'failed', last_error = left(coalesce(p_error, ''), 500)
+  update job_payments
+     set status = case when p_final then 'failed' else 'due' end,
+         last_error = left(coalesce(p_error, ''), 500)
    where id = p_payment_id;
 
   select * into v_js from job_submissions where id = v_pay.submission_id;

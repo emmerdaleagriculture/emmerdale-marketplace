@@ -183,6 +183,83 @@ export async function acceptQuoteAction(
   redirect(session.url ?? `${SITE()}/my/${token}`);
 }
 
+/**
+ * Paying the balance by hand (terms 7.2), for when the off-session charge has
+ * given up. Minted on demand from the job page rather than emailed: a hosted
+ * link in an email lapses after 24 hours and then the customer has nothing,
+ * whereas the page they already hold can always make a fresh one.
+ *
+ * Carries the payment row id in the session metadata so the webhook settles
+ * the SAME row the worker gave up on, never a second one.
+ *
+ * Only a 'failed' balance — one the worker has stopped trying to charge. A
+ * 'due' row may be charged by the worker at any moment, and letting the
+ * customer pay it too is how one balance gets taken twice.
+ */
+export async function payBalanceAction(
+  _prev: AcceptActionState,
+  formData: FormData,
+): Promise<AcceptActionState> {
+  const token = String(formData.get('token') ?? '');
+  if (!isTokenFormat(token)) return { error: 'This link is no longer valid.' };
+
+  const admin = createServiceRoleClient();
+  const { data: js } = await admin
+    .from('job_submissions')
+    .select('id, contact_email, service:services(name)')
+    .eq('client_token', token)
+    .is('client_token_revoked_at', null)
+    .maybeSingle();
+  if (!js) return { error: 'This link is no longer valid.' };
+
+  const { data: bal } = await admin
+    .from('job_payments')
+    .select('id, amount_pence, stripe_customer_id')
+    .eq('submission_id', js.id)
+    .eq('kind', 'balance')
+    .eq('status', 'failed')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!bal) {
+    return { error: 'There\u2019s no balance waiting to be paid by hand on this job — we\u2019re still collecting it from your card.' };
+  }
+
+  let stripe;
+  try {
+    stripe = getStripe();
+  } catch (err) {
+    console.error('[sq] Stripe not configured:', err);
+    return { error: 'Payments aren\u2019t available just now — please try again shortly.' };
+  }
+  const serviceName = (js.service as { name: string } | null)?.name ?? 'Land work';
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: [
+      {
+        price_data: {
+          currency: 'gbp',
+          unit_amount: bal.amount_pence,
+          product_data: { name: `Balance — ${serviceName}` },
+        },
+        quantity: 1,
+      },
+    ],
+    // The Customer from the deposit when we have one, so the payment lands on
+    // the same Stripe record; otherwise just their email.
+    customer: bal.stripe_customer_id ?? undefined,
+    customer_email: bal.stripe_customer_id ? undefined : (js.contact_email ?? undefined),
+    metadata: { kind: 'sq_balance_payment', payment_id: bal.id, submission_id: js.id },
+    payment_intent_data: {
+      metadata: { kind: 'sq_balance_payment', payment_id: bal.id, submission_id: js.id },
+    },
+    success_url: `${SITE()}/my/${token}?paid=1`,
+    cancel_url: `${SITE()}/my/${token}`,
+  });
+
+  redirect(session.url ?? `${SITE()}/my/${token}`);
+}
+
 export async function submitRatingAction(
   _prev: FormState,
   formData: FormData,
