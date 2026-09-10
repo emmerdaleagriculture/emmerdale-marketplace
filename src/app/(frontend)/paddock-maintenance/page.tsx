@@ -15,7 +15,7 @@ import {
   faqSchema,
 } from '@/components/paddock/PaddockSections';
 import { getServices, getCountyCoverage } from '@/lib/reference';
-import { UK_COUNTY_NAMES } from '@/components/UKCoverageMap';
+import { UK_COUNTY_NAMES } from '@/lib/coverage';
 import { COMPANY_LEGAL_NAME, COMPANY_REG_PROSE, SERVICE_AREA, siteUrl } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';

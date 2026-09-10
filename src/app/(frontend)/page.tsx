@@ -8,9 +8,11 @@ import { HomeFooter } from '@/components/home/HomeFooter';
 import { StickyBar } from '@/components/home/StickyBar';
 import { DeferredImage } from '@/components/home/DeferredImage';
 import { ServiceIcon } from '@/components/home/ServiceIcons';
-import { UK_COUNTY_NAMES } from '@/components/UKCoverageMap';
+import { CoverageSection } from '@/components/home/CoverageSection';
+import { UK_COUNTY_NAMES } from '@/lib/coverage';
 import { HOME_SERVICES } from '@/lib/home/services';
 import { getCountyCoverage } from '@/lib/reference';
+import { allCountyRefs } from '@/lib/verticals';
 import {
   COMPANY_LEGAL_NAME,
   COMPANY_NUMBER,
@@ -28,7 +30,7 @@ const SITE = siteUrl();
 const LINKEDIN_URL = 'https://www.linkedin.com/in/tom-oswald-a7233619/';
 
 // ISR: statically cached at the CDN, re-rendered at most hourly. The only
-// live data on the page is the county coverage feeding the Service schema.
+// live data on the page is the county coverage — the map and the Service schema.
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
@@ -159,7 +161,7 @@ const TRUST = ['Prices upfront', 'Pay online', 'Vetted and fully trained operato
 
 
 export default async function LandingPage() {
-  const coverage = await getCountyCoverage();
+  const [coverage, counties] = await Promise.all([getCountyCoverage(), allCountyRefs()]);
   const coveredCounties = UK_COUNTY_NAMES.filter((n) => (coverage[n] ?? 0) > 0);
 
   // Service schema — what can be booked, where, and the route to a price.
@@ -300,6 +302,9 @@ export default async function LandingPage() {
         </section>
 
         <PhotoStrip photos={GALLERY_2} label="More of our work" />
+
+        {/* Where we work — live coverage choropleth. */}
+        <CoverageSection coverage={coverage} counties={counties} />
 
         {/* Editorial photo band. */}
         <section className={s.band} aria-label="Approved operators">

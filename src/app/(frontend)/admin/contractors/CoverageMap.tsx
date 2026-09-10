@@ -1,8 +1,5 @@
-import {
-  UKCoverageMap,
-  COVERAGE_BINS,
-  UK_COUNTY_NAMES,
-} from '@/components/UKCoverageMap';
+import { UKCoverageMap } from '@/components/UKCoverageMap';
+import { COVERAGE_BINS, UK_COUNTY_NAMES } from '@/lib/coverage';
 import s from '../admin.module.css';
 
 /** Admin coverage card: the shared choropleth plus legend and county list. */
