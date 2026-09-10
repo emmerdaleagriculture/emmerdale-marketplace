@@ -37,7 +37,7 @@ const STATE_LABELS: Record<string, string> = {
   confirmed: 'Confirmed — awaiting distribution',
   distributed: 'Distributed — no prices yet',
   quotes_receiving: 'Prices coming in',
-  accepted_awaiting_payment: 'Accepted — awaiting payment',
+  accepted_awaiting_payment: 'Accepted — awaiting deposit',
   awarded: 'Awarded — awaiting first contact',
   contacted: 'Contacted',
   scheduled: 'Scheduled',

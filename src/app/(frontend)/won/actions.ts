@@ -166,12 +166,13 @@ export async function uploadInvoiceAction(
   await notifyAdmins(
     `Invoice to pay: ${contractor?.business_name ?? 'a contractor'}`,
     [
-      `${contractor?.business_name ?? 'A contractor'} has sent their invoice for the job for ${js.contact_name ?? 'a customer'}.`,
+      `${contractor?.business_name ?? 'A contractor'} has sent their invoice for the job for ${js.contact_name ?? 'a customer'}. ` +
+      `Pay it once the customer's balance shows as cleared on /admin/money.`,
       '',
       `Open it on the job: ${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/admin/submissions/${submissionId}`,
     ].join('\n'),
   );
 
   revalidatePath('/won');
-  return { ok: true, message: 'Invoice received — thanks. We’ll get it paid.' };
+  return { ok: true, message: 'Invoice received — thanks. It’s paid once the customer’s balance has cleared.' };
 }

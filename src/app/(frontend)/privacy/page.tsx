@@ -53,6 +53,16 @@ export default function PrivacyPage() {
             except where you open a job and choose to make contact.
           </p>
 
+          <h2>Payments</h2>
+          <p>
+            Card payments are processed by Stripe. We never see or store your full card
+            number. When you pay a deposit to book a job, Stripe keeps your card on file
+            so that the balance can be taken from the same card once you have confirmed
+            the work is done, as set out in the customer terms; we hold only Stripe&rsquo;s
+            reference to it. We keep a record of the amounts paid, refunded and
+            outstanding on each job for accounting purposes.
+          </p>
+
           <h2>Retention</h2>
           <p>
             We keep customer enquiry data for as long as needed to arrange the work

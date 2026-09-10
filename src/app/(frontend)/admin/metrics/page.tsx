@@ -49,8 +49,8 @@ const PIPELINE_LABEL: Record<string, string> = {
   confirmed: 'Confirmed, not yet sent',
   distributed: 'Out to contractors',
   quotes_receiving: 'Prices coming in',
-  accepted_awaiting_payment: 'Accepted, awaiting payment',
-  awarded: 'Paid & awarded',
+  accepted_awaiting_payment: 'Accepted, awaiting deposit',
+  awarded: 'Deposit paid & awarded',
   contacted: 'Contractor in touch',
   scheduled: 'Scheduled',
   in_progress: 'In progress',
@@ -136,7 +136,7 @@ export default async function AdminDashboard() {
       <div className={s.attention}>
         <Attention count={at.invoices_to_pay} label="invoices to pay" href="/admin/money" />
         <Attention count={at.awaiting_customer_confirm} label="awaiting customer confirmation" href="/admin/submissions" />
-        <Attention count={at.awaiting_payment} label="accepted, not yet paid" href="/admin/submissions" />
+        <Attention count={at.awaiting_payment} label="accepted, deposit not paid" href="/admin/submissions" />
         <Attention count={at.no_quotes_48h} label="no price after 48h" href="/admin/submissions" />
         <Attention count={at.no_matches} label="no contractor covered it" href="/admin/submissions" />
         <Attention count={at.awaiting_invoice} label="finished, no invoice yet" href="/admin/money" />
@@ -164,7 +164,7 @@ export default async function AdminDashboard() {
       </div>
       <div className={s.metricGrid}>
         <Metric value={n(fu.confirmed_all)} label="Jobs sent, all time" />
-        <Metric value={n(fu.paid_all)} label="Jobs paid, all time" hint={`${pct(fu.paid_all, fu.confirmed_all)} of jobs sent`} />
+        <Metric value={n(fu.paid_all)} label="Jobs booked, all time" hint={`deposit paid — ${pct(fu.paid_all, fu.confirmed_all)} of jobs sent`} />
         <Metric value={n(fu.completed_all)} label="Jobs completed, all time" />
         <Metric value={n(d.unplaced_jobs)} label="Jobs with no county" hint="Could not be routed" />
       </div>
@@ -262,7 +262,8 @@ export default async function AdminDashboard() {
       <div className={s.metricGrid}>
         <Metric value={gbp(mo.gross_pence_30d)} label="Taken, 30 days" hint={`${gbp(mo.gross_pence_all)} all time`} />
         <Metric value={gbp(mo.margin_pence_30d)} label="Our margin, 30 days" hint={`${gbp(mo.margin_pence_all)} all time`} />
-        <Metric value={gbp(mo.held_pence)} label="Held for contractors" hint="Paid jobs not yet complete" />
+        <Metric value={gbp(mo.held_pence)} label="Collected on live jobs" hint="Deposits on jobs not yet complete" />
+        <Metric value={gbp(mo.outstanding_pence)} label="Balances outstanding" hint={`${n(mo.outstanding_count)} signed off, not yet collected`} />
         <Metric value={gbp(mo.payouts_owed_pence)} label="Payouts owed" hint="Complete, waiting on us" />
         <Metric value={gbp(mo.avg_job_pence)} label="Average job" />
         <Metric value={gbp(mo.refunded_pence_all)} label="Refunded, all time" />

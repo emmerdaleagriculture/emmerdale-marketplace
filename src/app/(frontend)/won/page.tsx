@@ -22,8 +22,8 @@ const STATUS_LABELS: Record<string, string> = {
   scheduled: 'Scheduled',
   in_progress: 'In progress',
   completed_by_contractor: 'Done — awaiting the customer’s confirmation',
-  completed: 'Complete — awaiting the balance and your invoice',
-  paid: 'Paid',
+  completed: 'Complete — waiting for the customer’s balance',
+  paid: 'Customer paid in full — payout due on your invoice',
 };
 
 /**

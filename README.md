@@ -107,6 +107,20 @@ re-done by hand on the new project: the Vault secrets above, the Edge Function
 secrets, and every Auth dashboard setting (Site URL, redirect allowlist, the
 Turnstile captcha secret under Attack Protection, SMTP, email templates).
 
+## Customer payments (deposit + balance)
+
+A customer accepting a contractor's price pays a **deposit** through Stripe Checkout
+(`sq_deposit_rate` in `app_config`, live at `0.15`) and the card is saved. The award fires
+when the deposit clears. When the customer signs the job off — or it auto-confirms after
+three working days — a **balance** row is opened on `job_payments` and
+`/api/cron/balances` (Vercel cron, every 15 min, `CRON_SECRET`) charges it off-session,
+due within `sq_balance_terms_days` (7). A retryable failure keeps the row `due`; after
+`sq_balance_max_attempts` it becomes `failed` and the customer pays from their job page
+instead — the two states never overlap, which is what prevents a double charge.
+Cancellation before work starts forfeits the deposit. Contractors are paid once the balance
+has cleared and their invoice is in (`sq_payout_ready`). Setting the rate to `1.0` restores
+100%-up-front with no deploy.
+
 ## Paid tier (Stripe — Phase 4)
 
 Schema + gating (`subscriptions`, `is_active_subscriber`, exclusive-window

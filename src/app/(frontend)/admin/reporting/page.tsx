@@ -113,7 +113,7 @@ export default async function ReportingPage() {
     { step: 'Went out to contractors', n: reached(AFTER_DISTRIBUTE), note: 'at least one invitation sent' },
     { step: 'Got a price', n: reached(AFTER_QUOTE), note: 'at least one confirmed quote' },
     { step: 'Accepted one', n: reached(AFTER_ACCEPT), note: 'chose a price' },
-    { step: 'Paid', n: reached(AFTER_PAY), note: 'payment cleared, contractor awarded' },
+    { step: 'Booked', n: reached(AFTER_PAY), note: 'deposit cleared, contractor awarded' },
     { step: 'Finished', n: reached(DONE), note: 'work confirmed complete' },
   ];
 

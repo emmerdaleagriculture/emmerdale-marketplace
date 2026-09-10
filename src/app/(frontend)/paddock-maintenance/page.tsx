@@ -75,7 +75,11 @@ const faqs = [
   },
   {
     q: 'Who actually does the work?',
-    a: `The work is done by agricultural contractors in our network, which is run by ${COMPANY_REG_PROSE} — the company behind Hampshire Paddock Management. You deal with the contractor directly and pay them directly.`,
+    a: `The work is done by agricultural contractors in our network, which is run by ${COMPANY_REG_PROSE} — the company behind Hampshire Paddock Management. You book and pay through us; the contractor turns up and does the work.`,
+  },
+  {
+    q: 'How do I pay?',
+    a: 'You pay a 15% deposit by card to book the job, and the rest once the work is done and you have confirmed you are happy with it. The balance is taken from the same card, and is due within 7 days of you signing the job off. The deposit is non-refundable if you cancel.',
   },
 ];
 

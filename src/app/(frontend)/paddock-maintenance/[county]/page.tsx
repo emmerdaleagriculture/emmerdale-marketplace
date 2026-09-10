@@ -89,7 +89,11 @@ function countyFaqs(name: string, region: string, coverage: number): Faq[] {
     },
     {
       q: 'Who runs this?',
-      a: `${COMPANY_LEGAL_NAME}, the company behind Hampshire Paddock Management — a contracting firm that does paddock work every day. You deal with the contractor directly and pay them directly; we take no commission.`,
+      a: `${COMPANY_LEGAL_NAME}, the company behind Hampshire Paddock Management — a contracting firm that does paddock work every day. You book and pay through us, and the contractor does the work.`,
+    },
+    {
+      q: 'How do I pay?',
+      a: 'A 15% deposit by card to book the job, and the rest once the work is done and you have confirmed it — taken from the same card, due within 7 days of sign-off. The deposit is non-refundable if you cancel.',
     },
   ];
 }

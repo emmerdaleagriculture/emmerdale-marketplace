@@ -44,8 +44,8 @@ export function InvoiceUpload({
         <p>
           <strong>Invoice received.</strong>{' '}
           {sentName ? `${sentName} — ` : ''}
-          {sentAt ? new Date(sentAt).toLocaleDateString('en-GB') : ''}. We&rsquo;ll get it
-          paid.
+          {sentAt ? new Date(sentAt).toLocaleDateString('en-GB') : ''}. It&rsquo;s paid
+          once the customer&rsquo;s balance has cleared.
         </p>
         <button type="button" className={s.linkish} onClick={() => setReplacing(true)}>
           Send a different one
@@ -60,7 +60,7 @@ export function InvoiceUpload({
       <input type="hidden" name="submission_id" value={submissionId} />
 
       <p className={s.invoicePrompt}>
-        {replacing ? 'Replace your invoice' : 'Send us your invoice and we’ll pay it.'}
+        {replacing ? 'Replace your invoice' : 'Send us your invoice — it’s paid once the customer’s balance has cleared.'}
       </p>
 
       <input

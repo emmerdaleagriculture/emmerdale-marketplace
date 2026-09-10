@@ -69,6 +69,15 @@ export default async function SubmissionDetailPage({
   // Private bucket — photos are only ever reachable through short-lived
   // signed URLs minted here for the admin.
   // The contractor's invoice for the payout, same private-bucket treatment.
+  // Every movement of money on the job: the deposit, and after sign-off the
+  // balance — with where the worker has got to on it, which is the question
+  // an operator opening a finished job is usually here to answer.
+  const { data: payments } = await admin
+    .from('job_payments')
+    .select('id, kind, status, amount_pence, paid_at, due_at, attempts, last_error')
+    .eq('submission_id', id)
+    .order('created_at', { ascending: true });
+
   let invoiceUrl: string | null = null;
   if (sub.contractor_invoice_path) {
     const { data } = await admin.storage
@@ -171,6 +180,41 @@ export default async function SubmissionDetailPage({
         </>
       )}
 
+      {(payments?.length ?? 0) > 0 && (
+        <>
+          <div className={s.sectionLabel}>Payments</div>
+          <div className={s.tableWrap}>
+            <table className={s.table}>
+              <thead>
+                <tr><th>Part</th><th>Amount</th><th>Status</th><th>When</th></tr>
+              </thead>
+              <tbody>
+                {payments!.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.kind === 'balance' ? 'Balance' : 'Deposit'}</td>
+                    <td>{formatGBP(p.amount_pence)}</td>
+                    <td title={p.last_error ?? undefined}>
+                      {p.status}
+                      {p.kind === 'balance' && p.status === 'due' && p.attempts > 0
+                        ? ` (retrying — ${p.attempts} so far)`
+                        : ''}
+                      {p.status === 'failed' ? ' — customer asked to pay from their job page' : ''}
+                    </td>
+                    <td>
+                      {p.paid_at
+                        ? `paid ${new Date(p.paid_at).toLocaleString('en-GB')}`
+                        : p.due_at
+                          ? `due ${new Date(p.due_at).toLocaleDateString('en-GB')}`
+                          : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
       {['completed', 'paid'].includes(sub.status) && (
         <>
           <div className={s.sectionLabel}>Contractor invoice</div>
@@ -187,7 +231,7 @@ export default async function SubmissionDetailPage({
                 . Link is good for an hour.
               </>
             ) : (
-              <>Not sent yet. The job is finished and the payout is owed.</>
+              <>Not sent yet. The job is finished; the payout is due once the balance above has cleared and the invoice is in.</>
             )}
           </div>
         </>

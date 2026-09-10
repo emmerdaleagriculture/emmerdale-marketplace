@@ -467,12 +467,16 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       };
     case 'sq_job_cancelled_admin':
       return {
-        subject: `Cancelled after payment — refund due`,
+        subject: Number(p.refund_pence) > 0
+          ? `Cancelled after payment — refund of ${gbp(p.refund_pence)} sent`
+          : `Cancelled — deposit of ${gbp(p.fee_pence)} retained`,
         text:
-          `A customer cancelled a paid job on their job page (terms 9.1).\n\n` +
-          `Refunded to them: ${gbp(p.refund_pence)}\n` +
-          `Retained (15% fee):  ${gbp(p.fee_pence)}\n\n` +
-          `The Stripe refund was requested automatically — check it cleared, and ` +
+          `A customer cancelled a booked job on their job page (terms 9.1).\n\n` +
+          `Retained (the deposit): ${gbp(p.fee_pence)}\n` +
+          `Refunded to them:       ${gbp(p.refund_pence)}\n\n` +
+          (Number(p.refund_pence) > 0
+            ? `The Stripe refund was requested automatically — check it cleared, and `
+            : `Nothing to refund and no balance will be taken — check `) +
           `that the contractor has been stood down.\n` +
           `${SITE_URL}/admin/submissions/${p.submission_id}`,
       };

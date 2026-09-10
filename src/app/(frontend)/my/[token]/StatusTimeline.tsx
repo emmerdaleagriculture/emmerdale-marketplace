@@ -3,7 +3,7 @@ import m from './my.module.css';
 const STEPS: [string, string][] = [
   ['distributed', 'Sent to contractors'],
   ['quotes_receiving', 'Prices coming in'],
-  ['accepted_awaiting_payment', 'Payment'],
+  ['accepted_awaiting_payment', 'Deposit'],
   ['awarded', 'Booked'],
   ['completed', 'Done'],
 ];

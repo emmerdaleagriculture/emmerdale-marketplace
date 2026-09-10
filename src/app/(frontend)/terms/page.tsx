@@ -98,13 +98,13 @@ export default function TermsPage() {
           <p>
             If the site is materially different from the description, stop and tell us.
             We will re-price it with the customer, and work continues once they have
-            accepted and paid for the change. Do not agree extra work directly with the
+            accepted the change; the difference is added to their balance. Do not agree extra work directly with the
             customer: it goes through us so it is recorded, insured and covered by these
             terms.
           </p>
           <p>
-            If a customer raises a problem within their three working days, we hold the
-            money while we deal with it. Where work is incomplete or not to a reasonable
+            If a customer raises a problem within their three working days, we hold off
+            collecting their balance while we deal with it. Where work is incomplete or not to a reasonable
             standard, we will ask you to return and put it right within 7 days at no cost
             to the customer. Where that is not possible, we may refund the customer an
             appropriate part of the price and reduce or withhold payment to you
@@ -115,7 +115,7 @@ export default function TermsPage() {
           <p>
             A customer can cancel before work starts. If you have already been booked and
             have incurred a call-out, tell us and we will agree what is owed to you out
-            of the cancellation fee we retain. If a customer fails to give access at the
+            of the deposit we retain. If a customer fails to give access at the
             agreed time, tell us the same day.
           </p>
           <p>
