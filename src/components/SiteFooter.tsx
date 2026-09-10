@@ -55,8 +55,8 @@ export function SiteFooter() {
             <Link href="/privacy">Privacy policy</Link>
             {/* Customer-facing documents are PDFs; /terms is the contractor
                 agreement, which is a different audience entirely. */}
-            <a href="/legal/customer-terms-and-conditions.pdf">Customer terms (PDF)</a>
-            <a href="/legal/customer-service-charter.pdf">Service charter (PDF)</a>
+            <a href="/customer-terms">Customer terms</a>
+            <a href="/service-charter">Service charter</a>
             <Link href="/terms">Contractor terms</Link>
           </nav>
         </div>

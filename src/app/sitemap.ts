@@ -93,6 +93,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/contact`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE}/privacy`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE}/terms`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE}/customer-terms`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE}/service-charter`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
     ...paddockCountyPages,
     ...countyPages,
     ...notePages,

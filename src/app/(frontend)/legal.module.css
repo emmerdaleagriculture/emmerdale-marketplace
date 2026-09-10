@@ -31,3 +31,41 @@
   padding-left: 22px;
   margin-bottom: 12px;
 }
+
+/* The customer terms: lettered sub-clauses, in-text links, and the
+   Cancellation Schedule as a real table rather than a PDF's fake one. */
+.prose ol {
+  padding-left: 26px;
+  margin-bottom: 12px;
+}
+.prose a {
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose a:hover {
+  text-decoration: none;
+}
+.tableWrap {
+  overflow-x: auto;
+  margin: 12px 0 24px;
+}
+.schedule {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.schedule th,
+.schedule td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-2);
+}
+.schedule th {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom: 2px solid var(--jd-green-deep);
+}

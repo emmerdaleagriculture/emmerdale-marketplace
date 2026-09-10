@@ -53,6 +53,20 @@ const nextConfig = {
         destination: '/notes/agricultural-contractor-looking-for-more-work',
         permanent: true,
       },
+      // The customer terms and service charter were PDFs until 2026-09-10 and
+      // are linked from every job page and payment email sent before then.
+      // Their v1.0 described 100%-up-front payment, which the site no longer
+      // does; the pages carry v2.0, and the old URLs land on them.
+      {
+        source: '/legal/customer-terms-and-conditions.pdf',
+        destination: '/customer-terms',
+        permanent: true,
+      },
+      {
+        source: '/legal/customer-service-charter.pdf',
+        destination: '/service-charter',
+        permanent: true,
+      },
     ];
   },
 
