@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       app_config: {
@@ -150,6 +125,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "my_sq_won_jobs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_quotes_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
           },
         ]
       }
@@ -338,6 +320,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contractor_quotes_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
+          },
+          {
             foreignKeyName: "contractor_quotes_superseded_by_fkey"
             columns: ["superseded_by"]
             isOneToOne: false
@@ -400,11 +389,17 @@ export type Database = {
             referencedRelation: "my_sq_won_jobs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contractor_ratings_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
+          },
         ]
       }
       contractors: {
         Row: {
-          payout_before_balance: boolean
           base_lat: number | null
           base_lng: number | null
           base_postcode: string
@@ -414,6 +409,7 @@ export type Database = {
           email: string
           id: string
           notify_new_jobs: boolean
+          payout_before_balance: boolean
           phone: string
           rating_avg: number | null
           rating_count: number
@@ -422,7 +418,6 @@ export type Database = {
           vetted_at: string | null
         }
         Insert: {
-          payout_before_balance?: boolean
           base_lat?: number | null
           base_lng?: number | null
           base_postcode: string
@@ -432,6 +427,7 @@ export type Database = {
           email: string
           id: string
           notify_new_jobs?: boolean
+          payout_before_balance?: boolean
           phone: string
           rating_avg?: number | null
           rating_count?: number
@@ -440,7 +436,6 @@ export type Database = {
           vetted_at?: string | null
         }
         Update: {
-          payout_before_balance?: boolean
           base_lat?: number | null
           base_lng?: number | null
           base_postcode?: string
@@ -450,6 +445,7 @@ export type Database = {
           email?: string
           id?: string
           notify_new_jobs?: boolean
+          payout_before_balance?: boolean
           phone?: string
           rating_avg?: number | null
           rating_count?: number
@@ -697,6 +693,13 @@ export type Database = {
             referencedRelation: "my_sq_won_jobs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "job_events_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
+          },
         ]
       }
       job_invitations: {
@@ -761,6 +764,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "my_sq_won_jobs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_invitations_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
           },
         ]
       }
@@ -845,67 +855,67 @@ export type Database = {
         Row: {
           amount_pence: number
           attempts: number
-          due_at: string | null
-          kind: string
-          last_attempt_at: string | null
-          last_error: string | null
-          stripe_customer_id: string | null
-          stripe_payment_method_id: string | null
           client_quote_id: string
           created_at: string
           currency: string
+          due_at: string | null
           expires_at: string
           id: string
+          kind: string
+          last_attempt_at: string | null
+          last_error: string | null
           paid_at: string | null
           refunded_at: string | null
           refunded_pence: number | null
           status: string
           stripe_checkout_session_id: string | null
+          stripe_customer_id: string | null
           stripe_payment_intent_id: string | null
+          stripe_payment_method_id: string | null
           submission_id: string
         }
         Insert: {
           amount_pence: number
           attempts?: number
-          due_at?: string | null
-          kind?: string
-          last_attempt_at?: string | null
-          last_error?: string | null
-          stripe_customer_id?: string | null
-          stripe_payment_method_id?: string | null
           client_quote_id: string
           created_at?: string
           currency?: string
+          due_at?: string | null
           expires_at: string
           id?: string
+          kind?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
           paid_at?: string | null
           refunded_at?: string | null
           refunded_pence?: number | null
           status?: string
           stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
+          stripe_payment_method_id?: string | null
           submission_id: string
         }
         Update: {
           amount_pence?: number
           attempts?: number
-          due_at?: string | null
-          kind?: string
-          last_attempt_at?: string | null
-          last_error?: string | null
-          stripe_customer_id?: string | null
-          stripe_payment_method_id?: string | null
           client_quote_id?: string
           created_at?: string
           currency?: string
+          due_at?: string | null
           expires_at?: string
           id?: string
+          kind?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
           paid_at?: string | null
           refunded_at?: string | null
           refunded_pence?: number | null
           status?: string
-          stripe_checkout_session_id?: string
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
+          stripe_payment_method_id?: string | null
           submission_id?: string
         }
         Relationships: [
@@ -936,6 +946,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "my_sq_won_jobs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_payments_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
           },
         ]
       }
@@ -1002,6 +1019,13 @@ export type Database = {
             referencedRelation: "my_sq_won_jobs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "job_schedules_source_submission_id_fkey"
+            columns: ["source_submission_id"]
+            isOneToOne: false
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
+          },
         ]
       }
       job_submission_parses: {
@@ -1062,6 +1086,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "my_sq_won_jobs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_submission_parses_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
           },
         ]
       }
@@ -1523,7 +1554,7 @@ export type Database = {
           kind: string
           label?: string | null
           path: string
-          seconds: number | null
+          seconds?: number | null
           session_key: string
           viewport_w?: number | null
           x_pct?: number | null
@@ -1648,6 +1679,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "my_sq_won_jobs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submission_notifications_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
           },
         ]
       }
@@ -1827,12 +1865,31 @@ export type Database = {
           },
         ]
       }
+      sq_payout_ready: {
+        Row: {
+          business_name: string | null
+          collected_pence: number | null
+          contractor_id: string | null
+          contractor_invoice_at: string | null
+          owed_pence: number | null
+          payout_before_balance: boolean | null
+          status: string | null
+          submission_id: string | null
+          total_pence: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_submissions_awarded_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      admin_dashboard: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      admin_dashboard: { Args: never; Returns: Json }
       admin_metrics: { Args: never; Returns: Json }
       app_config_num: {
         Args: { p_default: number; p_key: string }
@@ -1936,13 +1993,41 @@ export type Database = {
         }[]
       }
       record_invitation_view: { Args: { p_token: string }; Returns: Json }
-      run_due_job_schedules: { Args: never; Returns: number }
-      sealed_quote_tick: { Args: never; Returns: undefined }
-      sq_job_facts: { Args: { p_submission_id: string }; Returns: Json }
       record_undeliverable_email: {
         Args: { p_detail: string; p_email: string; p_kind: string }
         Returns: undefined
       }
+      run_due_job_schedules: { Args: never; Returns: number }
+      sealed_quote_tick: { Args: never; Returns: undefined }
+      send_chase_emails: { Args: never; Returns: Json }
+      sq_alert_overdue_balances: { Args: never; Returns: number }
+      sq_cancellation_split: {
+        Args: { p_submission_id: string }
+        Returns: Json
+      }
+      sq_claim_due_balances: {
+        Args: { p_limit?: number }
+        Returns: {
+          amount_pence: number
+          attempts: number
+          client_token: string
+          contact_email: string
+          max_attempts: number
+          payment_id: string
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          submission_id: string
+        }[]
+      }
+      sq_deposit_pence: {
+        Args: { p_client_price_pence: number; p_rate: number }
+        Returns: number
+      }
+      sq_fail_balance: {
+        Args: { p_error: string; p_final?: boolean; p_payment_id: string }
+        Returns: Json
+      }
+      sq_job_facts: { Args: { p_submission_id: string }; Returns: Json }
       sq_notify_once: {
         Args: {
           p_kind: string
@@ -1953,7 +2038,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      sq_open_balance: { Args: { p_submission_id: string }; Returns: number }
+      sq_payment_plan: { Args: { p_client_quote_id: string }; Returns: Json }
       sq_publish_quote: { Args: { p_quote_id: string }; Returns: undefined }
+      sq_settle_balance: {
+        Args: { p_intent_id: string; p_payment_id: string }
+        Returns: Json
+      }
       sq_token: { Args: never; Returns: string }
       submit_client_rating: {
         Args: { p_client_token: string; p_comment: string; p_stars: number }
@@ -1974,36 +2065,6 @@ export type Database = {
         }
         Returns: Json
       }
-      sq_payment_plan: { Args: { p_client_quote_id: string }; Returns: Json }
-      sq_deposit_pence: {
-        Args: { p_client_price_pence: number; p_rate: number }
-        Returns: number
-      }
-      sq_open_balance: { Args: { p_submission_id: string }; Returns: number }
-      sq_cancellation_split: { Args: { p_submission_id: string }; Returns: Json }
-      sq_claim_due_balances: {
-        Args: { p_limit: number }
-        Returns: {
-          payment_id: string
-          submission_id: string
-          amount_pence: number
-          stripe_customer_id: string | null
-          stripe_payment_method_id: string | null
-          attempts: number
-          max_attempts: number
-          contact_email: string | null
-          client_token: string | null
-        }[]
-      }
-      sq_settle_balance: {
-        Args: { p_payment_id: string; p_intent_id: string }
-        Returns: Json
-      }
-      sq_fail_balance: {
-        Args: { p_payment_id: string; p_error: string; p_final: boolean }
-        Returns: Json
-      }
-      sq_alert_overdue_balances: { Args: never; Returns: number }
       void_acceptance: { Args: { p_session_id: string }; Returns: Json }
       working_days_since: { Args: { p_from: string }; Returns: number }
     }
@@ -2134,9 +2195,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
