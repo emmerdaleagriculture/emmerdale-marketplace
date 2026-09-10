@@ -46,6 +46,7 @@ export function LandingFlow() {
   const [captchaToken, setCaptchaToken] = useState('');
   const [awaitingToken, setAwaitingToken] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const captchaRef = useRef<HTMLDivElement>(null);
   const tokenRef = useRef('');
   tokenRef.current = captchaToken;
 
@@ -56,6 +57,15 @@ export function LandingFlow() {
       formRef.current?.requestSubmit();
     }
   }, [awaitingToken, captchaToken]);
+
+  // The widget sits below the button so the button itself clears the fold,
+  // which is fine while the challenge passes silently — but a managed
+  // challenge sometimes wants a tick, and an unticked box the customer
+  // cannot see reads as a dead button. If we end up waiting, put the thing
+  // being waited on in front of them.
+  useEffect(() => {
+    if (awaitingToken) captchaRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [awaitingToken]);
   // Never hold a paid click hostage to a slow challenge: after 8s, submit
   // anyway and let the server-side verification decide.
   useEffect(() => {
@@ -249,7 +259,7 @@ export function LandingFlow() {
     <form
       ref={formRef}
       action={action}
-      className={a.card}
+      className={`${a.card} ${s.card}`}
       onSubmit={(e) => {
         trackStep('send');
         // The button is never disabled waiting for Turnstile — if the token
@@ -262,20 +272,6 @@ export function LandingFlow() {
     >
       <PageTracker path="/start" />
       {state.error && <p className={f.error}>{state.error}</p>}
-      {/* Why bother, for someone weighing this against asking in a Facebook
-          group. At the top, before the box: the case is made before anyone
-          is asked to type. */}
-      <ul className={s.reassure}>
-        <li>No trawling Facebook groups hoping someone answers.</li>
-        <li>Insured contractors, vetted before they see a single job.</li>
-        <li>Several prices to choose from, not whoever replies first.</li>
-        <li>Booked for when you actually want it, and it gets done.</li>
-        <li>
-          Your own job page — a private link with the prices, the contractor and
-          where it&rsquo;s up to.
-        </li>
-        <li>We&rsquo;re on the end of the phone if you need us.</li>
-      </ul>
 
       <input type="hidden" name="form_ts" value={formTs} />
       <input type="hidden" name="utm_source" value={utm.source} />
@@ -331,31 +327,37 @@ export function LandingFlow() {
 
       {/* Photos (spec §26a.3): optional, prompted specifically — a contractor
           reads more from one gateway photo than three paragraphs. Stored,
-          never parsed; shown to contractors in Part 2. */}
-      <div className={a.row2}>
-        <label className={f.field}>
-          <span className={f.label}>Photo of the field (optional)</span>
-          <input
-            className={f.input}
-            type="file"
-            name="photo_field"
-            accept="image/*"
-            onChange={(e) => downscaleInput(e.currentTarget)}
-          />
-        </label>
-        <label className={f.field}>
-          <span className={f.label}>Photo of the gateway or access (optional)</span>
-          <input
-            className={f.input}
-            type="file"
-            name="photo_access"
-            accept="image/*"
-            onChange={(e) => downscaleInput(e.currentTarget)}
-          />
-        </label>
-      </div>
+          never parsed; shown to contractors in Part 2.
 
-      <Turnstile resetOn={state} onToken={setCaptchaToken} />
+          Folded shut by default: expanded, the two file inputs are 180px of
+          optional work standing between the description and the button, and
+          on a phone that is the difference between seeing Get started and
+          not. The prompt survives; only the fields wait to be asked for. */}
+      <details className={s.photos}>
+        <summary>Add photos (optional)</summary>
+        <div className={a.row2}>
+          <label className={f.field}>
+            <span className={f.label}>Photo of the field</span>
+            <input
+              className={f.input}
+              type="file"
+              name="photo_field"
+              accept="image/*"
+              onChange={(e) => downscaleInput(e.currentTarget)}
+            />
+          </label>
+          <label className={f.field}>
+            <span className={f.label}>Photo of the gateway or access</span>
+            <input
+              className={f.input}
+              type="file"
+              name="photo_access"
+              accept="image/*"
+              onChange={(e) => downscaleInput(e.currentTarget)}
+            />
+          </label>
+        </div>
+      </details>
 
       <div className={a.actions}>
         <button
@@ -367,6 +369,36 @@ export function LandingFlow() {
         </button>
       </div>
 
+      {/* Below the button, not above it. The widget is 80px of machinery the
+          customer never interacts with, and above the button that 80px was
+          the difference between seeing Get started on a phone and not. The
+          submit path is unchanged either way: the token lands in a hidden
+          input in this same form, and a press before the challenge resolves
+          is already held and replayed by the handler above. */}
+      <div ref={captchaRef}>
+        <Turnstile resetOn={state} onToken={setCaptchaToken} />
+        {awaitingToken && (
+          <p className={f.hint}>Just finishing the security check — one moment.</p>
+        )}
+      </div>
+
+      {/* Why bother, for someone weighing this against asking in a Facebook
+          group. Below the box, not above it: with the list first, the field
+          started 687px down a 664px phone viewport, and 96% of ad arrivals
+          left without clicking anything at all. The case still gets made —
+          to the people who scroll — but it no longer stands in the way of
+          the one thing this page is paid to collect. */}
+      <ul className={s.reassure}>
+        <li>No trawling Facebook groups hoping someone answers.</li>
+        <li>Insured contractors, vetted before they see a single job.</li>
+        <li>Several prices to choose from, not whoever replies first.</li>
+        <li>Booked for when you actually want it, and it gets done.</li>
+        <li>
+          Your own job page — a private link with the prices, the contractor and
+          where it&rsquo;s up to.
+        </li>
+        <li>We&rsquo;re on the end of the phone if you need us.</li>
+      </ul>
     </form>
   );
 }

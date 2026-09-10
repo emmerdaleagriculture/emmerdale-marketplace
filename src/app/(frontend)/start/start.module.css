@@ -142,9 +142,9 @@
    competing with the form above it. */
 .reassure {
   list-style: none;
-  margin: 0 0 22px;
-  padding: 0 0 18px;
-  border-bottom: 1px solid var(--rule);
+  margin: 24px 0 0;
+  padding: 18px 0 0;
+  border-top: 1px solid var(--rule);
   display: grid;
   gap: 9px;
   font-size: 14px;
@@ -167,14 +167,14 @@
   border: 1px solid var(--jd-green-deep);
 }
 
-/* On a phone the list now sits above the box, and seven lines at desktop
-   spacing push the box below the fold for exactly the ad traffic this page
-   exists for. Tighter leading, smaller gaps, less padding — the words stay. */
+/* The list sits below the box now, so it no longer costs anyone the form.
+   It stays tight on a phone anyway: it is read after the decision, not
+   before it, and six loose paragraphs there are just more to scroll past. */
 @media (max-width: 620px) {
   .reassure {
     gap: 5px;
-    padding-bottom: 12px;
-    margin-bottom: 14px;
+    padding-top: 12px;
+    margin-top: 18px;
     font-size: 13px;
     line-height: 1.35;
   }
@@ -207,4 +207,60 @@
 }
 .contact a:hover {
   text-decoration: none;
+}
+
+/*
+ * /start-only trims to the shared auth layout. This page is bought by the
+ * click, so the vertical distance between the header and the first field is
+ * money: 56px of top padding and a four-line standfirst put the description
+ * box below the fold on a phone. Scoped here rather than in auth.module.css,
+ * which login, signup and reset also use — those pages are reached on purpose
+ * and can afford the air.
+ */
+.main {
+  padding-top: 24px;
+}
+.sub {
+  margin-bottom: 18px;
+}
+
+/* Phone is three quarters of this page's traffic and the only width where
+   the fold is contested — spend the last of the slack there and nowhere
+   else. The card's own inset is the largest remaining block above the
+   button that costs nothing to give up. */
+@media (max-width: 620px) {
+  .main {
+    padding-top: 16px;
+  }
+  /* Doubled selector, not !important: auth.module.css sets .card's padding
+     with the same specificity and the two files' order in the bundle is not
+     ours to rely on. */
+  .card.card {
+    padding: 20px;
+  }
+}
+
+/*
+ * Photos, folded shut. Two file inputs open is ~180px of optional work
+ * between the description and the button; the prompt is worth keeping where
+ * a customer sees it, the fields are not worth the fold.
+ */
+.photos {
+  margin-bottom: 12px;
+}
+.photos > summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  /* A comfortable tap target without a visible button: the row is small text
+     and phones are most of this page's traffic. */
+  padding: 4px 0;
+}
+.photos > summary:hover {
+  text-decoration: none;
+}
+.photos > div {
+  margin-top: 12px;
 }

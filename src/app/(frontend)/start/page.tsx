@@ -28,14 +28,22 @@ export default function StartPage() {
           React hoists these into <head>. */}
       <link rel="preconnect" href="https://challenges.cloudflare.com" />
       <HomeHeader />
-      <main className={a.main}>
+      {/* Everything above the form is a cost paid by every arrival: with the
+          old 56px top padding and a four-line standfirst, the description box
+          began 687px down a 664px phone viewport — below the fold on the
+          device three quarters of the ad traffic uses. Both are trimmed to
+          buy those pixels back. */}
+      <main className={`${a.main} ${s.main}`}>
         <div className={a.narrow}>
-          <div className={a.eyebrow}>Field &amp; paddock work</div>
+          {/* No eyebrow here, unlike the rest of the site: "FIELD & PADDOCK
+              WORK" in letterspaced caps says what the h1 and the standfirst
+              below it already say in plain words, and the header names the
+              business. On the one page bought by the click it was 30px
+              charged to every arrival for a second telling. */}
           <h1 className={a.title}>Tell us what needs doing</h1>
-          <p className={a.sub}>
-            Describe the job in your own words — long grass, an overgrown
-            paddock, a field that needs putting right. We&rsquo;ll sort the
-            details and pass it to contractors who cover your area.
+          <p className={`${a.sub} ${s.sub}`}>
+            In your own words — we&rsquo;ll pass it to contractors who cover
+            your area.
           </p>
           <LandingFlow />
           {/* Outside <LandingFlow> on purpose: it renders one of three things
