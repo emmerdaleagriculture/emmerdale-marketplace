@@ -88,7 +88,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
 
   if (state.ok) {
     return (
-      <div className={a.card}>
+      <div className={`${a.card} ${s.card}`}>
         <p className={f.success} style={{ fontSize: 16, margin: 0 }}>
           {state.message}
         </p>
@@ -122,7 +122,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
     <form
       ref={formRef}
       action={action}
-      className={a.card}
+      className={`${a.card} ${s.card}`}
       onSubmit={(e) => {
         if (boundaryWanted && !sendWithoutBoundary.current) {
           e.preventDefault();

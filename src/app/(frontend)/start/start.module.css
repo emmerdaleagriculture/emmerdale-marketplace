@@ -264,3 +264,10 @@
 .photos > div {
   margin-top: 12px;
 }
+
+/* The line that appears under the widget while a submit is held. A <p> takes
+   the browser's 1em margin by default, which moves the widget a customer is
+   in the middle of looking at. */
+.captchaNote {
+  margin: 8px 0 0;
+}

@@ -64,7 +64,14 @@ export function LandingFlow() {
   // cannot see reads as a dead button. If we end up waiting, put the thing
   // being waited on in front of them.
   useEffect(() => {
-    if (awaitingToken) captchaRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const el = captchaRef.current;
+    if (!awaitingToken || !el) return;
+    // Already on screen (any desktop, and a phone mid-form) — scrolling then
+    // just yanks the page out from under a thumb that is about to press.
+    const box = el.getBoundingClientRect();
+    if (box.top >= 0 && box.bottom <= window.innerHeight) return;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ block: 'center', behavior: still ? 'auto' : 'smooth' });
   }, [awaitingToken]);
   // Never hold a paid click hostage to a slow challenge: after 8s, submit
   // anyway and let the server-side verification decide.
@@ -244,7 +251,11 @@ export function LandingFlow() {
 
   if (pending) {
     return (
-      <div className={a.card} aria-busy="true" aria-label="Working out the details of your job">
+      <div
+        className={`${a.card} ${s.card}`}
+        aria-busy="true"
+        aria-label="Working out the details of your job"
+      >
         <PageTracker path="/start" />
         <p className={s.skeletonNote}>Reading your description…</p>
         <div className={s.skeletonRow} style={{ width: '55%' }} />
@@ -378,7 +389,9 @@ export function LandingFlow() {
       <div ref={captchaRef}>
         <Turnstile resetOn={state} onToken={setCaptchaToken} />
         {awaitingToken && (
-          <p className={f.hint}>Just finishing the security check — one moment.</p>
+          <p className={`${f.hint} ${s.captchaNote}`}>
+            Just finishing the security check — one moment.
+          </p>
         )}
       </div>
 
