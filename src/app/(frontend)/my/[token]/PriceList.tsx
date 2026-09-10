@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { acceptQuoteAction, type AcceptActionState } from './actions';
-import { formatGBP, formatRate } from '@/lib/sealedQuotes/money';
+import { depositSplitPence, formatGBP, formatRate } from '@/lib/sealedQuotes/money';
 import { sortClientQuotes, type SortMode } from '@/lib/sealedQuotes/quoteSort';
 import { RatingStars } from '@/components/RatingStars';
 import f from '@/components/forms/forms.module.css';
@@ -38,10 +38,13 @@ export function PriceList({
   token,
   quotes,
   ratingWeight,
+  depositRate,
 }: {
   token: string;
   quotes: ClientQuoteView[];
   ratingWeight: number;
+  /** 1 = the deposit is the whole price, and the split is never mentioned. */
+  depositRate: number;
 }) {
   const [state, action, pending] = useActionState(acceptQuoteAction, EMPTY);
   const [mode, setMode] = useState<SortMode>('recommended');
@@ -86,15 +89,29 @@ export function PriceList({
               <form action={action} className={m.acceptConfirm}>
                 <input type="hidden" name="token" value={token} />
                 <input type="hidden" name="client_quote_id" value={q.id} />
-                <p>
-                  You&rsquo;re accepting <strong>{q.contractor_display_label}</strong> at{' '}
-                  <strong>{formatGBP(q.client_price_pence)}</strong>. You pay Emmerdale up
-                  front; the money is only released to the contractor when the
-                  work&rsquo;s done.
-                </p>
+                {(() => {
+                  const { deposit, balance } = depositSplitPence(
+                    q.client_price_pence,
+                    depositRate,
+                  );
+                  return balance > 0 ? (
+                    <p>
+                      You&rsquo;re accepting <strong>{q.contractor_display_label}</strong> at{' '}
+                      <strong>{formatGBP(q.client_price_pence)}</strong>. You pay{' '}
+                      <strong>{formatGBP(deposit)}</strong> now to book it; the remaining{' '}
+                      {formatGBP(balance)} is charged to the same card once the work is done
+                      and you&rsquo;ve confirmed it.
+                    </p>
+                  ) : (
+                    <p>
+                      You&rsquo;re accepting <strong>{q.contractor_display_label}</strong> at{' '}
+                      <strong>{formatGBP(q.client_price_pence)}</strong>, paid now to book it.
+                    </p>
+                  );
+                })()}
                 <div className={m.acceptButtons}>
                   <button className={f.btnYellow} type="submit" disabled={pending}>
-                    {pending ? 'Setting up payment…' : 'Accept and pay'}
+                    {pending ? 'Setting up payment…' : 'Accept and book'}
                   </button>
                   <button
                     type="button"

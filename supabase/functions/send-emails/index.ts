@@ -159,8 +159,9 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `You’ve got the job — ${p.service ?? 'land work'}`,
         text:
-          `The customer accepted your price and has paid in full. The money is held ` +
-          `by Emmerdale and released to you when the work is done.\n\n` +
+          `The customer accepted your price and has paid their deposit. You’re paid ` +
+          `your full price once the job is done, they’ve confirmed it, the balance has ` +
+          `cleared and your invoice is in.\n\n` +
           `Customer:  ${p.contact_name ?? '—'}\n` +
           `Phone:     ${p.contact_phone ?? '—'}\n` +
           `Email:     ${p.contact_email ?? '—'}\n` +
@@ -204,7 +205,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Hi ${first},\n\nA contractor (${p.contractor_label ?? 'Contractor A'}) has priced your ` +
           `${p.service ?? ''} job at ${gbp(p.client_price_pence)}.\n\n` +
           `More may follow — see them all and choose here:\n${portal}\n\n` +
-          `Nothing is booked until you accept a price and pay.`,
+          `Nothing is booked until you accept a price and pay the deposit.`,
       };
     case 'sq_new_quotes':
       return {
@@ -214,17 +215,27 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `to choose from (${p.new_count} new since we last emailed).\n\n` +
           `See them all here:\n${portal}`,
       };
-    case 'sq_payment_link':
+    case 'sq_payment_link': {
+      // p.amount_pence is the DEPOSIT. balance_pence is 0 while the deposit is
+      // the whole price (sq_deposit_rate = 1.0), and the copy has to hold in
+      // both cases without anyone remembering to change it.
+      const bal = Number(p.balance_pence ?? 0);
       return {
-        subject: `Complete your booking — ${gbp(p.amount_pence)}`,
+        subject: bal > 0
+          ? `Confirm your booking — ${gbp(p.amount_pence)} deposit`
+          : `Complete your booking — ${gbp(p.amount_pence)}`,
         text:
-          `Hi ${first},\n\nYou’ve accepted a price of ${gbp(p.amount_pence)} from ` +
+          `Hi ${first},\n\nYou’ve accepted a price of ${gbp(p.total_pence ?? p.amount_pence)} from ` +
           `${p.contractor_label ?? 'your chosen contractor'}.\n\n` +
-          `Pay here to confirm the booking:\n${p.checkout_url}\n\n` +
-          `The link is valid for 24 hours. Your money is held by Emmerdale and only ` +
-          `released to the contractor when the work is done.\n\n` +
+          (bal > 0
+            ? `Pay the ${gbp(p.amount_pence)} deposit here to confirm the booking:\n${p.checkout_url}\n\n` +
+              `The remaining ${gbp(bal)} is charged to the same card once you’ve confirmed the ` +
+              `work is done, and is due within ${p.terms_days ?? 7} days of that.\n\n`
+            : `Pay here to confirm the booking:\n${p.checkout_url}\n\n`) +
+          `The link is valid for 24 hours.\n\n` +
           `Your job page: ${portal}`,
       };
+    }
     case 'sq_payment_expired':
       return {
         subject: `That payment link expired — nothing was booked`,
@@ -238,8 +249,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `Booked — ${p.contractor_business_name ?? 'your contractor'} has your job`,
         text:
           `Hi ${first},\n\nAll confirmed: ${p.contractor_business_name ?? 'your contractor'} has ` +
-          `your job and you’ve paid in full. We hold the money and release it to them ` +
-          `when the work is done.\n\n` +
+          `your job and your deposit is paid. The rest is due once the work is done and ` +
+          `you’ve confirmed it.\n\n` +
           `They’ll be in touch within 24 hours to arrange it. Track everything here:\n${portal}`,
       };
     case 'sq_no_matches':
@@ -289,8 +300,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `How did ${p.contractor_business_name ?? 'the contractor'} do?`,
         text:
-          `Hi ${first},\n\nYour job is complete and ${p.contractor_business_name ?? 'the contractor'} ` +
-          `has been paid. If you’ve got 30 seconds, a rating helps the next customer:\n` +
+          `Hi ${first},\n\nYour job is complete. If you’ve got 30 seconds, a rating ` +
+          `helps the next customer:\n` +
           `${portal}/rate`,
       };
 
@@ -299,8 +310,9 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `${p.contractor_business_name ?? 'Your contractor'} says your job is done`,
         text:
           `Hi ${first},\n\n${p.contractor_business_name ?? 'Your contractor'} has marked your ` +
-          `job as finished. Have a look, and if you're happy, confirm it — that's what ` +
-          `releases their payment:\n${portal}\n\n` +
+          `job as finished. Have a look, and if you're happy, confirm it here:\n${portal}\n\n` +
+          `Confirming settles the job: the balance is charged to the card you paid your ` +
+          `deposit with, and your contractor gets paid.\n\n` +
           `If it isn't finished, don't confirm. Reply to this email and we'll sort it out.`,
       };
 
@@ -314,7 +326,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `Hi ${first},\n\n${p.contractor_business_name ?? 'Your contractor'} marked your ` +
           `job as finished a couple of days ago, and we haven't heard from you.\n\n` +
-          `If you're happy with the work, confirm it here and their payment goes out:\n` +
+          `If you're happy with the work, confirm it here — that settles the balance and ` +
+          `their payment goes out:\n` +
           `${portal}\n\n` +
           `If we don't hear anything, the job confirms itself after three working days ` +
           `— so if something isn't right, tell us now. Reply to this email and we'll ` +
@@ -329,8 +342,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `We owe you for the ${p.service ?? 'job'} — send your invoice`,
         text:
           `Your ${p.service ?? 'job'} job${p.postcode_district ? ` in ${p.postcode_district}` : ''}` +
-          `${p.contact_name ? ` for ${p.contact_name}` : ''} is finished and confirmed, ` +
-          `and the money is here waiting.\n\n` +
+          `${p.contact_name ? ` for ${p.contact_name}` : ''} is finished and confirmed.\n\n` +
           `We just need your invoice before we can pay it. A PDF or a photo of a paper ` +
           `one is fine — upload it on the job:\n${SITE_URL}/won\n\n` +
           `Already sent it another way? Reply and tell us and we'll match it up.`,
@@ -338,10 +350,68 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
 
     case 'sq_completion_confirmed':
       return {
-        subject: `Job confirmed complete — your payment is released`,
+        subject: `Job confirmed complete — payment on its way`,
         text:
-          `${p.contact_name ?? 'The customer'} has confirmed the work is done, so your ` +
-          `payment is released and on its way.\n\nYour won jobs: ${SITE_URL}/won`,
+          `${p.contact_name ?? 'The customer'} has confirmed the work is done. We’re ` +
+          `collecting the balance from them now; your payment follows once it has cleared ` +
+          `and we have your invoice.\n\nYour won jobs: ${SITE_URL}/won`,
+      };
+
+    // ── The balance (terms 7.2) ──────────────────────────────────────────────
+    case 'sq_balance_due':
+      return {
+        subject: `Balance due — ${gbp(p.amount_pence)}`,
+        text:
+          `Hi ${first},\n\nThanks for confirming the work is done.\n\n` +
+          `Job total:     ${gbp(p.total_pence)}\n` +
+          `Deposit paid:  ${gbp(p.deposit_pence)}\n` +
+          `Balance:       ${gbp(p.amount_pence)}\n\n` +
+          `We’ll take the balance from the card you paid the deposit with. It’s due ` +
+          `within ${p.terms_days ?? 7} days.\n\n` +
+          `Your job page: ${portal}`,
+      };
+
+    case 'sq_balance_paid':
+      return {
+        subject: `Paid in full — thank you`,
+        text:
+          `Hi ${first},\n\nThe balance of ${gbp(p.amount_pence)} has gone through and the ` +
+          `job is settled in full. Nothing further to do.\n\nThanks for using Emmerdale.`,
+      };
+
+    // The off-session charge has given up. This is the only email that asks
+    // the customer to do something about money after the job is done, so it
+    // says why, and gives them the link rather than an instruction to call.
+    case 'sq_balance_action_needed':
+      return {
+        subject: `We couldn’t take your balance — ${gbp(p.amount_pence)}`,
+        text:
+          `Hi ${first},\n\nWe tried to take the ${gbp(p.amount_pence)} balance on your ` +
+          `completed job from the card you used for the deposit, and the payment didn’t ` +
+          `go through. That’s usually an expired card or a check your bank wants you to ` +
+          `approve.\n\n` +
+          `You can settle it here:\n${portal}\n\n` +
+          `If something about the job isn’t right, reply to this email instead and we’ll ` +
+          `sort it out before taking anything.`,
+      };
+
+    case 'sq_balance_stuck':
+      return {
+        subject: `BALANCE STUCK: ${gbp(p.amount_pence)} could not be charged`,
+        text:
+          `The off-session charge for submission ${p.submission_id} failed its last ` +
+          `attempt and the customer has been sent a link.\n\n` +
+          `Error: ${p.error ?? '(none recorded)'}\n\n` +
+          `${SITE_URL}/admin/submissions/${p.submission_id}`,
+      };
+
+    case 'sq_balance_overdue':
+      return {
+        subject: `BALANCE OVERDUE: ${gbp(p.amount_pence)}`,
+        text:
+          `The balance on submission ${p.submission_id} passed its due date ` +
+          `(${p.due_at ?? '?'}) without being settled.\n\n` +
+          `${SITE_URL}/admin/submissions/${p.submission_id}`,
       };
 
     case 'sq_job_cancelled_contractor':
@@ -373,11 +443,11 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Each job comes with a link. Open it, send a price, or pass. No obligation ` +
           `and no cost to you — you keep the price you quote, and our margin sits on ` +
           `top and is paid by the customer.\n\n` +
-          `3. We take the money up front and hold it.\n` +
-          `The customer pays us in full before you start, so the money is there from ` +
-          `day one. It's released to you once the job is done and they've confirmed ` +
-          `it — and if they don't respond, it's released automatically after three ` +
-          `working days. No invoicing, no chasing.\n\n` +
+          `3. We handle the money.\n` +
+          `The customer pays us a deposit to book the job and the balance when it's ` +
+          `done and they've confirmed it — and if they don't respond, the job confirms ` +
+          `itself after three working days. You're paid your full price once that ` +
+          `balance has cleared. You never chase the customer for money.\n\n` +
           `We're starting in Dorset and Oxfordshire before opening it up nationally, ` +
           `and we have advertising running, so we expect a fair volume of work.\n\n` +
           `You don't need to do anything — your account and the counties you cover ` +
@@ -413,7 +483,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `A client payment (${gbp(p.amount_pence)}) cleared for a job that is no ` +
           `longer awardable (status: ${p.job_status ?? '?'}). Nothing was awarded; ` +
-          `the money is held.\n\n` +
+          `the money is sitting in Stripe.\n\n` +
           `Decide and refund manually in Stripe. Session: ${p.session_id ?? '—'}\n` +
           `Submission: ${SITE_URL}/admin/submissions/${p.submission_id}`,
       };

@@ -23,7 +23,7 @@ export function MarkDoneButton({ submissionId }: { submissionId: string }) {
         {pending ? 'Sending…' : 'Mark the work as done'}
       </button>
       <span className={f.hint} style={{ marginLeft: 10 }}>
-        We&rsquo;ll ask the customer to confirm — that releases your payment.
+        We&rsquo;ll ask the customer to confirm — that settles the balance and releases your payment.
       </span>
     </form>
   );

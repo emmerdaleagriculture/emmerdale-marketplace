@@ -29,9 +29,8 @@ export function PayNow({
     <div className={m.payPanel}>
       <p>
         You&rsquo;ve accepted <strong>{label}</strong> at <strong>{amountLabel}</strong>.
-        Complete payment to confirm the booking — the payment link is valid for 24
-        hours, and your money is only released to the contractor when the
-        work&rsquo;s done.
+        Complete the deposit to confirm the booking — the payment link is valid for
+        24 hours.
       </p>
       {state.error && <p className={f.error}>{state.error}</p>}
       <form action={action}>

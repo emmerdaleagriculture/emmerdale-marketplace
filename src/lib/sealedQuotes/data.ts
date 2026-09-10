@@ -117,6 +117,20 @@ export async function signPhotos(paths: string[] | null): Promise<JobSpecPhoto[]
   return signed.filter((p): p is JobSpecPhoto => p !== null);
 }
 
+/**
+ * The share taken at acceptance (terms 7.2). 1.0 during the rollout means the
+ * deposit IS the price and every "deposit" affordance disappears on its own —
+ * the pages read this rather than assuming 0.15, so the flag moves the copy
+ * too and nothing has to be remembered at switch-on.
+ */
+export async function getDepositRate(): Promise<number> {
+  const admin = createServiceRoleClient();
+  const { data } = await admin
+    .from('app_config').select('value').eq('key', 'sq_deposit_rate').maybeSingle();
+  const n = Number(data?.value);
+  return Number.isFinite(n) && n >= 0 && n <= 1 ? n : 1;
+}
+
 export async function getCompositeWeight(): Promise<number> {
   const admin = createServiceRoleClient();
   const { data } = await admin

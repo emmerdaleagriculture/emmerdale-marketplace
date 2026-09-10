@@ -6,6 +6,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getStripe } from '@/lib/stripe';
 import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
 import { cancellationQuote } from '@/lib/sealedQuotes/cancellation';
+import { formatGBP } from '@/lib/sealedQuotes/money';
 import type { FormState } from '@/lib/form';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -20,6 +21,14 @@ export type AcceptActionState = FormState;
  *
  * Retry after an expired link is the same action — one tap, never a fresh
  * decision: the RPC re-accepts the same quote and a fresh session is minted.
+ *
+ * What the session charges is the DEPOSIT, not the price (terms 7.2). The
+ * amount comes from sq_payment_plan() rather than being worked out here:
+ * begin_acceptance re-derives it and refuses a mismatch, so a page held open
+ * across a rate change cannot open a session for the old split. The card is
+ * saved at the same time — the balance is charged to it off-session when the
+ * customer signs the job off, and consent for that has to be given here, while
+ * they are present.
  */
 export async function acceptQuoteAction(
   _prev: AcceptActionState,
@@ -40,17 +49,21 @@ export async function acceptQuoteAction(
 
   // Retry path: a live pending payment for this quote → reuse its link.
   if (js.status === 'accepted_awaiting_payment' && js.accepted_client_quote_id === quoteId) {
+    // kind = deposit throughout: a balance row has no Checkout session to
+    // reuse or void, and picking one up here would send a customer who is
+    // retrying their deposit to the wrong money.
     const { data: pay } = await admin
       .from('job_payments')
       .select('stripe_checkout_session_id, status, expires_at')
       .eq('submission_id', js.id)
       .eq('client_quote_id', quoteId)
+      .eq('kind', 'deposit')
       .eq('status', 'pending')
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (pay) {
+    if (pay?.stripe_checkout_session_id) {
       const stripe = getStripe();
       const session = await stripe.checkout.sessions.retrieve(pay.stripe_checkout_session_id);
       if (session.url) redirect(session.url);
@@ -61,11 +74,14 @@ export async function acceptQuoteAction(
       .from('job_payments')
       .select('stripe_checkout_session_id')
       .eq('submission_id', js.id)
+      .eq('kind', 'deposit')
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (stale) await admin.rpc('void_acceptance', { p_session_id: stale.stripe_checkout_session_id });
+    if (stale?.stripe_checkout_session_id) {
+      await admin.rpc('void_acceptance', { p_session_id: stale.stripe_checkout_session_id });
+    }
   }
 
   const { data: quote } = await admin
@@ -78,6 +94,18 @@ export async function acceptQuoteAction(
 
   const serviceName = (js.service as { name: string } | null)?.name ?? 'Land work';
   const expiresAt = Math.floor(Date.now() / 1000) + 24 * 3600 - 120; // Stripe caps at exactly 24h
+
+  const { data: planRow, error: planError } = await admin.rpc('sq_payment_plan', {
+    p_client_quote_id: quote.id,
+  });
+  const plan = planRow as
+    | { ok: boolean; total_pence: number; deposit_pence: number; balance_pence: number; terms_days: number }
+    | null;
+  if (planError || !plan?.ok) {
+    console.error('[sq] sq_payment_plan failed:', planError, planRow);
+    return { error: 'Something went wrong — nothing was booked. Please try again.' };
+  }
+  const takingDeposit = plan.balance_pence > 0;
 
   let stripe;
   try {
@@ -95,9 +123,16 @@ export async function acceptQuoteAction(
       {
         price_data: {
           currency: 'gbp',
-          unit_amount: quote.client_price_pence,
+          unit_amount: plan.deposit_pence,
           product_data: {
-            name: `${serviceName} — ${quote.contractor_display_label}`,
+            name: takingDeposit
+              ? `Deposit — ${serviceName} (${quote.contractor_display_label})`
+              : `${serviceName} — ${quote.contractor_display_label}`,
+            description: takingDeposit
+              ? `${formatGBP(plan.deposit_pence)} now of ${formatGBP(plan.total_pence)}. ` +
+                `The remaining ${formatGBP(plan.balance_pence)} is charged to this card when ` +
+                `you confirm the work is done, and is due within ${plan.terms_days} days of that.`
+              : undefined,
           },
         },
         quantity: 1,
@@ -105,8 +140,12 @@ export async function acceptQuoteAction(
     ],
     expires_at: expiresAt,
     customer_email: js.contact_email ?? undefined,
+    // A Customer and a saved card, or there is nothing to charge the balance
+    // to later. Both are no-ops while the deposit is the whole price.
+    customer_creation: 'always',
     metadata: { kind: 'sq_job_payment', submission_id: js.id, client_quote_id: quote.id },
     payment_intent_data: {
+      setup_future_usage: takingDeposit ? 'off_session' : undefined,
       metadata: { kind: 'sq_job_payment', submission_id: js.id, client_quote_id: quote.id },
     },
     success_url: `${SITE()}/my/${token}?paid=1`,
@@ -119,6 +158,7 @@ export async function acceptQuoteAction(
     p_session_id: session.id,
     p_session_expires_at: new Date(expiresAt * 1000).toISOString(),
     p_checkout_url: session.url ?? `${SITE()}/my/${token}`,
+    p_deposit_pence: plan.deposit_pence,
   });
   if (error || !(data as { ok: boolean }).ok) {
     // Cleanup: never leave a payable session for an acceptance that didn't take.
@@ -128,6 +168,10 @@ export async function acceptQuoteAction(
     const reason = (data as { reason?: string } | null)?.reason;
     if (reason === 'conflict') {
       return { error: 'This job already has an acceptance in progress — refresh to see where things stand.' };
+    }
+    if (reason === 'amount_mismatch') {
+      // The split moved under them between reading the plan and committing.
+      return { error: 'The payment terms have just changed — refresh and accept again.' };
     }
     if (reason === 'quote_unavailable') {
       return { error: `That price is no longer available — it may have lapsed. The list below is current.` };
@@ -209,10 +253,11 @@ export async function confirmCompletionAction(
 /**
  * Cancelling before work starts (terms 9.1, 9.2).
  *
- * The refund goes first. If Stripe declines, the job stays live and the
- * customer is told — cancelling the job and then failing to return the money
- * is the one order of operations that leaves them worse off than doing
- * nothing, and it is the state nobody would notice.
+ * The deposit is the cancellation fee, so in the normal case there is nothing
+ * to send back and the cancellation is a single state change. When there IS a
+ * refund — a payment above the deposit — it goes FIRST: cancelling the job and
+ * then failing to return the money is the one order of operations that leaves
+ * them worse off than doing nothing, and it is the state nobody would notice.
  *
  * Cancelling after work has started is 9.3 and needs someone to value the work
  * done, so it is not offered here.
@@ -241,21 +286,22 @@ export async function cancelJobAction(_prev: FormState, formData: FormData): Pro
     return { error: 'We couldn\u2019t find the payment for this job — please contact us and we\u2019ll cancel it by hand.' };
   }
   const { fee, refund, paymentIntentId } = quote;
-  const stripe = getStripe();
 
-  try {
-    await stripe.refunds.create({
-      payment_intent: paymentIntentId,
-      amount: refund,
-      reason: 'requested_by_customer',
-      metadata: { submission_id: js.id, kind: 'sq_client_cancellation' },
-    });
-  } catch (err) {
-    console.error('[sq] refund failed:', err);
-    return {
-      error:
-        'We couldn\u2019t process the refund just now, so nothing has been cancelled. Try again shortly, or contact us and we\u2019ll do it by hand.',
-    };
+  if (refund > 0 && paymentIntentId) {
+    try {
+      await getStripe().refunds.create({
+        payment_intent: paymentIntentId,
+        amount: refund,
+        reason: 'requested_by_customer',
+        metadata: { submission_id: js.id, kind: 'sq_client_cancellation' },
+      });
+    } catch (err) {
+      console.error('[sq] refund failed:', err);
+      return {
+        error:
+          'We couldn\u2019t process the refund just now, so nothing has been cancelled. Try again shortly, or contact us and we\u2019ll do it by hand.',
+      };
+    }
   }
 
   const { data, error } = await admin.rpc('cancel_job_by_client', {
@@ -278,6 +324,9 @@ export async function cancelJobAction(_prev: FormState, formData: FormData): Pro
   revalidatePath(`/my/${token}`);
   return {
     ok: true,
-    message: `Cancelled. £${(refund / 100).toFixed(2)} is on its way back to your card, usually within 5 working days.`,
+    message:
+      refund > 0
+        ? `Cancelled. ${formatGBP(refund)} is on its way back to your card, usually within 5 working days. We've kept the ${formatGBP(fee)} deposit.`
+        : `Cancelled. The ${formatGBP(fee)} deposit isn't refundable, and nothing further will be taken.`,
   };
 }

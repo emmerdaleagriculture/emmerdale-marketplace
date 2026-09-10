@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import {
   getClientQuoteById,
   getClientQuotes,
-  getCompositeWeight,
+  getCompositeWeight, getDepositRate,
   getSubmissionByClientToken,
   signPhotos,
 } from '@/lib/sealedQuotes/data';
@@ -83,9 +83,10 @@ export default async function ClientPortalPage({
   // latency. The accepted quote is fetched by id with no validity filter:
   // an award outlives its quote's valid-until date.
   const needQuotes = ['quotes_receiving', 'accepted_awaiting_payment'].includes(js.status);
-  const [quotes, ratingWeight, photos, accepted] = await Promise.all([
+  const [quotes, ratingWeight, depositRate, photos, accepted] = await Promise.all([
     needQuotes ? getClientQuotes(js.id) : Promise.resolve([]),
     needQuotes ? getCompositeWeight() : Promise.resolve(0.3),
+    getDepositRate(),
     signPhotos(js.photo_paths),
     js.accepted_client_quote_id
       ? getClientQuoteById(js.accepted_client_quote_id)
@@ -134,12 +135,13 @@ export default async function ClientPortalPage({
                 {quotes.length === 1
                   ? 'One price so far — more may follow.'
                   : `${quotes.length} prices to choose from.`}{' '}
-                Nothing is booked until you accept one and pay.
+                Nothing is booked until you accept one and pay the deposit.
               </p>
               <PriceList
                 token={token}
                 quotes={quotes as ClientQuoteView[]}
                 ratingWeight={ratingWeight}
+                depositRate={depositRate}
               />
               {/* The terms open with "read these before you accept a price",
                   so this is where they have to be — not only in the footer. */}
@@ -170,9 +172,9 @@ export default async function ClientPortalPage({
             <div className={m.awardPanel}>
               <p>
                 <strong>{accepted?.contractor_real_name ?? 'Your contractor'}</strong> has
-                your job{accepted ? ` at ${formatGBP(accepted.client_price_pence)}` : ''}. You&rsquo;ve
-                paid in full; we hold the money and release it to them when the
-                work&rsquo;s done.
+                your job{accepted ? ` at ${formatGBP(accepted.client_price_pence)}` : ''}. Your
+                deposit is paid; the rest is due once the work is done and
+                you&rsquo;ve confirmed it.
               </p>
               <p>They&rsquo;ll be in touch within 24 hours to arrange it.</p>
             </div>
@@ -184,6 +186,7 @@ export default async function ClientPortalPage({
               token={token}
               refundLabel={formatGBP(cancelQuote.refund)}
               feeLabel={formatGBP(cancelQuote.fee)}
+              refundPence={cancelQuote.refund}
             />
           )}
 
@@ -206,8 +209,8 @@ export default async function ClientPortalPage({
           {(js.status === 'completed' || js.status === 'paid') && (
             <div className={m.awardPanel}>
               <p>
-                All done — {accepted?.contractor_real_name ?? 'your contractor'} has been
-                paid.
+                All done{js.status === 'paid' ? ' and paid in full' : ''} —{' '}
+                {accepted?.contractor_real_name ?? 'your contractor'} did the work.
               </p>
               {rated ? (
                 <p>

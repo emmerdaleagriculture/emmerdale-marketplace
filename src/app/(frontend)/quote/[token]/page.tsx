@@ -122,7 +122,8 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
             js.awarded_contractor_id === invitation.contractor_id && (
               <div className={q.pricedPanel}>
                 <strong>You&rsquo;ve got this job.</strong> The customer accepted your
-                price and has paid in full — their details and the next steps are in{' '}
+                price and has paid their deposit — their details and the next steps are
+                in{' '}
                 <a href="/won">your won jobs</a>.
               </div>
             )}

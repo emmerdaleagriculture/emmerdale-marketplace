@@ -9,9 +9,15 @@ export const metadata: Metadata = { title: 'Money — Admin' };
 export const dynamic = 'force-dynamic';
 
 /**
- * Money view (spec v1.6 §30 view 4): held funds, per-job margin — one of the
- * two screens where both prices appear (§29). Contractor payouts are Part 3;
- * "released" here means the job reached completed/paid.
+ * Money view (spec v1.6 §30 view 4): what has come in and what is still owed —
+ * one of the two screens where both sides' figures appear (§29).
+ *
+ * A job now has TWO payment rows: the deposit taken at acceptance and the
+ * balance that falls due at sign-off. So the table lists movements of money,
+ * not jobs, and the per-row "margin" it used to show (row amount minus the
+ * contractor's whole price) is gone — on a deposit row it was a large negative
+ * number. Margin is a per-job figure and lives on the dashboard; what belongs
+ * here is which money has arrived and which has not.
  */
 export default async function MoneyPage() {
   const admin = createServiceRoleClient();
@@ -19,7 +25,7 @@ export default async function MoneyPage() {
   const { data: payments } = await admin
     .from('job_payments')
     .select(
-      `id, status, amount_pence, paid_at, created_at,
+      `id, status, kind, amount_pence, paid_at, created_at, due_at, attempts, last_error,
        submission:job_submissions(id, status, contact_name, service:services(name)),
        quote:client_quotes(client_price_pence, contractor_quote_id)`,
     )
@@ -46,6 +52,13 @@ export default async function MoneyPage() {
   );
   const totalHeld = held.reduce((sum, r) => sum + r.amount_pence, 0);
 
+  // Balances signed off but not yet collected. This is the number that did not
+  // exist under the old model and is the one worth watching: money the
+  // business has promised a contractor and has not been paid.
+  const owed = rows.filter((r) => r.kind === 'balance' && ['due', 'failed'].includes(r.status));
+  const totalOwed = owed.reduce((sum, r) => sum + r.amount_pence, 0);
+  const stuck = owed.filter((r) => r.status === 'failed').length;
+
   return (
     <div>
       <h1 className={s.h1}>Money</h1>
@@ -57,8 +70,15 @@ export default async function MoneyPage() {
       <div className={s.metricGrid}>
         <div className={s.metric}>
           <div className={s.metricValue}>{formatGBP(totalHeld)}</div>
-          <div className={s.metricLabel}>Held right now</div>
-          <div className={s.metricHint}>{held.length} paid jobs not yet complete</div>
+          <div className={s.metricLabel}>Collected on live jobs</div>
+          <div className={s.metricHint}>{held.length} payments on jobs not yet complete</div>
+        </div>
+        <div className={s.metric}>
+          <div className={s.metricValue}>{formatGBP(totalOwed)}</div>
+          <div className={s.metricLabel}>Balances outstanding</div>
+          <div className={s.metricHint}>
+            {owed.length} awaiting collection{stuck > 0 ? ` · ${stuck} failed` : ''}
+          </div>
         </div>
         <div className={s.metric}>
           <div className={s.metricValue}>
@@ -78,9 +98,10 @@ export default async function MoneyPage() {
             <thead>
               <tr>
                 <th>Job</th>
-                <th>Customer paid</th>
+                <th>Part</th>
+                <th>Amount</th>
+                <th>Job total</th>
                 <th>Contractor gets</th>
-                <th>Margin</th>
                 <th>Payment</th>
                 <th>Job status</th>
                 <th>When</th>
@@ -94,9 +115,11 @@ export default async function MoneyPage() {
                   contact_name: string | null;
                   service: { name: string } | null;
                 } | null;
-                const cqId = (r.quote as { contractor_quote_id: string } | null)
-                  ?.contractor_quote_id;
-                const cPrice = cqId ? (contractorPrice.get(cqId) ?? null) : null;
+                const quote = r.quote as
+                  | { contractor_quote_id: string; client_price_pence: number }
+                  | null;
+                const cPrice = quote ? (contractorPrice.get(quote.contractor_quote_id) ?? null) : null;
+                const jobTotal = quote?.client_price_pence ?? null;
                 return (
                   <tr key={r.id}>
                     <td>
@@ -108,12 +131,22 @@ export default async function MoneyPage() {
                         '—'
                       )}
                     </td>
+                    <td>{r.kind === 'balance' ? 'Balance' : 'Deposit'}</td>
                     <td>{formatGBP(r.amount_pence)}</td>
+                    <td>{jobTotal !== null ? formatGBP(jobTotal) : '—'}</td>
                     <td>{cPrice !== null ? formatGBP(cPrice) : '—'}</td>
-                    <td>{cPrice !== null ? formatGBP(r.amount_pence - cPrice) : '—'}</td>
-                    <td>{r.status}</td>
+                    <td title={r.last_error ?? undefined}>
+                      {r.status}
+                      {r.status === 'failed' && r.attempts ? ` (${r.attempts} tries)` : ''}
+                    </td>
                     <td>{sub?.status ?? '—'}</td>
-                    <td>{r.paid_at ? formatDateTime(r.paid_at) : formatDateTime(r.created_at)}</td>
+                    <td>
+                      {r.paid_at
+                        ? formatDateTime(r.paid_at)
+                        : r.due_at && r.kind === 'balance'
+                          ? `due ${formatDateTime(r.due_at)}`
+                          : formatDateTime(r.created_at)}
+                    </td>
                   </tr>
                 );
               })}

@@ -52,45 +52,56 @@ export function poundsInputToPence(raw: string): number | null {
 }
 
 /**
- * Cancellation fee (terms 9.2 and the Cancellation Schedule).
+ * The deposit / balance split (terms 7.2).
  *
- * Charged on OUR MARGIN, not on the whole price. 15% of the gross would retain
- * more than the job earns — £9,075 against a £5,500 margin on a £60,500 job —
- * which is a penalty, not a pre-estimate of loss.
+ * TS twin of sq_deposit_pence(). SQL is canonical — the server action reads
+ * the plan from sq_payment_plan() before opening a Checkout session, and
+ * begin_acceptance re-derives it and refuses a mismatch. This exists for
+ * display and for the fixture test that keeps the two in lockstep.
  *
- * The Stripe fee is added because Stripe keeps it on a refund. Without it the
- * fee is 1.36% of the gross against a 1.5% + 20p charge, so every cancellation
- * would lose money on every job size. Each part is a cost actually incurred,
- * which is what makes the total defensible rather than arbitrary.
+ * round(), not ceil-to-£5 like computeClientPricePence: two amounts that have
+ * to sum back to the price exactly cannot both be rounded outward.
+ */
+export const DEFAULT_DEPOSIT_RATE = 0.15;
+
+export type DepositSplit = { deposit: number; balance: number };
+
+export function depositSplitPence(
+  totalPence: number,
+  rate: number = DEFAULT_DEPOSIT_RATE,
+): DepositSplit {
+  if (!Number.isInteger(totalPence) || totalPence < 0) {
+    throw new Error('totalPence must be a non-negative integer');
+  }
+  const deposit = Math.min(Math.max(Math.round(totalPence * rate), 0), totalPence);
+  return { deposit, balance: totalPence - deposit };
+}
+
+/**
+ * Cancellation before work starts (terms 9.1/9.2): the deposit is the fee.
+ *
+ * It used to be 15% of our MARGIN plus the Stripe fee, refunding the rest —
+ * arithmetic that only made sense while the customer had handed over the whole
+ * price up front. Now they put down 15% and that is what they forfeit, so the
+ * fee is a share of the price and the refund is whatever they paid above it
+ * (normally nothing, and everything above the deposit while sq_deposit_rate is
+ * still 1.0 for the rollout).
  */
 export const DEFAULT_CANCELLATION_FEE_RATE = 0.15;
 
 export type CancellationSplit = {
-  /** Retained: the share of margin, plus the processing fee Stripe keeps. */
+  /** Retained: the deposit, or its equivalent share of the price. */
   fee: number;
-  /** Refunded to the customer's card. */
+  /** Refunded to the customer's card — zero once only a deposit has been paid. */
   refund: number;
-  marginShare: number;
-  stripeFee: number;
 };
 
 export function cancellationSplit(
-  pricePence: number,
-  marginPence: number,
-  stripeFeePence: number,
+  totalPence: number,
+  paidPence: number,
   rate: number = DEFAULT_CANCELLATION_FEE_RATE,
 ): CancellationSplit {
-  // Never more than the margin itself, whatever the rate is set to, and never
-  // negative on a job priced at or below cost.
-  const marginShare = Math.max(0, Math.round(Math.max(0, marginPence) * rate));
-  const stripeFee = Math.max(0, Math.round(stripeFeePence));
-  // The refund can never exceed what they paid, and the fee can never swallow
-  // the whole payment: a customer is always refunded something.
-  const fee = Math.min(marginShare + stripeFee, Math.max(0, pricePence));
-  return { fee, refund: pricePence - fee, marginShare, stripeFee };
-}
-
-/** Stripe's UK card pricing, used only when the real figure can't be read. */
-export function estimateStripeFee(pricePence: number): number {
-  return Math.round(pricePence * 0.015) + 20;
+  // Never keep more than they actually handed over.
+  const fee = Math.min(Math.max(Math.round(Math.max(0, totalPence) * rate), 0), Math.max(0, paidPence));
+  return { fee, refund: Math.max(0, paidPence) - fee };
 }

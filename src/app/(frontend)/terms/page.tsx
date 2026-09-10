@@ -78,10 +78,17 @@ export default function TermsPage() {
             that includes both.
           </p>
           <p>
-            The customer pays us in full before the work starts, and we hold that money.
-            You are paid your full quoted price when the job is done and the customer
-            confirms it — or automatically <strong>three working days</strong> after you
-            mark it complete, if they neither confirm nor raise a problem.
+            The customer pays a deposit to book the job, and the balance falls due when
+            the work is done and they confirm it — or automatically{' '}
+            <strong>three working days</strong> after you mark it complete, if they
+            neither confirm nor raise a problem. The balance is payable by them within{' '}
+            <strong>seven days</strong> of that point.
+          </p>
+          <p>
+            You are paid your full quoted price once that balance has cleared and we have
+            your invoice. If the customer&rsquo;s balance fails and cannot be recovered,
+            we will tell you and agree what happens next — we will not simply leave it
+            outstanding.
           </p>
           <p>
             You do not invoice the customer and must not ask them for payment.

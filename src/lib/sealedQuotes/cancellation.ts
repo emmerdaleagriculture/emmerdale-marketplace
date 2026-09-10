@@ -1,33 +1,59 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getStripe } from '@/lib/stripe';
-import {
-  DEFAULT_CANCELLATION_FEE_RATE,
-  cancellationSplit,
-  estimateStripeFee,
-  type CancellationSplit,
-} from '@/lib/sealedQuotes/money';
 
 /**
- * What a customer gets back if they cancel now (terms 9.2).
+ * What a customer gets back if they cancel now (terms 9.1/9.2).
  *
  * One function so the figure quoted on the job page is the figure actually
  * refunded. Computing it twice invites the two drifting apart, and the one
- * place that must never happen is the number someone agrees to before we take
+ * place that must never happen is the number someone agrees to before we keep
  * their money.
  *
- * Falls back to Stripe's published pricing if the real fee can't be read — a
- * page render must not fail, and a refund must not be blocked, because Stripe
- * was slow.
+ * The arithmetic itself lives in SQL (sq_cancellation_split) alongside the
+ * config rate, because the fee is now a share of the price rather than
+ * something assembled from a margin and a live Stripe fee lookup. What is left
+ * here is the Stripe side: finding the intent a refund can actually be issued
+ * against.
  */
+export type CancellationQuote = {
+  /** Retained — the deposit, or its equivalent share of the price. */
+  fee: number;
+  /** Refunded to the card. Zero when only the deposit has been paid. */
+  refund: number;
+  totalPence: number;
+  paidPence: number;
+  /** Null when there is nothing to refund — a deposit-only cancellation. */
+  paymentIntentId: string | null;
+};
+
 export async function cancellationQuote(
   submissionId: string,
-): Promise<(CancellationSplit & { paymentIntentId: string; amountPence: number }) | null> {
+): Promise<CancellationQuote | null> {
   const admin = createServiceRoleClient();
+
+  const { data: split } = await admin.rpc('sq_cancellation_split', {
+    p_submission_id: submissionId,
+  });
+  const s = split as
+    | { ok: boolean; total_pence: number; paid_pence: number; fee_pence: number; refund_pence: number }
+    | null;
+  if (!s?.ok) return null;
+
+  const base = {
+    fee: s.fee_pence,
+    refund: s.refund_pence,
+    totalPence: s.total_pence,
+    paidPence: s.paid_pence,
+  };
+  // Nothing going back means no intent is needed, and looking one up would
+  // only invent a way for a cancellation to fail.
+  if (s.refund_pence <= 0) return { ...base, paymentIntentId: null };
 
   const { data: payment } = await admin
     .from('job_payments')
-    .select('amount_pence, stripe_payment_intent_id, stripe_checkout_session_id, client_quote_id')
+    .select('stripe_payment_intent_id, stripe_checkout_session_id')
     .eq('submission_id', submissionId)
+    .eq('kind', 'deposit')
     .eq('status', 'paid')
     .maybeSingle();
   if (!payment) return null;
@@ -57,46 +83,5 @@ export async function cancellationQuote(
   }
   if (!intentId) return null;
 
-  const [{ data: quote }, { data: rateRow }] = await Promise.all([
-    admin
-      .from('client_quotes')
-      .select('client_price_pence, contractor_quote:contractor_quotes(contractor_price_pence)')
-      .eq('id', payment.client_quote_id)
-      .maybeSingle(),
-    admin.from('app_config').select('value').eq('key', 'sq_cancellation_fee_rate').maybeSingle(),
-  ]);
-
-  const contractorPrice =
-    (quote?.contractor_quote as { contractor_price_pence: number } | null)
-      ?.contractor_price_pence ?? null;
-  // No contractor price means no known margin. Charge nothing but the
-  // processing fee rather than guessing at a number we'd be keeping.
-  const margin =
-    contractorPrice === null ? 0 : (quote?.client_price_pence ?? 0) - contractorPrice;
-
-  const rate = Number(rateRow?.value ?? DEFAULT_CANCELLATION_FEE_RATE);
-
-  let stripeFee = estimateStripeFee(payment.amount_pence);
-  try {
-    const pi = await getStripe().paymentIntents.retrieve(intentId, {
-      expand: ['latest_charge.balance_transaction'],
-    });
-    const charge = pi.latest_charge as { balance_transaction?: { fee?: number } } | null;
-    if (typeof charge?.balance_transaction?.fee === 'number') {
-      stripeFee = charge.balance_transaction.fee;
-    }
-  } catch {
-    /* published pricing it is */
-  }
-
-  return {
-    ...cancellationSplit(
-      payment.amount_pence,
-      margin,
-      stripeFee,
-      Number.isFinite(rate) ? rate : DEFAULT_CANCELLATION_FEE_RATE,
-    ),
-    paymentIntentId: intentId,
-    amountPence: payment.amount_pence,
-  };
+  return { ...base, paymentIntentId: intentId };
 }

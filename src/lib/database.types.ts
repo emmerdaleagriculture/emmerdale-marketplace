@@ -404,6 +404,7 @@ export type Database = {
       }
       contractors: {
         Row: {
+          payout_before_balance: boolean
           base_lat: number | null
           base_lng: number | null
           base_postcode: string
@@ -421,6 +422,7 @@ export type Database = {
           vetted_at: string | null
         }
         Insert: {
+          payout_before_balance?: boolean
           base_lat?: number | null
           base_lng?: number | null
           base_postcode: string
@@ -438,6 +440,7 @@ export type Database = {
           vetted_at?: string | null
         }
         Update: {
+          payout_before_balance?: boolean
           base_lat?: number | null
           base_lng?: number | null
           base_postcode?: string
@@ -841,6 +844,13 @@ export type Database = {
       job_payments: {
         Row: {
           amount_pence: number
+          attempts: number
+          due_at: string | null
+          kind: string
+          last_attempt_at: string | null
+          last_error: string | null
+          stripe_customer_id: string | null
+          stripe_payment_method_id: string | null
           client_quote_id: string
           created_at: string
           currency: string
@@ -850,12 +860,19 @@ export type Database = {
           refunded_at: string | null
           refunded_pence: number | null
           status: string
-          stripe_checkout_session_id: string
+          stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
           submission_id: string
         }
         Insert: {
           amount_pence: number
+          attempts?: number
+          due_at?: string | null
+          kind?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           client_quote_id: string
           created_at?: string
           currency?: string
@@ -865,12 +882,19 @@ export type Database = {
           refunded_at?: string | null
           refunded_pence?: number | null
           status?: string
-          stripe_checkout_session_id: string
+          stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
           submission_id: string
         }
         Update: {
           amount_pence?: number
+          attempts?: number
+          due_at?: string | null
+          kind?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           client_quote_id?: string
           created_at?: string
           currency?: string
@@ -1821,6 +1845,7 @@ export type Database = {
           p_checkout_url: string
           p_client_quote_id: string
           p_client_token: string
+          p_deposit_pence?: number
           p_session_expires_at: string
           p_session_id: string
         }
@@ -1949,6 +1974,36 @@ export type Database = {
         }
         Returns: Json
       }
+      sq_payment_plan: { Args: { p_client_quote_id: string }; Returns: Json }
+      sq_deposit_pence: {
+        Args: { p_client_price_pence: number; p_rate: number }
+        Returns: number
+      }
+      sq_open_balance: { Args: { p_submission_id: string }; Returns: number }
+      sq_cancellation_split: { Args: { p_submission_id: string }; Returns: Json }
+      sq_claim_due_balances: {
+        Args: { p_limit: number }
+        Returns: {
+          payment_id: string
+          submission_id: string
+          amount_pence: number
+          stripe_customer_id: string | null
+          stripe_payment_method_id: string | null
+          attempts: number
+          max_attempts: number
+          contact_email: string | null
+          client_token: string | null
+        }[]
+      }
+      sq_settle_balance: {
+        Args: { p_payment_id: string; p_intent_id: string }
+        Returns: Json
+      }
+      sq_fail_balance: {
+        Args: { p_payment_id: string; p_error: string; p_final: boolean }
+        Returns: Json
+      }
+      sq_alert_overdue_balances: { Args: never; Returns: number }
       void_acceptance: { Args: { p_session_id: string }; Returns: Json }
       working_days_since: { Args: { p_from: string }; Returns: number }
     }

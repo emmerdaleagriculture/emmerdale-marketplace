@@ -18,6 +18,10 @@ import { notifyAdmins } from '@/lib/adminNotify';
 function isJobPayment(session: Stripe.Checkout.Session): boolean {
   return session.mode === 'payment' && session.metadata?.kind === 'sq_job_payment';
 }
+/** The emailed fallback link for a balance the off-session charge couldn't take. */
+function isBalancePayment(session: Stripe.Checkout.Session): boolean {
+  return session.mode === 'payment' && session.metadata?.kind === 'sq_balance_payment';
+}
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) {
@@ -54,10 +58,35 @@ export async function POST(request: Request) {
             typeof session.payment_intent === 'string'
               ? session.payment_intent
               : (session.payment_intent?.id ?? null);
+
+          // The saved card. Checkout only puts setup_future_usage on the
+          // intent, so the payment method has to be read back from it — and
+          // without it every balance falls straight through to the emailed
+          // link. Failing to read it must not block the award, so it is
+          // logged and the job proceeds.
+          let customerId: string | null =
+            typeof session.customer === 'string' ? session.customer : (session.customer?.id ?? null);
+          let paymentMethodId: string | null = null;
           if (intentId) {
+            try {
+              const pi = await stripe.paymentIntents.retrieve(intentId);
+              paymentMethodId =
+                typeof pi.payment_method === 'string'
+                  ? pi.payment_method
+                  : (pi.payment_method?.id ?? null);
+              customerId =
+                customerId ??
+                (typeof pi.customer === 'string' ? pi.customer : (pi.customer?.id ?? null));
+            } catch (err) {
+              console.error('[stripe] could not read the saved card off the intent:', err);
+            }
             const { error: intentError } = await admin
               .from('job_payments')
-              .update({ stripe_payment_intent_id: intentId })
+              .update({
+                stripe_payment_intent_id: intentId,
+                stripe_customer_id: customerId,
+                stripe_payment_method_id: paymentMethodId,
+              })
               .eq('stripe_checkout_session_id', session.id);
             if (intentError) {
               console.error('[stripe] could not store the payment intent:', intentError);
@@ -83,6 +112,30 @@ export async function POST(request: Request) {
                 `investigate and refund or award manually.`,
             );
           }
+        } else if (isBalancePayment(session)) {
+          // The fallback link: the customer paying a balance by hand after the
+          // off-session charge gave up. Same settlement path as the worker's,
+          // so a job cannot end up half-settled depending on which route the
+          // money came in by.
+          const admin = createServiceRoleClient();
+          const paymentId = session.metadata?.payment_id;
+          const intentId =
+            typeof session.payment_intent === 'string'
+              ? session.payment_intent
+              : (session.payment_intent?.id ?? null);
+          if (!paymentId) {
+            await notifyAdmins(
+              'PAYMENT NEEDS A HUMAN: balance paid with no payment_id',
+              `Stripe session ${session.id} settled a balance but carried no payment_id in ` +
+                `its metadata, so it could not be matched to a job. Investigate.`,
+            );
+          } else {
+            const { error } = await admin.rpc('sq_settle_balance', {
+              p_payment_id: paymentId,
+              p_intent_id: intentId ?? session.id,
+            });
+            if (error) throw error; // 500 → Stripe retries
+          }
         } else if (session.subscription) {
           const subId =
             typeof session.subscription === 'string'
@@ -95,6 +148,9 @@ export async function POST(request: Request) {
       }
       case 'checkout.session.expired': {
         const session = event.data.object as Stripe.Checkout.Session;
+        // Deliberately only the deposit link. A balance link lapsing means the
+        // customer didn't get round to it — the debt stands and the chase
+        // continues; voiding the acceptance would un-award a finished job.
         if (isJobPayment(session)) {
           // Link lapsed → acceptance void, job back to the price list (§27).
           const admin = createServiceRoleClient();

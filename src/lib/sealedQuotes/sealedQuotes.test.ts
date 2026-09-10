@@ -1,9 +1,80 @@
 import { describe, expect, it } from 'vitest';
-import { computeClientPricePence, formatGBP, formatRate, poundsInputToPence } from './money';
+import {
+  cancellationSplit,
+  computeClientPricePence,
+  depositSplitPence,
+  formatGBP,
+  formatRate,
+  poundsInputToPence,
+} from './money';
 import { generateToken, isTokenFormat, tokensEqual } from './tokens';
 import { haversineMiles } from './geo';
 import { sortClientQuotes, isNewContractor, type SortableQuote } from './quoteSort';
 import { isOverdue } from './opsThresholds';
+
+describe('depositSplitPence — terms 7.2 deposit and balance', () => {
+  // The property that matters more than any single figure: a customer must
+  // never be charged a penny more or less than the price they accepted.
+  it('always sums back to the total, at every rate and price', () => {
+    for (const total of [1, 99, 999, 10000, 12345, 44000, 250000]) {
+      for (const rate of [0, 0.15, 0.5, 1]) {
+        const { deposit, balance } = depositSplitPence(total, rate);
+        expect(deposit + balance).toBe(total);
+        expect(deposit).toBeGreaterThanOrEqual(0);
+        expect(balance).toBeGreaterThanOrEqual(0);
+      }
+    }
+  });
+
+  it('takes 15% by default', () => {
+    expect(depositSplitPence(10000)).toEqual({ deposit: 1500, balance: 8500 });
+    expect(depositSplitPence(44000)).toEqual({ deposit: 6600, balance: 37400 });
+  });
+
+  // The rollout flag. At 1.0 there is no balance at all, so no balance row is
+  // opened and no off-session charge is ever attempted — the old behaviour.
+  it('rate 1.0 leaves no balance', () => {
+    expect(depositSplitPence(44000, 1)).toEqual({ deposit: 44000, balance: 0 });
+  });
+
+  // Fixture parity with SQL sq_deposit_pence() — verified against the DB in a
+  // rollback transaction; update both together.
+  it('SQL parity fixtures', () => {
+    const fixtures: [number, number, number][] = [
+      [10000, 0.15, 1500],
+      [999, 0.15, 150],
+      [12345, 0.15, 1852],
+      [1, 0.15, 0],
+      [50000, 0.15, 7500],
+    ];
+    for (const [total, rate, deposit] of fixtures) {
+      expect(depositSplitPence(total, rate).deposit).toBe(deposit);
+    }
+  });
+
+  it('rejects negative and non-integer input', () => {
+    expect(() => depositSplitPence(-1)).toThrow();
+    expect(() => depositSplitPence(10.5)).toThrow();
+  });
+});
+
+describe('cancellationSplit — the deposit is the fee', () => {
+  it('keeps 15% of the price and refunds the rest of what was paid', () => {
+    // Normal case: only the deposit has been paid, so nothing comes back.
+    expect(cancellationSplit(10000, 1500)).toEqual({ fee: 1500, refund: 0 });
+  });
+
+  it('never keeps more than was actually handed over', () => {
+    expect(cancellationSplit(10000, 500)).toEqual({ fee: 500, refund: 0 });
+    expect(cancellationSplit(10000, 0)).toEqual({ fee: 0, refund: 0 });
+  });
+
+  // While sq_deposit_rate is still 1.0 the customer has paid everything, and
+  // cancelling must not confiscate it.
+  it('refunds the balance when the whole price was taken up front', () => {
+    expect(cancellationSplit(10000, 10000)).toEqual({ fee: 1500, refund: 8500 });
+  });
+});
 
 describe('computeClientPricePence — §18 markup, ceil to £5', () => {
   it('marks up 10% and rounds UP to the nearest 500p', () => {

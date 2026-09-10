@@ -22,15 +22,15 @@ const STATUS_LABELS: Record<string, string> = {
   scheduled: 'Scheduled',
   in_progress: 'In progress',
   completed_by_contractor: 'Done — awaiting the customer’s confirmation',
-  completed: 'Complete — paid out on release',
+  completed: 'Complete — awaiting the balance and your invoice',
   paid: 'Paid',
 };
 
 /**
  * Won jobs (§25): the full client details, released only on award, plus the
- * one-tap first-contact log. The customer has paid in full — the money is
- * held and released on completion; silence after payment is the biggest
- * reputational risk, hence the 24-hour contact expectation front and centre.
+ * one-tap first-contact log. The customer has paid a deposit and owes the
+ * balance on sign-off; silence after booking is the biggest reputational risk,
+ * hence the 24-hour contact expectation front and centre.
  */
 export default async function WonJobsPage() {
   const supabase = await createClient();
@@ -61,15 +61,16 @@ export default async function WonJobsPage() {
           <div className={a.eyebrow}>The network</div>
           <h1 className={a.title}>Won jobs</h1>
           <p className={a.sub}>
-            Each of these customers accepted your price and has paid in full. The
-            money is held by Emmerdale and released to you when the work&rsquo;s done —
-            contact them and get it arranged as soon as you can.
+            Each of these customers accepted your price and paid a deposit. You&rsquo;re
+            paid your full price once the job is done, they&rsquo;ve confirmed it, the
+            balance has cleared and your invoice is in — contact them and get it
+            arranged as soon as you can.
           </p>
 
           {jobs.length === 0 ? (
             <div className={s.empty}>
-              Nothing yet. When a customer accepts your price and pays, the job —
-              and their full details — appear here.
+              Nothing yet. When a customer accepts your price and pays their deposit,
+              the job — and their full details — appear here.
             </div>
           ) : (
             <div className={s.list}>

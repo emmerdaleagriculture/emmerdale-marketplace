@@ -115,9 +115,9 @@ export default async function SignupPage({
                 <div>
                   <strong>We handle the payment</strong>
                   <span>
-                    The customer pays us in full before you start, so the money is there
-                    from day one. It’s released to you once the job’s done and confirmed —
-                    no invoicing, no chasing.
+                    The customer pays us a deposit to book you and the balance when the
+                    job’s done and they’ve confirmed it. You’re paid your full price once
+                    that clears — you never chase the customer for money.
                   </span>
                 </div>
               </li>
