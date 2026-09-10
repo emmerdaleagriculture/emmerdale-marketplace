@@ -11,12 +11,13 @@ export const SITE_STRAPLINE = 'The contractor network';
 // Footer strapline, in the HPM register ("Paddocks, put right.").
 export const SITE_FOOTER_STRAPLINE = 'Work, passed on properly.';
 
-// Emmerdale Agriculture Group Ltd — the spin-off company this project belongs
-// to. NOT Emmerdale Agriculture Ltd (14950816), which is a different,
-// pre-existing company. The number is null until incorporation completes; set
-// it here and every "Company No." line on the site picks it up.
-export const COMPANY_LEGAL_NAME = 'Emmerdale Agriculture Group Ltd';
-export const COMPANY_NUMBER: string | null = null;
+// Emmerdale Agriculture Online Ltd — the company this project belongs to,
+// confirmed by Tom 2026-09-10 (it was drafted here as "Group Ltd", number
+// pending, before incorporation). NOT Emmerdale Agriculture Ltd (14950816),
+// which is a different, pre-existing company. Every "Company No." line on the
+// site, the legal pages and the structured data read these two constants.
+export const COMPANY_LEGAL_NAME = 'Emmerdale Agriculture Online Ltd';
+export const COMPANY_NUMBER: string | null = '17435453';
 
 /** "Emmerdale Agriculture Group Ltd · Company No. 12345678" (number omitted while pending). */
 export const COMPANY_REG_LINE = COMPANY_NUMBER
