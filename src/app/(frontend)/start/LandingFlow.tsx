@@ -275,10 +275,6 @@ export function LandingFlow() {
           where it&rsquo;s up to.
         </li>
         <li>We&rsquo;re on the end of the phone if you need us.</li>
-        <li>
-          We hold your payment and only release it once you and the contractor have
-          both signed the job off.
-        </li>
       </ul>
 
       <input type="hidden" name="form_ts" value={formTs} />
