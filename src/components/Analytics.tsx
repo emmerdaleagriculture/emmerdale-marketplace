@@ -24,6 +24,10 @@ import { isSensitivePath, redactPath } from '@/lib/analyticsPaths';
  */
 
 const GA_ID = 'G-869MBRK9FD';
+// Google Ads. One gtag.js serves both tags — the loader is fetched with the
+// GA id and each destination is configured in turn — so the Ads tag needs no
+// second script, and conversions it reports share the redaction above.
+const ADS_ID = 'AW-18445155008';
 const META_PIXEL_ID = '1714644666891790';
 
 declare global {
@@ -100,6 +104,7 @@ export function Analytics() {
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', '${GA_ID}');
+          gtag('config', '${ADS_ID}');
         `}
       </Script>
       <Script id="meta-pixel" strategy="lazyOnload">
