@@ -12,8 +12,10 @@ export default function robots(): MetadataRoute.Robots {
       // /start is the paid-ads landing page: noindex by design (spec §1).
       // /quote and /my are token-addressed sealed-quote pages; /invitations
       // and /won are the contractor portal. /app is the mobile app shell's
-      // entry screen: noindex by design, same as /start.
-      disallow: ['/admin', '/account', '/onboarding', '/jobs', '/api/', '/auth/', '/reset-password', '/start', '/quote', '/my', '/invitations', '/won', '/app'],
+      // entry screen: noindex by design, same as /start. Robots rules are
+      // prefix matches, so a bare '/app' would also block /apple-icon.png —
+      // anchored to the route itself and anything under it instead.
+      disallow: ['/admin', '/account', '/onboarding', '/jobs', '/api/', '/auth/', '/reset-password', '/start', '/quote', '/my', '/invitations', '/won', '/app$', '/app/'],
     },
     sitemap: `${SITE}/sitemap.xml`,
   };
