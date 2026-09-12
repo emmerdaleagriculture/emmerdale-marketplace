@@ -11,8 +11,9 @@ export default function robots(): MetadataRoute.Robots {
       // Auth-gated or utility routes — nothing indexable behind these.
       // /start is the paid-ads landing page: noindex by design (spec §1).
       // /quote and /my are token-addressed sealed-quote pages; /invitations
-      // and /won are the contractor portal.
-      disallow: ['/admin', '/account', '/onboarding', '/jobs', '/api/', '/auth/', '/reset-password', '/start', '/quote', '/my', '/invitations', '/won'],
+      // and /won are the contractor portal. /app is the mobile app shell's
+      // entry screen: noindex by design, same as /start.
+      disallow: ['/admin', '/account', '/onboarding', '/jobs', '/api/', '/auth/', '/reset-password', '/start', '/quote', '/my', '/invitations', '/won', '/app'],
     },
     sitemap: `${SITE}/sitemap.xml`,
   };
