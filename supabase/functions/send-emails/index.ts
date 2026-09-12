@@ -301,12 +301,13 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       };
     case 'sq_no_quotes_closed':
       return {
-        subject: `About your ${p.service ?? ''} job`,
+        subject: `About your ${p.service ? `${p.service} ` : ''}job`,
         text:
-          `Hi ${first},\n\nWe put your job to ${p.invited ?? 'several'} contractor` +
-          `${Number(p.invited) === 1 ? '' : 's'} in ${p.county ?? 'your area'}, but none ` +
-          `priced it within the week, so it has now closed. That’s usually timing or ` +
-          `distance, not your job.\n\nYou’re welcome to post it again: ${SITE_URL}/start`,
+          `Hi ${first},\n\nWe’re sorry — we don’t have contractors in ${p.county ?? 'your area'} ` +
+          `who can carry out ${p.service ? `this ${p.service} work` : 'this work'} at the ` +
+          `moment, so after 7 days without a price your job has now closed.\n\n` +
+          `We’re adding contractors every day, so please check back for future work: ` +
+          `${SITE_URL}/start`,
       };
     case 'sq_rating_request':
       return {
