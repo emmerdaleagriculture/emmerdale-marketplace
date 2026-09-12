@@ -31,6 +31,238 @@
   margin-bottom: 24px;
 }
 
+/* ── Dashboard ─────────────────────────────────────────────────────────── */
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  font-size: 14px;
+  color: var(--ink-2);
+  margin-bottom: 24px;
+}
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.email {
+  color: var(--ink-3);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+/* Four numbers: two across on a phone, four on a desk. Each is a link. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+@media (min-width: 640px) {
+  .tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--white);
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+.tile:hover {
+  border-color: var(--jd-green);
+}
+.tileValue {
+  font-family: var(--font-display-stack);
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--jd-green-deep);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.tileLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.tileHint {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* "Needs you now": whole rows are the tap target. */
+.actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--jd-green);
+  border-radius: 8px;
+  background: var(--white);
+  color: inherit;
+  text-decoration: none;
+}
+.action:hover {
+  border-color: var(--jd-green);
+}
+.actionUrgent {
+  border-left-color: #c63b1f;
+  background: #fffaf8;
+}
+.actionText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.actionTitle {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--jd-green-deep);
+  overflow-wrap: anywhere;
+}
+.actionDetail {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+.actionCta {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--jd-green);
+  white-space: nowrap;
+}
+.actionUrgent .actionCta {
+  color: #a02a2a;
+}
+@media (max-width: 420px) {
+  .action {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .actionCta {
+    align-self: flex-end;
+  }
+}
+
+.caughtUp {
+  padding: 16px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--cream);
+  color: var(--ink-2);
+  font-size: 15px;
+}
+.more {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jd-green);
+}
+.quickLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+.quickLinks a {
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 6px 0;
+}
+.coverage {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.55;
+  margin: 0 0 14px;
+}
+
+/* Settings sections: closed by default so the page stays short. */
+.section {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--white);
+  margin-bottom: 10px;
+}
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  font-size: 15px;
+}
+.sectionHead::-webkit-details-marker {
+  display: none;
+}
+.sectionHead::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  margin-left: 4px;
+  border-right: 2px solid var(--ink-3);
+  border-bottom: 2px solid var(--ink-3);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+.section[open] > .sectionHead::after {
+  transform: rotate(-135deg);
+}
+.sectionMeta {
+  margin-left: auto;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--ink-3);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.sectionBody {
+  padding: 4px 16px 16px;
+  border-top: 1px solid var(--rule);
+}
+.sectionBody > :first-child {
+  margin-top: 12px;
+}
+.formFoot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 /* Subscription card */
 .subCard {
   border: 1px solid var(--rule);

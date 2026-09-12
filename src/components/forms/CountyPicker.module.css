@@ -1,0 +1,41 @@
+/* Collapsible regions (account settings). Onboarding keeps the open list. */
+.regionDetails > summary {
+  cursor: pointer;
+  list-style: none;
+  min-height: 48px;
+}
+.regionDetails > summary::-webkit-details-marker {
+  display: none;
+}
+.regionDetails > summary::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--ink-3);
+  border-bottom: 2px solid var(--ink-3);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+.regionDetails[open] > summary::after {
+  transform: rotate(-135deg);
+}
+.regionDetails:not([open]) > summary {
+  border-bottom: none;
+}
+.regionCount {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.regionCountOn {
+  color: var(--jd-green-dark);
+  font-weight: 600;
+}
+.regionTools {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 14px 0;
+}
+.regionTools button {
+  min-height: 36px;
+}

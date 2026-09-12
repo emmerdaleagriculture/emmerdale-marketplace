@@ -55,12 +55,13 @@ export function SiteNav() {
 
   const links = signedIn ? (
     <>
+      {/* Work first. The old open-access /jobs board has no open jobs left —
+          everything now arrives as an invitation — so it is no longer linked. */}
+      <Link href="/account" onClick={close}>Dashboard</Link>
+      <Link href="/invitations" onClick={close}>Jobs to price</Link>
+      <Link href="/won" onClick={close}>Won jobs</Link>
       <Link href="/paddock-maintenance" onClick={close}>Paddock maintenance</Link>
       <Link href="/notes" onClick={close}>Notes</Link>
-      <Link href="/jobs" onClick={close}>Jobs</Link>
-      <Link href="/invitations" onClick={close}>Invitations</Link>
-      <Link href="/won" onClick={close}>Won jobs</Link>
-      <Link href="/account" onClick={close}>Account</Link>
       <form action="/auth/signout" method="post">
         <button type="submit" className={styles.linkButton}>Log out</button>
       </form>

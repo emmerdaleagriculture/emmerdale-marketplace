@@ -8,6 +8,12 @@ import { formatDateTime, timeLeft } from '@/lib/time';
 import a from '../auth.module.css';
 import s from './invitations.module.css';
 
+/** Unclassified jobs carry the customer's own words as the title — keep a card a card. */
+function clip(text: string, n: number) {
+  const t = text.trim().replace(/\s+/g, ' ');
+  return t.length > n ? `${t.slice(0, n - 1)}…` : t;
+}
+
 export const metadata: Metadata = {
   title: 'Invitations',
   robots: { index: false, follow: false },
@@ -77,7 +83,7 @@ export default async function InvitationsPage() {
                       className={s.card}
                     >
                       <div className={s.cardHead}>
-                        <span className={s.service}>{inv.service ?? 'Land work'}</span>
+                        <span className={s.service}>{clip(inv.service ?? 'Land work', 70)}</span>
                         {inv.status === 'priced' ? (
                           <span className={s.pillPriced}>Priced</span>
                         ) : (
@@ -111,7 +117,7 @@ export default async function InvitationsPage() {
                   <div className={s.historyList}>
                     {history.map((inv) => (
                       <div key={inv.id} className={s.historyRow}>
-                        <span>{inv.service ?? 'Land work'}</span>
+                        <span>{clip(inv.service ?? 'Land work', 50)}</span>
                         <span className={s.meta}>
                           {[inv.postcode_district, inv.county].filter(Boolean).join(', ')}
                         </span>
