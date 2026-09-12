@@ -4,7 +4,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { PostJobForm } from './PostJobForm';
 import { createClient } from '@/lib/supabase/server';
-import { isAdminEmail } from '@/lib/auth';
+import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { getCounties, getServices } from '@/lib/reference';
 import a from '../../auth.module.css';
 import j from '../jobs.module.css';
@@ -29,7 +29,7 @@ export default async function PostJobPage() {
     .select('status, contact_name, phone, email')
     .eq('id', user.id)
     .maybeSingle();
-  if (!contractor) redirect('/onboarding');
+  if (!contractor) redirect(await nonContractorPath(user.id));
 
   const [services, counties] = await Promise.all([getServices(), getCounties()]);
 

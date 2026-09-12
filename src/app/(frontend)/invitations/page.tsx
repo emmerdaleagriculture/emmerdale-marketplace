@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { nonContractorPath } from '@/lib/auth';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { formatDateTime, timeLeft } from '@/lib/time';
@@ -36,7 +37,7 @@ export default async function InvitationsPage() {
     .select('status')
     .eq('id', user.id)
     .maybeSingle();
-  if (!contractor) redirect('/onboarding');
+  if (!contractor) redirect(await nonContractorPath(user.id));
 
   const { data } = await supabase
     .from('my_sq_invitations')

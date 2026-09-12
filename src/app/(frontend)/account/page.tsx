@@ -5,7 +5,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
 import { createClient } from '@/lib/supabase/server';
-import { isAdminEmail } from '@/lib/auth';
+import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { getCounties, getServices } from '@/lib/reference';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { timeAgo, timeLeft } from '@/lib/time';
@@ -69,8 +69,8 @@ export default async function AccountPage() {
   // Admins aren't contractors — without this, an admin with no contractor
   // profile ping-pongs between /account and /onboarding forever.
   if (!contractor && isAdminEmail(user.email)) redirect('/admin');
-  // A confirmed contractor who hasn't completed onboarding has no profile yet.
-  if (!contractor) redirect('/onboarding');
+  // No profile: a customer (→ their jobs) or a contractor mid-onboarding.
+  if (!contractor) redirect(await nonContractorPath(user.id));
 
   const [counties, services, ccRows, invQ, wonQ, quoteQ] = await Promise.all([
     getCounties(),

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { nonContractorPath } from '@/lib/auth';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { formatGBP } from '@/lib/sealedQuotes/money';
@@ -44,7 +45,7 @@ export default async function WonJobsPage() {
     .select('status')
     .eq('id', user.id)
     .maybeSingle();
-  if (!contractor) redirect('/onboarding');
+  if (!contractor) redirect(await nonContractorPath(user.id));
 
   const { data } = await supabase
     .from('my_sq_won_jobs')

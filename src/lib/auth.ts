@@ -54,6 +54,27 @@ export async function getContractor(): Promise<Contractor | null> {
   return data ?? null;
 }
 
+/**
+ * Where a signed-in user without a contractor profile belongs when they open a
+ * contractor page. Contractor pages used to send every such user to
+ * /onboarding — for a customer, an application form for somebody else's job.
+ * Customers go to their own jobs; anyone else (a contractor mid-signup) to
+ * onboarding, as before.
+ */
+export async function nonContractorPath(userId: string): Promise<string> {
+  try {
+    const { data } = await createServiceRoleClient()
+      .from('customers')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+    return data ? '/my' : '/onboarding';
+  } catch (err) {
+    console.error('[auth] customer lookup failed:', err);
+    return '/onboarding';
+  }
+}
+
 /** What the login form's side chooser asked for, when it was asked. */
 export type LoginSide = 'customer' | 'contractor' | null;
 

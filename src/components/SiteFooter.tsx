@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import styles from './SiteFooter.module.css';
+import { FooterAccountLinks } from './FooterAccountLinks';
 import {
   SITE_FOOTER_STRAPLINE,
   COMPANY_LEGAL_NAME,
@@ -37,8 +38,7 @@ export function SiteFooter() {
             <div className={styles.colTitle}>The network</div>
             <Link href="/#how-it-works">How it works</Link>
             <Link href="/notes">Notes from the field</Link>
-            <Link href="/signup">Join as a contractor</Link>
-            <Link href="/login">Log in</Link>
+            <FooterAccountLinks />
           </nav>
 
           <nav className={styles.linkCol} aria-label="Services">

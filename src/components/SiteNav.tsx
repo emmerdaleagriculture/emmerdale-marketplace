@@ -5,74 +5,68 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './SiteHeader.module.css';
 import { SocialLinks } from './SocialLinks';
+import { useViewer } from './useViewer';
 
 /**
  * The header's links, and the menu they collapse into.
  *
- * A signed-in contractor gets eight items — Paddock maintenance, Notes, Jobs,
- * Invitations, Won jobs, Account, Log out — in a row that did not wrap or
- * scroll. On a phone the last of them simply ran off the right edge: "Log out"
- * was unreachable, and "Won jobs" sat under the thumb of a two-line
- * "Paddock maintenance". Hiding one link at 620px was never going to be
- * enough for a list this long, so below 820px the whole thing becomes a menu.
+ * A signed-in contractor's list ran off the right edge of a phone, so below
+ * 820px the whole thing becomes a menu.
  *
- * Auth still resolves in the browser, so pages carrying this header stay
- * statically cacheable: the logged-out links render first and swap on
- * hydration.
+ * The links depend on who is signed in, not just whether someone is:
+ * contractors get their work (dashboard, jobs to price, won jobs), customers
+ * get their jobs and a way to book another — a customer shown "Won jobs" is
+ * looking at somebody else's business. Someone who is both gets both.
  *
- * The check is gated on a cookie. Importing the Supabase browser client just
- * to ask "is anyone signed in?" cost every page wearing this header ~65 kB of
- * gzipped JavaScript — /terms, /privacy, all 170 county pages — and for the
- * anonymous visitor who is nearly everyone the answer was always no. With no
- * `sb-` cookie there is no session to find, so nothing is loaded; only a
- * browser that actually holds one pays for the client, and only once.
+ * Auth still resolves in the browser (useViewer), so pages carrying this
+ * header stay statically cacheable: the logged-out links render first and swap
+ * on hydration, and a visitor with no session cookie loads nothing.
  */
 export function SiteNav() {
-  const [signedIn, setSignedIn] = useState(false);
+  const viewer = useViewer();
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    // @supabase/ssr writes its session cookies readable by the page, so their
-    // absence is a reliable "nobody here" without a round trip or a download.
-    if (!/(^|;\s*)sb-[^=]+=/.test(document.cookie)) return;
-    let cancelled = false;
-    import('@/lib/supabase/client')
-      .then(({ createClient }) => createClient().auth.getUser())
-      .then(({ data }) => {
-        if (!cancelled) setSignedIn(!!data.user);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // A menu left open across a navigation covers the page you asked for.
   useEffect(() => setOpen(false), [pathname]);
 
   const close = () => setOpen(false);
 
-  const links = signedIn ? (
-    <>
-      {/* Work first. The old open-access /jobs board has no open jobs left —
-          everything now arrives as an invitation — so it is no longer linked. */}
-      <Link href="/account" onClick={close}>Dashboard</Link>
-      <Link href="/invitations" onClick={close}>Jobs to price</Link>
-      <Link href="/won" onClick={close}>Won jobs</Link>
-      <Link href="/paddock-maintenance" onClick={close}>Paddock maintenance</Link>
-      <Link href="/notes" onClick={close}>Notes</Link>
-      <form action="/auth/signout" method="post">
-        <button type="submit" className={styles.linkButton}>Log out</button>
-      </form>
-    </>
-  ) : (
+  const logOut = (
+    <form action="/auth/signout" method="post">
+      <button type="submit" className={styles.linkButton}>Log out</button>
+    </form>
+  );
+
+  const role = viewer.signedIn ? viewer.role : null;
+  const isContractor = role === 'contractor' || role === 'both';
+  const isCustomer = role === 'customer' || role === 'both';
+
+  const links = !viewer.signedIn ? (
     <>
       <Link href="/#how-it-works" onClick={close}>How it works</Link>
       <Link href="/paddock-maintenance" onClick={close}>Paddock maintenance</Link>
       <Link href="/notes" onClick={close}>Notes</Link>
       <Link href="/login" onClick={close}>Log in</Link>
       <Link href="/signup" className={styles.cta} onClick={close}>Join the network</Link>
+    </>
+  ) : (
+    <>
+      {isContractor && (
+        <>
+          <Link href="/account" onClick={close}>Dashboard</Link>
+          <Link href="/invitations" onClick={close}>Jobs to price</Link>
+          <Link href="/won" onClick={close}>Won jobs</Link>
+        </>
+      )}
+      {isCustomer && <Link href="/my" onClick={close}>My jobs</Link>}
+      {role === 'customer' && <Link href="/start" onClick={close}>Get a quote</Link>}
+      {/* Signed in with neither profile: an admin, or a contractor part-way
+          through signing up — /account routes both to the right place. */}
+      {role === 'account' && <Link href="/account" onClick={close}>Account</Link>}
+      <Link href="/paddock-maintenance" onClick={close}>Paddock maintenance</Link>
+      <Link href="/notes" onClick={close}>Notes</Link>
+      {logOut}
     </>
   );
 

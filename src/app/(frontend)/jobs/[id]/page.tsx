@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { createClient } from '@/lib/supabase/server';
+import { nonContractorPath } from '@/lib/auth';
 import { getServices } from '@/lib/reference';
 import a from '../../auth.module.css';
 import j from '../jobs.module.css';
@@ -24,7 +25,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
     .select('status')
     .eq('id', user.id)
     .maybeSingle();
-  if (!contractor) redirect('/onboarding');
+  if (!contractor) redirect(await nonContractorPath(user.id));
   if (contractor.status !== 'approved') redirect('/jobs');
 
   // A live job in our counties (public view) and/or one we've already opened.

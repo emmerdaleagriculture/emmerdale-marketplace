@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { createClient } from '@/lib/supabase/server';
+import { nonContractorPath } from '@/lib/auth';
 import { getServices } from '@/lib/reference';
 import { timeAgo } from '@/lib/time';
 import a from '../auth.module.css';
@@ -30,7 +31,7 @@ export default async function JobsBoardPage() {
     .select('status, business_name')
     .eq('id', user.id)
     .maybeSingle();
-  if (!contractor) redirect('/onboarding');
+  if (!contractor) redirect(await nonContractorPath(user.id));
 
   const services = await getServices();
   const serviceName = new Map(services.map((s) => [s.id, s.name]));
