@@ -184,9 +184,16 @@
 .statWarn dd {
   color: #a02a2a;
 }
+/* On a phone: three on the first row, two sharing the second — no empty cell. */
 @media (max-width: 520px) {
   .stats {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .stat {
+    grid-column: span 2;
+  }
+  .stat:nth-child(n + 4) {
+    grid-column: span 3;
   }
 }
 

@@ -23,7 +23,7 @@ export type JobSpec = {
   photos?: JobSpecPhoto[];
 };
 
-const URGENCY_LABELS: Record<string, string> = {
+export const URGENCY_LABELS: Record<string, string> = {
   asap: 'As soon as possible',
   within_month: 'Within the month',
   flexible: 'Flexible',

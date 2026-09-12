@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { formatDateTime, timeAgo, timeLeft } from '@/lib/time';
+import { formatDate, formatDateTime, timeAgo, timeLeft } from '@/lib/time';
 import { formatGBP } from '@/lib/sealedQuotes/money';
+import { URGENCY_LABELS } from '@/components/job/JobSpecCard';
 import s from '../admin.module.css';
 import p from './submissions.module.css';
 
@@ -132,7 +133,11 @@ function Card({ r }: { r: Row }) {
     r.county,
     r.postcode,
     areaLabel(r),
-    r.urgency ? `${r.urgency}${r.target_date ? ` · by ${r.target_date}` : ''}` : null,
+    r.urgency
+      ? r.urgency === 'dated' && r.target_date
+        ? `By ${formatDate(r.target_date)}`
+        : (URGENCY_LABELS[r.urgency] ?? r.urgency)
+      : null,
     r.photos ? `${r.photos} photo${r.photos === 1 ? '' : 's'}` : null,
     r.utm_source ? `via ${r.utm_source}` : null,
   ].filter(Boolean) as string[];
