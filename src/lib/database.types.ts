@@ -1891,7 +1891,10 @@ export type Database = {
     Functions: {
       admin_dashboard: { Args: never; Returns: Json }
       admin_metrics: { Args: never; Returns: Json }
-      admin_submission_board: { Args: { p_limit?: number }; Returns: Json }
+      admin_submission_board: {
+        Args: { p_limit?: number; p_statuses?: string[] }
+        Returns: Json
+      }
       app_config_num: {
         Args: { p_default: number; p_key: string }
         Returns: number

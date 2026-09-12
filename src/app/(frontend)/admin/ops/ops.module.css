@@ -15,16 +15,177 @@
   border-radius: 4px;
 }
 
-.overdueRow {
-  background: #fdf0ee;
+/* Stage chips: the pipeline in one line, each a jump to its lane. */
+.lanes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 4px;
+}
+.lane {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink-2);
+  font-size: 13px;
+  text-decoration: none;
+}
+.lane b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.laneEmpty {
+  opacity: 0.5;
 }
 
-.overduePill {
-  margin-left: 8px;
+/* One row per job. Two columns on a desk (detail | clock), stacked on a phone. */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 20px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rule);
+  border-left: 3px solid transparent;
+}
+.row:last-child {
+  border-bottom: none;
+}
+.rowLate {
+  border-left-color: #a02a2a;
+  background: #fdf5f4;
+}
+.main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.top {
+  display: flex;
+  align-items: baseline;
+  gap: 4px 10px;
+  flex-wrap: wrap;
+}
+.title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--jd-green-dark);
+  overflow-wrap: anywhere;
+}
+.meta {
+  font-size: 13px;
+  color: var(--ink-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  overflow-wrap: anywhere;
+}
+.meta a {
+  color: var(--jd-green);
+}
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.fact {
+  font-size: 12px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.fact a {
+  color: var(--jd-green);
+}
+.factWarn {
+  background: #fdecea;
+  border-color: #f3c9c2;
+  color: #7a1c0e;
+}
+.factGood {
+  background: var(--jd-green-pale);
+  border-color: #cfe0c7;
+  color: var(--jd-green-dark);
+}
+.next {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.nextLate {
+  font-size: 13px;
+  color: #a02a2a;
+  font-weight: 600;
+}
+
+.state {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
   font-size: 10px;
   letter-spacing: 0.06em;
-  padding: 2px 7px;
-  border-radius: 9px;
-  background: var(--error);
-  color: var(--white);
+  text-transform: uppercase;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.open { background: #fff9e0; color: #5c4d00; }
+.good { background: var(--jd-green-pale); color: var(--jd-green-dark); }
+.bad { background: #fdecea; color: #7a1c0e; }
+
+.side {
+  text-align: right;
+  white-space: nowrap;
+}
+.clock {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.rowLate .clock {
+  color: #a02a2a;
+}
+.clockLabel {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* On a phone the zeros are noise: show only counters and stages with jobs. */
+@media (max-width: 560px) {
+  .zero {
+    display: none;
+  }
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px 14px;
+  }
+  .side {
+    text-align: left;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-top: 1px dashed var(--rule);
+    padding-top: 6px;
+  }
+  .clock {
+    font-size: 15px;
+  }
 }
