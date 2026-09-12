@@ -129,17 +129,29 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `You’re approved — welcome to the network`,
         text:
           `Your application has been approved. You’ll now be emailed when a job is ` +
-          `posted in one of your counties.\n\n` +
-          `Sign in to see the job board: ${SITE_URL}/jobs`,
+          `posted in one of your counties — and any jobs already open there are on ` +
+          `their way to you now.\n\n` +
+          `Sign in to see your jobs: ${SITE_URL}/invitations`,
       };
 
     // ── Sealed-quote funnel: contractor-facing ────────────────────────────
     case 'sq_invitation': {
       const dist = p.distance_miles != null ? ` (${p.distance_miles} miles from your base)` : '';
+      // late_join: invited to a job already out when they were approved or
+      // added the county, so its 7 days are part-spent — give the real close.
+      const closes = p.expires_at
+        ? new Date(String(p.expires_at)).toLocaleDateString('en-GB', {
+            weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/London',
+          })
+        : null;
+      const deadline = p.late_join && closes ? `Pricing closes ${closes}` : 'Price it within 7 days';
       return {
         subject: `Job to price: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
         text:
-          `A job in your area needs pricing.\n\n` +
+          (p.late_join
+            ? `A job in your area is still open for pricing — it went out before you joined ` +
+              `this county, so you’re seeing it now.\n\n`
+            : `A job in your area needs pricing.\n\n`) +
           `In their words: “${p.description ?? '—'}”\n\n` +
           (p.service ? `Work:      ${p.service}\n` : '') +
           `Area:      ${areaLine(p)}\n` +
@@ -149,7 +161,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           (p.access_notes ? `Notes:     ${p.access_notes}\n` : '') +
           (p.obstacles ? `Obstacles: ${p.obstacles}\n` : '') +
           `\nFirst come, first served: the customer sees prices as they arrive and can ` +
-          `accept at any moment. Price it within 7 days — but the sooner you price, ` +
+          `accept at any moment. ${deadline} — but the sooner you price, ` +
           `the better your chances.\n\n` +
           `Price it or pass (one tap): ${SITE_URL}/quote/${p.token}\n\n` +
           `Photos, a satellite view of the drawn boundary and the full spec are on that page.`,

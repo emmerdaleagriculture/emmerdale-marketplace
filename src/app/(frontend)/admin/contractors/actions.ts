@@ -19,6 +19,10 @@ async function assertAdmin() {
  * (spec §8); reinstating a suspended contractor does not, since they have had
  * it. Every distribution path filters on status = 'approved', so suspension
  * stops the emails and the job list without touching their history.
+ *
+ * Approval also vets (contractors_stamp_vetted) and invites them to every job
+ * still open in their counties (contractors_invite_on_eligible), in the same
+ * update — see 20260912170000_invite_new_contractors_to_open_jobs.sql.
  */
 export async function setContractorStatus(formData: FormData) {
   await assertAdmin();
