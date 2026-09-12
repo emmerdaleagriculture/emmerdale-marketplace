@@ -5,8 +5,9 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/time';
-import { CancelRepeat, RepeatSetup } from './RepeatControls';
+import { CancelRepeat, RepeatSetup, SwitchRepeatMode } from './RepeatControls';
 import { startReorderAction } from './actions';
+import { ContactUsButton } from '@/components/ContactUsButton';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
@@ -40,6 +41,9 @@ const STATUS_LABEL: Record<string, string> = {
 /**
  * The customer's account: every job they've had, and the two things they'd
  * want from a second one — order it again, or have it go out on its own.
+ * Either way they choose who gets it: the contractor who did it last time
+ * (asked first, others after 48 hours if they can't), or fresh prices from
+ * everyone who covers the area.
  *
  * A job arrives here by being claimed from its own link, never by matching an
  * email address; see the migration for why. Someone with no claimed job has no
@@ -56,7 +60,7 @@ export default async function MyJobsPage() {
   const [jobsQ, schedulesQ] = await Promise.all([
     admin
       .from('job_submissions')
-      .select('id, status, created_at, postcode, service_verbatim, raw_text, client_token, service:services(name), county:counties(name)')
+      .select('id, status, created_at, postcode, service_verbatim, raw_text, client_token, awarded_contractor_id, service:services(name), county:counties(name)')
       .eq('customer_id', user.id)
       // A repeat the customer started and backed out of is a draft they never
       // sent. It is not one of their jobs and has nothing to show.
@@ -65,7 +69,7 @@ export default async function MyJobsPage() {
       .limit(100),
     admin
       .from('job_schedules')
-      .select('id, source_submission_id, interval_months, next_run_at, runs, active')
+      .select('id, source_submission_id, interval_months, next_run_at, runs, active, contractor_mode, contractor_id')
       .eq('customer_id', user.id)
       .eq('active', true),
   ]);
@@ -73,6 +77,20 @@ export default async function MyJobsPage() {
   const jobs = jobsQ.data ?? [];
   const schedules = schedulesQ.data ?? [];
   const scheduleFor = new Map(schedules.map((s) => [s.source_submission_id, s]));
+
+  // Contractors are named to the customer once they've done the work for
+  // them — the name is how they choose "the same one again".
+  const contractorIds = [
+    ...new Set(
+      [...jobs.map((j) => j.awarded_contractor_id), ...schedules.map((s) => s.contractor_id)].filter(
+        (id): id is string => Boolean(id),
+      ),
+    ),
+  ];
+  const { data: contractors } = contractorIds.length
+    ? await admin.from('contractors').select('id, business_name').in('id', contractorIds)
+    : { data: [] as { id: string; business_name: string }[] };
+  const nameOf = new Map((contractors ?? []).map((c) => [c.id, c.business_name]));
 
   return (
     <div className={a.wrap}>
@@ -92,8 +110,8 @@ export default async function MyJobsPage() {
             <>
               <p className={a.sub}>
                 Everything you&rsquo;ve had done, and everything on its way. A job you&rsquo;ve
-                had before can go out again in a couple of taps — or on its own, as often
-                as you need it.
+                had before can go out again in a couple of taps — to the same contractor or
+                for fresh prices — or on its own, as often as you need it.
               </p>
 
               <div style={{ display: 'grid', gap: 18 }}>
@@ -102,6 +120,9 @@ export default async function MyJobsPage() {
                   const service = (j.service as { name: string } | null)?.name;
                   const county = (j.county as { name: string } | null)?.name;
                   const repeat = scheduleFor.get(j.id);
+                  const contractorName = j.awarded_contractor_id ? nameOf.get(j.awarded_contractor_id) ?? null : null;
+                  const repeatContractor = repeat?.contractor_id ? nameOf.get(repeat.contractor_id) ?? null : null;
+                  const repeatMode = repeat?.contractor_mode === 'same' ? 'same' : 'market';
                   return (
                     <div key={j.id} className={a.card}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
@@ -111,6 +132,7 @@ export default async function MyJobsPage() {
                       <p className={a.sub} style={{ margin: '6px 0 14px' }}>
                         {[j.postcode, county].filter(Boolean).join(', ') || 'Location not set'} ·{' '}
                         {formatDateTime(j.created_at)}
+                        {contractorName && ` · done by ${contractorName}`}
                         {j.client_token && (
                           <>
                             {' · '}
@@ -121,23 +143,62 @@ export default async function MyJobsPage() {
 
                       {DONE.has(j.status) && (
                         <div style={{ display: 'grid', gap: 12 }}>
-                          <form action={startReorderAction}>
-                            <input type="hidden" name="submission_id" value={j.id} />
-                            <button className={f.btnPrimary} type="submit">
-                              Order it again
-                            </button>
-                          </form>
+                          {contractorName ? (
+                            <>
+                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                <form action={startReorderAction}>
+                                  <input type="hidden" name="submission_id" value={j.id} />
+                                  <input type="hidden" name="mode" value="same" />
+                                  <button className={f.btnPrimary} type="submit">
+                                    Book {contractorName} again
+                                  </button>
+                                </form>
+                                <form action={startReorderAction}>
+                                  <input type="hidden" name="submission_id" value={j.id} />
+                                  <input type="hidden" name="mode" value="market" />
+                                  <button className={f.btnGhost} type="submit">
+                                    Get fresh prices
+                                  </button>
+                                </form>
+                              </div>
+                              <p className={f.hint} style={{ margin: 0 }}>
+                                Booking again asks {contractorName} first — if they can&rsquo;t
+                                price it within 48 hours, it goes to other contractors. Fresh
+                                prices sends it to every contractor who covers{' '}
+                                {county ?? 'your area'}.
+                              </p>
+                            </>
+                          ) : (
+                            <form action={startReorderAction}>
+                              <input type="hidden" name="submission_id" value={j.id} />
+                              <input type="hidden" name="mode" value="market" />
+                              <button className={f.btnPrimary} type="submit">
+                                Order it again
+                              </button>
+                            </form>
+                          )}
                           {repeat ? (
                             <div style={{ display: 'grid', gap: 6 }}>
                               <span>
                                 Repeating every {repeat.interval_months} months — next one{' '}
                                 {formatDateTime(repeat.next_run_at)}
+                                {' · '}
+                                {repeatMode === 'same' && repeatContractor
+                                  ? `asks ${repeatContractor} first`
+                                  : 'fresh prices each time'}
                                 {repeat.runs > 0 ? ` · sent ${repeat.runs} time${repeat.runs === 1 ? '' : 's'} so far` : ''}
                               </span>
-                              <CancelRepeat scheduleId={repeat.id} />
+                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                <SwitchRepeatMode
+                                  scheduleId={repeat.id}
+                                  mode={repeatMode}
+                                  contractorName={repeatContractor}
+                                />
+                                <CancelRepeat scheduleId={repeat.id} />
+                              </div>
                             </div>
                           ) : (
-                            <RepeatSetup submissionId={j.id} />
+                            <RepeatSetup submissionId={j.id} contractorName={contractorName} />
                           )}
                         </div>
                       )}
@@ -153,6 +214,11 @@ export default async function MyJobsPage() {
               </div>
             </>
           )}
+
+          <ContactUsButton
+            subject="Customer enquiry"
+            body={`\n\n—\nSent from my account (${user.email ?? ''})`}
+          />
         </div>
       </main>
       <SiteFooter />

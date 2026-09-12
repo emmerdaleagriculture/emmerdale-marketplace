@@ -8,6 +8,15 @@ import { claimJobForUser, claimMessage } from '@/lib/customers/claim';
 import type { FormState } from '@/lib/form';
 
 /**
+ * How a repeat finds its contractor. 'same' offers it to whoever did it last
+ * time first (distribute_submission, 48h window); 'market' sends it to every
+ * contractor covering the county. Anything unrecognised is the market.
+ */
+type ContractorMode = 'same' | 'market';
+const modeFrom = (formData: FormData): ContractorMode =>
+  formData.get('mode') === 'same' ? 'same' : 'market';
+
+/**
  * Turn a job link into an account.
  *
  * The token is the proof. Signing up cannot be trusted to prove an email
@@ -39,10 +48,11 @@ export async function claimJobAction(_prev: FormState, formData: FormData): Prom
   return { ok: true, message: claimMessage(outcome.alsoClaimed) };
 }
 
-/** Repeat this job every N months until they stop it. */
+/** Repeat this job every N months until they stop it — with the same contractor or fresh prices. */
 export async function scheduleJobAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const submissionId = String(formData.get('submission_id') ?? '');
   const months = Number(formData.get('interval_months') ?? 0);
+  const mode = modeFrom(formData);
   if (!submissionId || !Number.isInteger(months) || months < 1 || months > 24) {
     return { error: 'Choose how often the job should repeat.' };
   }
@@ -56,9 +66,10 @@ export async function scheduleJobAction(_prev: FormState, formData: FormData): P
   const admin = createServiceRoleClient();
   // Ownership is checked here rather than trusted from the form: the id comes
   // from a page the customer was shown, which is not the same as a right to it.
+  // The contractor comes from the job, never the form.
   const { data: owned } = await admin
     .from('job_submissions')
-    .select('id')
+    .select('id, awarded_contractor_id')
     .eq('id', submissionId)
     .eq('customer_id', user.id)
     .maybeSingle();
@@ -81,11 +92,14 @@ export async function scheduleJobAction(_prev: FormState, formData: FormData): P
   next.setMonth(next.getMonth() + months);
   next.setDate(Math.min(day, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
 
+  const same = mode === 'same' && Boolean(owned.awarded_contractor_id);
   const { error } = await admin.from('job_schedules').insert({
     customer_id: user.id,
     source_submission_id: submissionId,
     interval_months: months,
     next_run_at: next.toISOString(),
+    contractor_mode: same ? 'same' : 'market',
+    contractor_id: owned.awarded_contractor_id,
   });
   if (error) {
     console.error('[customer] schedule insert failed:', error);
@@ -93,7 +107,48 @@ export async function scheduleJobAction(_prev: FormState, formData: FormData): P
   }
 
   revalidatePath('/my');
-  return { ok: true, message: `Set. We’ll send it out again in ${months} months.` };
+  return {
+    ok: true,
+    message: same
+      ? `Set. In ${months} months we’ll ask your contractor first, then others if they can’t do it.`
+      : `Set. In ${months} months we’ll send it out for fresh prices.`,
+  };
+}
+
+/** Switch an existing repeat between the same contractor and fresh prices. */
+export async function switchScheduleModeAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const id = String(formData.get('schedule_id') ?? '');
+  const mode = modeFrom(formData);
+  if (!id) return { error: 'Something went wrong — refresh and try again.' };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Sign in to change this.' };
+
+  let query = createServiceRoleClient()
+    .from('job_schedules')
+    .update({ contractor_mode: mode })
+    .eq('id', id)
+    .eq('customer_id', user.id)
+    .eq('active', true);
+  // "The same contractor" needs one on record.
+  if (mode === 'same') query = query.not('contractor_id', 'is', null);
+  const { data: changed, error } = await query.select('id');
+  if (error) return { error: 'That didn’t go through — please try again.' };
+  if (!changed || changed.length === 0) {
+    return { error: 'That repeat can’t be changed — refresh to see what’s set.' };
+  }
+
+  revalidatePath('/my');
+  return {
+    ok: true,
+    message: mode === 'same' ? 'Done — your contractor will be asked first.' : 'Done — it will go out for fresh prices.',
+  };
 }
 
 /** Stop a repeat. Kept, not deleted, so the history still reads. */
@@ -129,7 +184,8 @@ export async function cancelScheduleAction(
 
 /**
  * Start a repeat: copy a finished job into a fresh draft, then hand the
- * customer to the confirm step.
+ * customer to the confirm step. `mode=same` marks the draft for the contractor
+ * who did the job; confirming then offers it to them first.
  *
  * A POST rather than a link, because it writes. Doing this on the page render
  * meant every refresh of the confirm step minted another abandoned draft, and
@@ -137,6 +193,7 @@ export async function cancelScheduleAction(
  */
 export async function startReorderAction(formData: FormData): Promise<void> {
   const sourceId = String(formData.get('submission_id') ?? '');
+  const mode = modeFrom(formData);
   if (!sourceId) redirect('/my');
 
   const supabase = await createClient();
@@ -158,6 +215,8 @@ export async function startReorderAction(formData: FormData): Promise<void> {
     .from('job_submissions')
     .insert({
       customer_id: user.id,
+      repeat_of: src.id,
+      preferred_contractor_id: mode === 'same' ? src.awarded_contractor_id : null,
       raw_text: src.raw_text,
       location_raw: src.location_raw,
       service_id: src.service_id,
@@ -185,6 +244,51 @@ export async function startReorderAction(formData: FormData): Promise<void> {
     console.error('[reorder] draft insert failed:', error);
     redirect('/my');
   }
+
+  redirect(`/start/again/${draft.id}`);
+}
+
+/**
+ * Change a reorder draft's mind before it is sent: same contractor ↔ fresh
+ * prices. The contractor is always the one who did the job the draft copies.
+ */
+export async function setDraftModeAction(formData: FormData): Promise<void> {
+  const draftId = String(formData.get('draft_id') ?? '');
+  const mode = modeFrom(formData);
+  if (!draftId) redirect('/my');
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect(`/login?next=${encodeURIComponent(`/start/again/${draftId}`)}`);
+
+  const admin = createServiceRoleClient();
+  const { data: draft } = await admin
+    .from('job_submissions')
+    .select('id, repeat_of')
+    .eq('id', draftId)
+    .eq('customer_id', user.id)
+    .eq('status', 'draft')
+    .maybeSingle();
+  if (!draft) redirect('/my');
+
+  let preferred: string | null = null;
+  if (mode === 'same' && draft.repeat_of) {
+    const { data: prev } = await admin
+      .from('job_submissions')
+      .select('awarded_contractor_id')
+      .eq('id', draft.repeat_of)
+      .eq('customer_id', user.id)
+      .maybeSingle();
+    preferred = prev?.awarded_contractor_id ?? null;
+  }
+
+  await admin
+    .from('job_submissions')
+    .update({ preferred_contractor_id: preferred })
+    .eq('id', draft.id)
+    .eq('status', 'draft');
 
   redirect(`/start/again/${draft.id}`);
 }

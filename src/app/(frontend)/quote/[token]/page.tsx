@@ -11,6 +11,7 @@ import { BoundaryPreview } from '@/components/job/BoundaryPreview';
 import type { BoundaryPolygon } from '@/lib/jobParse/geometry';
 import { QuoteForm } from './QuoteForm';
 import { DeclineForm } from './DeclineForm';
+import { ContactUsButton } from '@/components/ContactUsButton';
 import a from '../../auth.module.css';
 import q from './quote.module.css';
 
@@ -46,6 +47,16 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     getLiveQuote(js.id, invitation.contractor_id),
     signPhotos(js.photo_paths),
   ]);
+  // A repeat the customer asked to offer to this contractor first: not first
+  // come, first served — theirs alone until market_opens_at.
+  const { data: offer } = await admin
+    .from('job_submissions')
+    .select('market_opens_at, preferred_contractor_id')
+    .eq('id', js.id)
+    .maybeSingle();
+  const directToYou =
+    Boolean(offer?.market_opens_at) && offer?.preferred_contractor_id === invitation.contractor_id;
+
   const jobOpen =
     ['distributed', 'quotes_receiving', 'accepted_awaiting_payment'].includes(js.status) &&
     !['declined', 'closed_awarded', 'closed_stale'].includes(invitation.status);
@@ -139,13 +150,21 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
           {jobOpen && (
             <>
-              <div className={q.warnPanel}>
-                <strong>First come, first served.</strong> The customer sees prices
-                as they arrive and can accept at any moment — this job can be gone
-                on day one. Price it within{' '}
-                {js.expires_at ? timeLeft(js.expires_at).replace(' left', '') : '7 days'}, but the
-                sooner you price, the better your chances.
-              </div>
+              {directToYou && offer?.market_opens_at ? (
+                <div className={q.pricedPanel}>
+                  <strong>The customer asked for you again.</strong> This repeat job is
+                  offered to you alone until {formatDateTime(offer.market_opens_at)}. Price
+                  it or pass by then — after that it goes to other contractors in the area.
+                </div>
+              ) : (
+                <div className={q.warnPanel}>
+                  <strong>First come, first served.</strong> The customer sees prices
+                  as they arrive and can accept at any moment — this job can be gone
+                  on day one. Price it within{' '}
+                  {js.expires_at ? timeLeft(js.expires_at).replace(' left', '') : '7 days'}, but the
+                  sooner you price, the better your chances.
+                </div>
+              )}
 
               {live && (
                 <div className={q.pricedPanel}>
@@ -171,6 +190,11 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
               {!live && <DeclineForm token={token} />}
             </>
           )}
+
+          <ContactUsButton
+            subject={`About a job to price — ${service?.name ?? 'Land work'}${spec.location ? `, ${spec.location}` : ''} (ref ${js.id.slice(0, 8)})`}
+            note="A question about this job before you price it?"
+          />
         </div>
       </main>
       <SiteFooter />

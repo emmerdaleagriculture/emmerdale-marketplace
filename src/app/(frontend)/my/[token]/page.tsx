@@ -21,7 +21,9 @@ import { PayNow } from './PayNow';
 import { SaveToAccount } from './SaveToAccount';
 import { CancelJob } from './CancelJob';
 import { PayBalance } from './PayBalance';
-import { formatDate } from '@/lib/time';
+import { formatDate, formatDateTime } from '@/lib/time';
+import { OpenToMarket } from './OpenToMarket';
+import { ContactUsButton } from '@/components/ContactUsButton';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import a from '../../auth.module.css';
 import m from './my.module.css';
@@ -97,6 +99,25 @@ export default async function ClientPortalPage({
   const county = (js.county as { name: string } | null)?.name ?? null;
   const first = js.contact_name?.split(/\s+/)[0] ?? 'there';
 
+  // A repeat offered to the customer's previous contractor first
+  // (market_opens_at is set only while that offer stands). They chose them by
+  // name, so the name is shown here even before any price.
+  const { data: directRow } = await createServiceRoleClient()
+    .from('job_submissions')
+    .select('market_opens_at, preferred_contractor_id')
+    .eq('id', js.id)
+    .maybeSingle();
+  const directName =
+    directRow?.market_opens_at && directRow.preferred_contractor_id
+      ? ((
+          await createServiceRoleClient()
+            .from('contractors')
+            .select('business_name')
+            .eq('id', directRow.preferred_contractor_id)
+            .maybeSingle()
+        ).data?.business_name ?? 'your contractor')
+      : null;
+
   // Everything after the token lookup is independent — one round-trip of
   // latency. The accepted quote is fetched by id with no validity filter:
   // an award outlives its quote's valid-until date.
@@ -138,13 +159,24 @@ export default async function ClientPortalPage({
           <StatusTimeline status={js.status} />
 
           {/* ── Pre-quotes ─────────────────────────────────────────── */}
-          {(js.status === 'confirmed' || js.status === 'distributed') && (
-            <p className={a.sub}>
-              Hi {first} — we&rsquo;re putting your job in front of contractors who
-              cover {county ?? 'your area'}. Prices appear here as they come in, and
-              we&rsquo;ll email you when the first one arrives.
-            </p>
-          )}
+          {(js.status === 'confirmed' || js.status === 'distributed') &&
+            (directName && directRow?.market_opens_at ? (
+              <>
+                <p className={a.sub}>
+                  Hi {first} — we&rsquo;ve asked {directName} to price your job first.
+                  If they can&rsquo;t by {formatDateTime(directRow.market_opens_at)}, we&rsquo;ll
+                  send it to other contractors who cover {county ?? 'your area'} — or you
+                  can do that now.
+                </p>
+                <OpenToMarket token={token} label="Get prices from other contractors now" />
+              </>
+            ) : (
+              <p className={a.sub}>
+                Hi {first} — we&rsquo;re putting your job in front of contractors who
+                cover {county ?? 'your area'}. Prices appear here as they come in, and
+                we&rsquo;ll email you when the first one arrives.
+              </p>
+            ))}
 
           {/* ── Live prices ────────────────────────────────────────── */}
           {js.status === 'quotes_receiving' && (
@@ -161,6 +193,15 @@ export default async function ClientPortalPage({
                 ratingWeight={ratingWeight}
                 depositRate={depositRate}
               />
+              {directName && (
+                <>
+                  <p className={a.sub}>
+                    You asked {directName} first, so only their price is here. Want to
+                    compare?
+                  </p>
+                  <OpenToMarket token={token} label="Also get prices from other contractors" />
+                </>
+              )}
               {/* The terms open with "read these before you accept a price",
                   so this is where they have to be — not only in the footer. */}
               <p className={a.sub}>
@@ -290,6 +331,12 @@ export default async function ClientPortalPage({
             Something wrong with the details? Reply to your confirmation email and
             we&rsquo;ll fix it.
           </p>
+
+          <ContactUsButton
+            subject={`About my job — ${service ?? 'land work'}${js.postcode ? `, ${js.postcode}` : ''} (ref ${js.id.slice(0, 8)})`}
+            body={`\n\n—\nJob page: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.emmerdaleagriculture.com'}/my/${token}`}
+            note="A question about your job, a price or a payment?"
+          />
         </div>
       </main>
       <SiteFooter />

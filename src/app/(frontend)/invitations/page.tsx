@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { nonContractorPath } from '@/lib/auth';
+import { ContactUsButton } from '@/components/ContactUsButton';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { formatDateTime, timeLeft } from '@/lib/time';
@@ -141,6 +142,8 @@ export default async function InvitationsPage() {
               )}
             </>
           )}
+
+          <ContactUsButton subject="Contractor enquiry — jobs to price" />
         </div>
       </main>
       <SiteFooter />

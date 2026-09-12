@@ -4,8 +4,10 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { ConfirmStep } from '../../ConfirmStep';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
+import { setDraftModeAction } from '../../../my/actions';
 import type { ParseResult } from '@/lib/jobParse/schema';
 import type { AreaUnit, CanonicalService, Urgency } from '@/lib/jobParse/schema';
+import f from '@/components/forms/forms.module.css';
 import a from '../../../auth.module.css';
 
 export const metadata: Metadata = { title: 'Order it again', robots: { index: false, follow: false } };
@@ -15,11 +17,14 @@ export const dynamic = 'force-dynamic';
  * Order it again: a new draft copied from a job the customer already had done,
  * dropped straight into the confirm step.
  *
- * Reviewed rather than sent blind. A repeat is priced by contractors from the
- * pack it carries, and a year-old access note or a target date in the past is
- * worse than no note at all — so the customer sees it before it goes, and the
- * ordinary confirm action takes it from there. Nothing about the downstream
- * path is special-cased: a repeat is just a job.
+ * Reviewed rather than sent blind. A repeat is priced from the pack it
+ * carries, and a year-old access note or a target date in the past is worse
+ * than no note at all — so the customer sees it before it goes, and the
+ * ordinary confirm action takes it from there.
+ *
+ * The draft already knows who it's for (preferred_contractor_id, set by the
+ * button they pressed); distribute_submission reads it on confirm. The page
+ * says which it is and lets them change their mind before sending.
  */
 export default async function OrderAgainPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -43,10 +48,29 @@ export default async function OrderAgainPage({ params }: { params: Promise<{ id:
     .maybeSingle();
   if (!src) notFound();
 
-  const countyName = src.county_id
-    ? ((await admin.from('counties').select('name').eq('id', src.county_id).maybeSingle()).data
-        ?.name ?? null)
-    : null;
+  const [countyQ, prevQ] = await Promise.all([
+    src.county_id
+      ? admin.from('counties').select('name').eq('id', src.county_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    src.repeat_of
+      ? admin
+          .from('job_submissions')
+          .select('awarded_contractor_id')
+          .eq('id', src.repeat_of)
+          .eq('customer_id', user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const countyName = countyQ.data?.name ?? null;
+
+  // The contractor who did the job this copies — the only one "the same
+  // contractor" can mean — and whether this draft is currently for them.
+  const previousId = prevQ.data?.awarded_contractor_id ?? null;
+  const { data: previous } = previousId
+    ? await admin.from('contractors').select('business_name').eq('id', previousId).maybeSingle()
+    : { data: null };
+  const previousName = previous?.business_name ?? null;
+  const direct = Boolean(src.preferred_contractor_id) && src.preferred_contractor_id === previousId;
 
   const result: ParseResult = {
     submission_id: src.id,
@@ -88,12 +112,25 @@ export default async function OrderAgainPage({ params }: { params: Promise<{ id:
       <main className={a.main}>
         <div className={a.narrow}>
           <div className={a.eyebrow}>Order it again</div>
-          <h1 className={a.title}>Same job, fresh prices.</h1>
+          <h1 className={a.title}>
+            {direct && previousName ? `Book ${previousName} again.` : 'Same job, fresh prices.'}
+          </h1>
           <p className={a.sub}>
             Everything below is copied from last time — the field, the access notes and
-            the photos. Change anything that&rsquo;s moved on, then send it and
-            contractors will price it again.
+            the photos. Change anything that&rsquo;s moved on, then send it.{' '}
+            {direct && previousName
+              ? `We'll ask ${previousName} to price it first. If they can't within 48 hours, it goes to other contractors who cover ${countyName ?? 'your area'} — you won't need to do anything.`
+              : `It goes to every contractor who covers ${countyName ?? 'your area'}, and their prices appear on your job page as they come in.`}
           </p>
+          {previousName && (
+            <form action={setDraftModeAction} style={{ marginBottom: 20 }}>
+              <input type="hidden" name="draft_id" value={src.id} />
+              <input type="hidden" name="mode" value={direct ? 'market' : 'same'} />
+              <button className={f.btnGhost} type="submit">
+                {direct ? 'Get fresh prices instead' : `Ask ${previousName} first instead`}
+              </button>
+            </form>
+          )}
           <ConfirmStep result={result} />
         </div>
       </main>

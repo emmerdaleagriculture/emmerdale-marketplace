@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
+import { ContactUsButton } from '@/components/ContactUsButton';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { getCounties, getServices } from '@/lib/reference';
@@ -311,6 +312,11 @@ export default async function AccountPage() {
             counties={counties}
             selectedCounties={selectedCounties}
             services={services}
+          />
+
+          <ContactUsButton
+            subject={`Contractor enquiry — ${contractor.business_name}`}
+            body={`\n\n—\n${contractor.business_name} · ${user.email ?? ''}`}
           />
         </div>
       </main>

@@ -145,13 +145,32 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           })
         : null;
       const deadline = p.late_join && closes ? `Pricing closes ${closes}` : 'Price it within 7 days';
+      // direct: a repeat the customer asked to offer to this contractor first.
+      const opens = p.market_opens_at
+        ? new Date(String(p.market_opens_at)).toLocaleString('en-GB', {
+            weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit',
+            timeZone: 'Europe/London',
+          })
+        : 'the next 48 hours';
+      const lastTime = p.last_job_at
+        ? new Date(String(p.last_job_at)).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'Europe/London' })
+        : null;
       return {
-        subject: `Job to price: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
+        subject: p.direct
+          ? `A previous customer wants you again: ${p.service ?? 'land work'}, ${p.county ?? ''}`
+          : `Job to price: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
         text:
-          (p.late_join
-            ? `A job in your area is still open for pricing — it went out before you joined ` +
-              `this county, so you’re seeing it now.\n\n`
-            : `A job in your area needs pricing.\n\n`) +
+          (p.direct
+            ? `A customer you’ve done this job for has asked for you again, so it’s offered ` +
+              `to you first.` +
+              (p.last_price_pence
+                ? ` Last time${lastTime ? ` (${lastTime})` : ''} you priced it at ${gbp(p.last_price_pence)}.`
+                : '') +
+              `\n\n`
+            : p.late_join
+              ? `A job in your area is still open for pricing — it went out before you joined ` +
+                `this county, so you’re seeing it now.\n\n`
+              : `A job in your area needs pricing.\n\n`) +
           `In their words: “${p.description ?? '—'}”\n\n` +
           (p.service ? `Work:      ${p.service}\n` : '') +
           `Area:      ${areaLine(p)}\n` +
@@ -160,9 +179,12 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           (p.gate_width ? `Access:    ${p.gate_width} gate\n` : '') +
           (p.access_notes ? `Notes:     ${p.access_notes}\n` : '') +
           (p.obstacles ? `Obstacles: ${p.obstacles}\n` : '') +
-          `\nFirst come, first served: the customer sees prices as they arrive and can ` +
-          `accept at any moment. ${deadline} — but the sooner you price, ` +
-          `the better your chances.\n\n` +
+          (p.direct
+            ? `\nIt’s yours alone until ${opens}. Price it or pass by then — after that it ` +
+              `goes to other contractors in the area.\n\n`
+            : `\nFirst come, first served: the customer sees prices as they arrive and can ` +
+              `accept at any moment. ${deadline} — but the sooner you price, ` +
+              `the better your chances.\n\n`) +
           `Price it or pass (one tap): ${SITE_URL}/quote/${p.token}\n\n` +
           `Photos, a satellite view of the drawn boundary and the full spec are on that page.`,
       };
@@ -206,10 +228,37 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `Your job page`,
         text:
-          `Hi ${first},\n\nThis is your job page — prices from contractors will appear ` +
-          `there as they come in:\n${portal}\n\n` +
+          `Hi ${first},\n\n` +
+          (p.direct_contractor
+            ? `We’ve asked ${p.direct_contractor} to price your job first, as you asked. If ` +
+              `they can’t within 48 hours we’ll send it to other contractors in your area — ` +
+              `you won’t need to do anything. Their price will appear on your job page:\n${portal}\n\n`
+            : (p.direct_unavailable
+                ? `The contractor who did this job last time isn’t taking work through us at ` +
+                  `the moment, so we’ve sent it to every contractor who covers your area.\n\n`
+                : '') +
+              `This is your job page — prices from contractors will appear ` +
+              `there as they come in:\n${portal}\n\n`) +
           `Keep this email; the link is your key to the page.`,
       };
+    case 'sq_direct_fallback': {
+      const who = p.contractor_name ?? 'Your previous contractor';
+      const why = p.reason === 'declined'
+        ? `${who} can’t take your job on this time`
+        : `${who} hasn’t been able to price your job within 48 hours`;
+      const n = Number(p.invited ?? 0);
+      return {
+        subject: `Your job is going out to more contractors`,
+        text:
+          `Hi ${first},\n\n${why}, so ` +
+          (n > 0
+            ? `we’ve sent it to ${n} other contractor${n === 1 ? '' : 's'} who cover your area. ` +
+              `Their prices will appear on your job page as they come in:\n${portal}\n\n`
+            : `we’ve opened it to other contractors — though none cover your area just now. ` +
+              `We’ll keep it open, and your job page shows where it stands:\n${portal}\n\n`) +
+          `Nothing is booked until you accept a price.`,
+      };
+    }
     case 'sq_first_quote':
       return {
         subject: `Your first price is in — ${gbp(p.client_price_pence)}`,

@@ -959,6 +959,8 @@ export type Database = {
       job_schedules: {
         Row: {
           active: boolean
+          contractor_id: string | null
+          contractor_mode: string
           created_at: string
           customer_id: string
           id: string
@@ -970,6 +972,8 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          contractor_id?: string | null
+          contractor_mode?: string
           created_at?: string
           customer_id: string
           id?: string
@@ -981,6 +985,8 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          contractor_id?: string | null
+          contractor_mode?: string
           created_at?: string
           customer_id?: string
           id?: string
@@ -991,6 +997,13 @@ export type Database = {
           source_submission_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "job_schedules_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "job_schedules_customer_id_fkey"
             columns: ["customer_id"]
@@ -1130,6 +1143,7 @@ export type Database = {
           lat: number | null
           lng: number | null
           location_raw: string | null
+          market_opens_at: string | null
           missing_fields: string[]
           model_version: string | null
           obstacles: string | null
@@ -1138,9 +1152,11 @@ export type Database = {
           parsed_at: string | null
           photo_paths: string[]
           postcode: string | null
+          preferred_contractor_id: string | null
           prompt_version: string | null
           quotes_notified_at: string | null
           raw_text: string
+          repeat_of: string | null
           service_alternatives: string[]
           service_attributes: Json
           service_confirmed: boolean | null
@@ -1186,6 +1202,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           location_raw?: string | null
+          market_opens_at?: string | null
           missing_fields?: string[]
           model_version?: string | null
           obstacles?: string | null
@@ -1194,9 +1211,11 @@ export type Database = {
           parsed_at?: string | null
           photo_paths?: string[]
           postcode?: string | null
+          preferred_contractor_id?: string | null
           prompt_version?: string | null
           quotes_notified_at?: string | null
           raw_text: string
+          repeat_of?: string | null
           service_alternatives?: string[]
           service_attributes?: Json
           service_confirmed?: boolean | null
@@ -1242,6 +1261,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           location_raw?: string | null
+          market_opens_at?: string | null
           missing_fields?: string[]
           model_version?: string | null
           obstacles?: string | null
@@ -1250,9 +1270,11 @@ export type Database = {
           parsed_at?: string | null
           photo_paths?: string[]
           postcode?: string | null
+          preferred_contractor_id?: string | null
           prompt_version?: string | null
           quotes_notified_at?: string | null
           raw_text?: string
+          repeat_of?: string | null
           service_alternatives?: string[]
           service_attributes?: Json
           service_confirmed?: boolean | null
@@ -1293,6 +1315,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_submissions_preferred_contractor_id_fkey"
+            columns: ["preferred_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_submissions_repeat_of_fkey"
+            columns: ["repeat_of"]
+            isOneToOne: false
+            referencedRelation: "job_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_submissions_repeat_of_fkey"
+            columns: ["repeat_of"]
+            isOneToOne: false
+            referencedRelation: "my_sq_invitations"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "job_submissions_repeat_of_fkey"
+            columns: ["repeat_of"]
+            isOneToOne: false
+            referencedRelation: "my_sq_won_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_submissions_repeat_of_fkey"
+            columns: ["repeat_of"]
+            isOneToOne: false
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
           },
           {
             foreignKeyName: "job_submissions_service_id_fkey"
@@ -1954,6 +2011,10 @@ export type Database = {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
       }
+      invite_contractor_to_open_jobs: {
+        Args: { p_contractor_id: string; p_county_id?: number }
+        Returns: number
+      }
       is_active_subscriber: { Args: { p_contractor: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       log_first_contact: {
@@ -1996,6 +2057,10 @@ export type Database = {
           customer_phone: string
         }[]
       }
+      open_submission_to_market: {
+        Args: { p_reason?: string; p_submission_id: string }
+        Returns: Json
+      }
       record_invitation_view: { Args: { p_token: string }; Returns: Json }
       record_undeliverable_email: {
         Args: { p_detail: string; p_email: string; p_kind: string }
@@ -2027,9 +2092,18 @@ export type Database = {
         Args: { p_client_price_pence: number; p_rate: number }
         Returns: number
       }
+      sq_direct_window_tick: { Args: never; Returns: number }
       sq_fail_balance: {
         Args: { p_error: string; p_final?: boolean; p_payment_id: string }
         Returns: Json
+      }
+      sq_invite_contractor: {
+        Args: {
+          p_contractor_id: string
+          p_extra?: Json
+          p_submission_id: string
+        }
+        Returns: boolean
       }
       sq_job_facts: { Args: { p_submission_id: string }; Returns: Json }
       sq_notify_once: {

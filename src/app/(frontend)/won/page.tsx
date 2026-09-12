@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { nonContractorPath } from '@/lib/auth';
+import { ContactUsButton } from '@/components/ContactUsButton';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { formatGBP } from '@/lib/sealedQuotes/money';
@@ -175,6 +176,11 @@ export default async function WonJobsPage() {
               ))}
             </div>
           )}
+
+          <ContactUsButton
+            subject="Contractor enquiry — a won job"
+            note="Trouble reaching a customer, a problem on site, or a question about your payout?"
+          />
         </div>
       </main>
       <SiteFooter />

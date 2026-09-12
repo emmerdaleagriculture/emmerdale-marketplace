@@ -407,3 +407,49 @@ export async function cancelJobAction(_prev: FormState, formData: FormData): Pro
         : `Cancelled. The ${formatGBP(fee)} deposit isn't refundable, and nothing further will be taken.`,
   };
 }
+
+/**
+ * A repeat offered to the previous contractor first, opened to everyone who
+ * covers the area at the customer's request — the same step the 48-hour clock
+ * takes on its own (open_submission_to_market). No email: they're on the page.
+ */
+export async function openToMarketAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const token = String(formData.get('token') ?? '');
+  if (!isTokenFormat(token)) return { error: 'This link is no longer valid.' };
+
+  const admin = createServiceRoleClient();
+  const { data: js } = await admin
+    .from('job_submissions')
+    .select('id')
+    .eq('client_token', token)
+    .is('client_token_revoked_at', null)
+    .maybeSingle();
+  if (!js) return { error: 'This link is no longer valid.' };
+
+  const { data, error } = await admin.rpc('open_submission_to_market', {
+    p_submission_id: js.id,
+    p_reason: 'customer',
+  });
+  if (error) {
+    console.error('[sq] open_submission_to_market failed:', error);
+    return { error: 'That didn’t go through — please try again.' };
+  }
+  const res = data as { ok: boolean; reason?: string; invited?: number };
+  if (!res.ok) {
+    return {
+      error:
+        res.reason === 'not_direct'
+          ? 'This job is already with every contractor who covers your area.'
+          : 'This job has moved on — refresh to see where it is.',
+    };
+  }
+
+  revalidatePath(`/my/${token}`);
+  const n = res.invited ?? 0;
+  return {
+    ok: true,
+    message: n
+      ? `Sent to ${n} more contractor${n === 1 ? '' : 's'} — their prices will appear here as they come in.`
+      : 'Done — but no other contractors cover your area just now. We’ll keep it open.',
+  };
+}
