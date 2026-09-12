@@ -20,10 +20,18 @@ export type ViewerRole = 'contractor' | 'customer' | 'both' | 'account';
 export type Viewer = { signedIn: false } | { signedIn: true; role: ViewerRole };
 
 const SIGNED_OUT: Viewer = { signedIn: false };
+
+// Shared only between the header and footer of one render, never across
+// navigations: a login or onboarding finishes with a client-side redirect, and
+// a lookup remembered from before it would keep showing the old links.
+const SHARE_MS = 2000;
 let pending: Promise<Viewer> | null = null;
+let pendingAt = 0;
 
 function loadViewer(): Promise<Viewer> {
   if (!/(^|;\s*)sb-[^=]+=/.test(document.cookie)) return Promise.resolve(SIGNED_OUT);
+  if (pending && Date.now() - pendingAt > SHARE_MS) pending = null;
+  if (!pending) pendingAt = Date.now();
   pending ??= import('@/lib/supabase/client')
     .then(async ({ createClient }) => {
       const supabase = createClient();
