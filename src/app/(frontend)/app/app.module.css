@@ -1,0 +1,21 @@
+.cardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.cardLink:hover {
+  border-color: var(--jd-green-dark);
+}
+.cardLink:focus-visible {
+  outline: 2px solid var(--jd-green-dark);
+  outline-offset: 2px;
+}
+
+.cardDesc {
+  color: var(--ink-2);
+  font-size: 14.5px;
+  line-height: 1.55;
+  margin: 0;
+}
+
