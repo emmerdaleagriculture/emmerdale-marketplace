@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID.com.emmerdaleagriculture.app"],
+        "components": [
+          { "/": "/app", "comment": "app entry screen" },
+          { "/": "/start*", "comment": "job booking flow" },
+          { "/": "/my/*", "comment": "a customer's own job pages" },
+          { "/": "/jobs*", "comment": "contractor job board" },
+          { "/": "/account*", "comment": "contractor dashboard" }
+        ]
+      }
+    ]
+  }
+}
