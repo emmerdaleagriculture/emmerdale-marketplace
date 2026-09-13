@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatDate, formatDateTime, timeAgo, timeLeft } from '@/lib/time';
-import { formatGBP } from '@/lib/sealedQuotes/money';
 import { URGENCY_LABELS } from '@/components/job/JobSpecCard';
 import s from '../admin.module.css';
 import p from './submissions.module.css';
 import { SUBMISSION_FILTERS, isSubmissionFilter, matchesFilter } from '@/lib/submissionFilters';
+import { OutreachStats } from './OutreachStats';
 
 export const metadata: Metadata = { title: 'Submissions — Admin' };
 
@@ -180,45 +180,7 @@ function Card({ r }: { r: Row }) {
       {!isDraft &&
         (r.invited > 0 ? (
           <>
-            <dl className={p.stats}>
-              <div className={`${p.stat} ${r.emails_failed > 0 ? p.statWarn : ''}`}>
-                <dt>Emailed</dt>
-                <dd>
-                  {r.emails_sent}
-                  <small>
-                    {r.emails_failed > 0 ? `${r.emails_failed} failed` : `${r.emails_delivered} delivered`}
-                  </small>
-                </dd>
-              </div>
-              <div className={p.stat}>
-                <dt>Opened</dt>
-                <dd>
-                  {r.opened}
-                  <small>{pct(r.opened, r.invited)}%</small>
-                </dd>
-              </div>
-              <div className={p.stat}>
-                <dt>Responded</dt>
-                <dd>
-                  {responded}
-                  <small>{pct(responded, r.invited)}%</small>
-                </dd>
-              </div>
-              <div className={p.stat}>
-                <dt>Priced</dt>
-                <dd>
-                  {r.priced}
-                  <small>{r.declined} passed</small>
-                </dd>
-              </div>
-              <div className={p.stat}>
-                <dt>To client</dt>
-                <dd>
-                  {r.quotes_live}
-                  <small>{r.lowest_client_pence != null ? `from ${formatGBP(r.lowest_client_pence)}` : 'no prices'}</small>
-                </dd>
-              </div>
-            </dl>
+            <OutreachStats id={r.id} counts={r} />
             <div
               className={p.bar}
               role="img"

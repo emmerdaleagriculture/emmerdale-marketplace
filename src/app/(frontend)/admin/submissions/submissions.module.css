@@ -156,20 +156,34 @@
   overflow: hidden;
   margin: 0;
 }
+/* Each box links to the submission page listing who is behind the number. */
 .stat {
+  display: block;
   background: var(--cream);
   padding: 8px 6px;
   text-align: center;
   min-width: 0;
+  color: inherit;
+  text-decoration: none;
 }
-.stat dt {
+.stat:hover {
+  background: var(--jd-green-pale);
+}
+.statOn,
+.statOn:hover {
+  background: var(--white);
+  box-shadow: inset 0 -3px 0 var(--jd-green-dark);
+}
+.statLabel {
+  display: block;
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.stat dd {
-  margin: 2px 0 0;
+.statValue {
+  display: block;
+  margin-top: 2px;
   font-size: 18px;
   font-weight: 600;
   color: var(--ink);
@@ -181,8 +195,58 @@
   font-weight: 400;
   color: var(--ink-3);
 }
-.statWarn dd {
+.statWarn .statValue {
   color: #a02a2a;
+}
+
+/* Submission page: the list behind the selected box. */
+.stageTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin: 16px 0 8px;
+}
+.people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--white);
+}
+.person {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+.person + .person {
+  border-top: 1px solid var(--rule);
+}
+.personWho,
+.personWhat {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.personWhat {
+  text-align: right;
+  color: var(--ink-2);
+}
+.personWho small,
+.personWhat small {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.personBad {
+  color: #a02a2a;
+}
+@media (max-width: 520px) {
+  .personWhat {
+    text-align: left;
+  }
 }
 /* On a phone: three on the first row, two sharing the second — no empty cell. */
 @media (max-width: 520px) {
