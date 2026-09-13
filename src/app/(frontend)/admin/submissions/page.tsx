@@ -6,6 +6,7 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
 import { URGENCY_LABELS } from '@/components/job/JobSpecCard';
 import s from '../admin.module.css';
 import p from './submissions.module.css';
+import { SUBMISSION_FILTERS, isSubmissionFilter, matchesFilter } from '@/lib/submissionFilters';
 
 export const metadata: Metadata = { title: 'Submissions — Admin' };
 
@@ -261,8 +262,19 @@ export default async function AdminSubmissionsPage({
   const sp = await searchParams;
   const view: View = VIEWS.some(([k]) => k === sp.view) ? (sp.view as View) : 'all';
 
+  // Set when arriving from a dashboard tile: show just the jobs behind it.
+  const filter = isSubmissionFilter(sp.filter) ? sp.filter : null;
+
   const admin = createServiceRoleClient();
-  const { data, error } = await admin.rpc('admin_submission_board', { p_limit: LIMIT });
+  const ids = async (q: PromiseLike<{ data: { submission_id: string | null }[] | null }>) =>
+    new Set(((await q).data ?? []).map((r) => r.submission_id));
+  const [{ data, error }, pricedIds, paidIds] = await Promise.all([
+    admin.rpc('admin_submission_board', { p_limit: LIMIT }),
+    filter === 'priced' ? ids(admin.from('client_quotes').select('submission_id')) : new Set<string | null>(),
+    filter === 'paid'
+      ? ids(admin.from('job_payments').select('submission_id').in('status', ['paid', 'partially_refunded', 'refunded']))
+      : new Set<string | null>(),
+  ]);
   const rows = ((data ?? []) as unknown as Row[]);
 
   const jobs = rows.filter((r) => !DRAFT.has(r.status));
@@ -279,6 +291,9 @@ export default async function AdminSubmissionsPage({
   const shown = rows.filter((r) => inView(r, view));
   const shownJobs = shown.filter((r) => !DRAFT.has(r.status));
   const shownDrafts = shown.filter((r) => DRAFT.has(r.status));
+  const filtered = filter
+    ? rows.filter((r) => matchesFilter(r, filter, { priced: pricedIds, paid: paidIds }))
+    : [];
 
   const tiles: [string, string | number, string][] = [
     ['Jobs', jobs.length, `${jobs.filter((r) => QUOTING.has(r.status)).length} getting quotes`],
@@ -309,20 +324,42 @@ export default async function AdminSubmissionsPage({
         ))}
       </div>
 
-      <nav className={p.chips} aria-label="Filter submissions">
-        {VIEWS.map(([key, name]) => (
-          <Link
-            key={key}
-            href={key === 'all' ? '/admin/submissions' : `/admin/submissions?view=${key}`}
-            className={`${p.chip} ${view === key ? p.chipOn : ''}`}
-            aria-current={view === key ? 'page' : undefined}
-          >
-            {name} <b>{rows.filter((r) => inView(r, key)).length}</b>
+      {filter ? (
+        <nav className={p.chips} aria-label="Filter submissions">
+          <span className={`${p.chip} ${p.chipOn}`} aria-current="page">
+            {SUBMISSION_FILTERS[filter]} <b>{filtered.length}</b>
+          </span>
+          <Link href="/admin/submissions" className={p.chip}>
+            Show all
           </Link>
-        ))}
-      </nav>
+        </nav>
+      ) : (
+        <nav className={p.chips} aria-label="Filter submissions">
+          {VIEWS.map(([key, name]) => (
+            <Link
+              key={key}
+              href={key === 'all' ? '/admin/submissions' : `/admin/submissions?view=${key}`}
+              className={`${p.chip} ${view === key ? p.chipOn : ''}`}
+              aria-current={view === key ? 'page' : undefined}
+            >
+              {name} <b>{rows.filter((r) => inView(r, key)).length}</b>
+            </Link>
+          ))}
+        </nav>
+      )}
 
-      {view !== 'drafts' && (
+      {filter &&
+        (filtered.length === 0 ? (
+          <div className={s.empty}>Nothing matches.</div>
+        ) : (
+          <div className={p.cards}>
+            {filtered.map((r) => (
+              <Card key={r.id} r={r} />
+            ))}
+          </div>
+        ))}
+
+      {!filter && view !== 'drafts' && (
         <>
           {view === 'all' && <div className={s.sectionLabel}>Jobs</div>}
           {shownJobs.length === 0 ? (
@@ -337,7 +374,7 @@ export default async function AdminSubmissionsPage({
         </>
       )}
 
-      {(view === 'all' || view === 'drafts') && (
+      {!filter && (view === 'all' || view === 'drafts') && (
         <>
           <div className={s.sectionLabel}>Drafts — described a job, didn’t finish</div>
           {shownDrafts.length === 0 ? (
