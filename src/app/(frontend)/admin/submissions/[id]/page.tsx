@@ -9,26 +9,10 @@ import { getServices } from '@/lib/reference';
 import { DistributionPanel } from './DistributionPanel';
 import s from '../../admin.module.css';
 import p from '../submissions.module.css';
-import { OutreachStats, isOutreachStage, type OutreachCounts, type OutreachStage } from '../OutreachStats';
+import { OutreachList, OutreachStats, STAGE_TITLES, isOutreachStage, type OutreachStage } from '../OutreachStats';
+import { loadOutreach } from '../outreach';
 
 export const metadata: Metadata = { title: 'Submission — Admin' };
-
-type Line = { key: string; who: string; sub?: string; what: string; when: string | null; bad?: boolean };
-
-const STAGE_TITLES: Record<OutreachStage, string> = {
-  emailed: 'Invitation emails',
-  opened: 'Opened the job',
-  responded: 'Priced or passed',
-  priced: 'Prices, then passes',
-  client: 'Prices shown to the customer',
-};
-const STAGE_EMPTY: Record<OutreachStage, string> = {
-  emailed: 'No invitation emails recorded.',
-  opened: 'Nobody has opened the job yet.',
-  responded: 'Nobody has priced or passed yet.',
-  priced: 'No prices and no passes yet.',
-  client: 'Nothing shown to the customer yet.',
-};
 
 /**
  * Full view of one landing-page submission, including every parse attempt.
@@ -61,12 +45,8 @@ export default async function SubmissionDetailPage({
 
   // Distribution state (Part 2): invitations, both-sides prices (§29 — this
   // page and /admin/money are the only places both appear), and the event log.
-  const [invitationsQ, quotesQ, eventsQ, services, emailsQ, contractorQuotesQ] = await Promise.all([
-    admin
-      .from('job_invitations')
-      .select('id, status, decline_reason, distance_miles, sent_at, opened_at, contractor:contractors(business_name, email)')
-      .eq('submission_id', id)
-      .order('sent_at', { ascending: true }),
+  const [outreach, quotesQ, eventsQ, services] = await Promise.all([
+    loadOutreach(id),
     admin
       .from('client_quotes')
       .select(
@@ -83,137 +63,10 @@ export default async function SubmissionDetailPage({
       .order('created_at', { ascending: true })
       .limit(200),
     getServices(),
-    admin
-      .from('pending_emails')
-      .select('id, to_email, status, delivery_status, delivery_detail, delivery_at, sent_at, created_at')
-      .eq('kind', 'sq_invitation')
-      .eq('payload->>submission_id', id)
-      .order('created_at', { ascending: true }),
-    admin
-      .from('contractor_quotes')
-      .select('id, invitation_id, contractor_price_pence, quote_type, superseded_by, created_at')
-      .eq('submission_id', id)
-      .order('created_at', { ascending: true }),
   ]);
-  const invitations = invitationsQ.data ?? [];
   const allQuotes = quotesQ.data ?? [];
   const events = eventsQ.data ?? [];
-  const emails = emailsQ.data ?? [];
-
-  // Outreach, counted the way admin_submission_board() counts it, so the
-  // boxes here match the card that linked to them.
   const show: OutreachStage = isOutreachStage(sp.show) ? sp.show : 'emailed';
-  const contractorQuotes = contractorQuotesQ.data ?? [];
-  const latestQuote = new Map<string, (typeof contractorQuotes)[number]>();
-  for (const q of contractorQuotes) {
-    if (!q.superseded_by || !latestQuote.has(q.invitation_id)) latestQuote.set(q.invitation_id, q);
-  }
-  const passed = (inv: (typeof invitations)[number]) =>
-    !latestQuote.has(inv.id) && (inv.decline_reason != null || inv.status === 'declined');
-  const failedEmail = (e: (typeof emails)[number]) =>
-    e.status === 'failed' || ['bounced', 'complained', 'failed', 'suppressed'].includes(e.delivery_status ?? '');
-  const counts: OutreachCounts = {
-    invited: invitations.length,
-    opened: invitations.filter((i) => i.opened_at).length,
-    priced: invitations.filter((i) => latestQuote.has(i.id)).length,
-    declined: invitations.filter((i) => i.decline_reason != null || i.status === 'declined').length,
-    emails_sent: emails.filter((e) => e.status === 'sent').length,
-    emails_delivered: emails.filter((e) => e.delivery_status === 'delivered').length,
-    emails_failed: emails.filter(failedEmail).length,
-    quotes_live: allQuotes.filter((q) => q.status === 'active').length,
-    lowest_client_pence:
-      allQuotes
-        .filter((q) => q.status === 'active' || q.status === 'accepted')
-        .reduce<number | null>((m, q) => (m == null || q.client_price_pence < m ? q.client_price_pence : m), null),
-  };
-
-  const contractorOf = (inv: (typeof invitations)[number]) =>
-    inv.contractor as { business_name: string; email: string | null } | null;
-  const invByEmail = new Map(
-    invitations.flatMap((inv) => {
-      const email = contractorOf(inv)?.email;
-      return email ? [[email.toLowerCase(), inv] as const] : [];
-    }),
-  );
-  const outcome = (inv: (typeof invitations)[number]) => {
-    const q = latestQuote.get(inv.id);
-    if (q) return `Priced ${formatGBP(q.contractor_price_pence)}${q.quote_type === 'rate' ? ' (rate)' : ''}`;
-    if (passed(inv)) return `Passed${inv.decline_reason ? ` — ${inv.decline_reason.replace(/_/g, ' ')}` : ''}`;
-    return inv.opened_at ? 'Opened, no response yet' : 'Not opened';
-  };
-  const invLine = (inv: (typeof invitations)[number], when: string | null): Line => ({
-    key: inv.id,
-    who: contractorOf(inv)?.business_name ?? '—',
-    sub: inv.distance_miles != null ? `${inv.distance_miles} mi` : undefined,
-    what: outcome(inv),
-    when,
-  });
-  const byTime = (a: string | null, b: string | null) => (a ?? '').localeCompare(b ?? '');
-
-  let lines: Line[];
-  switch (show) {
-    case 'emailed':
-      lines = emails.map((e) => {
-        const inv = invByEmail.get(e.to_email.toLowerCase());
-        const bad = failedEmail(e);
-        return {
-          key: e.id,
-          who: (inv && contractorOf(inv)?.business_name) ?? e.to_email,
-          sub: inv ? e.to_email : undefined,
-          what: bad
-            ? `Failed — ${e.delivery_detail ?? e.delivery_status ?? e.status}`
-            : e.status === 'sent'
-              ? (e.delivery_status ?? 'sent')
-              : e.status,
-          when: e.delivery_at ?? e.sent_at ?? e.created_at,
-          bad,
-        };
-      });
-      // Invited but never emailed (opted out of job emails): still listed, as
-      // the old invitations table did.
-      {
-        const emailed = new Set(emails.map((e) => e.to_email.toLowerCase()));
-        for (const inv of invitations) {
-          const email = contractorOf(inv)?.email?.toLowerCase();
-          if (email && emailed.has(email)) continue;
-          lines.push({ ...invLine(inv, inv.sent_at), what: `No email sent · ${outcome(inv)}` });
-        }
-      }
-      break;
-    case 'opened':
-      lines = invitations
-        .filter((i) => i.opened_at)
-        .sort((a, b) => byTime(a.opened_at, b.opened_at))
-        .map((i) => invLine(i, i.opened_at));
-      break;
-    case 'responded':
-      lines = invitations
-        .filter((i) => latestQuote.has(i.id) || passed(i))
-        .map((i) => invLine(i, latestQuote.get(i.id)?.created_at ?? null));
-      break;
-    case 'priced':
-      // Prices first, then the passes the box's hint counts.
-      lines = [
-        ...invitations
-          .filter((i) => latestQuote.has(i.id))
-          .map((i) => invLine(i, latestQuote.get(i.id)!.created_at)),
-        ...invitations.filter(passed).map((i) => ({ ...invLine(i, null), bad: true })),
-      ];
-      break;
-    case 'client':
-      lines = allQuotes.map((cq) => {
-        const inner = cq.cq as { contractor: { business_name: string } | null } | null;
-        return {
-          key: cq.id,
-          who: inner?.contractor?.business_name ?? cq.contractor_real_name ?? cq.contractor_display_label,
-          sub: `shown as ${cq.contractor_display_label}`,
-          what: `${formatGBP(cq.client_price_pence)} · ${cq.status}`,
-          when: cq.created_at,
-          bad: cq.status !== 'active' && cq.status !== 'accepted',
-        };
-      });
-      break;
-  }
 
   // Private bucket — photos are only ever reachable through short-lived
   // signed URLs minted here for the admin.
@@ -394,31 +247,14 @@ export default async function SubmissionDetailPage({
         services={services}
       />
 
-      {(invitations.length > 0 || emails.length > 0) && (
+      {outreach.lines.emailed.length > 0 && (
         <>
           <div id="outreach" className={s.sectionLabel}>
-            Outreach — {invitations.length} invited
+            Outreach — {outreach.counts.invited} invited
           </div>
-          <OutreachStats id={sub.id} counts={counts} active={show} />
+          <OutreachStats id={sub.id} counts={outreach.counts} active={show} />
           <div className={p.stageTitle}>{STAGE_TITLES[show]}</div>
-          {lines.length === 0 ? (
-            <div className={s.empty}>{STAGE_EMPTY[show]}</div>
-          ) : (
-            <ul className={p.people}>
-              {lines.map((l) => (
-                <li key={l.key} className={p.person}>
-                  <div className={p.personWho}>
-                    {l.who}
-                    {l.sub && <small>{l.sub}</small>}
-                  </div>
-                  <div className={`${p.personWhat} ${l.bad ? p.personBad : ''}`}>
-                    {l.what}
-                    {l.when && <small>{formatDateTime(l.when)}</small>}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <OutreachList stage={show} lines={outreach.lines[show]} />
         </>
       )}
 

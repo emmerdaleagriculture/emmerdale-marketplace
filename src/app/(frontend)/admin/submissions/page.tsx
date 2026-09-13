@@ -6,7 +6,7 @@ import { URGENCY_LABELS } from '@/components/job/JobSpecCard';
 import s from '../admin.module.css';
 import p from './submissions.module.css';
 import { SUBMISSION_FILTERS, isSubmissionFilter, matchesFilter } from '@/lib/submissionFilters';
-import { OutreachStats } from './OutreachStats';
+import { OutreachModal } from './OutreachModal';
 
 export const metadata: Metadata = { title: 'Submissions — Admin' };
 
@@ -180,7 +180,7 @@ function Card({ r }: { r: Row }) {
       {!isDraft &&
         (r.invited > 0 ? (
           <>
-            <OutreachStats id={r.id} counts={r} />
+            <OutreachModal id={r.id} counts={r} title={title} />
             <div
               className={p.bar}
               role="img"

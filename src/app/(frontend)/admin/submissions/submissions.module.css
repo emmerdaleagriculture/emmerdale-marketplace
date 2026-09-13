@@ -159,6 +159,11 @@
 /* Each box links to the submission page listing who is behind the number. */
 .stat {
   display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  cursor: pointer;
   background: var(--cream);
   padding: 8px 6px;
   text-align: center;
@@ -197,6 +202,59 @@
 }
 .statWarn .statValue {
   color: #a02a2a;
+}
+
+/* Card outreach modal. Padding lives on .modalBody so a click on the dialog
+   element itself is always a backdrop click. */
+.modal {
+  /* The global reset zeroes margins, which un-centres a modal dialog. */
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  background: var(--white);
+  color: var(--ink);
+}
+.modal::backdrop {
+  background: rgba(20, 30, 20, 0.45);
+}
+.modalBody {
+  padding: 16px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.modalHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.modalTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--jd-green-dark);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.modalClose {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  margin: -6px -8px 0 0;
+  border: 0;
+  background: none;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.modalBody .more {
+  align-self: flex-end;
+  margin-top: 6px;
 }
 
 /* Submission page: the list behind the selected box. */
