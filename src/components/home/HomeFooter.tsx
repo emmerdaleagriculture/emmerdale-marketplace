@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AccountLink } from './AccountLink';
 import { BrandMark } from './BrandMark';
 import { FOOTER_HOME_SERVICES } from '@/lib/home/services';
 import { COMPANY_LEGAL_NAME, COMPANY_REG_LINE, COMPANY_ADDRESS_LINES } from '@/lib/site';
@@ -52,7 +53,7 @@ export function HomeFooter() {
               <li>
                 {/* One login for both sides now, so it is no longer the
                     contractors' door. */}
-                <Link href="/login">Log in</Link>
+                <AccountLink />
               </li>
               <li>
                 <Link href="/contact">Contact us</Link>
