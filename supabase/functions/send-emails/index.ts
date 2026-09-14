@@ -145,22 +145,27 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           })
         : null;
       const deadline = p.late_join && closes ? `Pricing closes ${closes}` : 'Price it within 7 days';
-      // direct: a repeat the customer asked to offer to this contractor first.
+      // direct: offered to this contractor alone first — a repeat the customer
+      // asked them for again, or (first_refusal) a new job before the market.
       const opens = p.market_opens_at
         ? new Date(String(p.market_opens_at)).toLocaleString('en-GB', {
             weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit',
             timeZone: 'Europe/London',
           })
-        : 'the next 48 hours';
+        : p.first_refusal ? 'the next 24 hours' : 'the next 48 hours';
       const lastTime = p.last_job_at
         ? new Date(String(p.last_job_at)).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'Europe/London' })
         : null;
       return {
-        subject: p.direct
-          ? `A previous customer wants you again: ${p.service ?? 'land work'}, ${p.county ?? ''}`
-          : `Job to price: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
+        subject: p.first_refusal
+          ? `New job, offered to you first: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
+          : p.direct
+            ? `A previous customer wants you again: ${p.service ?? 'land work'}, ${p.county ?? ''}`
+            : `Job to price: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
         text:
-          (p.direct
+          (p.first_refusal
+            ? `A new job in your area needs pricing, and it’s offered to you before anyone else.\n\n`
+            : p.direct
             ? `A customer you’ve done this job for has asked for you again, so it’s offered ` +
               `to you first.` +
               (p.last_price_pence
@@ -260,12 +265,18 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       };
     }
     case 'sq_first_quote':
+      // sole_offer: priced by the contractor holding the job under first
+      // refusal, so no other prices are coming — don't promise them.
       return {
-        subject: `Your first price is in — ${gbp(p.client_price_pence)}`,
+        subject: p.sole_offer
+          ? `Your price is in — ${gbp(p.client_price_pence)}`
+          : `Your first price is in — ${gbp(p.client_price_pence)}`,
         text:
           `Hi ${first},\n\nA contractor (${p.contractor_label ?? 'Contractor A'}) has priced your ` +
           `${p.service ?? ''} job at ${gbp(p.client_price_pence)}.\n\n` +
-          `More may follow — see them all and choose here:\n${portal}\n\n` +
+          (p.sole_offer
+            ? `See it and accept here:\n${portal}\n\n`
+            : `More may follow — see them all and choose here:\n${portal}\n\n`) +
           `Nothing is booked until you accept a price and pay the deposit.`,
       };
     case 'sq_new_quotes':

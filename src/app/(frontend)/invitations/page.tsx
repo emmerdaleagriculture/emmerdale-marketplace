@@ -103,8 +103,18 @@ export default async function InvitationsPage() {
                             ? `${inv.area_value} ${inv.area_unit === 'linear_m' ? 'm' : inv.area_unit}`
                             : ''}
                       </div>
+                      {/* Held alone (first refusal or a direct repeat): the
+                          deadline that matters is when it opens to others.
+                          Past it and still held means they priced in time and
+                          keep it — no other contractor is coming. */}
                       <div className={s.deadline}>
-                        {inv.expires_at ? timeLeft(inv.expires_at) : ''}
+                        {inv.offered_until
+                          ? new Date(inv.offered_until) > new Date()
+                            ? `Yours alone until ${formatDateTime(inv.offered_until)}`
+                            : 'Yours alone'
+                          : inv.expires_at
+                            ? timeLeft(inv.expires_at)
+                            : ''}
                       </div>
                     </Link>
                   ))}

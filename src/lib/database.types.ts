@@ -1143,6 +1143,7 @@ export type Database = {
           lat: number | null
           lng: number | null
           location_raw: string | null
+          first_refusal: boolean
           market_opens_at: string | null
           missing_fields: string[]
           model_version: string | null
@@ -1202,6 +1203,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           location_raw?: string | null
+          first_refusal?: boolean
           market_opens_at?: string | null
           missing_fields?: string[]
           model_version?: string | null
@@ -1261,6 +1263,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           location_raw?: string | null
+          first_refusal?: boolean
           market_opens_at?: string | null
           missing_fields?: string[]
           model_version?: string | null
@@ -1851,6 +1854,7 @@ export type Database = {
           id: string | null
           job_state: string | null
           obstacles: string | null
+          offered_until: string | null
           opened_at: string | null
           postcode_district: string | null
           sent_at: string | null

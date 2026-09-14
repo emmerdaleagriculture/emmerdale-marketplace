@@ -47,11 +47,11 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     getLiveQuote(js.id, invitation.contractor_id),
     signPhotos(js.photo_paths),
   ]);
-  // A repeat the customer asked to offer to this contractor first: not first
-  // come, first served — theirs alone until market_opens_at.
+  // Offered to this contractor alone until market_opens_at: a repeat the
+  // customer asked them for again, or a new job under first refusal.
   const { data: offer } = await admin
     .from('job_submissions')
-    .select('market_opens_at, preferred_contractor_id')
+    .select('market_opens_at, preferred_contractor_id, first_refusal')
     .eq('id', js.id)
     .maybeSingle();
   const directToYou =
@@ -150,11 +150,26 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
           {jobOpen && (
             <>
-              {directToYou && offer?.market_opens_at ? (
+              {directToYou && offer?.market_opens_at && new Date(offer.market_opens_at) > new Date() ? (
                 <div className={q.pricedPanel}>
-                  <strong>The customer asked for you again.</strong> This repeat job is
-                  offered to you alone until {formatDateTime(offer.market_opens_at)}. Price
-                  it or pass by then — after that it goes to other contractors in the area.
+                  {offer.first_refusal ? (
+                    <>
+                      <strong>Offered to you first.</strong> This job is yours alone
+                      until {formatDateTime(offer.market_opens_at)}.
+                    </>
+                  ) : (
+                    <>
+                      <strong>The customer asked for you again.</strong> This repeat job is
+                      offered to you alone until {formatDateTime(offer.market_opens_at)}.
+                    </>
+                  )}{' '}
+                  Price it or pass by then — after that it goes to other contractors in the area.
+                </div>
+              ) : directToYou && offer?.market_opens_at ? (
+                // Window closed with the job still held: they priced in time
+                // and keep it. Not first come, first served — nobody else has it.
+                <div className={q.pricedPanel}>
+                  <strong>Yours alone.</strong> No other contractor has been sent this job.
                 </div>
               ) : (
                 <div className={q.warnPanel}>
