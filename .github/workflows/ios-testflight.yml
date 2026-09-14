@@ -1,0 +1,120 @@
+# .github/workflows/ios-testflight.yml
+#
+# Builds the Capacitor iOS app on a GitHub-hosted macOS runner and uploads it
+# to TestFlight. Exists so nobody needs a Mac of their own: the only local
+# step is adding the secrets listed below, once.
+#
+# Run it manually (Actions > iOS TestFlight > Run workflow) until you trust
+# it, then switch the trigger to push-on-tag.
+#
+# ─── REQUIRED REPO SECRETS (Settings > Secrets and variables > Actions) ───
+#   APPSTORE_ISSUER_ID        App Store Connect API key issuer ID (a UUID)
+#   APPSTORE_KEY_ID           App Store Connect API key ID
+#   APPSTORE_PRIVATE_KEY      contents of the .p8 key file, pasted whole
+#   IOS_CERTIFICATE_BASE64    Apple distribution cert (.p12), base64-encoded
+#   IOS_CERTIFICATE_PASSWORD  password for that .p12
+#   IOS_PROVISIONING_PROFILE_BASE64   App Store provisioning profile, base64
+#   KEYCHAIN_PASSWORD         any string you invent; scoped to the runner
+#
+# To base64 a file on a Mac:  base64 -i cert.p12 | pbcopy
+#
+# Nothing secret is ever written to the repo or printed in logs.
+
+name: iOS TestFlight
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['ios-v*']
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Generates ios/ from capacitor.config.ts. Committing the ios/ folder is
+      # also fine — if it is already in the repo this step is skipped.
+      - name: Add iOS platform
+        run: |
+          if [ ! -d ios ]; then
+            npx cap add ios
+          fi
+          npx cap sync ios
+
+      - name: Import signing certificate
+        env:
+          CERT_B64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERT_PATH=$RUNNER_TEMP/cert.p12
+          KEYCHAIN=$RUNNER_TEMP/build.keychain-db
+          echo -n "$CERT_B64" | base64 --decode -o "$CERT_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$CERT_PATH" -P "$CERT_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security list-keychain -d user -s "$KEYCHAIN"
+
+      - name: Install provisioning profile
+        env:
+          PROFILE_B64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo -n "$PROFILE_B64" | base64 --decode -o ~/Library/MobileDevice/Provisioning\ Profiles/build.mobileprovision
+
+      - name: Build and archive
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -archivePath $RUNNER_TEMP/App.xcarchive \
+            -allowProvisioningUpdates \
+            archive
+
+      - name: Export IPA
+        run: |
+          cat > $RUNNER_TEMP/ExportOptions.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/App.xcarchive \
+            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
+            -exportPath $RUNNER_TEMP/export \
+            -allowProvisioningUpdates
+
+      - name: Upload to TestFlight
+        env:
+          ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo -n "$PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$KEY_ID.p8
+          xcrun altool --upload-app -f "$RUNNER_TEMP/export/App.ipa" -t ios \
+            --apiKey "$KEY_ID" --apiIssuer "$ISSUER_ID"
+
+      - name: Keep the build as an artefact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: ${{ runner.temp }}/export/*.ipa
+          if-no-files-found: ignore
