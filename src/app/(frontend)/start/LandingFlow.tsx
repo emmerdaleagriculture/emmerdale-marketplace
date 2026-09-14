@@ -307,11 +307,10 @@ export function LandingFlow() {
           required
           minLength={10}
           maxLength={2000}
-          rows={5}
+          rows={3}
           placeholder="e.g. I need my 7 acre field topped, it’s just off the A31 near Alresford"
           defaultValue={state.values?.raw_text}
         />
-        <span className={f.hint}>Your own words are fine — no need for the technical term.</span>
       </label>
 
       <input type="hidden" name="geo_lat" value={geo?.lat ?? ''} />
@@ -342,7 +341,7 @@ export function LandingFlow() {
 
           Folded shut by default: expanded, the two file inputs are 180px of
           optional work standing between the description and the button, and
-          on a phone that is the difference between seeing Get started and
+          on a phone that is the difference between seeing the button and
           not. The prompt survives; only the fields wait to be asked for. */}
       <details className={s.photos}>
         <summary>Add photos (optional)</summary>
@@ -370,19 +369,22 @@ export function LandingFlow() {
         </div>
       </details>
 
-      <div className={a.actions}>
+      <div className={`${a.actions} ${s.actions}`}>
         <button
-          className={f.btnYellow}
+          className={`${f.btnYellow} ${s.submit}`}
           type="submit"
           disabled={pending || awaitingToken}
         >
-          {awaitingToken ? 'One moment…' : pending ? 'Working…' : 'Get started'}
+          {awaitingToken ? 'One moment…' : pending ? 'Working…' : 'Get my prices'}
         </button>
+        <p className={s.noObligation}>
+          Free, and no obligation — you&rsquo;re not booking anything yet.
+        </p>
       </div>
 
       {/* Below the button, not above it. The widget is 80px of machinery the
           customer never interacts with, and above the button that 80px was
-          the difference between seeing Get started on a phone and not. The
+          the difference between seeing the button on a phone and not. The
           submit path is unchanged either way: the token lands in a hidden
           input in this same form, and a press before the challenge resolves
           is already held and replayed by the handler above. */}
@@ -394,24 +396,9 @@ export function LandingFlow() {
           </p>
         )}
       </div>
-
-      {/* Why bother, for someone weighing this against asking in a Facebook
-          group. Below the box, not above it: with the list first, the field
-          started 687px down a 664px phone viewport, and 96% of ad arrivals
-          left without clicking anything at all. The case still gets made —
-          to the people who scroll — but it no longer stands in the way of
-          the one thing this page is paid to collect. */}
-      <ul className={s.reassure}>
-        <li>No trawling Facebook groups hoping someone answers.</li>
-        <li>Insured contractors, vetted before they see a single job.</li>
-        <li>Several prices to choose from, not whoever replies first.</li>
-        <li>Booked for when you actually want it, and it gets done.</li>
-        <li>
-          Your own job page — a private link with the prices, the contractor and
-          where it&rsquo;s up to.
-        </li>
-        <li>We&rsquo;re on the end of the phone if you need us.</li>
-      </ul>
+      {/* The case for sending this lives under the card now, in page.tsx's
+          "What happens after you send this" — a reason list inside the form
+          said the same things twice. */}
     </form>
   );
 }
