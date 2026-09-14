@@ -581,8 +581,12 @@
   flex-wrap: wrap;
   text-align: center;
 }
+/* max-width keeps each column inside a phone screen; without it the 538px
+   desktop render pushed the whole page sideways. */
 .behaviourRow > * {
   flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 .behaviourRow .metricGrid {
   justify-content: center;
@@ -604,6 +608,14 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  overflow-x: auto;
+}
+/* Narrower than the render: scroll the overlay inside its pane. Centred, its
+   left edge would sit off-screen where it can't be scrolled to. */
+@media (max-width: 620px) {
+  .overlayPane {
+    align-items: flex-start;
+  }
 }
 .overlayTitle {
   font-size: 13px;
