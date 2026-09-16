@@ -75,7 +75,11 @@ export function HomeHeader() {
         <SocialLinks className={s.navSocial} />
 
         <div className={s.navCta}>
-          <Link href={BOOK_HREF} className={s.navBook}>
+          <Link
+            href={BOOK_HREF}
+            className={s.navBook}
+            onClick={() => window.gtag?.('event', 'cta_click', { location: 'header' })}
+          >
             Book online
           </Link>
           {/* One login for both sides. Labelling it "Contractor log in" hid it

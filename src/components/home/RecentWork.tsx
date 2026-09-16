@@ -1,5 +1,6 @@
 import { getRecentWork, MIN_RECENT_WORK, serviceFilters } from '@/lib/home/recentWork';
 import { RecentWorkBoard } from './RecentWorkBoard';
+import { ViewOnce } from './Track';
 import s from './home.module.css';
 
 /**
@@ -34,6 +35,9 @@ export async function RecentWork() {
           access, ground and scale move the number more than the service does —
           so treat these as what past work came to, not a quote for yours.
         </p>
+        {/* row_count travels with it: "saw the board" means something
+            different with four jobs on it than with forty. */}
+        <ViewOnce event="view_recent_work" params={{ row_count: rows.length }} />
         <RecentWorkBoard rows={rows} filters={serviceFilters(rows)} />
       </div>
     </section>

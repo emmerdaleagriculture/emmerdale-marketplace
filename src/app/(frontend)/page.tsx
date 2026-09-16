@@ -1,13 +1,13 @@
 import { jsonLd } from '@/lib/jsonld';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import Image from 'next/image';
 import { PageTracker } from '@/components/PageTracker';
 import { HomeHeader } from '@/components/home/HomeHeader';
 import { HomeFooter } from '@/components/home/HomeFooter';
 import { StickyBar } from '@/components/home/StickyBar';
 import { DeferredImage } from '@/components/home/DeferredImage';
-import { ServiceIcon } from '@/components/home/ServiceIcons';
+import { ServiceCard } from '@/components/home/ServiceCard';
+import { TrackedLink } from '@/components/home/Track';
 import { CoverageSection } from '@/components/home/CoverageSection';
 import { RecentEnquiries } from '@/components/home/RecentEnquiries';
 import { RecentWork } from '@/components/home/RecentWork';
@@ -279,26 +279,15 @@ export default async function LandingPage() {
             </p>
             <div className={s.servicesGrid}>
               {HOME_SERVICES.map((svc) => (
-                <Link
+                <ServiceCard
                   key={svc.slug}
+                  svc={svc}
                   // `job` and `src` are LandingFlow's existing prefill params:
                   // the card's service arrives already typed into the
                   // description, and the hand-off is attributed to the home
                   // page rather than showing up as "(direct)".
                   href={`${START_HREF}?job=${encodeURIComponent(svc.name)}&src=home`}
-                  className={s.service}
-                >
-                  <span className={s.serviceIcon}>
-                    <ServiceIcon icon={svc.icon} />
-                  </span>
-                  <h3 className={s.serviceName}>{svc.name}</h3>
-                  <p className={s.serviceBlurb}>{svc.blurb}</p>
-                  <span className={s.serviceFoot}>
-                    <b>Compare prices</b>
-                    <span>Free →</span>
-                    <span className={s.visuallyHidden}> for {svc.label}</span>
-                  </span>
-                </Link>
+                />
               ))}
             </div>
           </div>
@@ -407,9 +396,15 @@ export default async function LandingPage() {
               </p>
             </div>
             <div className={s.operatorsCta}>
-              <Link href="/signup" className={`${s.btn} ${s.btnLg} ${s.btnOutlineLight}`}>
+              {/* The supply side is currently invisible in the numbers — this
+                  is the only signal that anyone is trying to join. */}
+              <TrackedLink
+                href="/signup"
+                event="operator_apply"
+                className={`${s.btn} ${s.btnLg} ${s.btnOutlineLight}`}
+              >
                 Apply to join
-              </Link>
+              </TrackedLink>
               <p className={s.operatorsMeta}>
                 No fee — you receive 100% of what you quoted
                 <a href="#footnote-fees" aria-label="See note on card and transfer charges">*</a>
