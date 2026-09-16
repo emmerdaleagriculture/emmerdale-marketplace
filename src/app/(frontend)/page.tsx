@@ -9,6 +9,7 @@ import { StickyBar } from '@/components/home/StickyBar';
 import { DeferredImage } from '@/components/home/DeferredImage';
 import { ServiceIcon } from '@/components/home/ServiceIcons';
 import { CoverageSection } from '@/components/home/CoverageSection';
+import { RecentEnquiries } from '@/components/home/RecentEnquiries';
 import { UK_COUNTY_NAMES } from '@/lib/coverage';
 import { HOME_SERVICES } from '@/lib/home/services';
 import { getCountyCoverage } from '@/lib/reference';
@@ -302,6 +303,12 @@ export default async function LandingPage() {
         </section>
 
         <PhotoStrip photos={GALLERY_2} label="More of our work" />
+
+        {/* What's being asked for. Sits directly above the coverage map on
+            purpose: "here is what people want" reads into "here is where we
+            can do it". Renders nothing until there are enough real enquiries,
+            so an empty marketplace shows no strip rather than a thin one. */}
+        <RecentEnquiries />
 
         {/* Where we work — live coverage choropleth. */}
         <CoverageSection coverage={coverage} counties={counties} />

@@ -1007,3 +1007,59 @@
 .founderSig a:hover {
   border-bottom-color: currentColor;
 }
+
+/* Recent enquiries. Deliberately sparse cards: a county, an approximate size
+   where the parse extracted one, and the date it arrived. Nothing finer is
+   published, so there is nothing more to lay out — and the restraint is the
+   point rather than a gap to fill. */
+.enquiries {
+  padding: clamp(48px, 6vw, 84px) 0;
+}
+.enquiriesSub {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  max-width: 54ch;
+  margin: 0;
+}
+.enquiriesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 0;
+  list-style: none;
+}
+.enquiry {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* Absent on cards where no area was extracted, so the county becomes the
+   first line rather than sitting under an empty slot. */
+.enquirySize {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.enquiryCounty {
+  color: var(--green);
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+.enquiryDate {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+@media (min-width: 900px) {
+  .enquiriesGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
