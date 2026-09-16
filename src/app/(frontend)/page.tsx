@@ -10,6 +10,7 @@ import { DeferredImage } from '@/components/home/DeferredImage';
 import { ServiceIcon } from '@/components/home/ServiceIcons';
 import { CoverageSection } from '@/components/home/CoverageSection';
 import { RecentEnquiries } from '@/components/home/RecentEnquiries';
+import { RecentWork } from '@/components/home/RecentWork';
 import { UK_COUNTY_NAMES } from '@/lib/coverage';
 import { HOME_SERVICES } from '@/lib/home/services';
 import { getCountyCoverage } from '@/lib/reference';
@@ -301,6 +302,12 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* What past work cost. Directly after the service board on purpose:
+            the cards above say what we do, this says what it came to — which
+            is the question a visitor actually arrived with. Hides itself until
+            there are enough real completed jobs to show. */}
+        <RecentWork />
 
         <PhotoStrip photos={GALLERY_2} label="More of our work" />
 
