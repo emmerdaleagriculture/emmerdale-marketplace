@@ -1,16 +1,18 @@
 import { jsonLd } from '@/lib/jsonld';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import Image from 'next/image';
 import { PageTracker } from '@/components/PageTracker';
-import { HomeHeader, BOOK_HREF } from '@/components/home/HomeHeader';
+import { HomeHeader } from '@/components/home/HomeHeader';
 import { HomeFooter } from '@/components/home/HomeFooter';
 import { StickyBar } from '@/components/home/StickyBar';
 import { DeferredImage } from '@/components/home/DeferredImage';
-import { ServiceIcon } from '@/components/home/ServiceIcons';
+import { ServiceCard } from '@/components/home/ServiceCard';
+import { TrackedLink } from '@/components/home/Track';
 import { CoverageSection } from '@/components/home/CoverageSection';
 import { RecentEnquiries } from '@/components/home/RecentEnquiries';
 import { RecentWork } from '@/components/home/RecentWork';
+import { QuoteWidget } from '@/components/home/QuoteWidget';
+import { Comparison } from '@/components/home/Comparison';
 import { UK_COUNTY_NAMES } from '@/lib/coverage';
 import { HOME_SERVICES } from '@/lib/home/services';
 import { getCountyCoverage } from '@/lib/reference';
@@ -31,14 +33,20 @@ const SITE = siteUrl();
 /** Tom's public profile — the founder card links his name to it. */
 const LINKEDIN_URL = 'https://www.linkedin.com/in/tom-oswald-a7233619/';
 
-// ISR: statically cached at the CDN, re-rendered at most hourly. The only
-// live data on the page is the county coverage — the map and the Service schema.
+/**
+ * Every customer CTA lands here. Cards carry their service in the query so the
+ * form knows what was clicked — /start reads it client-side, in LandingFlow,
+ * because the page itself reads no searchParams and must stay static.
+ */
+const START_HREF = '/start';
+
+// ISR: statically cached at the CDN, re-rendered at most hourly.
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Paddock, land and equestrian jobs, priced upfront',
+  title: 'Get prices from approved operators near you',
   description:
-    'A managed marketplace for rural land. Paddock, land and equestrian jobs, priced upfront, booked online, completed by approved operators near you.',
+    'A managed marketplace for rural land. Tell us what needs doing and approved operators near you — vetted, trained and insured — come back with prices you can compare side by side.',
   alternates: { canonical: '/' },
 };
 
@@ -80,12 +88,11 @@ const orgJsonLd = {
   },
   sameAs: [HPM_URL],
   description:
-    `A managed marketplace for rural land, run by ${COMPANY_LEGAL_NAME}, the company behind Hampshire Paddock Management. Paddock, land and equestrian jobs priced upfront and completed by approved operators across ${SERVICE_AREA}.`,
+    `A managed marketplace for rural land, run by ${COMPANY_LEGAL_NAME}, the company behind Hampshire Paddock Management. Paddock, land and equestrian jobs completed by approved operators across ${SERVICE_AREA}, with several prices to compare.`,
 };
 
-// Photo strips: one under the intro, one under the service board. Mixed
-// aspect ratios in the originals, shown as uniform 4:3 crops; `pos` nudges
-// the crop so the machine stays in frame.
+// Photo strip. The design stubs its imagery as "(existing photo)" placeholders,
+// so the real assets slot into those positions rather than being dropped.
 type GalleryPhoto = { src: string; alt: string; pos: string };
 
 const GALLERY: GalleryPhoto[] = [
@@ -98,29 +105,6 @@ const GALLERY: GalleryPhoto[] = [
     src: '/john-deere-6130r.jpg',
     alt: 'A John Deere 6130R with a spreader in a freshly mown field under a stormy sky',
     pos: '50% 68%',
-  },
-  {
-    src: '/woolton-house.jpg',
-    alt: 'A John Deere 4066M compact tractor with a flail mower on the lawns of a country house',
-    pos: '50% 55%',
-  },
-  {
-    src: '/john-deere-6250r-kuhn.jpg',
-    alt: 'A John Deere 6250R with a Kuhn flail mower on grassland',
-    pos: '50% 55%',
-  },
-];
-
-const GALLERY_2: GalleryPhoto[] = [
-  {
-    src: '/jcb-fastrac.jpg',
-    alt: 'A JCB Fastrac in a field margin, in black and white',
-    pos: '50% 60%',
-  },
-  {
-    src: '/john-deere-4066m-pitch.jpg',
-    alt: 'A John Deere 4066M with a seeder beside rugby posts on a sports pitch',
-    pos: '50% 72%',
   },
   {
     src: '/john-deere-6130r-kuhn.jpg',
@@ -159,8 +143,48 @@ function PhotoStrip({ photos, label }: { photos: GalleryPhoto[]; label: string }
   );
 }
 
-const TRUST = ['Prices upfront', 'Pay online', 'Vetted and fully trained operators', 'Fully insured'];
+/**
+ * The trust ticker. "Prices upfront" came off: there is no price on the site
+ * and the variance in this trade is too wide for an honest one, so the claim
+ * was never quite true. These three are what the marketplace actually sells.
+ */
+const TICKER = [
+  'Several prices to choose from',
+  'Vetted & insured operators',
+  'We hold your money until you’re happy',
+];
 
+/** The hero's three promises, each the answer to a real hesitation. */
+const PROMISES: [string, string][] = [
+  ['Several prices, not one.', 'Approved operators near you price your job, usually inside 24 hours.'],
+  ['Vetted, trained and fully insured.', 'We check the paperwork so you don’t have to ask.'],
+  ['We hold your money until you’re happy.', 'The contractor gets paid when you say the job’s right.'],
+];
+
+const STEPS: [string, string][] = [
+  ['You tell us the job', 'Pick a service and give us a postcode. About a minute.'],
+  ['We ask operators near you', 'Vetted, trained and insured. They price your job directly.'],
+  ['You compare prices', 'Side by side, with rating and distance. Sort by either.'],
+  ['You book and pay online', 'We hold the money. You never pay the contractor directly.'],
+  ['The work gets done', 'Before and after photos land on your job page.'],
+];
+
+const Tick = () => (
+  <svg
+    className={s.promiseTick}
+    width="17"
+    height="17"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="m5 12 5 5L20 7" />
+  </svg>
+);
 
 export default async function LandingPage() {
   const [coverage, counties] = await Promise.all([getCountyCoverage(), allCountyRefs()]);
@@ -173,8 +197,8 @@ export default async function LandingPage() {
     name: 'Paddock maintenance & land services',
     serviceType: HOME_SERVICES.map((svc) => svc.name),
     description:
-      `Paddock maintenance and agricultural contracting, including topping, harrowing, rolling, overseeding, hedge cutting, fencing and land clearance, for paddock owners, equestrian yards, farms and estates across ${SERVICE_AREA}. Priced upfront and completed by approved operators.`,
-    url: `${SITE}${BOOK_HREF}`,
+      `Paddock maintenance and agricultural contracting, including topping, harrowing, rolling, overseeding, hedge cutting, fencing and land clearance, for paddock owners, equestrian yards, farms and estates across ${SERVICE_AREA}. Completed by approved operators, with several prices to compare.`,
+    url: `${SITE}${START_HREF}`,
     provider: {
       '@type': 'Organization',
       name: COMPANY_LEGAL_NAME,
@@ -187,14 +211,8 @@ export default async function LandingPage() {
   return (
     <div className={s.page}>
       <PageTracker path="/" />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd(orgJsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd(serviceJsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(orgJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(serviceJsonLd) }} />
 
       <a className={s.skip} href="#main">
         Skip to main content
@@ -202,10 +220,10 @@ export default async function LandingPage() {
 
       <HomeHeader />
 
-      <div className={s.trust} role="region" aria-label="Trust signals">
+      <div className={s.ticker} role="region" aria-label="What you get">
         <div className={s.container}>
-          <ul className={s.trustList}>
-            {TRUST.map((t) => (
+          <ul className={s.tickerList}>
+            {TICKER.map((t) => (
               <li key={t}>{t}</li>
             ))}
           </ul>
@@ -213,133 +231,154 @@ export default async function LandingPage() {
       </div>
 
       <main id="main">
-        {/* Tom leads the page. */}
-        <section className={s.intro} id="about">
-          <div className={s.container}>
-            <div className={s.founder}>
-              <figure className={s.founderPhoto}>
-                <Image
-                  src="/tom-oswald.jpg"
-                  alt="Tom Oswald standing in front of a John Deere 9RX 830 tractor"
-                  fill
-                  priority
-                  quality={65}
-                  sizes="(min-width: 900px) 420px, 100vw"
-                  className={s.founderImg}
-                />
-              </figure>
-              <div className={s.founderText}>
-                <p className={s.eyebrow}>A managed marketplace for rural land</p>
-                <h1 className={s.founderH1}>
-                  Hi, I&rsquo;m{' '}
-                  <a href={LINKEDIN_URL} className={s.founderName} target="_blank" rel="noopener noreferrer">
-                    Tom Oswald
-                  </a>
-                  .
-                </h1>
-                <p>
-                  I&rsquo;m the managing director of Emmerdaleagriculture.com. I
-                  started{' '}
-                  <a href={HPM_URL} className={s.founderLink} target="_blank" rel="noopener noreferrer">
-                    <strong>Hampshire Paddock Management</strong>
-                  </a>{' '}
-                  looking
-                  after paddocks, smallholdings and grassland across the South
-                  of England, topping, harrowing, rolling, hedges, the everyday
-                  work that keeps land in good order.
-                </p>
-                <p>
-                  The enquiries never stopped coming, and one firm can only be
-                  in so many fields at once. So we grew into{' '}
-                  <strong>Emmerdale Agriculture</strong>, the same standard
-                  of work, delivered across the UK by approved
-                  operators we know and trust. You get one price, one booking
-                  and one place to come back to; they do the work they&rsquo;re
-                  best at, close to home.
-                </p>
-                <p className={s.founderSig}>
-                  <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">Tom Oswald</a> · Managing Director
-                </p>
-              </div>
+        {/* The hero leads with the proposition, not with Tom. Someone arriving
+            from "paddock topping cost" had to read 364 words before anything
+            invited them to act; the widget puts the ask on screen beside the
+            promise. Tom moves down the page, where his story does its real
+            work as reassurance rather than as an obstacle. */}
+        <section className={s.hero} id="quote">
+          <div className={`${s.container} ${s.heroGrid}`}>
+            <div>
+              <p className={s.kicker}>A managed marketplace for rural land</p>
+              <h1 className={s.heroH1}>Get prices from approved operators near you.</h1>
+              <p className={s.heroSub}>
+                Tell us what needs doing. Operators covering your patch — vetted,
+                trained and insured — price the job, <strong>you see them side by
+                side</strong>, and you book the one you want. No phone calls out
+                of the blue.
+              </p>
+              <ul className={s.promises}>
+                {PROMISES.map(([title, body]) => (
+                  <li key={title}>
+                    <Tick />
+                    <span>
+                      <strong>{title}</strong> {body}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
+            <QuoteWidget />
           </div>
         </section>
 
-        <PhotoStrip photos={GALLERY} label="Our work" />
+        {/* What past work cost — the persuasion engine, straight after the
+            hero. Hides itself until there are enough real completed jobs. */}
+        <RecentWork />
 
-        {/* Full service board. */}
+        {/* Full service board. Every card carries its service into the form, so
+            the customer never describes twice what they already chose. */}
         <section id="services" className={s.services}>
           <div className={s.container}>
-            <p className={s.eyebrow}>What we do</p>
-            <p className={s.servicesIntro}>
-              If you own a paddock or a bit of land, finding someone reliable to
-              do the job usually means trawling Facebook groups and hoping for
-              the best. We do that part for you. Tell us what needs doing and we
-              match it against our database of vetted contractors, so the right
-              person for the job gets in touch, not whoever replied first.
-            </p>
-            <h2 className={s.sectionH} style={{ marginBottom: 6 }}>
-              Everything we do
-            </h2>
-            <p className={s.servicesSub}>
-              Tap a card, tell us what needs doing and we&rsquo;ll come back
-              with a price. Free, and no obligation.
+            <p className={s.eyebrow}>Everything we do</p>
+            <h2 className={s.sectionH}>Pick the job. Operators near you come back with prices.</h2>
+            <p className={s.lede}>
+              If you own a paddock or a bit of land, finding someone reliable
+              usually means trawling Facebook groups and hoping for the best. We
+              do that part for you.
             </p>
             <div className={s.servicesGrid}>
               {HOME_SERVICES.map((svc) => (
-                <article key={svc.slug} className={s.service}>
-                  <div className={s.serviceIcon}>
-                    <ServiceIcon icon={svc.icon} />
-                  </div>
-                  <h3 className={s.serviceName}>{svc.name}</h3>
-                  <p className={s.serviceBlurb}>{svc.blurb}</p>
-                  <Link href={BOOK_HREF} className={s.serviceLink}>
-                    <span className={s.serviceLinkText}>Get a price →</span>
-                    <span className={s.visuallyHidden}> for {svc.label}</span>
-                  </Link>
-                </article>
+                <ServiceCard
+                  key={svc.slug}
+                  svc={svc}
+                  // `job` and `src` are LandingFlow's existing prefill params:
+                  // the card's service arrives already typed into the
+                  // description, and the hand-off is attributed to the home
+                  // page rather than showing up as "(direct)".
+                  href={`${START_HREF}?job=${encodeURIComponent(svc.name)}&src=home`}
+                />
               ))}
             </div>
           </div>
         </section>
 
-        {/* What past work cost. Directly after the service board on purpose:
-            the cards above say what we do, this says what it came to — which
-            is the question a visitor actually arrived with. Hides itself until
-            there are enough real completed jobs to show. */}
-        <RecentWork />
+        <Comparison />
 
-        <PhotoStrip photos={GALLERY_2} label="More of our work" />
+        <section id="how" className={s.how}>
+          <div className={s.container}>
+            <p className={s.eyebrow}>How it works</p>
+            <h2 className={s.sectionH}>
+              No phone calls out of the blue, and nothing to pay to find out the price.
+            </h2>
+            <ol className={s.steps}>
+              {STEPS.map(([title, body], i) => (
+                <li key={title} className={s.step}>
+                  <span className={s.stepNum}>{i + 1}</span>
+                  <h3 className={s.stepH}>{title}</h3>
+                  <p>{body}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
 
-        {/* What's being asked for. Sits directly above the coverage map on
-            purpose: "here is what people want" reads into "here is where we
-            can do it". Renders nothing until there are enough real enquiries,
-            so an empty marketplace shows no strip rather than a thin one. */}
+        <PhotoStrip photos={GALLERY} label="Our work" />
+
+        {/* What's being asked for. Renders nothing until there are enough real
+            enquiries, so an empty marketplace shows no strip rather than a
+            thin one. */}
         <RecentEnquiries />
 
-        {/* Where we work — live coverage choropleth. */}
+        {/* Where we work — live coverage choropleth. Its copy is computed from
+            the database rather than hardcoded, which is why it still says
+            England, Wales and Scotland where the design says England only.
+            That contradiction is Tom's to settle; a true claim is not narrowed
+            to a false one here. */}
         <CoverageSection coverage={coverage} counties={counties} />
 
-        {/* Editorial photo band. */}
-        <section className={s.band} aria-label="Approved operators">
-          {/* Deferred until near the viewport so it never competes with the
-              founder photo (the LCP) for bandwidth. Under a dark scrim and
-              cropped to a 420px strip, so a 1200px source at modest quality
-              is indistinguishable from the 1920px one Lighthouse flagged. */}
-          <DeferredImage
-            src="/john-deere-6250r.webp"
-            alt="A John Deere 6250R working in a Hampshire field"
-            fill
-            quality={60}
-            sizes="(min-width: 1200px) 1200px, 100vw"
-            className={s.bandImg}
-          />
-          <div className={s.bandScrim} />
-          <div className={`${s.container} ${s.bandInner}`}>
-            <blockquote className={s.bandQuote}>
-              Every job is done by an operator we&rsquo;ve vetted, insured and
-              reviewed.
-            </blockquote>
+        {/* Tom, as reassurance rather than as the headline. */}
+        <section className={s.tom} id="about">
+          <div className={`${s.container} ${s.tomGrid}`}>
+            <figure className={s.tomPhoto}>
+              <Image
+                src="/tom-oswald.jpg"
+                alt="Tom Oswald standing in front of a John Deere 9RX 830 tractor"
+                fill
+                quality={65}
+                sizes="(min-width: 860px) 420px, 100vw"
+                className={s.tomImg}
+              />
+            </figure>
+            <div>
+              <p className={s.eyebrow}>Who&rsquo;s behind it</p>
+              <blockquote className={s.tomQuote}>
+                <p>
+                  I started{' '}
+                  <a href={HPM_URL} className={s.tomLink} target="_blank" rel="noopener noreferrer">
+                    Hampshire Paddock Management
+                  </a>{' '}
+                  looking after paddocks, smallholdings and grassland across the
+                  South of England — topping, harrowing, rolling, hedges, the
+                  everyday work that keeps land in good order.
+                </p>
+                <p>
+                  <strong>
+                    The enquiries never stopped coming, and one firm can only be
+                    in so many fields at once.
+                  </strong>{' '}
+                  So we grew into Emmerdale Agriculture: the same standard of
+                  work, delivered across the UK by approved operators we know
+                  and trust.
+                </p>
+              </blockquote>
+              <div className={s.byline}>
+                <span className={s.bylineAvatar} aria-hidden="true">
+                  TO
+                </span>
+                <span>
+                  <a
+                    href={LINKEDIN_URL}
+                    className={s.bylineName}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Tom Oswald
+                  </a>
+                  <span className={s.bylineRole}>Managing Director</span>
+                </span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -349,20 +388,25 @@ export default async function LandingPage() {
             <div>
               <p className={`${s.eyebrow} ${s.eyebrowLight}`}>For operators</p>
               <h2 className={`${s.sectionH} ${s.operatorsH}`}>
-                Do you run an agricultural contracting business?
+                Run an agricultural contracting business?
               </h2>
               <p className={s.operatorsCopy}>
-                Join our network of approved operators. We bring you the
-                customer and handle the payment, you set your own price and do
-                the work you&rsquo;re good at.
+                We bring you the customer and handle the payment. You set your
+                own price and do the work you&rsquo;re good at.
               </p>
             </div>
             <div className={s.operatorsCta}>
-              <Link href="/signup" className={`${s.btn} ${s.btnLg} ${s.btnOutlineLight}`}>
+              {/* The supply side is currently invisible in the numbers — this
+                  is the only signal that anyone is trying to join. */}
+              <TrackedLink
+                href="/signup"
+                event="operator_apply"
+                className={`${s.btn} ${s.btnLg} ${s.btnOutlineLight}`}
+              >
                 Apply to join
-              </Link>
+              </TrackedLink>
               <p className={s.operatorsMeta}>
-                No fee, you receive 100% of what you quoted
+                No fee — you receive 100% of what you quoted
                 <a href="#footnote-fees" aria-label="See note on card and transfer charges">*</a>
               </p>
             </div>
@@ -371,7 +415,9 @@ export default async function LandingPage() {
       </main>
 
       <HomeFooter />
-      <StickyBar href={BOOK_HREF} watch="about" />
+      {/* Watches the hero: the bar slides up once the widget scrolls away, so
+          the ask is never off screen on a phone. 84% of ad clicks are mobile. */}
+      <StickyBar href={START_HREF} watch="quote" />
     </div>
   );
 }

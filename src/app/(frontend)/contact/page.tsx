@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { HomeHeader } from '@/components/home/HomeHeader';
 import { HomeFooter } from '@/components/home/HomeFooter';
+import { TrackedLink } from '@/components/home/Track';
 import {
   COMPANY_ADDRESS_LINES,
   COMPANY_LEGAL_NAME,
@@ -56,8 +57,14 @@ export default function ContactPage() {
           <div className={a.card} style={{ marginTop: 20 }}>
             <h2 className={a.cardTitle}>Phone</h2>
             <p>
-              {/* Tappable: most people reading this are on a phone already. */}
-              <a href={`tel:${PHONE_TEL}`}>{PHONE_DISPLAY}</a>
+              {/* Tappable: most people reading this are on a phone already.
+                  This is the only customer-facing phone link on the site, so
+                  it is the only honest place for cta_call — the other tel:
+                  links are admin and contractor screens, where it is us
+                  ringing the customer rather than the other way round. */}
+              <TrackedLink href={`tel:${PHONE_TEL}`} event="cta_call">
+                {PHONE_DISPLAY}
+              </TrackedLink>
             </p>
           </div>
 
