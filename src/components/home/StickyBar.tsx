@@ -29,7 +29,15 @@ export function StickyBar({ href, watch }: { href: string; watch: string }) {
   return (
     <div className={`${s.stickybar} ${visible ? s.stickybarVisible : ''}`} aria-hidden={!visible}>
       <div className={s.stickybarInner}>
-        <Link href={href} className={s.stickybarBtn} tabIndex={visible ? 0 : -1}>
+        {/* 84% of ad clicks are on a phone, so this is the main CTA — which
+            is exactly why it has to be distinguishable from the header and
+            hero ones in the numbers. window.gtag is declared in Analytics. */}
+        <Link
+          href={href}
+          className={s.stickybarBtn}
+          tabIndex={visible ? 0 : -1}
+          onClick={() => window.gtag?.('event', 'cta_click', { location: 'sticky' })}
+        >
           Get a price
         </Link>
       </div>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HOME_SERVICES } from '@/lib/home/services';
+import { ViewOnce } from './Track';
 import s from './home.module.css';
 
 // window.gtag is declared once, in @/components/Analytics.
@@ -89,6 +90,9 @@ export function QuoteWidget() {
 
   return (
     <div className={s.widget}>
+      {/* The denominator for the hero's conversion rate: how many arrivals
+          actually got the widget on screen. */}
+      <ViewOnce event="view_quote_widget" />
       <h2 className={s.widgetTitle}>What needs doing?</h2>
       <p className={s.widgetSub}>Takes about a minute. No account needed.</p>
 

@@ -1,3 +1,4 @@
+import { ViewOnce } from './Track';
 import s from './home.module.css';
 
 /**
@@ -110,6 +111,10 @@ export function Comparison() {
           don&rsquo;t — it&rsquo;s what sits behind the job once you&rsquo;ve
           picked one.
         </p>
+
+        {/* The main persuasion block — the question worth answering is whether
+            reaching it predicts converting. */}
+        <ViewOnce event="view_comparison" />
 
         <div className={s.vsWrap}>
           <div className={s.vsHead}>
