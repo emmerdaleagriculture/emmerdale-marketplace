@@ -66,6 +66,11 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
   const spec = {
     service: service?.name ?? null,
+    // What the customer actually wrote. Routing stopped classifying services
+    // (8e86e71), so service is null on nearly every job — without this the
+    // contractor's "Work" row read "Described by the customer" and the
+    // description appeared nowhere on the page.
+    serviceVerbatim: js.service_verbatim,
     areaValue: js.area_value,
     areaUnit: js.area_unit,
     areaMapped: js.area_mapped_value,
