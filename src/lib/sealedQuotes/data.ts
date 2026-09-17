@@ -20,7 +20,7 @@ export async function getInvitationByToken(token: string) {
          id, status, expires_at, awarded_contractor_id, postcode, lat, lng, boundary,
          area_value, area_unit, area_mapped_value, area_source,
          urgency, target_date, access_notes, obstacles, gate_width,
-         service_attributes, photo_paths,
+         service_attributes, photo_paths, service_verbatim,
          service:services (id, name, area_priced),
          county:counties (name)
        )`,

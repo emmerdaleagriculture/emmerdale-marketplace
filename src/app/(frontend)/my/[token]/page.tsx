@@ -138,6 +138,7 @@ export default async function ClientPortalPage({
 
   const spec = {
     service,
+    serviceVerbatim: js.service_verbatim,
     areaValue: js.area_value,
     areaUnit: js.area_unit,
     areaMapped: js.area_mapped_value,
