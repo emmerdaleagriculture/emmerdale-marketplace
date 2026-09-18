@@ -186,7 +186,10 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
                 `this county, so you’re seeing it now.\n\n`
               : `A job in your area needs pricing.\n\n`) +
           `In their words: “${p.description ?? '—'}”\n\n` +
-          (p.service ? `Work:      ${p.service}\n` : '') +
+          // The label can now be the customer's own words, when they were short
+          // enough to read as a service name — so it can be word-for-word the
+          // description printed directly above. Don't say it twice.
+          (p.service && p.service !== p.description ? `Work:      ${p.service}\n` : '') +
           `Area:      ${areaLine(p)}\n` +
           `Where:     ${p.postcode_district ?? '—'}, ${p.county ?? ''} — the full address comes if you win the job\n` +
           `When:      ${p.urgency ?? 'not stated'}${p.target_date ? ` (by ${p.target_date})` : ''}\n` +
@@ -231,7 +234,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `Confirm your price: ${gbp(p.amount_pence)} for ${p.service ?? 'the job'}`,
         text:
           `We read your reply as a price of ${gbp(p.amount_pence)} for the ` +
-          `${p.service ?? ''} job in ${p.postcode_district ?? 'your area'}.\n\n` +
+          `${p.service ? `${p.service} ` : ''}job in ${p.postcode_district ?? 'your area'}.\n\n` +
           `It won’t be shown to the customer until you confirm it:\n` +
           `${SITE_URL}/quote/confirm/${p.confirm_token}\n\n` +
           `If that figure’s wrong, use your pricing link instead and it will replace this one.`,
@@ -282,7 +285,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           : `Your first price is in — ${gbp(p.client_price_pence)}`,
         text:
           `Hi ${first},\n\nA contractor (${p.contractor_label ?? 'Contractor A'}) has priced your ` +
-          `${p.service ?? ''} job at ${gbp(p.client_price_pence)}.\n\n` +
+          `${p.service ? `${p.service} ` : ''}job at ${gbp(p.client_price_pence)}.\n\n` +
           (p.sole_offer
             ? `See it and accept here:\n${portal}\n\n`
             : `More may follow — see them all and choose here:\n${portal}\n\n`) +
@@ -345,7 +348,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         };
       }
       return {
-        subject: `About your ${p.service ?? ''} job`,
+        subject: `About your ${p.service ? `${p.service} ` : ''}job`,
         text:
           `Hi ${first},\n\nWe don’t currently have contractors covering ${p.county ?? 'your area'} ` +
           `for this kind of work, so we can’t take your job forward right now. We’re ` +
@@ -363,7 +366,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `Your job is still out with contractors`,
         text:
-          `Hi ${first},\n\nJust so you know where things stand: your ${p.service ?? ''} job ` +
+          `Hi ${first},\n\nJust so you know where things stand: your ${p.service ? `${p.service} ` : ''}job ` +
           `is with contractors in ${p.county ?? 'your area'}, but none has priced it yet. ` +
           `That’s usually about their diaries, not your job — prices can arrive at any ` +
           `time over the next few days.\n\nYour job page: ${portal}`,
@@ -474,7 +477,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `We owe you for the ${p.service ?? 'job'} — send your invoice`,
         text:
-          `Your ${p.service ?? 'job'} job${p.postcode_district ? ` in ${p.postcode_district}` : ''}` +
+          `Your ${p.service ? `${p.service} ` : ''}job${p.postcode_district ? ` in ${p.postcode_district}` : ''}` +
           `${p.contact_name ? ` for ${p.contact_name}` : ''} is finished and confirmed.\n\n` +
           `We just need your invoice before we can pay it. A PDF or a photo of a paper ` +
           `one is fine — upload it on the job:\n${SITE_URL}/won\n\n` +
