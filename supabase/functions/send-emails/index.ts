@@ -44,6 +44,15 @@ const SQ_CONTRACTOR_KINDS = new Set([
   'sq_invitation', 'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
 ]);
 
+/**
+ * Tom's line, for the customer-facing follow-ups that offer a call.
+ *
+ * Duplicated from src/lib/site.ts (PHONE_DISPLAY) because this is a Deno edge
+ * function and cannot import from the Next app. If the number changes there,
+ * it has to change here too — there is no build step that would catch it.
+ */
+const PHONE_DISPLAY = '07825 156062';
+
 /** "£1,250" / "£1,252.50" from pence. */
 function gbp(pence: unknown): string {
   const n = Number(pence ?? 0);
@@ -145,22 +154,27 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           })
         : null;
       const deadline = p.late_join && closes ? `Pricing closes ${closes}` : 'Price it within 7 days';
-      // direct: a repeat the customer asked to offer to this contractor first.
+      // direct: offered to this contractor alone first — a repeat the customer
+      // asked them for again, or (first_refusal) a new job before the market.
       const opens = p.market_opens_at
         ? new Date(String(p.market_opens_at)).toLocaleString('en-GB', {
             weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit',
             timeZone: 'Europe/London',
           })
-        : 'the next 48 hours';
+        : p.first_refusal ? 'the next 24 hours' : 'the next 48 hours';
       const lastTime = p.last_job_at
         ? new Date(String(p.last_job_at)).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'Europe/London' })
         : null;
       return {
-        subject: p.direct
-          ? `A previous customer wants you again: ${p.service ?? 'land work'}, ${p.county ?? ''}`
-          : `Job to price: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
+        subject: p.first_refusal
+          ? `New job, offered to you first: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
+          : p.direct
+            ? `A previous customer wants you again: ${p.service ?? 'land work'}, ${p.county ?? ''}`
+            : `Job to price: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
         text:
-          (p.direct
+          (p.first_refusal
+            ? `A new job in your area needs pricing, and it’s offered to you before anyone else.\n\n`
+            : p.direct
             ? `A customer you’ve done this job for has asked for you again, so it’s offered ` +
               `to you first.` +
               (p.last_price_pence
@@ -172,7 +186,10 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
                 `this county, so you’re seeing it now.\n\n`
               : `A job in your area needs pricing.\n\n`) +
           `In their words: “${p.description ?? '—'}”\n\n` +
-          (p.service ? `Work:      ${p.service}\n` : '') +
+          // The label can now be the customer's own words, when they were short
+          // enough to read as a service name — so it can be word-for-word the
+          // description printed directly above. Don't say it twice.
+          (p.service && p.service !== p.description ? `Work:      ${p.service}\n` : '') +
           `Area:      ${areaLine(p)}\n` +
           `Where:     ${p.postcode_district ?? '—'}, ${p.county ?? ''} — the full address comes if you win the job\n` +
           `When:      ${p.urgency ?? 'not stated'}${p.target_date ? ` (by ${p.target_date})` : ''}\n` +
@@ -217,7 +234,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `Confirm your price: ${gbp(p.amount_pence)} for ${p.service ?? 'the job'}`,
         text:
           `We read your reply as a price of ${gbp(p.amount_pence)} for the ` +
-          `${p.service ?? ''} job in ${p.postcode_district ?? 'your area'}.\n\n` +
+          `${p.service ? `${p.service} ` : ''}job in ${p.postcode_district ?? 'your area'}.\n\n` +
           `It won’t be shown to the customer until you confirm it:\n` +
           `${SITE_URL}/quote/confirm/${p.confirm_token}\n\n` +
           `If that figure’s wrong, use your pricing link instead and it will replace this one.`,
@@ -260,12 +277,18 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       };
     }
     case 'sq_first_quote':
+      // sole_offer: priced by the contractor holding the job under first
+      // refusal, so no other prices are coming — don't promise them.
       return {
-        subject: `Your first price is in — ${gbp(p.client_price_pence)}`,
+        subject: p.sole_offer
+          ? `Your price is in — ${gbp(p.client_price_pence)}`
+          : `Your first price is in — ${gbp(p.client_price_pence)}`,
         text:
           `Hi ${first},\n\nA contractor (${p.contractor_label ?? 'Contractor A'}) has priced your ` +
-          `${p.service ?? ''} job at ${gbp(p.client_price_pence)}.\n\n` +
-          `More may follow — see them all and choose here:\n${portal}\n\n` +
+          `${p.service ? `${p.service} ` : ''}job at ${gbp(p.client_price_pence)}.\n\n` +
+          (p.sole_offer
+            ? `See it and accept here:\n${portal}\n\n`
+            : `More may follow — see them all and choose here:\n${portal}\n\n`) +
           `Nothing is booked until you accept a price and pay the deposit.`,
       };
     case 'sq_new_quotes':
@@ -325,7 +348,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         };
       }
       return {
-        subject: `About your ${p.service ?? ''} job`,
+        subject: `About your ${p.service ? `${p.service} ` : ''}job`,
         text:
           `Hi ${first},\n\nWe don’t currently have contractors covering ${p.county ?? 'your area'} ` +
           `for this kind of work, so we can’t take your job forward right now. We’re ` +
@@ -343,7 +366,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `Your job is still out with contractors`,
         text:
-          `Hi ${first},\n\nJust so you know where things stand: your ${p.service ?? ''} job ` +
+          `Hi ${first},\n\nJust so you know where things stand: your ${p.service ? `${p.service} ` : ''}job ` +
           `is with contractors in ${p.county ?? 'your area'}, but none has priced it yet. ` +
           `That’s usually about their diaries, not your job — prices can arrive at any ` +
           `time over the next few days.\n\nYour job page: ${portal}`,
@@ -358,6 +381,57 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `We’re adding contractors every day, so please check back for future work: ` +
           `${SITE_URL}/start`,
       };
+    // ── Follow-ups while the customer sits on their prices ────────────────
+    // Day 3: the fuller note. Day 6: a short nudge. Both stop the moment a
+    // price is accepted — the job leaves quotes_receiving and the chase query
+    // no longer matches it.
+    //
+    // The deposit percentage comes from the payload, not a literal here: it is
+    // app_config.sq_deposit_rate, and copy that hardcodes 15% would quietly
+    // start lying to customers the day that changes.
+    case 'sq_quotes_nudge_1': {
+      const pctD3 = p.deposit_pct ?? 15;
+      return {
+        subject: `Your Emmerdale Agriculture prices are ready — here’s what happens next`,
+        text:
+          `Hi ${first},\n\n` +
+          `It’s Tom here from Emmerdale Agriculture.\n\n` +
+          `You’ve now received your price${Number(p.quote_count ?? 1) === 1 ? '' : 's'} for ` +
+          `${p.service ?? 'your job'}. I wanted to follow up personally and answer any ` +
+          `questions before you decide.\n\n` +
+          `A few things worth knowing about how we work:\n\n` +
+          `• Every approved operator is vetted and fully insured before they’re allowed to ` +
+          `price your job.\n` +
+          `• They take before-and-after photos of the work, so you can see exactly what’s ` +
+          `been done.\n` +
+          `• We don’t release payment to the operator until you’ve confirmed you’re happy — ` +
+          `your payment sits with us until then, not with them.\n\n` +
+          `If you’re ready to go ahead, open your job page and hit “Accept this price” on the ` +
+          `one you’d like:\n${portal}\n\n` +
+          `You only pay a ${pctD3}% deposit to book the job in and we’ll agree the date with ` +
+          `you — the rest is due once it’s done and you’re satisfied.\n\n` +
+          `If you’d like a hand comparing them or just want to talk it through, give me a ` +
+          `call on ${PHONE_DISPLAY} — happy to help you pick the right option.\n\n` +
+          `All the best,\nTom Oswald\nEmmerdale Agriculture\n${PHONE_DISPLAY}`,
+      };
+    }
+    case 'sq_quotes_nudge_2': {
+      const pctD6 = p.deposit_pct ?? 15;
+      return {
+        subject: `Still deciding? Your prices are waiting`,
+        text:
+          `Hi ${first}, it’s Tom from Emmerdale Agriculture.\n\n` +
+          `Just checking in on the price${Number(p.quote_count ?? 1) === 1 ? '' : 's'} you got ` +
+          `for ${p.service ?? 'your job'}. All our operators are fully vetted and insured, and ` +
+          `they take before and after photos so you can see the work — we only release payment ` +
+          `once you’re happy with the job.\n\n` +
+          `Ready to go ahead? Open your job page and hit “Accept this price” on the one you ` +
+          `want:\n${portal}\n\n` +
+          `Only a ${pctD6}% deposit to book the date in, the rest due once it’s done.\n\n` +
+          `Any questions, or want help choosing, just call me on ${PHONE_DISPLAY}.\n\n` +
+          `All the best,\nTom`,
+      };
+    }
     case 'sq_rating_request':
       return {
         subject: `How did ${p.contractor_business_name ?? 'the contractor'} do?`,
@@ -403,7 +477,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `We owe you for the ${p.service ?? 'job'} — send your invoice`,
         text:
-          `Your ${p.service ?? 'job'} job${p.postcode_district ? ` in ${p.postcode_district}` : ''}` +
+          `Your ${p.service ? `${p.service} ` : ''}job${p.postcode_district ? ` in ${p.postcode_district}` : ''}` +
           `${p.contact_name ? ` for ${p.contact_name}` : ''} is finished and confirmed.\n\n` +
           `We just need your invoice before we can pay it. A PDF or a photo of a paper ` +
           `one is fine — upload it on the job:\n${SITE_URL}/won\n\n` +

@@ -104,14 +104,15 @@ export default async function AdminDashboard() {
 
   // The funnel as steps, each with its conversion from the one before. The
   // first step is page views, which the beacon only counts for humans.
-  const steps: { key: string; label: string }[] = [
-    { key: 'landing_views_30d', label: 'Landing views' },
-    { key: 'started_30d', label: 'Started a job' },
-    { key: 'confirmed_30d', label: 'Sent it' },
-    { key: 'distributed_30d', label: 'Reached contractors' },
-    { key: 'priced_30d', label: 'Got a price' },
-    { key: 'paid_30d', label: 'Paid' },
-    { key: 'completed_30d', label: 'Completed' },
+  // Each step opens what it counts: views by source, or the jobs themselves.
+  const steps: { key: string; label: string; href: string }[] = [
+    { key: 'landing_views_30d', label: 'Landing views', href: '/admin/reporting' },
+    { key: 'started_30d', label: 'Started a job', href: '/admin/submissions?filter=started' },
+    { key: 'confirmed_30d', label: 'Sent it', href: '/admin/submissions?filter=sent' },
+    { key: 'distributed_30d', label: 'Reached contractors', href: '/admin/submissions?filter=reached' },
+    { key: 'priced_30d', label: 'Got a price', href: '/admin/submissions?filter=priced' },
+    { key: 'paid_30d', label: 'Paid', href: '/admin/submissions?filter=paid' },
+    { key: 'completed_30d', label: 'Completed', href: '/admin/submissions?filter=completed' },
   ];
   const top = fu[steps[0].key] || 0;
 
@@ -135,10 +136,10 @@ export default async function AdminDashboard() {
       <div className={s.sectionLabel}>Needs attention</div>
       <div className={s.attention}>
         <Attention count={at.invoices_to_pay} label="invoices to pay" href="/admin/money" />
-        <Attention count={at.awaiting_customer_confirm} label="awaiting customer confirmation" href="/admin/submissions" />
-        <Attention count={at.awaiting_payment} label="accepted, deposit not paid" href="/admin/submissions" />
-        <Attention count={at.no_quotes_48h} label="no price after 48h" href="/admin/submissions" />
-        <Attention count={at.no_matches} label="no contractor covered it" href="/admin/submissions" />
+        <Attention count={at.awaiting_customer_confirm} label="awaiting customer confirmation" href="/admin/submissions?filter=awaiting_confirm" />
+        <Attention count={at.awaiting_payment} label="accepted, deposit not paid" href="/admin/submissions?filter=awaiting_payment" />
+        <Attention count={at.no_quotes_48h} label="no price after 48h" href="/admin/submissions?filter=no_quotes_48h" />
+        <Attention count={at.no_matches} label="no contractor covered it" href="/admin/submissions?filter=no_matches" />
         <Attention count={at.awaiting_invoice} label="finished, no invoice yet" href="/admin/money" />
         <Attention count={co.pending ?? 0} label="contractors awaiting approval" href="/admin/contractors" />
         <Attention count={em.failed} label="emails failed to send" href="/admin/email" />
@@ -151,14 +152,14 @@ export default async function AdminDashboard() {
           const v = fu[st.key] || 0;
           const prev = i === 0 ? v : fu[steps[i - 1].key] || 0;
           return (
-            <div key={st.key} className={s.funnelStep}>
+            <Link key={st.key} href={st.href} className={s.funnelStep}>
               <div className={s.funnelValue}>{n(v)}</div>
               <div className={s.funnelLabel}>{st.label}</div>
               <div className={s.funnelRate}>{i === 0 ? ' ' : `${pct(v, prev)} of previous`}</div>
               <div className={s.funnelBar}>
                 <span style={{ width: top > 0 ? `${Math.max(2, (100 * v) / top)}%` : '0%' }} />
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

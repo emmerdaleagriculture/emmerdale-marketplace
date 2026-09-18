@@ -8,6 +8,7 @@ import {
   COMPANY_REG_PROSE,
 } from '@/lib/site';
 import a from '../auth.module.css';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import l from '../legal.module.css';
 
 export const metadata: Metadata = {
@@ -32,6 +33,7 @@ export default function CustomerTermsPage() {
       <SiteHeader />
       <main className={a.main}>
         <article className={l.prose}>
+          <Breadcrumb tone="light" items={[{ label: 'Customer terms' }]} />
           <h1>Customer terms and conditions</h1>
           <p className={l.updated}>
             {COMPANY_REG_PROSE}, registered office {COMPANY_ADDRESS_LINES.join(' ')}, trading

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { AccountLink } from './AccountLink';
 import { BrandMark } from './BrandMark';
 import { SocialLinks } from '@/components/SocialLinks';
 import s from './home.module.css';
@@ -74,14 +75,16 @@ export function HomeHeader() {
         <SocialLinks className={s.navSocial} />
 
         <div className={s.navCta}>
-          <Link href={BOOK_HREF} className={s.navBook}>
+          <Link
+            href={BOOK_HREF}
+            className={s.navBook}
+            onClick={() => window.gtag?.('event', 'cta_click', { location: 'header' })}
+          >
             Book online
           </Link>
           {/* One login for both sides. Labelling it "Contractor log in" hid it
               from the customers who now have accounts of their own. */}
-          <Link href="/login" className={s.navLogin}>
-            Log in
-          </Link>
+          <AccountLink className={s.navLogin} />
         </div>
 
         <button
@@ -117,9 +120,7 @@ export function HomeHeader() {
         <Link href={BOOK_HREF} className={s.mobileMenuBook} onClick={close}>
           Book online
         </Link>
-        <Link href="/login" onClick={close}>
-          Log in
-        </Link>
+        <AccountLink onClick={close} />
       </div>
     </header>
   );

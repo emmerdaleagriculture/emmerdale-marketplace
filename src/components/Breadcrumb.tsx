@@ -20,6 +20,13 @@ type Props = {
   /** Skip the "Home" prefix if a particular page wants something different. */
   skipHome?: boolean;
   /**
+   * Which surface this sits on. 'dark' is the hero treatment the vertical and
+   * notes pages use; 'light' is for the cream/white pages, where the white
+   * text of the dark variant is invisible. Defaults to 'dark' so every
+   * existing caller is unchanged.
+   */
+  tone?: 'dark' | 'light';
+  /**
    * Emit BreadcrumbList JSON-LD. Defaults to true. Pass siteUrl explicitly
    * if you need absolute URLs for the structured data (otherwise relative).
    */
@@ -28,7 +35,13 @@ type Props = {
 };
 
 /** Ported from the HPM site — same markup, marketplace default site URL. */
-export function Breadcrumb({ items, skipHome = false, jsonLd = true, siteUrl: siteUrlProp }: Props) {
+export function Breadcrumb({
+  items,
+  skipHome = false,
+  jsonLd = true,
+  tone = 'dark',
+  siteUrl: siteUrlProp,
+}: Props) {
   const trail: Crumb[] = skipHome ? items : [{ label: 'Home', href: '/' }, ...items];
 
   const lastIndex = trail.length - 1;
@@ -50,7 +63,10 @@ export function Breadcrumb({ items, skipHome = false, jsonLd = true, siteUrl: si
 
   return (
     <>
-      <nav className={styles.crumb} aria-label="Breadcrumb">
+      <nav
+        className={tone === 'light' ? `${styles.crumb} ${styles.light}` : styles.crumb}
+        aria-label="Breadcrumb"
+      >
         {trail.map((c, i) => {
           const isLast = i === lastIndex;
           return (

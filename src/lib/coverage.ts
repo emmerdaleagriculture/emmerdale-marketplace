@@ -7,12 +7,13 @@ import { UK_COUNTY_PATHS } from '@/lib/ukCountyPaths';
  * a route handler can't import react-dom/server.
  */
 
-// Sequential brand-green ramp (validated): neutral for zero, light → dark.
+// Sequential brand-green ramp: neutral for zero, light → dark.
 // `label` is for the admin; `publicLabel` keeps contractor counts private.
 export const COVERAGE_BINS = [
-  { min: 4, fill: '#245018', label: '4+ contractors', publicLabel: 'Strong coverage' },
-  { min: 2, fill: '#5f9844', label: '2–3 contractors', publicLabel: 'Good coverage' },
-  { min: 1, fill: '#a5c887', label: '1 contractor', publicLabel: 'Covered' },
+  { min: 10, fill: '#245018', label: '10+ contractors', publicLabel: 'Excellent coverage' },
+  { min: 6, fill: '#4f8638', label: '6–9 contractors', publicLabel: 'Strong coverage' },
+  { min: 4, fill: '#86b267', label: '4–5 contractors', publicLabel: 'Good coverage' },
+  { min: 1, fill: '#c3dcad', label: '1–3 contractors', publicLabel: 'Covered' },
   { min: 0, fill: '#eceee9', label: 'No coverage yet', publicLabel: 'Not covered yet' },
 ] as const;
 

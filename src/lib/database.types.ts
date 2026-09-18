@@ -51,6 +51,7 @@ export type Database = {
           status: string
           submission_id: string
           valid_until: string
+          viewed_at: string | null
         }
         Insert: {
           client_price_pence: number
@@ -70,6 +71,7 @@ export type Database = {
           status?: string
           submission_id: string
           valid_until: string
+          viewed_at?: string | null
         }
         Update: {
           client_price_pence?: number
@@ -89,6 +91,7 @@ export type Database = {
           status?: string
           submission_id?: string
           valid_until?: string
+          viewed_at?: string | null
         }
         Relationships: [
           {
@@ -1136,6 +1139,7 @@ export type Database = {
           customer_id: string | null
           distributed_at: string | null
           expires_at: string | null
+          first_refusal: boolean
           gate_w3w: string | null
           gate_width: string | null
           gclid: string | null
@@ -1195,6 +1199,7 @@ export type Database = {
           customer_id?: string | null
           distributed_at?: string | null
           expires_at?: string | null
+          first_refusal?: boolean
           gate_w3w?: string | null
           gate_width?: string | null
           gclid?: string | null
@@ -1254,6 +1259,7 @@ export type Database = {
           customer_id?: string | null
           distributed_at?: string | null
           expires_at?: string | null
+          first_refusal?: boolean
           gate_w3w?: string | null
           gate_width?: string | null
           gclid?: string | null
@@ -1593,12 +1599,15 @@ export type Database = {
           created_at: string
           depth_pct: number | null
           doc_h: number | null
+          has_gclid: boolean | null
           id: number
           kind: string
           label: string | null
           path: string
           seconds: number | null
           session_key: string
+          utm_medium: string | null
+          utm_source: string | null
           viewport_w: number | null
           x_pct: number | null
           y_pct: number | null
@@ -1607,12 +1616,15 @@ export type Database = {
           created_at?: string
           depth_pct?: number | null
           doc_h?: number | null
+          has_gclid?: boolean | null
           id?: never
           kind: string
           label?: string | null
           path: string
           seconds?: number | null
           session_key: string
+          utm_medium?: string | null
+          utm_source?: string | null
           viewport_w?: number | null
           x_pct?: number | null
           y_pct?: number | null
@@ -1621,12 +1633,15 @@ export type Database = {
           created_at?: string
           depth_pct?: number | null
           doc_h?: number | null
+          has_gclid?: boolean | null
           id?: never
           kind?: string
           label?: string | null
           path?: string
           seconds?: number | null
           session_key?: string
+          utm_medium?: string | null
+          utm_source?: string | null
           viewport_w?: number | null
           x_pct?: number | null
           y_pct?: number | null
@@ -1677,6 +1692,44 @@ export type Database = {
           to_email?: string
         }
         Relationships: []
+      }
+      recent_work_seed: {
+        Row: {
+          amount_pence: number
+          created_at: string
+          id: number
+          note: string | null
+          service_id: number
+          sort_order: number
+          source: string
+        }
+        Insert: {
+          amount_pence: number
+          created_at?: string
+          id?: never
+          note?: string | null
+          service_id: number
+          sort_order?: number
+          source?: string
+        }
+        Update: {
+          amount_pence?: number
+          created_at?: string
+          id?: never
+          note?: string | null
+          service_id?: number
+          sort_order?: number
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recent_work_seed_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       services: {
         Row: {
@@ -1851,6 +1904,7 @@ export type Database = {
           id: string | null
           job_state: string | null
           obstacles: string | null
+          offered_until: string | null
           opened_at: string | null
           postcode_district: string | null
           sent_at: string | null
@@ -1921,6 +1975,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recent_enquiries: {
+        Row: {
+          county: string | null
+          created_on: string | null
+          ord: number | null
+          size_label: string | null
+        }
+        Relationships: []
+      }
+      recent_work: {
+        Row: {
+          amount_pence: number | null
+          ord: number | null
+          service_name: string | null
+          source: string | null
+          stars: number | null
+        }
+        Relationships: []
       }
       sq_payout_ready: {
         Row: {
@@ -2106,6 +2179,10 @@ export type Database = {
         Returns: boolean
       }
       sq_job_facts: { Args: { p_submission_id: string }; Returns: Json }
+      sq_mark_quotes_viewed: {
+        Args: { p_submission_id: string }
+        Returns: number
+      }
       sq_notify_once: {
         Args: {
           p_kind: string
@@ -2119,6 +2196,15 @@ export type Database = {
       sq_open_balance: { Args: { p_submission_id: string }; Returns: number }
       sq_payment_plan: { Args: { p_client_quote_id: string }; Returns: Json }
       sq_publish_quote: { Args: { p_quote_id: string }; Returns: undefined }
+      sq_quote_position: {
+        Args: { p_contractor_id: string; p_submission_id: string }
+        Returns: {
+          price_position: number
+          price_rank: number
+          price_total: number
+          viewed_at: string
+        }[]
+      }
       sq_settle_balance: {
         Args: { p_intent_id: string; p_payment_id: string }
         Returns: Json

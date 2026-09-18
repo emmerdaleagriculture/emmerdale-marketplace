@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { COMPANY_REG_LINE } from '@/lib/site';
 import a from '../auth.module.css';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import l from '../legal.module.css';
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default function TermsPage() {
       <SiteHeader />
       <main className={a.main}>
         <article className={l.prose}>
+          <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
           <p className={l.updated}>Version 2.0 — 5 September 2026. {COMPANY_REG_LINE}</p>
 

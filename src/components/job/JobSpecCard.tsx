@@ -5,6 +5,12 @@ export type JobSpecPhoto = { url: string; label: string };
 
 export type JobSpec = {
   service: string | null;
+  /**
+   * The customer's own words for the work. Since the model came out of job
+   * creation (8e86e71) `service` is null on almost every submission, so this
+   * is in practice the only description a contractor gets.
+   */
+  serviceVerbatim?: string | null;
   areaValue: number | null;
   areaUnit: string | null;
   areaMapped: number | null;
@@ -49,7 +55,11 @@ function areaLabel(spec: JobSpec): string {
 export function JobSpecCard({ spec }: { spec: JobSpec }) {
   const conditions = Object.entries(spec.conditions ?? {});
   const rows: [string, string | null][] = [
-    ['Work', spec.service ?? 'Described by the customer'],
+    // The customer's own words first: the classified service name (when there
+    // is one) already heads the page, so repeating it here told the contractor
+    // nothing, and when there wasn't one this row rendered a placeholder —
+    // "Described by the customer" — with the description nowhere on the page.
+    ['Work', spec.serviceVerbatim || spec.service || 'Described by the customer'],
     ['Area', areaLabel(spec)],
     [
       'Where',

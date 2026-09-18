@@ -20,8 +20,8 @@ import s from './app.module.css';
  * section heading and its button. Nothing here is new marketing copy.
  *
  * Signed-in visitors never see this screen: postLoginPath() — the same routing
- * /login already uses — sends a contractor to the job board and a customer to
- * their jobs, identical to logging in on the website.
+ * /login already uses — sends a contractor to their dashboard (/account) and a
+ * customer to their jobs (/my), identical to logging in on the website.
  *
  * Deliberately not indexed (and disallowed in robots.ts, as /start is): this
  * route exists for the app shell, not for search. Organic traffic still lands

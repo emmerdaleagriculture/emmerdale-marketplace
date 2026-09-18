@@ -39,6 +39,7 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
     items: [
       { href: '/admin/jobs', label: 'Jobs' },
       { href: '/admin/contractors', label: 'Contractors' },
+      { href: '/admin/coverage', label: 'Coverage' },
     ],
   },
   {
@@ -46,6 +47,7 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
     items: [
       { href: '/admin/metrics', label: 'Dashboard' },
       { href: '/admin/reporting', label: 'Landing funnel' },
+      { href: '/admin/reporting/sources', label: 'Sources' },
       { href: '/admin/seo', label: 'SEO' },
     ],
   },

@@ -8,6 +8,9 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
 import { getServices } from '@/lib/reference';
 import { DistributionPanel } from './DistributionPanel';
 import s from '../../admin.module.css';
+import p from '../submissions.module.css';
+import { OutreachList, OutreachStats, STAGE_TITLES, isOutreachStage, type OutreachStage } from '../OutreachStats';
+import { loadOutreach } from '../outreach';
 
 export const metadata: Metadata = { title: 'Submission — Admin' };
 
@@ -18,10 +21,13 @@ export const metadata: Metadata = { title: 'Submission — Admin' };
  */
 export default async function SubmissionDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const sp = await searchParams;
   const admin = createServiceRoleClient();
 
   const { data: sub } = await admin
@@ -39,12 +45,8 @@ export default async function SubmissionDetailPage({
 
   // Distribution state (Part 2): invitations, both-sides prices (§29 — this
   // page and /admin/money are the only places both appear), and the event log.
-  const [invitationsQ, quotesQ, eventsQ, services] = await Promise.all([
-    admin
-      .from('job_invitations')
-      .select('id, status, decline_reason, distance_miles, sent_at, opened_at, contractor:contractors(business_name, email)')
-      .eq('submission_id', id)
-      .order('sent_at', { ascending: true }),
+  const [outreach, quotesQ, eventsQ, services] = await Promise.all([
+    loadOutreach(id),
     admin
       .from('client_quotes')
       .select(
@@ -62,9 +64,9 @@ export default async function SubmissionDetailPage({
       .limit(200),
     getServices(),
   ]);
-  const invitations = invitationsQ.data ?? [];
   const allQuotes = quotesQ.data ?? [];
   const events = eventsQ.data ?? [];
+  const show: OutreachStage = isOutreachStage(sp.show) ? sp.show : 'emailed';
 
   // Private bucket — photos are only ever reachable through short-lived
   // signed URLs minted here for the admin.
@@ -245,30 +247,14 @@ export default async function SubmissionDetailPage({
         services={services}
       />
 
-      {invitations.length > 0 && (
+      {outreach.lines.emailed.length > 0 && (
         <>
-          <div className={s.sectionLabel}>Invitations ({invitations.length})</div>
-          <div className={s.tableWrap}>
-            <table className={s.table}>
-              <thead>
-                <tr><th>Contractor</th><th>Status</th><th>Distance</th><th>Sent</th><th>Opened</th></tr>
-              </thead>
-              <tbody>
-                {invitations.map((inv) => (
-                  <tr key={inv.id}>
-                    <td>{(inv.contractor as { business_name: string } | null)?.business_name ?? '—'}</td>
-                    <td>
-                      {inv.status}
-                      {inv.decline_reason ? ` (${inv.decline_reason.replace(/_/g, ' ')})` : ''}
-                    </td>
-                    <td>{inv.distance_miles != null ? `${inv.distance_miles} mi` : '—'}</td>
-                    <td>{formatDateTime(inv.sent_at)}</td>
-                    <td>{inv.opened_at ? formatDateTime(inv.opened_at) : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div id="outreach" className={s.sectionLabel}>
+            Outreach — {outreach.counts.invited} invited
           </div>
+          <OutreachStats id={sub.id} counts={outreach.counts} active={show} />
+          <div className={p.stageTitle}>{STAGE_TITLES[show]}</div>
+          <OutreachList stage={show} lines={outreach.lines[show]} />
         </>
       )}
 

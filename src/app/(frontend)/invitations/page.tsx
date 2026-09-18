@@ -8,6 +8,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { formatDateTime, timeLeft } from '@/lib/time';
 import a from '../auth.module.css';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import s from './invitations.module.css';
 
 /** Unclassified jobs carry the customer's own words as the title — keep a card a card. */
@@ -56,6 +57,11 @@ export default async function InvitationsPage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
+          <Breadcrumb
+            tone="light"
+            jsonLd={false}
+            items={[{ label: 'Dashboard', href: '/account' }, { label: 'Jobs to price' }]}
+          />
           <div className={a.eyebrow}>The network</div>
           <h1 className={a.title}>Jobs to price</h1>
           <p className={a.sub}>
@@ -103,8 +109,18 @@ export default async function InvitationsPage() {
                             ? `${inv.area_value} ${inv.area_unit === 'linear_m' ? 'm' : inv.area_unit}`
                             : ''}
                       </div>
+                      {/* Held alone (first refusal or a direct repeat): the
+                          deadline that matters is when it opens to others.
+                          Past it and still held means they priced in time and
+                          keep it — no other contractor is coming. */}
                       <div className={s.deadline}>
-                        {inv.expires_at ? timeLeft(inv.expires_at) : ''}
+                        {inv.offered_until
+                          ? new Date(inv.offered_until) > new Date()
+                            ? `Yours alone until ${formatDateTime(inv.offered_until)}`
+                            : 'Yours alone'
+                          : inv.expires_at
+                            ? timeLeft(inv.expires_at)
+                            : ''}
                       </div>
                     </Link>
                   ))}

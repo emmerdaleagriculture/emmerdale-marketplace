@@ -11,6 +11,7 @@ import { FirstContactButton } from './FirstContactButton';
 import { MarkDoneButton } from './MarkDoneButton';
 import { InvoiceUpload } from './InvoiceUpload';
 import a from '../auth.module.css';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import s from './won.module.css';
 
 export const metadata: Metadata = {
@@ -60,6 +61,11 @@ export default async function WonJobsPage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
+          <Breadcrumb
+            tone="light"
+            jsonLd={false}
+            items={[{ label: 'Dashboard', href: '/account' }, { label: 'Won jobs' }]}
+          />
           <div className={a.eyebrow}>The network</div>
           <h1 className={a.title}>Won jobs</h1>
           <p className={a.sub}>

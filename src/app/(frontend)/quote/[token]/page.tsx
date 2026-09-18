@@ -9,6 +9,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { JobSpecCard } from '@/components/job/JobSpecCard';
 import { BoundaryPreview } from '@/components/job/BoundaryPreview';
 import type { BoundaryPolygon } from '@/lib/jobParse/geometry';
+import { PricePosition } from './PricePosition';
 import { QuoteForm } from './QuoteForm';
 import { DeclineForm } from './DeclineForm';
 import { ContactUsButton } from '@/components/ContactUsButton';
@@ -40,18 +41,38 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   // One round-trip of latency, not three: the view event, the live quote and
   // the photo signing are independent.
   const admin = createServiceRoleClient();
-  const [, live, photos] = await Promise.all([
+  const [, live, photos, positionRes] = await Promise.all([
     admin
       .rpc('record_invitation_view', { p_token: token })
       .then(() => undefined, (e) => console.error('[sq] record view failed:', e)),
     getLiveQuote(js.id, invitation.contractor_id),
     signPhotos(js.photo_paths),
+    // Where their price sits, and whether the customer has seen it. Returns no
+    // row until enough others have priced — the threshold is enforced in SQL,
+    // so nothing here decides what is safe to show.
+    admin
+      .rpc('sq_quote_position', {
+        p_submission_id: js.id,
+        p_contractor_id: invitation.contractor_id,
+      })
+      .then((r) => r, (e) => {
+        console.error('[sq] quote position failed:', e);
+        return { data: null };
+      }),
   ]);
-  // A repeat the customer asked to offer to this contractor first: not first
-  // come, first served — theirs alone until market_opens_at.
+  const position = (positionRes?.data as
+    | {
+        price_rank: number;
+        price_total: number;
+        price_position: number | null;
+        viewed_at: string | null;
+      }[]
+    | null)?.[0] ?? null;
+  // Offered to this contractor alone until market_opens_at: a repeat the
+  // customer asked them for again, or a new job under first refusal.
   const { data: offer } = await admin
     .from('job_submissions')
-    .select('market_opens_at, preferred_contractor_id')
+    .select('market_opens_at, preferred_contractor_id, first_refusal')
     .eq('id', js.id)
     .maybeSingle();
   const directToYou =
@@ -66,6 +87,11 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
   const spec = {
     service: service?.name ?? null,
+    // What the customer actually wrote. Routing stopped classifying services
+    // (8e86e71), so service is null on nearly every job — without this the
+    // contractor's "Work" row read "Described by the customer" and the
+    // description appeared nowhere on the page.
+    serviceVerbatim: js.service_verbatim,
     areaValue: js.area_value,
     areaUnit: js.area_unit,
     areaMapped: js.area_mapped_value,
@@ -150,11 +176,26 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
           {jobOpen && (
             <>
-              {directToYou && offer?.market_opens_at ? (
+              {directToYou && offer?.market_opens_at && new Date(offer.market_opens_at) > new Date() ? (
                 <div className={q.pricedPanel}>
-                  <strong>The customer asked for you again.</strong> This repeat job is
-                  offered to you alone until {formatDateTime(offer.market_opens_at)}. Price
-                  it or pass by then — after that it goes to other contractors in the area.
+                  {offer.first_refusal ? (
+                    <>
+                      <strong>Offered to you first.</strong> This job is yours alone
+                      until {formatDateTime(offer.market_opens_at)}.
+                    </>
+                  ) : (
+                    <>
+                      <strong>The customer asked for you again.</strong> This repeat job is
+                      offered to you alone until {formatDateTime(offer.market_opens_at)}.
+                    </>
+                  )}{' '}
+                  Price it or pass by then — after that it goes to other contractors in the area.
+                </div>
+              ) : directToYou && offer?.market_opens_at ? (
+                // Window closed with the job still held: they priced in time
+                // and keep it. Not first come, first served — nobody else has it.
+                <div className={q.pricedPanel}>
+                  <strong>Yours alone.</strong> No other contractor has been sent this job.
                 </div>
               ) : (
                 <div className={q.warnPanel}>
@@ -176,7 +217,29 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                   </strong>{' '}
                   (sent {formatDateTime(live.created_at)}, valid until {live.valid_until}).
                   Send a new price below — the latest one is what the customer sees.
+                  {/* Whether it has actually reached them. Absent entirely
+                      until the price has been sent, so it never reads as
+                      "not seen" when there was nothing to see. */}
+                  <span
+                    className={`${q.seen} ${position?.viewed_at ? q.seenYes : q.seenNo}`}
+                  >
+                    <span className={q.seenDot} aria-hidden="true" />
+                    {position?.viewed_at
+                      ? `Seen by the customer on ${formatDateTime(position.viewed_at)}`
+                      : 'Not opened by the customer yet'}
+                  </span>
                 </div>
+              )}
+
+              {/* Only rendered once enough others have priced — the threshold
+                  is decided in SQL, so a thin field simply returns nulls and
+                  nothing appears here. */}
+              {live && position?.price_rank != null && position.price_total != null && (
+                <PricePosition
+                  rank={position.price_rank}
+                  total={position.price_total}
+                  position={position.price_position}
+                />
               )}
 
               <QuoteForm

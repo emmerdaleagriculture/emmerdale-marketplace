@@ -101,14 +101,18 @@ export default async function ClientPortalPage({
 
   // A repeat offered to the customer's previous contractor first
   // (market_opens_at is set only while that offer stands). They chose them by
-  // name, so the name is shown here even before any price.
+  // name, so the name is shown here even before any price. A first-refusal
+  // job (a new job offered to one contractor before the market) is not
+  // theirs to know about: it reads as an ordinary job, with no name and no
+  // button to open it up.
   const { data: directRow } = await createServiceRoleClient()
     .from('job_submissions')
-    .select('market_opens_at, preferred_contractor_id')
+    .select('market_opens_at, preferred_contractor_id, first_refusal')
     .eq('id', js.id)
     .maybeSingle();
+  const firstRefusalOpen = Boolean(directRow?.first_refusal && directRow.market_opens_at);
   const directName =
-    directRow?.market_opens_at && directRow.preferred_contractor_id
+    directRow?.market_opens_at && directRow.preferred_contractor_id && !directRow.first_refusal
       ? ((
           await createServiceRoleClient()
             .from('contractors')
@@ -130,10 +134,23 @@ export default async function ClientPortalPage({
     js.accepted_client_quote_id
       ? getClientQuoteById(js.accepted_client_quote_id)
       : Promise.resolve(null),
+    // Record that these prices have been seen, so the contractor who sent one
+    // knows it reached the customer. First view only — the function ignores
+    // rows that already carry a timestamp, so this never becomes a log of
+    // someone's visits. Failure must not cost the customer their page.
+    //
+    // LAST in the array on purpose: the five bindings above are positional,
+    // and inserting anything before them silently shifts every one.
+    needQuotes
+      ? createServiceRoleClient()
+          .rpc('sq_mark_quotes_viewed', { p_submission_id: js.id })
+          .then(() => undefined, (e) => console.error('[sq] mark viewed failed:', e))
+      : Promise.resolve(undefined),
   ]);
 
   const spec = {
     service,
+    serviceVerbatim: js.service_verbatim,
     areaValue: js.area_value,
     areaUnit: js.area_unit,
     areaMapped: js.area_mapped_value,
@@ -183,7 +200,9 @@ export default async function ClientPortalPage({
             <>
               <p className={a.sub}>
                 {quotes.length === 1
-                  ? 'One price so far — more may follow.'
+                  ? firstRefusalOpen
+                    ? 'One price so far.'
+                    : 'One price so far — more may follow.'
                   : `${quotes.length} prices to choose from.`}{' '}
                 Nothing is booked until you accept one and pay the deposit.
               </p>

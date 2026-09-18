@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { HomeHeader } from '@/components/home/HomeHeader';
 import { HomeFooter } from '@/components/home/HomeFooter';
+import { TrackedLink } from '@/components/home/Track';
 import {
   COMPANY_ADDRESS_LINES,
   COMPANY_LEGAL_NAME,
@@ -10,6 +11,7 @@ import {
   PHONE_DISPLAY,
   PHONE_TEL,
 } from '@/lib/site';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import a from '../auth.module.css';
 
 export const metadata: Metadata = {
@@ -34,6 +36,7 @@ export default function ContactPage() {
       <HomeHeader />
       <main className={a.main}>
         <div className={a.narrow}>
+          <Breadcrumb tone="light" items={[{ label: 'Contact us' }]} />
           <div className={a.eyebrow}>Emmerdale Agriculture</div>
           <h1 className={a.title}>Contact us</h1>
           <p className={a.sub}>
@@ -56,8 +59,14 @@ export default function ContactPage() {
           <div className={a.card} style={{ marginTop: 20 }}>
             <h2 className={a.cardTitle}>Phone</h2>
             <p>
-              {/* Tappable: most people reading this are on a phone already. */}
-              <a href={`tel:${PHONE_TEL}`}>{PHONE_DISPLAY}</a>
+              {/* Tappable: most people reading this are on a phone already.
+                  This is the only customer-facing phone link on the site, so
+                  it is the only honest place for cta_call — the other tel:
+                  links are admin and contractor screens, where it is us
+                  ringing the customer rather than the other way round. */}
+              <TrackedLink href={`tel:${PHONE_TEL}`} event="cta_call">
+                {PHONE_DISPLAY}
+              </TrackedLink>
             </p>
           </div>
 

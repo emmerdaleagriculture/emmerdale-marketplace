@@ -9,6 +9,7 @@ import { getServices } from '@/lib/reference';
 import { timeAgo } from '@/lib/time';
 import a from '../auth.module.css';
 import f from '@/components/forms/forms.module.css';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import j from './jobs.module.css';
 
 export const metadata: Metadata = { title: 'Jobs' };
@@ -54,6 +55,9 @@ export default async function JobsBoardPage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
+          {/* Signed-in page: no BreadcrumbList markup — a private job list is
+              not something Google should be offered a trail into. */}
+          <Breadcrumb tone="light" jsonLd={false} items={[{ label: 'Open jobs' }]} />
           <div className={a.eyebrow}>The network</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
             <h1 className={a.title}>Open jobs</h1>
