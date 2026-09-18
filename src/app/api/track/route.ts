@@ -18,7 +18,15 @@ type Incoming = {
   path?: unknown;
   session?: unknown;
   events?: unknown;
+  utm_source?: unknown;
+  utm_medium?: unknown;
+  has_gclid?: unknown;
 };
+
+/** Campaign labels, clamped like every other field here. Never the gclid
+ *  itself — see the migration for why a boolean is the whole answer. */
+const text = (v: unknown, max: number): string | null =>
+  typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null;
 
 const num = (v: unknown, lo: number, hi: number): number | null => {
   const n = typeof v === 'number' ? v : Number(v);
@@ -56,6 +64,13 @@ export async function POST(request: Request) {
     return new NextResponse(null, { status: 204 });
   }
 
+  // Attribution is per visit, not per event: it rides on every row because the
+  // table is queried a row at a time, and one string per row is cheaper than a
+  // join to a sessions table that would otherwise have to exist.
+  const utmSource = text(body.utm_source, 200);
+  const utmMedium = text(body.utm_medium, 200);
+  const hasGclid = body.has_gclid === true ? true : null;
+
   const rows = (body.events as Record<string, unknown>[])
     .slice(0, MAX_EVENTS)
     .map((e) => {
@@ -74,6 +89,9 @@ export async function POST(request: Request) {
         viewport_w: int(e.vw, 0, 10000),
         doc_h: int(e.dh, 0, 200000),
         label: typeof e.label === 'string' ? e.label.slice(0, 80) : null,
+        utm_source: utmSource,
+        utm_medium: utmMedium,
+        has_gclid: hasGclid,
       };
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
