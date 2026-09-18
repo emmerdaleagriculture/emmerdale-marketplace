@@ -15,6 +15,12 @@ export type Attributed = {
   utm_source?: string | null;
   utm_medium?: string | null;
   gclid?: string | null;
+  /**
+   * page_events stores a flag rather than the click id — it is a behavioural
+   * table that promises to hold nothing identifying. Same meaning as `gclid`
+   * being present, so the classifier treats them alike.
+   */
+  has_gclid?: boolean | null;
 };
 
 export const UNATTRIBUTED = 'Unattributed (direct / organic)';
@@ -30,7 +36,7 @@ const NAMED: Record<string, string> = {
 };
 
 export function channelOf(row: Attributed): string {
-  if (row.gclid) return 'Google Ads';
+  if (row.gclid || row.has_gclid) return 'Google Ads';
   const src = row.utm_source?.trim();
   if (!src) return UNATTRIBUTED;
   if (NAMED[src]) return NAMED[src];

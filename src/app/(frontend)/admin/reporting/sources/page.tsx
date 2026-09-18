@@ -35,13 +35,22 @@ export default async function SourcesPage() {
   const admin = createServiceRoleClient();
   const cutoff = new Date(Date.now() - 30 * DAY).toISOString();
 
-  const [viewsQ, subsQ] = await Promise.all([
+  const [viewsQ, subsQ, stepsQ] = await Promise.all([
     admin.from('landing_views').select('created_at, utm_source, gclid, referrer').gte('created_at', cutoff).limit(10000),
     admin
       .from('job_submissions')
       .select('created_at, confirmed_at, status, utm_source, gclid')
       .gte('created_at', cutoff)
       .limit(5000),
+    // Milestones, for the people who never became a submission at all. These
+    // live only in the beacon: no row is created until Send is pressed.
+    admin
+      .from('page_events')
+      .select('session_key, label, utm_source, utm_medium, has_gclid')
+      .eq('path', '/start')
+      .eq('kind', 'step')
+      .gte('created_at', cutoff)
+      .limit(20000),
   ]);
 
   const views = (viewsQ.data ?? []) as ViewRow[];
@@ -92,6 +101,53 @@ export default async function SourcesPage() {
     (acc, c) => ({ arrivals: acc.arrivals + c.arrivals, confirmed: acc.confirmed + c.confirmed }),
     { arrivals: 0, confirmed: 0 },
   );
+
+  /**
+   * The behavioural funnel, per channel — the only view of people who typed and
+   * left, since they create no submission row.
+   *
+   * Counted per session rather than per row: one tab is one visit, and a visit
+   * that reports six milestones is not six visitors. Attribution rides on every
+   * row, but only from 18 Sept; a session whose rows all predate that carries
+   * none, and is shown as "Not recorded" rather than being silently folded into
+   * direct traffic — a genuinely direct visit looks identical, and pretending
+   * otherwise would overstate whichever channel absorbed it.
+   */
+  type StepRow = {
+    session_key: string;
+    label: string | null;
+    utm_source: string | null;
+    utm_medium: string | null;
+    has_gclid: boolean | null;
+  };
+  const steps = (stepsQ.data ?? []) as StepRow[];
+
+  const sessions = new Map<string, { channel: string | null; labels: Set<string> }>();
+  for (const e of steps) {
+    const entry = sessions.get(e.session_key) ?? { channel: null, labels: new Set<string>() };
+    if (e.label) entry.labels.add(e.label);
+    // First row that carries attribution wins; the rest of the session agrees.
+    if (entry.channel === null && (e.utm_source || e.utm_medium || e.has_gclid)) {
+      entry.channel = channelOf(e);
+    }
+    sessions.set(e.session_key, entry);
+  }
+
+  const NOT_RECORDED = 'Not recorded';
+  const behaviourMap = new Map<string, { channel: string; typed: number; send: number; sent: number }>();
+  for (const entry of sessions.values()) {
+    const key = entry.channel ?? NOT_RECORDED;
+    const b = behaviourMap.get(key) ?? { channel: key, typed: 0, send: 0, sent: 0 };
+    if (entry.labels.has('typed')) b.typed += 1;
+    if (entry.labels.has('send')) b.send += 1;
+    if (entry.labels.has('sent')) b.sent += 1;
+    behaviourMap.set(key, b);
+  }
+  const behaviour = [...behaviourMap.values()]
+    .filter((b) => b.typed > 0 || b.send > 0 || b.sent > 0)
+    .sort((a, b) => compareChannels(a.channel, b.channel) || b.typed - a.typed);
+  const behaviourSessions = sessions.size;
+  const behaviourUnattributed = [...sessions.values()].filter((e) => e.channel === null).length;
 
   // Referrers say what "unattributed" actually is — syndicatedsearch.goog is
   // Google's search-partner network, so some of it is paid traffic whose gclid
@@ -211,6 +267,48 @@ export default async function SourcesPage() {
                 </tr>
               );
             })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className={s.sectionLabel}>Started but never submitted — by source</div>
+      <p className={s.sub}>
+        People who typed into the box and left. They create no submission, so every
+        other report on this site is blind to them — the beacon is the only place
+        they exist.
+        {behaviourUnattributed > 0 && (
+          <>
+            {' '}
+            Attribution only reaches the beacon from <strong>18 Sept</strong>, so{' '}
+            {behaviourUnattributed} of {behaviourSessions} sessions here predate it and
+            sit under &ldquo;not recorded&rdquo;. That shrinks daily.
+          </>
+        )}
+      </p>
+      <div className={s.tableWrap}>
+        <table className={s.table}>
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Typed</th>
+              <th>Pressed send</th>
+              <th>Finished</th>
+              <th>Gave up after typing</th>
+            </tr>
+          </thead>
+          <tbody>
+            {behaviour.map((b) => (
+              <tr key={b.channel}>
+                <td>{b.channel}</td>
+                <td>{b.typed || '—'}</td>
+                <td>{b.send || '—'}</td>
+                <td>{b.sent || '—'}</td>
+                <td>{b.typed - b.send > 0 ? b.typed - b.send : '—'}</td>
+              </tr>
+            ))}
+            {behaviour.length === 0 && (
+              <tr><td colSpan={5}>No milestones recorded in this window.</td></tr>
+            )}
           </tbody>
         </table>
       </div>

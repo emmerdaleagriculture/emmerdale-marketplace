@@ -52,6 +52,32 @@ export function trackStep(label: string): void {
   });
 }
 
+/**
+ * Which channel this visit arrived from, read off the address bar.
+ *
+ * Sent so that the people who typed into the box and left — who never create a
+ * submission row, and so are invisible to every other report — can still be
+ * counted against the channel that paid for them.
+ *
+ * The gclid is reduced to a boolean on purpose. It is the one value here that
+ * identifies a particular ad click, and this table exists on the promise that
+ * it holds nothing identifying. "Was this Google Ads" is the whole question,
+ * and a flag answers it.
+ */
+function attribution(): { utm_source?: string; utm_medium?: string; has_gclid?: boolean } {
+  try {
+    const q = new URLSearchParams(window.location.search);
+    const clip = (v: string | null) => (v && v.trim() ? v.trim().slice(0, 200) : undefined);
+    const src = clip(q.get('utm_source'));
+    const med = clip(q.get('utm_medium'));
+    const gcl = Boolean(q.get('gclid'));
+    // Nothing to say is better than a row of empty strings.
+    return { ...(src ? { utm_source: src } : {}), ...(med ? { utm_medium: med } : {}), ...(gcl ? { has_gclid: true } : {}) };
+  } catch {
+    return {};
+  }
+}
+
 /** A short, stable description of what was clicked — never page text. */
 function labelFor(el: Element | null): string | undefined {
   const node = el?.closest('a,button,[role="button"],summary,input,select,textarea');
@@ -158,7 +184,7 @@ export function PageTracker({ path }: { path: string }) {
       try {
         navigator.sendBeacon?.(
           '/api/track',
-          new Blob([JSON.stringify({ path, session, events: batch })], {
+          new Blob([JSON.stringify({ path, session, events: batch, ...attribution() })], {
             type: 'application/json',
           }),
         );

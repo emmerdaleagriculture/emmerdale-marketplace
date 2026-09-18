@@ -1596,12 +1596,15 @@ export type Database = {
           created_at: string
           depth_pct: number | null
           doc_h: number | null
+          has_gclid: boolean | null
           id: number
           kind: string
           label: string | null
           path: string
           seconds: number | null
           session_key: string
+          utm_medium: string | null
+          utm_source: string | null
           viewport_w: number | null
           x_pct: number | null
           y_pct: number | null
@@ -1610,12 +1613,15 @@ export type Database = {
           created_at?: string
           depth_pct?: number | null
           doc_h?: number | null
+          has_gclid?: boolean | null
           id?: never
           kind: string
           label?: string | null
           path: string
           seconds?: number | null
           session_key: string
+          utm_medium?: string | null
+          utm_source?: string | null
           viewport_w?: number | null
           x_pct?: number | null
           y_pct?: number | null
@@ -1624,12 +1630,15 @@ export type Database = {
           created_at?: string
           depth_pct?: number | null
           doc_h?: number | null
+          has_gclid?: boolean | null
           id?: never
           kind?: string
           label?: string | null
           path?: string
           seconds?: number | null
           session_key?: string
+          utm_medium?: string | null
+          utm_source?: string | null
           viewport_w?: number | null
           x_pct?: number | null
           y_pct?: number | null
