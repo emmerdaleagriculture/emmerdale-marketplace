@@ -1,0 +1,22 @@
+{
+  "name": "emmerdale-agriculture-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Native app-store shell (Capacitor) for emmerdaleagriculture.com. Wraps the live website in a native container for iOS/Android rather than re-implementing it — the app always shows exactly what's live on the site, with no separate web build step. Boots at /app instead of the marketing homepage.",
+  "scripts": {
+    "add:ios": "cap add ios",
+    "add:android": "cap add android",
+    "open:ios": "cap open ios",
+    "open:android": "cap open android",
+    "sync": "cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/ios": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.1.2"
+  }
+}
