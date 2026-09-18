@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { channelOf } from '@/lib/attribution';
 import s from '../admin.module.css';
 
 export const metadata: Metadata = { title: 'Reporting — Admin' };
@@ -25,6 +26,8 @@ type SubRow = {
   area_source: string;
   photo_paths: string[];
   utm_source: string | null;
+  /** Needed to tell an Ads job from a direct one — see @/lib/attribution. */
+  gclid: string | null;
   service: { name: string } | null;
   county: { name: string } | null;
 };
@@ -50,7 +53,7 @@ export default async function ReportingPage() {
     admin
       .from('job_submissions')
       .select(
-        'created_at, confirmed_at, status, parse_source, service_confirmed, area_source, photo_paths, utm_source, service:services(name), county:counties(name)',
+        'created_at, confirmed_at, status, parse_source, service_confirmed, area_source, photo_paths, utm_source, gclid, service:services(name), county:counties(name)',
       )
       .gte('created_at', cutoff)
       .limit(5000),
@@ -162,9 +165,13 @@ export default async function ReportingPage() {
     row[field] += 1;
     sources.set(key, row);
   };
-  for (const v of views) bump(v.utm_source ?? (v.gclid ? 'google (gclid)' : '(direct)'), 'views');
-  for (const r of subs) bump(r.utm_source ?? '(direct)', 'parses');
-  for (const r of confirmed) bump(r.utm_source ?? '(direct)', 'confirms');
+  // One classifier for all three rows (@/lib/attribution). The gclid fallback
+  // used to apply to views only — and `subs` didn't even select the column —
+  // so every Ads submission and confirm landed in "(direct)", and the one
+  // channel that costs money read as producing nothing.
+  for (const v of views) bump(channelOf(v), 'views');
+  for (const r of subs) bump(channelOf(r), 'parses');
+  for (const r of confirmed) bump(channelOf(r), 'confirms');
 
   // Daily rollup, last 14 days.
   const days: { day: string; views: number; parses: number; confirms: number }[] = [];
