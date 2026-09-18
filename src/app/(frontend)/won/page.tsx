@@ -64,6 +64,7 @@ export default async function WonJobsPage() {
           <Breadcrumb
             tone="light"
             jsonLd={false}
+            skipHome
             items={[{ label: 'Dashboard', href: '/account' }, { label: 'Won jobs' }]}
           />
           <div className={a.eyebrow}>The network</div>

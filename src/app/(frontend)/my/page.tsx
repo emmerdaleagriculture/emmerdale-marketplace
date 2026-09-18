@@ -98,7 +98,7 @@ export default async function MyJobsPage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
-          <Breadcrumb tone="light" jsonLd={false} items={[{ label: 'Your jobs' }]} />
+          <Breadcrumb tone="light" jsonLd={false} skipHome items={[{ label: 'Your jobs' }]} />
           <div className={a.eyebrow}>Your account</div>
           <h1 className={a.title}>Your jobs</h1>
 

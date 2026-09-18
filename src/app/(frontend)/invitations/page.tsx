@@ -60,6 +60,7 @@ export default async function InvitationsPage() {
           <Breadcrumb
             tone="light"
             jsonLd={false}
+            skipHome
             items={[{ label: 'Dashboard', href: '/account' }, { label: 'Jobs to price' }]}
           />
           <div className={a.eyebrow}>The network</div>

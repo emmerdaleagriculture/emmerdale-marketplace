@@ -42,7 +42,12 @@ export default async function PostJobPage() {
           <Breadcrumb
             tone="light"
             jsonLd={false}
-            items={[{ label: 'Open jobs', href: '/jobs' }, { label: 'Post a job' }]}
+            skipHome
+            items={[
+              { label: 'Dashboard', href: '/account' },
+              { label: 'Open jobs', href: '/jobs' },
+              { label: 'Post a job' },
+            ]}
           />
           <div className={a.eyebrow}>The network</div>
           <h1 className={a.title}>Post a job</h1>

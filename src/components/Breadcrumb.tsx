@@ -17,7 +17,11 @@ type Props = {
    * Don't include "Home" — the component prepends it automatically.
    */
   items: Crumb[];
-  /** Skip the "Home" prefix if a particular page wants something different. */
+  /**
+   * Drop the "Home" prefix. Signed-in pages pass this and lead with their own
+   * "Dashboard" crumb instead: behind a login, the marketing home page is not
+   * where anyone means to go when they reach for the top of the trail.
+   */
   skipHome?: boolean;
   /**
    * Which surface this sits on. 'dark' is the hero treatment the vertical and
