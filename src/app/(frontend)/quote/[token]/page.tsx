@@ -9,6 +9,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { JobSpecCard } from '@/components/job/JobSpecCard';
 import { BoundaryPreview } from '@/components/job/BoundaryPreview';
 import type { BoundaryPolygon } from '@/lib/jobParse/geometry';
+import { PricePosition } from './PricePosition';
 import { QuoteForm } from './QuoteForm';
 import { DeclineForm } from './DeclineForm';
 import { ContactUsButton } from '@/components/ContactUsButton';
@@ -40,13 +41,33 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   // One round-trip of latency, not three: the view event, the live quote and
   // the photo signing are independent.
   const admin = createServiceRoleClient();
-  const [, live, photos] = await Promise.all([
+  const [, live, photos, positionRes] = await Promise.all([
     admin
       .rpc('record_invitation_view', { p_token: token })
       .then(() => undefined, (e) => console.error('[sq] record view failed:', e)),
     getLiveQuote(js.id, invitation.contractor_id),
     signPhotos(js.photo_paths),
+    // Where their price sits, and whether the customer has seen it. Returns no
+    // row until enough others have priced — the threshold is enforced in SQL,
+    // so nothing here decides what is safe to show.
+    admin
+      .rpc('sq_quote_position', {
+        p_submission_id: js.id,
+        p_contractor_id: invitation.contractor_id,
+      })
+      .then((r) => r, (e) => {
+        console.error('[sq] quote position failed:', e);
+        return { data: null };
+      }),
   ]);
+  const position = (positionRes?.data as
+    | {
+        price_rank: number;
+        price_total: number;
+        price_position: number | null;
+        viewed_at: string | null;
+      }[]
+    | null)?.[0] ?? null;
   // Offered to this contractor alone until market_opens_at: a repeat the
   // customer asked them for again, or a new job under first refusal.
   const { data: offer } = await admin
@@ -196,7 +217,29 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                   </strong>{' '}
                   (sent {formatDateTime(live.created_at)}, valid until {live.valid_until}).
                   Send a new price below — the latest one is what the customer sees.
+                  {/* Whether it has actually reached them. Absent entirely
+                      until the price has been sent, so it never reads as
+                      "not seen" when there was nothing to see. */}
+                  <span
+                    className={`${q.seen} ${position?.viewed_at ? q.seenYes : q.seenNo}`}
+                  >
+                    <span className={q.seenDot} aria-hidden="true" />
+                    {position?.viewed_at
+                      ? `Seen by the customer on ${formatDateTime(position.viewed_at)}`
+                      : 'Not opened by the customer yet'}
+                  </span>
                 </div>
+              )}
+
+              {/* Only rendered once enough others have priced — the threshold
+                  is decided in SQL, so a thin field simply returns nulls and
+                  nothing appears here. */}
+              {live && position?.price_rank != null && position.price_total != null && (
+                <PricePosition
+                  rank={position.price_rank}
+                  total={position.price_total}
+                  position={position.price_position}
+                />
               )}
 
               <QuoteForm

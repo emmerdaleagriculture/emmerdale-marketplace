@@ -51,6 +51,7 @@ export type Database = {
           status: string
           submission_id: string
           valid_until: string
+          viewed_at: string | null
         }
         Insert: {
           client_price_pence: number
@@ -70,6 +71,7 @@ export type Database = {
           status?: string
           submission_id: string
           valid_until: string
+          viewed_at?: string | null
         }
         Update: {
           client_price_pence?: number
@@ -89,6 +91,7 @@ export type Database = {
           status?: string
           submission_id?: string
           valid_until?: string
+          viewed_at?: string | null
         }
         Relationships: [
           {
@@ -2176,6 +2179,10 @@ export type Database = {
         Returns: boolean
       }
       sq_job_facts: { Args: { p_submission_id: string }; Returns: Json }
+      sq_mark_quotes_viewed: {
+        Args: { p_submission_id: string }
+        Returns: number
+      }
       sq_notify_once: {
         Args: {
           p_kind: string
@@ -2189,6 +2196,15 @@ export type Database = {
       sq_open_balance: { Args: { p_submission_id: string }; Returns: number }
       sq_payment_plan: { Args: { p_client_quote_id: string }; Returns: Json }
       sq_publish_quote: { Args: { p_quote_id: string }; Returns: undefined }
+      sq_quote_position: {
+        Args: { p_contractor_id: string; p_submission_id: string }
+        Returns: {
+          price_position: number
+          price_rank: number
+          price_total: number
+          viewed_at: string
+        }[]
+      }
       sq_settle_balance: {
         Args: { p_intent_id: string; p_payment_id: string }
         Returns: Json

@@ -134,6 +134,18 @@ export default async function ClientPortalPage({
     js.accepted_client_quote_id
       ? getClientQuoteById(js.accepted_client_quote_id)
       : Promise.resolve(null),
+    // Record that these prices have been seen, so the contractor who sent one
+    // knows it reached the customer. First view only — the function ignores
+    // rows that already carry a timestamp, so this never becomes a log of
+    // someone's visits. Failure must not cost the customer their page.
+    //
+    // LAST in the array on purpose: the five bindings above are positional,
+    // and inserting anything before them silently shifts every one.
+    needQuotes
+      ? createServiceRoleClient()
+          .rpc('sq_mark_quotes_viewed', { p_submission_id: js.id })
+          .then(() => undefined, (e) => console.error('[sq] mark viewed failed:', e))
+      : Promise.resolve(undefined),
   ]);
 
   const spec = {
