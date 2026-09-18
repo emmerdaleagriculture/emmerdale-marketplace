@@ -8,6 +8,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { formatDateTime, timeLeft } from '@/lib/time';
 import a from '../auth.module.css';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import s from './invitations.module.css';
 
 /** Unclassified jobs carry the customer's own words as the title — keep a card a card. */
@@ -56,6 +57,11 @@ export default async function InvitationsPage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
+          <Breadcrumb
+            tone="light"
+            jsonLd={false}
+            items={[{ label: 'Dashboard', href: '/account' }, { label: 'Jobs to price' }]}
+          />
           <div className={a.eyebrow}>The network</div>
           <h1 className={a.title}>Jobs to price</h1>
           <p className={a.sub}>

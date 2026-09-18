@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { COMPANY_ADDRESS_LINES, COMPANY_REG_PROSE } from '@/lib/site';
 import a from '../auth.module.css';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import l from '../legal.module.css';
 
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function ServiceCharterPage() {
       <SiteHeader />
       <main className={a.main}>
         <article className={l.prose}>
+          <Breadcrumb tone="light" items={[{ label: 'Service charter' }]} />
           <h1>What to expect from us</h1>
           <p className={l.updated}>
             Emmerdale Agriculture — Customer Service Charter ·{' '}

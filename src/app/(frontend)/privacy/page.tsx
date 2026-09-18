@@ -3,6 +3,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { COMPANY_LEGAL_NAME, COMPANY_REG_LINE, COMPANY_REG_PROSE } from '@/lib/site';
 import a from '../auth.module.css';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import l from '../legal.module.css';
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export default function PrivacyPage() {
       <SiteHeader />
       <main className={a.main}>
         <article className={l.prose}>
+          <Breadcrumb tone="light" items={[{ label: 'Privacy policy' }]} />
           <h1>Privacy policy</h1>
           <p className={l.updated}>{COMPANY_REG_LINE}</p>
 

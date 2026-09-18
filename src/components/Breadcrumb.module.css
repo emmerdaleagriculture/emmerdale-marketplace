@@ -25,3 +25,27 @@
   color: var(--jd-yellow);
   font-weight: 600;
 }
+
+/* The trail above sits on a dark hero. On the cream and white pages — legal,
+   dashboards, job lists — white-on-cream is invisible, which is why the
+   breadcrumb never spread beyond the vertical pages. Same markup, readable
+   palette. The doubled class beats the base .current on specificity, so the
+   yellow current crumb does not leak through. */
+.light {
+  /* --ink-2, not --ink-3: at 12px on cream the lighter ink lands around 4.4:1,
+     under AA. In these trails it only ever paints the separator, but the
+     darker token costs nothing. */
+  color: var(--ink-2);
+}
+.light a {
+  color: var(--ink-2);
+  opacity: 1;
+  border-bottom-color: var(--rule);
+}
+.light a:hover {
+  color: var(--jd-green-dark);
+  border-bottom-color: var(--jd-green-dark);
+}
+.light .current {
+  color: var(--jd-green-dark);
+}
