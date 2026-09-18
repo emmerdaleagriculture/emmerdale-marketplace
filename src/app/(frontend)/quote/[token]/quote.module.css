@@ -7,6 +7,92 @@
   margin-bottom: 20px;
 }
 
+/* Has the customer opened this price yet. Sits with the price itself, because
+   it is a fact about that price rather than about the job. */
+.seen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.seenYes {
+  color: var(--jd-green-dark, #245018);
+}
+.seenNo {
+  color: var(--ink-3, #6f7469);
+  font-weight: 500;
+}
+.seenDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 100px;
+  background: currentColor;
+  flex: none;
+}
+
+/* Where this price sits among the others. No axis numbers and no prices —
+   just far enough to tell a contractor they are out of step. */
+.posWrap {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 14px 16px 12px;
+  margin-bottom: 20px;
+  background: #fff;
+}
+.posHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 10px;
+}
+.posSummary {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--jd-green-dark, #245018);
+}
+.posCount {
+  font-size: 13px;
+  color: var(--ink-3, #6f7469);
+}
+.posTrack {
+  position: relative;
+  height: 10px;
+  border-radius: 100px;
+  /* Cheap on the left, dear on the right. */
+  background: linear-gradient(90deg, #4a9a3a 0%, #ffde00 55%, #c63b1f 100%);
+  opacity: 0.85;
+}
+.posFill {
+  display: none;
+}
+.posMarker {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+  background: #1a1f15;
+  box-shadow: 0 0 0 2px #fff;
+  transform: translate(-50%, -50%);
+}
+.posScale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--ink-3, #6f7469);
+}
+.posNote {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-3, #6f7469);
+}
+
 .pricedPanel {
   padding: 14px 16px;
   border: 1px solid var(--rule);
