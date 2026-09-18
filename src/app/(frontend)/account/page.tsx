@@ -196,7 +196,7 @@ export default async function AccountPage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
-          <Breadcrumb tone="light" jsonLd={false} items={[{ label: 'Dashboard' }]} />
+          <Breadcrumb tone="light" jsonLd={false} skipHome items={[{ label: 'Dashboard' }]} />
           <div className={a.eyebrow}>Your dashboard</div>
           <h1 className={a.title}>{contractor.business_name}</h1>
           <div className={ac.statusRow}>

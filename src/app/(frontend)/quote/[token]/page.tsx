@@ -5,6 +5,7 @@ import { getInvitationByToken, getLiveQuote, signPhotos } from '@/lib/sealedQuot
 import { formatGBP, formatRate } from '@/lib/sealedQuotes/money';
 import { timeLeft, formatDateTime } from '@/lib/time';
 import { MinimalHeader } from '@/components/MinimalHeader';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import { SiteFooter } from '@/components/SiteFooter';
 import { JobSpecCard } from '@/components/job/JobSpecCard';
 import { BoundaryPreview } from '@/components/job/BoundaryPreview';
@@ -113,6 +114,17 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
       <MinimalHeader />
       <main className={a.main}>
         <div className={a.narrow}>
+          {/* No BreadcrumbList: the page is noindex and token-addressed, so
+              there is no trail for Google to follow into it. The root is the
+              contractor's dashboard rather than the marketing home page —
+              everyone who reaches this page came from an invitation email, so
+              they have an account to go back to. */}
+          <Breadcrumb
+            tone="light"
+            jsonLd={false}
+            skipHome
+            items={[{ label: 'Dashboard', href: '/account' }, { label: 'Price this job' }]}
+          />
           <div className={a.eyebrow}>Job to price</div>
           <h1 className={a.title}>{service?.name ?? 'Land work'}</h1>
           <p className={a.sub}>

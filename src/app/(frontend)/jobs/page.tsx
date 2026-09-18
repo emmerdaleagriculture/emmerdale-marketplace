@@ -57,7 +57,12 @@ export default async function JobsBoardPage() {
         <div className={a.wide}>
           {/* Signed-in page: no BreadcrumbList markup — a private job list is
               not something Google should be offered a trail into. */}
-          <Breadcrumb tone="light" jsonLd={false} items={[{ label: 'Open jobs' }]} />
+          <Breadcrumb
+            tone="light"
+            jsonLd={false}
+            skipHome
+            items={[{ label: 'Dashboard', href: '/account' }, { label: 'Open jobs' }]}
+          />
           <div className={a.eyebrow}>The network</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
             <h1 className={a.title}>Open jobs</h1>
