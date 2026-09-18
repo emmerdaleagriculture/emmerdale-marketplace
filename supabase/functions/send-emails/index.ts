@@ -44,6 +44,15 @@ const SQ_CONTRACTOR_KINDS = new Set([
   'sq_invitation', 'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
 ]);
 
+/**
+ * Tom's line, for the customer-facing follow-ups that offer a call.
+ *
+ * Duplicated from src/lib/site.ts (PHONE_DISPLAY) because this is a Deno edge
+ * function and cannot import from the Next app. If the number changes there,
+ * it has to change here too — there is no build step that would catch it.
+ */
+const PHONE_DISPLAY = '07825 156062';
+
 /** "£1,250" / "£1,252.50" from pence. */
 function gbp(pence: unknown): string {
   const n = Number(pence ?? 0);
@@ -369,6 +378,57 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `We’re adding contractors every day, so please check back for future work: ` +
           `${SITE_URL}/start`,
       };
+    // ── Follow-ups while the customer sits on their prices ────────────────
+    // Day 3: the fuller note. Day 6: a short nudge. Both stop the moment a
+    // price is accepted — the job leaves quotes_receiving and the chase query
+    // no longer matches it.
+    //
+    // The deposit percentage comes from the payload, not a literal here: it is
+    // app_config.sq_deposit_rate, and copy that hardcodes 15% would quietly
+    // start lying to customers the day that changes.
+    case 'sq_quotes_nudge_1': {
+      const pctD3 = p.deposit_pct ?? 15;
+      return {
+        subject: `Your Emmerdale Agriculture prices are ready — here’s what happens next`,
+        text:
+          `Hi ${first},\n\n` +
+          `It’s Tom here from Emmerdale Agriculture.\n\n` +
+          `You’ve now received your price${Number(p.quote_count ?? 1) === 1 ? '' : 's'} for ` +
+          `${p.service ?? 'your job'}. I wanted to follow up personally and answer any ` +
+          `questions before you decide.\n\n` +
+          `A few things worth knowing about how we work:\n\n` +
+          `• Every approved operator is vetted and fully insured before they’re allowed to ` +
+          `price your job.\n` +
+          `• They take before-and-after photos of the work, so you can see exactly what’s ` +
+          `been done.\n` +
+          `• We don’t release payment to the operator until you’ve confirmed you’re happy — ` +
+          `your payment sits with us until then, not with them.\n\n` +
+          `If you’re ready to go ahead, open your job page and hit “Accept this price” on the ` +
+          `one you’d like:\n${portal}\n\n` +
+          `You only pay a ${pctD3}% deposit to book the job in and we’ll agree the date with ` +
+          `you — the rest is due once it’s done and you’re satisfied.\n\n` +
+          `If you’d like a hand comparing them or just want to talk it through, give me a ` +
+          `call on ${PHONE_DISPLAY} — happy to help you pick the right option.\n\n` +
+          `All the best,\nTom Oswald\nEmmerdale Agriculture\n${PHONE_DISPLAY}`,
+      };
+    }
+    case 'sq_quotes_nudge_2': {
+      const pctD6 = p.deposit_pct ?? 15;
+      return {
+        subject: `Still deciding? Your prices are waiting`,
+        text:
+          `Hi ${first}, it’s Tom from Emmerdale Agriculture.\n\n` +
+          `Just checking in on the price${Number(p.quote_count ?? 1) === 1 ? '' : 's'} you got ` +
+          `for ${p.service ?? 'your job'}. All our operators are fully vetted and insured, and ` +
+          `they take before and after photos so you can see the work — we only release payment ` +
+          `once you’re happy with the job.\n\n` +
+          `Ready to go ahead? Open your job page and hit “Accept this price” on the one you ` +
+          `want:\n${portal}\n\n` +
+          `Only a ${pctD6}% deposit to book the date in, the rest due once it’s done.\n\n` +
+          `Any questions, or want help choosing, just call me on ${PHONE_DISPLAY}.\n\n` +
+          `All the best,\nTom`,
+      };
+    }
     case 'sq_rating_request':
       return {
         subject: `How did ${p.contractor_business_name ?? 'the contractor'} do?`,
