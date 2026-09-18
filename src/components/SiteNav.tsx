@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './SiteHeader.module.css';
@@ -22,6 +22,41 @@ import { useViewer } from './useViewer';
  * header stay statically cacheable: the logged-out links render first and swap
  * on hydration, and a visitor with no session cookie loads nothing.
  */
+/**
+ * Longest matching href wins, the same rule the admin bar uses: on /jobs/new,
+ * "Open jobs" is the row that lights up rather than nothing at all. Fragment
+ * links are never marked — "/#how-it-works" is a position on a page, not a
+ * page you can be on.
+ */
+function isActive(href: string, pathname: string): boolean {
+  if (href.includes('#')) return false;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** A header link that knows whether you are already there. */
+function NavLink({
+  href,
+  children,
+  onClick,
+}: {
+  href: string;
+  children: ReactNode;
+  onClick?: () => void;
+}) {
+  const pathname = usePathname() ?? '';
+  const active = isActive(href, pathname);
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={active ? styles.on : undefined}
+      aria-current={active ? 'page' : undefined}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export function SiteNav() {
   const viewer = useViewer();
   const [open, setOpen] = useState(false);
@@ -44,28 +79,34 @@ export function SiteNav() {
 
   const links = !viewer.signedIn ? (
     <>
-      <Link href="/#how-it-works" onClick={close}>How it works</Link>
-      <Link href="/paddock-maintenance" onClick={close}>Paddock maintenance</Link>
-      <Link href="/notes" onClick={close}>Notes</Link>
-      <Link href="/login" onClick={close}>Log in</Link>
+      <NavLink href="/#how-it-works" onClick={close}>How it works</NavLink>
+      <NavLink href="/paddock-maintenance" onClick={close}>Paddock maintenance</NavLink>
+      <NavLink href="/notes" onClick={close}>Notes</NavLink>
+      <NavLink href="/login" onClick={close}>Log in</NavLink>
+      {/* Not a NavLink: the CTA is already the loudest thing in the bar, and
+          marking it "current" on /signup fights its own styling. */}
       <Link href="/signup" className={styles.cta} onClick={close}>Join the network</Link>
     </>
   ) : (
     <>
       {isContractor && (
         <>
-          <Link href="/account" onClick={close}>Dashboard</Link>
-          <Link href="/invitations" onClick={close}>Jobs to price</Link>
-          <Link href="/won" onClick={close}>Won jobs</Link>
+          <NavLink href="/account" onClick={close}>Dashboard</NavLink>
+          <NavLink href="/invitations" onClick={close}>Jobs to price</NavLink>
+          {/* The open board. It was reachable only from inside the dashboard,
+              so the one page where a contractor goes looking for work had no
+              route to it from the header. /jobs/new hangs off it. */}
+          <NavLink href="/jobs" onClick={close}>Open jobs</NavLink>
+          <NavLink href="/won" onClick={close}>Won jobs</NavLink>
         </>
       )}
-      {isCustomer && <Link href="/my" onClick={close}>My jobs</Link>}
-      {role === 'customer' && <Link href="/start" onClick={close}>Get a quote</Link>}
+      {isCustomer && <NavLink href="/my" onClick={close}>My jobs</NavLink>}
+      {role === 'customer' && <NavLink href="/start" onClick={close}>Get a quote</NavLink>}
       {/* Signed in with neither profile: an admin, or a contractor part-way
           through signing up — /account routes both to the right place. */}
-      {role === 'account' && <Link href="/account" onClick={close}>Account</Link>}
-      <Link href="/paddock-maintenance" onClick={close}>Paddock maintenance</Link>
-      <Link href="/notes" onClick={close}>Notes</Link>
+      {role === 'account' && <NavLink href="/account" onClick={close}>Account</NavLink>}
+      <NavLink href="/paddock-maintenance" onClick={close}>Paddock maintenance</NavLink>
+      <NavLink href="/notes" onClick={close}>Notes</NavLink>
       {logOut}
     </>
   );
