@@ -1136,6 +1136,7 @@ export type Database = {
           customer_id: string | null
           distributed_at: string | null
           expires_at: string | null
+          first_refusal: boolean
           gate_w3w: string | null
           gate_width: string | null
           gclid: string | null
@@ -1143,7 +1144,6 @@ export type Database = {
           lat: number | null
           lng: number | null
           location_raw: string | null
-          first_refusal: boolean
           market_opens_at: string | null
           missing_fields: string[]
           model_version: string | null
@@ -1196,6 +1196,7 @@ export type Database = {
           customer_id?: string | null
           distributed_at?: string | null
           expires_at?: string | null
+          first_refusal?: boolean
           gate_w3w?: string | null
           gate_width?: string | null
           gclid?: string | null
@@ -1203,7 +1204,6 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           location_raw?: string | null
-          first_refusal?: boolean
           market_opens_at?: string | null
           missing_fields?: string[]
           model_version?: string | null
@@ -1256,6 +1256,7 @@ export type Database = {
           customer_id?: string | null
           distributed_at?: string | null
           expires_at?: string | null
+          first_refusal?: boolean
           gate_w3w?: string | null
           gate_width?: string | null
           gclid?: string | null
@@ -1263,7 +1264,6 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           location_raw?: string | null
-          first_refusal?: boolean
           market_opens_at?: string | null
           missing_fields?: string[]
           model_version?: string | null
@@ -1690,6 +1690,44 @@ export type Database = {
         }
         Relationships: []
       }
+      recent_work_seed: {
+        Row: {
+          amount_pence: number
+          created_at: string
+          id: number
+          note: string | null
+          service_id: number
+          sort_order: number
+          source: string
+        }
+        Insert: {
+          amount_pence: number
+          created_at?: string
+          id?: never
+          note?: string | null
+          service_id: number
+          sort_order?: number
+          source?: string
+        }
+        Update: {
+          amount_pence?: number
+          created_at?: string
+          id?: never
+          note?: string | null
+          service_id?: number
+          sort_order?: number
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recent_work_seed_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           area_priced: boolean
@@ -1934,6 +1972,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recent_enquiries: {
+        Row: {
+          county: string | null
+          created_on: string | null
+          ord: number | null
+          size_label: string | null
+        }
+        Relationships: []
+      }
+      recent_work: {
+        Row: {
+          amount_pence: number | null
+          ord: number | null
+          service_name: string | null
+          source: string | null
+          stars: number | null
+        }
+        Relationships: []
       }
       sq_payout_ready: {
         Row: {
