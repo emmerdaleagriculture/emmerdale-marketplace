@@ -326,14 +326,21 @@ export default async function ReportingPage() {
       <div className={s.sectionLabel}>Parse pipeline — last 30 days</div>
       <div className={s.metricGrid}>
         <div className={s.metric}>
-          <div className={s.metricLabel}>Parse latency</div>
+          {/* Empty by design, for the same reason as the fallback count: no
+              model call, no latency to record. */}
+          <div className={s.metricLabel}>Parse latency (model)</div>
           <div className={s.metricValue}>{avgLatency !== null ? `${(avgLatency / 1000).toFixed(1)}s` : '—'}</div>
           <div className={s.metricHint}>{p95Latency !== null ? `p95 ${(p95Latency / 1000).toFixed(1)}s` : 'no data'}</div>
         </div>
         <div className={s.metric}>
           <div className={s.metricLabel}>Fallback parses</div>
           <div className={s.metricValue}>{subs.filter((r) => r.parse_source === 'deterministic_fallback').length}</div>
-          <div className={s.metricHint}>LLM unavailable or timed out</div>
+          {/* Not a failure count. The model came out of job creation in
+              8e86e71 — routing is by county alone, so nothing downstream reads
+              the wording — which means every parse is deterministic now and
+              this number should equal the total. Reading it as "the LLM is
+              down" sends people chasing a bug that was a deliberate decision. */}
+          <div className={s.metricHint}>expected — no model in job creation since 8e86e71</div>
         </div>
         <div className={s.metric}>
           <div className={s.metricLabel}>Unmatched services</div>
