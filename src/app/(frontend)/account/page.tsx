@@ -11,6 +11,7 @@ import { getCounties, getServices } from '@/lib/reference';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { timeAgo, timeLeft } from '@/lib/time';
 import a from '../auth.module.css';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import ac from './account.module.css';
 
 export const metadata: Metadata = {
@@ -195,6 +196,7 @@ export default async function AccountPage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
+          <Breadcrumb tone="light" jsonLd={false} items={[{ label: 'Dashboard' }]} />
           <div className={a.eyebrow}>Your dashboard</div>
           <h1 className={a.title}>{contractor.business_name}</h1>
           <div className={ac.statusRow}>

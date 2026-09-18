@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { getCounties, getServices } from '@/lib/reference';
 import a from '../../auth.module.css';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import j from '../jobs.module.css';
 
 export const metadata: Metadata = {
@@ -38,6 +39,11 @@ export default async function PostJobPage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
+          <Breadcrumb
+            tone="light"
+            jsonLd={false}
+            items={[{ label: 'Open jobs', href: '/jobs' }, { label: 'Post a job' }]}
+          />
           <div className={a.eyebrow}>The network</div>
           <h1 className={a.title}>Post a job</h1>
 

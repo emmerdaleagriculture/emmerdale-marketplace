@@ -11,6 +11,7 @@ import {
   PHONE_DISPLAY,
   PHONE_TEL,
 } from '@/lib/site';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import a from '../auth.module.css';
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ export default function ContactPage() {
       <HomeHeader />
       <main className={a.main}>
         <div className={a.narrow}>
+          <Breadcrumb tone="light" items={[{ label: 'Contact us' }]} />
           <div className={a.eyebrow}>Emmerdale Agriculture</div>
           <h1 className={a.title}>Contact us</h1>
           <p className={a.sub}>

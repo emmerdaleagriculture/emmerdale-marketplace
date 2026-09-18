@@ -9,6 +9,7 @@ import { CancelRepeat, RepeatSetup, SwitchRepeatMode } from './RepeatControls';
 import { startReorderAction } from './actions';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import f from '@/components/forms/forms.module.css';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import a from '../auth.module.css';
 
 export const metadata: Metadata = { title: 'Your jobs', robots: { index: false, follow: false } };
@@ -97,6 +98,7 @@ export default async function MyJobsPage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
+          <Breadcrumb tone="light" jsonLd={false} items={[{ label: 'Your jobs' }]} />
           <div className={a.eyebrow}>Your account</div>
           <h1 className={a.title}>Your jobs</h1>
 
