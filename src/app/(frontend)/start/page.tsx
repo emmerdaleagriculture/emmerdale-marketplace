@@ -34,7 +34,7 @@ const AFTER_STEPS: [string, string][] = [
   ],
   [
     'You book the one you choose',
-    'Pay securely online — a deposit to book, and the rest once the work is done.',
+    'Pay securely online — a 15% deposit to book, and the rest once the work is done.',
   ],
   [
     'The work gets done',

@@ -165,7 +165,7 @@ const STEPS: [string, string][] = [
   ['You tell us the job', 'Pick a service and give us a postcode. About a minute.'],
   ['We ask operators near you', 'Vetted, trained and insured. They price your job directly.'],
   ['You compare prices', 'Side by side, with distance. Sort by price.'],
-  ['You book and pay online', 'A deposit to book, and the rest once the work is done.'],
+  ['You book and pay online', 'A 15% deposit to book, and the rest once the work is done.'],
   ['The work gets done', 'Before and after photos land on your job page.'],
 ];
 
