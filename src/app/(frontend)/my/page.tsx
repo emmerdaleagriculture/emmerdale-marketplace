@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
+import { DetailsForm } from './DetailsForm';
 import { formatDateTime } from '@/lib/time';
 import { CancelRepeat, RepeatSetup, SwitchRepeatMode } from './RepeatControls';
 import { startReorderAction } from './actions';
@@ -58,7 +59,7 @@ export default async function MyJobsPage() {
   if (!user) redirect('/login?next=/my');
 
   const admin = createServiceRoleClient();
-  const [jobsQ, schedulesQ] = await Promise.all([
+  const [jobsQ, schedulesQ, customerQ] = await Promise.all([
     admin
       .from('job_submissions')
       .select('id, status, created_at, postcode, service_verbatim, raw_text, client_token, awarded_contractor_id, service:services(name), county:counties(name)')
@@ -73,10 +74,14 @@ export default async function MyJobsPage() {
       .select('id, source_submission_id, interval_months, next_run_at, runs, active, contractor_mode, contractor_id')
       .eq('customer_id', user.id)
       .eq('active', true),
+    // The account's own details. maybeSingle, not single: signing up without
+    // ever claiming a job never creates a customers row.
+    admin.from('customers').select('contact_name, phone').eq('id', user.id).maybeSingle(),
   ]);
 
   const jobs = jobsQ.data ?? [];
   const schedules = schedulesQ.data ?? [];
+  const customer = customerQ.data;
   const scheduleFor = new Map(schedules.map((s) => [s.source_submission_id, s]));
 
   // Contractors are named to the customer once they've done the work for
@@ -101,6 +106,14 @@ export default async function MyJobsPage() {
           <Breadcrumb tone="light" jsonLd={false} skipHome items={[{ label: 'Your jobs' }]} />
           <div className={a.eyebrow}>Your account</div>
           <h1 className={a.title}>Your jobs</h1>
+
+          <DetailsForm
+            email={user.email ?? ''}
+            initial={{
+              contactName: customer?.contact_name ?? null,
+              phone: customer?.phone ?? null,
+            }}
+          />
 
           {jobs.length === 0 ? (
             <p className={a.sub}>

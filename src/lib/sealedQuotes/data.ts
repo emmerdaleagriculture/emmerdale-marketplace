@@ -18,6 +18,7 @@ export async function getInvitationByToken(token: string) {
       `id, token, status, decline_reason, distance_miles, sent_at, opened_at, contractor_id,
        submission:job_submissions (
          id, status, expires_at, awarded_contractor_id, postcode, lat, lng, boundary,
+         amended_at,
          area_value, area_unit, area_mapped_value, area_source,
          urgency, target_date, access_notes, obstacles, gate_width,
          service_attributes, photo_paths, service_verbatim,

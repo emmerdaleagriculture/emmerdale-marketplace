@@ -229,6 +229,22 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                   </strong>{' '}
                   (sent {formatDateTime(live.created_at)}, valid until {live.valid_until}).
                   Send a new price below — the latest one is what the customer sees.
+                  {/* The customer changed the job after this price was sent. Shown
+                      here as well as emailed, because the email is easy to miss and
+                      this page is where a price gets revised. Compared as dates, not
+                      strings: both are ISO from the same source today, but a lexical
+                      comparison would break silently if either ever changed shape. */}
+                  {js.amended_at && new Date(js.amended_at) > new Date(live.created_at) && (
+                    <>
+                      {' '}
+                      <strong>
+                        The customer corrected the details on{' '}
+                        {formatDateTime(js.amended_at)}, after you priced it.
+                      </strong>{' '}
+                      Check what changed above. Your price still stands — revise it only
+                      if the correction changes what you would charge.
+                    </>
+                  )}
                   {/* Whether it has actually reached them. Absent entirely
                       until the price has been sent, so it never reads as
                       "not seen" when there was nothing to see. */}
