@@ -371,10 +371,14 @@ export async function parseJobAction(
 const ConfirmSchema = z.object({
   submission_id: z.string().uuid(),
   contact_name: z.string().trim().min(1, 'Your name is required.'),
-  contact_phone: z.string().trim().min(5, 'A phone number is required.'),
+  // No longer asked for on the form. Kept optional rather than dropped so the
+  // column still accepts a number from anywhere else that sends one.
+  contact_phone: z.string().trim().optional().or(z.literal('')),
   // Required: everything we send the customer after this goes by email.
   contact_email: z.string().trim().email('An email address is required.'),
-  contact_preference: z.enum(['phone', 'email', 'either']).default('either'),
+  // Email is the only channel the form now collects, so that is what a
+  // submission records — 'either' would claim a phone we never asked for.
+  contact_preference: z.enum(['phone', 'email', 'either']).default('email'),
   county_id: z.coerce.number().int().positive().optional().or(z.literal('')),
   service_choice: z.string().trim(),
   service_confirmed: z.enum(['yes', 'no']),
@@ -412,9 +416,10 @@ export async function confirmJobAction(
   const parsed = ConfirmSchema.safeParse({
     submission_id: formData.get('submission_id'),
     contact_name: formData.get('contact_name'),
-    contact_phone: formData.get('contact_phone'),
+    // Absent now the field is gone — null would fail z.string().optional().
+    contact_phone: formData.get('contact_phone') ?? '',
     contact_email: formData.get('contact_email'),
-    contact_preference: formData.get('contact_preference') || 'either',
+    contact_preference: formData.get('contact_preference') || 'email',
     county_id: formData.get('county_id') || '',
     service_choice: formData.get('service_choice'),
     service_confirmed: formData.get('service_confirmed'),
@@ -573,7 +578,7 @@ export async function confirmJobAction(
       status: 'confirmed',
       confirmed_at: new Date().toISOString(),
       contact_name: d.contact_name,
-      contact_phone: d.contact_phone,
+      contact_phone: d.contact_phone || null,
       contact_email: d.contact_email,
       contact_preference: d.contact_preference,
       service_id: serviceId,
@@ -639,7 +644,7 @@ export async function confirmJobAction(
       `County:     ${countyName ?? (countyId ? `#${countyId}` : '(not resolved)')}\n` +
       `Urgency:    ${d.urgency || '—'}${d.target_date ? ` (target ${d.target_date})` : ''}\n` +
       `Gate:       ${gateWidthLabel(gateWidth) ?? '—'}${gateW3w ? ` · ///${gateW3w}` : ''}\n` +
-      `Contact:    ${d.contact_name} · ${d.contact_phone}${d.contact_email ? ` · ${d.contact_email}` : ''} (prefers ${d.contact_preference})\n` +
+      `Contact:    ${d.contact_name}${d.contact_phone ? ` · ${d.contact_phone}` : ''}${d.contact_email ? ` · ${d.contact_email}` : ''} (prefers ${d.contact_preference})\n` +
       `Parse:      ${draft.parse_source ?? '—'}\n` +
       `Attribution: ${[draft.utm_source, draft.utm_campaign, draft.gclid ? 'gclid' : null].filter(Boolean).join(' / ') || '—'}\n\n` +
       `Full text:\n${draft.raw_text}\n\n` +
