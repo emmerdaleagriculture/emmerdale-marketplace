@@ -26,15 +26,15 @@ const AFTER_STEPS: [string, string][] = [
   ['You tell us what needs doing', 'In your own words. Takes about a minute — no account needed.'],
   [
     'We ask contractors who cover your area',
-    'Approved operators we’ve vetted, trained and insured. They price your job directly.',
+    'Approved operators we’ve vetted, trained and insured. They price your job directly — your contact details stay with us until you accept a price.',
   ],
   [
     'You see their prices side by side',
-    'With their rating and how far away they are. Sort by price or by rating, and pick the one you want.',
+    'With how far away they are. Sort by price, and pick the one you want.',
   ],
   [
     'You book the one you choose',
-    'Pay securely online. We handle the money — you never pay the contractor directly.',
+    'Pay securely online — a deposit to book, and the rest once the work is done.',
   ],
   [
     'The work gets done',

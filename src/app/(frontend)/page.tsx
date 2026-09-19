@@ -158,14 +158,14 @@ const TICKER = [
 const PROMISES: [string, string][] = [
   ['Several prices, not one.', 'Approved operators near you price your job, usually inside 24 hours.'],
   ['Vetted, trained and fully insured.', 'We check the paperwork so you don’t have to ask.'],
-  ['We hold your money until you’re happy.', 'The contractor gets paid when you say the job’s right.'],
+  ['We hold your deposit until you’re happy.', 'The contractor gets paid when you say the job’s right.'],
 ];
 
 const STEPS: [string, string][] = [
   ['You tell us the job', 'Pick a service and give us a postcode. About a minute.'],
   ['We ask operators near you', 'Vetted, trained and insured. They price your job directly.'],
-  ['You compare prices', 'Side by side, with rating and distance. Sort by either.'],
-  ['You book and pay online', 'We hold the money. You never pay the contractor directly.'],
+  ['You compare prices', 'Side by side, with distance. Sort by price.'],
+  ['You book and pay online', 'A deposit to book, and the rest once the work is done.'],
   ['The work gets done', 'Before and after photos land on your job page.'],
 ];
 

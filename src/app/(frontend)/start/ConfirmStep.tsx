@@ -477,7 +477,12 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
       </label>
 
       {/* ── Contact ──────────────────────────────────────────────────── */}
-      <div className={a.groupTitle}>Where should contractors reach you?</div>
+      <div className={a.groupTitle}>How should we reach you?</div>
+      {/* Read at the exact step people were abandoning: the heading used to say
+          contractors would reach them, which is only true after they accept. */}
+      <p className={f.hint}>
+        Your details stay with us — a contractor only gets them if you accept their price.
+      </p>
 
       <div className={a.row2}>
         <label className={f.field}>
@@ -491,23 +496,11 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
             onInput={() => trackStep('contact')}
           />
         </label>
-        <label className={f.field}>
-          <span className={f.label}>Phone</span>
-          <input className={f.input} type="tel" name="contact_phone" required autoComplete="tel" />
-        </label>
         <EmailField
           name="contact_email"
           required
           hint="Everything about your job comes to this address."
         />
-        <label className={f.field}>
-          <span className={f.label}>Best way to reach you</span>
-          <select className={f.input} name="contact_preference" defaultValue="either">
-            <option value="either">Phone or email</option>
-            <option value="phone">Phone</option>
-            <option value="email">Email</option>
-          </select>
-        </label>
       </div>
 
       <div className={a.actions}>
