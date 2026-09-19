@@ -42,6 +42,7 @@ const REPLY_DOMAIN = (Deno.env.get('SQ_INBOUND_REPLY_DOMAIN') ?? '').trim();
 // reach a real contractor.
 const SQ_CONTRACTOR_KINDS = new Set([
   'sq_invitation', 'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
+  'sq_job_amended',
 ]);
 
 /**
@@ -627,6 +628,32 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Decide and refund manually in Stripe. Session: ${p.session_id ?? '—'}\n` +
           `Submission: ${SITE_URL}/admin/submissions/${p.submission_id}`,
       };
+
+    // The customer has corrected a job this contractor has already priced.
+    // The point of the mail is the second paragraph: their price is untouched.
+    // Anything that reads as "re-price this" would cost them a quote they were
+    // happy with — on a small job the area can move a long way without moving
+    // the price at all, because the minimum charge decides it.
+    case 'sq_job_amended': {
+      const changes = Array.isArray(p.changes) ? (p.changes as string[]) : [];
+      const list = changes.length
+        ? changes.map((c) => `  - ${c}`).join('\n')
+        : '  - the job details';
+      return {
+        subject: `Job details changed: ${p.service ?? 'land work'}${p.county ? `, ${p.county}` : ''}`,
+        text:
+          `A customer has corrected a job you have already priced.\n\n` +
+          `What changed:\n${list}\n\n` +
+          (p.current_price_pence
+            ? `Your price of ${gbp(p.current_price_pence)} still stands. We have not ` +
+              `withdrawn it and the customer can still accept it. If the correction ` +
+              `makes no difference to what you would charge, there is nothing to do.\n\n`
+            : `Your price still stands — we have not withdrawn it. If the correction ` +
+              `makes no difference to what you would charge, there is nothing to do.\n\n`) +
+          `If it does change your price, send a new one and that is what the ` +
+          `customer sees:\n${SITE_URL}/quote/${p.token}\n`,
+      };
+    }
 
     default:
       return null; // unknown kind → fail loudly (marked failed, no retries)

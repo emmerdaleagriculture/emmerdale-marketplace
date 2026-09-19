@@ -17,6 +17,7 @@ import { StatusTimeline } from './StatusTimeline';
 import { PriceList, type ClientQuoteView } from './PriceList';
 import { ConfirmDone } from './ConfirmDone';
 import { InlineRating } from './InlineRating';
+import { EditJobForm } from './EditJobForm';
 import { PayNow } from './PayNow';
 import { SaveToAccount } from './SaveToAccount';
 import { CancelJob } from './CancelJob';
@@ -346,10 +347,30 @@ export default async function ClientPortalPage({
             What you told us
           </div>
           <JobSpecCard spec={spec} />
-          <p className={m.fixLine}>
-            Something wrong with the details? Reply to your confirmation email and
-            we&rsquo;ll fix it.
-          </p>
+          {/* This used to say "reply to your confirmation email and we'll fix
+              it", which is how corrections actually arrived: by email, applied
+              by hand. While the job is still being priced they can now do it
+              themselves. After it is awarded the money has moved and the old
+              line is still the right answer. */}
+          {['confirmed', 'distributed', 'quotes_receiving'].includes(js.status) ? (
+            <EditJobForm
+              token={token}
+              initial={{
+                description: js.service_verbatim,
+                areaValue: js.area_value,
+                areaUnit: js.area_unit,
+                urgency: js.urgency,
+                targetDate: js.target_date,
+                accessNotes: js.access_notes,
+                obstacles: js.obstacles,
+              }}
+            />
+          ) : (
+            <p className={m.fixLine}>
+              Something wrong with the details? Reply to your confirmation email and
+              we&rsquo;ll fix it.
+            </p>
+          )}
 
           <ContactUsButton
             subject={`About my job — ${service ?? 'land work'}${js.postcode ? `, ${js.postcode}` : ''} (ref ${js.id.slice(0, 8)})`}

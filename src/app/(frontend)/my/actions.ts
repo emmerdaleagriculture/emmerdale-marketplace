@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
 import { claimJobForUser, claimMessage } from '@/lib/customers/claim';
+import { AREA_UNITS, URGENCY_VALUES } from '@/lib/jobParse/schema';
 import type { FormState } from '@/lib/form';
 
 /**
@@ -180,6 +181,222 @@ export async function cancelScheduleAction(
 
   revalidatePath('/my');
   return { ok: true, message: 'Stopped. Nothing further will go out.' };
+}
+
+/**
+ * While the job is still being priced it can be corrected. Once it is awarded
+ * the money has moved, and a quiet change to the spec is not a correction any
+ * more — that needs a person, the way cancelling after work starts does.
+ */
+const EDITABLE_STATUSES = ['confirmed', 'distributed', 'quotes_receiving'];
+
+/** "1.25 acres" / "40 metres" / "not stated" — for the change list in the email. */
+function areaLabel(value: number | null, unit: string | null): string {
+  if (value === null) return 'not stated';
+  return `${value} ${unit === 'linear_m' ? 'metres' : (unit ?? '')}`.trim();
+}
+
+/**
+ * Correct a job after it has gone out to contractors.
+ *
+ * The token is the proof, exactly as it is for claiming. The customer this was
+ * built for had no account when he needed it — requiring one would have sent
+ * him back to email, which is the thing this replaces.
+ *
+ * A contractor who has already priced KEEPS their price. The area of a small
+ * job can move a long way without moving what it costs, because the minimum
+ * charge decides it, so withdrawing the quote would throw away a good price to
+ * no purpose. They are told instead, and revising is their own choice —
+ * submit_contractor_quote already supersedes cleanly when they do.
+ */
+export async function editJobAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const token = String(formData.get('token') ?? '');
+  if (!isTokenFormat(token)) return { error: 'This link is no longer valid.' };
+
+  const admin = createServiceRoleClient();
+  const { data: js } = await admin
+    .from('job_submissions')
+    .select(
+      `id, status, service_verbatim, area_value, area_unit, urgency, target_date,
+       access_notes, obstacles, service:services (name), county:counties (name)`,
+    )
+    .eq('client_token', token)
+    .is('client_token_revoked_at', null)
+    .maybeSingle();
+  if (!js) return { error: 'This link is no longer valid.' };
+  if (!EDITABLE_STATUSES.includes(js.status)) {
+    return { error: 'This job is already booked — email us and we’ll sort it out.' };
+  }
+
+  const description = String(formData.get('service_verbatim') ?? '').trim().slice(0, 2000);
+  const areaRaw = String(formData.get('area_value') ?? '').trim();
+  const areaValue = areaRaw === '' ? null : Number(areaRaw);
+  if (areaValue !== null && (!Number.isFinite(areaValue) || areaValue <= 0)) {
+    return { error: 'Give the size as a number, or leave it blank.' };
+  }
+  const unitRaw = String(formData.get('area_unit') ?? '');
+  const areaUnit = (AREA_UNITS as readonly string[]).includes(unitRaw) ? unitRaw : js.area_unit;
+  const urgencyRaw = String(formData.get('urgency') ?? '');
+  const urgency = (URGENCY_VALUES as readonly string[]).includes(urgencyRaw) ? urgencyRaw : null;
+  const dateRaw = String(formData.get('target_date') ?? '');
+  const targetDate = urgency === 'dated' && /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : null;
+  const accessNotes = String(formData.get('access_notes') ?? '').trim().slice(0, 1000) || null;
+  const obstacles = String(formData.get('obstacles') ?? '').trim().slice(0, 1000) || null;
+
+  // What actually moved. This is the whole content of the contractor's email,
+  // so it is built from the before/after rather than from what was submitted:
+  // a form that posts every field would otherwise report changes to fields
+  // nobody touched.
+  const changes: string[] = [];
+  if (areaValue !== js.area_value || areaUnit !== js.area_unit) {
+    changes.push(`Size: ${areaLabel(js.area_value, js.area_unit)} → ${areaLabel(areaValue, areaUnit)}`);
+  }
+  if (description && description !== (js.service_verbatim ?? '')) {
+    changes.push(`Description: “${description}”`);
+  }
+  if (urgency !== js.urgency || targetDate !== js.target_date) changes.push('When it needs doing');
+  if (accessNotes !== js.access_notes) changes.push('Access notes');
+  if (obstacles !== js.obstacles) changes.push('What is in the way');
+  if (changes.length === 0) return { ok: true, message: 'Nothing to change — that all matches what we have.' };
+
+  const amendedAt = new Date().toISOString();
+  const { data: updated, error } = await admin
+    .from('job_submissions')
+    .update({
+      service_verbatim: description || js.service_verbatim,
+      area_value: areaValue,
+      area_unit: areaValue === null ? null : areaUnit,
+      urgency,
+      target_date: targetDate,
+      access_notes: accessNotes,
+      obstacles,
+      amended_at: amendedAt,
+    })
+    .eq('id', js.id)
+    // Re-checked in the write: the status could have moved to awarded between
+    // the read above and here, and that is exactly the case that must not slip
+    // through.
+    .in('status', EDITABLE_STATUSES)
+    .select('id');
+  if (error || !updated || updated.length === 0) {
+    console.error('[amend] update failed:', error);
+    return { error: 'That didn’t go through — please try again.' };
+  }
+
+  await admin.rpc('log_job_event', {
+    p_job_id: js.id,
+    p_event_type: 'job_amended',
+    p_from: null,
+    p_to: null,
+    p_actor_type: 'client',
+    p_actor_id: null,
+    p_reason: null,
+    p_metadata: { changes },
+  });
+
+  // Tell everyone holding a live price. Fire-and-log: a mail failure must not
+  // cost the customer their correction, which is already saved above.
+  let notified = 0;
+  try {
+    const [{ data: priced }, { data: live }] = await Promise.all([
+      admin
+        .from('job_invitations')
+        .select('contractor_id, token, contractor:contractors (email)')
+        .eq('submission_id', js.id)
+        .eq('status', 'priced'),
+      admin
+        .from('contractor_quotes')
+        .select('contractor_id, contractor_price_pence')
+        .eq('submission_id', js.id)
+        .is('superseded_by', null),
+    ]);
+    const priceFor = new Map((live ?? []).map((q) => [q.contractor_id, q.contractor_price_pence]));
+    const service = (js.service as { name: string } | null)?.name ?? js.service_verbatim;
+    const county = (js.county as { name: string } | null)?.name ?? null;
+
+    for (const inv of priced ?? []) {
+      const email = (inv.contractor as { email: string | null } | null)?.email;
+      if (!email) continue;
+      await admin.rpc('sq_notify_once', {
+        p_submission_id: js.id,
+        // sq_notify_once dedupes on (submission, recipient, kind) — and that is
+        // the primary key, so a bare contractor id would let this fire once per
+        // job for ever and swallow every correction after the first. Stamping
+        // the amendment time into the key keeps the protection against a double
+        // send and loses none of the corrections.
+        p_recipient: `${inv.contractor_id}:amend:${amendedAt}`,
+        p_kind: 'sq_job_amended',
+        p_to_email: email,
+        p_payload: {
+          service,
+          county,
+          changes,
+          token: inv.token,
+          current_price_pence: priceFor.get(inv.contractor_id) ?? null,
+        },
+      });
+      notified += 1;
+    }
+  } catch (err) {
+    console.error('[amend] contractor notification failed:', err);
+  }
+
+  revalidatePath('/my');
+  revalidatePath(`/my/${token}`);
+  // Only claim the contractors were told when some actually were: a job
+  // corrected before anyone has priced has nobody to tell, and saying
+  // otherwise would be a promise about an email that was never sent.
+  return {
+    ok: true,
+    message:
+      notified > 0
+        ? 'Updated. The contractors who have already priced it have been told — their price still stands unless they choose to change it.'
+        : 'Updated. Contractors will see the corrected details when they price it.',
+  };
+}
+
+/**
+ * The other half of having an account: the details themselves.
+ *
+ * Unlike the claim upsert — which fills gaps and never overwrites, so claiming
+ * a second job cannot wipe a name the first one supplied — this writes exactly
+ * what the customer typed. They are looking at the field and correcting it, and
+ * a merge would quietly refuse the edit.
+ *
+ * Email is not editable here. It is the identity the account signs in with, so
+ * changing it is an auth change, not a detail change.
+ */
+export async function updateDetailsAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Sign in to change your details.' };
+
+  const name = String(formData.get('contact_name') ?? '').trim().slice(0, 200);
+  if (!name) return { error: 'Give us a name to put on your jobs.' };
+  // Loose on purpose: landlines, mobiles, spaces, +44 and the odd extension all
+  // arrive here, and a strict pattern would reject real numbers to no benefit.
+  const phone = String(formData.get('phone') ?? '').trim().slice(0, 40) || null;
+
+  const { error } = await createServiceRoleClient().from('customers').upsert(
+    {
+      id: user.id,
+      // NOT NULL, and the row may genuinely not exist yet: signing up without
+      // ever claiming a job never creates one.
+      email: user.email ?? '',
+      contact_name: name,
+      phone,
+    },
+    { onConflict: 'id' },
+  );
+  if (error) {
+    console.error('[customer] details update failed:', error);
+    return { error: 'That didn’t go through — please try again.' };
+  }
+
+  revalidatePath('/my');
+  return { ok: true, message: 'Saved.' };
 }
 
 /**

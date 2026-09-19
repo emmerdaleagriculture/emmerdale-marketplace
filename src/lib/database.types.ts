@@ -1116,6 +1116,7 @@ export type Database = {
         Row: {
           accepted_client_quote_id: string | null
           access_notes: string | null
+          amended_at: string | null
           area_mapped_value: number | null
           area_source: string
           area_unit: string | null
@@ -1176,6 +1177,7 @@ export type Database = {
         Insert: {
           accepted_client_quote_id?: string | null
           access_notes?: string | null
+          amended_at?: string | null
           area_mapped_value?: number | null
           area_source?: string
           area_unit?: string | null
@@ -1236,6 +1238,7 @@ export type Database = {
         Update: {
           accepted_client_quote_id?: string | null
           access_notes?: string | null
+          amended_at?: string | null
           area_mapped_value?: number | null
           area_source?: string
           area_unit?: string | null
@@ -2096,14 +2099,20 @@ export type Database = {
       }
       log_job_event: {
         Args: {
-          p_actor_id: string
+          // Nullable in the function itself — sq_functions.sql calls it as
+          // (…, null, null, 'system', null, null), and only an 'operator'
+          // event is constrained to carry a reason. Widened by hand because
+          // passing '' instead would write empty strings into job_events where
+          // NULL is meant, and an empty from/to is not the same as no
+          // transition.
+          p_actor_id: string | null
           p_actor_type: string
           p_event_type: string
-          p_from: string
+          p_from: string | null
           p_job_id: string
           p_metadata: Json
-          p_reason: string
-          p_to: string
+          p_reason: string | null
+          p_to: string | null
         }
         Returns: undefined
       }
