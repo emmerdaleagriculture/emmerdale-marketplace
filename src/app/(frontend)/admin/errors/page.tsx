@@ -79,10 +79,11 @@ export default async function ErrorsPage() {
           <strong>Sentry is capturing errors, but this page cannot read them back.</strong>
           <br />
           Reporting works — the app sends to Sentry from the server, the browser and
-          the edge. Listing issues here needs <code>SENTRY_AUTH_TOKEN</code> (scope{' '}
-          <code>org:read</code>) set in Vercel, which is the same token source maps
-          need. Until then this section is blank because it is blind, not because
-          nothing has happened: check{' '}
+          the edge. Listing issues here needs <code>SENTRY_READ_TOKEN</code> set in
+          Vercel: a separate token from the one the build uses, because listing
+          issues needs the <code>event:read</code> scope and an organization token
+          cannot be given it. Until then this section is blank because it is blind,
+          not because nothing has happened: check{' '}
           <a href="https://emmerdale-agriculture-ltd.sentry.io/issues/" target="_blank" rel="noreferrer">
             Sentry directly
           </a>
