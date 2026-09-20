@@ -9,17 +9,30 @@
  * Fail-open by design: an unset TURNSTILE_SECRET_KEY or a Cloudflare outage
  * logs and passes. A paid click must never dead-end on a third-party blip
  * (spec §6.4) — rate limits and length caps still carry the abuse load.
+ *
+ * `softFail` is that rule firing: the check could not be made, so the caller
+ * proceeds, but gets a reason to record. Only a token Cloudflare actively
+ * rejects comes back `ok: false` — that is the check working, not blipping.
  */
 export async function verifyTurnstile(
   token: string,
   ip: string,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; error?: string; softFail?: string }> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) {
     console.warn('[turnstile] TURNSTILE_SECRET_KEY not set — skipping verification');
     return { ok: true };
   }
-  if (!token) return { ok: false, error: 'missing-token' };
+  // No token at all is the widget never having delivered one — challenges.
+  // cloudflare.com blocked or slow, or LandingFlow's 8s escape hatch giving
+  // up on it — and the comment on that escape hatch says the server decides.
+  // It used to decide by hard-rejecting here, the one path through this file
+  // that dead-ended a paid click on a third-party blip, which is precisely
+  // what the rule above forbids. Two of the first five /start errors were
+  // this, and one of those customers left. It is not evidence of a bot:
+  // a bot sends no token because it never loaded the page, a customer
+  // because Cloudflare's script did not load for them. Pass, and record.
+  if (!token) return { ok: true, softFail: 'missing-token' };
 
   const body = new URLSearchParams({ secret, response: token });
   if (ip && ip !== 'unknown') body.set('remoteip', ip);
@@ -43,7 +56,7 @@ export async function verifyTurnstile(
     }
   } catch (err) {
     console.error('[turnstile] siteverify unreachable — failing open:', err);
-    return { ok: true };
+    return { ok: true, softFail: 'unreachable' };
   }
 
   try {
@@ -52,6 +65,6 @@ export async function verifyTurnstile(
     return { ok: false, error: (json['error-codes'] ?? []).join(',') || 'verification-failed' };
   } catch (err) {
     console.error('[turnstile] siteverify returned an unreadable response — failing open:', err);
-    return { ok: true };
+    return { ok: true, softFail: 'unreadable' };
   }
 }

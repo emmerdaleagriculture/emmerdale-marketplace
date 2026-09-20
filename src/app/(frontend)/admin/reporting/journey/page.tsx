@@ -29,7 +29,7 @@ export default async function JourneyPage({
   const path = PATHS.some((p) => p.path === sp.path) ? sp.path! : '/';
   const admin = createServiceRoleClient();
 
-  const [clicksQ, depthsQ, stepsQ] = await Promise.all([
+  const [clicksQ, depthsQ, stepsQ, refusalsQ] = await Promise.all([
     admin
       .from('page_events')
       .select('x_pct, y_pct, label, viewport_w')
@@ -51,6 +51,15 @@ export default async function JourneyPage({
       .eq('kind', 'step')
       .order('created_at', { ascending: false })
       .limit(10000),
+    // The error milestones say only that a step errored. This says which —
+    // recorded server-side by refuse() as the message is returned, so it does
+    // not depend on the tab surviving long enough to flush a beacon.
+    admin
+      .from('job_parse_events')
+      .select('action, outcome, reason, created_at')
+      .in('outcome', ['rejected', 'fallback'])
+      .order('created_at', { ascending: false })
+      .limit(2000),
   ]);
 
   const clicks = (clicksQ.data ?? []).filter(
@@ -120,6 +129,23 @@ export default async function JourneyPage({
   };
   const fmtSecs = (sec: number | null) =>
     sec === null ? '—' : sec < 90 ? `${sec}s` : `${Math.round(sec / 60)}m`;
+
+  // Refusals by reason, commonest first. 'fallback' is a check that could not
+  // be made and was let through rather than costing the click — worth seeing,
+  // but it is not a customer who was stopped.
+  const refusalCounts = new Map<string, { n: number; last: string }>();
+  for (const r of refusalsQ.data ?? []) {
+    const key = `${r.action}|${r.outcome}|${r.reason ?? '(unrecorded)'}`;
+    const cur = refusalCounts.get(key);
+    if (cur) cur.n += 1;
+    else refusalCounts.set(key, { n: 1, last: r.created_at });
+  }
+  const refusals = [...refusalCounts.entries()]
+    .map(([key, v]) => {
+      const [action, outcome, reason] = key.split('|');
+      return { action, outcome, reason, ...v };
+    })
+    .sort((a, b) => b.n - a.n);
 
   return (
     <div>
@@ -203,6 +229,41 @@ export default async function JourneyPage({
                           </tr>
                         );
                       })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className={s.sectionLabel}>Why those errors happened</div>
+              {refusals.length === 0 ? (
+                <div className={s.empty}>
+                  Nothing refused yet. Every error either step can show is recorded with
+                  its reason as it is returned, so an error row above is never again the
+                  only trace of one.
+                </div>
+              ) : (
+                <div className={s.tableWrap}>
+                  <table className={s.table}>
+                    <thead>
+                      <tr><th>Step</th><th>Reason</th><th>Times</th><th>Most recent</th></tr>
+                    </thead>
+                    <tbody>
+                      {refusals.map((r) => (
+                        <tr key={`${r.action}-${r.outcome}-${r.reason}`}>
+                          <td>{r.action === 'parse' ? 'Step 1' : 'Step 2'}</td>
+                          <td style={{ color: r.outcome === 'fallback' ? '#8a6d1f' : '#a02a2a' }}>
+                            <code>{r.reason}</code>
+                            {r.outcome === 'fallback' && ' — let through'}
+                          </td>
+                          <td>{r.n}</td>
+                          <td>
+                            {new Date(r.last).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>

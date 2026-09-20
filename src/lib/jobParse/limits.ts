@@ -42,6 +42,15 @@ export async function logParseEvent(
 /**
  * True when this IP is over its hourly limit for the action. Fails open on a
  * counting error — the limit protects spend, it must not cost conversions.
+ *
+ * Counts accepted attempts only, which is what "protects spend" means: a
+ * rejected one did no work — it never reached the geocode or the insert.
+ * Counting rejections too made this table's second job eat its first, now
+ * that every refusal is recorded for the funnel: a customer who mistyped
+ * their email five times would have spent their own hourly allowance on
+ * their own typos and been locked out of the form, which is exactly the
+ * conversion this is forbidden from costing. (dailyParseBudgetExceeded below
+ * has always counted this way.)
  */
 export async function rateLimited(
   ip: string,
@@ -57,6 +66,7 @@ export async function rateLimited(
       .select('id', { count: 'exact', head: true })
       .eq('ip', ip)
       .eq('action', action)
+      .eq('outcome', 'ok')
       .gte('created_at', since);
     if (error) throw error;
     return (count ?? 0) >= limitPerHour;

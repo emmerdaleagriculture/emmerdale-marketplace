@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import type Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe';
 import { createServiceRoleClient } from '@/lib/supabase/server';
@@ -56,14 +57,22 @@ async function run(request: Request) {
     stripe = getStripe();
   } catch (err) {
     // No keys configured is not an error worth alerting on every ten minutes.
+    // It is worth knowing about once, though — with no Stripe, no balance is
+    // ever collected, and this branch returns 200 so nothing else would say
+    // so. Sentry groups the repeats into one issue rather than 96 a day.
     console.error('[balances] Stripe not configured:', err);
+    Sentry.captureException(err, { level: 'warning', tags: { cron: 'balances', stage: 'config' } });
     return NextResponse.json({ skipped: 'stripe-not-configured' });
   }
 
   const admin = createServiceRoleClient();
   const { data, error } = await admin.rpc('sq_claim_due_balances', { p_limit: BATCH });
   if (error) {
+    // The whole run did nothing: not one balance was claimed, let alone
+    // charged. Nothing downstream notices — the 500 goes back to Vercel Cron,
+    // which does not tell anyone.
     console.error('[balances] claim failed:', error);
+    Sentry.captureException(error, { tags: { cron: 'balances', stage: 'claim' } });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   const claims = (data ?? []) as Claim[];
@@ -125,6 +134,24 @@ async function run(request: Request) {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const isFinal = claim.attempts >= claim.max_attempts;
+
+      // A declined card is this worker doing its job: recorded on the row,
+      // retried, and handed over to the customer's own "Pay balance" link once
+      // the attempts run out. It is not an incident and must not page anyone.
+      //
+      // Everything else reaching this catch is — a Stripe outage, a rejected
+      // key, or the worst case above, sq_settle_balance throwing *after* the
+      // payment intent already succeeded, which is money taken from a customer
+      // and not recorded against their job. That one is indistinguishable from
+      // a decline here, and was being written to the row as though it were one.
+      const stripeErrorType = (err as { type?: string } | null)?.type;
+      if (stripeErrorType !== 'StripeCardError') {
+        Sentry.captureException(err, {
+          tags: { cron: 'balances', stage: 'charge', stripe_error: stripeErrorType ?? 'none' },
+          extra: { payment_id: claim.payment_id, attempts: claim.attempts, final: isFinal },
+        });
+      }
+
       await admin.rpc('sq_fail_balance', {
         p_payment_id: claim.payment_id,
         p_error: message,

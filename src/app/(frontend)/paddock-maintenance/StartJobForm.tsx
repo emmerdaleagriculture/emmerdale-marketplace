@@ -82,7 +82,11 @@ export function StartJobForm() {
           className={f.textarea}
           name="job"
           required
-          minLength={10}
+          // Matches step 1's ParseSchema, which this hands over to. A stricter
+          // number here would refuse on the organic side ("Topping") what the
+          // flow itself accepts, and refuse it as a browser tooltip — nothing
+          // submitted, nothing recorded, the visitor simply gone.
+          minLength={3}
           maxLength={MAX_JOB}
           rows={4}
           placeholder="e.g. Two paddocks about 3 acres each, grass is well over knee height and full of docks — needs topping before winter"

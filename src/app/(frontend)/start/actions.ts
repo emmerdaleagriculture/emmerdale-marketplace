@@ -23,12 +23,44 @@ import {
   rateLimited,
   CONFIRM_LIMIT_PER_HOUR,
   PARSE_LIMIT_PER_HOUR,
+  type ParseEventAction,
 } from '@/lib/jobParse/limits';
 import { AREA_UNITS, URGENCY_VALUES, type ParseResult } from '@/lib/jobParse/schema';
 
 export type ParseValues = { raw_text: string; location_raw: string };
 export type ParseActionState = FormState & { result?: ParseResult; values?: ParseValues };
 export type ConfirmActionState = FormState;
+
+/**
+ * Show the customer an error, and record why.
+ *
+ * The funnel logs *that* a step errored — page_events 'parse_error' — and
+ * never which error. Of the first five, only the two the rate limiter and
+ * Turnstile happened to write to job_parse_events could be explained
+ * afterwards; the rest left a console.error in Vercel's runtime log, which is
+ * a live stream and not a history, and were unreadable inside the hour. One
+ * is now permanently unexplainable.
+ *
+ * So every exit that puts a message in front of the customer comes through
+ * here, and the reason lands beside the rejections already being recorded.
+ * Reasons are for us, never shown: `message` is the customer's half.
+ */
+async function refuse(
+  ip: string,
+  action: ParseEventAction,
+  reason: string,
+  message: string,
+): Promise<FormState> {
+  await logParseEvent(ip, action, 'rejected', reason);
+  return { error: message };
+}
+
+/** A zod failure as a reason string: which field, and what was wrong with it. */
+const issueReason = (err: z.ZodError): string => {
+  const issue = err.issues[0];
+  if (!issue) return 'validation:unknown';
+  return `validation:${issue.path.join('.') || 'form'}:${issue.code}`;
+};
 
 /** Loose British Isles bounding box — sanity check on client-supplied coords. */
 function inBritishIsles(lat: number, lng: number): boolean {
@@ -114,7 +146,16 @@ const ParseSchema = z.object({
   raw_text: z
     .string()
     .trim()
-    .min(10, 'Tell us a little more about the job — a sentence or two is plenty.')
+    // Three, not ten. Ten was a wall, not a floor: the shortest description
+    // anyone has ever managed to send is "Rotavating", at exactly ten, and
+    // half of them are under sixteen — people type the service and nothing
+    // else. "Harrowing" is nine characters and is a service we sell, so it
+    // was refused, and because the textarea enforced the same number the
+    // browser refused it silently: no submission, no error, no row anywhere.
+    // Nothing downstream needs the length. Step 2 asks for area, postcode,
+    // urgency and access whatever step 1 said, and the contractor reads
+    // service_verbatim — which is this text, however short it is.
+    .min(3, 'A word or two is enough — what needs doing?')
     .max(2000, 'That’s a bit long — please keep it under 2,000 characters.'),
   location_raw: z.string().trim().max(200).optional().or(z.literal('')),
 });
@@ -170,13 +211,17 @@ export async function parseJobAction(
     location_raw: String(formData.get('location_raw') ?? ''),
   };
 
+  // Read before the schema check rather than after it: a refusal needs an IP
+  // to be recorded against, and reading a header costs nothing.
+  const ip = await clientIp();
+
   const parsed = ParseSchema.safeParse(values);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? 'Please check the form.', values };
+    const message = parsed.error.issues[0]?.message ?? 'Please check the form.';
+    return { ...(await refuse(ip, 'parse', issueReason(parsed.error), message)), values };
   }
   const d = parsed.data;
   const locationRaw = d.location_raw ?? '';
-  const ip = await clientIp();
 
   // Bot traps (honeypot + minimum fill time, as on the enquiry form). A
   // trapped submission still gets a working flow rather than being faked
@@ -191,22 +236,38 @@ export async function parseJobAction(
   // waits the customer paid for; started together they cost the slower one.
   const [turnstile, limited] = await Promise.all([
     botSuspect
-      ? Promise.resolve<{ ok: boolean; error?: string }>({ ok: true })
+      ? Promise.resolve<{ ok: boolean; error?: string; softFail?: string }>({ ok: true })
       : verifyTurnstile(String(formData.get('cf-turnstile-response') || ''), ip),
     rateLimited(ip, 'parse', PARSE_LIMIT_PER_HOUR),
   ]);
 
   if (!turnstile.ok) {
-    await logParseEvent(ip, 'parse', 'rejected', `turnstile:${turnstile.error}`);
     return {
-      error: 'We couldn’t verify you’re human just then — please try again.',
+      ...(await refuse(
+        ip,
+        'parse',
+        `turnstile:${turnstile.error}`,
+        'We couldn’t verify you’re human just then — please try again.',
+      )),
       values,
     };
   }
+  // The check could not be made and the flow went on anyway (spec §6.4).
+  // Recorded off the critical path, because a widget that has quietly stopped
+  // delivering tokens is invisible otherwise — it costs conversions while
+  // every submission still looks clean.
+  if (turnstile.softFail) {
+    const soft = turnstile.softFail;
+    after(() => logParseEvent(ip, 'parse', 'fallback', `turnstile:${soft}`));
+  }
   if (limited) {
-    await logParseEvent(ip, 'parse', 'rejected', 'rate_limit');
     return {
-      error: 'You’ve sent a few of these in a row — give it a little while and try again.',
+      ...(await refuse(
+        ip,
+        'parse',
+        'rate_limit',
+        'You’ve sent a few of these in a row — give it a little while and try again.',
+      )),
       values,
     };
   }
@@ -325,7 +386,15 @@ export async function parseJobAction(
     .single();
   if (draftError || !draft) {
     console.error('[jobParse] draft insert failed:', draftError);
-    return { error: 'Something went wrong — please try again.', values };
+    return {
+      ...(await refuse(
+        ip,
+        'parse',
+        `insert_failed:${draftError?.code ?? 'unknown'}`,
+        'Something went wrong — please try again.',
+      )),
+      values,
+    };
   }
 
   // Read the photo bytes here — memory, no network — so the form is not
@@ -409,8 +478,7 @@ export async function confirmJobAction(
 ): Promise<ConfirmActionState> {
   const ip = await clientIp();
   if (await rateLimited(ip, 'confirm', CONFIRM_LIMIT_PER_HOUR)) {
-    await logParseEvent(ip, 'confirm', 'rejected', 'rate_limit');
-    return { error: 'Too many attempts — give it a little while and try again.' };
+    return refuse(ip, 'confirm', 'rate_limit', 'Too many attempts — give it a little while and try again.');
   }
 
   const parsed = ConfirmSchema.safeParse({
@@ -435,7 +503,8 @@ export async function confirmJobAction(
     obstacles: formData.get('obstacles') ?? '',
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? 'Please check the form.' };
+    const message = parsed.error.issues[0]?.message ?? 'Please check the form.';
+    return refuse(ip, 'confirm', issueReason(parsed.error), message);
   }
   const d = parsed.data;
 
@@ -444,7 +513,7 @@ export async function confirmJobAction(
   // exist loses all of it silently, so a dead domain stops the submission
   // here, while the customer is still on the page to fix it.
   const emailError = await emailDeliveryError(d.contact_email);
-  if (emailError) return { error: emailError };
+  if (emailError) return refuse(ip, 'confirm', 'email_undeliverable', emailError);
 
   const admin = createServiceRoleClient();
   const { data: draft } = await admin
@@ -452,11 +521,18 @@ export async function confirmJobAction(
     .select('id, status, postcode, county_id, lat, lng, service_verbatim, service_attributes, raw_text, parse_source, utm_source, utm_campaign, gclid')
     .eq('id', d.submission_id)
     .maybeSingle();
-  if (!draft) return { error: 'We couldn’t find your submission — please start again.' };
+  if (!draft) {
+    return refuse(ip, 'confirm', 'draft_missing', 'We couldn’t find your submission — please start again.');
+  }
   // Double submit (back button, double tap) — already done, don't error.
   if (draft.status === 'confirmed') return { ok: true, message: CONFIRM_SUCCESS };
   if (draft.status !== 'draft') {
-    return { error: 'This submission has expired — please start again.' };
+    return refuse(
+      ip,
+      'confirm',
+      `draft_status:${draft.status}`,
+      'This submission has expired — please start again.',
+    );
   }
 
   // Service: canonical name resolved to an id by name at write time; 'other'
@@ -608,7 +684,12 @@ export async function confirmJobAction(
   if (error || !updated) {
     if (!error) return { ok: true, message: CONFIRM_SUCCESS }; // raced with itself — already confirmed
     console.error('[jobParse] confirm update failed:', error);
-    return { error: 'Something went wrong saving your details — please try again.' };
+    return refuse(
+      ip,
+      'confirm',
+      `update_failed:${error.code ?? 'unknown'}`,
+      'Something went wrong saving your details — please try again.',
+    );
   }
 
   // Carried to the thank-you page so it can offer them an account for the job

@@ -49,6 +49,9 @@ export function LandingFlow() {
   const captchaRef = useRef<HTMLDivElement>(null);
   const tokenRef = useRef('');
   tokenRef.current = captchaToken;
+  // Set only by the 8s escape hatch, so its deliberate tokenless submit is
+  // not caught by the hold below and bounced straight back into waiting.
+  const gaveUpRef = useRef(false);
 
   // The security check finishing while the customer waits → submit for them.
   useEffect(() => {
@@ -74,10 +77,13 @@ export function LandingFlow() {
     el.scrollIntoView({ block: 'center', behavior: still ? 'auto' : 'smooth' });
   }, [awaitingToken]);
   // Never hold a paid click hostage to a slow challenge: after 8s, submit
-  // anyway and let the server-side verification decide.
+  // anyway and let the server-side verification decide. It decides to let it
+  // through (verifyTurnstile, softFail 'missing-token'); it used to reject,
+  // which turned every slow widget into a dead end.
   useEffect(() => {
     if (!awaitingToken) return;
     const t = setTimeout(() => {
+      gaveUpRef.current = true;
       setAwaitingToken(false);
       formRef.current?.requestSubmit();
     }, 8000);
@@ -273,9 +279,20 @@ export function LandingFlow() {
       className={`${a.card} ${s.card}`}
       onSubmit={(e) => {
         trackStep('send');
-        // The button is never disabled waiting for Turnstile — if the token
-        // hasn't arrived yet, hold THIS submit and fire it the moment it does.
-        if (turnstileEnabled && !tokenRef.current && !awaitingToken) {
+        // No token yet → hold THIS submit and fire it the moment one lands.
+        // The escape hatch's own submit is exempt, marked as it is fired.
+        //
+        // That exemption used to be `!awaitingToken`, which read as the same
+        // thing and is not: any second press while the first was still held
+        // also saw it, and went to the server bare. The button is disabled
+        // while waiting, but the hatch re-enables it 8s in, so a customer who
+        // pressed again then took that path — which is how the widget being
+        // slow reached the server as a submission with no token at all.
+        if (gaveUpRef.current) {
+          gaveUpRef.current = false;
+          return;
+        }
+        if (turnstileEnabled && !tokenRef.current) {
           e.preventDefault();
           setAwaitingToken(true);
         }
@@ -305,7 +322,9 @@ export function LandingFlow() {
           className={f.textarea}
           name="raw_text"
           required
-          minLength={10}
+          // Matches ParseSchema. Where they disagree the browser wins and
+          // refuses with a tooltip we never see and cannot record.
+          minLength={3}
           maxLength={2000}
           rows={3}
           placeholder="e.g. I need my 7 acre field topped, it’s just off the A31 near Alresford"
