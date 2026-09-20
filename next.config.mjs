@@ -1,4 +1,7 @@
 import { fileURLToPath } from 'url';
+// From '@sentry/nextjs/config', not '@sentry/nextjs' — the latter is
+// deprecated on v10 and stops working in v11.
+import { withSentryConfig } from '@sentry/nextjs/config';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -98,4 +101,22 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: 'emmerdale-agriculture-ltd',
+  project: 'javascript-nextjs',
+
+  // Build-time only, and the one genuine secret in this setup — unlike the
+  // DSN. Absent locally, which is fine: source maps simply are not uploaded.
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Without this, a production stack trace is minified nonsense.
+  widenClientFileUpload: true,
+
+  // Sentry's own domain is on every ad-blocker list, and a good share of this
+  // site's traffic is people who browse with one. Events go to this path on
+  // our own domain instead, which is also why middleware.ts has to let it
+  // past — see the matcher there.
+  tunnelRoute: '/monitoring',
+
+  silent: !process.env.CI,
+});
