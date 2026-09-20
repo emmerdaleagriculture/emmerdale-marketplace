@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 import { addLeadManualAction, importCsvAction } from './import-actions';
 import { emptyFormState } from '@/lib/form';
+import { EmailField } from '@/components/forms/EmailField';
 import f from '@/components/forms/forms.module.css';
 import a from '../../auth.module.css';
 import s from '../admin.module.css';
@@ -58,10 +59,8 @@ export function LeadsIntakePanel() {
                 <span className={f.label}>Phone</span>
                 <input className={f.input} name="phone" />
               </label>
-              <label className={f.field}>
-                <span className={f.label}>Email</span>
-                <input className={f.input} name="email" type="email" />
-              </label>
+              {/* A lead's address, not the operator's — see NewJobForm. */}
+              <EmailField name="email" autoComplete="off" />
               <label className={f.field}>
                 <span className={f.label}>Postcode</span>
                 <input className={f.input} name="postcode" />

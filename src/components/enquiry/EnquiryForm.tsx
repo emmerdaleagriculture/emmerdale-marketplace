@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from 'react';
 import { submitEnquiryAction } from './actions';
 import { emptyFormState } from '@/lib/form';
+import { EmailField } from '@/components/forms/EmailField';
 import f from '@/components/forms/forms.module.css';
 import a from '@/app/(frontend)/auth.module.css';
 
@@ -58,10 +59,7 @@ export function EnquiryForm({
           <span className={f.label}>Phone</span>
           <input className={f.input} type="tel" name="phone" required autoComplete="tel" />
         </label>
-        <label className={f.field}>
-          <span className={f.label}>Email</span>
-          <input className={f.input} type="email" name="email" required autoComplete="email" />
-        </label>
+        <EmailField name="email" required hint="We reply to this address." />
         <label className={f.field}>
           <span className={f.label}>Postcode</span>
           <input className={f.input} type="text" name="postcode" required autoComplete="postal-code" />

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useActionState } from 'react';
 import { submitJobAction, type PostJobState } from './actions';
+import { EmailField } from '@/components/forms/EmailField';
 import { ServicePicker, type ServiceOption } from '@/components/forms/ServicePicker';
 import type { CountyOption } from '@/components/forms/CountyPicker';
 import f from '@/components/forms/forms.module.css';
@@ -123,10 +124,11 @@ export function PostJobForm({
           <span className={f.label}>Contact phone</span>
           <input className={f.input} name="contact_phone" required defaultValue={v?.contact_phone ?? defaults.contact_phone} />
         </label>
-        <label className={f.field}>
-          <span className={f.label}>Contact email (optional)</span>
-          <input className={f.input} name="contact_email" type="email" defaultValue={v?.contact_email ?? defaults.contact_email} />
-        </label>
+        <EmailField
+          name="contact_email"
+          label="Contact email (optional)"
+          defaultValue={v?.contact_email ?? defaults.contact_email}
+        />
       </div>
 
       <div className={a.groupTitle}>Consent (required)</div>
