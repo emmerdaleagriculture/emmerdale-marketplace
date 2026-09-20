@@ -80,10 +80,20 @@ export async function loadSentryIssues(limit = 25): Promise<SentryIssues> {
     if (!res.ok) {
       const detail =
         res.status === 401
-          ? 'the token was rejected — check it has org:read and has not been revoked'
-          : res.status === 404
-            ? `no project ${ORG}/${PROJECT} on the ${apiBase()} region`
-            : `Sentry answered ${res.status}`;
+          ? 'the token was rejected — it may have been revoked'
+          : res.status === 403
+            ? // The expected outcome for a source-map token, and worth saying
+              // precisely: the one Sentry's UI offers for uploading releases
+              // carries project:releases and no read scope at all, so it
+              // uploads fine and cannot list a single issue. 403 here means
+              // the token works and is not allowed to read, which is a
+              // different problem from 401 and has a different fix.
+              'the token has no read scope — uploading source maps needs ' +
+              'project:releases, but listing issues also needs org:read ' +
+              '(a token can have both; the release-only one does not)'
+            : res.status === 404
+              ? `no project ${ORG}/${PROJECT} in the ${apiBase()} region`
+              : `Sentry answered ${res.status}`;
       return { configured: true, ok: false, error: detail };
     }
     const raw: RawIssue[] = await res.json();
