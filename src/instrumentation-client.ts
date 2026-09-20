@@ -5,6 +5,7 @@ import {
   SENTRY_ENVIRONMENT,
   SENTRY_RELEASE,
   TRACES_SAMPLE_RATE,
+  warnIfDsnMissing,
 } from '@/lib/sentry/options';
 import { scrubEvent } from '@/lib/sentry/scrub';
 
@@ -19,6 +20,8 @@ import { scrubEvent } from '@/lib/sentry/scrub';
  * its own terms, with masking configured deliberately, rather than something
  * to switch on in passing while wiring up error reporting.
  */
+warnIfDsnMissing('browser');
+
 Sentry.init({
   dsn: SENTRY_DSN,
   environment: SENTRY_ENVIRONMENT,

@@ -5,6 +5,7 @@ import {
   SENTRY_ENVIRONMENT,
   SENTRY_RELEASE,
   TRACES_SAMPLE_RATE,
+  warnIfDsnMissing,
 } from '@/lib/sentry/options';
 import { scrubEvent } from '@/lib/sentry/scrub';
 
@@ -14,6 +15,8 @@ import { scrubEvent } from '@/lib/sentry/scrub';
  * authenticated request in the app, and an error in it breaks all of them at
  * once. It was previously the least observable part of the stack.
  */
+warnIfDsnMissing('edge');
+
 Sentry.init({
   dsn: SENTRY_DSN,
   environment: SENTRY_ENVIRONMENT,

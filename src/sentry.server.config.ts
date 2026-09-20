@@ -5,8 +5,11 @@ import {
   SENTRY_ENVIRONMENT,
   SENTRY_RELEASE,
   TRACES_SAMPLE_RATE,
+  warnIfDsnMissing,
 } from '@/lib/sentry/options';
 import { scrubEvent } from '@/lib/sentry/scrub';
+
+warnIfDsnMissing('server');
 
 Sentry.init({
   dsn: SENTRY_DSN,

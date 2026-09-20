@@ -11,15 +11,36 @@ type DataCollection = NonNullable<NonNullable<Parameters<typeof init>[0]>['dataC
 
 /**
  * Public by design: the DSN ships inside the client bundle, so it is a
- * destination address rather than a credential (SENTRY_AUTH_TOKEN, used only
- * at build time for source maps, is the secret). Written as a literal with an
- * env override, because a DSN that resolves to undefined in production makes
- * Sentry silently do nothing — the one failure this whole exercise exists to
- * stop. `.de.` is not a typo: the org is in Sentry's EU region.
+ * destination address rather than a credential. It permits posting events to
+ * one project and nothing else — reading issues or changing anything needs
+ * SENTRY_AUTH_TOKEN, which is a real secret and build-time only. Hence
+ * NEXT_PUBLIC_, and hence `--type config` in Vercel: named without the prefix
+ * it would be unreadable from the browser, and client-side error capture
+ * would stop dead while the server carried on looking healthy.
+ *
+ * Set on production and preview. The env var is the only source — there is
+ * no literal fallback, so the guard below carries the weight instead.
  */
-export const SENTRY_DSN =
-  process.env.NEXT_PUBLIC_SENTRY_DSN ||
-  'https://6d552e8cd01ff31ac3d70f46075e5b07@o4512119101587456.ingest.de.sentry.io/4512119114694736';
+export const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+/**
+ * An unset DSN does not throw: Sentry.init accepts it and quietly captures
+ * nothing, which on a deployed site is indistinguishable from an app that
+ * simply has no errors. That silence is the exact failure this whole setup
+ * exists to prevent, so say so — loudly, in the build and function logs,
+ * where a deploy that lost the variable is visible rather than assumed.
+ *
+ * Locally an unset DSN is ordinary and expected; nothing is said there.
+ */
+export function warnIfDsnMissing(runtime: string): void {
+  const deployed = Boolean(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL_ENV);
+  if (!SENTRY_DSN && deployed) {
+    console.error(
+      `[sentry] NEXT_PUBLIC_SENTRY_DSN is not set — the ${runtime} runtime is reporting NOTHING. ` +
+        'Set it on this environment in Vercel (--type config) and redeploy.',
+    );
+  }
+}
 
 /** Keeps a preview deploy's errors out of the production issue stream. */
 export const SENTRY_ENVIRONMENT =
