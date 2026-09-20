@@ -54,13 +54,42 @@ const SQ_CONTRACTOR_KINDS = new Set([
  */
 const PHONE_DISPLAY = '07825 156062';
 
-/** "£1,250" / "£1,252.50" from pence. */
+/**
+ * "£1,250" / "£1,252.50" from pence, and "—" when the payload has no usable
+ * figure — never "£0", which would read as a real amount of nothing.
+ *
+ * This used to be shadowed by a local `gbp` inside render(), so every price in
+ * every email rendered as "£1250.00": no thousands separator and forced pence,
+ * disagreeing with formatGBP() in the app for the same number. The local one is
+ * gone; its "—" guard for a missing value moved in here.
+ */
 function gbp(pence: unknown): string {
-  const n = Number(pence ?? 0);
-  const pounds = Math.floor(n / 100);
-  const rem = n % 100;
+  if (typeof pence !== 'number' || !Number.isFinite(pence)) return '—';
+  const pounds = Math.floor(pence / 100);
+  const rem = pence % 100;
   const grouped = pounds.toLocaleString('en-GB');
   return rem ? `£${grouped}.${String(rem).padStart(2, '0')}` : `£${grouped}`;
+}
+
+/**
+ * " (includes VAT)" / " (no VAT)", or "" when the price was taken before the
+ * tick box existed — same states as contractor_quotes.price_basis. Says only
+ * whether VAT is in the figure. Returns the bracketed suffix so call sites read
+ * `${gbp(x)}${vatSuffix(p.price_basis)}`.
+ *
+ * Duplicated from src/lib/sealedQuotes/money.ts (vatNote) for the same reason
+ * as PHONE_DISPLAY above: this is a Deno edge function and cannot import from
+ * the Next app. If the wording changes there it has to change here too.
+ */
+function vatSuffix(basis: unknown): string {
+  switch (basis) {
+    case 'inc_vat':
+      return ' (includes VAT)';
+    case 'no_vat':
+      return ' (no VAT)';
+    default:
+      return '';
+  }
 }
 
 function areaLine(p: Record<string, unknown>): string {
@@ -96,8 +125,6 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
   const signIn = `Sign in to view it: ${jobLink}`;
   const first = p.contact_name ? String(p.contact_name).split(/\s+/)[0] : 'there';
   const portal = `${SITE_URL}/my/${p.client_token ?? ''}`;
-  const gbp = (pence: unknown) =>
-    typeof pence === 'number' ? `£${(pence / 100).toFixed(2)}` : '—';
 
   switch (kind) {
     // ── Open-access board (existing) ──────────────────────────────────────
@@ -219,7 +246,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Email:     ${p.contact_email ?? '—'}\n` +
           `Postcode:  ${p.postcode ?? '—'}\n` +
           (p.gate_w3w ? `Gate:      ///${p.gate_w3w}\n` : '') +
-          `Your price: ${gbp(p.contractor_price_pence)}\n\n` +
+          `Your price: ${gbp(p.contractor_price_pence)}${vatSuffix(p.price_basis)}\n\n` +
           `Contact them within 24 hours to arrange the work, and log that you have ` +
           `here: ${SITE_URL}/won`,
       };
@@ -286,7 +313,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           : `Your first price is in — ${gbp(p.client_price_pence)}`,
         text:
           `Hi ${first},\n\nA contractor (${p.contractor_label ?? 'Contractor A'}) has priced your ` +
-          `${p.service ? `${p.service} ` : ''}job at ${gbp(p.client_price_pence)}.\n\n` +
+          `${p.service ? `${p.service} ` : ''}job at ${gbp(p.client_price_pence)}` +
+          `${vatSuffix(p.price_basis)}.\n\n` +
           (p.sole_offer
             ? `See it and accept here:\n${portal}\n\n`
             : `More may follow — see them all and choose here:\n${portal}\n\n`) +
@@ -310,7 +338,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           ? `Confirm your booking — ${gbp(p.amount_pence)} deposit`
           : `Complete your booking — ${gbp(p.amount_pence)}`,
         text:
-          `Hi ${first},\n\nYou’ve accepted a price of ${gbp(p.total_pence ?? p.amount_pence)} from ` +
+          `Hi ${first},\n\nYou’ve accepted a price of ${gbp(p.total_pence ?? p.amount_pence)}` +
+          `${vatSuffix(p.price_basis)} from ` +
           `${p.contractor_label ?? 'your chosen contractor'}.\n\n` +
           (bal > 0
             ? `Pay the ${gbp(p.amount_pence)} deposit here to confirm the booking:\n${p.checkout_url}\n\n` +
@@ -500,7 +529,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `Balance due — ${gbp(p.amount_pence)}`,
         text:
           `Hi ${first},\n\nThanks for confirming the work is done.\n\n` +
-          `Job total:     ${gbp(p.total_pence)}\n` +
+          // The total carries the qualifier; deposit and balance are shares of it.
+          `Job total:     ${gbp(p.total_pence)}${vatSuffix(p.price_basis)}\n` +
           `Deposit paid:  ${gbp(p.deposit_pence)}\n` +
           `Balance:       ${gbp(p.amount_pence)}\n\n` +
           `We’ll take the balance from the card you paid the deposit with. It’s due ` +
@@ -512,7 +542,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `Paid in full — thank you`,
         text:
-          `Hi ${first},\n\nThe balance of ${gbp(p.amount_pence)} has gone through and the ` +
+          `Hi ${first},\n\nThe balance of ${gbp(p.amount_pence)}${vatSuffix(p.price_basis)} ` +
+          `has gone through and the ` +
           `job is settled in full. Nothing further to do.\n\nThanks for using Emmerdale.`,
       };
 
@@ -523,7 +554,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `We couldn’t take your balance — ${gbp(p.amount_pence)}`,
         text:
-          `Hi ${first},\n\nWe tried to take the ${gbp(p.amount_pence)} balance on your ` +
+          `Hi ${first},\n\nWe tried to take the ${gbp(p.amount_pence)}` +
+          `${vatSuffix(p.price_basis)} balance on your ` +
           `completed job from the card you used for the deposit, and the payment didn’t ` +
           `go through. That’s usually an expired card or a check your bank wants you to ` +
           `approve.\n\n` +
@@ -645,7 +677,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `A customer has corrected a job you have already priced.\n\n` +
           `What changed:\n${list}\n\n` +
           (p.current_price_pence
-            ? `Your price of ${gbp(p.current_price_pence)} still stands. We have not ` +
+            ? `Your price of ${gbp(p.current_price_pence)}${vatSuffix(p.price_basis)} ` +
+              `still stands. We have not ` +
               `withdrawn it and the customer can still accept it. If the correction ` +
               `makes no difference to what you would charge, there is nothing to do.\n\n`
             : `Your price still stands — we have not withdrawn it. If the correction ` +

@@ -6,6 +6,8 @@ import {
   formatGBP,
   formatRate,
   poundsInputToPence,
+  QUOTABLE_PRICE_BASES,
+  vatNote,
 } from './money';
 import { generateToken, isTokenFormat, tokensEqual } from './tokens';
 import { haversineMiles } from './geo';
@@ -133,6 +135,32 @@ describe('formatGBP / formatRate / poundsInputToPence', () => {
     expect(poundsInputToPence('0')).toBeNull();
     expect(poundsInputToPence('abc')).toBeNull();
     expect(poundsInputToPence('45.999')).toBeNull();
+  });
+});
+
+describe('vatNote — is VAT present in the figure shown?', () => {
+  it('labels both states the tick box can set', () => {
+    expect(vatNote('inc_vat')).toBe('includes VAT');
+    expect(vatNote('no_vat')).toBe('no VAT');
+  });
+
+  it('gives each state a distinct label and leaves no state unlabelled', () => {
+    const labels = QUOTABLE_PRICE_BASES.map(vatNote);
+    expect(labels.every((l) => l !== null)).toBe(true);
+    expect(new Set(labels).size).toBe(QUOTABLE_PRICE_BASES.length);
+  });
+
+  it('never claims VAT on a price nobody was asked about', () => {
+    expect(vatNote('plus_vat')).toBeNull();
+  });
+
+  it('says nothing when nobody was asked', () => {
+    // Every quote taken before the form had the tick box, and every one parsed
+    // out of an email reply. A bare price is the honest rendering, not a guess.
+    expect(vatNote('unspecified')).toBeNull();
+    expect(vatNote(null)).toBeNull();
+    expect(vatNote(undefined)).toBeNull();
+    expect(vatNote('something_new')).toBeNull();
   });
 });
 

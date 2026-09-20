@@ -76,6 +76,9 @@ export async function submitQuoteAction(
     p_valid_until: (d.valid_until || null) as string,
     p_source: 'form',
     p_confirmed: true,
+    // Tick = VAT is in the figure, untick = there is none in it. 'unspecified'
+    // is reserved for prices that arrived by email parse, where nobody asked.
+    p_price_basis: formData.get('includes_vat') === 'on' ? 'inc_vat' : 'no_vat',
   });
   if (error) {
     console.error('[sq] submit_contractor_quote failed:', error);

@@ -306,11 +306,13 @@ export async function editJobAction(_prev: FormState, formData: FormData): Promi
         .eq('status', 'priced'),
       admin
         .from('contractor_quotes')
-        .select('contractor_id, contractor_price_pence')
+        .select('contractor_id, contractor_price_pence, price_basis')
         .eq('submission_id', js.id)
         .is('superseded_by', null),
     ]);
-    const priceFor = new Map((live ?? []).map((q) => [q.contractor_id, q.contractor_price_pence]));
+    // Keyed to the whole row: the amendment email quotes the price back and
+    // has to quote its VAT basis with it, or a plus-VAT figure reads as final.
+    const quoteFor = new Map((live ?? []).map((q) => [q.contractor_id, q]));
     const service = (js.service as { name: string } | null)?.name ?? js.service_verbatim;
     const county = (js.county as { name: string } | null)?.name ?? null;
 
@@ -332,7 +334,9 @@ export async function editJobAction(_prev: FormState, formData: FormData): Promi
           county,
           changes,
           token: inv.token,
-          current_price_pence: priceFor.get(inv.contractor_id) ?? null,
+          current_price_pence:
+            quoteFor.get(inv.contractor_id)?.contractor_price_pence ?? null,
+          price_basis: quoteFor.get(inv.contractor_id)?.price_basis ?? null,
         },
       });
       notified += 1;

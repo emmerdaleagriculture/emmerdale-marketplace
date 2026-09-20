@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { acceptQuoteAction, type AcceptActionState } from './actions';
-import { depositSplitPence, formatGBP, formatRate } from '@/lib/sealedQuotes/money';
+import { depositSplitPence, formatGBP, formatRate, vatNote } from '@/lib/sealedQuotes/money';
 import { sortClientQuotes, type SortMode } from '@/lib/sealedQuotes/quoteSort';
 import { RatingStars } from '@/components/RatingStars';
 import f from '@/components/forms/forms.module.css';
@@ -15,6 +15,7 @@ export type ClientQuoteView = {
   client_price_pence: number;
   client_rate_value_pence: number | null;
   client_rate_minimum_pence: number | null;
+  price_basis: string;
   contractor_display_label: string;
   contractor_rating_avg: number | null;
   contractor_rating_count: number;
@@ -74,7 +75,12 @@ export function PriceList({
           <div key={q.id} className={m.quoteCard}>
             <div className={m.quoteHead}>
               <span className={m.quoteLabel}>{q.contractor_display_label}</span>
-              <span className={m.quotePrice}>{formatGBP(q.client_price_pence)}</span>
+              <span className={m.quotePriceWrap}>
+                <span className={m.quotePrice}>{formatGBP(q.client_price_pence)}</span>
+                {vatNote(q.price_basis) && (
+                  <span className={m.vatNote}>{vatNote(q.price_basis)}</span>
+                )}
+              </span>
             </div>
             <div className={m.quoteMeta}>
               <RatingStars avg={q.contractor_rating_avg} count={q.contractor_rating_count} />
@@ -94,10 +100,12 @@ export function PriceList({
                     q.client_price_pence,
                     depositRate,
                   );
+                  const note = vatNote(q.price_basis);
                   return balance > 0 ? (
                     <p>
                       You&rsquo;re accepting <strong>{q.contractor_display_label}</strong> at{' '}
-                      <strong>{formatGBP(q.client_price_pence)}</strong>. You pay{' '}
+                      <strong>{formatGBP(q.client_price_pence)}</strong>
+                      {note ? ` (${note})` : ''}. You pay{' '}
                       <strong>{formatGBP(deposit)}</strong> now to book it; the remaining{' '}
                       {formatGBP(balance)} is charged to the same card once the work is done
                       and you&rsquo;ve confirmed it.
@@ -105,7 +113,8 @@ export function PriceList({
                   ) : (
                     <p>
                       You&rsquo;re accepting <strong>{q.contractor_display_label}</strong> at{' '}
-                      <strong>{formatGBP(q.client_price_pence)}</strong>, paid now to book it.
+                      <strong>{formatGBP(q.client_price_pence)}</strong>
+                      {note ? ` (${note})` : ''}, paid now to book it.
                     </p>
                   );
                 })()}
