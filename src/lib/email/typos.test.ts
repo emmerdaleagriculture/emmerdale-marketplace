@@ -13,6 +13,15 @@ describe('suggestKnownProviderTypo', () => {
     expect(suggestKnownProviderTypo('tom@hotmial.co.uk')).toBe('tom@hotmail.co.uk');
   });
 
+  // A contractor signed up on 11 Sep with this domain, was approved the next
+  // day, and heard nothing for nine days: gamil.com is registered, so it
+  // resolves, accepts the mail and swallows it — the DNS check cannot see it
+  // and this is the only thing that can. The detector was right all along;
+  // the signup form simply wasn't asking it.
+  it('catches gamil.com, which resolves and is not gmail', () => {
+    expect(suggestKnownProviderTypo('harri.shone@gamil.com')).toBe('harri.shone@gmail.com');
+  });
+
   it('catches dropped and doubled characters', () => {
     expect(suggestKnownProviderTypo('tom@gmal.com')).toBe('tom@gmail.com');
     expect(suggestKnownProviderTypo('tom@outlok.com')).toBe('tom@outlook.com');

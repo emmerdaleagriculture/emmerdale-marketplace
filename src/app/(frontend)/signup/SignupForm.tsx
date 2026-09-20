@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { signUpAction } from './actions';
 import { emptyFormState } from '@/lib/form';
+import { EmailField } from '@/components/forms/EmailField';
 import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
@@ -47,10 +48,15 @@ export function SignupForm({ next }: { next?: string }) {
         </label>
       </div>
 
-      <label className={f.field}>
-        <span className={f.label}>Email</span>
-        <input className={f.input} type="email" name="email" required autoComplete="email" />
-      </label>
+      {/* Not a plain input: a contractor who mistypes their domain is approved
+          and then never told, because the address resolves and swallows the
+          mail. That is how harri.shone@gamil.com went nine days without
+          hearing, on a form that had this component available the whole time. */}
+      <EmailField
+        name="email"
+        required
+        hint="Your confirmation link and every job invitation come to this address."
+      />
       <label className={f.field}>
         <span className={f.label}>Password</span>
         <input

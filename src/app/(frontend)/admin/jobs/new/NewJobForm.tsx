@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 import { createJobAction, type JobFormState } from './actions';
 import { ServicePicker, type ServiceOption } from '@/components/forms/ServicePicker';
 import type { CountyOption } from '@/components/forms/CountyPicker';
+import { EmailField } from '@/components/forms/EmailField';
 import f from '@/components/forms/forms.module.css';
 import a from '../../../auth.module.css';
 
@@ -64,10 +65,19 @@ export function NewJobForm({
           <span className={f.label}>Customer phone</span>
           <input className={f.input} name="customer_phone" required defaultValue={v?.customer_phone ?? defaults.customer_phone} />
         </label>
-        <label className={f.field}>
-          <span className={f.label}>Customer email (optional)</span>
-          <input className={f.input} name="customer_email" type="email" defaultValue={v?.customer_email ?? defaults.customer_email} />
-        </label>
+        {/* Typed from a phone call, where a domain is heard rather than read
+            — the likeliest place of all to land one character out. */}
+        <EmailField
+          name="customer_email"
+          label="Customer email (optional)"
+          // The customer's address, not whoever is signed in — so no browser
+          // autofill. EmailField defaults to autoComplete="email", which on an
+          // admin form invites exactly the mistake this component exists to
+          // stop: the operator's own address saved as the customer's, and the
+          // customer never hearing anything.
+          autoComplete="off"
+          defaultValue={v?.customer_email ?? defaults.customer_email}
+        />
       </div>
 
       <div className={a.groupTitle}>Job</div>

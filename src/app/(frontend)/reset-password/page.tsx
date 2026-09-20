@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { requestResetAction } from './actions';
 import { emptyFormState } from '@/lib/form';
+import { EmailField } from '@/components/forms/EmailField';
 import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
 import { SiteFooter } from '@/components/SiteFooter';
 import f from '@/components/forms/forms.module.css';
@@ -44,10 +45,10 @@ export default function ResetPasswordPage() {
           ) : (
             <form action={action} className={a.card}>
               {state.error && <p className={f.error}>{state.error}</p>}
-              <label className={f.field}>
-                <span className={f.label}>Email</span>
-                <input className={f.input} type="email" name="email" required autoComplete="email" />
-              </label>
+              {/* A mistyped domain here sends the reset link somewhere real
+                  and silent, and the person waits for a mail that arrived
+                  at a typosquatter instead. */}
+              <EmailField name="email" required />
               <Turnstile resetOn={state} onToken={setCaptchaToken} />
               <div className={a.actions}>
                 <button className={f.btnPrimary} type="submit" disabled={pending || captchaPending}>
