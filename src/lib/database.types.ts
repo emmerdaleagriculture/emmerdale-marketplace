@@ -47,6 +47,7 @@ export type Database = {
           distance_miles: number | null
           id: string
           markup_rate: number
+          price_basis: string
           site_visit_required: boolean
           status: string
           submission_id: string
@@ -67,6 +68,7 @@ export type Database = {
           distance_miles?: number | null
           id?: string
           markup_rate: number
+          price_basis?: string
           site_visit_required?: boolean
           status?: string
           submission_id: string
@@ -87,6 +89,7 @@ export type Database = {
           distance_miles?: number | null
           id?: string
           markup_rate?: number
+          price_basis?: string
           site_visit_required?: boolean
           status?: string
           submission_id?: string
@@ -2227,6 +2230,7 @@ export type Database = {
         Args: {
           p_confirmed: boolean
           p_notes: string
+          p_price_basis: string
           p_price_pence: number
           p_quote_type: string
           p_rate_minimum_pence: number

@@ -41,6 +41,35 @@ export function formatRate(ratePence: number, minimumPence: number | null): stri
 }
 
 /**
+ * Whether a quoted figure has VAT in it (contractor_quotes.price_basis).
+ * 'unspecified' covers every price taken before the form asked, and every one
+ * parsed out of an email reply — we genuinely don't know, so we don't claim.
+ */
+export type PriceBasis = 'unspecified' | 'inc_vat' | 'no_vat';
+
+/** The two states the tick box can set. */
+export const QUOTABLE_PRICE_BASES = ['inc_vat', 'no_vat'] as const;
+
+/**
+ * The VAT qualifier to show beside a price, or null to show it bare.
+ *
+ * Says only whether VAT is present in the figure shown. Both states mean the
+ * figure IS the whole charge — the difference is whether a business customer
+ * has VAT in it to reclaim. No arithmetic anywhere: the deposit and balance are
+ * shares of this same figure, exactly as before.
+ */
+export function vatNote(basis: string | null | undefined): string | null {
+  switch (basis) {
+    case 'inc_vat':
+      return 'includes VAT';
+    case 'no_vat':
+      return 'no VAT';
+    default:
+      return null;
+  }
+}
+
+/**
  * Parse a price typed into a form ("450", "£450.50", "1,200") into pence.
  * Null when it isn't a usable positive amount.
  */

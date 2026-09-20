@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getInvitationByToken, getLiveQuote, signPhotos } from '@/lib/sealedQuotes/data';
-import { formatGBP, formatRate } from '@/lib/sealedQuotes/money';
+import { formatGBP, formatRate, vatNote } from '@/lib/sealedQuotes/money';
 import { timeLeft, formatDateTime } from '@/lib/time';
 import { MinimalHeader } from '@/components/MinimalHeader';
 import { Breadcrumb } from '@/components/Breadcrumb';
@@ -226,7 +226,8 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                     {live.quote_type === 'rate' && live.rate_value_pence
                       ? formatRate(live.rate_value_pence, live.rate_minimum_pence)
                       : formatGBP(live.contractor_price_pence)}
-                  </strong>{' '}
+                  </strong>
+                  {vatNote(live.price_basis) ? ` (${vatNote(live.price_basis)})` : ''}{' '}
                   (sent {formatDateTime(live.created_at)}, valid until {live.valid_until}).
                   Send a new price below — the latest one is what the customer sees.
                   {/* The customer changed the job after this price was sent. Shown

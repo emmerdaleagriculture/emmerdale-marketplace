@@ -8,7 +8,7 @@ import {
   getSubmissionByClientToken,
   signPhotos,
 } from '@/lib/sealedQuotes/data';
-import { formatGBP } from '@/lib/sealedQuotes/money';
+import { formatGBP, vatNote } from '@/lib/sealedQuotes/money';
 import { cancellationQuote } from '@/lib/sealedQuotes/cancellation';
 import { MinimalHeader } from '@/components/MinimalHeader';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -249,7 +249,9 @@ export default async function ClientPortalPage({
               token={token}
               quoteId={accepted.id}
               label={accepted.contractor_display_label}
-              amountLabel={formatGBP(accepted.client_price_pence)}
+              amountLabel={`${formatGBP(accepted.client_price_pence)}${
+                vatNote(accepted.price_basis) ? ` (${vatNote(accepted.price_basis)})` : ''
+              }`}
             />
           )}
 
@@ -258,7 +260,13 @@ export default async function ClientPortalPage({
             <div className={m.awardPanel}>
               <p>
                 <strong>{accepted?.contractor_real_name ?? 'Your contractor'}</strong> has
-                your job{accepted ? ` at ${formatGBP(accepted.client_price_pence)}` : ''}. Your
+                your job
+                {accepted
+                  ? ` at ${formatGBP(accepted.client_price_pence)}${
+                      vatNote(accepted.price_basis) ? ` (${vatNote(accepted.price_basis)})` : ''
+                    }`
+                  : ''}
+                . Your
                 deposit is paid; the rest is due once the work is done and
                 you&rsquo;ve confirmed it.
               </p>

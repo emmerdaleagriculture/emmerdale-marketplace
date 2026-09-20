@@ -197,6 +197,11 @@ export async function POST(request: Request) {
     p_valid_until: null as unknown as string,
     p_source: 'email_parsed',
     p_confirmed: false,
+    // 'unspecified', never inferred from mentions_vat: that flag fires on "inc
+    // VAT" as readily as on "+ VAT", and guessing the wrong way round would put
+    // a qualifier on the customer's screen that the contractor never wrote. The
+    // price shows bare until they restate it on the form.
+    p_price_basis: 'unspecified',
   });
   if (error) {
     console.error('[inbound] submit failed:', error);

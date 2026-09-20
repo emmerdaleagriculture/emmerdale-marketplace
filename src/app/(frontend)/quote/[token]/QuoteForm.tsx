@@ -105,6 +105,18 @@ export function QuoteForm({
         </div>
       )}
 
+      {/* Ticked by default: the figure as typed being the figure the customer
+          pays is what every price on the site has meant, and most contractors
+          here are VAT registered. Untick = there is no VAT in it. */}
+      <label className={f.checkRow}>
+        <input type="checkbox" name="includes_vat" defaultChecked />
+        <span>
+          {quoteType === 'total'
+            ? 'This price includes VAT'
+            : 'These figures include VAT'}
+        </span>
+      </label>
+
       <label className={f.field}>
         <span className={f.label}>Notes to Emmerdale (optional — not shown to the customer)</span>
         <textarea className={f.textarea} name="notes" rows={2} maxLength={1000} />

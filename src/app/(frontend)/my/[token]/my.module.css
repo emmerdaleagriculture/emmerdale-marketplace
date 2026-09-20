@@ -64,6 +64,21 @@
   font-weight: 600;
 }
 
+/* Price and its VAT qualifier travel together — the qualifier changes what the
+   number means, so it must never wrap away into the metadata row. */
+.quotePriceWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.vatNote {
+  font-size: 12px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
 .quoteMeta {
   display: flex;
   gap: 8px 16px;

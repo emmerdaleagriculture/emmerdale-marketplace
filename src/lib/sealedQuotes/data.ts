@@ -36,7 +36,7 @@ export async function getLiveQuote(submissionId: string, contractorId: string) {
   const admin = createServiceRoleClient();
   const { data } = await admin
     .from('contractor_quotes')
-    .select('id, quote_type, contractor_price_pence, rate_value_pence, rate_minimum_pence, site_visit_required, valid_until, confirmed_by_contractor, created_at')
+    .select('id, quote_type, contractor_price_pence, rate_value_pence, rate_minimum_pence, price_basis, site_visit_required, valid_until, confirmed_by_contractor, created_at')
     .eq('submission_id', submissionId)
     .eq('contractor_id', contractorId)
     .is('superseded_by', null)
@@ -74,7 +74,7 @@ export async function getClientQuotes(submissionId: string) {
   const { data } = await admin
     .from('client_quotes')
     .select(
-      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status',
+      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status',
     )
     .eq('submission_id', submissionId)
     .in('status', ['active', 'accepted'])
@@ -92,7 +92,7 @@ export async function getClientQuoteById(id: string) {
   const { data } = await admin
     .from('client_quotes')
     .select(
-      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status',
+      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status',
     )
     .eq('id', id)
     .maybeSingle();
