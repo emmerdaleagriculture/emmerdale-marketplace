@@ -8,7 +8,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { normalisePostcode, resolveCounty, type CountyResolution } from '@/lib/postcodes';
 import { getCounties, getServices } from '@/lib/reference';
-import { verifyTurnstile } from '@/lib/turnstile';
+import { verifyTurnstile, type TurnstileResult } from '@/lib/turnstile';
 import type { FormState } from '@/lib/form';
 import { CONFIRM_SUCCESS } from './copy';
 import type { Json } from '@/lib/database.types';
@@ -236,26 +236,24 @@ export async function parseJobAction(
   // waits the customer paid for; started together they cost the slower one.
   const [turnstile, limited] = await Promise.all([
     botSuspect
-      ? Promise.resolve<{ ok: boolean; error?: string; softFail?: string }>({ ok: true })
+      // No softFail: a trapped submission is already recorded below as
+      // 'honeypot', and logging it twice would double-count it on the
+      // dashboard under two different names.
+      ? Promise.resolve<TurnstileResult>({})
       : verifyTurnstile(String(formData.get('cf-turnstile-response') || ''), ip),
     rateLimited(ip, 'parse', PARSE_LIMIT_PER_HOUR),
   ]);
 
-  if (!turnstile.ok) {
-    return {
-      ...(await refuse(
-        ip,
-        'parse',
-        `turnstile:${turnstile.error}`,
-        'We couldn’t verify you’re human just then — please try again.',
-      )),
-      values,
-    };
-  }
-  // The check could not be made and the flow went on anyway (spec §6.4).
+  // Turnstile cannot refuse anyone — it reports, and the flow goes on. There
+  // is deliberately no branch here that returns an error; see the note in
+  // lib/turnstile.ts for why none of its failure codes is worth a customer.
+  //
   // Recorded off the critical path, because a widget that has quietly stopped
-  // delivering tokens is invisible otherwise — it costs conversions while
-  // every submission still looks clean.
+  // delivering tokens is invisible otherwise: it costs conversions while every
+  // submission still looks clean. This log is now the ONLY evidence that the
+  // check is doing anything at all, which makes it load-bearing rather than
+  // incidental — if it ever fills with real failures, that is the signal to
+  // revisit the trade, not to start refusing people again by reflex.
   if (turnstile.softFail) {
     const soft = turnstile.softFail;
     after(() => logParseEvent(ip, 'parse', 'fallback', `turnstile:${soft}`));
