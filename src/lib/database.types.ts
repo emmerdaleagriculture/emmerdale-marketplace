@@ -1665,6 +1665,9 @@ export type Database = {
           kind: string
           payload: Json
           provider_message_id: string | null
+          retry_count: number
+          retry_of: string | null
+          send_after: string | null
           sent_at: string | null
           status: string
           to_email: string
@@ -1679,6 +1682,9 @@ export type Database = {
           kind: string
           payload?: Json
           provider_message_id?: string | null
+          retry_count?: number
+          retry_of?: string | null
+          send_after?: string | null
           sent_at?: string | null
           status?: string
           to_email: string
@@ -1693,11 +1699,22 @@ export type Database = {
           kind?: string
           payload?: Json
           provider_message_id?: string | null
+          retry_count?: number
+          retry_of?: string | null
+          send_after?: string | null
           sent_at?: string | null
           status?: string
           to_email?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pending_emails_retry_of_fkey"
+            columns: ["retry_of"]
+            isOneToOne: false
+            referencedRelation: "pending_emails"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recent_work_seed: {
         Row: {
