@@ -1142,6 +1142,7 @@ export type Database = {
           created_at: string
           customer_id: string | null
           distributed_at: string | null
+          draft_chased_at: string | null
           expires_at: string | null
           first_refusal: boolean
           gate_w3w: string | null
@@ -1203,6 +1204,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           distributed_at?: string | null
+          draft_chased_at?: string | null
           expires_at?: string | null
           first_refusal?: boolean
           gate_w3w?: string | null
@@ -1264,6 +1266,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           distributed_at?: string | null
+          draft_chased_at?: string | null
           expires_at?: string | null
           first_refusal?: boolean
           gate_w3w?: string | null
