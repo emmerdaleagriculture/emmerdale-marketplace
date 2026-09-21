@@ -461,6 +461,36 @@ export type Database = {
         }
         Relationships: []
       }
+      cron_runs: {
+        Row: {
+          detail: Json | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          name: string
+          ok: boolean | null
+          started_at: string
+        }
+        Insert: {
+          detail?: Json | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          name: string
+          ok?: boolean | null
+          started_at?: string
+        }
+        Update: {
+          detail?: Json | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          name?: string
+          ok?: boolean | null
+          started_at?: string
+        }
+        Relationships: []
+      }
       counties: {
         Row: {
           country: string
@@ -2098,6 +2128,21 @@ export type Database = {
         Returns: Json
       }
       drain_emails_tick: { Args: never; Returns: number }
+      cron_jobs_health: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          jobname: string
+          schedule: string
+          command: string
+          active: boolean
+          last_status: string | null
+          last_start: string | null
+          last_end: string | null
+          last_message: string | null
+          runs_24h: number
+          failures_24h: number
+        }[]
+      }
       email_drain_health: {
         Args: { p_limit?: number }
         Returns: {

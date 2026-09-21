@@ -26,6 +26,7 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
       { href: '/admin/money', label: 'Money' },
       { href: '/admin/email', label: 'Email' },
       { href: '/admin/errors', label: 'Errors' },
+      { href: '/admin/crons', label: 'Scheduled' },
     ],
   },
   {
