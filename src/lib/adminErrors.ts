@@ -36,6 +36,48 @@ export type AdminErrors = {
   payments: PaymentFailure[];
 };
 
+/**
+ * Which of these failures were put right by a later attempt.
+ *
+ * Retries chain — a message can fail, be retried, fail again, and arrive on
+ * the third go — so a failure is resolved if *any* descendant was delivered,
+ * not just its immediate child. Hence the walk rather than a single lookup.
+ */
+async function resolvedByRetry(
+  admin: ReturnType<typeof createServiceRoleClient>,
+  failureIds: string[],
+  from: string,
+): Promise<Set<string>> {
+  const resolved = new Set<string>();
+  if (failureIds.length === 0) return resolved;
+
+  const { data } = await admin
+    .from('pending_emails')
+    .select('id, retry_of, delivery_status')
+    .not('retry_of', 'is', null)
+    .gte('created_at', from)
+    .limit(1000);
+
+  const children = new Map<string, { id: string; delivered: boolean }[]>();
+  for (const r of data ?? []) {
+    if (!r.retry_of) continue;
+    const list = children.get(r.retry_of) ?? [];
+    list.push({ id: r.id, delivered: r.delivery_status === 'delivered' });
+    children.set(r.retry_of, list);
+  }
+
+  const arrived = (id: string, seen: Set<string>): boolean => {
+    // Guards against a cycle, which the data should never contain but which
+    // would otherwise hang the admin page rather than merely mislead it.
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return (children.get(id) ?? []).some((c) => c.delivered || arrived(c.id, seen));
+  };
+
+  for (const id of failureIds) if (arrived(id, new Set())) resolved.add(id);
+  return resolved;
+}
+
 export async function loadAdminErrors(): Promise<AdminErrors> {
   const admin = createServiceRoleClient();
   const from = since();
@@ -55,8 +97,13 @@ export async function loadAdminErrors(): Promise<AdminErrors> {
     // that it never arrived. The second is invisible in the send logs.
     admin
       .from('pending_emails')
-      .select('kind, status, delivery_status, delivery_detail, created_at')
+      .select('id, kind, status, delivery_status, delivery_detail, created_at')
       .or('status.eq.failed,delivery_status.in.(bounced,failed,suppressed)')
+      // Only the first attempt at a message. A retry that also failed is the
+      // same person still not hearing from us, and counting it again would
+      // make a message we tried hardest to deliver look like the worst
+      // problem on the page.
+      .is('retry_of', null)
       .gte('created_at', from)
       .order('created_at', { ascending: false })
       .limit(500),
@@ -88,8 +135,19 @@ export async function loadAdminErrors(): Promise<AdminErrors> {
       });
   }
 
+  // A failure that a later attempt fixed is history, not news. The webhook
+  // queues a retry as a new row pointing back at this one, so walk forward:
+  // if anything downstream of a failure was delivered, the person got their
+  // email and the page should not still be reporting them as missing it.
+  const resolved = await resolvedByRetry(
+    admin,
+    (emailsQ.data ?? []).map((e) => e.id),
+    from,
+  );
+
   const emails = new Map<string, EmailFailure>();
   for (const e of emailsQ.data ?? []) {
+    if (resolved.has(e.id)) continue;
     // Prefer the provider's verdict: 'failed to send' and 'sent, then bounced'
     // are different problems with different fixes.
     const status = e.delivery_status ?? e.status;

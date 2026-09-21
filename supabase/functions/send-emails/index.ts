@@ -727,10 +727,16 @@ Deno.serve(async (req) => {
     for (const r of data ?? []) dead.add(String(r.email).toLowerCase());
   } catch { /* table may not exist yet — send as before */ }
 
+  // `send_after` holds a row back. It is set only by the delivery webhook
+  // when it queues a retry, so it is null on every ordinary send and this
+  // filter changes nothing for them — but a retry of a message that bounced
+  // off a full mailbox must not go out on the next drain, sixty seconds
+  // later, when the mailbox is certain to still be full.
   const { data: pending } = await supabase
     .from('pending_emails')
     .select('id, kind, to_email, payload, attempts')
     .eq('status', 'pending')
+    .or(`send_after.is.null,send_after.lte.${new Date().toISOString()}`)
     .limit(BATCH);
 
   let sent = 0, failed = 0, retried = 0;
