@@ -267,6 +267,45 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
         </div>
       )}
 
+      {/* ── Contact ──────────────────────────────────────────────────── */}
+      {/* Above the map and the refinements on purpose, and this is the whole
+          point of the ordering. Of the 27 people who reached this screen in
+          the week to 21 Sep 2026, only 8 typed into a contact field — and of
+          the 9 who scrolled to the very bottom, where these two inputs used
+          to sit below seven optional ones, 7 did. One in eighteen of everyone
+          who stopped short did. The form was asking for everything it merely
+          wanted before the only thing it actually needs.
+
+          The details below still matter and most people still fill them in;
+          they are simply not what a lost lead costs. Capture beats
+          completeness (spec §4 step 3), and nothing above this line is
+          something the customer has to supply. */}
+      <div className={a.groupTitle}>How should we reach you?</div>
+      {/* Read at the exact step people were abandoning: the heading used to say
+          contractors would reach them, which is only true after they accept. */}
+      <p className={f.hint}>
+        Your details stay with us — a contractor only gets them if you accept their price.
+      </p>
+
+      <div className={a.row2}>
+        <label className={f.field}>
+          <span className={f.label}>Your name</span>
+          <input
+            className={f.input}
+            type="text"
+            name="contact_name"
+            required
+            autoComplete="name"
+            onInput={() => trackStep('contact')}
+          />
+        </label>
+        <EmailField
+          name="contact_email"
+          required
+          hint="Everything about your job comes to this address."
+        />
+      </div>
+
       {/* ── The details ──────────────────────────────────────────────── */}
       <div className={a.groupTitle}>Check the details</div>
 
@@ -476,33 +515,6 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           defaultValue={result.obstacles}
         />
       </label>
-
-      {/* ── Contact ──────────────────────────────────────────────────── */}
-      <div className={a.groupTitle}>How should we reach you?</div>
-      {/* Read at the exact step people were abandoning: the heading used to say
-          contractors would reach them, which is only true after they accept. */}
-      <p className={f.hint}>
-        Your details stay with us — a contractor only gets them if you accept their price.
-      </p>
-
-      <div className={a.row2}>
-        <label className={f.field}>
-          <span className={f.label}>Your name</span>
-          <input
-            className={f.input}
-            type="text"
-            name="contact_name"
-            required
-            autoComplete="name"
-            onInput={() => trackStep('contact')}
-          />
-        </label>
-        <EmailField
-          name="contact_email"
-          required
-          hint="Everything about your job comes to this address."
-        />
-      </div>
 
       <div className={a.actions}>
         {boundaryWanted && (
