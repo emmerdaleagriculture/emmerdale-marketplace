@@ -23,6 +23,7 @@ export function EmailField({
   defaultValue = '',
   autoComplete = 'email',
   hint,
+  onBlur,
 }: {
   name: string;
   label?: string;
@@ -30,6 +31,8 @@ export function EmailField({
   defaultValue?: string;
   autoComplete?: string;
   hint?: string;
+  /** Runs alongside the typo check, not instead of it. */
+  onBlur?: (value: string) => void;
 }) {
   const [value, setValue] = useState(defaultValue);
   const [suggestion, setSuggestion] = useState<string | null>(null);
@@ -49,7 +52,10 @@ export function EmailField({
           // Clear as they type; re-check once they've finished.
           if (suggestion) setSuggestion(null);
         }}
-        onBlur={(e) => setSuggestion(suggestKnownProviderTypo(e.target.value))}
+        onBlur={(e) => {
+          setSuggestion(suggestKnownProviderTypo(e.target.value));
+          onBlur?.(e.target.value);
+        }}
       />
       {hint && !suggestion && <span className={f.hint}>{hint}</span>}
       {suggestion && (
