@@ -20,7 +20,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
       .order('sent_at', { ascending: true }),
     admin
       .from('pending_emails')
-      .select('id, to_email, status, delivery_status, delivery_detail, delivery_at, sent_at, created_at')
+      .select('id, to_email, status, delivery_status, delivery_detail, delivery_at, sent_at, created_at, retry_of')
       .eq('kind', 'sq_invitation')
       .eq('payload->>submission_id', id)
       .order('created_at', { ascending: true }),
@@ -36,7 +36,14 @@ export async function loadOutreach(id: string): Promise<Outreach> {
       .order('created_at', { ascending: true }),
   ]);
   const invitations = invitationsQ.data ?? [];
-  const emails = emailsQ.data ?? [];
+  // A delivery retry is a second pending_emails row for the same message, so
+  // the raw rows would show one contractor twice and count them twice. Keep
+  // only the newest attempt in each chain — same shape as superseded_by on
+  // contractor_quotes below — so an invitation is one line showing where it
+  // actually ended up.
+  const attempts = emailsQ.data ?? [];
+  const superseded = new Set(attempts.map((e) => e.retry_of).filter((id): id is string => !!id));
+  const emails = attempts.filter((e) => !superseded.has(e.id));
   const contractorQuotes = contractorQuotesQ.data ?? [];
   const clientQuotes = clientQuotesQ.data ?? [];
 

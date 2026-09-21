@@ -30,7 +30,7 @@ export default async function AdminEmailPage() {
   const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
 
   const [counts, recent, stuck, undelivered, drain] = await Promise.all([
-    admin.from('pending_emails').select('status, attempts, created_at'),
+    admin.from('pending_emails').select('status, attempts, created_at, send_after'),
     admin
       .from('pending_emails')
       .select('id, kind, to_email, status, attempts, created_at, sent_at, delivery_status')
@@ -56,7 +56,15 @@ export default async function AdminEmailPage() {
   ]);
 
   const all = counts.data ?? [];
-  const pending = all.filter((r) => r.status === 'pending');
+  // A row held back by send_after is a delivery retry waiting out its delay —
+  // deliberately parked, not stuck. Counting it here would put "Oldest
+  // waiting: 4 hours ago" on a perfectly healthy drain, which is precisely
+  // the reading this page exists to make trustworthy.
+  const now = new Date().toISOString();
+  const held = all.filter((r) => r.status === 'pending' && r.send_after && r.send_after > now);
+  const pending = all.filter(
+    (r) => r.status === 'pending' && !(r.send_after && r.send_after > now),
+  );
   const failed = all.filter((r) => r.status === 'failed');
   const sentWeek = all.filter((r) => r.status === 'sent' && r.created_at >= since);
   const oldestPending = pending
@@ -108,7 +116,14 @@ export default async function AdminEmailPage() {
               <td>{stuck.data?.length ?? 0}</td>
               <td>{failed.length}</td>
               <td>{sentWeek.length}</td>
-              <td>{oldestPending ? timeAgo(oldestPending) : '—'}</td>
+              <td>
+                {oldestPending ? timeAgo(oldestPending) : '—'}
+                {held.length > 0 && (
+                  <div className={s.metricHint}>
+                    +{held.length} held for a later retry
+                  </div>
+                )}
+              </td>
             </tr>
           </tbody>
         </table>

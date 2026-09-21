@@ -20,6 +20,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const MAX_ATTEMPTS = 5;
 const BATCH = 50;
+/** Postgres undefined_column — this function running ahead of its migration. */
+const UNDEFINED_COLUMN = '42703';
 
 type PendingEmail = {
   id: string;
@@ -732,12 +734,32 @@ Deno.serve(async (req) => {
   // filter changes nothing for them — but a retry of a message that bounced
   // off a full mailbox must not go out on the next drain, sixty seconds
   // later, when the mailbox is certain to still be full.
-  const { data: pending } = await supabase
+  const sendable = await supabase
     .from('pending_emails')
     .select('id, kind, to_email, payload, attempts')
     .eq('status', 'pending')
     .or(`send_after.is.null,send_after.lte.${new Date().toISOString()}`)
     .limit(BATCH);
+
+  // If send_after isn't there yet — this function deployed ahead of its
+  // migration — PostgREST rejects the whole query, and `data ?? []` would
+  // read as an empty queue. That is the worst possible failure here: every
+  // email in the system silently stops going out while this returns 200 and
+  // /admin/email reports a healthy drain. Fall back to the query without the
+  // hold, which is exactly correct in that window, because nothing can have
+  // been held back by a column that does not exist.
+  let pending = sendable.data;
+  if (sendable.error) {
+    console.error('[send-emails] sendable query failed:', sendable.error.message);
+    if (sendable.error.code !== UNDEFINED_COLUMN) throw sendable.error;
+    const fallback = await supabase
+      .from('pending_emails')
+      .select('id, kind, to_email, payload, attempts')
+      .eq('status', 'pending')
+      .limit(BATCH);
+    if (fallback.error) throw fallback.error;
+    pending = fallback.data;
+  }
 
   let sent = 0, failed = 0, retried = 0;
 
