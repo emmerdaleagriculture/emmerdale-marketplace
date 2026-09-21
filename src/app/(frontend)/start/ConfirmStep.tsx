@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { START_COMPLETE_PATH } from './copy';
-import { confirmJobAction, type ConfirmActionState } from './actions';
+import { confirmJobAction, saveContactDraftAction, type ConfirmActionState } from './actions';
 import type { ParseResult } from '@/lib/jobParse/schema';
 import { conditionsFor, isAreaPriced } from '@/lib/jobParse/conditions';
 import { GATE_WIDTH_OPTIONS } from '@/lib/jobParse/access';
@@ -66,6 +66,28 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
   // asks for one, once. The customer can still send without it.
   const [drawRequest, setDrawRequest] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
+
+  /**
+   * Keep whatever contact details are on screen, without waiting for Send.
+   *
+   * Most people who reach this screen never press it, and until this existed
+   * that meant a draft describing real work in a real postcode with nobody's
+   * name on it. Reads the live form rather than tracking two more pieces of
+   * state, so it always saves exactly what the customer can see.
+   *
+   * Fire-and-forget on purpose: nothing here is allowed to interrupt someone
+   * in the middle of filling in a form.
+   */
+  const keepContact = () => {
+    const form = formRef.current;
+    if (!form) return;
+    const data = new FormData(form);
+    void saveContactDraftAction(
+      result.submission_id,
+      String(data.get('contact_name') ?? ''),
+      String(data.get('contact_email') ?? ''),
+    );
+  };
   const sendWithoutBoundary = useRef(false);
 
   // Step changes are state swaps, not navigations — the browser keeps the
@@ -266,6 +288,54 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           ))}
         </div>
       )}
+
+      {/* ── Contact ──────────────────────────────────────────────────── */}
+      {/* Above the map and the refinements on purpose, and this is the whole
+          point of the ordering. Of the 27 people who reached this screen in
+          the week to 21 Sep 2026, only 8 typed into a contact field — and of
+          the 9 who scrolled to the very bottom, where these two inputs used
+          to sit below seven optional ones, 7 did. One in eighteen of everyone
+          who stopped short did. The form was asking for everything it merely
+          wanted before the only thing it actually needs.
+
+          The details below still matter and most people still fill them in;
+          they are simply not what a lost lead costs. Capture beats
+          completeness (spec §4 step 3), and nothing above this line is
+          something the customer has to supply. */}
+      <div className={a.groupTitle}>How should we reach you?</div>
+      {/* Read at the exact step people were abandoning: the heading used to say
+          contractors would reach them, which is only true after they accept. */}
+      {/* Says that the details are kept before Send, because they are:
+          keepContact writes them on blur. Someone who types an email here and
+          then leaves will hear from us, and they should learn that from the
+          form rather than from the email. It is also the honest reason to
+          fill it in early — the job is not lost if they run out of time. */}
+      <p className={f.hint}>
+        Your details stay with us — a contractor only gets them if you accept their
+        price. If you don&rsquo;t finish now, we&rsquo;ll email you a link to pick up
+        where you left off.
+      </p>
+
+      <div className={a.row2}>
+        <label className={f.field}>
+          <span className={f.label}>Your name</span>
+          <input
+            className={f.input}
+            type="text"
+            name="contact_name"
+            required
+            autoComplete="name"
+            onInput={() => trackStep('contact')}
+            onBlur={keepContact}
+          />
+        </label>
+        <EmailField
+          name="contact_email"
+          required
+          hint="Everything about your job comes to this address."
+          onBlur={keepContact}
+        />
+      </div>
 
       {/* ── The details ──────────────────────────────────────────────── */}
       <div className={a.groupTitle}>Check the details</div>
@@ -476,33 +546,6 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           defaultValue={result.obstacles}
         />
       </label>
-
-      {/* ── Contact ──────────────────────────────────────────────────── */}
-      <div className={a.groupTitle}>How should we reach you?</div>
-      {/* Read at the exact step people were abandoning: the heading used to say
-          contractors would reach them, which is only true after they accept. */}
-      <p className={f.hint}>
-        Your details stay with us — a contractor only gets them if you accept their price.
-      </p>
-
-      <div className={a.row2}>
-        <label className={f.field}>
-          <span className={f.label}>Your name</span>
-          <input
-            className={f.input}
-            type="text"
-            name="contact_name"
-            required
-            autoComplete="name"
-            onInput={() => trackStep('contact')}
-          />
-        </label>
-        <EmailField
-          name="contact_email"
-          required
-          hint="Everything about your job comes to this address."
-        />
-      </div>
 
       <div className={a.actions}>
         {boundaryWanted && (

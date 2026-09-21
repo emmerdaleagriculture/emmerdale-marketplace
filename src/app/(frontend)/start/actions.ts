@@ -732,3 +732,59 @@ export async function confirmJobAction(
 
   return { ok: true, message: CONFIRM_SUCCESS };
 }
+
+/** Generous: this fires on blur, and a customer correcting a typo is normal. */
+const CONTACT_DRAFT_LIMIT_PER_HOUR = 60;
+
+/**
+ * Keep the contact details the moment they are typed, before the job is sent.
+ *
+ * The confirm screen loses most of the people who reach it — 27 arrived in the
+ * week to 21 September 2026 and 8 typed into a contact field — and until now
+ * the details were only written by confirmJobAction, so anyone who filled in
+ * their name and email and then left was indistinguishable from someone who
+ * never started. Twenty-two drafts sat in the table describing real work in a
+ * real postcode with no way to reach anybody.
+ *
+ * Saving on blur turns that into a lead that can be chased. The row stays
+ * `draft` and nothing is distributed: this writes two columns and changes no
+ * status, so a saved draft is still not a job, and confirmJobAction remains
+ * the only thing that makes one.
+ *
+ * Deliberately quiet. It returns nothing and reports nothing to the customer,
+ * because it is not an action they asked for — a failure here must never put
+ * an error in front of someone in the middle of filling in a form.
+ */
+export async function saveContactDraftAction(
+  submissionId: string,
+  name: string,
+  email: string,
+): Promise<void> {
+  if (!z.string().uuid().safeParse(submissionId).success) return;
+
+  // Half a typed address is not a lead, and an emptied field is not a
+  // retraction of one already saved — write only what is worth keeping.
+  const trimmedName = name.trim().slice(0, 200);
+  const trimmedEmail = email.trim().slice(0, 320);
+  const patch: { contact_name?: string; contact_email?: string } = {};
+  if (trimmedName) patch.contact_name = trimmedName;
+  if (trimmedEmail && z.string().email().safeParse(trimmedEmail).success) {
+    patch.contact_email = trimmedEmail;
+  }
+  if (Object.keys(patch).length === 0) return;
+
+  const ip = await clientIp();
+  if (await rateLimited(ip, 'confirm', CONTACT_DRAFT_LIMIT_PER_HOUR)) return;
+
+  const admin = createServiceRoleClient();
+  // `status = 'draft'` is the whole guard, and it is the same one
+  // confirmJobAction uses: a sent, expired or cancelled job cannot have its
+  // contact details rewritten by anyone who still has the id in a tab.
+  const { error } = await admin
+    .from('job_submissions')
+    .update(patch)
+    .eq('id', submissionId)
+    .eq('status', 'draft');
+
+  if (error) console.error('[saveContactDraft] could not save:', error.message);
+}
