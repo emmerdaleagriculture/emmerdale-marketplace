@@ -34,9 +34,19 @@ create index if not exists pending_emails_sendable_idx
   on pending_emails (send_after)
   where status = 'pending';
 
--- Walking back from a failure to the attempts that followed it, which is how
--- the admin page tells a resolved failure from a live one.
-create index if not exists pending_emails_retry_of_idx
+-- One retry per failure, enforced here rather than trusted to the caller.
+--
+-- The delivery webhook is a Svix endpoint, so Resend redelivers an event
+-- whenever it does not get a 2xx — the handler's own comments say so. Without
+-- this, a redelivered `email.failed` would queue a second attempt at the same
+-- message and the contractor would receive two copies of it. A read-then-write
+-- check in the handler would race against exactly that redelivery; a unique
+-- index cannot.
+--
+-- It doubles as the index for walking a failure forward to the attempts that
+-- followed it, which is how the admin page tells a resolved failure from a
+-- live one.
+create unique index if not exists pending_emails_one_retry_per_parent_idx
   on pending_emails (retry_of)
   where retry_of is not null;
 

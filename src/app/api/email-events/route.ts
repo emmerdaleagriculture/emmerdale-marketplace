@@ -83,6 +83,9 @@ function describe(event: ResendEvent): string {
   return parts.join(' — ').slice(0, 500) || (event.type ?? 'no detail');
 }
 
+/** Postgres unique_violation, surfaced by PostgREST as the error code. */
+const DUPLICATE_KEY = '23505';
+
 type FailedRow = {
   id: string;
   kind: string;
@@ -93,7 +96,11 @@ type FailedRow = {
 
 /**
  * Queue another attempt if this failure was about the moment rather than the
- * address, and return when it will go — or null if it will not.
+ * address, and describe what will happen — or null if nothing will.
+ *
+ * Safe to call twice for the same failure. Resend redelivers an event until
+ * it gets a 2xx, and a unique index on `retry_of` turns the second insert
+ * into a duplicate-key error rather than a second copy of the email.
  *
  * The line is the one Resend already draws. `failed` is the provider saying
  * it could not send at all, which says nothing about the recipient. A
@@ -130,15 +137,21 @@ async function maybeRetry(
     send_after: sendAfter.toISOString(),
   });
 
-  // A retry that cannot be queued is not worth failing the webhook over —
-  // Resend would redeliver the event and we would re-record the same failure.
-  // Say so where it will be seen instead.
+  // A unique violation means this failure already has its retry: Resend has
+  // redelivered an event we have already acted on. That is the index doing
+  // its job, not a fault, and must not turn into a second copy of the email
+  // or an alarming log line.
+  if (error?.code === DUPLICATE_KEY) return 'already queued to go again';
+
+  // Anything else is worth seeing, but not worth failing the webhook over —
+  // a non-2xx makes Resend redeliver, and we would re-record the same
+  // failure. Say so where it will be read instead.
   if (error) {
     console.error('[email-events] could not queue retry:', error.message);
     return null;
   }
 
-  return describeDelay(delay);
+  return `queued to go again ${describeDelay(delay)}`;
 }
 
 export async function POST(request: Request) {
@@ -218,7 +231,7 @@ export async function POST(request: Request) {
         : status === 'suppressed'
           ? 'Resend would not send to this address — it is on the suppression list from an earlier failure. It needs clearing there before anything else will reach them.'
           : retried
-            ? `They did not receive it. This looks temporary, so it is queued to go again ${retried} — no action needed unless that one fails too.`
+            ? `They did not receive it. This looks temporary, so it is ${retried} — no action needed unless that one fails too.`
             : 'They did not receive it. If this is a customer mid-job, they need contacting another way.';
     await notifyAdmins(
       `Email ${status}: ${row.kind}`,
