@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { PageTracker, trackStep } from '@/components/PageTracker';
+import { submitForm } from '@/lib/submitForm';
 import { parseJobAction, recordLandingView, type ParseActionState } from './actions';
 import { downscalePhoto } from './photoDownscale';
 
@@ -57,7 +58,7 @@ export function LandingFlow() {
   useEffect(() => {
     if (awaitingToken && captchaToken) {
       setAwaitingToken(false);
-      formRef.current?.requestSubmit();
+      submitForm(formRef.current);
     }
   }, [awaitingToken, captchaToken]);
 
@@ -85,7 +86,7 @@ export function LandingFlow() {
     const t = setTimeout(() => {
       gaveUpRef.current = true;
       setAwaitingToken(false);
-      formRef.current?.requestSubmit();
+      submitForm(formRef.current);
     }, 8000);
     return () => clearTimeout(t);
   }, [awaitingToken]);
