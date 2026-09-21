@@ -8,6 +8,7 @@ import type { ParseResult } from '@/lib/jobParse/schema';
 import { conditionsFor, isAreaPriced } from '@/lib/jobParse/conditions';
 import { GATE_WIDTH_OPTIONS } from '@/lib/jobParse/access';
 import { areaDiscrepancy } from '@/lib/jobParse/geometry';
+import { submitForm } from '@/lib/submitForm';
 import { BoundaryMap, type BoundaryState } from './BoundaryMap';
 import { trackStep } from '@/components/PageTracker';
 import { EmailField } from '@/components/forms/EmailField';
@@ -321,7 +322,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
               className={f.btnGhost}
               onClick={() => {
                 sendWithoutBoundary.current = true;
-                formRef.current?.requestSubmit();
+                submitForm(formRef.current);
               }}
             >
               I can&rsquo;t draw it, send anyway
