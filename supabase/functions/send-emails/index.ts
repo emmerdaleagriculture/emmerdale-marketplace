@@ -173,6 +173,41 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Sign in to see your jobs: ${SITE_URL}/invitations`,
       };
 
+    // ── /start funnel: customer-facing ───────────────────────────────────
+
+    /**
+     * Someone described a job, gave us their name and email, and never
+     * pressed Send. The details are on the draft because the confirm screen
+     * saves them on blur; this is the one message that asks them to finish.
+     *
+     * Written as a hand back rather than a sales push, because that is what
+     * it is: their words are still in the form, and the link puts them back
+     * in front of it. One per draft — job_submissions.draft_chased_at makes
+     * sure of that — and it says how to be left alone, because they never
+     * completed anything and are owed the easy exit.
+     */
+    case 'job_draft_chaser': {
+      const what = p.service ? String(p.service) : 'your job';
+      const near = p.postcode ? ` at ${p.postcode}` : '';
+      return {
+        subject: `Your ${what} enquiry — shall we finish it off?`,
+        text:
+          `Hi ${first},\n\n` +
+          `It's Tom here from Emmerdale Agriculture.\n\n` +
+          `You started telling us about ${what}${near} but didn't quite get to the ` +
+          `end, so nothing has gone out to any contractors yet.\n\n` +
+          `Everything you typed is still saved. Pick it up here and it takes about ` +
+          `a minute:\n${SITE_URL}/start/resume/${p.submission_id ?? ''}\n\n` +
+          `Once it's sent, contractors who cover your area price it and you compare ` +
+          `them on one page. There's no charge for asking, and no obligation to ` +
+          `accept any of them.\n\n` +
+          `If you'd rather talk it through, call me on ${PHONE_DISPLAY}.\n\n` +
+          `And if you've changed your mind or sorted it elsewhere, just ignore this ` +
+          `— it's the only reminder we'll send.\n\n` +
+          `All the best,\nTom Oswald\nEmmerdale Agriculture\n${PHONE_DISPLAY}`,
+      };
+    }
+
     // ── Sealed-quote funnel: contractor-facing ────────────────────────────
     case 'sq_invitation': {
       const dist = p.distance_miles != null ? ` (${p.distance_miles} miles from your base)` : '';
