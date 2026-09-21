@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { recordCronRun } from '@/lib/cron/record';
 
 /**
  * POST|GET /api/cron/draft-chaser — one reminder to people who described a
@@ -100,15 +101,22 @@ async function run() {
     chased++;
   }
 
-  return NextResponse.json({ considered: (drafts ?? []).length, chased });
+  return { considered: (drafts ?? []).length, chased };
 }
 
-export async function GET(request: Request) {
+/**
+ * Recorded in cron_runs, so a cron that stops firing is visible as a gap on
+ * /admin/crons rather than as drafts quietly going unchased. Unauthorised
+ * calls are NOT recorded — they are somebody knocking, not a run.
+ */
+async function handle(request: Request) {
   if (!authorised(request)) return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
-  return run();
+  const summary = await recordCronRun('draft-chaser', async () => {
+    const detail = await run();
+    return { result: detail, detail };
+  });
+  return NextResponse.json(summary);
 }
 
-export async function POST(request: Request) {
-  if (!authorised(request)) return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
-  return run();
-}
+export const GET = handle;
+export const POST = handle;

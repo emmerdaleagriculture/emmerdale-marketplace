@@ -3,6 +3,8 @@ import * as Sentry from '@sentry/nextjs';
 import type Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { recordCronRun } from '@/lib/cron/record';
+import type { Json } from '@/lib/database.types';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 
 /**
@@ -164,10 +166,34 @@ async function run(request: Request) {
   return NextResponse.json({ claimed: claims.length, charged, failed });
 }
 
-export async function POST(request: Request) {
-  return run(request);
+/**
+ * Recorded in cron_runs. Until this existed the only evidence that this had
+ * ever fired was money moving, so a cron that quietly stopped being
+ * registered would have shown up as balances nobody chased rather than as
+ * anything anyone could see.
+ *
+ * Unauthorised calls are turned away before the record is opened — someone
+ * knocking is not a run. The body is read back for the detail because it
+ * already says exactly what the run did ({claimed, charged, failed}), and
+ * duplicating that into a second return shape would be two things to keep in
+ * step.
+ */
+async function handle(request: Request) {
+  if (!authorised(request)) {
+    return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
+  }
+  return recordCronRun('balances', async () => {
+    const result = await run(request);
+    let detail: Json = null;
+    try {
+      detail = (await result.clone().json()) as Json;
+    } catch {
+      // A non-JSON response is unusual but not worth failing the run over.
+    }
+    return { result, detail };
+  });
 }
+
+export const POST = handle;
 // Vercel Cron issues a GET.
-export async function GET(request: Request) {
-  return run(request);
-}
+export const GET = handle;
