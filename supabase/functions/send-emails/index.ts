@@ -255,7 +255,11 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           // enough to read as a service name — so it can be word-for-word the
           // description printed directly above. Don't say it twice.
           (p.service && p.service !== p.description ? `Work:      ${p.service}\n` : '') +
-          `Area:      ${areaLine(p)}\n` +
+          // Omitted entirely for work that is not measured by the acre —
+          // twenty bales of hay have no area, and "not stated" reads as a
+          // customer who withheld something. Only an explicit false drops it:
+          // an unclassified job genuinely does not have a known area.
+          (p.area_priced === false ? '' : `Area:      ${areaLine(p)}\n`) +
           // County-only jobs (portal enquiries publish no postcode, because
           // the customer's postcode is not always the job's location) would
           // otherwise read "Where: —, Devon".
