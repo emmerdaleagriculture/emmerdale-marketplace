@@ -73,3 +73,29 @@
   margin: 6px 0 0;
   padding-left: 18px;
 }
+
+/* View toggle. Same shape as the submissions board's chips — one idea, one
+   look, rather than a fourth chip system. */
+.views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.view {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink-2);
+  font-size: 14px;
+  text-decoration: none;
+}
+.viewOn {
+  background: var(--jd-green-deep);
+  border-color: var(--jd-green-deep);
+  color: #fff;
+}

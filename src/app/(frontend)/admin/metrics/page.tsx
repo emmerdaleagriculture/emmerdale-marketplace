@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatGBP } from '@/lib/sealedQuotes/money';
-import { UKCoverageMap } from '@/components/UKCoverageMap';
 import s from '../admin.module.css';
 
 export const metadata: Metadata = { title: 'Dashboard — Admin' };
@@ -111,9 +110,6 @@ export default async function AdminDashboard() {
     (a, b) => Object.keys(PIPELINE_LABEL).indexOf(a[0]) - Object.keys(PIPELINE_LABEL).indexOf(b[0]),
   );
 
-  // Map: demand. The contractors page already has the supply map.
-  const jobsByCounty: Record<string, number> = {};
-  for (const c of d.counties) if (c.jobs > 0) jobsByCounty[c.name] = c.jobs;
   const weeklyMax = Math.max(1, ...d.weekly.map((w) => w.jobs));
 
   return (
@@ -255,17 +251,20 @@ export default async function AdminDashboard() {
 
       {/* ── Locations ─────────────────────────────────────────────────── */}
       <div className={s.sectionLabel}>Where the work is</div>
+      {/* The choropleth moved to /admin/coverage, which now draws all three
+          views. This page linked to a third map on the contractors page and
+          called it "coverage map" — a fourth name for the same idea. The
+          table stays: it is the only place these columns appear. */}
       <div className={s.mapCard}>
         <div className={s.mapHead}>
           <span className={s.mapTitle}>Jobs by county</span>
           <span className={s.mapStat}>
             {d.counties.filter((c) => c.jobs > 0).length} counties have had a job ·{' '}
             {d.counties.filter((c) => c.contractors > 0).length} have a vetted contractor ·{' '}
-            <Link href="/admin/contractors">coverage map</Link>
+            <Link href="/admin/coverage?view=jobs">on the map</Link>
           </span>
         </div>
         <div className={s.mapRow}>
-          <UKCoverageMap counts={jobsByCounty} className={s.map} pathClassName={s.mapCounty} showCounts />
           <div className={s.tableWrap}>
             <table className={s.table}>
               <thead>

@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { getCountyCoverage } from '@/lib/reference';
 import { setContractorStatus } from './actions';
 import { DeleteContractorButton } from './DeleteContractorButton';
-import { CoverageMap } from './CoverageMap';
 import s from '../admin.module.css';
 
 export const metadata: Metadata = { title: 'Contractors — Admin' };
@@ -71,13 +69,11 @@ type ContractorRow = {
 
 export default async function AdminContractorsPage() {
   const admin = createServiceRoleClient();
-  const [{ data }, coverageCounts] = await Promise.all([
-    admin
-      .from('contractors')
-      .select('id, business_name, contact_name, email, base_postcode, status, created_at')
-      .order('created_at', { ascending: false }),
-    getCountyCoverage(),
-  ]);
+  // The county coverage read went with the map it fed.
+  const { data } = await admin
+    .from('contractors')
+    .select('id, business_name, contact_name, email, base_postcode, status, created_at')
+    .order('created_at', { ascending: false });
 
   const contractors = (data ?? []) as ContractorRow[];
   const pending = contractors.filter((c) => c.status === 'pending');
@@ -89,8 +85,11 @@ export default async function AdminContractorsPage() {
       <p className={s.sub}>
         {contractors.length} registered · {pending.length} awaiting approval
       </p>
-
-      <CoverageMap counts={coverageCounts} />
+      {/* Was a choropleth of ticked counties. All three maps live on one page
+          now, where they can be compared instead of hunted for. */}
+      <p className={s.sub}>
+        <Link href="/admin/coverage?view=contractors">Contractors by county on the map →</Link>
+      </p>
 
       <div className={s.sectionLabel}>Awaiting approval</div>
       {pending.length === 0 ? (
