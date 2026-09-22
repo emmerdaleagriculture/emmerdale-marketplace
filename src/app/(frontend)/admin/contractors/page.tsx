@@ -4,18 +4,12 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { setContractorStatus } from './actions';
 import { DeleteContractorButton } from './DeleteContractorButton';
 import s from '../admin.module.css';
+import { AdminTable, StatusPill } from '../ui';
 
 export const metadata: Metadata = { title: 'Contractors — Admin' };
 
-const pillClass: Record<string, string> = {
-  pending: s.pillPending,
-  approved: s.pillApproved,
-  suspended: s.pillSuspended,
-};
-
-function StatusPill({ status }: { status: string }) {
-  return <span className={`${s.pill} ${pillClass[status] ?? ''}`}>{status}</span>;
-}
+/** Both tables on this page are the same table, split by status. */
+const COLUMNS = ['Business', 'Contact', 'Email', 'Base', 'Status', 'Actions'];
 
 function ActionButtons({ c }: { c: ContractorRow }) {
   return (
@@ -95,50 +89,22 @@ export default async function AdminContractorsPage() {
       {pending.length === 0 ? (
         <div className={s.empty}>No contractors waiting for approval.</div>
       ) : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-          <thead>
-            <tr>
-              <th>Business</th>
-              <th>Contact</th>
-              <th>Email</th>
-              <th>Base</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pending.map((c) => (
-              <Row key={c.id} c={c} />
-            ))}
-          </tbody>
-          </table>
-        </div>
+        <AdminTable head={COLUMNS}>
+          {pending.map((c) => (
+            <Row key={c.id} c={c} />
+          ))}
+        </AdminTable>
       )}
 
       <div className={s.sectionLabel}>All contractors</div>
       {rest.length === 0 ? (
         <div className={s.empty}>No approved contractors yet.</div>
       ) : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-          <thead>
-            <tr>
-              <th>Business</th>
-              <th>Contact</th>
-              <th>Email</th>
-              <th>Base</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rest.map((c) => (
-              <Row key={c.id} c={c} />
-            ))}
-          </tbody>
-          </table>
-        </div>
+        <AdminTable head={COLUMNS}>
+          {rest.map((c) => (
+            <Row key={c.id} c={c} />
+          ))}
+        </AdminTable>
       )}
     </div>
   );

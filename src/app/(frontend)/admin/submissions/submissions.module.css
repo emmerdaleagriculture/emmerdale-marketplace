@@ -2,39 +2,6 @@
    grid, not a table row, so on a narrow screen it reflows into stacked blocks
    instead of scrolling sideways, and contact details stay tappable. */
 
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
-  margin-bottom: 22px;
-}
-.tile {
-  background: var(--white);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  padding: 14px 16px;
-  min-width: 0;
-}
-.tileValue {
-  font-family: var(--font-display-stack);
-  font-size: 28px;
-  line-height: 1.1;
-  color: var(--jd-green-deep);
-  font-variant-numeric: tabular-nums;
-}
-.tileLabel {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  margin-top: 4px;
-}
-.tileHint {
-  font-size: 12px;
-  color: var(--ink-3);
-  margin-top: 2px;
-}
-
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -263,9 +230,13 @@
   text-transform: uppercase;
   font-weight: 600;
 }
-.open { background: #fff9e0; color: #5c4d00; }
-.good { background: var(--jd-green-pale); color: var(--jd-green-dark); }
-.bad { background: #fdecea; color: #7a1c0e; }
+/* The three tones, composed from admin.module.css rather than restated.
+   These were byte-identical here, in ops.module.css and in admin.module.css
+   as .pillPending / .pillApproved / .pillSuspended — three copies of the same
+   three colour pairs, which is three places to change and two to forget. */
+.open { composes: pillPending from '../admin.module.css'; }
+.good { composes: pillApproved from '../admin.module.css'; }
+.bad { composes: pillSuspended from '../admin.module.css'; }
 .muted { background: var(--cream); color: var(--ink-3); border: 1px solid var(--rule); }
 .draft { background: #eaf0f6; color: #2d4a6b; }
 

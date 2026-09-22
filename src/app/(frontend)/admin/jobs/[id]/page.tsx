@@ -5,16 +5,9 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { approveJobAction, withdrawJobAction, relistJobAction, completeJobAction } from '../actions';
 import { formatDateTime } from '@/lib/time';
 import s from '../../admin.module.css';
+import { AdminTable, StatusPill } from '../../ui';
 
 export const metadata: Metadata = { title: 'Job — Admin' };
-
-const pillFor: Record<string, string> = {
-  pending: s.pillPending,
-  open: s.pillApproved,
-  exclusive: s.pillPending,
-  withdrawn: s.pillSuspended,
-  completed: s.pillApproved,
-};
 
 export default async function AdminJobDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -59,7 +52,7 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
       </Link>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
         <h1 className={s.h1}>{job.title}</h1>
-        <span className={`${s.pill} ${pillFor[job.status] ?? ''}`}>{job.status}</span>
+        <StatusPill status={job.status} />
       </div>
       <p className={s.sub}>
         {county} · {job.town ? `${job.town}, ` : ''}
@@ -112,36 +105,24 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
       {opens.length === 0 ? (
         <div className={s.empty}>No contractor has opened this job yet.</div>
       ) : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-            <thead>
-              <tr>
-                <th>Contractor</th>
-                <th>Contact</th>
-                <th>Email</th>
-                <th>Opened</th>
+        <AdminTable head={['Contractor', 'Contact', 'Email', 'Opened']}>
+          {opens.map((r, i) => {
+            const ct = r.contractors as {
+              business_name: string;
+              contact_name: string;
+              phone: string;
+              email: string;
+            } | null;
+            return (
+              <tr key={i}>
+                <td>{ct?.business_name ?? 'No longer on record'}</td>
+                <td>{ct ? `${ct.contact_name} · ${ct.phone}` : '—'}</td>
+                <td>{ct?.email ?? '—'}</td>
+                <td>{formatDateTime(r.revealed_at)}</td>
               </tr>
-            </thead>
-            <tbody>
-              {opens.map((r, i) => {
-                const ct = r.contractors as {
-                  business_name: string;
-                  contact_name: string;
-                  phone: string;
-                  email: string;
-                } | null;
-                return (
-                  <tr key={i}>
-                    <td>{ct?.business_name ?? 'No longer on record'}</td>
-                    <td>{ct ? `${ct.contact_name} · ${ct.phone}` : '—'}</td>
-                    <td>{ct?.email ?? '—'}</td>
-                    <td>{formatDateTime(r.revealed_at)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+            );
+          })}
+        </AdminTable>
       )}
 
       <div className={s.sectionLabel}>Actions</div>

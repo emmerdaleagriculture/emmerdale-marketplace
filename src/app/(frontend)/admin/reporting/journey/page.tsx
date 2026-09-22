@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { HeatOverlay } from './HeatOverlay';
 import s from '../../admin.module.css';
+import { AdminTable } from '../../ui';
 
 export const metadata: Metadata = { title: 'Journey — Admin' };
 export const dynamic = 'force-dynamic';
@@ -157,29 +158,25 @@ export default async function JourneyPage({
       </p>
 
       <div className={s.sectionLabel}>Page</div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <tbody>
-            <tr>
-              {PATHS.map((p) => (
-                <td key={p.path}>
-                  {p.path === path ? (
-                    <strong>{p.label}</strong>
-                  ) : (
-                    <Link href={`/admin/reporting/journey?path=${encodeURIComponent(p.path)}`}>
-                      {p.label}
-                    </Link>
-                  )}
-                </td>
-              ))}
-              <td>
-                {visits} visit{visits === 1 ? '' : 's'} · {clicks.length} clicks ·{' '}
-                {visits > 0 ? Math.round((100 * phones) / visits) : 0}% on a phone
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <AdminTable>
+        <tr>
+          {PATHS.map((p) => (
+            <td key={p.path}>
+              {p.path === path ? (
+                <strong>{p.label}</strong>
+              ) : (
+                <Link href={`/admin/reporting/journey?path=${encodeURIComponent(p.path)}`}>
+                  {p.label}
+                </Link>
+              )}
+            </td>
+          ))}
+          <td>
+            {visits} visit{visits === 1 ? '' : 's'} · {clicks.length} clicks ·{' '}
+            {visits > 0 ? Math.round((100 * phones) / visits) : 0}% on a phone
+          </td>
+        </tr>
+      </AdminTable>
 
       {visits === 0 ? (
         <div className={s.empty}>
@@ -198,40 +195,33 @@ export default async function JourneyPage({
                   was added; the first rows appear once those visits end.
                 </div>
               ) : (
-                <div className={s.tableWrap}>
-                  <table className={s.table}>
-                    <thead>
-                      <tr><th>Milestone</th><th>Visits</th><th>Of all visits</th><th>Of previous</th><th>Median time in</th></tr>
-                    </thead>
-                    <tbody>
-                      {MILESTONES.map((m, i) => {
-                        const cur = milestone(m.key);
-                        const prev = i === 0 ? allVisits : milestone(MILESTONES[i - 1].key).visits;
-                        return (
-                          <tr key={m.key}>
-                            <td>{m.label}</td>
-                            <td>{cur.visits}</td>
-                            <td>{allVisits > 0 ? `${Math.round((100 * cur.visits) / allVisits)}%` : '—'}</td>
-                            <td>{prev > 0 ? `${Math.round((100 * cur.visits) / prev)}%` : '—'}</td>
-                            <td>{fmtSecs(cur.seconds)}</td>
-                          </tr>
-                        );
-                      })}
-                      {ERRORS.map((m) => {
-                        const cur = milestone(m.key);
-                        return cur.visits === 0 ? null : (
-                          <tr key={m.key}>
-                            <td style={{ color: '#a02a2a' }}>{m.label}</td>
-                            <td>{cur.visits}</td>
-                            <td>{allVisits > 0 ? `${Math.round((100 * cur.visits) / allVisits)}%` : '—'}</td>
-                            <td>—</td>
-                            <td>{fmtSecs(cur.seconds)}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                <AdminTable head={['Milestone', 'Visits', 'Of all visits', 'Of previous', 'Median time in']}>
+                  {MILESTONES.map((m, i) => {
+                    const cur = milestone(m.key);
+                    const prev = i === 0 ? allVisits : milestone(MILESTONES[i - 1].key).visits;
+                    return (
+                      <tr key={m.key}>
+                        <td>{m.label}</td>
+                        <td>{cur.visits}</td>
+                        <td>{allVisits > 0 ? `${Math.round((100 * cur.visits) / allVisits)}%` : '—'}</td>
+                        <td>{prev > 0 ? `${Math.round((100 * cur.visits) / prev)}%` : '—'}</td>
+                        <td>{fmtSecs(cur.seconds)}</td>
+                      </tr>
+                    );
+                  })}
+                  {ERRORS.map((m) => {
+                    const cur = milestone(m.key);
+                    return cur.visits === 0 ? null : (
+                      <tr key={m.key}>
+                        <td style={{ color: '#a02a2a' }}>{m.label}</td>
+                        <td>{cur.visits}</td>
+                        <td>{allVisits > 0 ? `${Math.round((100 * cur.visits) / allVisits)}%` : '—'}</td>
+                        <td>—</td>
+                        <td>{fmtSecs(cur.seconds)}</td>
+                      </tr>
+                    );
+                  })}
+                </AdminTable>
               )}
 
               <div className={s.sectionLabel}>Why those errors happened</div>
@@ -242,87 +232,66 @@ export default async function JourneyPage({
                   only trace of one.
                 </div>
               ) : (
-                <div className={s.tableWrap}>
-                  <table className={s.table}>
-                    <thead>
-                      <tr><th>Step</th><th>Reason</th><th>Times</th><th>Most recent</th></tr>
-                    </thead>
-                    <tbody>
-                      {refusals.map((r) => (
-                        <tr key={`${r.action}-${r.outcome}-${r.reason}`}>
-                          <td>{r.action === 'parse' ? 'Step 1' : 'Step 2'}</td>
-                          <td style={{ color: r.outcome === 'fallback' ? '#8a6d1f' : '#a02a2a' }}>
-                            <code>{r.reason}</code>
-                            {r.outcome === 'fallback' && ' — let through'}
-                          </td>
-                          <td>{r.n}</td>
-                          <td>
-                            {new Date(r.last).toLocaleDateString('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                            })}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <AdminTable head={['Step', 'Reason', 'Times', 'Most recent']}>
+                  {refusals.map((r) => (
+                    <tr key={`${r.action}-${r.outcome}-${r.reason}`}>
+                      <td>{r.action === 'parse' ? 'Step 1' : 'Step 2'}</td>
+                      <td style={{ color: r.outcome === 'fallback' ? '#8a6d1f' : '#a02a2a' }}>
+                        <code>{r.reason}</code>
+                        {r.outcome === 'fallback' && ' — let through'}
+                      </td>
+                      <td>{r.n}</td>
+                      <td>
+                        {new Date(r.last).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </td>
+                    </tr>
+                  ))}
+                </AdminTable>
               )}
             </>
           )}
 
           <div className={s.sectionLabel}>How far down people got</div>
-          <div className={s.tableWrap}>
-            <table className={s.table}>
-              <thead>
-                <tr><th>Reached</th><th>Visits</th><th>Share</th><th /></tr>
-              </thead>
-              <tbody>
-                {bands.map((b) => {
-                  const share = visits > 0 ? (100 * b.reached) / visits : 0;
-                  return (
-                    <tr key={b.mark}>
-                      <td>{b.mark}% down the page</td>
-                      <td>{b.reached}</td>
-                      <td>{share.toFixed(0)}%</td>
-                      <td style={{ width: '45%' }}>
-                        <span
-                          style={{
-                            display: 'block',
-                            height: 8,
-                            width: `${share}%`,
-                            background: 'var(--jd-green-deep)',
-                            minWidth: share > 0 ? 2 : 0,
-                          }}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <AdminTable head={['Reached', 'Visits', 'Share', '']}>
+            {bands.map((b) => {
+              const share = visits > 0 ? (100 * b.reached) / visits : 0;
+              return (
+                <tr key={b.mark}>
+                  <td>{b.mark}% down the page</td>
+                  <td>{b.reached}</td>
+                  <td>{share.toFixed(0)}%</td>
+                  <td style={{ width: '45%' }}>
+                    <span
+                      style={{
+                        display: 'block',
+                        height: 8,
+                        width: `${share}%`,
+                        background: 'var(--jd-green-deep)',
+                        minWidth: share > 0 ? 2 : 0,
+                      }}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </AdminTable>
 
           <div className={s.sectionLabel}>Most clicked</div>
           {topLabels.length === 0 ? (
             <div className={s.empty}>No clicks recorded yet.</div>
           ) : (
-            <div className={s.tableWrap}>
-              <table className={s.table}>
-                <thead>
-                  <tr><th>What was clicked</th><th>Clicks</th><th>Per visit</th></tr>
-                </thead>
-                <tbody>
-                  {topLabels.map(([label, n]) => (
-                    <tr key={label}>
-                      <td>{label}</td>
-                      <td>{n}</td>
-                      <td>{(n / visits).toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AdminTable head={['What was clicked', 'Clicks', 'Per visit']}>
+              {topLabels.map(([label, n]) => (
+                <tr key={label}>
+                  <td>{label}</td>
+                  <td>{n}</td>
+                  <td>{(n / visits).toFixed(2)}</td>
+                </tr>
+              ))}
+            </AdminTable>
           )}
 
           <div className={s.sectionLabel}>Click heat, over the live page</div>

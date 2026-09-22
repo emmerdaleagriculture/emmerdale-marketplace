@@ -5,6 +5,7 @@ import { dayHeading, formatDate, formatDateTime, londonDay, timeAgo, timeLeft } 
 import { URGENCY_LABELS } from '@/components/job/JobSpecCard';
 import s from '../admin.module.css';
 import p from './submissions.module.css';
+import { Tile, Tiles } from '../ui';
 import { SUBMISSION_FILTERS, isSubmissionFilter, matchesFilter } from '@/lib/submissionFilters';
 import { OutreachModal } from './OutreachModal';
 import { DraftToolbar } from './DraftToolbar';
@@ -338,15 +339,11 @@ export default async function AdminSubmissionsPage({
 
       {error && <div className={s.blocked}>Couldn’t load submissions: {error.message}</div>}
 
-      <div className={p.tiles}>
+      <Tiles>
         {tiles.map(([label, value, hint]) => (
-          <div key={label} className={p.tile}>
-            <div className={p.tileValue}>{value}</div>
-            <div className={p.tileLabel}>{label}</div>
-            <div className={p.tileHint}>{hint}</div>
-          </div>
+          <Tile key={label} value={value} label={label} hint={hint} />
         ))}
-      </div>
+      </Tiles>
 
       {filter ? (
         <nav className={p.chips} aria-label="Filter submissions">
