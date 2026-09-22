@@ -146,13 +146,11 @@ function PhotoStrip({ photos, label }: { photos: GalleryPhoto[]; label: string }
 /**
  * The trust ticker. "Prices upfront" came off: there is no price on the site
  * and the variance in this trade is too wide for an honest one, so the claim
- * was never quite true. These three are what the marketplace actually sells.
+ * was never quite true. "We hold your money until you're happy" came off next
+ * — under the deposit model we hold 15%, not the money, and the balance is
+ * charged after sign-off. The claim outgrew the mechanism.
  */
-const TICKER = [
-  'Several prices to choose from',
-  'Vetted & insured operators',
-  'We hold your money until you’re happy',
-];
+const TICKER = ['Several prices to choose from', 'Vetted & insured operators'];
 
 /** The hero's three promises, each the answer to a real hesitation. */
 const PROMISES: [string, string][] = [

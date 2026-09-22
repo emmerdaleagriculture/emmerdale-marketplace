@@ -63,6 +63,16 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
   },
+  // Proves the domain to Meta so the ads account can own it — without this,
+  // conversion events from /start can't be attributed. Rendered as
+  // <meta name="facebook-domain-verification" content="…"> on every page;
+  // Meta only reads it on the root, but it costs nothing to carry site-wide
+  // and survives someone pointing the verification at a different path.
+  verification: {
+    other: {
+      'facebook-domain-verification': 'tz4e89ngu5xtoh3brsykbwgr1i5yp0',
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -49,8 +49,13 @@ const ROWS: Row[] = [
     bad: 'Cash on the day, handed over before you’ve walked the field.',
     good: (
       <>
-        <b>You pay us, not the contractor.</b> We hold it until you’ve seen the
-        work and said you’re happy.
+        {/* Was "we hold it until you've seen the work" — under the deposit
+            model we hold 15% to book, not the whole price, and the balance is
+            charged after sign-off. What survives is the part that is true and
+            is the actual reassurance: the contractor is not paid until then. */}
+        <b>You pay us, not the contractor.</b> We hold a deposit to book the
+        job, and nobody gets paid until you’ve seen the work and said
+        you’re happy.
       </>
     ),
   },
