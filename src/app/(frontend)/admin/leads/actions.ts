@@ -160,7 +160,10 @@ export async function publishLeadAsSubmissionAction(
       contact_phone: phone || null,
       contact_email: email || null,
       contact_preference: 'either',
-      expires_at: new Date(now.getTime() + 10 * 86400_000).toISOString(),
+      // No expires_at: distribute_submission sets it unconditionally from
+      // app_config.sq_job_expiry_days a moment later, so anything written
+      // here is overwritten. A hardcoded window that looks authoritative
+      // and isn't is how the real lever gets missed.
     })
     .select('id')
     .single();

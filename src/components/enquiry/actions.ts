@@ -203,8 +203,10 @@ async function autoConvertEnquiry(
         contact_phone: d.phone,
         contact_email: d.email,
         contact_preference: 'either',
-        // Same window /start uses, so a price is not open-ended.
-        expires_at: new Date(now.getTime() + 10 * 86400_000).toISOString(),
+        // No expires_at: distribute_submission sets it unconditionally from
+        // app_config.sq_job_expiry_days a moment later, so anything written
+        // here is overwritten. A hardcoded window that looks authoritative
+        // and isn't is how the real lever gets missed.
       })
       .select('id')
       .single();
