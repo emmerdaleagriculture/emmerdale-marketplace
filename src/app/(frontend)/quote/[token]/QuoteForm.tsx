@@ -22,7 +22,7 @@ export function QuoteForm({
   defaultValidUntil: string | null;
 }) {
   const [state, action, pending] = useActionState(submitQuoteAction, EMPTY);
-  const [quoteType, setQuoteType] = useState<'total' | 'rate'>('total');
+  const [quoteType, setQuoteType] = useState<'total' | 'rate' | 'unit'>('total');
 
   if (state.closed) {
     return <div className={q.closedPanel}>{state.message}</div>;
@@ -45,15 +45,19 @@ export function QuoteForm({
 
       <div className={a.groupTitle}>{revising ? 'Send a new price' : 'Your price'}</div>
 
-      {areaPriced && (
-        <div className={f.chips} style={{ marginBottom: 14 }}>
-          <button
-            type="button"
-            className={quoteType === 'total' ? `${f.chip} ${f.chipOn}` : f.chip}
-            onClick={() => setQuoteType('total')}
-          >
-            Total price
-          </button>
+      {/* Work measured by the acre gets the per-acre shape; everything else
+          gets per-unit, because hay is priced by the bale and a tractor by
+          the day. A contractor with only a Total box has to decide alone
+          whether it covers the first delivery or the arrangement. */}
+      <div className={f.chips} style={{ marginBottom: 14 }}>
+        <button
+          type="button"
+          className={quoteType === 'total' ? `${f.chip} ${f.chipOn}` : f.chip}
+          onClick={() => setQuoteType('total')}
+        >
+          Total price
+        </button>
+        {areaPriced ? (
           <button
             type="button"
             className={quoteType === 'rate' ? `${f.chip} ${f.chipOn}` : f.chip}
@@ -61,10 +65,71 @@ export function QuoteForm({
           >
             £ per acre + minimum
           </button>
-        </div>
-      )}
+        ) : (
+          <button
+            type="button"
+            className={quoteType === 'unit' ? `${f.chip} ${f.chipOn}` : f.chip}
+            onClick={() => setQuoteType('unit')}
+          >
+            £ per unit
+          </button>
+        )}
+      </div>
 
-      {quoteType === 'total' ? (
+      {quoteType === 'unit' ? (
+        <>
+          <div className={a.row2}>
+            <label className={f.field}>
+              <span className={f.label}>Price per unit (£)</span>
+              <input
+                className={f.input}
+                type="text"
+                name="rate_value"
+                inputMode="decimal"
+                placeholder="e.g. 12"
+                required
+              />
+            </label>
+            <label className={f.field}>
+              <span className={f.label}>Unit</span>
+              <input
+                className={f.input}
+                type="text"
+                name="unit_label"
+                list="quote-units"
+                maxLength={24}
+                placeholder="bale"
+                required
+              />
+              <datalist id="quote-units">
+                <option value="bale" />
+                <option value="day" />
+                <option value="hour" />
+                <option value="load" />
+                <option value="tonne" />
+                <option value="metre" />
+              </datalist>
+            </label>
+          </div>
+          <label className={f.field}>
+            <span className={f.label}>How many</span>
+            <input
+              className={f.input}
+              type="text"
+              name="unit_quantity"
+              inputMode="decimal"
+              placeholder="e.g. 20"
+              required
+            />
+            {/* The customer accepts one figure and pays a deposit on it, so a
+                rate on its own is not a quote. */}
+            <span className={f.hint}>
+              The customer sees the rate and the total it comes to. Quote for what
+              they asked for — if that isn&rsquo;t clear, say so in the note below.
+            </span>
+          </label>
+        </>
+      ) : quoteType === 'total' ? (
         <label className={f.field}>
           <span className={f.label}>Total price (£)</span>
           <input

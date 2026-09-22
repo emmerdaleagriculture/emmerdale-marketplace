@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { acceptQuoteAction, type AcceptActionState } from './actions';
-import { depositSplitPence, formatGBP, formatRate, vatNote } from '@/lib/sealedQuotes/money';
+import { depositSplitPence, formatGBP, formatRate, formatUnitPrice, vatNote } from '@/lib/sealedQuotes/money';
 import { sortClientQuotes, type SortMode } from '@/lib/sealedQuotes/quoteSort';
 import { RatingStars } from '@/components/RatingStars';
 import f from '@/components/forms/forms.module.css';
@@ -22,6 +22,9 @@ export type ClientQuoteView = {
   distance_miles: number | null;
   site_visit_required: boolean;
   valid_until: string;
+  /** Set on a unit-priced quote: "£12 per bale × 20". */
+  unit_label: string | null;
+  unit_quantity: number | null;
   /** The contractor's own words, in their voice. May be null. */
   contractor_note: string | null;
 };
@@ -87,9 +90,14 @@ export function PriceList({
             <div className={m.quoteMeta}>
               <RatingStars avg={q.contractor_rating_avg} count={q.contractor_rating_count} />
               {q.distance_miles != null && <span>{q.distance_miles} miles away</span>}
-              {q.client_rate_value_pence != null && (
-                <span>{formatRate(q.client_rate_value_pence, q.client_rate_minimum_pence)}</span>
-              )}
+              {q.client_rate_value_pence != null &&
+                (q.unit_label && q.unit_quantity != null ? (
+                  <span>
+                    {formatUnitPrice(q.client_rate_value_pence, q.unit_label, Number(q.unit_quantity))}
+                  </span>
+                ) : (
+                  <span>{formatRate(q.client_rate_value_pence, q.client_rate_minimum_pence)}</span>
+                ))}
               {q.site_visit_required && <span>Wants to see the site first</span>}
               <span>valid until {q.valid_until}</span>
             </div>
