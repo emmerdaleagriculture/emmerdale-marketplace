@@ -37,9 +37,13 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
     ],
   },
   {
-    name: 'Board',
+    // Was 'Board', for the legacy jobs board now being retired: portal
+    // enquiries and lead conversions both publish into job_submissions, so
+    // nothing new enters it. /admin/jobs still resolves while its last live
+    // jobs are worked through — it is simply no longer somewhere you navigate
+    // to, and the work it used to hold is on Intake › Submissions.
+    name: 'Network',
     items: [
-      { href: '/admin/jobs', label: 'Jobs' },
       { href: '/admin/contractors', label: 'Contractors' },
       { href: '/admin/coverage', label: 'Coverage' },
     ],
@@ -50,6 +54,8 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
       { href: '/admin/metrics', label: 'Dashboard' },
       { href: '/admin/reporting', label: 'Landing funnel' },
       { href: '/admin/reporting/sources', label: 'Sources' },
+      // Reachable only from body links on three other pages until now.
+      { href: '/admin/reporting/journey', label: 'Journey' },
       { href: '/admin/seo', label: 'SEO' },
     ],
   },

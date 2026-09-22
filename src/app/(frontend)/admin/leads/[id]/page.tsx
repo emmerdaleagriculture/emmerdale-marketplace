@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { NewJobForm } from '../../jobs/new/NewJobForm';
+import { PublishLeadForm } from '../PublishLeadForm';
 import { dismissLeadAction } from '../actions';
 import { getCounties, getServices } from '@/lib/reference';
 import { tidyJobHint, leadServiceIds } from '@/lib/leads';
@@ -26,7 +26,6 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
 
   const [services, counties] = await Promise.all([getServices(), getCounties()]);
 
-  const firstName = lead.full_name.split(/\s+/)[0];
   const cleanHint = tidyJobHint(lead.job_hint);
   // County auto-resolved from the postcode when the enquiry was submitted.
   const details = lead.details as { county?: string | null; county_id?: number | null } | null;
@@ -74,24 +73,23 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <div className={s.sectionLabel}>Publish as a job</div>
+      <div className={s.sectionLabel}>Publish to contractors</div>
       <p className={s.sub}>
-        The listing will show the first name, the postcode district, the job and
-        its details. Surname and contact are only shown to contractors who open
-        the job, and every open is logged. Confirm consent before publishing.
+        It goes into the sealed-quote flow, the same place /start jobs go, so it
+        shows up on the ops board with everything else. Contractors covering
+        that county who do that work are invited to price it; the customer sees
+        the prices and picks. Their contact stays with us until they accept.
       </p>
-      <NewJobForm
+      <PublishLeadForm
+        leadId={lead.id}
         services={services}
         counties={counties}
-        leadId={lead.id}
         defaults={{
           customer_name: lead.full_name,
-          customer_first_name: firstName,
           customer_phone: lead.phone ?? '',
           customer_email: lead.email ?? '',
-          postcode: lead.postcode ?? '',
-          description: cleanHint ?? '',
-          service_ids: leadServiceIds(lead.source, services),
+          details: cleanHint ?? '',
+          service_id: leadServiceIds(lead.source, services)[0],
           county_id: detectedCountyId,
         }}
       />
