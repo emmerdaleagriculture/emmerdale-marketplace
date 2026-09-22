@@ -17,6 +17,11 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
 
   const { data: lead } = await admin.from('leads').select('*').eq('id', id).maybeSingle();
   if (!lead) notFound();
+  // Converted leads go to wherever the work actually lives: the sealed-quote
+  // submission for portal enquiries, the legacy board for anything older.
+  if (lead.status === 'converted' && lead.submission_id) {
+    redirect(`/admin/submissions/${lead.submission_id}`);
+  }
   if (lead.status === 'converted' && lead.job_id) redirect(`/admin/jobs/${lead.job_id}`);
 
   const [services, counties] = await Promise.all([getServices(), getCounties()]);

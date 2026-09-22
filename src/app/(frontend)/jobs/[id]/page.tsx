@@ -3,7 +3,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { nonContractorPath } from '@/lib/auth';
 import { getServices } from '@/lib/reference';
 import a from '../../auth.module.css';
@@ -36,7 +36,41 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   ]);
 
   const job = pub ?? mine;
-  if (!job) notFound();
+  if (!job) {
+    // Filled or withdrawn, and this contractor never opened it — so it is in
+    // neither view. A 404 tells them the link is broken when in fact they
+    // were simply too late, and every notification email becomes a dead link
+    // the moment its job is filled. Existence is checked with the service
+    // role because they have no read on a closed job; nothing about it is
+    // shown, since they never opened it.
+    const { data: exists } = await createServiceRoleClient()
+      .from('jobs')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle();
+    if (!exists) notFound();
+    return (
+      <div className={a.wrap}>
+        <SiteHeader />
+        <main className={a.main}>
+          <div className={a.narrow}>
+            <h1 className={a.title}>
+              This one&rsquo;s <em>gone.</em>
+            </h1>
+            <p className={a.sub}>
+              The job has been filled or withdrawn since that email went out,
+              so the customer&rsquo;s details are no longer shown. Nothing
+              needed from you.
+            </p>
+            <p className={a.altLink}>
+              <Link href="/jobs">← See what else is open in your counties</Link>
+            </p>
+          </div>
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
 
   const serviceName = new Map(services.map((s) => [s.id, s.name]));
 
