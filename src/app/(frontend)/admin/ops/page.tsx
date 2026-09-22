@@ -175,11 +175,16 @@ function facts(j: Job, now: number): Fact[] {
 export default async function OpsPage() {
   const admin = createServiceRoleClient();
 
-  const [{ data, error }, { data: config }] = await Promise.all([
+  const [{ data, error }, { data: config }, { data: exposedFns }] = await Promise.all([
     admin.rpc('admin_submission_board', { p_limit: 500, p_statuses: OPEN_STATES }),
     admin.from('app_config').select('value').eq('key', 'sq_test_contractor_allowlist').maybeSingle(),
+    // Should always be empty. Supabase's own default privileges grant EXECUTE
+    // on new functions in public to anon, and we cannot turn that off for the
+    // supabase_admin grantor, so this is the tripwire rather than a guarantee.
+    admin.rpc('anon_exposed_functions'),
   ]);
   const testMode = Array.isArray(config?.value) && config.value.length > 0;
+  const exposed = ((exposedFns ?? []) as { fn: string }[]).map((r) => r.fn);
 
   const now = Date.now();
   const jobs = ((data ?? []) as unknown as Job[]).map((j) => {
@@ -229,6 +234,18 @@ export default async function OpsPage() {
           TEST MODE — invitations restricted to the allowlist. Real contractors
           receive nothing. Clear <code>sq_test_contractor_allowlist</code> in
           app_config to go live.
+        </div>
+      )}
+      {exposed.length > 0 && (
+        <div className={s.blocked}>
+          <strong>
+            {exposed.length} database function{exposed.length === 1 ? '' : 's'} reachable
+            with the public key.
+          </strong>{' '}
+          Anyone can call {exposed.length === 1 ? 'it' : 'them'} without signing in:{' '}
+          <code>{exposed.join(', ')}</code>. Revoke with{' '}
+          <code>revoke execute on function … from anon, authenticated</code> — this
+          happens by itself when a function is created outside our migrations.
         </div>
       )}
       {error && <div className={s.blocked}>Couldn’t load the board: {error.message}</div>}

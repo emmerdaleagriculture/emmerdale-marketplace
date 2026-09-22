@@ -27,13 +27,30 @@ const LINK = /\bhttps?:\/\/|\bwww\./i;
 const DOMAIN = /\b[a-z0-9][a-z0-9-]*\.(?:co\.uk|com|net|org|uk|io|co)\b/i;
 const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/;
 /**
- * Any mention of money, not just a digit followed by one: "four hundred
- * pounds" is the figure too. A legitimate note has no business naming an
- * amount at all — that is what the price box is for — so the currency words
- * are blocked outright rather than only when a numeral is next to them.
- * Bare digits stay legal: "2 acres", "24 hours", "3 metres".
+ * Any mention of money. Three shapes, because a price can be written without
+ * a currency symbol and without a space:
+ *
+ *  - a symbol anywhere: £450, $450, €450
+ *  - a currency word, with or without a numeral beside it: "quid",
+ *    "pounds" — "four hundred pounds" is the figure too, so these are
+ *    blocked outright rather than only next to a digit — and "gbp" either
+ *    side of one, with no space needed ("GBP450", "450GBP")
+ *  - a unit rate: "400 per acre", "40/acre", "£40 an hour"
+ *
+ * Bare digits stay legal: "2 acres", "24 hours", "3 metres", "12 October".
+ * A bare total — "400 all in" — still gets through, and always will without
+ * reading the sentence; that is what the admin Clear button is for.
  */
-const MONEY = /£|\bquid\b|\bgbp\b|\bpounds?\b/i;
+const MONEY = new RegExp(
+  [
+    '[£$€]',
+    '\\bquid\\b',
+    '\\bpounds?\\b',
+    '\\bgbp\\s*\\d|\\d\\s*gbp\\b',
+    '\\d\\s*(?:\\/|\\bper\\b|\\ban?\\b)\\s*(?:acre|hour|hr|day|metre|meter|m|yard|bale|tonne|ton)\\b',
+  ].join('|'),
+  'i',
+);
 
 /**
  * UK-shaped phone numbers, after separators are removed so "07123 456 789"

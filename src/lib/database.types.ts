@@ -2278,6 +2278,7 @@ export type Database = {
       }
       sq_open_balance: { Args: { p_submission_id: string }; Returns: number }
       sq_payment_plan: { Args: { p_client_quote_id: string }; Returns: Json }
+      anon_exposed_functions: { Args: Record<PropertyKey, never>; Returns: { fn: string }[] }
       sq_clear_client_note: { Args: { p_client_quote_id: string }; Returns: undefined }
       sq_publish_quote: { Args: { p_quote_id: string }; Returns: undefined }
       sq_quote_position: {

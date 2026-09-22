@@ -28,6 +28,24 @@ describe('clientNoteProblem — what a customer may be shown', () => {
     blocked('400 quid, cash or bank transfer');
     blocked('Four hundred pounds including the gateway');
     blocked('GBP 450 for the acreage stated');
+    // Found by review: the word boundary meant no-space forms slipped past.
+    blocked('GBP450 all in');
+    blocked('450GBP for the lot');
+    blocked('$450 if you want it done this week');
+    blocked('€450');
+  });
+
+  it('blocks a unit rate, which is the price by another name', () => {
+    blocked('400 per acre');
+    blocked('40/acre');
+    blocked('£40 an hour');
+    blocked('90 per hour plus travel');
+    blocked('12 per bale');
+  });
+
+  it('still allows measurements that look like rates', () => {
+    ok('Machine cuts 2 acres an hour, so it is a morning.');
+    ok('Gateway needs 3 metres.');
   });
 
   it('leaves bare numbers alone — they are usually not money', () => {
