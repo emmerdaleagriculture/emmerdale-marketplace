@@ -14,7 +14,10 @@ const LINKS = [
   { href: '/notes', label: 'Notes' },
 ];
 
-const CONTRACTOR_HREF = '/#operators';
+/** The supply-side landing page. Was the homepage's own `#operators` band,
+    which only made the argument in three sentences — and scrolled rather than
+    navigated, so it never showed up as a page in the numbers. */
+const CONTRACTOR_HREF = '/agriculturalcontractors';
 
 /** Where every customer CTA on the front page goes: the describe-your-job flow. */
 export const BOOK_HREF = '/start';

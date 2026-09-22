@@ -48,7 +48,9 @@ export function HomeFooter() {
                 <Link href="/notes">Notes from the field</Link>
               </li>
               <li>
-                <a href="#operators">Are you a contractor?</a>
+                {/* Was a bare `#operators` fragment, which went nowhere from
+                    any page but the homepage. */}
+                <Link href="/agriculturalcontractors">Are you a contractor?</Link>
               </li>
               <li>
                 {/* One login for both sides now, so it is no longer the

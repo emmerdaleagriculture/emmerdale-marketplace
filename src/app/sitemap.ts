@@ -89,6 +89,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/paddock-maintenance`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE}/hay-bales`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE}/tractor-hire`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.7 },
+    // The supply side: the argument page, then the form it feeds.
+    { url: `${SITE}/agriculturalcontractors`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE}/signup`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE}/contact`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE}/privacy`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
