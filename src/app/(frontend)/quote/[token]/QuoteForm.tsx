@@ -117,9 +117,21 @@ export function QuoteForm({
         </span>
       </label>
 
+      {/* This box used to say "not shown to the customer". It now is shown,
+          so the label leads with that — a contractor who misses the change
+          could put their own price or their number in front of a customer
+          who is looking at a different figure and cannot contact them yet. */}
       <label className={f.field}>
-        <span className={f.label}>Notes to Emmerdale (optional — not shown to the customer)</span>
-        <textarea className={f.textarea} name="notes" rows={2} maxLength={1000} />
+        <span className={f.label}>
+          Note with your price (optional — <strong>the customer reads this</strong>)
+        </span>
+        <textarea className={f.textarea} name="note_to_client" rows={2} maxLength={200} />
+        <span className={f.hint}>
+          Anything worth them knowing: what&rsquo;s included, when you could do
+          it, what you&rsquo;d need on site. Leave out your own price, your
+          phone number and any links — the customer sees our price, not yours,
+          and deals with us until they accept.
+        </span>
       </label>
 
       <label className={f.checkRow}>

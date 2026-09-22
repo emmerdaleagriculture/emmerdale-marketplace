@@ -88,6 +88,20 @@
   margin-bottom: 12px;
 }
 
+/* The contractor's note. Set apart from our own text with a rule and the
+   serif face, so the customer reads it as a person speaking rather than as
+   another field of the listing. */
+.quoteNote {
+  margin: 0 0 12px;
+  padding-left: 12px;
+  border-left: 3px solid var(--jd-green-pale);
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
 .acceptConfirm {
   border-top: 1px solid var(--rule);
   padding-top: 12px;

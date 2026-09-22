@@ -141,3 +141,49 @@ export async function markCompletedAction(
   refresh(id);
   return { ok: true, message: 'Marked complete — the customer gets a rating request.' };
 }
+
+/**
+ * Operator: retract a contractor's note from the customer's price card.
+ *
+ * Nothing reviews a note between the contractor writing it and the customer
+ * reading it (submit_contractor_quote publishes in the same transaction), so
+ * this is the only control over one that shouldn't have gone out. It clears
+ * the published copy on client_quotes; what the contractor actually wrote
+ * stays on contractor_quotes, because the log of a complaint is the thing you
+ * need when you take it up with them.
+ */
+export async function clearClientNoteAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const user = await assertAdmin();
+  const submissionId = String(formData.get('submission_id') ?? '');
+  const clientQuoteId = String(formData.get('client_quote_id') ?? '');
+  if (!submissionId || !clientQuoteId) return { error: 'Missing the quote.' };
+
+  const admin = createServiceRoleClient();
+  const { data: before } = await admin
+    .from('client_quotes')
+    .select('contractor_note')
+    .eq('id', clientQuoteId)
+    .maybeSingle();
+
+  const { error } = await admin.rpc('sq_clear_client_note', { p_client_quote_id: clientQuoteId });
+  if (error) {
+    console.error('[admin] sq_clear_client_note failed:', error);
+    return { error: 'Could not clear that note — try again.' };
+  }
+
+  await admin.rpc('log_job_event', {
+    p_job_id: submissionId,
+    p_event_type: 'note_retracted',
+    p_from: null,
+    p_to: null,
+    p_actor_type: 'operator',
+    p_actor_id: user.id,
+    p_reason: null,
+    p_metadata: { client_quote_id: clientQuoteId, note: before?.contractor_note ?? null },
+  });
+  refresh(submissionId);
+  return { ok: true, message: 'Note cleared.' };
+}

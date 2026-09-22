@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
 import { poundsInputToPence } from '@/lib/sealedQuotes/money';
+import { CLIENT_NOTE_MAX, clientNoteProblem } from '@/lib/sealedQuotes/clientNote';
 import type { FormState } from '@/lib/form';
 
 export type QuoteActionState = FormState & { closed?: boolean };
@@ -15,6 +16,9 @@ const QuoteSchema = z.object({
   rate_value: z.string().trim().optional().or(z.literal('')),
   rate_minimum: z.string().trim().optional().or(z.literal('')),
   notes: z.string().trim().max(1000).optional().or(z.literal('')),
+  // Shown to the customer. Capped generously here so an over-long note gets
+  // clientNoteProblem's sentence rather than a bare zod message.
+  note_to_client: z.string().trim().max(2000).optional().or(z.literal('')),
   valid_until: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -39,6 +43,7 @@ export async function submitQuoteAction(
     rate_value: formData.get('rate_value') ?? '',
     rate_minimum: formData.get('rate_minimum') ?? '',
     notes: formData.get('notes') ?? '',
+    note_to_client: formData.get('note_to_client') ?? '',
     valid_until: formData.get('valid_until') ?? '',
   });
   if (!parsed.success) {
@@ -46,6 +51,12 @@ export async function submitQuoteAction(
   }
   const d = parsed.data;
   if (!isTokenFormat(d.token)) return { error: 'This link is not valid.' };
+
+  // Checked before the price is even converted: nothing reviews this note
+  // between here and the customer reading it.
+  const noteProblem = clientNoteProblem(d.note_to_client ?? '');
+  if (noteProblem) return { error: noteProblem };
+  const noteToClient = (d.note_to_client ?? '').trim().slice(0, CLIENT_NOTE_MAX);
 
   let pricePence: number | null = null;
   let rateValuePence: number | null = null;
@@ -79,6 +90,7 @@ export async function submitQuoteAction(
     // Tick = VAT is in the figure, untick = there is none in it. 'unspecified'
     // is reserved for prices that arrived by email parse, where nobody asked.
     p_price_basis: formData.get('includes_vat') === 'on' ? 'inc_vat' : 'no_vat',
+    p_note_to_client: (noteToClient || null) as string,
   });
   if (error) {
     console.error('[sq] submit_contractor_quote failed:', error);

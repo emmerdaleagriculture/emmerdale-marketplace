@@ -39,6 +39,7 @@ export type Database = {
           client_rate_value_pence: number | null
           contractor_display_label: string
           contractor_id: string
+          contractor_note: string | null
           contractor_quote_id: string
           contractor_rating_avg: number | null
           contractor_rating_count: number
@@ -60,6 +61,7 @@ export type Database = {
           client_rate_value_pence?: number | null
           contractor_display_label: string
           contractor_id: string
+          contractor_note?: string | null
           contractor_quote_id: string
           contractor_rating_avg?: number | null
           contractor_rating_count?: number
@@ -81,6 +83,7 @@ export type Database = {
           client_rate_value_pence?: number | null
           contractor_display_label?: string
           contractor_id?: string
+          contractor_note?: string | null
           contractor_quote_id?: string
           contractor_rating_avg?: number | null
           contractor_rating_count?: number
@@ -233,6 +236,7 @@ export type Database = {
           created_at: string
           id: string
           invitation_id: string
+          note_to_client: string | null
           notes_internal: string | null
           price_basis: string
           quote_type: string
@@ -252,6 +256,7 @@ export type Database = {
           created_at?: string
           id?: string
           invitation_id: string
+          note_to_client?: string | null
           notes_internal?: string | null
           price_basis?: string
           quote_type?: string
@@ -271,6 +276,7 @@ export type Database = {
           created_at?: string
           id?: string
           invitation_id?: string
+          note_to_client?: string | null
           notes_internal?: string | null
           price_basis?: string
           quote_type?: string
@@ -2272,6 +2278,7 @@ export type Database = {
       }
       sq_open_balance: { Args: { p_submission_id: string }; Returns: number }
       sq_payment_plan: { Args: { p_client_quote_id: string }; Returns: Json }
+      sq_clear_client_note: { Args: { p_client_quote_id: string }; Returns: undefined }
       sq_publish_quote: { Args: { p_quote_id: string }; Returns: undefined }
       sq_quote_position: {
         Args: { p_contractor_id: string; p_submission_id: string }
@@ -2294,6 +2301,7 @@ export type Database = {
       submit_contractor_quote: {
         Args: {
           p_confirmed: boolean
+          p_note_to_client?: string
           p_notes: string
           p_price_basis: string
           p_price_pence: number
