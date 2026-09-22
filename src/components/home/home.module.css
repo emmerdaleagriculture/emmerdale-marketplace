@@ -1039,15 +1039,30 @@
   flex-direction: column;
   gap: 4px;
 }
-/* Absent on cards where no area was extracted, so the county becomes the
-   first line rather than sitting under an empty slot. */
-.enquirySize {
+/* The job itself, and the headline of the card — an acreage on its own says
+   nothing about the work. Absent only when the description matched no
+   service in the taxonomy, in which case the size leads instead. */
+.enquiryService {
   font-family: var(--display);
   font-weight: 700;
   font-size: 1.125rem;
   line-height: 1.15;
   letter-spacing: -0.01em;
   color: var(--text);
+}
+/* Absent on cards where no area was extracted, so the county becomes the
+   line under the job rather than sitting over an empty slot. */
+.enquirySize {
+  font-size: 0.9375rem;
+  color: var(--text);
+}
+/* With no service matched, the size carries the card instead. */
+.enquiry:not(:has(.enquiryService)) .enquirySize {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
 }
 .enquiryCounty {
   color: var(--green);

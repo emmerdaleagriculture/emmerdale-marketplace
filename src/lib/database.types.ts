@@ -1803,16 +1803,19 @@ export type Database = {
         Row: {
           area_priced: boolean
           id: number
+          listed: boolean
           name: string
         }
         Insert: {
           area_priced?: boolean
           id?: number
+          listed?: boolean
           name: string
         }
         Update: {
           area_priced?: boolean
           id?: number
+          listed?: boolean
           name?: string
         }
         Relationships: []

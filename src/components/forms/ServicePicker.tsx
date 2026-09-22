@@ -3,7 +3,17 @@
 import { useState } from 'react';
 import styles from './forms.module.css';
 
-export type ServiceOption = { id: number; name: string };
+export type ServiceOption = {
+  id: number;
+  name: string;
+  /**
+   * Whether it belongs on a customer-facing service strip. A service can be
+   * routable without being advertised (services.listed). The PICKER ignores
+   * this on purpose — a contractor has to be able to tick anything they can
+   * be sent.
+   */
+  listed?: boolean;
+};
 
 /**
  * Service multi-select rendered as toggle chips. Values submit as native
