@@ -57,6 +57,7 @@ export type PublishLeadValues = {
   customer_phone: string;
   customer_email: string;
   details: string;
+  postcode: string;
   service_id?: number;
   county_id?: number;
   consent: boolean;
@@ -76,9 +77,10 @@ export type PublishLeadState = FormState & { values?: PublishLeadValues };
  * distribution matches contractors on it. The legacy board took an array
  * because it matched on county alone and never used the services for routing.
  *
- * No postcode on the submission, for the reason set out in
- * components/enquiry/actions.ts: a customer's postcode is not always the job's
- * location, and county is what distribution actually matches on.
+ * The postcode is carried when there is one — the invitation shows its
+ * district, which is what a contractor prices from. Leaving it blank falls
+ * back to county-only, which is right when the lead has no postcode, and
+ * when the job is plainly somewhere other than the enquirer's address.
  */
 export async function publishLeadAsSubmissionAction(
   _prev: PublishLeadState,
@@ -92,6 +94,7 @@ export async function publishLeadAsSubmissionAction(
   const phone = String(formData.get('customer_phone') ?? '').trim();
   const email = String(formData.get('customer_email') ?? '').trim();
   const details = String(formData.get('details') ?? '').trim();
+  const postcode = String(formData.get('postcode') ?? '').trim().toUpperCase();
 
   // Every rejection hands the operator's own edits back. React resets a form
   // once its action resolves, so without this a missed consent tick throws
@@ -102,6 +105,7 @@ export async function publishLeadAsSubmissionAction(
     customer_phone: phone,
     customer_email: email,
     details,
+    postcode,
     service_id: Number.isInteger(serviceId) && serviceId > 0 ? serviceId : undefined,
     county_id: Number.isInteger(countyId) && countyId > 0 ? countyId : undefined,
     consent: formData.get('consent') === 'on',
@@ -149,7 +153,9 @@ export async function publishLeadAsSubmissionAction(
       service_id: serviceId,
       service_confirmed: true,
       county_id: countyId,
-      postcode: null,
+      // Blank is allowed and means county-only: some leads arrive without one,
+      // and some — a venue miles from the enquirer's home — are better without.
+      postcode: postcode || null,
       contact_name: name,
       contact_phone: phone || null,
       contact_email: email || null,

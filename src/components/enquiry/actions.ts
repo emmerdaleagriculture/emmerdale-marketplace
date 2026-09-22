@@ -138,11 +138,14 @@ const MIN_DETAIL = 15;
  * on /admin/ops, which reads admin_submission_board — so the work was
  * invisible on the board built to watch it.
  *
- * NO POSTCODE reaches the submission. Matching is by county and service, and
- * the postcode actively misleads: a customer enquired from Plymouth for a
- * wedding at Torbay, thirty miles away, and contractors would have priced
- * travel to the wrong town. The county is the honest unit, and the customer's
- * own words — which is where "Torbay Party Barn" was written — carry the rest.
+ * Distribution matches on county and service, so a submission whose postcode
+ * never resolved still reaches the right contractors — county is the fallback,
+ * not a replacement. Where a postcode exists it is carried, because the
+ * invitation shows its district and that is what a contractor prices from.
+ *
+ * It can be wrong: one enquiry came from a Plymouth postcode for a wedding at
+ * Torbay, thirty miles away. The customer's own words carry that — "Torbay
+ * Party Barn" was in the message — and an operator can correct the submission.
  *
  * Known rough edge: both verticals are area_priced = false and the one hay
  * job that has been through this flow drew 14 invitations, 5 opens and no
@@ -157,7 +160,7 @@ const MIN_DETAIL = 15;
 async function autoConvertEnquiry(
   admin: ReturnType<typeof createServiceRoleClient>,
   leadId: string,
-  d: { category: string; name: string; phone: string; email: string; details: string },
+  d: { category: string; name: string; phone: string; email: string; details: string; postcode: string },
   geo: { county_id?: number | null; county_name?: string | null },
 ): Promise<string | null> {
   try {
@@ -191,8 +194,11 @@ async function autoConvertEnquiry(
         // They chose the vertical by using its form — that IS the choice.
         service_confirmed: true,
         county_id: geo.county_id,
-        // Deliberately county-only. See the note above.
-        postcode: null,
+        // The postcode they gave. County is the FALLBACK when there isn't
+        // one, not a replacement for one: a contractor needs the district to
+        // judge whether a job is worth pricing, and "somewhere in Surrey" is
+        // not something anyone can price.
+        postcode: d.postcode || null,
         contact_name: d.name,
         contact_phone: d.phone,
         contact_email: d.email,

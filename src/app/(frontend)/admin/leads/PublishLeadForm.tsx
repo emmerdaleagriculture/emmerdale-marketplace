@@ -31,6 +31,7 @@ export function PublishLeadForm({
     customer_phone: string;
     customer_email: string;
     details: string;
+    postcode: string;
     service_id?: number;
     county_id?: number;
   };
@@ -71,6 +72,14 @@ export function PublishLeadForm({
         <label className={f.field}>
           <span className={f.label}>Email</span>
           <input className={f.input} name="customer_email" type="email" defaultValue={v.customer_email} />
+        </label>
+        <label className={f.field}>
+          <span className={f.label}>Postcode</span>
+          <input className={f.input} name="postcode" defaultValue={v.postcode} />
+          <span className={f.hint}>
+            Contractors see the district only. Clear it if the job is somewhere
+            other than this address — they will see the county alone.
+          </span>
         </label>
         <label className={f.field}>
           <span className={f.label}>County</span>
