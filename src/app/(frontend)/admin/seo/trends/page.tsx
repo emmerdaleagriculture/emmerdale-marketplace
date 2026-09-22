@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { gscQuery, isoDaysAgo } from '@/lib/gsc';
 import { seoGuard } from '../guard';
-import { SubNav } from '../SubNav';
 import { TimeSeriesChart } from '../TimeSeriesChart';
 import styles from '../seo.module.css';
 
@@ -46,7 +45,7 @@ function Delta({ now, before, invert = false }: { now: number; before: number; i
 }
 
 export default async function TrendsPage() {
-  const { block } = await seoGuard('/admin/seo/trends');
+  const { block } = await seoGuard();
   if (block) return block;
 
   const endDate = isoDaysAgo(GSC_LAG_DAYS);
@@ -79,7 +78,6 @@ export default async function TrendsPage() {
 
   return (
     <main className={styles.page}>
-      <SubNav active="/admin/seo/trends" />
       <header className={styles.head}>
         <div>
           <h1>Trends</h1>

@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { gscQuery, isoDaysAgo, getConnectedEmail, listSites, configuredSiteUrl } from '@/lib/gsc';
 import { seoGuard } from './guard';
-import { SubNav } from './SubNav';
 import styles from './seo.module.css';
 
 export const metadata: Metadata = {
@@ -49,7 +48,7 @@ export default async function SeoOverviewPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { block } = await seoGuard('/admin/seo');
+  const { block } = await seoGuard();
   if (block) return block;
 
   const sp = await searchParams;
@@ -95,7 +94,6 @@ export default async function SeoOverviewPage({
 
   return (
     <main className={styles.page}>
-      <SubNav active="/admin/seo" />
       <header className={styles.head}>
         <div>
           <h1>Search Console</h1>
@@ -103,6 +101,13 @@ export default async function SeoOverviewPage({
             Last {RANGE_DAYS} days &middot; {startDate} → {endDate} &middot; vs prior {RANGE_DAYS}d
           </p>
         </div>
+        {/* Rehomed from the SubNav tab bar, which was a second navigation
+            system for one group of pages. It belongs with the connection it
+            re-grants, not in a menu — and it is always available, e.g. to add
+            Analytics scopes. */}
+        <Link href="/admin/seo/auth/connect" className={styles.range}>
+          Reconnect Google →
+        </Link>
       </header>
 
       {justConnected && <section className={styles.successBanner}>Connected to Google ✓</section>}

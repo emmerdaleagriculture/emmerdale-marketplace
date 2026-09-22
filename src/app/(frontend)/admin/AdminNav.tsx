@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './admin.module.css';
@@ -16,6 +17,17 @@ import styles from './admin.module.css';
  * Labels follow each page's own heading where the nav disagreed with it:
  * "Metrics" was headed Dashboard, "Reporting" was headed Landing page
  * reporting. Two words for the same idea is how you end up clicking both.
+ *
+ * A group heading SWITCHES the row below it; it does not navigate. It used to
+ * link to its own first item, which put five routes in the bar twice under two
+ * names — /admin/ops as both "Run" and "Ops", /admin/metrics as both "Insight"
+ * and "Dashboard" — 21 anchors for 16 destinations. Nobody can tell that Run
+ * and Ops are the same page by looking. Browsing a group now costs a click and
+ * reveals its pages instead of guessing which one you wanted.
+ *
+ * Search Console was the third navigation system in the admin: its own tab bar
+ * in its own CSS module, rendered by four pages and the guard, for what is
+ * plainly a group of pages. It is a group now, and that component is gone.
  */
 const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
   {
@@ -56,7 +68,15 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
       { href: '/admin/reporting/sources', label: 'Sources' },
       // Reachable only from body links on three other pages until now.
       { href: '/admin/reporting/journey', label: 'Journey' },
-      { href: '/admin/seo', label: 'SEO' },
+    ],
+  },
+  {
+    name: 'Search',
+    items: [
+      { href: '/admin/seo', label: 'Overview' },
+      { href: '/admin/seo/trends', label: 'Trends' },
+      { href: '/admin/seo/queries', label: 'Queries' },
+      { href: '/admin/seo/pages', label: 'Pages' },
     ],
   },
   {
@@ -77,21 +97,31 @@ export function AdminNav() {
   const current = activeHref(pathname);
   // The index page belongs to no group; default to Run so the bar is never
   // a row of headings with nothing under it.
-  const group =
+  const currentGroup =
     GROUPS.find((g) => g.items.some((i) => i.href === current)) ?? GROUPS[0];
+  // Which group's pages are on show. Browsing another group's pages without
+  // leaving this one is the whole reason the headings stopped being links.
+  const [openName, setOpenName] = useState(currentGroup.name);
+  // Navigating re-anchors the row to wherever you landed, so the bar never
+  // sits open on a group you have since left.
+  useEffect(() => setOpenName(currentGroup.name), [currentGroup.name]);
+  const group = GROUPS.find((g) => g.name === openName) ?? currentGroup;
 
   return (
     <div className={styles.navWrap}>
       <nav className={styles.groupRow} aria-label="Admin sections">
         {GROUPS.map((g) => (
-          <Link
+          <button
             key={g.name}
-            href={g.items[0].href}
+            type="button"
+            onClick={() => setOpenName(g.name)}
             className={g.name === group.name ? `${styles.group} ${styles.groupOn}` : styles.group}
-            aria-current={g.name === group.name ? 'true' : undefined}
+            // Pressed = showing its pages. The page row carries aria-current
+            // for the page you are actually on.
+            aria-pressed={g.name === group.name}
           >
             {g.name}
-          </Link>
+          </button>
         ))}
       </nav>
       <nav className={styles.pageRow} aria-label={`${group.name} pages`}>

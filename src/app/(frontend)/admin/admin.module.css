@@ -34,7 +34,16 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+/* A <button> since it switches the row below rather than navigating, so it
+   needs the element reset a link never did. */
 .group {
+  appearance: none;
+  background: none;
+  border: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
   color: #fff;
   opacity: 0.55;
   padding: 2px 0 6px;
