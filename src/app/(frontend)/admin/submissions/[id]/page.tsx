@@ -7,6 +7,7 @@ import { gateWidthLabel } from '@/lib/jobParse/access';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { getServices } from '@/lib/reference';
 import { DistributionPanel } from './DistributionPanel';
+import { ClearNoteButton } from './ClearNoteButton';
 import s from '../../admin.module.css';
 import p from '../submissions.module.css';
 import { OutreachList, OutreachStats, STAGE_TITLES, isOutreachStage, type OutreachStage } from '../OutreachStats';
@@ -50,7 +51,7 @@ export default async function SubmissionDetailPage({
     admin
       .from('client_quotes')
       .select(
-        `id, status, client_price_pence, contractor_display_label, contractor_real_name, valid_until, created_at,
+        `id, status, client_price_pence, contractor_display_label, contractor_real_name, valid_until, created_at, contractor_note,
          cq:contractor_quotes(contractor_price_pence, quote_type, rate_value_pence, rate_minimum_pence, source, notes_internal, site_visit_required,
            contractor:contractors(business_name))`,
       )
@@ -271,7 +272,8 @@ export default async function SubmissionDetailPage({
                   <th>Client price</th>
                   <th>Margin</th>
                   <th>Status</th>
-                  <th>Notes to us</th>
+                  <th>Note to the customer</th>
+                  <th>Notes to us (historic)</th>
                 </tr>
               </thead>
               <tbody>
@@ -296,6 +298,18 @@ export default async function SubmissionDetailPage({
                       <td>{formatGBP(cq.client_price_pence)}</td>
                       <td>{inner ? formatGBP(cq.client_price_pence - inner.contractor_price_pence) : '—'}</td>
                       <td>{cq.status}</td>
+                      {/* Nothing reviews this before the customer reads it,
+                          so the only control is taking it back afterwards. */}
+                      <td>
+                        {cq.contractor_note ? (
+                          <>
+                            “{cq.contractor_note}”
+                            <ClearNoteButton submissionId={id} clientQuoteId={cq.id} />
+                          </>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
                       <td>{inner?.notes_internal ?? '—'}</td>
                     </tr>
                   );

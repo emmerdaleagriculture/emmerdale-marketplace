@@ -22,6 +22,8 @@ export type ClientQuoteView = {
   distance_miles: number | null;
   site_visit_required: boolean;
   valid_until: string;
+  /** The contractor's own words, in their voice. May be null. */
+  contractor_note: string | null;
 };
 
 const SORT_LABELS: [SortMode, string][] = [
@@ -91,6 +93,11 @@ export function PriceList({
               {q.site_visit_required && <span>Wants to see the site first</span>}
               <span>valid until {q.valid_until}</span>
             </div>
+            {/* The contractor's own words. Quoted, so it reads as theirs and
+                not as something we are saying about the price. */}
+            {q.contractor_note && (
+              <p className={m.quoteNote}>&ldquo;{q.contractor_note}&rdquo;</p>
+            )}
             {confirming === q.id ? (
               <form action={action} className={m.acceptConfirm}>
                 <input type="hidden" name="token" value={token} />

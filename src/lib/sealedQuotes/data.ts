@@ -71,14 +71,25 @@ export async function getSubmissionByClientToken(token: string) {
  */
 export async function getClientQuotes(submissionId: string) {
   const admin = createServiceRoleClient();
-  const { data } = await admin
+  const { data, error } = await admin
     .from('client_quotes')
     .select(
-      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status',
+      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status, contractor_note',
     )
     .eq('submission_id', submissionId)
     .in('status', ['active', 'accepted'])
     .gte('valid_until', new Date().toISOString().slice(0, 10));
+  // Never swallow this one. `data ?? []` on a failed query renders the portal
+  // with an empty price list under "Nothing is booked until you accept one" —
+  // a customer who has prices is told, calmly and wrongly, that nobody quoted,
+  // and walks. An error page they can reload is the lesser harm, and the throw
+  // reaches Sentry through global-error instead of going unrecorded.
+  // Caught in the wild: adding a column to this select before the migration
+  // ran returned 42703 and showed live jobs as having no prices at all.
+  if (error) {
+    console.error('[sq] getClientQuotes failed:', error);
+    throw new Error(`Could not load prices for submission ${submissionId}: ${error.message}`);
+  }
   return data ?? [];
 }
 
@@ -89,13 +100,19 @@ export async function getClientQuotes(submissionId: string) {
  */
 export async function getClientQuoteById(id: string) {
   const admin = createServiceRoleClient();
-  const { data } = await admin
+  const { data, error } = await admin
     .from('client_quotes')
     .select(
-      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status',
+      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status, contractor_note',
     )
     .eq('id', id)
     .maybeSingle();
+  // Same reasoning as getClientQuotes: this backs the price on an awarded or
+  // paid job, where a silent null is a job page that has lost its price.
+  if (error) {
+    console.error('[sq] getClientQuoteById failed:', error);
+    throw new Error(`Could not load client quote ${id}: ${error.message}`);
+  }
   return data ?? null;
 }
 

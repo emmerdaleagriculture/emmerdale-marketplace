@@ -141,3 +141,62 @@ export async function markCompletedAction(
   refresh(id);
   return { ok: true, message: 'Marked complete — the customer gets a rating request.' };
 }
+
+/**
+ * Operator: retract a contractor's note from the customer's price card.
+ *
+ * Nothing reviews a note between the contractor writing it and the customer
+ * reading it (submit_contractor_quote publishes in the same transaction), so
+ * this is the only control over one that shouldn't have gone out. It clears
+ * the published copy on client_quotes; what the contractor actually wrote
+ * stays on contractor_quotes, because the log of a complaint is the thing you
+ * need when you take it up with them.
+ */
+export async function clearClientNoteAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const user = await assertAdmin();
+  const submissionId = String(formData.get('submission_id') ?? '');
+  const clientQuoteId = String(formData.get('client_quote_id') ?? '');
+  const reason = String(formData.get('reason') ?? '').trim();
+  if (!submissionId || !clientQuoteId) return { error: 'Missing the quote.' };
+  // job_events carries `check (actor_type <> 'operator' or reason is not
+  // null)` — "an unlogged manual change is indefensible (§29)". A Clear
+  // button with no reason is exactly what that constraint is for.
+  if (!reason) return { error: 'Say why you are pulling it.' };
+
+  const admin = createServiceRoleClient();
+  const { data: before } = await admin
+    .from('client_quotes')
+    .select('contractor_note')
+    .eq('id', clientQuoteId)
+    .maybeSingle();
+
+  // Log BEFORE clearing, and refuse to clear if the log fails. The other
+  // order leaves the customer-visible change made and unrecorded, which is
+  // the state the constraint exists to prevent.
+  const { error: logError } = await admin.rpc('log_job_event', {
+    p_job_id: submissionId,
+    p_event_type: 'note_retracted',
+    p_from: null,
+    p_to: null,
+    p_actor_type: 'operator',
+    p_actor_id: user.id,
+    p_reason: reason,
+    p_metadata: { client_quote_id: clientQuoteId, note: before?.contractor_note ?? null },
+  });
+  if (logError) {
+    console.error('[admin] log_job_event note_retracted failed:', logError);
+    return { error: 'Could not record the retraction, so nothing was changed.' };
+  }
+
+  const { error } = await admin.rpc('sq_clear_client_note', { p_client_quote_id: clientQuoteId });
+  if (error) {
+    console.error('[admin] sq_clear_client_note failed:', error);
+    return { error: 'Could not clear that note — try again.' };
+  }
+
+  refresh(submissionId);
+  return { ok: true, message: 'Note cleared.' };
+}
