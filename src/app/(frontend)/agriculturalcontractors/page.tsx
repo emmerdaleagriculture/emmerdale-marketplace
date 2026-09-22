@@ -138,7 +138,11 @@ const faqs = [
   },
   {
     q: 'Is there a check before I start getting work?',
-    a: 'Yes. Registration is free but subject to approval. We look at every contractor before they see a job: public liability insurance of at least £2 million, the certificates for the work you take on — spraying, chainsaw, machinery and so on — and an introductory call. It is the same check every other contractor on the list has passed, which is the reason customers trust it.',
+    a: 'Yes, though it is a light one. Registration is free and subject to approval: we check who you are and that you are a working contracting business, and we speak to you before any job reaches you.',
+  },
+  {
+    q: 'Do I need my own insurance and certificates?',
+    a: 'Work done through us is covered by our own public liability policy, so you do not need to hold cover of your own to take jobs from us. We do not ask to see spraying, chainsaw or machinery certificates either — what you are qualified and ticketed to operate is your responsibility as an independent business, not something we sit in judgement on.',
   },
   {
     q: 'What do you get out of it?',
