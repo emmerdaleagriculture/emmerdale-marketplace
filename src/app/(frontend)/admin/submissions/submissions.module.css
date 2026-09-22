@@ -463,3 +463,50 @@
   font-weight: 600;
   white-space: nowrap;
 }
+
+/* Drafts tab: tick-and-clear. The bar sticks so the button stays reachable
+   while you work down a long list. */
+.draftBar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+.draftAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.rowPick {
+  grid-area: pick;
+  align-self: start;
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+/* The checkbox takes its own column ahead of the status pill. */
+.row:has(.rowPick) {
+  grid-template-columns: 24px 136px minmax(0, 1fr) 216px 92px;
+  grid-template-areas: 'pick status main outreach when';
+}
+@media (max-width: 1080px) {
+  .row:has(.rowPick) {
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'pick status when'
+      'main main main'
+      'outreach outreach outreach';
+  }
+}

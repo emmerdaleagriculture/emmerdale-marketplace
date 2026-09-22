@@ -1,6 +1,7 @@
 'use server';
 
 import { after } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { emailDeliveryError } from '@/lib/email/deliverable';
 import { rememberJustSentJob } from '@/lib/jobCookie';
@@ -708,6 +709,11 @@ export async function confirmJobAction(
   } catch (err) {
     console.error('[sq] distribution failed:', err);
   }
+
+  // The homepage's "Jobs in progress" strip is what this job just joined, and
+  // the page is ISR on a one-hour window — without this it would not show up
+  // until the next rebuild. Cheap, and the only page that reads the view.
+  revalidatePath('/');
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   await notifyAdmins(

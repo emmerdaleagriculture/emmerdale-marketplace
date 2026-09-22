@@ -7,6 +7,7 @@ import s from '../admin.module.css';
 import p from './submissions.module.css';
 import { SUBMISSION_FILTERS, isSubmissionFilter, matchesFilter } from '@/lib/submissionFilters';
 import { OutreachModal } from './OutreachModal';
+import { DraftToolbar } from './DraftToolbar';
 
 export const metadata: Metadata = { title: 'Submissions — Admin' };
 
@@ -60,6 +61,7 @@ type Row = {
   emails_failed: number;
   quotes_live: number;
   lowest_client_pence: number | null;
+  hidden_at: string | null;
 };
 
 type Tone = 'open' | 'good' | 'bad' | 'muted' | 'draft';
@@ -152,7 +154,7 @@ function pct(n: number, of: number) {
 }
 
 /** One submission, one line: what it is, where it got to, how long ago. */
-function SubmissionRow({ r }: { r: Row }) {
+function SubmissionRow({ r, selectable = false }: { r: Row; selectable?: boolean }) {
   const [label, tone] = STATUS[r.status] ?? [r.status, 'muted'];
   const isDraft = DRAFT.has(r.status);
   const raw = tidy(r.raw_text);
@@ -189,6 +191,11 @@ function SubmissionRow({ r }: { r: Row }) {
 
   return (
     <li className={p.row}>
+      {/* Plain input inside the bulk form — no client state, and it still
+          works with JavaScript off. Only drafts are ever selectable. */}
+      {selectable && (
+        <input type="checkbox" name="ids" value={r.id} className={p.rowPick} aria-label={`Select ${title}`} />
+      )}
       <span className={`${p.status} ${p[tone]}`}>{label}</span>
 
       <div className={p.rowMain}>
@@ -243,7 +250,7 @@ function SubmissionRow({ r }: { r: Row }) {
 }
 
 /** A list banded into days, newest first. */
-function Days({ rows }: { rows: Row[] }) {
+function Days({ rows, selectable = false }: { rows: Row[]; selectable?: boolean }) {
   return (
     <>
       {byDay(rows).map(([key, day]) => (
@@ -253,7 +260,7 @@ function Days({ rows }: { rows: Row[] }) {
           </h2>
           <ul className={p.rows}>
             {day.map((r) => (
-              <SubmissionRow key={r.id} r={r} />
+              <SubmissionRow key={r.id} r={r} selectable={selectable} />
             ))}
           </ul>
         </section>
@@ -273,17 +280,27 @@ export default async function AdminSubmissionsPage({
   // Set when arriving from a dashboard tile: show just the jobs behind it.
   const filter = isSubmissionFilter(sp.filter) ? sp.filter : null;
 
+  // ?hidden=1 on the drafts tab: the ones cleared off the board, so they can
+  // be put back. Nothing else ever asks for them.
+  const showHidden = view === 'drafts' && sp.hidden === '1';
+
   const admin = createServiceRoleClient();
   const ids = async (q: PromiseLike<{ data: { submission_id: string | null }[] | null }>) =>
     new Set(((await q).data ?? []).map((r) => r.submission_id));
   const [{ data, error }, pricedIds, paidIds] = await Promise.all([
-    admin.rpc('admin_submission_board', { p_limit: LIMIT }),
+    admin.rpc('admin_submission_board', { p_limit: LIMIT, p_include_hidden: showHidden }),
     filter === 'priced' ? ids(admin.from('client_quotes').select('submission_id')) : new Set<string | null>(),
     filter === 'paid'
       ? ids(admin.from('job_payments').select('submission_id').in('status', ['paid', 'partially_refunded', 'refunded']))
       : new Set<string | null>(),
   ]);
-  const rows = ((data ?? []) as unknown as Row[]);
+  const all = ((data ?? []) as unknown as Row[]);
+  // When showing hidden we asked for everything; the tab shows only those.
+  const rows = showHidden ? all.filter((r) => r.hidden_at) : all;
+  const { count: hiddenCount } = await admin
+    .from('job_submissions')
+    .select('id', { count: 'exact', head: true })
+    .not('hidden_at', 'is', null);
 
   const jobs = rows.filter((r) => !DRAFT.has(r.status));
   const drafts = rows.filter((r) => DRAFT.has(r.status));
@@ -357,14 +374,36 @@ export default async function AdminSubmissionsPage({
 
       {!filter && view === 'drafts' && (
         <p className={p.lede}>
-          Described a job on /start and stopped before leaving contact details.
+          {showHidden
+            ? 'Drafts cleared off the board. Tick any you want back.'
+            : 'Described a job on /start and stopped before leaving contact details.'}{' '}
+          {showHidden ? (
+            <Link href="/admin/submissions?view=drafts">Back to the live ones</Link>
+          ) : (
+            hiddenCount != null &&
+            hiddenCount > 0 && (
+              <Link href="/admin/submissions?view=drafts&hidden=1">
+                {hiddenCount} cleared — show {hiddenCount === 1 ? 'it' : 'them'}
+              </Link>
+            )
+          )}
         </p>
       )}
 
       {shown.length === 0 ? (
         <div className={s.empty}>
-          {filter ? 'Nothing matches.' : view === 'drafts' ? 'No drafts.' : 'Nothing here yet.'}
+          {filter
+            ? 'Nothing matches.'
+            : view === 'drafts'
+              ? showHidden
+                ? 'Nothing cleared.'
+                : 'No drafts.'
+              : 'Nothing here yet.'}
         </div>
+      ) : !filter && view === 'drafts' ? (
+        <DraftToolbar count={shown.length} showingHidden={showHidden}>
+          <Days rows={shown} selectable />
+        </DraftToolbar>
       ) : (
         <Days rows={shown} />
       )}
