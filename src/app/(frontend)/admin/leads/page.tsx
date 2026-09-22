@@ -24,6 +24,7 @@ type LeadRow = {
   job_hint: string | null;
   status: string;
   job_id: string | null;
+  submission_id: string | null;
   created_at: string;
 };
 
@@ -31,7 +32,7 @@ export default async function AdminLeadsPage() {
   const admin = createServiceRoleClient();
   const { data } = await admin
     .from('leads')
-    .select('id, source, full_name, phone, postcode, job_hint, status, job_id, created_at')
+    .select('id, source, full_name, phone, postcode, job_hint, status, job_id, submission_id, created_at')
     .order('created_at', { ascending: false })
     .limit(200);
 
@@ -116,11 +117,20 @@ export default async function AdminLeadsPage() {
                 <td>{tidyJobHint(l.job_hint)?.slice(0, 60) ?? '—'}</td>
                 <td>
                   <span className={`${s.pill} ${pillFor[l.status] ?? ''}`}>{l.status}</span>
-                  {l.job_id && (
+                  {/* Portal enquiries publish into the sealed-quote flow;
+                      older ones point at the legacy board. */}
+                  {l.submission_id ? (
                     <>
                       {' '}
-                      <Link href={`/admin/jobs/${l.job_id}`}>job →</Link>
+                      <Link href={`/admin/submissions/${l.submission_id}`}>submission →</Link>
                     </>
+                  ) : (
+                    l.job_id && (
+                      <>
+                        {' '}
+                        <Link href={`/admin/jobs/${l.job_id}`}>job →</Link>
+                      </>
+                    )
                   )}
                 </td>
                 <td>{formatDateTime(l.created_at)}</td>

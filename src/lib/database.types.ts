@@ -1426,7 +1426,7 @@ export type Database = {
           consent_wording_version: string | null
           county_id: number
           created_at: string
-          created_by: string
+          created_by: string | null
           customer_email: string | null
           customer_first_name: string | null
           customer_name: string
@@ -1448,7 +1448,7 @@ export type Database = {
           consent_wording_version?: string | null
           county_id: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           customer_email?: string | null
           customer_first_name?: string | null
           customer_name: string
@@ -1470,7 +1470,7 @@ export type Database = {
           consent_wording_version?: string | null
           county_id?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           customer_email?: string | null
           customer_first_name?: string | null
           customer_name?: string
@@ -1542,6 +1542,7 @@ export type Database = {
           phone: string | null
           postcode: string | null
           source: string
+          submission_id: string | null
           status: string
         }
         Insert: {
@@ -1555,6 +1556,7 @@ export type Database = {
           phone?: string | null
           postcode?: string | null
           source?: string
+          submission_id?: string | null
           status?: string
         }
         Update: {
@@ -1568,6 +1570,7 @@ export type Database = {
           phone?: string | null
           postcode?: string | null
           source?: string
+          submission_id?: string | null
           status?: string
         }
         Relationships: [

@@ -65,7 +65,7 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
   const geo = await resolveCounty(d.postcode);
 
   const admin = createServiceRoleClient();
-  const { error } = await admin.from('leads').insert({
+  const { data: lead, error } = await admin.from('leads').insert({
     source: d.category,
     full_name: d.name,
     phone: d.phone,
@@ -83,10 +83,18 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
       county: geo.county_name ?? null,
       town: geo.town ?? null,
     },
-  });
-  if (error) {
+  })
+    .select('id')
+    .single();
+  if (error || !lead) {
     return { error: 'Something went wrong saving your enquiry — please try again or call us.' };
   }
+
+  // Straight to the contractors who cover the county. Fire-and-log, like
+  // distribution in start/actions.ts: a failure here must never cost the
+  // customer their enquiry, and anything that does not convert simply stays
+  // a pending lead — which is exactly the behaviour this replaces.
+  const converted = await autoConvertEnquiry(admin, lead.id, d, geo);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   await notifyAdmins(
@@ -98,8 +106,130 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
       `Postcode:  ${d.postcode}\n` +
       `County:    ${geo.county_name ?? '(not resolved — check the postcode)'}\n` +
       `Wants:     ${d.details}\n\n` +
+      (converted
+        ? `ALREADY SENT to contractors covering ${geo.county_name}: ${siteUrl}/admin/submissions/${converted}\n` +
+          `Withdraw it there if it shouldn't have gone out.\n\n`
+        : `NOT sent automatically — it is waiting for you: ${siteUrl}/admin/leads\n\n`) +
       `Review in the leads queue: ${siteUrl}/admin/leads`,
   );
 
   return { ok: true, message: SUCCESS_MESSAGE };
+}
+
+/** The vertical's canonical service, and how its job is titled. */
+const AUTO_CONVERT: Record<string, { serviceId: number; title: string }> = {
+  hay: { serviceId: 16, title: 'Hay, straw or haylage wanted' },
+  'tractor-hire': { serviceId: 17, title: 'Tractor hire for an event' },
+};
+
+/** Enough words to be a real enquiry rather than a test or a slip. */
+const MIN_DETAIL = 15;
+
+/**
+ * Publish a portal enquiry to the contractors covering its county.
+ *
+ * Returns the new job id, or null when it did not convert — in which case the
+ * lead stays `pending` and an operator picks it up, which is what happened to
+ * every enquiry before this existed. Never throws: the caller has already
+ * saved the customer's enquiry and must not fail it on our account.
+ *
+ * It lands in the SEALED-QUOTE flow (job_submissions), not the legacy `jobs`
+ * board. Two systems for the same thing meant portal enquiries never appeared
+ * on /admin/ops, which reads admin_submission_board — so the work was
+ * invisible on the board built to watch it.
+ *
+ * NO POSTCODE reaches the submission. Matching is by county and service, and
+ * the postcode actively misleads: a customer enquired from Plymouth for a
+ * wedding at Torbay, thirty miles away, and contractors would have priced
+ * travel to the wrong town. The county is the honest unit, and the customer's
+ * own words — which is where "Torbay Party Barn" was written — carry the rest.
+ *
+ * Known rough edge: both verticals are area_priced = false and the one hay
+ * job that has been through this flow drew 14 invitations, 5 opens and no
+ * prices at all. The flow is built around an acreage; hay and a wedding
+ * tractor are not that shape.
+ *
+ * Only the two portal verticals convert. Facebook lead-ads arrive through
+ * /api/leads instead, and 12 of their 13 leads have been dismissed as junk;
+ * routing those to contractors automatically would be a good way to teach the
+ * network to ignore our email.
+ */
+async function autoConvertEnquiry(
+  admin: ReturnType<typeof createServiceRoleClient>,
+  leadId: string,
+  d: { category: string; name: string; phone: string; email: string; details: string },
+  geo: { county_id?: number | null; county_name?: string | null },
+): Promise<string | null> {
+  try {
+    const spec = AUTO_CONVERT[d.category];
+    // An unresolved postcode has no county to publish to, and a two-word
+    // enquiry is not worth sixteen contractors' attention.
+    if (!spec || !geo.county_id || d.details.trim().length < MIN_DETAIL) return null;
+
+    // The same person twice in an hour is a double-submit or a bot, not two
+    // jobs. The second one waits for a human.
+    const { count: recent } = await admin
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .eq('email', d.email)
+      .eq('status', 'converted')
+      .gte('created_at', new Date(Date.now() - 3600_000).toISOString());
+    if (recent && recent > 0) return null;
+
+    const now = new Date();
+    const { data: sub, error } = await admin
+      .from('job_submissions')
+      .insert({
+        status: 'confirmed',
+        confirmed_at: now.toISOString(),
+        // The customer's own words are the job: there is no separate
+        // description on this form, and service_verbatim is what a contractor
+        // reads on the quote page.
+        raw_text: d.details,
+        service_verbatim: d.details,
+        service_id: spec.serviceId,
+        // They chose the vertical by using its form — that IS the choice.
+        service_confirmed: true,
+        county_id: geo.county_id,
+        // Deliberately county-only. See the note above.
+        postcode: null,
+        contact_name: d.name,
+        contact_phone: d.phone,
+        contact_email: d.email,
+        contact_preference: 'either',
+        // Same window /start uses, so a price is not open-ended.
+        expires_at: new Date(now.getTime() + 10 * 86400_000).toISOString(),
+      })
+      .select('id')
+      .single();
+    if (error || !sub) {
+      console.error('[enquiry] auto-convert insert failed:', error);
+      return null;
+    }
+
+    // submission_id, not job_id: that column's foreign key points at the
+    // legacy jobs table, and writing a submission id there fails silently and
+    // leaves the lead sitting in the queue while its work is already out.
+    const { error: linkError } = await admin
+      .from('leads')
+      .update({ status: 'converted', submission_id: sub.id })
+      .eq('id', leadId);
+    if (linkError) console.error('[enquiry] lead link failed:', linkError);
+
+    // Out to the contractors covering that county who do this work. Unlike
+    // the legacy board this matches on service as well, so a hay enquiry does
+    // not land with someone who only tops paddocks.
+    const { data: dist, error: distError } = await admin.rpc('distribute_submission', {
+      p_submission_id: sub.id,
+    });
+    if (distError) {
+      console.error('[enquiry] distribute_submission failed:', distError);
+    } else {
+      console.log('[enquiry] distributed:', JSON.stringify(dist));
+    }
+    return sub.id;
+  } catch (err) {
+    console.error('[enquiry] auto-convert failed:', err);
+    return null;
+  }
 }

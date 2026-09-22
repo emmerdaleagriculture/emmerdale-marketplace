@@ -256,7 +256,11 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           // description printed directly above. Don't say it twice.
           (p.service && p.service !== p.description ? `Work:      ${p.service}\n` : '') +
           `Area:      ${areaLine(p)}\n` +
-          `Where:     ${p.postcode_district ?? '—'}, ${p.county ?? ''} — the full address comes if you win the job\n` +
+          // County-only jobs (portal enquiries publish no postcode, because
+          // the customer's postcode is not always the job's location) would
+          // otherwise read "Where: —, Devon".
+          `Where:     ${[p.postcode_district, p.county].filter(Boolean).join(', ') || 'see notes'}` +
+          ` — the full address comes if you win the job\n` +
           `When:      ${p.urgency ?? 'not stated'}${p.target_date ? ` (by ${p.target_date})` : ''}\n` +
           (p.gate_width ? `Access:    ${p.gate_width} gate\n` : '') +
           (p.access_notes ? `Notes:     ${p.access_notes}\n` : '') +

@@ -72,6 +72,19 @@ export function EnquiryForm({
         <textarea className={f.textarea} name="details" required maxLength={800} placeholder={detailsPlaceholder} />
       </label>
 
+      {/* The enquiry now goes straight to contractors, so the customer has to
+          be told that before they send it — not afterwards. This is the same
+          substance as the consent an operator used to tick on their behalf in
+          NewJobForm, shown to the person it actually concerns. Sending is the
+          agreement, so there is no box to tick: an unticked box on the last
+          field of a form is a conversion tax, and a required one is consent
+          in name only. Wording version v3-portal in the stored record. */}
+      <p className={f.hint} style={{ marginTop: 4 }}>
+        Sending this passes your name and number to vetted contractors covering
+        your county, so they can contact you directly about it. We don&rsquo;t
+        publish your postcode — only the county.
+      </p>
+
       <div className={a.actions}>
         <button className={f.btnYellow} type="submit" disabled={pending}>
           {pending ? 'Sending…' : submitLabel}

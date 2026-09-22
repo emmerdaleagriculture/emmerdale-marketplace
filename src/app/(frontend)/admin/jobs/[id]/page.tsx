@@ -35,11 +35,16 @@ export default async function AdminJobDetail({ params }: { params: Promise<{ id:
       .eq('job_id', id)
       .order('revealed_at', { ascending: true }),
     // Member-posted jobs: created_by is a contractor. Admin-posted: no match.
-    admin
-      .from('contractors')
-      .select('business_name, contact_name')
-      .eq('id', job.created_by)
-      .maybeSingle(),
+    // Null since 20260922190000: the job published itself from a portal
+    // enquiry, so there is nobody to look up and `.eq('id', null)` would be
+    // a pointless round trip on a uuid column.
+    job.created_by
+      ? admin
+          .from('contractors')
+          .select('business_name, contact_name')
+          .eq('id', job.created_by)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const serviceMap = new Map((allServices ?? []).map((sv) => [sv.id, sv.name]));
