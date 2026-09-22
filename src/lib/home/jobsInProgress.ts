@@ -1,20 +1,29 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { memoize, REFERENCE_TTL_MS } from '@/lib/memo';
+import { memoize } from '@/lib/memo';
 
 /**
- * What's coming in, for the homepage strip.
+ * Short on purpose. A new job triggers revalidatePath('/'), and a memo that
+ * outlived that would rebuild the page from a stale read and show nothing
+ * new — the point of the strip is that it moves.
+ */
+const LIVE_TTL_MS = 60_000;
+
+/**
+ * The work actually under way, for the homepage strip.
  *
- * Reads the `recent_enquiries` view, which is deliberately coarse: county, an
- * approximate size and the date it arrived. There is no service name — job
+ * Reads the `jobs_in_progress` view, which is deliberately coarse: county, an
+ * approximate size and the date it came in. There is no service name — job
  * creation has run deterministic-only since 8e86e71, so `service_id` is null on
- * almost every submission by design — and no postcode, free text or contact
- * detail reaches the view at all.
+ * every live job — and no postcode, free text or contact detail reaches the
+ * view at all.
  *
- * These are ENQUIRIES, not bookings: most never reached a quote, and drafts are
- * included on purpose. Any copy around this must say so.
+ * These are live jobs: sent to contractors and not yet finished, dead or
+ * withdrawn. Drafts are excluded, and so is anything expired or cancelled —
+ * the previous version of this strip counted both and had to say so in the
+ * copy. Any copy around this must stay true to the WHERE clause.
  */
 
-export type RecentEnquiry = {
+export type JobInProgress = {
   county: string;
   /** "24 acres", "200m", or null when nothing was extracted. */
   size_label: string | null;
@@ -26,7 +35,7 @@ export type RecentEnquiry = {
  * Below this, the section hides entirely rather than advertising that almost
  * nobody has used us. Never pad, never invent, never sample.
  */
-export const MIN_ENQUIRIES = 4;
+export const MIN_JOBS = 4;
 
 /** How many the strip shows at most. */
 const LIMIT = 8;
@@ -36,7 +45,7 @@ const LIMIT = 8;
  * RLS-protected source tables as its owner. Cookie-less, so the homepage stays
  * ISR-cacheable rather than being forced dynamic.
  *
- * Untyped client on purpose — `recent_enquiries` is absent from
+ * Untyped client on purpose — `jobs_in_progress` is absent from
  * `database.types.ts` until the migration is applied and `supabase gen types`
  * is re-run. Swap this for `createStaticClient()` and drop the row cast once
  * that happens; nothing else here changes.
@@ -49,9 +58,9 @@ function viewClient(): SupabaseClient {
   );
 }
 
-export const getRecentEnquiries = memoize<RecentEnquiry[]>(async () => {
+export const getJobsInProgress = memoize<JobInProgress[]>(async () => {
   const { data, error } = await viewClient()
-    .from('recent_enquiries')
+    .from('jobs_in_progress')
     .select('county, size_label, created_on')
     .order('ord', { ascending: true })
     .limit(LIMIT);
@@ -59,7 +68,7 @@ export const getRecentEnquiries = memoize<RecentEnquiry[]>(async () => {
   if (error) {
     // A missing view (migration not yet pushed) must not take the homepage
     // down — the section simply doesn't render.
-    console.error('[recentEnquiries] read failed:', error.message);
+    console.error('[jobsInProgress] read failed:', error.message);
     return [];
   }
 
@@ -75,10 +84,10 @@ export const getRecentEnquiries = memoize<RecentEnquiry[]>(async () => {
         ]
       : [],
   );
-}, REFERENCE_TTL_MS);
+}, LIVE_TTL_MS);
 
 /** "13 September 2026" — the date it came in, as Tom asked. */
-export function formatEnquiryDate(iso: string): string {
+export function formatJobDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00Z`);
   if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleDateString('en-GB', {

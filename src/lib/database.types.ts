@@ -1184,6 +1184,8 @@ export type Database = {
           gate_w3w: string | null
           gate_width: string | null
           gclid: string | null
+          hidden_at: string | null
+          hidden_by: string | null
           id: string
           lat: number | null
           lng: number | null
@@ -1246,6 +1248,8 @@ export type Database = {
           gate_w3w?: string | null
           gate_width?: string | null
           gclid?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -1308,6 +1312,8 @@ export type Database = {
           gate_w3w?: string | null
           gate_width?: string | null
           gclid?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -2084,7 +2090,7 @@ export type Database = {
       admin_dashboard: { Args: never; Returns: Json }
       admin_metrics: { Args: never; Returns: Json }
       admin_submission_board: {
-        Args: { p_limit?: number; p_statuses?: string[] }
+        Args: { p_limit?: number; p_statuses?: string[]; p_include_hidden?: boolean }
         Returns: Json
       }
       app_config_num: {
@@ -2278,6 +2284,8 @@ export type Database = {
       }
       sq_open_balance: { Args: { p_submission_id: string }; Returns: number }
       sq_payment_plan: { Args: { p_client_quote_id: string }; Returns: Json }
+      admin_hide_drafts: { Args: { p_ids: string[]; p_actor: string }; Returns: Json }
+      admin_unhide_drafts: { Args: { p_ids: string[] }; Returns: Json }
       anon_exposed_functions: { Args: Record<PropertyKey, never>; Returns: { fn: string }[] }
       sq_clear_client_note: { Args: { p_client_quote_id: string }; Returns: undefined }
       sq_publish_quote: { Args: { p_quote_id: string }; Returns: undefined }

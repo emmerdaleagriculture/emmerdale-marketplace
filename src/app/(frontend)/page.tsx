@@ -9,7 +9,7 @@ import { DeferredImage } from '@/components/home/DeferredImage';
 import { ServiceCard } from '@/components/home/ServiceCard';
 import { TrackedLink } from '@/components/home/Track';
 import { CoverageSection } from '@/components/home/CoverageSection';
-import { RecentEnquiries } from '@/components/home/RecentEnquiries';
+import { JobsInProgress } from '@/components/home/JobsInProgress';
 import { RecentWork } from '@/components/home/RecentWork';
 import { QuoteWidget } from '@/components/home/QuoteWidget';
 import { Comparison } from '@/components/home/Comparison';
@@ -262,6 +262,12 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* What is happening right now, then what past work cost. Live work
+            first: it answers "is this thing running?" before the completed
+            board answers "what will it cost?". Both hide themselves rather
+            than render thin. */}
+        <JobsInProgress />
+
         {/* What past work cost — the persuasion engine, straight after the
             hero. Hides itself until there are enough real completed jobs. */}
         <RecentWork />
@@ -314,11 +320,6 @@ export default async function LandingPage() {
         </section>
 
         <PhotoStrip photos={GALLERY} label="Our work" />
-
-        {/* What's being asked for. Renders nothing until there are enough real
-            enquiries, so an empty marketplace shows no strip rather than a
-            thin one. */}
-        <RecentEnquiries />
 
         {/* Where we work — live coverage choropleth. Its copy is computed from
             the database rather than hardcoded, which is why it still says
