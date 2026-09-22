@@ -33,9 +33,12 @@ export async function JobsInProgress() {
         <ul className={s.enquiriesGrid}>
           {rows.map((r, i) => (
             <li key={`${r.county}-${r.created_on}-${i}`} className={s.enquiry}>
-              {/* Only rendered when the parse actually extracted an area —
-                  never a stand-in descriptor, which would be inventing the
-                  one detail the card is meant to report. */}
+              {/* Both of these are omitted rather than substituted when
+                  absent: a stand-in would be inventing the detail the card
+                  exists to report. The service is always one of the
+                  services table's own names — never the customer's wording,
+                  which routinely carries a yard name or a village. */}
+              {r.service ? <span className={s.enquiryService}>{r.service}</span> : null}
               {r.size_label ? <span className={s.enquirySize}>{r.size_label}</span> : null}
               <span className={s.enquiryCounty}>{r.county}</span>
               <time className={s.enquiryDate} dateTime={r.created_on}>

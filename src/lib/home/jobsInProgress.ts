@@ -12,10 +12,10 @@ const LIVE_TTL_MS = 60_000;
  * The work actually under way, for the homepage strip.
  *
  * Reads the `jobs_in_progress` view, which is deliberately coarse: county, an
- * approximate size and the date it came in. There is no service name — job
- * creation has run deterministic-only since 8e86e71, so `service_id` is null on
- * every live job — and no postcode, free text or contact detail reaches the
- * view at all.
+ * approximate size and the date it came in. The service is a canonical
+ * services.name matched from the description inside the view, never the
+ * customer's own wording — and no postcode, free text or contact detail
+ * reaches the view at all.
  *
  * These are live jobs: sent to contractors and not yet finished, dead or
  * withdrawn. Drafts are excluded, and so is anything expired or cancelled —
@@ -25,6 +25,9 @@ const LIVE_TTL_MS = 60_000;
 
 export type JobInProgress = {
   county: string;
+  /** A canonical services.name, or null when nothing matched. Never the
+      customer's own wording — see the view. */
+  service: string | null;
   /** "24 acres", "200m", or null when nothing was extracted. */
   size_label: string | null;
   /** ISO date (no time of day). */
@@ -61,7 +64,7 @@ function viewClient(): SupabaseClient {
 export const getJobsInProgress = memoize<JobInProgress[]>(async () => {
   const { data, error } = await viewClient()
     .from('jobs_in_progress')
-    .select('county, size_label, created_on')
+    .select('county, service, size_label, created_on')
     .order('ord', { ascending: true })
     .limit(LIMIT);
 
@@ -72,12 +75,18 @@ export const getJobsInProgress = memoize<JobInProgress[]>(async () => {
     return [];
   }
 
-  const rows = (data ?? []) as { county: unknown; size_label: unknown; created_on: unknown }[];
+  const rows = (data ?? []) as {
+    county: unknown;
+    service: unknown;
+    size_label: unknown;
+    created_on: unknown;
+  }[];
   return rows.flatMap((r) =>
     typeof r.county === 'string' && typeof r.created_on === 'string'
       ? [
           {
             county: r.county,
+            service: typeof r.service === 'string' ? r.service : null,
             size_label: typeof r.size_label === 'string' ? r.size_label : null,
             created_on: r.created_on,
           },
