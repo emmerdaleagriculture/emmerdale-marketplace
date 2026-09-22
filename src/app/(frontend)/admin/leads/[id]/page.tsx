@@ -89,6 +89,7 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
           customer_phone: lead.phone ?? '',
           customer_email: lead.email ?? '',
           details: cleanHint ?? '',
+          postcode: lead.postcode ?? '',
           service_id: leadServiceIds(lead.source, services)[0],
           county_id: detectedCountyId,
         }}

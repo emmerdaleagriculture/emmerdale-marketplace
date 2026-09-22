@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Tenor_Sans, DM_Sans, Inter } from 'next/font/google';
 import './globals.css';
 import { COMPANY_LEGAL_NAME, SITE_NAME, SITE_STRAPLINE, siteUrl } from '@/lib/site';
+import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
 import { Analytics } from '@/components/Analytics';
 
 const GA_ID = 'G-869MBRK9FD';
@@ -80,6 +81,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en-GB" className={`${tenor.variable} ${dm.variable} ${inter.variable}`}>
       <body>
         {children}
+        {/* Every page, every visitor — signed in or not, contractor or
+            customer. It hides itself on /admin, where the only readers are
+            the people it reports to. */}
+        <FeedbackWidget />
         <Analytics />
       </body>
     </html>
