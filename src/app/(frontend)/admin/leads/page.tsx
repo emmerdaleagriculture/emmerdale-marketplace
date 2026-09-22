@@ -6,14 +6,9 @@ import { LeadsIntakePanel } from './LeadsIntakePanel';
 import { tidyJobHint } from '@/lib/leads';
 import { formatDateTime } from '@/lib/time';
 import s from '../admin.module.css';
+import { AdminTable, StatusPill } from '../ui';
 
 export const metadata: Metadata = { title: 'Leads — Admin' };
-
-const pillFor: Record<string, string> = {
-  pending: s.pillPending,
-  converted: s.pillApproved,
-  dismissed: s.pillSuspended,
-};
 
 type LeadRow = {
   id: string;
@@ -55,100 +50,74 @@ export default async function AdminLeadsPage() {
           No leads waiting. New Facebook-form submissions appear here automatically.
         </div>
       ) : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Wants</th>
-              <th>Postcode</th>
-              <th>Received</th>
-              <th>Actions</th>
+        <AdminTable head={['Name', 'Wants', 'Postcode', 'Received', 'Actions']}>
+          {pending.map((l) => (
+            <tr key={l.id}>
+              <td>
+                <Link href={`/admin/leads/${l.id}`}>{l.full_name}</Link>
+              </td>
+              <td>{tidyJobHint(l.job_hint)?.slice(0, 60) ?? '—'}</td>
+              <td>{l.postcode ?? '—'}</td>
+              <td>{formatDateTime(l.created_at)}</td>
+              <td>
+                <div className={s.actions}>
+                  <Link href={`/admin/leads/${l.id}`} className={s.btnApprove}>
+                    Review
+                  </Link>
+                  <form action={dismissLeadAction}>
+                    <input type="hidden" name="id" value={l.id} />
+                    <button type="submit" className={s.btnSuspend}>
+                      Dismiss
+                    </button>
+                  </form>
+                </div>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {pending.map((l) => (
-              <tr key={l.id}>
-                <td>
-                  <Link href={`/admin/leads/${l.id}`}>{l.full_name}</Link>
-                </td>
-                <td>{tidyJobHint(l.job_hint)?.slice(0, 60) ?? '—'}</td>
-                <td>{l.postcode ?? '—'}</td>
-                <td>{formatDateTime(l.created_at)}</td>
-                <td>
-                  <div className={s.actions}>
-                    <Link href={`/admin/leads/${l.id}`} className={s.btnApprove}>
-                      Review
-                    </Link>
-                    <form action={dismissLeadAction}>
-                      <input type="hidden" name="id" value={l.id} />
-                      <button type="submit" className={s.btnSuspend}>
-                        Dismiss
-                      </button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          </table>
-        </div>
+          ))}
+        </AdminTable>
       )}
 
       <div className={s.sectionLabel}>History</div>
       {history.length === 0 ? (
         <div className={s.empty}>No processed leads yet.</div>
       ) : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Wants</th>
-              <th>Status</th>
-              <th>Received</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {history.map((l) => (
-              <tr key={l.id}>
-                <td>{l.full_name}</td>
-                <td>{tidyJobHint(l.job_hint)?.slice(0, 60) ?? '—'}</td>
-                <td>
-                  <span className={`${s.pill} ${pillFor[l.status] ?? ''}`}>{l.status}</span>
-                  {/* Portal enquiries publish into the sealed-quote flow;
-                      older ones point at the legacy board. */}
-                  {l.submission_id ? (
+        <AdminTable head={['Name', 'Wants', 'Status', 'Received', 'Actions']}>
+          {history.map((l) => (
+            <tr key={l.id}>
+              <td>{l.full_name}</td>
+              <td>{tidyJobHint(l.job_hint)?.slice(0, 60) ?? '—'}</td>
+              <td>
+                <StatusPill status={l.status} />
+                {/* Portal enquiries publish into the sealed-quote flow;
+                    older ones point at the legacy board. */}
+                {l.submission_id ? (
+                  <>
+                    {' '}
+                    <Link href={`/admin/submissions/${l.submission_id}`}>submission →</Link>
+                  </>
+                ) : (
+                  l.job_id && (
                     <>
                       {' '}
-                      <Link href={`/admin/submissions/${l.submission_id}`}>submission →</Link>
+                      <Link href={`/admin/jobs/${l.job_id}`}>job →</Link>
                     </>
-                  ) : (
-                    l.job_id && (
-                      <>
-                        {' '}
-                        <Link href={`/admin/jobs/${l.job_id}`}>job →</Link>
-                      </>
-                    )
-                  )}
-                </td>
-                <td>{formatDateTime(l.created_at)}</td>
-                <td>
-                  {l.status === 'dismissed' && (
-                    <form action={repenLeadAction}>
-                      <input type="hidden" name="id" value={l.id} />
-                      <button type="submit" className={s.btnSuspend} style={{ borderColor: 'var(--rule)', color: 'var(--ink-2)' }}>
-                        Restore
-                      </button>
-                    </form>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          </table>
-        </div>
+                  )
+                )}
+              </td>
+              <td>{formatDateTime(l.created_at)}</td>
+              <td>
+                {l.status === 'dismissed' && (
+                  <form action={repenLeadAction}>
+                    <input type="hidden" name="id" value={l.id} />
+                    <button type="submit" className={s.btnSuspend} style={{ borderColor: 'var(--rule)', color: 'var(--ink-2)' }}>
+                      Restore
+                    </button>
+                  </form>
+                )}
+              </td>
+            </tr>
+          ))}
+        </AdminTable>
       )}
     </div>
   );

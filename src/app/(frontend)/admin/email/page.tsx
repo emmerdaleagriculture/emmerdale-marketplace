@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { timeAgo } from '@/lib/time';
 import s from '../admin.module.css';
+import { AdminTable } from '../ui';
 
 export const metadata: Metadata = { title: 'Email — Admin' };
 export const dynamic = 'force-dynamic';
@@ -105,52 +106,38 @@ export default async function AdminEmailPage() {
       </div>
 
       <div className={s.sectionLabel}>Queue</div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr><th>Waiting</th><th>Given up</th><th>Failed</th><th>Sent, last 7 days</th><th>Oldest waiting</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{pending.length}</td>
-              <td>{stuck.data?.length ?? 0}</td>
-              <td>{failed.length}</td>
-              <td>{sentWeek.length}</td>
-              <td>
-                {oldestPending ? timeAgo(oldestPending) : '—'}
-                {held.length > 0 && (
-                  <div className={s.metricHint}>
-                    +{held.length} held for a later retry
-                  </div>
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <AdminTable head={['Waiting', 'Given up', 'Failed', 'Sent, last 7 days', 'Oldest waiting']}>
+        <tr>
+          <td>{pending.length}</td>
+          <td>{stuck.data?.length ?? 0}</td>
+          <td>{failed.length}</td>
+          <td>{sentWeek.length}</td>
+          <td>
+            {oldestPending ? timeAgo(oldestPending) : '—'}
+            {held.length > 0 && (
+              <div className={s.metricHint}>
+                +{held.length} held for a later retry
+              </div>
+            )}
+          </td>
+        </tr>
+      </AdminTable>
 
       {(stuck.data ?? []).length > 0 && (
         <>
           <div className={s.sectionLabel}>
             Given up — {GIVE_UP_AT} attempts reached, these will never send
           </div>
-          <div className={s.tableWrap}>
-            <table className={s.table}>
-              <thead>
-                <tr><th>Kind</th><th>To</th><th>Attempts</th><th>Age</th></tr>
-              </thead>
-              <tbody>
-                {(stuck.data ?? []).map((r) => (
-                  <tr key={r.id}>
-                    <td>{r.kind}</td>
-                    <td>{r.to_email ?? '—'}</td>
-                    <td>{r.attempts}</td>
-                    <td>{timeAgo(r.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AdminTable head={['Kind', 'To', 'Attempts', 'Age']}>
+            {(stuck.data ?? []).map((r) => (
+              <tr key={r.id}>
+                <td>{r.kind}</td>
+                <td>{r.to_email ?? '—'}</td>
+                <td>{r.attempts}</td>
+                <td>{timeAgo(r.created_at)}</td>
+              </tr>
+            ))}
+          </AdminTable>
         </>
       )}
 
@@ -159,24 +146,17 @@ export default async function AdminEmailPage() {
           <div className={s.sectionLabel}>
             Did not arrive — accepted by Resend, then rejected by the recipient
           </div>
-          <div className={s.tableWrap}>
-            <table className={s.table}>
-              <thead>
-                <tr><th>Kind</th><th>To</th><th>What happened</th><th>Reason</th><th>When</th></tr>
-              </thead>
-              <tbody>
-                {(undelivered.data ?? []).map((r) => (
-                  <tr key={r.id}>
-                    <td>{r.kind}</td>
-                    <td>{r.to_email ?? '—'}</td>
-                    <td>{r.delivery_status}</td>
-                    <td>{r.delivery_detail ?? '—'}</td>
-                    <td>{r.delivery_at ? timeAgo(r.delivery_at) : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AdminTable head={['Kind', 'To', 'What happened', 'Reason', 'When']}>
+            {(undelivered.data ?? []).map((r) => (
+              <tr key={r.id}>
+                <td>{r.kind}</td>
+                <td>{r.to_email ?? '—'}</td>
+                <td>{r.delivery_status}</td>
+                <td>{r.delivery_detail ?? '—'}</td>
+                <td>{r.delivery_at ? timeAgo(r.delivery_at) : '—'}</td>
+              </tr>
+            ))}
+          </AdminTable>
         </>
       )}
 
@@ -184,28 +164,21 @@ export default async function AdminEmailPage() {
       {(recent.data ?? []).length === 0 ? (
         <div className={s.empty}>Nothing queued yet.</div>
       ) : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-            <thead>
-              <tr><th>Kind</th><th>To</th><th>Status</th><th>Delivery</th><th>Attempts</th><th>Queued</th><th>Sent</th></tr>
-            </thead>
-            <tbody>
-              {(recent.data ?? []).map((r) => (
-                <tr key={r.id}>
-                  <td>{r.kind}</td>
-                  <td>{r.to_email ?? '—'}</td>
-                  <td>{r.status}</td>
-                  <td style={PROBLEM.has(r.delivery_status ?? '') ? { color: '#a02a2a', fontWeight: 600 } : undefined}>
-                    {r.status === 'sent' ? (r.delivery_status ?? 'no report yet') : '—'}
-                  </td>
-                  <td>{r.attempts}</td>
-                  <td>{timeAgo(r.created_at)}</td>
-                  <td>{r.sent_at ? timeAgo(r.sent_at) : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AdminTable head={['Kind', 'To', 'Status', 'Delivery', 'Attempts', 'Queued', 'Sent']}>
+          {(recent.data ?? []).map((r) => (
+            <tr key={r.id}>
+              <td>{r.kind}</td>
+              <td>{r.to_email ?? '—'}</td>
+              <td>{r.status}</td>
+              <td style={PROBLEM.has(r.delivery_status ?? '') ? { color: '#a02a2a', fontWeight: 600 } : undefined}>
+                {r.status === 'sent' ? (r.delivery_status ?? 'no report yet') : '—'}
+              </td>
+              <td>{r.attempts}</td>
+              <td>{timeAgo(r.created_at)}</td>
+              <td>{r.sent_at ? timeAgo(r.sent_at) : '—'}</td>
+            </tr>
+          ))}
+        </AdminTable>
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatDateTime, timeAgo } from '@/lib/time';
 import { setFeedbackHandledAction } from './actions';
 import s from '../admin.module.css';
+import { AdminTable } from '../ui';
 
 export const metadata: Metadata = { title: 'Feedback — Admin' };
 export const dynamic = 'force-dynamic';
@@ -67,46 +68,33 @@ export default async function AdminFeedbackPage() {
         list.length === 0 ? null : (
           <div key={label}>
             <div className={s.sectionLabel}>{label}</div>
-            <div className={s.tableWrap}>
-              <table className={s.table}>
-                <thead>
-                  <tr>
-                    <th>When</th>
-                    <th>Who</th>
-                    <th>Page</th>
-                    <th>What they said</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {list.map((r) => (
-                    <tr key={r.id}>
-                      <td title={formatDateTime(r.created_at)}>{timeAgo(r.created_at)}</td>
-                      <td>
-                        {ROLE_LABEL[r.role] ?? r.role}
-                        {r.email && (
-                          <>
-                            <br />
-                            <a href={`mailto:${r.email}`}>{r.email}</a>
-                          </>
-                        )}
-                      </td>
-                      <td>{r.path ?? '—'}</td>
-                      <td style={{ whiteSpace: 'pre-wrap', maxWidth: 480 }}>{r.message}</td>
-                      <td>
-                        <form action={setFeedbackHandledAction}>
-                          <input type="hidden" name="id" value={r.id} />
-                          <input type="hidden" name="handled" value={handled ? 'no' : 'yes'} />
-                          <button type="submit" className={handled ? s.btnSuspend : s.btnApprove}>
-                            {handled ? 'Reopen' : 'Done'}
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AdminTable head={['When', 'Who', 'Page', 'What they said', '']}>
+              {list.map((r) => (
+                <tr key={r.id}>
+                  <td title={formatDateTime(r.created_at)}>{timeAgo(r.created_at)}</td>
+                  <td>
+                    {ROLE_LABEL[r.role] ?? r.role}
+                    {r.email && (
+                      <>
+                        <br />
+                        <a href={`mailto:${r.email}`}>{r.email}</a>
+                      </>
+                    )}
+                  </td>
+                  <td>{r.path ?? '—'}</td>
+                  <td style={{ whiteSpace: 'pre-wrap', maxWidth: 480 }}>{r.message}</td>
+                  <td>
+                    <form action={setFeedbackHandledAction}>
+                      <input type="hidden" name="id" value={r.id} />
+                      <input type="hidden" name="handled" value={handled ? 'no' : 'yes'} />
+                      <button type="submit" className={handled ? s.btnSuspend : s.btnApprove}>
+                        {handled ? 'Reopen' : 'Done'}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </AdminTable>
           </div>
         ),
       )}

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { timeAgo } from '@/lib/time';
 import s from '../admin.module.css';
+import { AdminTable } from '../ui';
 
 export const metadata: Metadata = { title: 'Queues — Admin' };
 export const dynamic = 'force-dynamic';
@@ -47,68 +48,47 @@ export default async function QueuesPage() {
       {(unmatched.data ?? []).length === 0 ? (
         <div className={s.empty}>Nothing waiting.</div>
       ) : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-            <thead>
-              <tr><th>In their words</th><th>Customer</th><th>County</th><th>Age</th></tr>
-            </thead>
-            <tbody>
-              {(unmatched.data ?? []).map((r) => (
-                <tr key={r.id}>
-                  <td><Link href={`/admin/submissions/${r.id}`}>{r.service_verbatim ?? '(none)'}</Link></td>
-                  <td>{r.contact_name ?? '—'}</td>
-                  <td>{(r.county as { name: string } | null)?.name ?? '—'}</td>
-                  <td>{timeAgo(r.created_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AdminTable head={['In their words', 'Customer', 'County', 'Age']}>
+          {(unmatched.data ?? []).map((r) => (
+            <tr key={r.id}>
+              <td><Link href={`/admin/submissions/${r.id}`}>{r.service_verbatim ?? '(none)'}</Link></td>
+              <td>{r.contact_name ?? '—'}</td>
+              <td>{(r.county as { name: string } | null)?.name ?? '—'}</td>
+              <td>{timeAgo(r.created_at)}</td>
+            </tr>
+          ))}
+        </AdminTable>
       )}
 
       <div className={s.sectionLabel}>Expiring within 24 hours</div>
       {(stale.data ?? []).length === 0 ? (
         <div className={s.empty}>Nothing near expiry.</div>
       ) : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-            <thead>
-              <tr><th>Job</th><th>Status</th><th>Customer</th><th>Expires</th></tr>
-            </thead>
-            <tbody>
-              {(stale.data ?? []).map((r) => (
-                <tr key={r.id}>
-                  <td><Link href={`/admin/submissions/${r.id}`}>{(r.service as { name: string } | null)?.name ?? '—'}</Link></td>
-                  <td>{r.status}</td>
-                  <td>{r.contact_name ?? '—'}</td>
-                  <td>{r.expires_at}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AdminTable head={['Job', 'Status', 'Customer', 'Expires']}>
+          {(stale.data ?? []).map((r) => (
+            <tr key={r.id}>
+              <td><Link href={`/admin/submissions/${r.id}`}>{(r.service as { name: string } | null)?.name ?? '—'}</Link></td>
+              <td>{r.status}</td>
+              <td>{r.contact_name ?? '—'}</td>
+              <td>{r.expires_at}</td>
+            </tr>
+          ))}
+        </AdminTable>
       )}
 
       <div className={s.sectionLabel}>Recent parse failures</div>
       {(failedParses.data ?? []).length === 0 ? (
         <div className={s.empty}>No failed parses recently.</div>
       ) : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-            <thead>
-              <tr><th>Submission</th><th>Error</th><th>When</th></tr>
-            </thead>
-            <tbody>
-              {(failedParses.data ?? []).map((r, i) => (
-                <tr key={i}>
-                  <td><Link href={`/admin/submissions/${r.submission_id}`}>view</Link></td>
-                  <td>{r.error}</td>
-                  <td>{timeAgo(r.created_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AdminTable head={['Submission', 'Error', 'When']}>
+          {(failedParses.data ?? []).map((r, i) => (
+            <tr key={i}>
+              <td><Link href={`/admin/submissions/${r.submission_id}`}>view</Link></td>
+              <td>{r.error}</td>
+              <td>{timeAgo(r.created_at)}</td>
+            </tr>
+          ))}
+        </AdminTable>
       )}
 
       <div className={s.sectionLabel}>Disputes</div>

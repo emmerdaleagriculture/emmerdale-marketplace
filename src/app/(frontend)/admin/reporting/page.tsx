@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { channelOf } from '@/lib/attribution';
 import s from '../admin.module.css';
+import { AdminTable, Tile, Tiles } from '../ui';
 
 export const metadata: Metadata = { title: 'Reporting — Admin' };
 
@@ -202,28 +203,12 @@ export default async function ReportingPage() {
         </div>
       )}
 
-      <div className={s.metricGrid}>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Landings (30d)</div>
-          <div className={s.metricValue}>{d30.views}</div>
-          <div className={s.metricHint}>{d7.views} in 7d · {d1.views} in 24h</div>
-        </div>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Parses started (30d)</div>
-          <div className={s.metricValue}>{d30.parses}</div>
-          <div className={s.metricHint}>{pct(d30.parses, d30.views)} of landings</div>
-        </div>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Jobs confirmed (30d)</div>
-          <div className={s.metricValue}>{d30.confirms}</div>
-          <div className={s.metricHint}>{pct(d30.confirms, d30.parses)} of parses</div>
-        </div>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Landing → job</div>
-          <div className={s.metricValue}>{pct(d30.confirms, d30.views)}</div>
-          <div className={s.metricHint}>the number ads are buying</div>
-        </div>
-      </div>
+      <Tiles>
+        <Tile value={d30.views} label="Landings (30d)" hint={<>{d7.views} in 7d · {d1.views} in 24h</>} />
+        <Tile value={d30.parses} label="Parses started (30d)" hint={<>{pct(d30.parses, d30.views)} of landings</>} />
+        <Tile value={d30.confirms} label="Jobs confirmed (30d)" hint={<>{pct(d30.confirms, d30.parses)} of parses</>} />
+        <Tile value={pct(d30.confirms, d30.views)} label="Landing → job" hint="the number ads are buying" />
+      </Tiles>
 
       <div className={s.sectionLabel}>Where people are lost — last 30 days</div>
       {(viewsMissing || funnel[1].n > funnel[0].n) && (
@@ -233,98 +218,72 @@ export default async function ReportingPage() {
           live. Steps below it are still sound; the landing→job rate is not.
         </div>
       )}
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr><th>Step</th><th>Reached</th><th>Of the step before</th><th>Lost here</th><th /></tr>
-          </thead>
-          <tbody>
-            {funnel.map((row, i) => {
-              const prev = i === 0 ? null : funnel[i - 1].n;
-              const lost = prev === null ? null : prev - row.n;
-              const share = funnel[0].n > 0 ? (100 * row.n) / funnel[0].n : 0;
-              return (
-                <tr key={row.step}>
-                  <td>{row.step}<div className={s.metricHint}>{row.note}</div></td>
-                  <td>{row.n}</td>
-                  <td>{prev === null ? '—' : pct(row.n, prev)}</td>
-                  <td>
-                    {lost === null ? '—' : lost > 0 ? `−${lost}` : lost < 0 ? '?' : '0'}
-                  </td>
-                  <td style={{ width: '30%' }}>
-                    <span style={{ display: 'block', height: 8, width: `${share}%`,
-                      background: 'var(--jd-green-deep)', minWidth: share > 0 ? 2 : 0 }} />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable head={['Step', 'Reached', 'Of the step before', 'Lost here', '']}>
+        {funnel.map((row, i) => {
+          const prev = i === 0 ? null : funnel[i - 1].n;
+          const lost = prev === null ? null : prev - row.n;
+          const share = funnel[0].n > 0 ? (100 * row.n) / funnel[0].n : 0;
+          return (
+            <tr key={row.step}>
+              <td>{row.step}<div className={s.metricHint}>{row.note}</div></td>
+              <td>{row.n}</td>
+              <td>{prev === null ? '—' : pct(row.n, prev)}</td>
+              <td>
+                {lost === null ? '—' : lost > 0 ? `−${lost}` : lost < 0 ? '?' : '0'}
+              </td>
+              <td style={{ width: '30%' }}>
+                <span style={{ display: 'block', height: 8, width: `${share}%`,
+                  background: 'var(--jd-green-deep)', minWidth: share > 0 ? 2 : 0 }} />
+              </td>
+            </tr>
+          );
+        })}
+      </AdminTable>
 
       {leaks.length > 0 && (
         <>
           <div className={s.sectionLabel}>Why they stopped</div>
-          <div className={s.tableWrap}>
-            <table className={s.table}>
-              <thead><tr><th>Reason</th><th>Jobs</th><th>Status</th></tr></thead>
-              <tbody>
-                {leaks.map((l) => (
-                  <tr key={l.status}>
-                    <td>{l.label}</td>
-                    <td>{l.n}</td>
-                    <td>{l.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AdminTable head={['Reason', 'Jobs', 'Status']}>
+            {leaks.map((l) => (
+              <tr key={l.status}>
+                <td>{l.label}</td>
+                <td>{l.n}</td>
+                <td>{l.status}</td>
+              </tr>
+            ))}
+          </AdminTable>
         </>
       )}
 
       <div className={s.sectionLabel}>Daily — last 14 days</div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr><th>Day</th><th>Landings</th><th>Parses</th><th>Confirmed</th></tr>
-          </thead>
-          <tbody>
-            {days.map((d) => (
-              <tr key={d.day}>
-                <td>{d.day}</td>
-                <td>{d.views || '—'}</td>
-                <td>{d.parses || '—'}</td>
-                <td>{d.confirms || '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable head={['Day', 'Landings', 'Parses', 'Confirmed']}>
+        {days.map((d) => (
+          <tr key={d.day}>
+            <td>{d.day}</td>
+            <td>{d.views || '—'}</td>
+            <td>{d.parses || '—'}</td>
+            <td>{d.confirms || '—'}</td>
+          </tr>
+        ))}
+      </AdminTable>
 
       <div className={s.sectionLabel}>Attribution — last 30 days</div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr><th>Source</th><th>Landings</th><th>Parses</th><th>Confirmed</th><th>Landing → job</th></tr>
-          </thead>
-          <tbody>
-            {[...sources.entries()]
-              .sort((a, b) => b[1].views + b[1].parses - (a[1].views + a[1].parses))
-              .map(([source, row]) => (
-                <tr key={source}>
-                  <td>{source}</td>
-                  <td>{row.views}</td>
-                  <td>{row.parses}</td>
-                  <td>{row.confirms}</td>
-                  <td>{pct(row.confirms, row.views)}</td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable head={['Source', 'Landings', 'Parses', 'Confirmed', 'Landing → job']}>
+        {[...sources.entries()]
+          .sort((a, b) => b[1].views + b[1].parses - (a[1].views + a[1].parses))
+          .map(([source, row]) => (
+            <tr key={source}>
+              <td>{source}</td>
+              <td>{row.views}</td>
+              <td>{row.parses}</td>
+              <td>{row.confirms}</td>
+              <td>{pct(row.confirms, row.views)}</td>
+            </tr>
+          ))}
+      </AdminTable>
 
       <div className={s.sectionLabel}>Parse pipeline — last 30 days</div>
-      <div className={s.metricGrid}>
+      <Tiles>
         <div className={s.metric}>
           {/* Empty by design, for the same reason as the fallback count: no
               model call, no latency to record. */}
@@ -342,70 +301,33 @@ export default async function ReportingPage() {
               down" sends people chasing a bug that was a deliberate decision. */}
           <div className={s.metricHint}>expected — no model in job creation since 8e86e71</div>
         </div>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Unmatched services</div>
-          <div className={s.metricValue}>{unmatchedCount}</div>
-          <div className={s.metricHint}>of {confirmed.length} confirmed — taxonomy gaps</div>
-        </div>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Reclassified by customer</div>
-          <div className={s.metricValue}>{declinedCount}</div>
-          <div className={s.metricHint}>said &ldquo;not quite&rdquo; — prompt feedback</div>
-        </div>
-      </div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr><th>Parse outcome</th><th>Count</th></tr>
-          </thead>
-          <tbody>
-            {outcomes.map(([label, count]) => (
-              <tr key={label}><td>{label}</td><td>{count}</td></tr>
-            ))}
-            {versions.map(([label, count]) => (
-              <tr key={label}><td>model {label}</td><td>{count}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        <Tile value={unmatchedCount} label="Unmatched services" hint={<>of {confirmed.length} confirmed — taxonomy gaps</>} />
+        <Tile value={declinedCount} label="Reclassified by customer" hint="said &ldquo;not quite&rdquo; — prompt feedback" />
+      </Tiles>
+      <AdminTable head={['Parse outcome', 'Count']}>
+        {outcomes.map(([label, count]) => (
+          <tr key={label}><td>{label}</td><td>{count}</td></tr>
+        ))}
+        {versions.map(([label, count]) => (
+          <tr key={label}><td>model {label}</td><td>{count}</td></tr>
+        ))}
+      </AdminTable>
 
       <div className={s.sectionLabel}>Confirmed jobs — last 30 days</div>
-      <div className={s.metricGrid}>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Boundary drawn</div>
-          <div className={s.metricValue}>{pct(boundaryCount, confirmed.length)}</div>
-          <div className={s.metricHint}>{boundaryCount} of {confirmed.length}</div>
-        </div>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>With photos</div>
-          <div className={s.metricValue}>{pct(photoCount, confirmed.length)}</div>
-          <div className={s.metricHint}>{photoCount} of {confirmed.length}</div>
-        </div>
-      </div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr><th>Service</th><th>Confirmed</th></tr>
-          </thead>
-          <tbody>
-            {byService.map(([name, count]) => (
-              <tr key={name}><td>{name}</td><td>{count}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr><th>County</th><th>Confirmed</th></tr>
-          </thead>
-          <tbody>
-            {byCounty.map(([name, count]) => (
-              <tr key={name}><td>{name}</td><td>{count}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Tiles>
+        <Tile value={pct(boundaryCount, confirmed.length)} label="Boundary drawn" hint={<>{boundaryCount} of {confirmed.length}</>} />
+        <Tile value={pct(photoCount, confirmed.length)} label="With photos" hint={<>{photoCount} of {confirmed.length}</>} />
+      </Tiles>
+      <AdminTable head={['Service', 'Confirmed']}>
+        {byService.map(([name, count]) => (
+          <tr key={name}><td>{name}</td><td>{count}</td></tr>
+        ))}
+      </AdminTable>
+      <AdminTable head={['County', 'Confirmed']}>
+        {byCounty.map(([name, count]) => (
+          <tr key={name}><td>{name}</td><td>{count}</td></tr>
+        ))}
+      </AdminTable>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/time';
 import s from '../admin.module.css';
+import { AdminTable } from '../ui';
 
 export const metadata: Metadata = { title: 'Notes — Admin' };
 
@@ -35,44 +36,31 @@ export default async function AdminNotesPage() {
       {rows.length === 0 ? (
         <div className={s.empty}>No notes yet — write the first one.</div>
       ) : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Tag</th>
-                <th>Status</th>
-                <th>Published</th>
-                <th>Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
-                  <td>
-                    <Link href={`/admin/notes/${r.id}`}>{r.title}</Link>
-                    {r.featured && (
-                      <>
-                        {' '}
-                        <span className={`${s.pill} ${s.pillApproved}`}>featured</span>
-                      </>
-                    )}
-                  </td>
-                  <td>{r.primary_tag ?? '—'}</td>
-                  <td>
-                    {r.published ? (
-                      <span className={`${s.pill} ${s.pillApproved}`}>published</span>
-                    ) : (
-                      <span className={`${s.pill} ${s.pillPending}`}>draft</span>
-                    )}
-                  </td>
-                  <td>{r.published_at ? formatDateTime(r.published_at) : '—'}</td>
-                  <td>{formatDateTime(r.updated_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AdminTable head={['Title', 'Tag', 'Status', 'Published', 'Updated']}>
+          {rows.map((r) => (
+            <tr key={r.id}>
+              <td>
+                <Link href={`/admin/notes/${r.id}`}>{r.title}</Link>
+                {r.featured && (
+                  <>
+                    {' '}
+                    <span className={`${s.pill} ${s.pillApproved}`}>featured</span>
+                  </>
+                )}
+              </td>
+              <td>{r.primary_tag ?? '—'}</td>
+              <td>
+                {r.published ? (
+                  <span className={`${s.pill} ${s.pillApproved}`}>published</span>
+                ) : (
+                  <span className={`${s.pill} ${s.pillPending}`}>draft</span>
+                )}
+              </td>
+              <td>{r.published_at ? formatDateTime(r.published_at) : '—'}</td>
+              <td>{formatDateTime(r.updated_at)}</td>
+            </tr>
+          ))}
+        </AdminTable>
       )}
     </div>
   );

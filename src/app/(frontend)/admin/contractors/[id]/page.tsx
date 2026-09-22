@@ -5,14 +5,9 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { setContractorStatus } from '../actions';
 import { DeleteContractorButton } from '../DeleteContractorButton';
 import s from '../../admin.module.css';
+import { StatusPill } from '../../ui';
 
 export const metadata: Metadata = { title: 'Contractor — Admin' };
-
-const pillClass: Record<string, string> = {
-  pending: s.pillPending,
-  approved: s.pillApproved,
-  suspended: s.pillSuspended,
-};
 
 export default async function ContractorDetailPage({
   params,
@@ -44,7 +39,7 @@ export default async function ContractorDetailPage({
       </Link>
       <h1 className={s.h1}>{c.business_name}</h1>
       <p className={s.sub}>
-        <span className={`${s.pill} ${pillClass[c.status] ?? ''}`}>{c.status}</span>
+        <StatusPill status={c.status} />
       </p>
 
       <div className={s.detailGrid}>

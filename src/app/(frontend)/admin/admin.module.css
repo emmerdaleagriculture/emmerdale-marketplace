@@ -309,6 +309,8 @@
   font-size: 32px;
   line-height: 1.1;
   color: var(--jd-green-deep);
+  /* Keeps a column of tiles aligned as the figures change. */
+  font-variant-numeric: tabular-nums;
 }
 .metricLabel {
   font-size: 12px;

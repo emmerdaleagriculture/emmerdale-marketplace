@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import s from '../admin.module.css';
+import { AdminTable, Tile, Tiles } from '../ui';
 
 export const metadata: Metadata = { title: 'Dashboard — Admin' };
 export const dynamic = 'force-dynamic';
@@ -57,16 +58,6 @@ const PIPELINE_LABEL: Record<string, string> = {
 const n = (v: number | null | undefined) => (v === null || v === undefined ? '—' : v.toLocaleString('en-GB'));
 const gbp = (pence: number | null | undefined) => (pence == null ? '—' : formatGBP(pence));
 const pct = (num: number, den: number) => (den > 0 ? `${Math.round((100 * num) / den)}%` : '—');
-
-function Metric({ value, label, hint }: { value: string; label: string; hint?: string }) {
-  return (
-    <div className={s.metric}>
-      <div className={s.metricValue}>{value}</div>
-      <div className={s.metricLabel}>{label}</div>
-      {hint && <div className={s.metricHint}>{hint}</div>}
-    </div>
-  );
-}
 
 function Attention({ count, label, href }: { count: number; label: string; href: string }) {
   return (
@@ -150,12 +141,12 @@ export default async function AdminDashboard() {
           );
         })}
       </div>
-      <div className={s.metricGrid}>
-        <Metric value={n(fu.confirmed_all)} label="Jobs sent, all time" />
-        <Metric value={n(fu.paid_all)} label="Jobs booked, all time" hint={`deposit paid — ${pct(fu.paid_all, fu.confirmed_all)} of jobs sent`} />
-        <Metric value={n(fu.completed_all)} label="Jobs completed, all time" />
-        <Metric value={n(d.unplaced_jobs)} label="Jobs with no county" hint="Could not be routed" />
-      </div>
+      <Tiles>
+        <Tile value={n(fu.confirmed_all)} label="Jobs sent, all time" />
+        <Tile value={n(fu.paid_all)} label="Jobs booked, all time" hint={`deposit paid — ${pct(fu.paid_all, fu.confirmed_all)} of jobs sent`} />
+        <Tile value={n(fu.completed_all)} label="Jobs completed, all time" />
+        <Tile value={n(d.unplaced_jobs)} label="Jobs with no county" hint="Could not be routed" />
+      </Tiles>
 
       {/* ── Behaviour on /start ───────────────────────────────────────── */}
       {/* The click heat, scroll depth and milestone tables used to be
@@ -174,11 +165,11 @@ export default async function AdminDashboard() {
       {pipeline.length === 0 ? (
         <div className={s.empty}>Nothing in progress.</div>
       ) : (
-        <div className={s.metricGrid}>
+        <Tiles>
           {pipeline.map(([status, count]) => (
-            <Metric key={status} value={n(count)} label={PIPELINE_LABEL[status] ?? status} />
+            <Tile key={status} value={n(count)} label={PIPELINE_LABEL[status] ?? status} />
           ))}
-        </div>
+      </Tiles>
       )}
 
       {/* ── Money ─────────────────────────────────────────────────────── */}
@@ -186,12 +177,12 @@ export default async function AdminDashboard() {
           same three figures under the same labels as /admin/money. Only what
           that page does not carry stays here. */}
       <div className={s.sectionLabel}>Money</div>
-      <div className={s.metricGrid}>
-        <Metric value={gbp(mo.margin_pence_30d)} label="Our margin, 30 days" hint={`${gbp(mo.margin_pence_all)} all time`} />
-        <Metric value={gbp(mo.payouts_owed_pence)} label="Payouts owed" hint="Complete, waiting on us" />
-        <Metric value={gbp(mo.avg_job_pence)} label="Average job" />
-        <Metric value={gbp(mo.refunded_pence_all)} label="Refunded, all time" />
-      </div>
+      <Tiles>
+        <Tile value={gbp(mo.margin_pence_30d)} label="Our margin, 30 days" hint={`${gbp(mo.margin_pence_all)} all time`} />
+        <Tile value={gbp(mo.payouts_owed_pence)} label="Payouts owed" hint="Complete, waiting on us" />
+        <Tile value={gbp(mo.avg_job_pence)} label="Average job" />
+        <Tile value={gbp(mo.refunded_pence_all)} label="Refunded, all time" />
+      </Tiles>
       <p className={s.metricHint}>
         Taken, held and outstanding are on the <Link href="/admin/money">money page</Link>,
         with every payment behind them.
@@ -201,34 +192,34 @@ export default async function AdminDashboard() {
       <div className={s.two}>
         <div>
           <div className={s.sectionLabel}>Customers</div>
-          <div className={s.metricGrid}>
-            <Metric value={n(cu.total)} label="Accounts" hint={`${n(cu.new_30d)} new in 30 days`} />
-            <Metric value={n(cu.with_a_job)} label="With a job saved" />
-            <Metric value={n(cu.repeat)} label="Booked more than once" />
-            <Metric value={n(cu.schedules_active)} label="Repeat schedules running" />
-            <Metric value={n(cu.unclaimed_jobs)} label="Jobs not on an account" hint="Customer has the link only" />
-          </div>
+          <Tiles>
+            <Tile value={n(cu.total)} label="Accounts" hint={`${n(cu.new_30d)} new in 30 days`} />
+            <Tile value={n(cu.with_a_job)} label="With a job saved" />
+            <Tile value={n(cu.repeat)} label="Booked more than once" />
+            <Tile value={n(cu.schedules_active)} label="Repeat schedules running" />
+            <Tile value={n(cu.unclaimed_jobs)} label="Jobs not on an account" hint="Customer has the link only" />
+          </Tiles>
         </div>
         <div>
           <div className={s.sectionLabel}>Contractors</div>
-          <div className={s.metricGrid}>
-            <Metric value={n(co.vetted)} label="Approved & vetted" hint={`${n(co.approved)} approved · ${n(co.total)} registered`} />
-            <Metric value={n(co.pending)} label="Awaiting approval" hint={co.suspended ? `${n(co.suspended)} suspended` : undefined} />
-            <Metric value={n(co.new_30d)} label="Joined in 30 days" />
-            <Metric value={`${n(co.priced_30d)} / ${n(co.invited_30d)}`} label="Priced / invited, 30 days" hint={`${n(co.won_30d)} won a job`} />
-            <Metric value={co.rating_avg == null ? '—' : `${co.rating_avg} ★`} label="Average rating" hint={`${n(co.ratings)} ratings`} />
-          </div>
+          <Tiles>
+            <Tile value={n(co.vetted)} label="Approved & vetted" hint={`${n(co.approved)} approved · ${n(co.total)} registered`} />
+            <Tile value={n(co.pending)} label="Awaiting approval" hint={co.suspended ? `${n(co.suspended)} suspended` : undefined} />
+            <Tile value={n(co.new_30d)} label="Joined in 30 days" />
+            <Tile value={`${n(co.priced_30d)} / ${n(co.invited_30d)}`} label="Priced / invited, 30 days" hint={`${n(co.won_30d)} won a job`} />
+            <Tile value={co.rating_avg == null ? '—' : `${co.rating_avg} ★`} label="Average rating" hint={`${n(co.ratings)} ratings`} />
+          </Tiles>
         </div>
       </div>
 
       {/* ── Response ──────────────────────────────────────────────────── */}
       <div className={s.sectionLabel}>How contractors respond</div>
-      <div className={s.metricGrid}>
-        <Metric value={re.invite_to_first_price_median_hours == null ? '—' : `${re.invite_to_first_price_median_hours}h`} label="Invite → first price" hint="Median" />
-        <Metric value={n(re.invites_per_job)} label="Contractors invited per job" />
-        <Metric value={n(re.prices_per_job)} label="Prices per job" />
-        <Metric value={re.decline_rate_pct == null ? '—' : `${re.decline_rate_pct}%`} label="Invitations declined" />
-      </div>
+      <Tiles>
+        <Tile value={re.invite_to_first_price_median_hours == null ? '—' : `${re.invite_to_first_price_median_hours}h`} label="Invite → first price" hint="Median" />
+        <Tile value={n(re.invites_per_job)} label="Contractors invited per job" />
+        <Tile value={n(re.prices_per_job)} label="Prices per job" />
+        <Tile value={re.decline_rate_pct == null ? '—' : `${re.decline_rate_pct}%`} label="Invitations declined" />
+      </Tiles>
 
       {/* ── Trend ─────────────────────────────────────────────────────── */}
       <div className={s.sectionLabel}>Jobs per week — last 12 weeks</div>
@@ -265,31 +256,26 @@ export default async function AdminDashboard() {
           </span>
         </div>
         <div className={s.mapRow}>
-          <div className={s.tableWrap}>
-            <table className={s.table}>
-              <thead>
-                <tr>
-                  <th>County</th><th>Jobs</th><th>30d</th><th>Customers</th><th>Contractors</th><th>Unmatched</th><th>Taken</th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.counties.slice(0, 25).map((c) => {
-                  // Demand with nobody to send it to is the row to act on.
-                  const gap = c.jobs > 0 && c.contractors === 0;
-                  return (
-                    <tr key={c.id} className={gap ? s.gapRow : undefined}>
-                      <td>{c.name}<span className={s.metricHint}> {c.region}</span></td>
-                      <td>{n(c.jobs)}</td>
-                      <td>{n(c.jobs_30d)}</td>
-                      <td>{n(c.customers)}</td>
-                      <td>{n(c.contractors)}</td>
-                      <td>{c.no_matches > 0 ? n(c.no_matches) : '—'}</td>
-                      <td>{c.paid_pence > 0 ? gbp(c.paid_pence) : '—'}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div>
+            <AdminTable head={['County', 'Jobs', '30d', 'Customers', 'Contractors', 'Unmatched', 'Taken']}>
+              {d.counties.slice(0, 25).map((c) => {
+                // Demand with nobody to send it to is the row to act on.
+                const gap = c.jobs > 0 && c.contractors === 0;
+                return (
+                  <tr key={c.id} className={gap ? s.gapRow : undefined}>
+                    <td>{c.name}<span className={s.metricHint}> {c.region}</span></td>
+                    <td>{n(c.jobs)}</td>
+                    <td>{n(c.jobs_30d)}</td>
+                    <td>{n(c.customers)}</td>
+                    <td>{n(c.contractors)}</td>
+                    <td>{c.no_matches > 0 ? n(c.no_matches) : '—'}</td>
+                    <td>{c.paid_pence > 0 ? gbp(c.paid_pence) : '—'}</td>
+                  </tr>
+                );
+              })}
+            </AdminTable>
+            {/* The caption sits outside the scroll box, so it stays put
+                while the table scrolls sideways. */}
             {d.counties.length > 25 && (
               <div className={s.metricHint}>Top 25 by jobs, then by contractors. {d.counties.length} counties have either.</div>
             )}

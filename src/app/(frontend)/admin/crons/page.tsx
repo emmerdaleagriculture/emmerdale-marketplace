@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { HTTP_CRONS, isLate } from '@/lib/cron/registry';
 import s from '../admin.module.css';
+import { AdminTable, Tile, Tiles, ago } from '../ui';
 
 export const metadata: Metadata = { title: 'Scheduled jobs — Admin' };
 export const dynamic = 'force-dynamic';
@@ -20,15 +21,6 @@ export const dynamic = 'force-dynamic';
  * and they are the difference between "no balances were due" and "nobody has
  * been charged since Tuesday".
  */
-
-const fmtWhen = (iso: string | null) => {
-  if (!iso) return 'never';
-  const mins = Math.round((Date.now() - Date.parse(iso)) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  if (mins < 60 * 24) return `${Math.round(mins / 60)}h ago`;
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-};
 
 const fmtRan = (started: string, finished: string | null) => {
   if (!finished) return '—';
@@ -79,7 +71,7 @@ export default async function CronsPage() {
         : last.finished_at === null
           ? { label: 'started and never finished', bad: true }
           : isLate(job, last.started_at)
-            ? { label: `no run for ${fmtWhen(last.started_at)}`, bad: true }
+            ? { label: `no run for ${ago(last.started_at)}`, bad: true }
             : { label: 'running to schedule', bad: false };
     return { job, last, failures, seen: mine.length, verdict };
   });
@@ -111,125 +103,83 @@ export default async function CronsPage() {
         else, and only one of them is fine.
       </p>
 
-      <div className={s.metricGrid}>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Scheduled</div>
-          <div className={s.metricValue}>{HTTP_CRONS.length + pgRows.length}</div>
-          <div className={s.metricHint}>
-            {HTTP_CRONS.length} on Vercel, {pgRows.length} in Postgres
-          </div>
-        </div>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Needing a look</div>
-          <div className={s.metricValue}>{unhealthy}</div>
-          <div className={s.metricHint}>late, failing, or never seen</div>
-        </div>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Runs recorded</div>
-          <div className={s.metricValue}>{runs.length}</div>
-          <div className={s.metricHint}>HTTP crons, last 200</div>
-        </div>
-      </div>
+      <Tiles>
+        <Tile value={HTTP_CRONS.length + pgRows.length} label="Scheduled" hint={<>{HTTP_CRONS.length} on Vercel, {pgRows.length} in Postgres</>} />
+        <Tile value={unhealthy} label="Needing a look" hint="late, failing, or never seen" />
+        <Tile value={runs.length} label="Runs recorded" hint="HTTP crons, last 200" />
+      </Tiles>
 
       <div className={s.sectionLabel}>Vercel Cron — the app&rsquo;s own endpoints</div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr>
-              <th>Job</th>
-              <th>Schedule</th>
-              <th>Last run</th>
-              <th>Took</th>
-              <th>Result</th>
-              <th>State</th>
-            </tr>
-          </thead>
-          <tbody>
-            {httpRows.map(({ job, last, verdict, failures }) => (
-              <tr key={job.name}>
-                <td>
-                  <code>{job.path}</code>
-                  <div className={s.metricHint}>{job.what}</div>
-                </td>
-                <td>
-                  <code>{job.schedule}</code>
-                </td>
-                <td>{fmtWhen(last?.started_at ?? null)}</td>
-                <td>{last ? fmtRan(last.started_at, last.finished_at) : '—'}</td>
-                <td>
-                  {last?.error ? (
-                    <span>{last.error}</span>
-                  ) : last?.detail ? (
-                    <code>{JSON.stringify(last.detail)}</code>
-                  ) : (
-                    '—'
-                  )}
-                  {failures > 0 && (
-                    <div className={s.metricHint}>{failures} failed of the last {last ? byName.get(job.name)?.length : 0}</div>
-                  )}
-                </td>
-                <td>
-                  <strong>{verdict.bad ? '⚠ ' : ''}</strong>
-                  {verdict.label}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable head={['Job', 'Schedule', 'Last run', 'Took', 'Result', 'State']}>
+        {httpRows.map(({ job, last, verdict, failures }) => (
+          <tr key={job.name}>
+            <td>
+              <code>{job.path}</code>
+              <div className={s.metricHint}>{job.what}</div>
+            </td>
+            <td>
+              <code>{job.schedule}</code>
+            </td>
+            <td>{ago(last?.started_at ?? null, 'never')}</td>
+            <td>{last ? fmtRan(last.started_at, last.finished_at) : '—'}</td>
+            <td>
+              {last?.error ? (
+                <span>{last.error}</span>
+              ) : last?.detail ? (
+                <code>{JSON.stringify(last.detail)}</code>
+              ) : (
+                '—'
+              )}
+              {failures > 0 && (
+                <div className={s.metricHint}>{failures} failed of the last {last ? byName.get(job.name)?.length : 0}</div>
+              )}
+            </td>
+            <td>
+              <strong>{verdict.bad ? '⚠ ' : ''}</strong>
+              {verdict.label}
+            </td>
+          </tr>
+        ))}
+      </AdminTable>
 
       <div className={s.sectionLabel}>pg_cron — jobs running inside the database</div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr>
-              <th>Job</th>
-              <th>Schedule</th>
-              <th>Last run</th>
-              <th>Outcome</th>
-              <th>24h</th>
-              <th>State</th>
+      <AdminTable head={['Job', 'Schedule', 'Last run', 'Outcome', '24h', 'State']}>
+        {pgRows.map((j) => {
+          return (
+            <tr key={j.jobname}>
+              <td>
+                {j.jobname}
+                <div className={s.metricHint}>
+                  <code>{j.command}</code>
+                </div>
+              </td>
+              <td>
+                <code>{j.schedule}</code>
+              </td>
+              <td>{ago(j.last_start, 'never')}</td>
+              <td>
+                {j.last_status ?? '—'}
+                {j.last_message && <div className={s.metricHint}>{j.last_message}</div>}
+              </td>
+              <td>
+                {j.runs_24h} run{j.runs_24h === 1 ? '' : 's'}
+                {j.failures_24h > 0 && (
+                  <div className={s.metricHint}>{j.failures_24h} failed</div>
+                )}
+              </td>
+              <td>
+                {!j.active
+                  ? '⚠ disabled'
+                  : !j.last_start
+                    ? '⚠ never run'
+                    : j.failures_24h > 0
+                      ? `⚠ ${j.failures_24h} failed today`
+                      : 'running to schedule'}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {pgRows.map((j) => {
-              return (
-                <tr key={j.jobname}>
-                  <td>
-                    {j.jobname}
-                    <div className={s.metricHint}>
-                      <code>{j.command}</code>
-                    </div>
-                  </td>
-                  <td>
-                    <code>{j.schedule}</code>
-                  </td>
-                  <td>{fmtWhen(j.last_start)}</td>
-                  <td>
-                    {j.last_status ?? '—'}
-                    {j.last_message && <div className={s.metricHint}>{j.last_message}</div>}
-                  </td>
-                  <td>
-                    {j.runs_24h} run{j.runs_24h === 1 ? '' : 's'}
-                    {j.failures_24h > 0 && (
-                      <div className={s.metricHint}>{j.failures_24h} failed</div>
-                    )}
-                  </td>
-                  <td>
-                    {!j.active
-                      ? '⚠ disabled'
-                      : !j.last_start
-                        ? '⚠ never run'
-                        : j.failures_24h > 0
-                          ? `⚠ ${j.failures_24h} failed today`
-                          : 'running to schedule'}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+          );
+        })}
+      </AdminTable>
 
       <p className={s.sub}>
         A Vercel job reading <em>never seen</em> has not called in since this page

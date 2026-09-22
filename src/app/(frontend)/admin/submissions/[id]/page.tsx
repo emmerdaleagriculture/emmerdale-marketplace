@@ -9,6 +9,7 @@ import { getServices } from '@/lib/reference';
 import { DistributionPanel } from './DistributionPanel';
 import { ClearNoteButton } from './ClearNoteButton';
 import s from '../../admin.module.css';
+import { AdminTable } from '../../ui';
 import p from '../submissions.module.css';
 import { OutreachList, OutreachStats, STAGE_TITLES, isOutreachStage, type OutreachStage } from '../OutreachStats';
 import { loadOutreach } from '../outreach';
@@ -186,35 +187,28 @@ export default async function SubmissionDetailPage({
       {(payments?.length ?? 0) > 0 && (
         <>
           <div className={s.sectionLabel}>Payments</div>
-          <div className={s.tableWrap}>
-            <table className={s.table}>
-              <thead>
-                <tr><th>Part</th><th>Amount</th><th>Status</th><th>When</th></tr>
-              </thead>
-              <tbody>
-                {payments!.map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.kind === 'balance' ? 'Balance' : 'Deposit'}</td>
-                    <td>{formatGBP(p.amount_pence)}</td>
-                    <td title={p.last_error ?? undefined}>
-                      {p.status}
-                      {p.kind === 'balance' && p.status === 'due' && p.attempts > 0
-                        ? ` (retrying — ${p.attempts} so far)`
-                        : ''}
-                      {p.status === 'failed' ? ' — customer asked to pay from their job page' : ''}
-                    </td>
-                    <td>
-                      {p.paid_at
-                        ? `paid ${new Date(p.paid_at).toLocaleString('en-GB')}`
-                        : p.due_at
-                          ? `due ${new Date(p.due_at).toLocaleDateString('en-GB')}`
-                          : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AdminTable head={['Part', 'Amount', 'Status', 'When']}>
+            {payments!.map((p) => (
+              <tr key={p.id}>
+                <td>{p.kind === 'balance' ? 'Balance' : 'Deposit'}</td>
+                <td>{formatGBP(p.amount_pence)}</td>
+                <td title={p.last_error ?? undefined}>
+                  {p.status}
+                  {p.kind === 'balance' && p.status === 'due' && p.attempts > 0
+                    ? ` (retrying — ${p.attempts} so far)`
+                    : ''}
+                  {p.status === 'failed' ? ' — customer asked to pay from their job page' : ''}
+                </td>
+                <td>
+                  {p.paid_at
+                    ? `paid ${new Date(p.paid_at).toLocaleString('en-GB')}`
+                    : p.due_at
+                      ? `due ${new Date(p.due_at).toLocaleDateString('en-GB')}`
+                      : '—'}
+                </td>
+              </tr>
+            ))}
+          </AdminTable>
         </>
       )}
 
@@ -262,88 +256,65 @@ export default async function SubmissionDetailPage({
       {allQuotes.length > 0 && (
         <>
           <div className={s.sectionLabel}>Prices — both sides (never shown elsewhere)</div>
-          <div className={s.tableWrap}>
-            <table className={s.table}>
-              <thead>
-                <tr>
-                  <th>Label</th>
-                  <th>Contractor</th>
-                  <th>Contractor price</th>
-                  <th>Client price</th>
-                  <th>Margin</th>
-                  <th>Status</th>
-                  <th>Note to the customer</th>
-                  <th>Notes to us (historic)</th>
+          <AdminTable head={['Label', 'Contractor', 'Contractor price', 'Client price', 'Margin', 'Status', 'Note to the customer', 'Notes to us (historic)']}>
+            {allQuotes.map((cq) => {
+              const inner = cq.cq as {
+                contractor_price_pence: number;
+                quote_type: string;
+                source: string;
+                notes_internal: string | null;
+                site_visit_required: boolean;
+                contractor: { business_name: string } | null;
+              } | null;
+              return (
+                <tr key={cq.id}>
+                  <td>{cq.contractor_display_label}</td>
+                  <td>{inner?.contractor?.business_name ?? '—'}</td>
+                  <td>
+                    {inner ? formatGBP(inner.contractor_price_pence) : '—'}
+                    {inner?.quote_type === 'rate' ? ' (rate)' : ''}
+                    {inner?.source === 'email_parsed' ? ' · from email' : ''}
+                  </td>
+                  <td>{formatGBP(cq.client_price_pence)}</td>
+                  <td>{inner ? formatGBP(cq.client_price_pence - inner.contractor_price_pence) : '—'}</td>
+                  <td>{cq.status}</td>
+                  {/* Nothing reviews this before the customer reads it,
+                      so the only control is taking it back afterwards. */}
+                  <td>
+                    {cq.contractor_note ? (
+                      <>
+                        “{cq.contractor_note}”
+                        <ClearNoteButton submissionId={id} clientQuoteId={cq.id} />
+                      </>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>{inner?.notes_internal ?? '—'}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {allQuotes.map((cq) => {
-                  const inner = cq.cq as {
-                    contractor_price_pence: number;
-                    quote_type: string;
-                    source: string;
-                    notes_internal: string | null;
-                    site_visit_required: boolean;
-                    contractor: { business_name: string } | null;
-                  } | null;
-                  return (
-                    <tr key={cq.id}>
-                      <td>{cq.contractor_display_label}</td>
-                      <td>{inner?.contractor?.business_name ?? '—'}</td>
-                      <td>
-                        {inner ? formatGBP(inner.contractor_price_pence) : '—'}
-                        {inner?.quote_type === 'rate' ? ' (rate)' : ''}
-                        {inner?.source === 'email_parsed' ? ' · from email' : ''}
-                      </td>
-                      <td>{formatGBP(cq.client_price_pence)}</td>
-                      <td>{inner ? formatGBP(cq.client_price_pence - inner.contractor_price_pence) : '—'}</td>
-                      <td>{cq.status}</td>
-                      {/* Nothing reviews this before the customer reads it,
-                          so the only control is taking it back afterwards. */}
-                      <td>
-                        {cq.contractor_note ? (
-                          <>
-                            “{cq.contractor_note}”
-                            <ClearNoteButton submissionId={id} clientQuoteId={cq.id} />
-                          </>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td>{inner?.notes_internal ?? '—'}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+              );
+            })}
+          </AdminTable>
         </>
       )}
 
       {events.length > 0 && (
         <>
           <div className={s.sectionLabel}>Event log</div>
-          <div className={s.tableWrap}>
-            <table className={s.table}>
-              <thead>
-                <tr><th>When</th><th>Event</th><th>Actor</th><th>Reason</th></tr>
-              </thead>
-              <tbody>
-                {events.map((e, i) => (
-                  <tr key={i}>
-                    <td>{formatDateTime(e.created_at)}</td>
-                    <td>
-                      {e.event_type === 'status_change'
-                        ? `${e.from_status ?? '·'} → ${e.to_status ?? '·'}`
-                        : e.event_type}
-                    </td>
-                    <td>{e.actor_type}</td>
-                    <td>{e.reason ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AdminTable head={['When', 'Event', 'Actor', 'Reason']}>
+            {events.map((e, i) => (
+              <tr key={i}>
+                <td>{formatDateTime(e.created_at)}</td>
+                <td>
+                  {e.event_type === 'status_change'
+                    ? `${e.from_status ?? '·'} → ${e.to_status ?? '·'}`
+                    : e.event_type}
+                </td>
+                <td>{e.actor_type}</td>
+                <td>{e.reason ?? '—'}</td>
+              </tr>
+            ))}
+          </AdminTable>
         </>
       )}
 

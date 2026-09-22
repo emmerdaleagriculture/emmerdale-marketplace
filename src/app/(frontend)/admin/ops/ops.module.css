@@ -144,9 +144,13 @@
   font-weight: 600;
   white-space: nowrap;
 }
-.open { background: #fff9e0; color: #5c4d00; }
-.good { background: var(--jd-green-pale); color: var(--jd-green-dark); }
-.bad { background: #fdecea; color: #7a1c0e; }
+/* The three tones, composed from admin.module.css rather than restated.
+   These were byte-identical here, in ops.module.css and in admin.module.css
+   as .pillPending / .pillApproved / .pillSuspended — three copies of the same
+   three colour pairs, which is three places to change and two to forget. */
+.open { composes: pillPending from '../admin.module.css'; }
+.good { composes: pillApproved from '../admin.module.css'; }
+.bad { composes: pillSuspended from '../admin.module.css'; }
 
 .side {
   text-align: right;

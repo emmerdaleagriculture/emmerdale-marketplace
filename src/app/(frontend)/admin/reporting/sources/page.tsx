@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { channelOf, compareChannels, isPaid, UNATTRIBUTED } from '@/lib/attribution';
 import s from '../../admin.module.css';
+import { AdminTable, Tile, Tiles } from '../../ui';
 
 export const metadata: Metadata = { title: 'Sources — Admin' };
 export const dynamic = 'force-dynamic';
@@ -197,79 +198,46 @@ export default async function SourcesPage() {
         </div>
       )}
 
-      <div className={s.metricGrid}>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Arrivals (30d)</div>
-          <div className={s.metricValue}>{totals.arrivals}</div>
-          <div className={s.metricHint}>{paidTotals.arrivals} from paid</div>
-        </div>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Jobs started</div>
-          <div className={s.metricValue}>{totals.started}</div>
-          <div className={s.metricHint}>{pct(totals.started, totals.arrivals)} of arrivals</div>
-        </div>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Jobs confirmed</div>
-          <div className={s.metricValue}>{totals.confirmed}</div>
-          <div className={s.metricHint}>what the ad platforms count</div>
-        </div>
-        <div className={s.metric}>
-          <div className={s.metricLabel}>Confirmed from paid</div>
-          <div className={s.metricValue}>{paidTotals.confirmed}</div>
-          <div className={s.metricHint}>
-            {pct(paidTotals.confirmed, paidTotals.arrivals)} of {paidTotals.arrivals} paid arrivals
-          </div>
-        </div>
-      </div>
+      <Tiles>
+        <Tile value={totals.arrivals} label="Arrivals (30d)" hint={<>{paidTotals.arrivals} from paid</>} />
+        <Tile value={totals.started} label="Jobs started" hint={<>{pct(totals.started, totals.arrivals)} of arrivals</>} />
+        <Tile value={totals.confirmed} label="Jobs confirmed" hint="what the ad platforms count" />
+        <Tile value={paidTotals.confirmed} label="Confirmed from paid" hint={<>{pct(paidTotals.confirmed, paidTotals.arrivals)} of {paidTotals.arrivals} paid arrivals</>} />
+      </Tiles>
 
       <div className={s.sectionLabel}>By source — last 30 days</div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr>
-              <th>Source</th>
-              <th>Arrivals</th>
-              <th>Started</th>
-              <th>Still draft</th>
-              <th>Confirmed</th>
-              <th>Arrival → job</th>
-              <th />
+      <AdminTable head={['Source', 'Arrivals', 'Started', 'Still draft', 'Confirmed', 'Arrival → job', '']}>
+        {channels.map((c) => {
+          const share = totals.arrivals > 0 ? (100 * c.arrivals) / totals.arrivals : 0;
+          return (
+            <tr key={c.channel}>
+              <td>
+                {c.channel}
+                {isPaid(c.channel) && <div className={s.metricHint}>paid</div>}
+                {c.channel === UNATTRIBUTED && (
+                  <div className={s.metricHint}>includes paid clicks with no gclid</div>
+                )}
+              </td>
+              <td>{c.arrivals || '—'}</td>
+              <td>{c.started || '—'}</td>
+              <td>{c.drafts || '—'}</td>
+              <td>{c.confirmed || '—'}</td>
+              <td>{c.arrivals > 0 ? pct(c.confirmed, c.arrivals) : '—'}</td>
+              <td style={{ width: '20%' }}>
+                <span
+                  style={{
+                    display: 'block',
+                    height: 8,
+                    width: `${share}%`,
+                    background: 'var(--jd-green-deep)',
+                    minWidth: share > 0 ? 2 : 0,
+                  }}
+                />
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {channels.map((c) => {
-              const share = totals.arrivals > 0 ? (100 * c.arrivals) / totals.arrivals : 0;
-              return (
-                <tr key={c.channel}>
-                  <td>
-                    {c.channel}
-                    {isPaid(c.channel) && <div className={s.metricHint}>paid</div>}
-                    {c.channel === UNATTRIBUTED && (
-                      <div className={s.metricHint}>includes paid clicks with no gclid</div>
-                    )}
-                  </td>
-                  <td>{c.arrivals || '—'}</td>
-                  <td>{c.started || '—'}</td>
-                  <td>{c.drafts || '—'}</td>
-                  <td>{c.confirmed || '—'}</td>
-                  <td>{c.arrivals > 0 ? pct(c.confirmed, c.arrivals) : '—'}</td>
-                  <td style={{ width: '20%' }}>
-                    <span
-                      style={{
-                        display: 'block',
-                        height: 8,
-                        width: `${share}%`,
-                        background: 'var(--jd-green-deep)',
-                        minWidth: share > 0 ? 2 : 0,
-                      }}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+          );
+        })}
+      </AdminTable>
 
       <div className={s.sectionLabel}>Started but never submitted — by source</div>
       <p className={s.sub}>
@@ -285,77 +253,50 @@ export default async function SourcesPage() {
           </>
         )}
       </p>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr>
-              <th>Source</th>
-              <th>Typed</th>
-              <th>Pressed send</th>
-              <th>Finished</th>
-              <th>Gave up after typing</th>
-            </tr>
-          </thead>
-          <tbody>
-            {behaviour.map((b) => (
-              <tr key={b.channel}>
-                <td>{b.channel}</td>
-                <td>{b.typed || '—'}</td>
-                <td>{b.send || '—'}</td>
-                <td>{b.sent || '—'}</td>
-                <td>{b.typed - b.send > 0 ? b.typed - b.send : '—'}</td>
-              </tr>
-            ))}
-            {behaviour.length === 0 && (
-              <tr><td colSpan={5}>No milestones recorded in this window.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable head={['Source', 'Typed', 'Pressed send', 'Finished', 'Gave up after typing']}>
+        {behaviour.map((b) => (
+          <tr key={b.channel}>
+            <td>{b.channel}</td>
+            <td>{b.typed || '—'}</td>
+            <td>{b.send || '—'}</td>
+            <td>{b.sent || '—'}</td>
+            <td>{b.typed - b.send > 0 ? b.typed - b.send : '—'}</td>
+          </tr>
+        ))}
+        {behaviour.length === 0 && (
+          <tr><td colSpan={5}>No milestones recorded in this window.</td></tr>
+        )}
+      </AdminTable>
 
       <div className={s.sectionLabel}>What &ldquo;unattributed&rdquo; is — top referrers</div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr><th>Referrer</th><th>Arrivals</th></tr>
-          </thead>
-          <tbody>
-            {topReferrers.map(([ref, n]) => (
-              <tr key={ref}>
-                <td>
-                  {ref}
-                  {ref.includes('syndicatedsearch.goog') && (
-                    <div className={s.metricHint}>Google search-partner network — paid</div>
-                  )}
-                </td>
-                <td>{n}</td>
-              </tr>
-            ))}
-            {topReferrers.length === 0 && (
-              <tr><td colSpan={2}>No arrivals recorded yet.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable head={['Referrer', 'Arrivals']}>
+        {topReferrers.map(([ref, n]) => (
+          <tr key={ref}>
+            <td>
+              {ref}
+              {ref.includes('syndicatedsearch.goog') && (
+                <div className={s.metricHint}>Google search-partner network — paid</div>
+              )}
+            </td>
+            <td>{n}</td>
+          </tr>
+        ))}
+        {topReferrers.length === 0 && (
+          <tr><td colSpan={2}>No arrivals recorded yet.</td></tr>
+        )}
+      </AdminTable>
 
       <div className={s.sectionLabel}>Daily — last 14 days</div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr><th>Day</th><th>Paid arrivals</th><th>Everything else</th><th>Confirmed</th></tr>
-          </thead>
-          <tbody>
-            {days.map((d) => (
-              <tr key={d.day}>
-                <td>{d.day}</td>
-                <td>{d.paid || '—'}</td>
-                <td>{d.other || '—'}</td>
-                <td>{d.confirmed || '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable head={['Day', 'Paid arrivals', 'Everything else', 'Confirmed']}>
+        {days.map((d) => (
+          <tr key={d.day}>
+            <td>{d.day}</td>
+            <td>{d.paid || '—'}</td>
+            <td>{d.other || '—'}</td>
+            <td>{d.confirmed || '—'}</td>
+          </tr>
+        ))}
+      </AdminTable>
     </div>
   );
 }
