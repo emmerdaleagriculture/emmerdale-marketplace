@@ -11,10 +11,12 @@ export type QuoteActionState = FormState & { closed?: boolean };
 
 const QuoteSchema = z.object({
   token: z.string(),
-  quote_type: z.enum(['total', 'rate']),
+  quote_type: z.enum(['total', 'rate', 'unit']),
   price: z.string().trim().optional().or(z.literal('')),
   rate_value: z.string().trim().optional().or(z.literal('')),
   rate_minimum: z.string().trim().optional().or(z.literal('')),
+  unit_label: z.string().trim().max(24).optional().or(z.literal('')),
+  unit_quantity: z.string().trim().optional().or(z.literal('')),
   notes: z.string().trim().max(1000).optional().or(z.literal('')),
   // Shown to the customer. Capped generously here so an over-long note gets
   // clientNoteProblem's sentence rather than a bare zod message.
@@ -42,6 +44,8 @@ export async function submitQuoteAction(
     price: formData.get('price') ?? '',
     rate_value: formData.get('rate_value') ?? '',
     rate_minimum: formData.get('rate_minimum') ?? '',
+    unit_label: formData.get('unit_label') ?? '',
+    unit_quantity: formData.get('unit_quantity') ?? '',
     notes: formData.get('notes') ?? '',
     note_to_client: formData.get('note_to_client') ?? '',
     valid_until: formData.get('valid_until') ?? '',
@@ -62,7 +66,20 @@ export async function submitQuoteAction(
   let rateValuePence: number | null = null;
   let rateMinimumPence: number | null = null;
 
-  if (d.quote_type === 'total') {
+  let unitQuantity: number | null = null;
+
+  if (d.quote_type === 'unit') {
+    // Rate and quantity both, because the customer accepts one figure and
+    // pays a deposit against it — a rate alone is not something to accept.
+    rateValuePence = poundsInputToPence(d.rate_value ?? '');
+    if (rateValuePence === null) return { error: 'Enter your price per unit, e.g. 12.' };
+    if (!d.unit_label) return { error: 'Say what one unit is — a bale, a day, a load.' };
+    const qty = Number(d.unit_quantity);
+    if (!Number.isFinite(qty) || qty <= 0) {
+      return { error: 'Enter how many, e.g. 20.' };
+    }
+    unitQuantity = qty;
+  } else if (d.quote_type === 'total') {
     pricePence = poundsInputToPence(d.price ?? '');
     if (pricePence === null) return { error: 'Enter your price in pounds, e.g. 450.' };
   } else {
@@ -91,6 +108,8 @@ export async function submitQuoteAction(
     // is reserved for prices that arrived by email parse, where nobody asked.
     p_price_basis: formData.get('includes_vat') === 'on' ? 'inc_vat' : 'no_vat',
     p_note_to_client: (noteToClient || null) as string,
+    p_unit_label: (d.unit_label || null) as string,
+    p_unit_quantity: unitQuantity as number,
   });
   if (error) {
     console.error('[sq] submit_contractor_quote failed:', error);
@@ -105,6 +124,8 @@ export async function submitQuoteAction(
           message:
             'This one’s been taken — the customer accepted another price before yours came in. It happens with first-come jobs; nothing else is needed from you.',
         };
+      case 'unit_needs_quantity':
+        return { error: 'A per-unit price needs the unit and how many.' };
       case 'rate_needs_area':
         return { error: 'This job has no usable acreage for a per-acre rate — give a total price instead.' };
       case 'declined':

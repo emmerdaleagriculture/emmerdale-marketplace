@@ -5,6 +5,7 @@ import {
   depositSplitPence,
   formatGBP,
   formatRate,
+  formatUnitPrice,
   poundsInputToPence,
   QUOTABLE_PRICE_BASES,
   vatNote,
@@ -264,5 +265,22 @@ describe('isOverdue — §30 thresholds', () => {
     expect(isOverdue('awarded', at(25 * 3600 * 1000))).toBe(true);
     expect(isOverdue('quotes_receiving', at(999 * 3600 * 1000))).toBe(false); // never flagged
     expect(isOverdue('unknown_state', at(999 * 3600 * 1000))).toBe(false);
+  });
+});
+
+describe('formatUnitPrice — how a per-unit quote reads to the customer', () => {
+  // The point is that the customer can see how the total was arrived at
+  // rather than being handed a figure.
+  it('names the rate, the unit and how many', () => {
+    expect(formatUnitPrice(1200, 'bale', 20)).toBe('£12 per bale × 20 bales');
+    expect(formatUnitPrice(45000, 'day', 2)).toBe('£450 per day × 2 days');
+  });
+
+  it('does not pluralise a single unit', () => {
+    expect(formatUnitPrice(45000, 'day', 1)).toBe('£450 per day × 1 day');
+  });
+
+  it('carries a fractional quantity rather than rounding it away', () => {
+    expect(formatUnitPrice(10000, 'tonne', 2.5)).toBe('£100 per tonne × 2.5 tonnes');
   });
 });

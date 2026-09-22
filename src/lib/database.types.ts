@@ -52,6 +52,8 @@ export type Database = {
           site_visit_required: boolean
           status: string
           submission_id: string
+          unit_label: string | null
+          unit_quantity: number | null
           valid_until: string
           viewed_at: string | null
         }
@@ -74,6 +76,8 @@ export type Database = {
           site_visit_required?: boolean
           status?: string
           submission_id: string
+          unit_label: string | null
+          unit_quantity: number | null
           valid_until: string
           viewed_at?: string | null
         }
@@ -96,6 +100,8 @@ export type Database = {
           site_visit_required?: boolean
           status?: string
           submission_id?: string
+          unit_label?: string | null
+          unit_quantity?: number | null
           valid_until?: string
           viewed_at?: string | null
         }
@@ -246,6 +252,8 @@ export type Database = {
           source: string
           submission_id: string
           superseded_by: string | null
+          unit_label: string | null
+          unit_quantity: number | null
           valid_until: string
         }
         Insert: {
@@ -266,6 +274,8 @@ export type Database = {
           source: string
           submission_id: string
           superseded_by?: string | null
+          unit_label: string | null
+          unit_quantity: number | null
           valid_until: string
         }
         Update: {
@@ -286,6 +296,8 @@ export type Database = {
           source?: string
           submission_id?: string
           superseded_by?: string | null
+          unit_label?: string | null
+          unit_quantity?: number | null
           valid_until?: string
         }
         Relationships: [
@@ -2356,6 +2368,8 @@ export type Database = {
         Args: {
           p_confirmed: boolean
           p_note_to_client?: string
+          p_unit_label?: string
+          p_unit_quantity?: number
           p_notes: string
           p_price_basis: string
           p_price_pence: number

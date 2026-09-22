@@ -41,6 +41,22 @@ export function formatRate(ratePence: number, minimumPence: number | null): stri
 }
 
 /**
+ * "£12 per bale × 20" — a unit-priced quote, shown so the customer can see
+ * how the total was arrived at rather than being handed a figure. The
+ * quantity is the contractor's own: nobody measures twenty bales, so they
+ * state what they are quoting for.
+ */
+export function formatUnitPrice(
+  ratePence: number,
+  unitLabel: string,
+  quantity: number,
+): string {
+  const qty = Number.isInteger(quantity) ? String(quantity) : String(quantity);
+  const plural = quantity === 1 ? unitLabel : `${unitLabel}s`;
+  return `${formatGBP(ratePence)} per ${unitLabel} × ${qty} ${plural}`;
+}
+
+/**
  * Whether a quoted figure has VAT in it (contractor_quotes.price_basis).
  * 'unspecified' covers every price taken before the form asked, and every one
  * parsed out of an email reply — we genuinely don't know, so we don't claim.
