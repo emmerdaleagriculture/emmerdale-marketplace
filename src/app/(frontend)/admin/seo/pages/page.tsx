@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { gscQuery, isoDaysAgo, type GscRow } from '@/lib/gsc';
 import { fetchGa4PageMetrics, isGa4Configured, listGa4Properties, configuredGa4PropertyId } from '@/lib/ga4';
 import { seoGuard } from '../guard';
-import { SubNav } from '../SubNav';
 import styles from '../seo.module.css';
 
 export const metadata: Metadata = {
@@ -41,7 +40,7 @@ function pathOf(url: string): string {
 type Row = GscRow & { keys?: string[] };
 
 export default async function PagesPage() {
-  const { block } = await seoGuard('/admin/seo/pages');
+  const { block } = await seoGuard();
   if (block) return block;
 
   const endDate = isoDaysAgo(GSC_LAG_DAYS);
@@ -112,7 +111,6 @@ export default async function PagesPage() {
 
   return (
     <main className={styles.page}>
-      <SubNav active="/admin/seo/pages" />
       <header className={styles.head}>
         <div>
           <h1>Pages</h1>

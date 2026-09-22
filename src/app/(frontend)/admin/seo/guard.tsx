@@ -1,19 +1,20 @@
 import Link from 'next/link';
 import { isGscConnected, isGscOAuthConfigured } from '@/lib/gsc';
-import { SubNav } from './SubNav';
 import styles from './seo.module.css';
 
 /**
  * Shared setup check for every /admin/seo/* page. Admin auth is already enforced
  * by the /admin layout; this only checks the GSC OAuth setup and returns a
  * placeholder (config/connect needed) or null when ready to render.
+ *
+ * Took an activePath until the Search Console tab bar was folded into the
+ * admin nav — that argument existed only to mark the active tab.
  */
-export async function seoGuard(activePath: string): Promise<{ block: React.ReactNode | null }> {
+export async function seoGuard(): Promise<{ block: React.ReactNode | null }> {
   if (!isGscOAuthConfigured()) {
     return {
       block: (
         <main className={styles.page}>
-          <SubNav active={activePath} />
           <section className={styles.notConfigured}>
             <h2>OAuth not configured</h2>
             <p>
@@ -30,7 +31,6 @@ export async function seoGuard(activePath: string): Promise<{ block: React.React
     return {
       block: (
         <main className={styles.page}>
-          <SubNav active={activePath} />
           <section className={styles.notConfigured}>
             <h2>Connect your Google account</h2>
             <p>

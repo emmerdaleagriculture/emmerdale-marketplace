@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { gscQuery, isoDaysAgo, type GscRow } from '@/lib/gsc';
 import { seoGuard } from '../guard';
-import { SubNav } from '../SubNav';
 import styles from '../seo.module.css';
 
 export const metadata: Metadata = {
@@ -30,7 +29,7 @@ function rowKey(r: Row) {
 }
 
 export default async function QueriesPage() {
-  const { block } = await seoGuard('/admin/seo/queries');
+  const { block } = await seoGuard();
   if (block) return block;
 
   const endDate = isoDaysAgo(GSC_LAG_DAYS);
@@ -90,7 +89,6 @@ export default async function QueriesPage() {
 
   return (
     <main className={styles.page}>
-      <SubNav active="/admin/seo/queries" />
       <header className={styles.head}>
         <div>
           <h1>Queries</h1>
