@@ -75,7 +75,7 @@ export const HOME_SERVICES: HomeService[] = [
     slug: 'weed-control',
     name: 'Weed control & spraying',
     label: 'weed control and spraying',
-    blurb: 'Targeted treatment by licensed, certificated operators only.',
+    blurb: 'Targeted treatment of docks, nettles, thistles and ragwort.',
     icon: 'spraying',
   },
   {

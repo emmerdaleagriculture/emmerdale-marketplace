@@ -39,9 +39,9 @@ const ROWS: Row[] = [
     bad: 'You have to ask if they’re insured, and take the answer on trust.',
     good: (
       <>
-        <b>Public liability checked before they can quote</b>, along with
-        training and certification. We hold the paperwork, so you never have the
-        awkward conversation.
+        <b>£5m of public liability cover on every job</b>, carried by us rather
+        than left to whoever turns up. You never have the awkward conversation,
+        and a claim is ours to handle.
       </>
     ),
   },
