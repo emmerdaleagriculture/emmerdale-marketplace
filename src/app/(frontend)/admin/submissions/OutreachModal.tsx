@@ -7,10 +7,14 @@ import type { Outreach } from './outreach';
 import { OutreachList, OutreachStats, STAGE_TITLES, type OutreachCounts, type OutreachStage } from './OutreachStats';
 import p from './submissions.module.css';
 
+function pct(n: number, of: number) {
+  return of > 0 ? Math.round((n / of) * 100) : 0;
+}
+
 /**
- * The outreach boxes on a submission card. Tapping one opens a modal listing
- * who is behind the number, with the other four a tap away. Lists are fetched
- * fresh each time it opens.
+ * The outreach summary on a submission row. A bar and a line of numbers,
+ * opening a modal that lists who is behind each one, with the five stages a
+ * tap apart. Lists are fetched fresh each time it opens.
  */
 export function OutreachModal({ id, counts, title }: { id: string; counts: OutreachCounts; title: string }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -32,9 +36,25 @@ export function OutreachModal({ id, counts, title }: { id: string; counts: Outre
     });
   }
 
+  const responded = counts.priced + counts.declined;
+
   return (
     <>
-      <OutreachStats id={id} counts={counts} onSelect={open} />
+      <button
+        type="button"
+        className={p.mini}
+        onClick={() => open('emailed')}
+        aria-label={`${title} — ${counts.invited} invited, ${counts.opened} opened, ${counts.priced} priced. Show who.`}
+      >
+        <span className={p.bar} aria-hidden="true">
+          <span className={p.barResponded} style={{ width: `${pct(responded, counts.invited)}%` }} />
+          <span className={p.barOpened} style={{ width: `${pct(Math.max(0, counts.opened - responded), counts.invited)}%` }} />
+        </span>
+        <span className={p.miniNums} aria-hidden="true">
+          <b>{counts.invited}</b> invited · <b>{counts.opened}</b> opened · <b>{counts.priced}</b> priced
+          {counts.emails_failed > 0 && <em className={p.miniBad}>{counts.emails_failed} failed to send</em>}
+        </span>
+      </button>
       <dialog
         ref={dialog}
         className={p.modal}

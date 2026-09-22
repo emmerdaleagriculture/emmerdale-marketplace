@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { formatDate, formatDateTime, timeAgo, timeLeft } from '@/lib/time';
+import { dayHeading, formatDate, formatDateTime, londonDay, timeAgo, timeLeft } from '@/lib/time';
 import { URGENCY_LABELS } from '@/components/job/JobSpecCard';
 import s from '../admin.module.css';
 import p from './submissions.module.css';
@@ -13,12 +13,15 @@ export const metadata: Metadata = { title: 'Submissions — Admin' };
 /**
  * Every job described on /start, newest first, with what happened to it:
  * invitation emails sent and delivered, contractors who opened the job,
- * priced it or passed, and what the customer has been shown. Drafts — people
- * who described a job and stopped before their contact details — are listed
- * too, since they are the funnel's leak.
+ * priced it or passed, and what the customer has been shown.
  *
- * Numbers come from admin_submission_board(), which aggregates in SQL. Cards,
- * not a table, so it works one-handed on a phone.
+ * One compact line per job, banded into days, so a fortnight's work reads at a
+ * glance instead of scrolling. Rows stack rather than scroll sideways, so the
+ * page still works one-handed on a phone. Drafts — people who described a job
+ * and stopped before their contact details — are the funnel's leak and there
+ * are more of them than jobs, so they live behind their own tab.
+ *
+ * Numbers come from admin_submission_board(), which aggregates in SQL.
  */
 
 const LIMIT = 200;
@@ -92,7 +95,7 @@ const WON = new Set([
 ]);
 
 const VIEWS = [
-  ['all', 'All'],
+  ['all', 'All jobs'],
   ['quoting', 'Getting quotes'],
   ['won', 'Won'],
   ['closed', 'Closed'],
@@ -100,19 +103,42 @@ const VIEWS = [
 ] as const;
 type View = (typeof VIEWS)[number][0];
 
+/** "All jobs" means jobs: drafts outnumber them, and have their own tab. */
 function inView(r: Row, view: View): boolean {
   switch (view) {
     case 'drafts': return DRAFT.has(r.status);
     case 'quoting': return QUOTING.has(r.status);
     case 'won': return WON.has(r.status);
     case 'closed': return !DRAFT.has(r.status) && !QUOTING.has(r.status) && !WON.has(r.status);
-    default: return true;
+    default: return !DRAFT.has(r.status);
   }
 }
 
+/** Newest-first rows into newest-first days. */
+function byDay(rows: Row[]): [string, Row[]][] {
+  const days = new Map<string, Row[]>();
+  for (const r of rows) {
+    const key = londonDay(r.created_at);
+    const day = days.get(key);
+    if (day) day.push(r);
+    else days.set(key, [r]);
+  }
+  return [...days];
+}
+
+/** One line of whitespace-normalised text. */
+function tidy(text: string) {
+  return text.trim().replace(/\s+/g, ' ');
+}
+
 function clip(text: string, n: number) {
-  const t = text.trim().replace(/\s+/g, ' ');
+  const t = tidy(text);
   return t.length > n ? `${t.slice(0, n - 1)}…` : t;
+}
+
+/** Does `text` open with `prefix`, ignoring case? */
+function starts(text: string, prefix: string) {
+  return text.toLowerCase().startsWith(prefix.toLowerCase());
 }
 
 function areaLabel(r: Row): string | null {
@@ -125,11 +151,22 @@ function pct(n: number, of: number) {
   return of > 0 ? Math.round((n / of) * 100) : 0;
 }
 
-function Card({ r }: { r: Row }) {
+/** One submission, one line: what it is, where it got to, how long ago. */
+function SubmissionRow({ r }: { r: Row }) {
   const [label, tone] = STATUS[r.status] ?? [r.status, 'muted'];
   const isDraft = DRAFT.has(r.status);
-  const title = r.service ?? (r.service_verbatim ? clip(r.service_verbatim, 70) : clip(r.raw_text, 70));
-  const words = clip(r.raw_text, 180);
+  const raw = tidy(r.raw_text);
+  const service = r.service ?? (r.service_verbatim ? tidy(r.service_verbatim) : null);
+  // Often the "service" is the customer's sentence back again — nothing was
+  // parsed, or service_verbatim is the whole message — so one of the two only
+  // restates the other and the row would print it twice. Then show whichever
+  // says more and quote nothing underneath.
+  const restates =
+    service != null &&
+    (starts(service, raw) || (starts(raw, service) && raw.length - service.length < 20));
+  const fullest = service && service.length > raw.length ? service : raw;
+  const title = service == null || restates ? clip(fullest, 110) : clip(service, 70);
+  const words = service != null && !restates ? clip(raw, 120) : null;
   const facts = [
     r.county,
     r.postcode,
@@ -142,77 +179,86 @@ function Card({ r }: { r: Row }) {
     r.photos ? `${r.photos} photo${r.photos === 1 ? '' : 's'}` : null,
     r.utm_source ? `via ${r.utm_source}` : null,
   ].filter(Boolean) as string[];
-  const responded = r.priced + r.declined;
+
+  // The one thing worth knowing about where this job stands, under the numbers.
+  const standing = r.awarded_to
+    ? `Won by ${r.awarded_to}`
+    : QUOTING.has(r.status) && r.expires_at
+      ? timeLeft(r.expires_at)
+      : null;
 
   return (
-    <article className={p.card}>
-      <div className={p.cardHead}>
-        <span className={`${p.status} ${p[tone]}`}>{label}</span>
-        <span className={p.when} title={formatDateTime(r.created_at)}>
-          {isDraft ? 'Started ' : ''}
-          {timeAgo(r.created_at)}
-        </span>
+    <li className={p.row}>
+      <span className={`${p.status} ${p[tone]}`}>{label}</span>
+
+      <div className={p.rowMain}>
+        <Link href={`/admin/submissions/${r.id}`} className={p.title}>
+          {title}
+        </Link>
+        {words && words !== title && <p className={p.words}>“{words}”</p>}
+        {facts.length > 0 && (
+          <p className={p.facts}>
+            {facts.map((f, i) => (
+              <span key={f} className={p.fact}>
+                {i > 0 && <i aria-hidden="true"> · </i>}
+                {f}
+              </span>
+            ))}
+          </p>
+        )}
+        {(r.contact_name || r.contact_phone || r.contact_email) && (
+          <p className={p.contact}>
+            {r.contact_name && <span>{r.contact_name}</span>}
+            {r.contact_phone && <a href={`tel:${r.contact_phone.replace(/\s+/g, '')}`}>{r.contact_phone}</a>}
+            {r.contact_email && <a href={`mailto:${r.contact_email}`}>{r.contact_email}</a>}
+          </p>
+        )}
       </div>
 
-      <Link href={`/admin/submissions/${r.id}`} className={p.title}>
-        {title}
-      </Link>
-      {words !== title && <div className={p.words}>“{words}”</div>}
-
-      {facts.length > 0 && (
-        <div className={p.facts}>
-          {facts.map((f) => (
-            <span key={f} className={p.fact}>{f}</span>
-          ))}
-        </div>
-      )}
-
-      {r.contact_name || r.contact_phone || r.contact_email ? (
-        <div className={p.contact}>
-          {r.contact_name && <span>{r.contact_name}</span>}
-          {r.contact_phone && <a href={`tel:${r.contact_phone.replace(/\s+/g, '')}`}>{r.contact_phone}</a>}
-          {r.contact_email && <a href={`mailto:${r.contact_email}`}>{r.contact_email}</a>}
-        </div>
-      ) : (
-        isDraft && <div className={p.note}>Stopped before leaving contact details.</div>
-      )}
-
-      {!isDraft &&
-        (r.invited > 0 ? (
+      <div className={p.rowOutreach}>
+        {isDraft ? (
+          !r.contact_name && !r.contact_phone && !r.contact_email && (
+            <span className={p.note}>No contact details left</span>
+          )
+        ) : r.invited > 0 ? (
           <>
             <OutreachModal id={r.id} counts={r} title={title} />
-            <div
-              className={p.bar}
-              role="img"
-              aria-label={`${r.opened} of ${r.invited} opened, ${responded} responded`}
-            >
-              <span className={p.barResponded} style={{ width: `${pct(responded, r.invited)}%` }} />
-              <span className={p.barOpened} style={{ width: `${pct(Math.max(0, r.opened - responded), r.invited)}%` }} />
-            </div>
+            {standing && <span className={p.standing}>{standing}</span>}
           </>
         ) : (
-          <div className={p.note}>
-            {r.status === 'confirmed' ? 'Confirmed — not sent to contractors yet.' : 'No contractors were invited.'}
-          </div>
-        ))}
+          <span className={p.note}>
+            {r.status === 'confirmed' ? 'Not sent to contractors yet' : 'No contractors were invited'}
+          </span>
+        )}
+      </div>
 
-      <div className={p.foot}>
-        <span>
-          {r.awarded_to
-            ? `Won by ${r.awarded_to}`
-            : QUOTING.has(r.status) && r.expires_at
-              ? `${timeLeft(r.expires_at)} · ${r.invited} invited`
-              : isDraft
-                ? formatDateTime(r.created_at)
-                : r.invited > 0
-                  ? `${r.invited} invited`
-                  : formatDateTime(r.created_at)}
-        </span>
-        <Link href={`/admin/submissions/${r.id}`} className={p.more}>
+      <div className={p.rowWhen}>
+        <span title={formatDateTime(r.created_at)}>{timeAgo(r.created_at)}</span>
+        <Link href={`/admin/submissions/${r.id}`} className={p.more} aria-label={`Details — ${title}`}>
           Details →
         </Link>
       </div>
-    </article>
+    </li>
+  );
+}
+
+/** A list banded into days, newest first. */
+function Days({ rows }: { rows: Row[] }) {
+  return (
+    <>
+      {byDay(rows).map(([key, day]) => (
+        <section key={key} className={p.day}>
+          <h2 className={p.dayHead}>
+            {dayHeading(day[0].created_at)} <span className={p.dayCount}>{day.length}</span>
+          </h2>
+          <ul className={p.rows}>
+            {day.map((r) => (
+              <SubmissionRow key={r.id} r={r} />
+            ))}
+          </ul>
+        </section>
+      ))}
+    </>
   );
 }
 
@@ -250,12 +296,10 @@ export default async function AdminSubmissionsPage({
   const priced = sum('priced');
   const declined = sum('declined');
 
-  const shown = rows.filter((r) => inView(r, view));
-  const shownJobs = shown.filter((r) => !DRAFT.has(r.status));
-  const shownDrafts = shown.filter((r) => DRAFT.has(r.status));
-  const filtered = filter
+  // A dashboard filter overrides the tabs: it is its own list.
+  const shown = filter
     ? rows.filter((r) => matchesFilter(r, filter, { priced: pricedIds, paid: paidIds }))
-    : [];
+    : rows.filter((r) => inView(r, view));
 
   const tiles: [string, string | number, string][] = [
     ['Jobs', jobs.length, `${jobs.filter((r) => QUOTING.has(r.status)).length} getting quotes`],
@@ -271,7 +315,8 @@ export default async function AdminSubmissionsPage({
       <p className={s.sub}>
         Jobs described on the landing page, newest first
         {rows.length >= LIMIT ? ` — latest ${LIMIT}` : ''}. Opened means the
-        contractor opened the job from their email.
+        contractor opened the job from their email; tap the numbers on a row to
+        see who.
       </p>
 
       {error && <div className={s.blocked}>Couldn’t load submissions: {error.message}</div>}
@@ -289,7 +334,7 @@ export default async function AdminSubmissionsPage({
       {filter ? (
         <nav className={p.chips} aria-label="Filter submissions">
           <span className={`${p.chip} ${p.chipOn}`} aria-current="page">
-            {SUBMISSION_FILTERS[filter]} <b>{filtered.length}</b>
+            {SUBMISSION_FILTERS[filter]} <b>{shown.length}</b>
           </span>
           <Link href="/admin/submissions" className={p.chip}>
             Show all
@@ -310,45 +355,18 @@ export default async function AdminSubmissionsPage({
         </nav>
       )}
 
-      {filter &&
-        (filtered.length === 0 ? (
-          <div className={s.empty}>Nothing matches.</div>
-        ) : (
-          <div className={p.cards}>
-            {filtered.map((r) => (
-              <Card key={r.id} r={r} />
-            ))}
-          </div>
-        ))}
-
-      {!filter && view !== 'drafts' && (
-        <>
-          {view === 'all' && <div className={s.sectionLabel}>Jobs</div>}
-          {shownJobs.length === 0 ? (
-            <div className={s.empty}>Nothing here yet.</div>
-          ) : (
-            <div className={p.cards}>
-              {shownJobs.map((r) => (
-                <Card key={r.id} r={r} />
-              ))}
-            </div>
-          )}
-        </>
+      {!filter && view === 'drafts' && (
+        <p className={p.lede}>
+          Described a job on /start and stopped before leaving contact details.
+        </p>
       )}
 
-      {!filter && (view === 'all' || view === 'drafts') && (
-        <>
-          <div className={s.sectionLabel}>Drafts — described a job, didn’t finish</div>
-          {shownDrafts.length === 0 ? (
-            <div className={s.empty}>No drafts.</div>
-          ) : (
-            <div className={p.cards}>
-              {shownDrafts.map((r) => (
-                <Card key={r.id} r={r} />
-              ))}
-            </div>
-          )}
-        </>
+      {shown.length === 0 ? (
+        <div className={s.empty}>
+          {filter ? 'Nothing matches.' : view === 'drafts' ? 'No drafts.' : 'Nothing here yet.'}
+        </div>
+      ) : (
+        <Days rows={shown} />
       )}
     </div>
   );
