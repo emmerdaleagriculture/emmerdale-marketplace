@@ -122,7 +122,7 @@ const faqs = [
   },
   {
     q: 'What happens if the customer doesn’t pay?',
-    a: 'That is ours to deal with, not yours. The deposit is taken before you start work, and if a balance fails and cannot be recovered we will tell you and agree what happens next rather than leave it outstanding.',
+    a: 'That is ours to deal with, not yours. A deposit is taken before you start work, and if the balance goes unpaid we chase it — and will pursue the debt until it is paid, formally if it comes to that. You are not the one making those phone calls.',
   },
   {
     q: 'Do I have to quote for everything I’m sent?',
