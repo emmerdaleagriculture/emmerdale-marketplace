@@ -35,6 +35,33 @@ export function timeLeft(iso: string): string {
   return days === 1 ? '1 day left' : `${days} days left`;
 }
 
+/**
+ * Day grouping, pinned to London. The server renders in UTC, so through
+ * British Summer Time a job entered at 00:30 would otherwise be filed under
+ * the previous day — visible and wrong on a list grouped by date.
+ */
+const LONDON = 'Europe/London';
+
+/** "2026-09-22" in London — the key rows are grouped by. */
+export function londonDay(iso: string | number | Date): string {
+  return new Date(iso).toLocaleDateString('en-CA', { timeZone: LONDON });
+}
+
+/** "Today", "Yesterday", "Sat 20 Sept", "Sat 20 Sept 2025" — a day heading. */
+export function dayHeading(iso: string): string {
+  const day = londonDay(iso);
+  const now = Date.now();
+  if (day === londonDay(now)) return 'Today';
+  if (day === londonDay(now - 86400000)) return 'Yesterday';
+  return new Date(iso).toLocaleDateString('en-GB', {
+    timeZone: LONDON,
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    ...(day.slice(0, 4) === londonDay(now).slice(0, 4) ? {} : { year: 'numeric' }),
+  });
+}
+
 /** "4h 12m", "3d 2h" — time spent in a state, for the ops board. */
 export function dwell(iso: string): string {
   const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));

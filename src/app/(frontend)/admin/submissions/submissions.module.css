@@ -1,5 +1,6 @@
-/* /admin/submissions — cards rather than a table, so a job reads the same on
-   a phone as on a desk: nothing to scroll sideways, contact details tappable. */
+/* /admin/submissions — one compact row per job, banded into days. A row is a
+   grid, not a table row, so on a narrow screen it reflows into stacked blocks
+   instead of scrolling sideways, and contact details stay tappable. */
 
 .tiles {
   display: grid;
@@ -66,67 +67,190 @@
   color: #fff;
 }
 
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr));
-  gap: 14px;
-}
-.card {
-  background: var(--white);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-}
-.cardHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.when {
-  font-size: 13px;
-  color: var(--ink-3);
-}
-.title {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--jd-green-dark);
-  line-height: 1.3;
-  overflow-wrap: anywhere;
-}
-.words {
+.lede {
   font-size: 14px;
   color: var(--ink-2);
-  line-height: 1.45;
-  overflow-wrap: anywhere;
+  margin: -6px 0 18px;
 }
-.facts {
+
+/* A day's worth of submissions. */
+.day {
+  margin-bottom: 26px;
+}
+.dayHead {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-3);
+  margin: 0 0 8px;
 }
-.fact {
+.dayCount {
+  font-size: 11px;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
   background: var(--cream);
   border: 1px solid var(--rule);
   border-radius: 999px;
-  padding: 3px 10px;
+  padding: 1px 8px;
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+.row {
+  display: grid;
+  grid-template-columns: 136px minmax(0, 1fr) 216px 92px;
+  grid-template-areas: 'status main outreach when';
+  gap: 6px 16px;
+  align-items: start;
+  padding: 12px 16px;
+  min-width: 0;
+}
+.row:hover {
+  background: var(--cream);
+}
+.row + .row {
+  border-top: 1px solid var(--rule);
+}
+.row > .status {
+  grid-area: status;
+  justify-self: start;
+  margin-top: 2px;
+}
+.rowMain {
+  grid-area: main;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.rowOutreach {
+  grid-area: outreach;
+  min-width: 0;
+}
+.rowWhen {
+  grid-area: when;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--jd-green-dark);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.words {
   font-size: 13px;
   color: var(--ink-2);
+  line-height: 1.4;
+  margin: 0;
+  overflow-wrap: anywhere;
+  /* Two lines of the customer's own words, then stop. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+/* Facts run as one dot-separated line — pills cost a row of height each. */
+.facts {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.4;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.fact i {
+  font-style: normal;
+  color: var(--rule-strong, #c9c9bd);
 }
 .contact {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 14px;
-  font-size: 14px;
+  gap: 2px 14px;
+  font-size: 13px;
+  margin: 0;
   overflow-wrap: anywhere;
 }
 .contact a {
   color: var(--jd-green);
+}
+
+/* The outreach summary: a bar and the three numbers, opening the modal. */
+.mini {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  padding: 4px 6px;
+  margin: 0 -6px;
+  border-radius: 6px;
+}
+.mini:hover {
+  background: var(--jd-green-pale);
+}
+.miniNums {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.miniNums b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+/* Its own line, so it never wraps raggedly off the end of the numbers. */
+.miniBad {
+  display: block;
+  font-style: normal;
+  color: #a02a2a;
+}
+.standing {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+/* Under ~1080px the four columns stop fitting: stack them instead. */
+@media (max-width: 1080px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'status when'
+      'main main'
+      'outreach outreach';
+    gap: 8px 12px;
+    padding: 14px 16px;
+  }
+  .rowWhen {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+  .rowOutreach:empty {
+    display: none;
+  }
 }
 
 /* Status */
@@ -320,32 +444,22 @@
 }
 
 .bar {
+  display: flex;
+  width: 100%;
   height: 6px;
   border-radius: 3px;
   background: var(--jd-green-pale);
   overflow: hidden;
-  display: flex;
 }
 .barOpened { background: #9cc58f; }
 .barResponded { background: var(--jd-green-dark); }
 
 .note {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ink-3);
-}
-.foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
-  flex-wrap: wrap;
-  font-size: 13px;
-  color: var(--ink-2);
-  border-top: 1px solid var(--rule);
-  padding-top: 10px;
 }
 .more {
   color: var(--jd-green);
   font-weight: 600;
-  padding: 6px 0;
+  white-space: nowrap;
 }
