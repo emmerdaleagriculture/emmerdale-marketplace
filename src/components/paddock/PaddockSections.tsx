@@ -59,7 +59,8 @@ export function ServicesSection({
         <h2 className={s.sectionTitle}>{title}</h2>
         <p className={s.sectionLede}>{lede}</p>
         <div className={s.services}>
-          {services.map((svc) => (
+          {/* services.listed === false is routable but not advertised. */}
+          {services.filter((svc) => svc.listed !== false).map((svc) => (
             <span key={svc.id} className={s.serviceTag}>
               {svc.name}
             </span>

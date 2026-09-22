@@ -21,7 +21,7 @@ export const getCounties = memoize<CountyOption[]>(async () => {
 
 export const getServices = memoize<ServiceOption[]>(async () => {
   const supabase = createStaticClient();
-  const { data } = await supabase.from('services').select('id, name').order('id');
+  const { data } = await supabase.from('services').select('id, name, listed').order('id');
   return data ?? [];
 }, REFERENCE_TTL_MS);
 

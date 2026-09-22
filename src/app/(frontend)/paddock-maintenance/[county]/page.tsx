@@ -118,7 +118,7 @@ export default async function PaddockCountyPage({
     '@context': 'https://schema.org',
     '@type': 'Service',
     name: `Paddock maintenance in ${name}`,
-    serviceType: services.map((svc) => svc.name),
+    serviceType: services.filter((svc) => svc.listed !== false).map((svc) => svc.name),
     description: `Paddock maintenance and agricultural contracting in ${name} — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance for paddock owners, equestrian yards, smallholdings, farms and estates.`,
     url: `${SITE}/paddock-maintenance/${county}`,
     areaServed: { '@type': 'AdministrativeArea', name },
