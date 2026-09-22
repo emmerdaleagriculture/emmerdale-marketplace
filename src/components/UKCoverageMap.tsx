@@ -12,21 +12,27 @@ export function UKCoverageMap({
   className,
   pathClassName,
   showCounts = false,
+  unit,
+  label,
 }: {
   counts: Record<string, number>;
   className?: string;
   pathClassName?: string;
   /** Admin only — public pages must not reveal per-county contractor numbers. */
   showCounts?: boolean;
+  /** What the numbers are, when they are not contractors. */
+  unit?: { one: string; many: string; none: string };
+  /** What the map is of, for the aria label. */
+  label?: string;
 }) {
   return (
     <svg
       viewBox={UK_MAP_VIEWBOX}
       className={className}
       role="img"
-      aria-label={coverageMapLabel(counts)}
+      aria-label={coverageMapLabel(counts, label)}
     >
-      {coverageShapes(counts, showCounts).map((c) => (
+      {coverageShapes(counts, showCounts, unit).map((c) => (
         <path
           key={c.name}
           d={c.d}

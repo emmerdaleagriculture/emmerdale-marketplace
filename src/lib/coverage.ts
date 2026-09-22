@@ -21,8 +21,21 @@ export const coverageFill = (n: number) => COVERAGE_BINS.find((b) => n >= b.min)
 
 export const UK_COUNTY_NAMES = Object.keys(UK_COUNTY_PATHS);
 
-/** The counties as drawable shapes: path, fill and tooltip for each. */
-export function coverageShapes(counts: Record<string, number>, showCounts = false) {
+/**
+ * The counties as drawable shapes: path, fill and tooltip for each.
+ *
+ * `unit` exists because the admin map now also plots job counts, and a
+ * tooltip reading "Devon — 7 contractors" over a job count is simply wrong.
+ * It defaults to contractors, so every existing caller — the public map
+ * included — is unchanged.
+ */
+export function coverageShapes(
+  counts: Record<string, number>,
+  showCounts = false,
+  unit: { one: string; many: string; none: string } = {
+    one: 'contractor', many: 'contractors', none: 'no coverage yet',
+  },
+) {
   return UK_COUNTY_NAMES.map((name) => {
     const n = counts[name] ?? 0;
     return {
@@ -31,7 +44,7 @@ export function coverageShapes(counts: Record<string, number>, showCounts = fals
       fill: coverageFill(n),
       /** Admin only — public pages must not reveal per-county contractor numbers. */
       title: showCounts
-        ? `${name} — ${n === 0 ? 'no coverage yet' : `${n} contractor${n === 1 ? '' : 's'}`}`
+        ? `${name} — ${n === 0 ? unit.none : `${n} ${n === 1 ? unit.one : unit.many}`}`
         : `${name} — ${n === 0 ? 'not covered yet' : 'covered'}`,
     };
   });
@@ -48,7 +61,7 @@ export function coverageBinsInUse(counts: Record<string, number>) {
 }
 
 /** Alt/aria text for the whole map. */
-export function coverageMapLabel(counts: Record<string, number>) {
+export function coverageMapLabel(counts: Record<string, number>, what = 'contractor coverage') {
   const covered = UK_COUNTY_NAMES.filter((n) => (counts[n] ?? 0) > 0).length;
-  return `Map of Great Britain showing contractor coverage: ${covered} of ${UK_COUNTY_NAMES.length} counties covered`;
+  return `Map of Great Britain showing ${what}: ${covered} of ${UK_COUNTY_NAMES.length} counties covered`;
 }

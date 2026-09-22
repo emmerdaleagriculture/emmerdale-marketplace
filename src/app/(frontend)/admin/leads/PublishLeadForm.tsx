@@ -1,13 +1,12 @@
 'use client';
 
-import { useActionState } from 'react';
-import { publishLeadAsSubmissionAction } from './actions';
-import type { FormState } from '@/lib/form';
+import { useActionState, useEffect, useState } from 'react';
+import { publishLeadAsSubmissionAction, type PublishLeadState } from './actions';
 import type { ServiceOption } from '@/components/forms/ServicePicker';
 import f from '@/components/forms/forms.module.css';
 import a from '../../auth.module.css';
 
-const EMPTY: FormState = {};
+const EMPTY: PublishLeadState = {};
 
 /**
  * Publish a reviewed lead into the sealed-quote flow.
@@ -37,28 +36,45 @@ export function PublishLeadForm({
   };
 }) {
   const [state, act, pending] = useActionState(publishLeadAsSubmissionAction, EMPTY);
+  // What the operator last typed wins over the lead's own values: React
+  // resets the form when the action resolves, so a rejection would otherwise
+  // throw away a rewritten description and re-seed it from the raw lead.
+  const v = { ...defaults, ...(state.values ?? {}) } as typeof defaults & { consent?: boolean };
+  // Remount the form on every rejection, so the fields pick up the echoed
+  // values as their defaults.
+  //
+  // React calls form.reset() once the action resolves, and that runs AFTER
+  // effects — so a <select value={…}> is wiped in the DOM with no further
+  // render to put it back, and the next submit fails on "Pick the service
+  // first" while the operator is looking at a form that appears filled in.
+  // Measured, not assumed: formData carried service_id=1 into the action and
+  // the select read "" afterwards. A fresh mount sidesteps reset entirely.
+  const [mount, setMount] = useState(0);
+  useEffect(() => {
+    if (state.values) setMount((n) => n + 1);
+  }, [state.values]);
 
   return (
-    <form action={act}>
+    <form action={act} key={mount}>
       <input type="hidden" name="lead_id" value={leadId} />
       {state.error && <p className={f.error}>{state.error}</p>}
 
       <div className={a.row2}>
         <label className={f.field}>
           <span className={f.label}>Customer name</span>
-          <input className={f.input} name="customer_name" required defaultValue={defaults.customer_name} />
+          <input className={f.input} name="customer_name" required defaultValue={v.customer_name} />
         </label>
         <label className={f.field}>
           <span className={f.label}>Phone</span>
-          <input className={f.input} name="customer_phone" defaultValue={defaults.customer_phone} />
+          <input className={f.input} name="customer_phone" defaultValue={v.customer_phone} />
         </label>
         <label className={f.field}>
           <span className={f.label}>Email</span>
-          <input className={f.input} name="customer_email" type="email" defaultValue={defaults.customer_email} />
+          <input className={f.input} name="customer_email" type="email" defaultValue={v.customer_email} />
         </label>
         <label className={f.field}>
           <span className={f.label}>County</span>
-          <select className={f.input} name="county_id" required defaultValue={defaults.county_id ?? ''}>
+          <select className={f.input} name="county_id" required defaultValue={String(v.county_id ?? '')}>
             <option value="">Pick one…</option>
             {counties.map((c) => (
               <option key={c.id} value={c.id}>
@@ -74,7 +90,7 @@ export function PublishLeadForm({
 
       <label className={f.field}>
         <span className={f.label}>Service</span>
-        <select className={f.input} name="service_id" required defaultValue={defaults.service_id ?? ''}>
+        <select className={f.input} name="service_id" required defaultValue={String(v.service_id ?? '')}>
           <option value="">Pick one…</option>
           {services.map((sv) => (
             <option key={sv.id} value={sv.id}>
@@ -89,13 +105,13 @@ export function PublishLeadForm({
 
       <label className={f.field}>
         <span className={f.label}>The job, in the customer&rsquo;s words</span>
-        <textarea className={f.textarea} name="details" required rows={4} defaultValue={defaults.details} />
+        <textarea className={f.textarea} name="details" required rows={4} defaultValue={v.details} />
         <span className={f.hint}>This is what a contractor reads on the quote page.</span>
       </label>
 
       <div className={a.groupTitle}>Consent (required)</div>
       <label className={f.checkRow}>
-        <input type="checkbox" name="consent" />
+        <input type="checkbox" name="consent" defaultChecked={v.consent} />
         <span>
           The customer has consented to us passing their name and contact details
           to one or more vetted contractors in our network so they can contact the

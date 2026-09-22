@@ -4,6 +4,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { landCoverage } from '@/lib/radiusCoverage';
 import { UKCoverageMap } from '@/components/UKCoverageMap';
 import { COVERAGE_BINS, UK_COUNTY_NAMES } from '@/lib/coverage';
+import { getCountyCoverage } from '@/lib/reference';
 import { RadiusMap, type MapContractor } from './RadiusMap';
 import s from '../admin.module.css';
 import c from './coverage.module.css';
@@ -46,7 +47,11 @@ export default async function AdminCoveragePage({
   const view: View = VIEWS.some(([k]) => k === sp.view) ? (sp.view as View) : 'reach';
 
   const admin = createServiceRoleClient();
-  const [{ data: rows }, { data: counties }, { data: dash }] = await Promise.all([
+  // Each view pays only for itself: the radius passes are four full land
+  // sweeps, and admin_dashboard is a heavy aggregate. Before, every request
+  // did both whichever view was asked for.
+  const needsReach = view === 'reach';
+  const [{ data: rows }, { data: counties }, dashRes, ticked] = await Promise.all([
     admin
       .from('contractors')
       .select('id, business_name, base_postcode, base_lat, base_lng')
@@ -54,9 +59,13 @@ export default async function AdminCoveragePage({
       .not('vetted_at', 'is', null)
       .order('business_name'),
     admin.from('counties').select('name, country'),
-    // Carries jobs AND contractors per county, so one call feeds both
-    // choropleths rather than each page computing its own.
-    admin.rpc('admin_dashboard'),
+    // Only the Jobs view needs it: it is the one count nothing else exposes.
+    view === 'jobs' ? admin.rpc('admin_dashboard') : Promise.resolve({ data: null, error: null }),
+    // Contractors per county stays on getCountyCoverage — the definition the
+    // legend describes and the public map uses (approved, vetting aside).
+    // admin_dashboard counts approved AND vetted, so sourcing it there would
+    // have quietly disagreed with the map on the front page.
+    view === 'contractors' ? getCountyCoverage() : Promise.resolve({} as Record<string, number>),
   ]);
 
   const contractors = rows ?? [];
@@ -72,18 +81,17 @@ export default async function AdminCoveragePage({
   const missing = contractors.filter((r) => r.base_lat == null || r.base_lng == null);
 
   const countryOf = Object.fromEntries((counties ?? []).map((co) => [co.name, co.country]));
-  const coverage = RADII.map((radius) => landCoverage(plotted, radius, countryOf));
+  const coverage = needsReach ? RADII.map((radius) => landCoverage(plotted, radius, countryOf)) : [];
 
-  // Per-county counts for the two choropleths, from the one dashboard read.
-  const dashCounties = ((dash as { counties?: { name: string; jobs: number; contractors: number }[] } | null)
-    ?.counties ?? []);
-  const byContractors: Record<string, number> = {};
+  // A failed read must not draw an empty map and call it zero coverage —
+  // /admin/metrics says so out loud for the same call, and this page used to
+  // report the failure as "0 of 91 counties".
+  const dashError = (dashRes as { error?: { message: string } | null }).error ?? null;
+  const dashCounties =
+    ((dashRes as { data?: { counties?: { name: string; jobs: number }[] } | null }).data?.counties ?? []);
   const byJobs: Record<string, number> = {};
-  for (const co of dashCounties) {
-    if (co.contractors > 0) byContractors[co.name] = co.contractors;
-    if (co.jobs > 0) byJobs[co.name] = co.jobs;
-  }
-  const counts = view === 'jobs' ? byJobs : byContractors;
+  for (const co of dashCounties) if (co.jobs > 0) byJobs[co.name] = co.jobs;
+  const counts = view === 'jobs' ? byJobs : ticked;
   const withAny = UK_COUNTY_NAMES.filter((nm) => (counts[nm] ?? 0) > 0);
   const blurb = VIEWS.find(([k]) => k === view)![2];
 
@@ -105,7 +113,9 @@ export default async function AdminCoveragePage({
         ))}
       </nav>
 
-      {view === 'reach' ? (
+      {view === 'jobs' && dashError ? (
+        <div className={s.blocked}>Couldn&rsquo;t load job counts: {dashError.message}</div>
+      ) : view === 'reach' ? (
         <>
           <p className={s.sub}>
             {plotted.length} approved contractors, each with a circle round their base. Blank map
@@ -130,12 +140,23 @@ export default async function AdminCoveragePage({
             </span>
           </div>
           <div className={s.mapRow}>
-            <UKCoverageMap counts={counts} className={s.map} pathClassName={s.mapCounty} showCounts />
+            <UKCoverageMap
+              counts={counts}
+              className={s.map}
+              pathClassName={s.mapCounty}
+              showCounts
+              {...(view === 'jobs'
+                ? {
+                    unit: { one: 'job', many: 'jobs', none: 'no jobs yet' },
+                    label: 'where jobs have come from',
+                  }
+                : {})}
+            />
             <div className={s.mapLegend}>
               {COVERAGE_BINS.map((b) => (
                 <div key={b.label} className={s.mapLegendRow}>
                   <span className={s.mapSwatch} style={{ background: b.fill }} />
-                  {b.label}
+                  {view === 'jobs' ? b.label.replace(/contractors?/, 'jobs').replace('No coverage yet', 'None yet') : b.label}
                 </div>
               ))}
               <details className={s.mapList}>
