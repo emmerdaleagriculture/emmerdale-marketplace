@@ -467,8 +467,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `${p.service ?? 'your job'}. I wanted to follow up personally and answer any ` +
           `questions before you decide.\n\n` +
           `A few things worth knowing about how we work:\n\n` +
-          `• Every approved operator is vetted and fully insured before they’re allowed to ` +
-          `price your job.\n` +
+          `• Every approved operator is vetted before they’re allowed to price your job, ` +
+          `and every job carries our own £5m public liability cover.\n` +
           `• They take before-and-after photos of the work, so you can see exactly what’s ` +
           `been done.\n` +
           `• We don’t release payment to the operator until you’ve confirmed you’re happy — ` +
@@ -489,7 +489,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `Hi ${first}, it’s Tom from Emmerdale Agriculture.\n\n` +
           `Just checking in on the price${Number(p.quote_count ?? 1) === 1 ? '' : 's'} you got ` +
-          `for ${p.service ?? 'your job'}. All our operators are fully vetted and insured, and ` +
+          `for ${p.service ?? 'your job'}. All our operators are vetted and every job is covered ` +
+          `by our own insurance, and ` +
           `they take before and after photos so you can see the work — we only release payment ` +
           `once you’re happy with the job.\n\n` +
           `Ready to go ahead? Open your job page and hit “Accept this price” on the one you ` +

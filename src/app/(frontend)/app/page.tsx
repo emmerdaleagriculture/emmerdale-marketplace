@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const TRUST = ['Prices upfront', 'Fully insured', 'Vetted & fully trained'];
+const TRUST = ['Prices upfront', 'Every job insured', 'Vetted contractors'];
 
 export default async function AppHomePage() {
   const user = await getUser();

@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.0 — 5 September 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.1 — 22 September 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -45,18 +45,32 @@ export default function TermsPage() {
             is done, and are responsible for your own tax and National Insurance.
           </p>
 
-          <h2>2. Approval, insurance and certificates</h2>
+          <h2>2. Approval, cover and competence</h2>
           <p>
-            Registration is free and subject to approval. To be approved and to stay
-            approved you must hold public liability insurance of at least{' '}
-            <strong>£2 million</strong> and the certificates required for the work you
-            take on — spraying, chainsaw, machinery and so on. You must tell us if any
-            of that lapses or changes, and give us evidence when we ask.
+            Registration is free and subject to approval. We check who you are and that
+            you are a working contracting business, and we speak to you before any job
+            reaches you.
           </p>
           <p>
-            We may suspend or remove an account where work falls short, where conduct
-            towards a customer is unacceptable, or where insurance or certification
-            cannot be evidenced.
+            Work you carry out for us is covered by our own public liability insurance,
+            so <strong>you are not required to hold cover of your own</strong> in order
+            to take jobs through us. That cover applies only to work booked through us
+            — see clause 8 on working off-platform.
+          </p>
+          <p>
+            We do not ask to see spraying, chainsaw or machinery certificates. What you
+            are qualified and ticketed to operate is your responsibility as an
+            independent business, and{' '}
+            <strong>
+              you must not take on work you are not competent and lawfully entitled to
+              carry out
+            </strong>
+            . Where the law requires a certificate for the work — spraying in
+            particular — holding it remains your obligation, not ours to verify.
+          </p>
+          <p>
+            We may suspend or remove an account where work falls short or where conduct
+            towards a customer is unacceptable.
           </p>
 
           <h2>3. Being invited, and pricing</h2>

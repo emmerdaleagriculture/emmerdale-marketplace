@@ -29,7 +29,7 @@ export default function ServiceCharterPage() {
           <h1>What to expect from us</h1>
           <p className={l.updated}>
             Emmerdale Agriculture — Customer Service Charter ·{' '}
-            <strong>Version 2.0, 10 September 2026</strong>
+            <strong>Version 2.1, 22 September 2026</strong>
           </p>
           <p>
             You are dealing with one company for the whole job: us. This is what that means
@@ -51,10 +51,10 @@ export default function ServiceCharterPage() {
           </p>
           <p>
             <strong>Vetted contractors.</strong> Every contractor on our platform has been
-            checked: identity, insurance (public liability of at least £2m), the right
-            certificates for the work (spraying, chainsaw, machinery), and an introductory
-            call or supervised first job. They&rsquo;ve signed up to our Contractor Code of
-            Conduct.
+            checked before they see a job: who they are, that they are a working
+            contracting business, and a conversation with us. They&rsquo;ve signed up to
+            our Contractor Code of Conduct. Whoever does the work, the job is covered by
+            our own insurance — you are not relying on their paperwork.
           </p>
 
           <h2>After you book</h2>
@@ -111,9 +111,9 @@ export default function ServiceCharterPage() {
             you. If that isn&rsquo;t possible, we reduce the price by an appropriate amount.
           </p>
           <p>
-            <strong>Insured.</strong> We carry £5 million of public liability cover on work
-            done through our service, on top of each contractor&rsquo;s own insurance. If
-            something goes wrong, we manage the claim with you.
+            <strong>Insured.</strong> We carry £5 million of public liability cover on
+            every job done through our service. If something goes wrong, we manage the
+            claim with you — you deal with us, not with the contractor&rsquo;s insurer.
           </p>
 
           <h2>If you need to cancel</h2>

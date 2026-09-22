@@ -40,7 +40,7 @@ export default function CustomerTermsPage() {
             as Emmerdale Agriculture at emmerdaleagriculture.com (<strong>we</strong>,{' '}
             <strong>us</strong>, <strong>Emmerdale Agriculture</strong>).
             <br />
-            <strong>Version 2.0 — 10 September 2026</strong>
+            <strong>Version 2.1 — 22 September 2026</strong>
           </p>
 
           <p>
@@ -218,9 +218,9 @@ export default function CustomerTermsPage() {
           <p>
             8.4 If the Contractor damages your property, tell us and the Contractor on the day.
             The Contractor is required to report it too. We carry public liability insurance
-            of <strong>£5,000,000</strong> covering work done through our service, and we
-            require every Contractor to hold their own insurance. We will manage the claim with
-            you.
+            of <strong>£5,000,000</strong> covering work done through our service, and you
+            claim against us rather than against the Contractor. We will manage the claim
+            with you.
           </p>
           <p>
             8.5 If you are a consumer, nothing in these Terms takes away your rights under the

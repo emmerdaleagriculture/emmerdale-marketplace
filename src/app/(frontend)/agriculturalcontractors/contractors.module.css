@@ -1,0 +1,156 @@
+/* /agriculturalcontractors — the supply-side landing page.
+
+   Only the bits the shared kits don't already cover. Layout skeleton comes
+   from auth.module.css (`a`) and the section furniture from
+   landing.module.css (`s`), exactly as the other indexable landing pages do.
+   Note home.module.css is NOT usable here: its palette variables are scoped
+   to `.page` and would resolve to nothing outside the front page. */
+
+/* auth.module.css's .title is sized for form pages, where nothing competes
+   with it. Here the centred section headings below are larger, so the hero
+   would be outranked by its own subheadings without this. */
+.heroTitle {
+  font-size: clamp(34px, 5.4vw, 56px);
+  margin-bottom: 14px;
+}
+.heroSub {
+  font-size: clamp(16px, 2vw, 19px);
+  max-width: 620px;
+}
+
+/* The claim in four words, for the reader who scrolls no further. */
+.trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.trustItem {
+  border: 1px solid var(--rule);
+  background: var(--white);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+/* Hero call to action. */
+.heroCta {
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  gap: 16px 20px;
+  flex-wrap: wrap;
+}
+.heroMeta {
+  font-size: 14px;
+  color: var(--ink-2);
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* The four things we take off their hands. Two up, one up on a phone. */
+.reasons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+@media (max-width: 760px) {
+  .reasons {
+    grid-template-columns: 1fr;
+  }
+}
+.reason {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 26px 28px;
+  min-width: 0;
+}
+.reasonH {
+  font-family: var(--font-display-stack);
+  font-size: 21px;
+  line-height: 1.25;
+  color: var(--jd-green-deep);
+  margin-bottom: 10px;
+}
+.reasonBody {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.65;
+}
+.reasonBody + .reasonBody {
+  margin-top: 10px;
+}
+
+/* "All we ask" — two obligations, side by side, numbered like the steps. */
+.ask {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+@media (max-width: 760px) {
+  .ask {
+    grid-template-columns: 1fr;
+  }
+}
+.askItem {
+  border-top: 3px solid var(--jd-green);
+  padding-top: 20px;
+}
+.askH {
+  font-family: var(--font-display-stack);
+  font-size: 20px;
+  line-height: 1.25;
+  color: var(--jd-green-deep);
+  margin-bottom: 8px;
+}
+.askBody {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* Closing ask. Pale green so it reads as a stop, not another section. */
+.closing {
+  background: var(--jd-green-pale);
+  padding: 76px 24px;
+  text-align: center;
+}
+.closingInner {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.closingTitle {
+  font-family: var(--font-display-stack);
+  font-weight: 400;
+  font-size: clamp(26px, 3.4vw, 38px);
+  line-height: 1.15;
+  color: var(--jd-green-deep);
+  margin-bottom: 14px;
+}
+.closingTitle em {
+  font-style: italic;
+  font-family: var(--font-serif);
+  color: var(--jd-green);
+}
+.closingBody {
+  color: var(--ink-2);
+  line-height: 1.65;
+  margin-bottom: 28px;
+}
+.closingMeta {
+  margin-top: 18px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.closingMeta a {
+  color: var(--jd-green);
+  border-bottom: 1px solid var(--rule);
+}

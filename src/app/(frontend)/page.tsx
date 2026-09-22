@@ -46,7 +46,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Get prices from approved operators near you',
   description:
-    'A managed marketplace for rural land. Tell us what needs doing and approved operators near you — vetted, trained and insured — come back with prices you can compare side by side.',
+    'A managed marketplace for rural land. Tell us what needs doing and approved operators near you come back with prices you can compare side by side — with every job covered by our own insurance.',
   alternates: { canonical: '/' },
 };
 
@@ -157,13 +157,13 @@ const TICKER = [
 /** The hero's three promises, each the answer to a real hesitation. */
 const PROMISES: [string, string][] = [
   ['Several prices, not one.', 'Approved operators near you price your job, usually inside 24 hours.'],
-  ['Vetted, trained and fully insured.', 'We check the paperwork so you don’t have to ask.'],
+  ['Vetted operators, and every job insured.', 'Our own £5m policy covers the work, whoever does it.'],
   ['We hold your deposit until you’re happy.', 'The contractor gets paid when you say the job’s right.'],
 ];
 
 const STEPS: [string, string][] = [
   ['You tell us the job', 'Pick a service and give us a postcode. About a minute.'],
-  ['We ask operators near you', 'Vetted, trained and insured. They price your job directly.'],
+  ['We ask operators near you', 'Vetted, and the work insured by us. They price your job directly.'],
   ['You compare prices', 'Side by side, with distance. Sort by price.'],
   ['You book and pay online', 'A 15% deposit to book, and the rest once the work is done.'],
   ['The work gets done', 'Before and after photos land on your job page.'],
@@ -242,10 +242,10 @@ export default async function LandingPage() {
               <p className={s.kicker}>A managed marketplace for rural land</p>
               <h1 className={s.heroH1}>Get prices from approved operators near you.</h1>
               <p className={s.heroSub}>
-                Tell us what needs doing. Operators covering your patch — vetted,
-                trained and insured — price the job, <strong>you see them side by
-                side</strong>, and you book the one you want. No phone calls out
-                of the blue.
+                Tell us what needs doing. Vetted operators covering your patch
+                price the job, <strong>you see them side by side</strong>, and
+                you book the one you want — with the work insured by us. No
+                phone calls out of the blue.
               </p>
               <ul className={s.promises}>
                 {PROMISES.map(([title, body]) => (

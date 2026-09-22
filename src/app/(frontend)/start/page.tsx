@@ -20,13 +20,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const TRUST = ['Prices upfront', 'Vetted & fully trained', 'Fully insured', 'Pay online'];
+const TRUST = ['Prices upfront', 'Vetted contractors', 'Every job insured', 'Pay online'];
 
 const AFTER_STEPS: [string, string][] = [
   ['You tell us what needs doing', 'In your own words. Takes about a minute — no account needed.'],
   [
     'We ask contractors who cover your area',
-    'Approved operators we’ve vetted, trained and insured. They price your job directly — your contact details stay with us until you accept a price.',
+    'Approved operators we’ve vetted, with the work covered by our own insurance. They price your job directly — your contact details stay with us until you accept a price.',
   ],
   [
     'You see their prices side by side',
