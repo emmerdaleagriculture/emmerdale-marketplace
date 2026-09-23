@@ -168,9 +168,10 @@ export async function cancelJobAction(_prev: FormState, formData: FormData): Pro
 /**
  * Operator: record first contact on the contractor's behalf (§25).
  *
- * The contractor is meant to tap "I've contacted the customer" on /won, and
- * the ops board raises "no contact after 24h" until they do. When they have
- * called but not tapped, the only fix was the database. This makes the same
+ * Contact is assumed rather than chased (the ops board no longer flags an
+ * awarded job), but the record is still worth having when we learn of it —
+ * a contractor who called and never tapped "I've contacted the customer" on
+ * /won. This makes the same
  * awarded → contacted move, logged as the operator with the reason — and
  * WITHOUT time_to_first_contact, because the moment we heard about it is not
  * the moment it happened, and the supply-health figures should not pretend
