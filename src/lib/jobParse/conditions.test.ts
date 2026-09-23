@@ -89,6 +89,16 @@ describe('describeConditions', () => {
     ]);
   });
 
+  it('lists answers in the order they were asked, whatever order they were stored in', () => {
+    const stored = { gates: 'none', posts: 'wooden', height: '4ft', fence_type: 'picket' };
+    expect(describeConditions('Fencing', stored).map(([label]) => label)).toEqual([
+      'Fence type',
+      'Height',
+      'Posts',
+      'Gates',
+    ]);
+  });
+
   it('keeps keys it does not know rather than hiding them', () => {
     expect(describeConditions(null, { soil_type: 'heavy_clay' })).toEqual([
       ['soil type', 'heavy clay'],
