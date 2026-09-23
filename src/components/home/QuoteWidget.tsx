@@ -37,12 +37,17 @@ export function QuoteWidget() {
   const submit = () => {
     // LandingFlow already has a prefill contract — `job` fills the description,
     // `loc` fills the location, `src` marks an internal hand-off so an organic
-    // arrival doesn't count as "(direct)" against the paid funnel. Reuse it
-    // rather than inventing `service`/`postcode` params it would ignore.
+    // arrival doesn't count as "(direct)" against the paid funnel. Reuse it;
+    // `service` is its one addition, below.
     const chosen = HOME_SERVICES.find((x) => x.slug === service);
     const params = new URLSearchParams();
     // "other" deliberately prefills nothing: they said they'd describe it.
-    if (chosen) params.set('job', chosen.name);
+    if (chosen) {
+      params.set('job', chosen.name);
+      // The pick itself, so a service with its own questions (fencing) can
+      // open them instead of treating the name as a description.
+      params.set('service', chosen.slug);
+    }
     if (postcode.trim()) params.set('loc', postcode.trim());
     params.set('src', 'home');
 

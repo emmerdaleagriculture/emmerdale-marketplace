@@ -289,8 +289,9 @@ export default async function LandingPage() {
                   // `job` and `src` are LandingFlow's existing prefill params:
                   // the card's service arrives already typed into the
                   // description, and the hand-off is attributed to the home
-                  // page rather than showing up as "(direct)".
-                  href={`${START_HREF}?job=${encodeURIComponent(svc.name)}&src=home`}
+                  // page rather than showing up as "(direct)". `service` is
+                  // the pick itself, which opens a service's own questions.
+                  href={`${START_HREF}?job=${encodeURIComponent(svc.name)}&service=${svc.slug}&src=home`}
                 />
               ))}
             </div>
