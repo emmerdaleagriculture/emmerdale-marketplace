@@ -12,7 +12,7 @@ import { LlmParseSchema, RECORD_JOB_PARSE_TOOL, type LlmParse } from './schema';
  */
 
 export const MODEL_VERSION = 'claude-haiku-4-5';
-export const PROMPT_VERSION = 'v2'; // v2: Hedge cutting added; hedges removed from Flailing
+export const PROMPT_VERSION = 'v3'; // v3: Fencing, Ditch clearance, and seven machinery/forestry services; v2: Hedge cutting
 
 /** Hard latency ceiling on the parse call (spec §4 step 2). */
 // 15 s, up from 8: Haiku averages ~2.7 s here, but one live customer hit the
@@ -44,6 +44,13 @@ Services (choose exactly one, or "unmatched"):
 - Tractor hire (events) — hiring a tractor (with driver) for an event or show
 - Hedge cutting — cutting or trimming hedges, usually with a tractor-mounted flail arm; measured in metres of hedge
 - Fencing — supplying and erecting or repairing fencing: post-and-rail, stock netting, equestrian; measured in metres of fence
+- General tractor work — general tractor work that fits no more specific service: moving, loading, pulling or odd jobs with a tractor and driver; usually by the hour or day
+- Trailer work — carting or hauling with a tractor and trailer: moving bales, muck, timber, spoil or materials; usually by the load, hour or day
+- Road grading — grading and re-levelling farm tracks, drives or unmade roads, filling potholes and restoring the camber; measured in metres of track
+- Fixed tooth mulching — forestry mulching with a fixed-tooth mulcher: grinding scrub, saplings, stumps or brash down to mulch; measured by area
+- Excavator work — digging with an excavator or digger: trenches, footings, ponds, spoil moving; usually by the hour or day
+- Road construction/repair — building or repairing farm tracks, drives or access roads: excavating, laying stone and surfacing; measured in metres of track
+- Mounding — forestry mounding with an excavator to prepare ground for tree planting; measured by area
 
 Rules:
 - "unmatched" is a legitimate, first-class answer. Prefer it over a poor fit — a wrong confident classification is worse than an honest unmatched.
