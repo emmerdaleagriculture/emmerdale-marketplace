@@ -12,8 +12,8 @@ export const dynamic = 'force-dynamic';
 
 /**
  * The live operations board (spec v1.6 §30 view 1) — the screen the business
- * runs on. Every open job, grouped into five lanes, overdue first then oldest
- * dwell, each row carrying what's needed to act without opening it: customer
+ * runs on. Every open job, grouped into five lanes — awarded work first —
+ * newest job first within each, overdue rows marked in red; each row carrying what's needed to act without opening it: customer
  * and phone, outreach (invited / opened / priced), prices, deposit and balance,
  * the winning contractor, the clock against its threshold, and the next step.
  *
@@ -56,10 +56,12 @@ type Job = {
 
 type Tone = 'open' | 'good' | 'bad';
 
+// Awarded work first (Tom, 2026-09-23): those are the booked jobs with
+// money on them, and the ones a phone call is most likely to be about.
 const LANES: { key: string; title: string; tone: Tone; states: OpsState[] }[] = [
+  { key: 'delivery', title: 'Awarded & on site', tone: 'good', states: ['awarded', 'contacted', 'scheduled', 'in_progress'] },
   { key: 'quoting', title: 'Getting prices', tone: 'open', states: ['confirmed', 'distributed', 'quotes_receiving'] },
   { key: 'deposit', title: 'Awaiting deposit', tone: 'open', states: ['accepted_awaiting_payment'] },
-  { key: 'delivery', title: 'Awarded & on site', tone: 'good', states: ['awarded', 'contacted', 'scheduled', 'in_progress'] },
   { key: 'signoff', title: 'Awaiting sign-off', tone: 'good', states: ['completed_by_contractor'] },
   { key: 'issues', title: 'Issues', tone: 'bad', states: ['disputed', 'variation_pending', 'variation_declined'] },
 ];
@@ -200,9 +202,12 @@ export default async function OpsPage() {
     ...lane,
     jobs: jobs
       .filter((j) => lane.states.includes(j.status))
-      .sort((a, b) => Number(b.overdue) - Number(a.overdue) || b.elapsed - a.elapsed),
+      // Newest job first. Overdue rows keep their red styling but no longer
+      // jump the queue, which would break the order the page reads in.
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
   }));
 
+  const lane = (key: string) => lanes.find((l) => l.key === key)?.jobs ?? [];
   const overdue = jobs.filter((j) => j.overdue).length;
   const closingDry = jobs.filter(
     (j) => j.expires_at && ['distributed', 'quotes_receiving'].includes(j.status) &&
@@ -216,17 +221,17 @@ export default async function OpsPage() {
   const attention: [string, number, string][] = [
     ['Overdue', overdue, lanes.find((l) => l.jobs.some((j) => j.overdue))?.key ?? 'quoting'],
     ['Closing with no prices', closingDry, 'quoting'],
-    ['Awaiting deposit', lanes[1].jobs.length, 'deposit'],
+    ['Awaiting deposit', lane('deposit').length, 'deposit'],
     ['Payment failed', paymentProblems, 'delivery'],
     ['Jobs with failed emails', bounced, 'quoting'],
-    ['Issues', lanes[4].jobs.length, 'issues'],
+    ['Issues', lane('issues').length, 'issues'],
   ];
 
   return (
     <div>
       <h1 className={s.h1}>Operations</h1>
       <p className={s.sub}>
-        {jobs.length} open job{jobs.length === 1 ? '' : 's'}. Overdue first, then longest waiting.
+        {jobs.length} open job{jobs.length === 1 ? '' : 's'}. Awarded work first, newest first; overdue in red.
       </p>
 
       {testMode && (
