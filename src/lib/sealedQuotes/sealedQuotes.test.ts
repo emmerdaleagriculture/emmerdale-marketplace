@@ -262,7 +262,8 @@ describe('isOverdue — §30 thresholds', () => {
   it('flags past-threshold states', () => {
     expect(isOverdue('confirmed', at(16 * 60 * 1000))).toBe(true);
     expect(isOverdue('confirmed', at(10 * 60 * 1000))).toBe(false);
-    expect(isOverdue('awarded', at(25 * 3600 * 1000))).toBe(true);
+    // Contact is assumed after award, not chased (2026-09-23).
+    expect(isOverdue('awarded', at(999 * 3600 * 1000))).toBe(false);
     expect(isOverdue('quotes_receiving', at(999 * 3600 * 1000))).toBe(false); // never flagged
     expect(isOverdue('unknown_state', at(999 * 3600 * 1000))).toBe(false);
   });

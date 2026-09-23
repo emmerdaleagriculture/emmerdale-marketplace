@@ -165,6 +165,51 @@ export async function cancelJobAction(_prev: FormState, formData: FormData): Pro
   return { ok: true, message: 'Cancelled and logged.' };
 }
 
+/**
+ * Operator: record first contact on the contractor's behalf (§25).
+ *
+ * Contact is assumed rather than chased (the ops board no longer flags an
+ * awarded job), but the record is still worth having when we learn of it —
+ * a contractor who called and never tapped "I've contacted the customer" on
+ * /won. This makes the same
+ * awarded → contacted move, logged as the operator with the reason — and
+ * WITHOUT time_to_first_contact, because the moment we heard about it is not
+ * the moment it happened, and the supply-health figures should not pretend
+ * otherwise.
+ */
+export async function markContactedAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const user = await assertAdmin();
+  const id = String(formData.get('submission_id') ?? '');
+  const reason = String(formData.get('reason') ?? '').trim();
+  if (!reason) return { error: 'Say how you know — it goes in the audit log.' };
+
+  const admin = createServiceRoleClient();
+  const { data: updated, error } = await admin
+    .from('job_submissions')
+    .update({ status: 'contacted' })
+    .eq('id', id)
+    .eq('status', 'awarded')
+    .select('id');
+  if (error) return { error: error.message };
+  if (!updated?.length) return { error: 'Only an awarded job can be marked contacted.' };
+
+  await admin.rpc('log_job_event', {
+    p_job_id: id,
+    p_event_type: 'status_change',
+    p_from: 'awarded',
+    p_to: 'contacted',
+    p_actor_type: 'operator',
+    p_actor_id: user.id,
+    p_reason: reason,
+    p_metadata: { recorded_by_operator: true },
+  });
+  refresh(id);
+  return { ok: true, message: 'Marked contacted.' };
+}
+
 /** Operator: mark the work complete → triggers the rating request. */
 export async function markCompletedAction(
   _prev: FormState,

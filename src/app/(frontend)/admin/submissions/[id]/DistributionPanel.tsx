@@ -5,6 +5,7 @@ import {
   cancelJobAction,
   classifyAndDistributeAction,
   setServiceAction,
+  markContactedAction,
   distributeNowAction,
   markCompletedAction,
 } from './distribution-actions';
@@ -42,6 +43,7 @@ export function DistributionPanel({
   const [completeState, complete, completing] = useActionState(markCompletedAction, EMPTY);
   const [pickedService, setPickedService] = useState('');
   const [serviceState, setService, settingService] = useActionState(setServiceAction, EMPTY);
+  const [contactState, markContacted, markingContacted] = useActionState(markContactedAction, EMPTY);
 
   const cancellable = ['confirmed', 'distributed', 'quotes_receiving', 'accepted_awaiting_payment'].includes(status);
   const completable = ['awarded', 'contacted', 'scheduled', 'in_progress', 'completed_by_contractor'].includes(status);
@@ -68,6 +70,26 @@ export function DistributionPanel({
           </select>
           <button className={s.btnApprove} type="submit" disabled={classifying || !pickedService}>
             {classifying ? 'Sending…' : 'Classify & distribute'}
+          </button>
+        </form>
+      )}
+
+      {/* The contractor called but never tapped "I've contacted the customer",
+          so the 24h warning stands until someone records it. */}
+      {status === 'awarded' && (
+        <form action={markContacted} className={s.actions} style={{ alignItems: 'center', gap: 10 }}>
+          <ActionResult state={contactState} />
+          <input type="hidden" name="submission_id" value={submissionId} />
+          <input
+            className={f.input}
+            name="reason"
+            placeholder="How do you know? e.g. confirmed by phone"
+            required
+            maxLength={200}
+            style={{ maxWidth: 320 }}
+          />
+          <button className={f.btnGhost} type="submit" disabled={markingContacted}>
+            {markingContacted ? 'Saving…' : 'Mark contacted'}
           </button>
         </form>
       )}

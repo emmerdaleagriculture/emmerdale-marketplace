@@ -71,7 +71,7 @@ const STATE: Record<OpsState, [label: string, next: string, late: string]> = {
   distributed: ['With contractors', 'Waiting for the first price', 'No prices after 48h — chase contractors'],
   quotes_receiving: ['Prices in', 'Customer is choosing', ''],
   accepted_awaiting_payment: ['Accepted', 'Waiting for the deposit', 'Deposit unpaid after 12h — nudge the customer'],
-  awarded: ['Awarded', 'Contractor to contact the customer', 'No contact after 24h — call the contractor'],
+  awarded: ['Awarded', 'Contractor contacting the customer', ''],
   contacted: ['Contacted', 'Contractor and customer in touch', ''],
   scheduled: ['Scheduled', 'Booked in', 'Past its date and not started — check in'],
   in_progress: ['On site', 'Work under way', ''],
