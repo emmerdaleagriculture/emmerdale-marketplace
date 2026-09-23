@@ -44,10 +44,13 @@ export function OnboardingForm({
 
       <div className={a.groupTitle}>What work do you do?</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>
-        Pick the services you offer. You&rsquo;ll only be sent jobs for these — you
-        can change them any time.
+        Everything starts ticked — untick anything you don&rsquo;t do. You can
+        change them any time.
       </p>
-      <ServicePicker services={services} />
+      {/* All on by default (2026-09-23): jobs reach every contractor in the
+          county regardless, and a narrow first pick mostly meant work a
+          contractor does, like fencing, was simply never ticked. */}
+      <ServicePicker services={services} selected={services.map((s) => s.id)} />
 
       <div className={a.groupTitle}>Counties you cover</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>

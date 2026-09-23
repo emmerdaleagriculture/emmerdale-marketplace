@@ -254,6 +254,12 @@ const NON_AREA_PRICED: ReadonlySet<string> = new Set([
   'Hedge cutting',
   'Ditch clearance',
   'Fencing',
+  'Road grading',
+  'Road construction/repair',
+  // Machinery and driver, priced by the hour, day or load.
+  'General tractor work',
+  'Trailer work',
+  'Excavator work',
 ]);
 
 export function isAreaPriced(service: string | null): boolean {
