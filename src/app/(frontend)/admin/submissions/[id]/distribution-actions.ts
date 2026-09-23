@@ -56,6 +56,50 @@ export async function classifyAndDistributeAction(
   };
 }
 
+/**
+ * Operator: set or correct a job's service at any stage, without sending it
+ * anywhere. Classify & distribute only exists for a confirmed job; once a job
+ * is out or awarded its label still matters — it is what the contractor's
+ * page, the emails and the homepage board call the work — and a customer's
+ * first-mentioned word ("Spraying, rotivating, seeding…") is often not it.
+ */
+export async function setServiceAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await assertAdmin();
+  const id = String(formData.get('submission_id') ?? '');
+  const serviceId = Number(formData.get('service_id'));
+  if (!id || !Number.isInteger(serviceId) || serviceId <= 0) return { error: 'Pick a service.' };
+
+  const admin = createServiceRoleClient();
+  const { data: before } = await admin
+    .from('job_submissions')
+    .select('status, service:services(name)')
+    .eq('id', id)
+    .maybeSingle();
+  if (!before) return { error: 'Not found.' };
+  const { data: svc } = await admin.from('services').select('name').eq('id', serviceId).maybeSingle();
+  if (!svc) return { error: 'Unknown service.' };
+  const from = (before.service as { name: string } | null)?.name ?? null;
+  if (from === svc.name) return { ok: true, message: 'No change.' };
+
+  const { error } = await admin.from('job_submissions').update({ service_id: serviceId }).eq('id', id);
+  if (error) return { error: error.message };
+  // job_events refuses an operator action without a reason (§29); the change
+  // itself is the reason, and it keeps the old label on record.
+  await admin.rpc('log_job_event', {
+    p_job_id: id,
+    p_event_type: 'service_changed',
+    p_from: null,
+    p_to: null,
+    p_actor_type: 'operator',
+    p_actor_id: user.id,
+    p_reason: `Service set: ${from ?? '(unclassified)'} → ${svc.name}`,
+    p_metadata: { from, to: svc.name },
+  });
+  refresh(id);
+  revalidatePath('/');
+  return { ok: true, message: `Service set to ${svc.name}.` };
+}
+
 /** Operator: (re-)run distribution for a confirmed submission. */
 export async function distributeNowAction(
   _prev: FormState,

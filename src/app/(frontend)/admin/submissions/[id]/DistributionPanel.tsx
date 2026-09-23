@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react';
 import {
   cancelJobAction,
   classifyAndDistributeAction,
+  setServiceAction,
   distributeNowAction,
   markCompletedAction,
 } from './distribution-actions';
@@ -40,6 +41,7 @@ export function DistributionPanel({
   const [cancelState, cancel, cancelling] = useActionState(cancelJobAction, EMPTY);
   const [completeState, complete, completing] = useActionState(markCompletedAction, EMPTY);
   const [pickedService, setPickedService] = useState('');
+  const [serviceState, setService, settingService] = useActionState(setServiceAction, EMPTY);
 
   const cancellable = ['confirmed', 'distributed', 'quotes_receiving', 'accepted_awaiting_payment'].includes(status);
   const completable = ['awarded', 'contacted', 'scheduled', 'in_progress', 'completed_by_contractor'].includes(status);
@@ -66,6 +68,40 @@ export function DistributionPanel({
           </select>
           <button className={s.btnApprove} type="submit" disabled={classifying || !pickedService}>
             {classifying ? 'Sending…' : 'Classify & distribute'}
+          </button>
+        </form>
+      )}
+
+      {/* Correcting the label at any later stage. The confirmed-and-unclassified
+          case above is excluded: there, classifying is what sends the job. */}
+      {!(status === 'confirmed' && serviceId === null) && (
+        <form action={setService} className={s.actions} style={{ alignItems: 'center', gap: 10 }}>
+          <ActionResult state={serviceState} />
+          <input type="hidden" name="submission_id" value={submissionId} />
+          {/* Uncontrolled, keyed on the saved service: React resets a form once
+              its action finishes, and this puts the select back on what the
+              job now is rather than on blank. */}
+          <select
+            key={serviceId ?? 'none'}
+            className={f.input}
+            name="service_id"
+            defaultValue={serviceId ?? ''}
+            style={{ maxWidth: 280 }}
+            aria-label="Service"
+          >
+            <option value="">{serviceId === null ? 'Unclassified — set service…' : 'Service…'}</option>
+            {services.map((sv) => (
+              <option key={sv.id} value={sv.id}>
+                {sv.name}
+              </option>
+            ))}
+          </select>
+          <button
+            className={f.btnGhost}
+            type="submit"
+            disabled={settingService}
+          >
+            {settingService ? 'Saving…' : 'Set service'}
           </button>
         </form>
       )}
