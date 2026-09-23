@@ -215,6 +215,19 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           ),
       )}
 
+      {/* What happens next, before anything is asked. Both buttons that led
+          here said "Get my prices", and this page has no prices on it: of the
+          39 visits in the fortnight to 23 Sep that left here without touching
+          a field, 22 clicked nothing at all. Prices take contractors time —
+          the median first one lands 36 minutes after sending, 13 of 16 inside
+          a day — so the page says so rather than letting the button imply
+          they are one tap away. */}
+      <p className={s.servicePrompt}>
+        <strong>Nearly there.</strong> Check the details and we&rsquo;ll send your job to
+        local contractors. Prices usually start arriving within a few hours, and we&rsquo;ll
+        email you as they come in.
+      </p>
+
       {/* ── Contact ──────────────────────────────────────────────────── */}
       {/* First on the form, above even the service and its questions, on
           purpose — and this is the whole point of the ordering. A service
@@ -409,7 +422,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           <p className={s.servicePrompt}>
             <strong>One more thing before we send it:</strong> tap the corners of the
             area on the map above, one by one, so contractors can see exactly what
-            they&rsquo;re quoting for. Then press <strong>Send my job</strong> again.
+            they&rsquo;re quoting for. Then press <strong>Send to local contractors</strong> again.
           </p>
           <div className={s.serviceButtons}>
             <button
@@ -581,7 +594,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           </p>
         )}
         <button className={f.btnYellow} type="submit" disabled={pending}>
-          {pending ? 'Sending…' : 'Send my job'}
+          {pending ? 'Sending…' : 'Send to local contractors'}
         </button>
       </div>
     </form>

@@ -145,7 +145,7 @@ export function QuoteWidget() {
       </div>
 
       <button type="button" className={s.widgetGo} onClick={submit}>
-        Get my prices
+        Get started
       </button>
       <p className={s.widgetReassure}>
         Free and no obligation — you&rsquo;re not booking anything yet.

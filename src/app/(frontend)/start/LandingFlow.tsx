@@ -44,6 +44,14 @@ export function LandingFlow() {
     if (state.error) trackStep('parse_error');
   }, [state.error]);
   const [formTs, setFormTs] = useState('');
+  // Arriving from the home page widget with the service AND a postcode
+  // already chosen: this step would only show them back what they picked and
+  // ask for a second "Get my prices" press. Send it for them instead and
+  // land them straight on the details (Tom, 2026-09-23). The form stays
+  // mounted off-screen meanwhile, because the Turnstile widget inside it has
+  // to render to issue its token.
+  const [autoSend, setAutoSend] = useState(false);
+  const autoFired = useRef(false);
   const [captchaToken, setCaptchaToken] = useState('');
   const [awaitingToken, setAwaitingToken] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -69,14 +77,16 @@ export function LandingFlow() {
   // being waited on in front of them.
   useEffect(() => {
     const el = captchaRef.current;
-    if (!awaitingToken || !el) return;
+    // Off-screen during an automatic send; scrolling to it would drag the
+    // page sideways to nothing. The 8s hatch covers a challenge that stalls.
+    if (!awaitingToken || !el || autoSend) return;
     // Already on screen (any desktop, and a phone mid-form) — scrolling then
     // just yanks the page out from under a thumb that is about to press.
     const box = el.getBoundingClientRect();
     if (box.top >= 0 && box.bottom <= window.innerHeight) return;
     const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     el.scrollIntoView({ block: 'center', behavior: still ? 'auto' : 'smooth' });
-  }, [awaitingToken]);
+  }, [awaitingToken, autoSend]);
   // Never hold a paid click hostage to a slow challenge: after 8s, submit
   // anyway and let the server-side verification decide. It decides to let it
   // through (verifyTurnstile, softFail 'missing-token'); it used to reject,
@@ -198,6 +208,24 @@ export function LandingFlow() {
     }
   }, [pending]);
 
+  // Not before 3.2s after render: the server treats a submission inside
+  // three seconds as a bot (the minimum-fill-time trap), and an automatic
+  // send is exactly that fast. The usual token hold in onSubmit still applies.
+  useEffect(() => {
+    if (!autoSend || !formTs || autoFired.current) return;
+    const wait = Math.max(0, 3200 - (Date.now() - Number(formTs)));
+    const t = setTimeout(() => {
+      if (autoFired.current) return;
+      autoFired.current = true;
+      submitForm(formRef.current);
+    }, wait);
+    return () => clearTimeout(t);
+  }, [autoSend, formTs]);
+  // Anything the server refuses puts the ordinary form back in front of them.
+  useEffect(() => {
+    if (state.error) setAutoSend(false);
+  }, [state.error]);
+
   const viewLogged = useRef(false);
   useEffect(() => {
     setFormTs(String(Date.now()));
@@ -221,6 +249,7 @@ export function LandingFlow() {
     prefill(rawTextRef.current, q.get('job'), 2000);
     prefill(locationRef.current, q.get('loc'), 200);
     setServiceHint((q.get('service') ?? '').slice(0, 60));
+    if (q.get('src') === 'home' && q.get('job')?.trim() && q.get('loc')?.trim()) setAutoSend(true);
 
     // `src` marks an internal hand-off (the paddock pages). It stands in as the
     // source only when there's no real ad attribution, so organic arrivals stop
@@ -260,27 +289,36 @@ export function LandingFlow() {
     );
   }
 
-  if (pending) {
-    return (
-      <div
-        className={`${a.card} ${s.card}`}
-        aria-busy="true"
-        aria-label="Working out the details of your job"
-      >
-        <PageTracker path="/start" />
-        <p className={s.skeletonNote}>Reading your description…</p>
-        <div className={s.skeletonRow} style={{ width: '55%' }} />
-        <div className={s.skeletonRow} style={{ width: '80%' }} />
-        <div className={s.skeletonRow} style={{ width: '40%' }} />
-        <div className={s.skeletonRow} style={{ width: '65%' }} />
-      </div>
-    );
-  }
+  const skeleton = (tracker: boolean) => (
+    <div
+      className={`${a.card} ${s.card}`}
+      aria-busy="true"
+      aria-label="Working out the details of your job"
+    >
+      {tracker && <PageTracker path="/start" />}
+      <p className={s.skeletonNote}>Reading your description…</p>
+      <div className={s.skeletonRow} style={{ width: '55%' }} />
+      <div className={s.skeletonRow} style={{ width: '80%' }} />
+      <div className={s.skeletonRow} style={{ width: '40%' }} />
+      <div className={s.skeletonRow} style={{ width: '65%' }} />
+    </div>
+  );
+
+  if (pending) return skeleton(true);
 
   return (
+    <>
+    {/* The form's own PageTracker is still mounted, so no second beacon. */}
+    {autoSend && skeleton(false)}
     <form
       ref={formRef}
       action={action}
+      aria-hidden={autoSend || undefined}
+      style={
+        autoSend
+          ? { position: 'absolute', left: '-9999px', top: 0, width: 360 }
+          : undefined
+      }
       className={`${a.card} ${s.card}`}
       onSubmit={(e) => {
         trackStep('send');
@@ -400,7 +438,9 @@ export function LandingFlow() {
           type="submit"
           disabled={pending || awaitingToken}
         >
-          {awaitingToken ? 'One moment…' : pending ? 'Working…' : 'Get my prices'}
+          {/* Not "Get my prices": the next screen has none, and saying so was
+              the likeliest reason people left it (see ConfirmStep). */}
+          {awaitingToken ? 'One moment…' : pending ? 'Working…' : 'Next'}
         </button>
         <p className={s.noObligation}>
           Free, and no obligation — you&rsquo;re not booking anything yet.
@@ -425,5 +465,6 @@ export function LandingFlow() {
           "What happens after you send this" — a reason list inside the form
           said the same things twice. */}
     </form>
+    </>
   );
 }
