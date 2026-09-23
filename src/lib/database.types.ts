@@ -2177,6 +2177,10 @@ export type Database = {
     }
     Functions: {
       admin_dashboard: { Args: never; Returns: Json }
+      admin_delete_submission: {
+        Args: { p_submission_id: string }
+        Returns: Json
+      }
       admin_hide_drafts: {
         Args: { p_actor: string; p_ids: string[] }
         Returns: Json

@@ -8,6 +8,7 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
 import { getServices } from '@/lib/reference';
 import { DistributionPanel } from './DistributionPanel';
 import { ClearNoteButton } from './ClearNoteButton';
+import { DeleteJobButton } from './DeleteJobButton';
 import s from '../../admin.module.css';
 import { AdminTable } from '../../ui';
 import p from '../submissions.module.css';
@@ -344,6 +345,11 @@ export default async function SubmissionDetailPage({
           </div>
         ))
       )}
+
+      {/* Last on the page on purpose: this is for test jobs and junk, and it
+          should never sit next to the controls used on real ones. */}
+      <div className={s.sectionLabel}>Delete</div>
+      <DeleteJobButton submissionId={sub.id} status={sub.status} />
     </div>
   );
 }
