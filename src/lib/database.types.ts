@@ -76,8 +76,8 @@ export type Database = {
           site_visit_required?: boolean
           status?: string
           submission_id: string
-          unit_label: string | null
-          unit_quantity: number | null
+          unit_label?: string | null
+          unit_quantity?: number | null
           valid_until: string
           viewed_at?: string | null
         }
@@ -274,8 +274,8 @@ export type Database = {
           source: string
           submission_id: string
           superseded_by?: string | null
-          unit_label: string | null
-          unit_quantity: number | null
+          unit_label?: string | null
+          unit_quantity?: number | null
           valid_until: string
         }
         Update: {
@@ -479,6 +479,30 @@ export type Database = {
         }
         Relationships: []
       }
+      counties: {
+        Row: {
+          country: string
+          covers: string | null
+          id: number
+          name: string
+          region: string
+        }
+        Insert: {
+          country?: string
+          covers?: string | null
+          id?: number
+          name: string
+          region: string
+        }
+        Update: {
+          country?: string
+          covers?: string | null
+          id?: number
+          name?: string
+          region?: string
+        }
+        Relationships: []
+      }
       cron_runs: {
         Row: {
           detail: Json | null
@@ -506,27 +530,6 @@ export type Database = {
           name?: string
           ok?: boolean | null
           started_at?: string
-        }
-        Relationships: []
-      }
-      counties: {
-        Row: {
-          country: string
-          id: number
-          name: string
-          region: string
-        }
-        Insert: {
-          country?: string
-          id?: number
-          name: string
-          region: string
-        }
-        Update: {
-          country?: string
-          id?: number
-          name?: string
-          region?: string
         }
         Relationships: []
       }
@@ -576,6 +579,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      feedback: {
+        Row: {
+          created_at: string
+          email: string | null
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          message: string
+          path: string | null
+          role: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          message: string
+          path?: string | null
+          role?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          message?: string
+          path?: string | null
+          role?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       gsc_auth: {
         Row: {
@@ -687,45 +729,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      feedback: {
-        Row: {
-          created_at: string
-          email: string | null
-          handled_at: string | null
-          handled_by: string | null
-          id: string
-          message: string
-          path: string | null
-          role: string
-          user_agent: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          email?: string | null
-          handled_at?: string | null
-          handled_by?: string | null
-          id?: string
-          message: string
-          path?: string | null
-          role?: string
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string | null
-          handled_at?: string | null
-          handled_by?: string | null
-          id?: string
-          message?: string
-          path?: string | null
-          role?: string
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
       }
       job_events: {
         Row: {
@@ -1593,8 +1596,8 @@ export type Database = {
           phone: string | null
           postcode: string | null
           source: string
-          submission_id: string | null
           status: string
+          submission_id: string | null
         }
         Insert: {
           created_at?: string
@@ -1607,8 +1610,8 @@ export type Database = {
           phone?: string | null
           postcode?: string | null
           source?: string
-          submission_id?: string | null
           status?: string
+          submission_id?: string | null
         }
         Update: {
           created_at?: string
@@ -1621,8 +1624,8 @@ export type Database = {
           phone?: string | null
           postcode?: string | null
           source?: string
-          submission_id?: string | null
           status?: string
+          submission_id?: string | null
         }
         Relationships: [
           {
@@ -1645,6 +1648,34 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_jobs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "job_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "my_sq_invitations"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "leads_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "my_sq_won_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
           },
         ]
       }
@@ -1988,6 +2019,16 @@ export type Database = {
       }
     }
     Views: {
+      jobs_in_progress: {
+        Row: {
+          county: string | null
+          created_on: string | null
+          ord: number | null
+          service: string | null
+          size_label: string | null
+        }
+        Relationships: []
+      }
       my_opened_jobs: {
         Row: {
           budget_hint: string | null
@@ -2101,15 +2142,6 @@ export type Database = {
           },
         ]
       }
-      recent_enquiries: {
-        Row: {
-          county: string | null
-          created_on: string | null
-          ord: number | null
-          size_label: string | null
-        }
-        Relationships: []
-      }
       recent_work: {
         Row: {
           amount_pence: number | null
@@ -2145,10 +2177,25 @@ export type Database = {
     }
     Functions: {
       admin_dashboard: { Args: never; Returns: Json }
+      admin_hide_drafts: {
+        Args: { p_actor: string; p_ids: string[] }
+        Returns: Json
+      }
       admin_metrics: { Args: never; Returns: Json }
       admin_submission_board: {
-        Args: { p_limit?: number; p_statuses?: string[]; p_include_hidden?: boolean }
+        Args: {
+          p_include_hidden?: boolean
+          p_limit?: number
+          p_statuses?: string[]
+        }
         Returns: Json
+      }
+      admin_unhide_drafts: { Args: { p_ids: string[] }; Returns: Json }
+      anon_exposed_functions: {
+        Args: never
+        Returns: {
+          fn: string
+        }[]
       }
       app_config_num: {
         Args: { p_default: number; p_key: string }
@@ -2188,6 +2235,21 @@ export type Database = {
         Returns: Json
       }
       confirm_email_quote: { Args: { p_confirm_token: string }; Returns: Json }
+      cron_jobs_health: {
+        Args: never
+        Returns: {
+          active: boolean
+          command: string
+          failures_24h: number
+          jobname: string
+          last_end: string
+          last_message: string
+          last_start: string
+          last_status: string
+          runs_24h: number
+          schedule: string
+        }[]
+      }
       decline_invitation: {
         Args: { p_reason: string; p_token: string }
         Returns: Json
@@ -2197,21 +2259,6 @@ export type Database = {
         Returns: Json
       }
       drain_emails_tick: { Args: never; Returns: number }
-      cron_jobs_health: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          jobname: string
-          schedule: string
-          command: string
-          active: boolean
-          last_status: string | null
-          last_start: string | null
-          last_end: string | null
-          last_message: string | null
-          runs_24h: number
-          failures_24h: number
-        }[]
-      }
       email_drain_health: {
         Args: { p_limit?: number }
         Returns: {
@@ -2235,13 +2282,14 @@ export type Database = {
         Returns: Json
       }
       log_job_event: {
+        // HAND-CORRECTED, and it will be lost on the next `gen types` run.
+        // Supabase types a function argument as required and non-null when the
+        // SQL declares no DEFAULT, regardless of whether the parameter accepts
+        // null. Every one of these does: 38 job_events rows in production have
+        // from_status and to_status both null (quote_received, job_amended,
+        // consent_recorded — events that are not status transitions).
+        // Re-apply this after regenerating, or give the SQL arguments defaults.
         Args: {
-          // Nullable in the function itself — sq_functions.sql calls it as
-          // (…, null, null, 'system', null, null), and only an 'operator'
-          // event is constrained to carry a reason. Widened by hand because
-          // passing '' instead would write empty strings into job_events where
-          // NULL is meant, and an empty from/to is not the same as no
-          // transition.
           p_actor_id: string | null
           p_actor_type: string
           p_event_type: string
@@ -2307,6 +2355,10 @@ export type Database = {
           submission_id: string
         }[]
       }
+      sq_clear_client_note: {
+        Args: { p_client_quote_id: string }
+        Returns: undefined
+      }
       sq_deposit_pence: {
         Args: { p_client_price_pence: number; p_rate: number }
         Returns: number
@@ -2341,10 +2393,6 @@ export type Database = {
       }
       sq_open_balance: { Args: { p_submission_id: string }; Returns: number }
       sq_payment_plan: { Args: { p_client_quote_id: string }; Returns: Json }
-      admin_hide_drafts: { Args: { p_ids: string[]; p_actor: string }; Returns: Json }
-      admin_unhide_drafts: { Args: { p_ids: string[] }; Returns: Json }
-      anon_exposed_functions: { Args: Record<PropertyKey, never>; Returns: { fn: string }[] }
-      sq_clear_client_note: { Args: { p_client_quote_id: string }; Returns: undefined }
       sq_publish_quote: { Args: { p_quote_id: string }; Returns: undefined }
       sq_quote_position: {
         Args: { p_contractor_id: string; p_submission_id: string }
@@ -2354,6 +2402,10 @@ export type Database = {
           price_total: number
           viewed_at: string
         }[]
+      }
+      sq_service_label: {
+        Args: { p_service_id: number; p_verbatim: string }
+        Returns: string
       }
       sq_settle_balance: {
         Args: { p_intent_id: string; p_payment_id: string }
@@ -2368,10 +2420,8 @@ export type Database = {
         Args: {
           p_confirmed: boolean
           p_note_to_client?: string
-          p_unit_label?: string
-          p_unit_quantity?: number
           p_notes: string
-          p_price_basis: string
+          p_price_basis?: string
           p_price_pence: number
           p_quote_type: string
           p_rate_minimum_pence: number
@@ -2379,6 +2429,8 @@ export type Database = {
           p_site_visit: boolean
           p_source: string
           p_token: string
+          p_unit_label?: string
+          p_unit_quantity?: number
           p_valid_until: string
         }
         Returns: Json
