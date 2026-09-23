@@ -1,8 +1,8 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { memoize, REFERENCE_TTL_MS } from '@/lib/memo';
+import { memoize } from '@/lib/memo';
 
 /**
- * Completed work, with what it actually cost.
+ * Booked work, with what it actually cost — every job from its award on.
  *
  * This is what replaced published guide prices. A price list promises a figure
  * for the next job and cannot survive the variance in this trade; a finished
@@ -49,6 +49,12 @@ function viewClient(): SupabaseClient {
   );
 }
 
+/**
+ * Short, like the jobs-in-progress strip: an award calls revalidatePath('/'),
+ * and a memo that outlived it would rebuild the page from a stale read.
+ */
+const LIVE_TTL_MS = 60_000;
+
 export const getRecentWork = memoize<RecentWorkRow[]>(async () => {
   const { data, error } = await viewClient()
     .from('recent_work')
@@ -82,7 +88,7 @@ export const getRecentWork = memoize<RecentWorkRow[]>(async () => {
         ]
       : [],
   );
-}, REFERENCE_TTL_MS);
+}, LIVE_TTL_MS);
 
 /**
  * The services actually present in the rows, in board order.

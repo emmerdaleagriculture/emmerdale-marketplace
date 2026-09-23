@@ -13,8 +13,10 @@ import s from './home.module.css';
  * credibility rather than theirs. Finished work makes no promise about the next
  * job, so nobody can be ambushed by it.
  *
- * Headed "Work we've completed" rather than "Recent work": the cards carry no
- * dates, so recency isn't a claim this can stand behind.
+ * Headed "Work booked through us" rather than "Recent work": the cards carry
+ * no dates, so recency isn't a claim this can stand behind. Not "completed"
+ * either: since 20260923180000 a job joins the board when it is awarded, and
+ * some of those are still to be done.
  *
  * Fetches on the server and hands the rows to a client child, so the chips are
  * interactive without the page giving up its ISR caching.
@@ -28,10 +30,10 @@ export async function RecentWork() {
       <div className={s.container}>
         <p className={s.eyebrow}>What people paid</p>
         <h2 id="work-title" className={s.sectionH}>
-          Work we&rsquo;ve completed
+          Work booked through us
         </h2>
         <p className={s.workSub}>
-          Real jobs and what they actually cost. Every job prices differently —
+          Real jobs and the price agreed. Every job prices differently —
           access, ground and scale move the number more than the service does —
           so treat these as what past work came to, not a quote for yours.
         </p>
