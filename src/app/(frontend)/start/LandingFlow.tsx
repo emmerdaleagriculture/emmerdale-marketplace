@@ -217,6 +217,15 @@ export function LandingFlow() {
     const t = setTimeout(() => {
       if (autoFired.current) return;
       autoFired.current = true;
+      // onSubmit still records 'send', so the journey curve (send → parsed)
+      // stays whole; this marks which of those the page pressed itself.
+      trackStep('auto_send');
+      // Once only: a reload or a Back to this URL would otherwise send it
+      // again and mint a second draft. auto=0 leaves the prefill intact, so
+      // they land on step 1 with their answers still in it.
+      const url = new URL(window.location.href);
+      url.searchParams.set('auto', '0');
+      window.history.replaceState(window.history.state, '', url);
       submitForm(formRef.current);
     }, wait);
     return () => clearTimeout(t);
@@ -249,7 +258,14 @@ export function LandingFlow() {
     prefill(rawTextRef.current, q.get('job'), 2000);
     prefill(locationRef.current, q.get('loc'), 200);
     setServiceHint((q.get('service') ?? '').slice(0, 60));
-    if (q.get('src') === 'home' && q.get('job')?.trim() && q.get('loc')?.trim()) setAutoSend(true);
+    if (
+      q.get('src') === 'home' &&
+      q.get('auto') !== '0' &&
+      q.get('job')?.trim() &&
+      q.get('loc')?.trim()
+    ) {
+      setAutoSend(true);
+    }
 
     // `src` marks an internal hand-off (the paddock pages). It stands in as the
     // source only when there's no real ad attribution, so organic arrivals stop

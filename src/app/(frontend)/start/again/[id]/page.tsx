@@ -131,7 +131,14 @@ export default async function OrderAgainPage({ params }: { params: Promise<{ id:
               </button>
             </form>
           )}
-          <ConfirmStep result={result} />
+          {/* The paragraph above already says where it goes, and a direct
+              offer goes to one contractor first — the generic "we'll send it
+              to local contractors" line would contradict it. */}
+          <ConfirmStep
+            result={result}
+            intro={false}
+            sendLabel={direct && previousName ? `Send to ${previousName}` : 'Send to local contractors'}
+          />
         </div>
       </main>
       <SiteFooter />

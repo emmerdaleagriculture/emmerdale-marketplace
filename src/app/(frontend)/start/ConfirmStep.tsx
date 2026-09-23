@@ -36,7 +36,17 @@ const EMPTY: ConfirmActionState = {};
  * dead-ending the page (§6.4). Stated-vs-drawn discrepancies over the
  * threshold raise a non-blocking flag; both figures are stored regardless.
  */
-export function ConfirmStep({ result }: { result: ParseResult }) {
+export function ConfirmStep({
+  result,
+  intro = true,
+  sendLabel = 'Send to local contractors',
+}: {
+  result: ParseResult;
+  /** The "what happens next" line. A caller that already says it — the
+   *  repeat-order page, which may send to one contractor first — turns it off. */
+  intro?: boolean;
+  sendLabel?: string;
+}) {
   const [state, action, pending] = useActionState(confirmJobAction, EMPTY);
   const router = useRouter();
   // A service picked on the front page is already the customer's answer, so
@@ -222,11 +232,13 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           the median first one lands 36 minutes after sending, 13 of 16 inside
           a day — so the page says so rather than letting the button imply
           they are one tap away. */}
-      <p className={s.servicePrompt}>
-        <strong>Nearly there.</strong> Check the details and we&rsquo;ll send your job to
-        local contractors. Prices usually start arriving within a few hours, and we&rsquo;ll
-        email you as they come in.
-      </p>
+      {intro && (
+        <p className={s.servicePrompt}>
+          <strong>Nearly there.</strong> Check the details and we&rsquo;ll send your job to
+          local contractors. Prices usually start arriving within a few hours, and we&rsquo;ll
+          email you as they come in.
+        </p>
+      )}
 
       {/* ── Contact ──────────────────────────────────────────────────── */}
       {/* First on the form, above even the service and its questions, on
@@ -422,7 +434,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           <p className={s.servicePrompt}>
             <strong>One more thing before we send it:</strong> tap the corners of the
             area on the map above, one by one, so contractors can see exactly what
-            they&rsquo;re quoting for. Then press <strong>Send to local contractors</strong> again.
+            they&rsquo;re quoting for. Then press <strong>{sendLabel}</strong> again.
           </p>
           <div className={s.serviceButtons}>
             <button
@@ -594,7 +606,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
           </p>
         )}
         <button className={f.btnYellow} type="submit" disabled={pending}>
-          {pending ? 'Sending…' : 'Send to local contractors'}
+          {pending ? 'Sending…' : sendLabel}
         </button>
       </div>
     </form>
