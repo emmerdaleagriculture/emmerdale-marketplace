@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import type Stripe from 'stripe';
 import { getStripe, syncSubscription } from '@/lib/stripe';
 import { createServiceRoleClient } from '@/lib/supabase/server';
@@ -98,6 +99,10 @@ export async function POST(request: Request) {
           });
           if (error) throw error; // 500 → Stripe retries
           const res = data as { ok: boolean; reason?: string };
+          // The homepage's "work booked" board lists awarded jobs, and the
+          // page is ISR on an hour — without this a new booking would not
+          // show until the next rebuild.
+          if (res.ok) revalidatePath('/');
           if (!res.ok) {
             // ANY failed award after a successful charge needs a human — a
             // silent 200 here is a customer charged with no job and no alert.
