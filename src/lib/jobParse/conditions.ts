@@ -325,8 +325,13 @@ export function describeConditions(
       .filter((q): q is ChoiceQuestion => q.kind !== 'quantity')
       .map((q) => [q.key, q]),
   );
+  // In the order the questions were asked, not the order they were stored:
+  // jsonb sorts its keys by length, which put "Fence type" last.
+  const order = [...known.keys()];
+  const rank = (k: string) => (order.includes(k) ? order.indexOf(k) : order.length);
+  const entries = Object.entries(answers).sort(([a], [b]) => rank(a) - rank(b));
   const rows: [string, string][] = [];
-  for (const [key, value] of Object.entries(answers)) {
+  for (const [key, value] of entries) {
     const raw = String(value);
     const q = known.get(key);
     if (!q) {
