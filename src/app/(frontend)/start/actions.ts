@@ -16,7 +16,8 @@ import type { Json } from '@/lib/database.types';
 import { deterministicParse, toAcres } from '@/lib/jobParse/deterministic';
 import { reconcile } from '@/lib/jobParse/reconcile';
 import { parseBoundary, ringAreaAcres } from '@/lib/jobParse/geometry';
-import { conditionAnswers } from '@/lib/jobParse/conditions';
+import { conditionAnswers, describeConditions, quantityFor } from '@/lib/jobParse/conditions';
+import { serviceFromPick, servicesMentioned } from '@/lib/jobParse/servicePick';
 import { GATE_WIDTH_VALUES, gateWidthLabel, normaliseW3w } from '@/lib/jobParse/access';
 import {
   clientIp,
@@ -307,6 +308,25 @@ export async function parseJobAction(
   // contractor actually reads on the quote page — so carry step 1's text
   // through rather than showing an empty box and asking for it twice.
   if (!merged.service_verbatim) merged.service_verbatim = d.raw_text;
+
+  // A service the customer picked on the front page is theirs, not a guess —
+  // and for fencing it is what opens the fencing questions on the next step.
+  // Failing a pick, a service the words plainly name is offered as a choice.
+  const picked = serviceFromPick(String(formData.get('service_hint') ?? ''));
+  if (picked) {
+    merged.service = picked;
+    merged.service_picked = true;
+    merged.missing_fields = merged.missing_fields.filter((k) => k !== 'service');
+    // "Fencing, 2 acre paddock" reads a quantity the flow does not price by.
+    // An acreage in the metres box would be worse than an empty one.
+    const unit = quantityFor(picked)?.unit;
+    if (unit && merged.area_unit !== unit) {
+      merged.area_value = null;
+      merged.area_unit = unit;
+    }
+  } else if (!merged.service && merged.service_alternatives.length === 0) {
+    merged.service_alternatives = servicesMentioned(d.raw_text);
+  }
 
   // A postcode that straddles a border (SO51 is Hampshire and Wiltshire) or is
   // only an outcode resolves to no county at all. That used to confirm a job
@@ -725,6 +745,9 @@ export async function confirmJobAction(
       `Confirmed:  ${d.service_confirmed === 'yes' ? 'accepted our classification' : 'picked/typed their own'}\n` +
       `In their words: ${serviceVerbatim ?? '—'}\n` +
       `Area:       ${areaValue !== null ? `${areaValue} ${areaUnit}` : '—'}${areaMapped !== null ? ` (drawn boundary: ${areaMapped} acres)` : ''}\n` +
+      describeConditions(serviceName, conditions)
+        .map(([label, value]) => `  ${label}: ${value}\n`)
+        .join('') +
       `Postcode:   ${postcode ?? '—'}\n` +
       `County:     ${countyName ?? (countyId ? `#${countyId}` : '(not resolved)')}\n` +
       `Urgency:    ${d.urgency || '—'}${d.target_date ? ` (target ${d.target_date})` : ''}\n` +

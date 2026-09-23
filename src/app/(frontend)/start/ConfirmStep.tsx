@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import { START_COMPLETE_PATH } from './copy';
 import { confirmJobAction, saveContactDraftAction, type ConfirmActionState } from './actions';
 import type { ParseResult } from '@/lib/jobParse/schema';
-import { conditionsFor, isAreaPriced } from '@/lib/jobParse/conditions';
+import { conditionsFor, isAreaPriced, quantityFor, visibleChoices } from '@/lib/jobParse/conditions';
 import { GATE_WIDTH_OPTIONS } from '@/lib/jobParse/access';
 import { areaDiscrepancy } from '@/lib/jobParse/geometry';
 import { submitForm } from '@/lib/submitForm';
 import { BoundaryMap, type BoundaryState } from './BoundaryMap';
+import { ServiceQuestions } from './ServiceQuestions';
 import { trackStep } from '@/components/PageTracker';
 import { EmailField } from '@/components/forms/EmailField';
 import f from '@/components/forms/forms.module.css';
@@ -38,13 +39,21 @@ const EMPTY: ConfirmActionState = {};
 export function ConfirmStep({ result }: { result: ParseResult }) {
   const [state, action, pending] = useActionState(confirmJobAction, EMPTY);
   const router = useRouter();
+  // A service picked on the front page is already the customer's answer, so
+  // it is stated ("Fencing it is") rather than put back to them as a guess.
   const [view, setView] = useState<'suggested' | 'accepted' | 'alternatives'>(
-    result.service ? 'suggested' : 'alternatives',
+    result.service ? (result.service_picked ? 'accepted' : 'suggested') : 'alternatives',
   );
   const [choice, setChoice] = useState<string>(result.service ?? '');
   const [otherOpen, setOtherOpen] = useState(false);
   const [areaValue, setAreaValue] = useState(result.area_value?.toString() ?? '');
-  const [conditionValues, setConditionValues] = useState<Record<string, string>>({});
+  // A repeat order or a resumed draft arrives with its answers already given.
+  const [conditionValues, setConditionValues] = useState<Record<string, string>>(() => {
+    const keys = new Set(conditionsFor(result.service).map((q) => q.key));
+    return Object.fromEntries(
+      Object.entries(result.service_attributes ?? {}).filter(([k]) => keys.has(k)),
+    );
+  });
   const [mapState, setMapState] = useState<BoundaryState | null>(null);
 
   // Milestones for the journey report: the parse came back, they drew the
@@ -120,12 +129,29 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
   }
 
   const accepted = view === 'accepted';
+  // "Change" on a service we named must still offer that service back —
+  // a front-page pick arrives with no alternatives, and without this the
+  // customer would face a bare text box while still holding the pick.
+  const alternatives =
+    result.service && !result.service_alternatives.includes(result.service)
+      ? [result.service, ...result.service_alternatives]
+      : result.service_alternatives;
   // The service the customer currently stands behind — null means "their own
   // words" (stored as unmatched).
   const currentService = otherOpen ? null : choice || null;
-  const questions = conditionsFor(currentService);
+  // Only the questions the answers so far leave standing: a capping rail
+  // means nothing on post and rail, so it is neither shown nor sent.
+  const choices = visibleChoices(currentService, conditionValues);
+  const questions = conditionsFor(currentService).filter(
+    (q) => q.kind === 'quantity' || choices.includes(q),
+  );
+  // A flow with its own quantity (fencing's metres) asks it in sequence, in
+  // its own unit, in place of the generic area field.
+  const quantity = quantityFor(currentService);
 
-  const statedAcres = Number(areaValue) > 0 ? Number(areaValue) : null;
+  // Metres of fence are not acres: only a ground area has a drawn figure to
+  // disagree with.
+  const statedAcres = !quantity && Number(areaValue) > 0 ? Number(areaValue) : null;
   const mappedAcres = mapState?.mappedAcres ?? null;
   const showDiscrepancy = !keepStated && areaDiscrepancy(statedAcres, mappedAcres);
 
@@ -177,9 +203,66 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
               : ''
         }
       />
-      {Object.entries(conditionValues).map(([k, v]) => (
-        <input key={k} type="hidden" name={`condition_${k}`} value={v} />
-      ))}
+      {choices.map(
+        (q) =>
+          conditionValues[q.key] && (
+            <input
+              key={q.key}
+              type="hidden"
+              name={`condition_${q.key}`}
+              value={conditionValues[q.key]}
+            />
+          ),
+      )}
+
+      {/* ── Contact ──────────────────────────────────────────────────── */}
+      {/* First on the form, above even the service and its questions, on
+          purpose — and this is the whole point of the ordering. A service
+          with its own flow (fencing asks nine things) would otherwise push
+          these two inputs back down the page they were rescued from. Of the 27 people who reached this screen in
+          the week to 21 Sep 2026, only 8 typed into a contact field — and of
+          the 9 who scrolled to the very bottom, where these two inputs used
+          to sit below seven optional ones, 7 did. One in eighteen of everyone
+          who stopped short did. The form was asking for everything it merely
+          wanted before the only thing it actually needs.
+
+          The details below still matter and most people still fill them in;
+          they are simply not what a lost lead costs. Capture beats
+          completeness (spec §4 step 3). */}
+      <div className={a.groupTitle}>How should we reach you?</div>
+      {/* Read at the exact step people were abandoning: the heading used to say
+          contractors would reach them, which is only true after they accept. */}
+      {/* Says that the details are kept before Send, because they are:
+          keepContact writes them on blur. Someone who types an email here and
+          then leaves will hear from us, and they should learn that from the
+          form rather than from the email. It is also the honest reason to
+          fill it in early — the job is not lost if they run out of time. */}
+      <p className={f.hint}>
+        Your details stay with us — a contractor only gets them if you accept their
+        price. If you don&rsquo;t finish now, we&rsquo;ll email you a link to pick up
+        where you left off.
+      </p>
+
+      <div className={a.row2}>
+        <label className={f.field}>
+          <span className={f.label}>Your name</span>
+          <input
+            className={f.input}
+            type="text"
+            name="contact_name"
+            required
+            autoComplete="name"
+            onInput={() => trackStep('contact')}
+            onBlur={keepContact}
+          />
+        </label>
+        <EmailField
+          name="contact_email"
+          required
+          hint="Everything about your job comes to this address."
+          onBlur={keepContact}
+        />
+      </div>
 
       {/* ── The service ──────────────────────────────────────────────── */}
       {view === 'suggested' && result.service && (
@@ -219,13 +302,13 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
       {view === 'alternatives' && (
         <div className={s.serviceBlock}>
           <p className={s.servicePrompt}>
-            {result.service_alternatives.length
+            {alternatives.length
               ? 'Which of these is closest?'
               : 'Tell us about the work in your own words below.'}
           </p>
-          {result.service_alternatives.length > 0 && (
+          {alternatives.length > 0 && (
             <div className={f.chips}>
-              {result.service_alternatives.map((name) => (
+              {alternatives.map((name) => (
                 <button
                   key={name}
                   type="button"
@@ -247,7 +330,7 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
               </button>
             </div>
           )}
-          {(otherOpen || result.service_alternatives.length === 0) && (
+          {(otherOpen || alternatives.length === 0) && (
             <label className={f.field}>
               <span className={f.label}>Describe it in your own words</span>
               <input
@@ -265,108 +348,50 @@ export function ConfirmStep({ result }: { result: ParseResult }) {
       {/* ── Condition questions (spec §26a.2) ────────────────────────── */}
       {questions.length > 0 && (
         <div className={s.serviceBlock}>
-          {questions.map((q) => (
-            <div key={q.key} className={f.field}>
-              <span className={f.label}>{q.label}</span>
-              <div className={f.chips}>
-                {q.options.map((o) => (
-                  <button
-                    key={o.value}
-                    type="button"
-                    className={
-                      conditionValues[q.key] === o.value ? `${f.chip} ${f.chipOn}` : f.chip
-                    }
-                    onClick={() =>
-                      setConditionValues((prev) => ({ ...prev, [q.key]: o.value }))
-                    }
-                  >
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+          <ServiceQuestions
+            questions={questions}
+            values={conditionValues}
+            onAnswer={(key, value) => setConditionValues((prev) => ({ ...prev, [key]: value }))}
+            quantity={areaValue}
+            onQuantity={setAreaValue}
+            quantityClassName={fieldClass('area')}
+          />
         </div>
       )}
-
-      {/* ── Contact ──────────────────────────────────────────────────── */}
-      {/* Above the map and the refinements on purpose, and this is the whole
-          point of the ordering. Of the 27 people who reached this screen in
-          the week to 21 Sep 2026, only 8 typed into a contact field — and of
-          the 9 who scrolled to the very bottom, where these two inputs used
-          to sit below seven optional ones, 7 did. One in eighteen of everyone
-          who stopped short did. The form was asking for everything it merely
-          wanted before the only thing it actually needs.
-
-          The details below still matter and most people still fill them in;
-          they are simply not what a lost lead costs. Capture beats
-          completeness (spec §4 step 3), and nothing above this line is
-          something the customer has to supply. */}
-      <div className={a.groupTitle}>How should we reach you?</div>
-      {/* Read at the exact step people were abandoning: the heading used to say
-          contractors would reach them, which is only true after they accept. */}
-      {/* Says that the details are kept before Send, because they are:
-          keepContact writes them on blur. Someone who types an email here and
-          then leaves will hear from us, and they should learn that from the
-          form rather than from the email. It is also the honest reason to
-          fill it in early — the job is not lost if they run out of time. */}
-      <p className={f.hint}>
-        Your details stay with us — a contractor only gets them if you accept their
-        price. If you don&rsquo;t finish now, we&rsquo;ll email you a link to pick up
-        where you left off.
-      </p>
-
-      <div className={a.row2}>
-        <label className={f.field}>
-          <span className={f.label}>Your name</span>
-          <input
-            className={f.input}
-            type="text"
-            name="contact_name"
-            required
-            autoComplete="name"
-            onInput={() => trackStep('contact')}
-            onBlur={keepContact}
-          />
-        </label>
-        <EmailField
-          name="contact_email"
-          required
-          hint="Everything about your job comes to this address."
-          onBlur={keepContact}
-        />
-      </div>
 
       {/* ── The details ──────────────────────────────────────────────── */}
       <div className={a.groupTitle}>Check the details</div>
 
-      <div className={a.row2}>
-        <label className={fieldClass('area')}>
-          <span className={f.label}>How much ground?</span>
-          {/* Never `required`: for an unmatched job (a roof, a barn) there is
-              no sensible answer, and a blocked submit is a lost lead — capture
-              beats completeness (spec §4 step 3). The flag styling still asks. */}
-          <input
-            className={f.input}
-            type="number"
-            name="area_value"
-            inputMode="decimal"
-            step="any"
-            min="0"
-            value={areaValue}
-            onChange={(e) => setAreaValue(e.target.value)}
-          />
-        </label>
-        <label className={fieldClass('area')}>
-          <span className={f.label}>Unit</span>
-          <select className={f.input} name="area_unit" defaultValue={result.area_unit ?? 'acres'}>
-            <option value="acres">acres</option>
-            <option value="hectares">hectares</option>
-            <option value="sq_m">square metres</option>
-            <option value="linear_m">metres (hedges &amp; ditches)</option>
-          </select>
-        </label>
-      </div>
+      {/* The flow's own quantity question stands in for this one. */}
+      {!quantity && (
+        <div className={a.row2}>
+          <label className={fieldClass('area')}>
+            <span className={f.label}>How much ground?</span>
+            {/* Never `required`: for an unmatched job (a roof, a barn) there is
+                no sensible answer, and a blocked submit is a lost lead — capture
+                beats completeness (spec §4 step 3). The flag styling still asks. */}
+            <input
+              className={f.input}
+              type="number"
+              name="area_value"
+              inputMode="decimal"
+              step="any"
+              min="0"
+              value={areaValue}
+              onChange={(e) => setAreaValue(e.target.value)}
+            />
+          </label>
+          <label className={fieldClass('area')}>
+            <span className={f.label}>Unit</span>
+            <select className={f.input} name="area_unit" defaultValue={result.area_unit ?? 'acres'}>
+              <option value="acres">acres</option>
+              <option value="hectares">hectares</option>
+              <option value="sq_m">square metres</option>
+              <option value="linear_m">metres (hedges &amp; ditches)</option>
+            </select>
+          </label>
+        </div>
+      )}
 
       {/* ── Map pin + boundary (spec §7) ─────────────────────────────── */}
       {result.lat !== null && result.lng !== null && (

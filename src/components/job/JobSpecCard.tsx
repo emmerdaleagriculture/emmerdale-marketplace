@@ -1,4 +1,5 @@
 import { gateWidthLabel } from '@/lib/jobParse/access';
+import { describeConditions } from '@/lib/jobParse/conditions';
 import s from './JobSpecCard.module.css';
 
 export type JobSpecPhoto = { url: string; label: string };
@@ -53,7 +54,10 @@ function areaLabel(spec: JobSpec): string {
  * contact fields or exact locations from their data source.
  */
 export function JobSpecCard({ spec }: { spec: JobSpec }) {
-  const conditions = Object.entries(spec.conditions ?? {});
+  // One row per answer, in the words the customer was asked in: a fencing
+  // job carries nine of them, and "fence type: closeboard_panels" run
+  // together on one line was not something to price from.
+  const conditions = describeConditions(spec.service, spec.conditions ?? {});
   const rows: [string, string | null][] = [
     // The customer's own words first: the classified service name (when there
     // is one) already heads the page, so repeating it here told the contractor
@@ -90,16 +94,12 @@ export function JobSpecCard({ spec }: { spec: JobSpec }) {
               </div>
             ),
         )}
-        {conditions.length > 0 && (
-          <div className={s.row}>
-            <dt>Conditions</dt>
-            <dd>
-              {conditions
-                .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${String(v).replace(/_/g, ' ')}`)
-                .join(' · ')}
-            </dd>
+        {conditions.map(([label, value]) => (
+          <div key={label} className={s.row}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
           </div>
-        )}
+        ))}
       </dl>
       {spec.photos && spec.photos.length > 0 && (
         <div className={s.photos}>

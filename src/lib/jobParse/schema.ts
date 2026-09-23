@@ -230,4 +230,8 @@ export type ParseResult = {
   gate_width: string | null;
   parse_confidence: Record<string, number>;
   missing_fields: string[];
+  /** The service came from the customer's own pick on the front page, not
+   *  from reading their words — the confirm step states it rather than
+   *  asking "Is that right?". */
+  service_picked?: boolean;
 };

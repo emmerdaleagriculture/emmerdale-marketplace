@@ -91,6 +91,9 @@ export function LandingFlow() {
     return () => clearTimeout(t);
   }, [awaitingToken]);
   const [utm, setUtm] = useState({ source: '', medium: '', campaign: '', gclid: '' });
+  // The front page's service pick, by card slug. The server decides what it
+  // means (serviceFromPick); this only carries it across.
+  const [serviceHint, setServiceHint] = useState('');
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [geoHint, setGeoHint] = useState('');
@@ -217,6 +220,7 @@ export function LandingFlow() {
     };
     prefill(rawTextRef.current, q.get('job'), 2000);
     prefill(locationRef.current, q.get('loc'), 200);
+    setServiceHint((q.get('service') ?? '').slice(0, 60));
 
     // `src` marks an internal hand-off (the paddock pages). It stands in as the
     // source only when there's no real ad attribution, so organic arrivals stop
@@ -307,6 +311,7 @@ export function LandingFlow() {
       <input type="hidden" name="utm_medium" value={utm.medium} />
       <input type="hidden" name="utm_campaign" value={utm.campaign} />
       <input type="hidden" name="gclid" value={utm.gclid} />
+      <input type="hidden" name="service_hint" value={serviceHint} />
       {/* Honeypot — real users never see or fill this. */}
       <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', height: 0, overflow: 'hidden' }}>
         <label>
