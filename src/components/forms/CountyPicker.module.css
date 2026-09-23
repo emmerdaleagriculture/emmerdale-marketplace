@@ -39,3 +39,13 @@
 .regionTools button {
   min-height: 36px;
 }
+
+/* The modern areas inside a preserved county — "Carmarthenshire, Ceredigion
+   & Pembrokeshire" under "Dyfed". Quiet: it is an explanation, not a choice. */
+.countyCovers {
+  display: block;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--ink-3);
+  margin-top: 1px;
+}

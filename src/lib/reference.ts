@@ -14,7 +14,7 @@ export const getCounties = memoize<CountyOption[]>(async () => {
   const supabase = createStaticClient();
   const { data } = await supabase
     .from('counties')
-    .select('id, name, region')
+    .select('id, name, region, covers')
     .order('id');
   return data ?? [];
 }, REFERENCE_TTL_MS);

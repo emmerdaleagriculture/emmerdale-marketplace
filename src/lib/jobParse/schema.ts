@@ -20,7 +20,8 @@ export const CANONICAL_SERVICES = [
   'Rotavating',
   'Mole ploughing',
   'Stone burying',
-  'Land & ditch clearance',
+  'Land clearance',
+  'Ditch clearance',
   'Weed control',
   'Spraying',
   'Fertiliser application',
@@ -29,6 +30,7 @@ export const CANONICAL_SERVICES = [
   'Hay, straw & haylage',
   'Tractor hire (events)',
   'Hedge cutting',
+  'Fencing',
 ] as const;
 
 export type CanonicalService = (typeof CANONICAL_SERVICES)[number];
