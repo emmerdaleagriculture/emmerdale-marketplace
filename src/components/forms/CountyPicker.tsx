@@ -4,7 +4,13 @@ import { useRef, useState } from 'react';
 import styles from './forms.module.css';
 import cp from './CountyPicker.module.css';
 
-export type CountyOption = { id: number; name: string; region: string };
+export type CountyOption = {
+  id: number;
+  name: string;
+  region: string;
+  /** Modern principal areas inside a historic county. Display only. */
+  covers?: string | null;
+};
 
 /**
  * Region-grouped county multi-select with a select-all-per-region control
@@ -80,7 +86,13 @@ export function CountyPicker({
             data-region={region}
             defaultChecked={selectedSet.has(c.id)}
           />
-          <span>{c.name}</span>
+          {/* Wales is stored as the 1974 preserved counties, so a contractor
+              in Ceredigion sees only "Dyfed" and reasonably concludes we do
+              not cover him. `covers` names the modern areas underneath. */}
+          <span>
+            {c.name}
+            {c.covers ? <span className={cp.countyCovers}>{c.covers}</span> : null}
+          </span>
         </label>
       ))}
     </div>

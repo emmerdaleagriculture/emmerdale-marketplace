@@ -33,7 +33,8 @@ Services (choose exactly one, or "unmatched"):
 - Rotavating — rotavating or tilling soil to a workable bed
 - Mole ploughing — creating subsoil drainage channels with a mole plough
 - Stone burying — burying stones to leave a clean seedbed
-- Land & ditch clearance — clearing overgrown land, ditches or drainage channels
+- Land clearance — clearing overgrown ground, scrub or brambles back to usable land; measured by area
+- Ditch clearance — digging out, re-profiling or clearing a ditch or drainage channel; measured in metres of ditch
 - Weed control — dealing with weeds such as ragwort, docks or thistles
 - Spraying — applying herbicide or pesticide across a field
 - Fertiliser application — spreading fertiliser
@@ -42,6 +43,7 @@ Services (choose exactly one, or "unmatched"):
 - Hay, straw & haylage — supplying or delivering hay, straw or haylage bales
 - Tractor hire (events) — hiring a tractor (with driver) for an event or show
 - Hedge cutting — cutting or trimming hedges, usually with a tractor-mounted flail arm; measured in metres of hedge
+- Fencing — supplying and erecting or repairing fencing: post-and-rail, stock netting, equestrian; measured in metres of fence
 
 Rules:
 - "unmatched" is a legitimate, first-class answer. Prefer it over a poor fit — a wrong confident classification is worse than an honest unmatched.
