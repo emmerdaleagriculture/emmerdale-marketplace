@@ -1,6 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { notifyAdmins } from '@/lib/adminNotify';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
@@ -199,4 +201,65 @@ export async function clearClientNoteAction(
 
   refresh(submissionId);
   return { ok: true, message: 'Note cleared.' };
+}
+
+/**
+ * Operator: delete a job outright — for test jobs and junk, where cancelling
+ * would leave a fake customer in the boards forever.
+ *
+ * admin_delete_submission does the work in one transaction and refuses
+ * anything that has reached payment or award: those are financial records,
+ * and cancelling is the tool for them. The job's own audit log goes with it,
+ * so the record of the delete is an email to the admins instead.
+ */
+export async function deleteJobAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await assertAdmin();
+  const id = String(formData.get('submission_id') ?? '');
+  const reason = String(formData.get('reason') ?? '').trim();
+  if (!id) return { error: 'Missing the job.' };
+  if (!reason) return { error: 'Say why — it goes in the email that records the delete.' };
+
+  const admin = createServiceRoleClient();
+  const { data: js } = await admin
+    .from('job_submissions')
+    .select('status, raw_text, postcode, contact_name, contact_email, created_at')
+    .eq('id', id)
+    .maybeSingle();
+  if (!js) return { error: 'Not found — it may already be deleted.' };
+
+  const { data, error } = await admin.rpc('admin_delete_submission', { p_submission_id: id });
+  if (error) return { error: `Could not delete: ${error.message}` };
+  const res = data as { ok: boolean; reason?: string; status?: string; photo_paths?: string[] };
+  if (!res.ok) {
+    if (res.reason === 'payments' || res.reason === 'status') {
+      return {
+        error: `Can’t delete a job at "${res.status}" — it involves money or an award. Cancel it instead.`,
+      };
+    }
+    return { error: 'Not found — it may already be deleted.' };
+  }
+
+  // Photos live in storage, outside the transaction. A failure here leaves
+  // orphaned files, never a half-deleted job, so it is logged and not fatal.
+  if (res.photo_paths?.length) {
+    const { error: rmError } = await admin.storage.from('job-photos').remove(res.photo_paths);
+    if (rmError) console.error('[admin] job photo removal failed:', rmError.message);
+  }
+
+  await notifyAdmins(
+    `Job deleted: ${id.slice(0, 8)}`,
+    `${user.email} deleted a job.\n\n` +
+      `Reason:   ${reason}\n` +
+      `Status:   ${js.status}\n` +
+      `Created:  ${js.created_at}\n` +
+      `Postcode: ${js.postcode ?? '—'}\n` +
+      `Contact:  ${js.contact_name ?? '—'} ${js.contact_email ? `<${js.contact_email}>` : ''}\n\n` +
+      `Their words:\n${js.raw_text ?? '—'}\n\nSubmission id: ${id}`,
+  );
+
+  revalidatePath('/admin/submissions');
+  revalidatePath('/admin/ops');
+  revalidatePath('/admin/queues');
+  revalidatePath('/');
+  redirect('/admin/submissions');
 }
