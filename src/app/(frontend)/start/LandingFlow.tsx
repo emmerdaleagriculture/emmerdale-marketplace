@@ -6,6 +6,7 @@ import { PageTracker, trackStep } from '@/components/PageTracker';
 import { submitForm } from '@/lib/submitForm';
 import { parseJobAction, recordLandingView, type ParseActionState } from './actions';
 import { downscalePhoto } from './photoDownscale';
+import { HOME_SERVICES } from '@/lib/home/services';
 
 // The confirm step (and the map machinery it pulls in) is dead weight on
 // first paint — split it out, and warm the chunk during the parse wait so
@@ -104,6 +105,8 @@ export function LandingFlow() {
   // The front page's service pick, by card slug. The server decides what it
   // means (serviceFromPick); this only carries it across.
   const [serviceHint, setServiceHint] = useState('');
+  // "Something else" picked in the job list: no service, describe it below.
+  const [describing, setDescribing] = useState(false);
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [geoHint, setGeoHint] = useState('');
@@ -255,7 +258,13 @@ export function LandingFlow() {
     ) => {
       if (el && !el.value && value?.trim()) el.value = value.trim().slice(0, max);
     };
-    prefill(rawTextRef.current, q.get('job'), 2000);
+    // A card pick fills the job list below instead of typing its name into
+    // the box — the box is for anything else they want to say. Only a `job`
+    // with no recognised pick (the paddock pages' free text) goes in the box.
+    const pickedSlug = q.get('service');
+    if (!HOME_SERVICES.some((c) => c.slug === pickedSlug)) {
+      prefill(rawTextRef.current, q.get('job'), 2000);
+    }
     prefill(locationRef.current, q.get('loc'), 200);
     setServiceHint((q.get('service') ?? '').slice(0, 60));
     if (
@@ -374,20 +383,51 @@ export function LandingFlow() {
         </label>
       </div>
 
+      {/* The same job list as the home page widget. Ad clicks land here, not
+          on the home page, and until now had to type the service in words. */}
       <label className={f.field}>
-        <span className={f.label}>What needs doing?</span>
+        <span className={f.label}>The job</span>
+        <select
+          className={f.input}
+          value={serviceHint || (describing ? 'other' : '')}
+          onChange={(e) => {
+            const v = e.target.value;
+            setDescribing(v === 'other');
+            setServiceHint(v === 'other' ? '' : v);
+            trackStep('picked');
+          }}
+        >
+          <option value="">Choose a service…</option>
+          {HOME_SERVICES.map((svc) => (
+            <option key={svc.slug} value={svc.slug}>
+              {svc.name}
+            </option>
+          ))}
+          <option value="other">Something else — I&rsquo;ll describe it</option>
+        </select>
+      </label>
+
+      <label className={f.field}>
+        <span className={f.label}>
+          {serviceHint ? 'More details (optional)' : 'More details'}
+        </span>
         <textarea
           ref={rawTextRef}
           onInput={() => trackStep('typed')}
           className={f.textarea}
           name="raw_text"
-          required
+          // Optional once a service is picked: its name is the description.
+          required={!serviceHint}
           // Matches ParseSchema. Where they disagree the browser wins and
           // refuses with a tooltip we never see and cannot record.
           minLength={3}
           maxLength={2000}
           rows={3}
-          placeholder="e.g. I need my 7 acre field topped, it’s just off the A31 near Alresford"
+          placeholder={
+            serviceHint
+              ? 'e.g. about 7 acres, just off the A31 near Alresford'
+              : 'e.g. I need my 7 acre field topped, it’s just off the A31 near Alresford'
+          }
           defaultValue={state.values?.raw_text}
         />
       </label>
