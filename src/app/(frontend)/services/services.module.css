@@ -1,0 +1,26 @@
+/* Running text on the service pages. The landing sections centre their lede,
+   which suits one line and not four paragraphs about hedge flails. */
+.prose {
+  max-width: 680px;
+  margin: 0 auto 18px;
+  text-align: left;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: var(--ink-2, #4a4f45);
+}
+
+.prose li {
+  margin-bottom: 8px;
+}
+
+ul.prose {
+  padding-left: 1.2em;
+}
+
+.prose a {
+  color: var(--jd-green-dark, #2f6f3e);
+}
+
+.prose + h2 {
+  margin-top: 36px;
+}

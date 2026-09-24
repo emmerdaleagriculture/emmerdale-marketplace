@@ -268,7 +268,9 @@ export function LandingFlow() {
     prefill(locationRef.current, q.get('loc'), 200);
     setServiceHint((q.get('service') ?? '').slice(0, 60));
     if (
-      q.get('src') === 'home' &&
+      // The home widget and the service pages both hand over a picked
+      // service and a postcode; neither needs step 1 shown back to them.
+      ['home', 'service'].includes(q.get('src') ?? '') &&
       q.get('auto') !== '0' &&
       q.get('job')?.trim() &&
       q.get('loc')?.trim()

@@ -111,7 +111,7 @@ export default async function PaddockMaintenancePage() {
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
-          <Breadcrumb items={[{ label: 'Paddock maintenance' }]} />
+          <Breadcrumb tone="light" items={[{ label: 'Paddock maintenance' }]} />
           <div className={a.eyebrow}>Paddock &amp; field work</div>
           <h1 className={a.title}>
             Paddock maintenance — <em>tell us what needs doing.</em>
