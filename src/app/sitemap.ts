@@ -4,6 +4,7 @@ import { getCountyCoverage } from '@/lib/reference';
 import { getNotesData, countByTag } from '@/lib/notes/data';
 import { CURATED_TAGS } from '@/lib/notes/tags';
 import { siteUrl } from '@/lib/site';
+import { SERVICE_PAGES } from '@/lib/services';
 
 const SITE = siteUrl();
 
@@ -44,6 +45,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Paddock county pages list every county, covered or not — see the indexing
   // note on the page itself. A job in an uncovered county still has somewhere
   // to go, and that demand is what recruits contractors into the area.
+  // One page per service, plus their index (SEO review, 2026-09-24).
+  const servicePages: MetadataRoute.Sitemap = [
+    { url: `${SITE}/services`, lastModified: new Date('2026-09-24'), changeFrequency: 'monthly', priority: 0.8 },
+    ...SERVICE_PAGES.map((p) => ({
+      url: `${SITE}/services/${p.path}`,
+      lastModified: new Date('2026-09-24'),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })),
+  ];
+
   const paddockCountyPages: MetadataRoute.Sitemap = counties.map((c) => ({
     url: `${SITE}/paddock-maintenance/${c.slug}`,
     lastModified: LAST_UPDATED,
@@ -97,6 +109,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/terms`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE}/customer-terms`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE}/service-charter`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
+    ...servicePages,
     ...paddockCountyPages,
     ...countyPages,
     ...notePages,

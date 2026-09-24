@@ -1,5 +1,6 @@
 import { jsonLd } from '@/lib/jsonld';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import Image from 'next/image';
 import { PageTracker } from '@/components/PageTracker';
 import { HomeHeader } from '@/components/home/HomeHeader';
@@ -286,6 +287,11 @@ export default async function LandingPage() {
           <div className={s.container}>
             <p className={s.eyebrow}>Everything we do</p>
             <h2 className={s.sectionH}>Pick the job. Operators near you come back with prices.</h2>
+            {/* The way from the board to the service pages: the cards
+                themselves go straight to the form, which is what converts. */}
+            <p className={s.lede}>
+              <Link href="/services">What each job involves, and when to do it →</Link>
+            </p>
             <p className={s.lede}>
               If you own a paddock or a bit of land, finding someone reliable
               usually means trawling Facebook groups and hoping for the best. We

@@ -10,7 +10,7 @@ import s from './home.module.css';
 // Root-relative, not bare fragments: this header is no longer front-page
 // only, and "#services" from /contact scrolls to nothing.
 const LINKS = [
-  { href: '/#services', label: 'Services' },
+  { href: '/services', label: 'Services' },
   { href: '/notes', label: 'Notes' },
 ];
 
