@@ -685,6 +685,11 @@ export async function confirmJobAction(
       area_source: areaSource,
       boundary: boundary as unknown as Json,
       service_attributes: serviceAttributes as Json,
+      // The same answers in words, for the job emails (20260924100000).
+      details_text:
+        describeConditions(serviceName, serviceAttributes)
+          .map(([label, value]) => `${label}: ${value}`)
+          .join('\n') || null,
       postcode,
       county_id: countyId,
       lat,

@@ -35,6 +35,12 @@ export type ChoiceQuestion = {
   exclusive?: string;
   /** Asked only when this holds for the answers so far. */
   showIf?: (answers: Record<string, string>) => boolean;
+  /**
+   * The contractor cannot price without it. Never a hard block (a disabled
+   * Send loses the lead): the first Send without an answer scrolls here and
+   * asks; a second Send goes anyway. Give it a "Not sure" option.
+   */
+  required?: boolean;
 };
 
 /**
@@ -101,7 +107,39 @@ export const FENCE_TYPES: ConditionOption[] = [
   },
 ];
 
+/**
+ * What's growing decides the chemical, the rate and whether it can be done
+ * at all near stock — ragwort and bracken are a different job from docks in
+ * a paddock. The contractor needs it before they can price, so it is asked
+ * of every weed control and spraying job.
+ */
+const WEED_QUESTIONS: ConditionQuestion[] = [
+  {
+    key: 'weeds',
+    label: 'Which weeds need dealing with?',
+    short: 'Weeds',
+    hint: 'Pick every one you’ve got.',
+    multi: true,
+    exclusive: 'not_sure',
+    required: true,
+    options: [
+      { value: 'ragwort', label: 'Ragwort' },
+      { value: 'docks', label: 'Docks' },
+      { value: 'thistles', label: 'Thistles' },
+      { value: 'nettles', label: 'Nettles' },
+      { value: 'buttercups', label: 'Buttercups' },
+      { value: 'bracken', label: 'Bracken' },
+      { value: 'brambles', label: 'Brambles' },
+      { value: 'horsetail', label: 'Horsetail' },
+      { value: 'other', label: 'Something else' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+];
+
 export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQuestion[]>> = {
+  'Weed control': WEED_QUESTIONS,
+  Spraying: WEED_QUESTIONS,
   'Paddock topping': [
     {
       key: 'last_cut',

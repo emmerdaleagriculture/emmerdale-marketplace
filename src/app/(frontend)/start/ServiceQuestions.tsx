@@ -15,6 +15,7 @@ import s from './start.module.css';
  */
 export function ServiceQuestions({
   questions,
+  askedFor = null,
   values,
   onAnswer,
   quantity,
@@ -23,6 +24,8 @@ export function ServiceQuestions({
 }: {
   /** Already filtered to the questions the current answers leave showing. */
   questions: ConditionQuestion[];
+  /** A required question the customer tried to send without answering. */
+  askedFor?: string | null;
   values: Record<string, string>;
   onAnswer: (key: string, value: string) => void;
   quantity: string;
@@ -41,7 +44,7 @@ export function ServiceQuestions({
   return (
     <>
       {questions.map((q) => (
-        <div key={q.key}>
+        <div key={q.key} id={`q-${q.key}`}>
           {q.group && <p className={s.questionGroup}>{q.group}</p>}
           {q.kind === 'quantity' ? (
             <label className={quantityClassName}>
@@ -63,6 +66,12 @@ export function ServiceQuestions({
             <div className={f.field} role="group" aria-label={q.label}>
               <span className={f.label}>{q.label}</span>
               {q.hint && <span className={f.hint}>{q.hint}</span>}
+              {askedFor === q.key && (
+                <p className={s.discrepancy} role="alert" style={{ margin: '4px 0' }}>
+                  The contractor needs this to price your job — tap any that apply, or{' '}
+                  <strong>Not sure</strong>. Or press Send again to send it as it is.
+                </p>
+              )}
               {q.options.some((o) => o.image) ? (
                 <div className={s.optionCards}>
                   {q.options.map((o) => (

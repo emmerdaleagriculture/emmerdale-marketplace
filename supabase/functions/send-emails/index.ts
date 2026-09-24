@@ -259,7 +259,19 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           // twenty bales of hay have no area, and "not stated" reads as a
           // customer who withheld something. Only an explicit false drops it:
           // an unclassified job genuinely does not have a known area.
-          (p.area_priced === false ? '' : `Area:      ${areaLine(p)}\n`) +
+          // A length is the quantity a per-metre job is priced on (fencing,
+          // hedges, ditches), so it shows even though the work isn't by area.
+          (p.area_priced === false && !(p.area_unit === 'linear_m' && p.area_value)
+            ? ''
+            : `${p.area_unit === 'linear_m' ? 'Length:    ' : 'Area:      '}${areaLine(p)}\n`) +
+          // The customer's answers to the service's own questions — the weeds
+          // on a spraying job, the fence type and height on a fencing one.
+          (p.details
+            ? String(p.details)
+                .split('\n')
+                .map((l) => `  ${l}\n`)
+                .join('')
+            : '') +
           // County-only jobs (portal enquiries publish no postcode, because
           // the customer's postcode is not always the job's location) would
           // otherwise read "Where: —, Devon".

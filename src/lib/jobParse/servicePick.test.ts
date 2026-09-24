@@ -6,9 +6,13 @@ describe('serviceFromPick', () => {
     expect(serviceFromPick('fencing')).toBe('Fencing');
   });
 
+  it('reads the merged weed card as Weed control', () => {
+    expect(serviceFromPick('weed-control')).toBe('Weed control');
+  });
+
   it('leaves services without a flow of their own as words', () => {
     expect(serviceFromPick('topping')).toBeNull();
-    expect(serviceFromPick('weed-control')).toBeNull();
+    expect(serviceFromPick('hedge-cutting')).toBeNull();
   });
 
   it('ignores nothing and nonsense', () => {
@@ -22,6 +26,15 @@ describe('servicesMentioned', () => {
   it('offers fencing when the description says so', () => {
     expect(servicesMentioned('Need 40m of post and rail fencing')).toEqual(['Fencing']);
     expect(servicesMentioned('new fence along the lane')).toEqual(['Fencing']);
+  });
+
+  it('offers weed control and spraying from the words that mean them', () => {
+    expect(servicesMentioned('ragwort in the paddock')).toEqual(['Weed control']);
+    expect(servicesMentioned('need the field sprayed for docks')).toEqual([
+      'Weed control',
+      'Spraying',
+    ]);
+    expect(servicesMentioned('topping, some thistles')).toEqual(['Weed control']);
   });
 
   it('does not read fencing into other words', () => {
