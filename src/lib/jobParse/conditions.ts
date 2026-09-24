@@ -144,7 +144,10 @@ export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQues
     {
       key: 'last_cut',
       short: 'Last cut',
-      label: 'When was it last cut?',
+      label: 'When was the grass last cut?',
+      // How long it has been decides the machine and the time on site — a
+      // topper for this year's growth, a flail for three years of it.
+      required: true,
       options: [
         { value: 'this_year', label: 'This year' },
         { value: '1_2_years', label: '1–2 years ago' },

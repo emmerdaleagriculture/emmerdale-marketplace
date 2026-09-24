@@ -9,7 +9,13 @@ import type { CanonicalService } from './schema';
  * unless it is classified. Everything else still arrives as words in the
  * description box, as it always has.
  */
-const PICK_CLASSIFIES: ReadonlySet<CanonicalService> = new Set(['Fencing', 'Weed control']);
+const PICK_CLASSIFIES: ReadonlySet<CanonicalService> = new Set([
+  'Fencing',
+  'Weed control',
+  // Topping's questions (last cut, what's growing, the ground) were written
+  // first and almost never shown: the card never classified the job.
+  'Paddock topping',
+]);
 
 /**
  * Cards whose name is not a canonical service but whose pick still means

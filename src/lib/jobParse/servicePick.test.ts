@@ -10,8 +10,12 @@ describe('serviceFromPick', () => {
     expect(serviceFromPick('weed-control')).toBe('Weed control');
   });
 
+  it('classifies a topping pick, so its questions are asked', () => {
+    expect(serviceFromPick('topping')).toBe('Paddock topping');
+  });
+
   it('leaves services without a flow of their own as words', () => {
-    expect(serviceFromPick('topping')).toBeNull();
+    expect(serviceFromPick('harrowing')).toBeNull();
     expect(serviceFromPick('hedge-cutting')).toBeNull();
   });
 
