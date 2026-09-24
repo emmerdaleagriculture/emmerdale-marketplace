@@ -409,7 +409,7 @@ export function LandingFlow() {
 
       <label className={f.field}>
         <span className={f.label}>
-          {serviceHint ? 'Anything else we should know? (optional)' : 'What needs doing?'}
+          {serviceHint ? 'More details (optional)' : 'More details'}
         </span>
         <textarea
           ref={rawTextRef}
