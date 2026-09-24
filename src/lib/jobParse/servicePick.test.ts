@@ -31,14 +31,25 @@ describe('servicesMentioned', () => {
   it('offers weed control and spraying from the words that mean them', () => {
     expect(servicesMentioned('ragwort in the paddock')).toEqual(['Weed control']);
     expect(servicesMentioned('need the field sprayed for docks')).toEqual([
+      'Spraying',
+      'Weed control',
+    ]);
+    expect(servicesMentioned('topping, some thistles')).toEqual(['Paddock topping', 'Weed control']);
+  });
+
+  it('offers topping first when a topping job mentions weeds', () => {
+    expect(
+      servicesMentioned('Orchard topping Spring, summer to control Bracken, creeping thistle, nettle'),
+    ).toEqual(['Paddock topping', 'Weed control']);
+    expect(servicesMentioned('Weed control & spraying, topping and harrowing')).toEqual([
       'Weed control',
       'Spraying',
+      'Paddock topping',
     ]);
-    expect(servicesMentioned('topping, some thistles')).toEqual(['Weed control']);
   });
 
   it('does not read fencing into other words', () => {
-    expect(servicesMentioned('paddock topping, 5 acres')).toEqual([]);
+    expect(servicesMentioned('paddock topping, 5 acres')).not.toContain('Fencing');
     expect(servicesMentioned('defence of the realm')).toEqual([]);
   });
 });

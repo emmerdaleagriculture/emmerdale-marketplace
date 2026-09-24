@@ -40,12 +40,22 @@ export function serviceFromPick(slug: string | null | undefined): CanonicalServi
  * mentions a fence and is not a fencing job, so this fills the alternatives
  * the customer picks from rather than the service they are asked to confirm.
  */
+// Topping is here for the jobs that mention weeds without being weed jobs:
+// "orchard topping to control bracken and thistle" must not be offered
+// Weed control alone. Same stems jobs_in_progress uses (topping/topped/top the).
 const MENTIONS: [CanonicalService, RegExp][] = [
   ['Fencing', /\bfenc(?:e|es|ing)\b/i],
+  ['Paddock topping', /\b(?:topp(?:ing|ed)|top the)\b/i],
   ['Weed control', /\b(?:weeds?|ragwort|thistles?|docks|nettles|bracken|buttercups?|horsetail)\b/i],
   ['Spraying', /\bspray(?:s|ed|ing)?\b/i],
 ];
 
+/** In the order the customer mentioned them: the first thing they asked for leads. */
 export function servicesMentioned(text: string): CanonicalService[] {
-  return MENTIONS.filter(([, re]) => re.test(text)).map(([name]) => name);
+  return MENTIONS.flatMap(([name, re]) => {
+    const at = text.search(re);
+    return at < 0 ? [] : [{ name, at }];
+  })
+    .sort((a, b) => a.at - b.at)
+    .map((m) => m.name);
 }
