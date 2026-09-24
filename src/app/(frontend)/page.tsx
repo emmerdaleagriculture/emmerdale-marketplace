@@ -369,7 +369,7 @@ export default async function LandingPage() {
                   <a href={LUMENIRA_URL} className={s.tomLink} target="_blank" rel="noopener">
                     Lumenira
                   </a>
-                  .
+                  , a world-leading photo sharing site with thousands of users.
                 </p>
                 <p>
                   <strong>
