@@ -72,6 +72,13 @@ export const HOME_SERVICES: HomeService[] = [
     icon: 'clearance',
   },
   {
+    slug: 'flailing',
+    name: 'Flailing',
+    label: 'flailing',
+    blurb: 'Heavy flail through rough grass, scrub and brambles, cut and left.',
+    icon: 'flail',
+  },
+  {
     slug: 'flail-collecting',
     name: 'Flail collecting',
     label: 'flail collecting',
