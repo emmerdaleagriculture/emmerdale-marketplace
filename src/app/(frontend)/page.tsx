@@ -30,6 +30,9 @@ import s from '@/components/home/home.module.css';
 // Canonical origin for structured data — www in production.
 const SITE = siteUrl();
 
+/** Tom's other company — named on the founder card, for credibility. */
+const LUMENIRA_URL = 'https://www.lumenira.com';
+
 /** Tom's public profile — the founder card links his name to it. */
 const LINKEDIN_URL = 'https://www.linkedin.com/in/tom-oswald-a7233619/';
 
@@ -77,7 +80,14 @@ const orgJsonLd = {
     postalCode: 'SO51 0QL',
     addressCountry: 'GB',
   },
-  founder: { '@type': 'Person', name: 'Tom Oswald', jobTitle: 'Managing Director', sameAs: [LINKEDIN_URL] },
+  founder: {
+    '@type': 'Person',
+    name: 'Tom Oswald',
+    jobTitle: 'Managing Director',
+    sameAs: [LINKEDIN_URL],
+    // The other company he founded — the same credibility the card claims.
+    affiliation: { '@type': 'Organization', name: 'Lumenira', url: LUMENIRA_URL },
+  },
   areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
   contactPoint: {
     '@type': 'ContactPoint',
@@ -350,7 +360,16 @@ export default async function LandingPage() {
                   </a>{' '}
                   looking after paddocks, smallholdings and grassland across the
                   South of England — topping, harrowing, rolling, hedges, the
-                  everyday work that keeps land in good order.
+                  everyday work that keeps land in good order. I&rsquo;m also the
+                  founder of{' '}
+                  {/* A followed link on purpose (Tom, 2026-09-24): no nofollow,
+                      sponsored or ugc, and no noreferrer either, so the visit
+                      shows up as coming from here. noopener only guards the
+                      new tab and has no bearing on how search engines treat it. */}
+                  <a href={LUMENIRA_URL} className={s.tomLink} target="_blank" rel="noopener">
+                    Lumenira
+                  </a>
+                  , a world-leading photo sharing site with thousands of users.
                 </p>
                 <p>
                   <strong>
