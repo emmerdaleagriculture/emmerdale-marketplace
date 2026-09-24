@@ -20,7 +20,14 @@ export type ServiceIconKey =
   | 'tree'
   | 'subsoil'
   | 'scarify'
-  | 'stones';
+  | 'stones'
+  | 'tractor'
+  | 'trailer'
+  | 'grader'
+  | 'mulcher'
+  | 'excavator'
+  | 'road'
+  | 'mounds';
 
 // Line-art glyphs for the service cards. All share one 40×40 frame and stroke
 // so the grid reads as a set.
@@ -189,6 +196,69 @@ const PATHS: Record<ServiceIconKey, ReactNode> = {
       <path d="M6 12 H34" />
       <path d="M9 12 L7 24 M15 12 L13 24 M21 12 L19 24 M27 12 L25 24 M33 12 L31 24" />
       <path d="M4 30 C 10 26, 14 34, 20 30 S 30 26, 36 30" />
+    </>
+  ),
+  // A tractor, big back wheel and small front.
+  tractor: (
+    <>
+      <circle cx="12" cy="27" r="7" />
+      <circle cx="30" cy="30" r="4" />
+      <path d="M12 20 V10 H22 L26 20 H34 V26" />
+      <path d="M19 27 H26" />
+    </>
+  ),
+  // A two-axle trailer with a load.
+  trailer: (
+    <>
+      <path d="M6 16 H30 V26 H6 Z" />
+      <circle cx="13" cy="30" r="3" />
+      <circle cx="23" cy="30" r="3" />
+      <path d="M30 22 H36" />
+      <path d="M9 16 L13 11 L18 16 M18 16 L23 12 L27 16" />
+    </>
+  ),
+  // A grader blade levelling a track.
+  grader: (
+    <>
+      <path d="M4 32 C 12 28, 16 34, 22 31 L36 31" />
+      <path d="M14 26 L26 20" />
+      <path d="M20 23 V12 H30" />
+      <circle cx="32" cy="24" r="3" />
+    </>
+  ),
+  // A mulcher head with fixed teeth.
+  mulcher: (
+    <>
+      <rect x="6" y="14" width="22" height="12" rx="3" />
+      <path d="M9 26 L9 30 M14 26 L14 30 M19 26 L19 30 M24 26 L24 30" />
+      <path d="M28 20 H36" />
+      <path d="M5 34 L12 32 L18 35 L25 32 L33 34" />
+    </>
+  ),
+  // An excavator arm and bucket.
+  excavator: (
+    <>
+      <rect x="4" y="24" width="16" height="6" rx="3" />
+      <path d="M8 24 V18 H16 V24" />
+      <path d="M16 19 L26 9 L32 18" />
+      <path d="M32 18 L36 20 L33 25 L29 22 Z" />
+    </>
+  ),
+  // A road running into the distance, centre line dashed.
+  road: (
+    <>
+      <path d="M14 6 L4 34" />
+      <path d="M26 6 L36 34" />
+      <path d="M20 8 V12 M20 17 V22 M20 27 V33" />
+    </>
+  ),
+  // Planting mounds in a row, a sapling on one.
+  mounds: (
+    <>
+      <path d="M4 32 C 8 24, 12 24, 16 32" />
+      <path d="M16 32 C 20 24, 24 24, 28 32" />
+      <path d="M28 32 C 31 26, 34 26, 36 32" />
+      <path d="M22 26 V18 M22 21 L19 18 M22 20 L25 17" />
     </>
   ),
   // Stones going under a buried layer.
