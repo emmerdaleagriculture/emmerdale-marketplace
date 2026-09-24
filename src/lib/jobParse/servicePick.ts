@@ -9,7 +9,17 @@ import type { CanonicalService } from './schema';
  * unless it is classified. Everything else still arrives as words in the
  * description box, as it always has.
  */
-const PICK_CLASSIFIES: ReadonlySet<CanonicalService> = new Set(['Fencing']);
+const PICK_CLASSIFIES: ReadonlySet<CanonicalService> = new Set(['Fencing', 'Weed control']);
+
+/**
+ * Cards whose name is not a canonical service but whose pick still means
+ * one. "Weed control & spraying" covers two rows; the customer picking it is
+ * asking for weeds to be dealt with, which is Weed control — and both rows ask
+ * the same weed question, so nothing depends on which one it lands in.
+ */
+const CARD_SERVICE: Partial<Record<string, CanonicalService>> = {
+  'weed-control': 'Weed control',
+};
 
 /**
  * The canonical service a home-page pick (`?service=<card slug>`) stands for,
@@ -20,7 +30,7 @@ const PICK_CLASSIFIES: ReadonlySet<CanonicalService> = new Set(['Fencing']);
 export function serviceFromPick(slug: string | null | undefined): CanonicalService | null {
   if (!slug) return null;
   const card = HOME_SERVICES.find((c) => c.slug === slug);
-  const name = card?.name as CanonicalService | undefined;
+  const name = CARD_SERVICE[slug] ?? (card?.name as CanonicalService | undefined);
   return name && PICK_CLASSIFIES.has(name) ? name : null;
 }
 
@@ -30,8 +40,22 @@ export function serviceFromPick(slug: string | null | undefined): CanonicalServi
  * mentions a fence and is not a fencing job, so this fills the alternatives
  * the customer picks from rather than the service they are asked to confirm.
  */
-const MENTIONS: [CanonicalService, RegExp][] = [['Fencing', /\bfenc(?:e|es|ing)\b/i]];
+// Topping is here for the jobs that mention weeds without being weed jobs:
+// "orchard topping to control bracken and thistle" must not be offered
+// Weed control alone. Same stems jobs_in_progress uses (topping/topped/top the).
+const MENTIONS: [CanonicalService, RegExp][] = [
+  ['Fencing', /\bfenc(?:e|es|ing)\b/i],
+  ['Paddock topping', /\b(?:topp(?:ing|ed)|top the)\b/i],
+  ['Weed control', /\b(?:weeds?|ragwort|thistles?|docks|nettles|bracken|buttercups?|horsetail)\b/i],
+  ['Spraying', /\bspray(?:s|ed|ing)?\b/i],
+];
 
+/** In the order the customer mentioned them: the first thing they asked for leads. */
 export function servicesMentioned(text: string): CanonicalService[] {
-  return MENTIONS.filter(([, re]) => re.test(text)).map(([name]) => name);
+  return MENTIONS.flatMap(([name, re]) => {
+    const at = text.search(re);
+    return at < 0 ? [] : [{ name, at }];
+  })
+    .sort((a, b) => a.at - b.at)
+    .map((m) => m.name);
 }

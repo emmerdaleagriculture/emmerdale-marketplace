@@ -1231,6 +1231,7 @@ export type Database = {
           county_id: number | null
           created_at: string
           customer_id: string | null
+          details_text: string | null
           distributed_at: string | null
           draft_chased_at: string | null
           expires_at: string | null
@@ -1295,6 +1296,7 @@ export type Database = {
           county_id?: number | null
           created_at?: string
           customer_id?: string | null
+          details_text?: string | null
           distributed_at?: string | null
           draft_chased_at?: string | null
           expires_at?: string | null
@@ -1359,6 +1361,7 @@ export type Database = {
           county_id?: number | null
           created_at?: string
           customer_id?: string | null
+          details_text?: string | null
           distributed_at?: string | null
           draft_chased_at?: string | null
           expires_at?: string | null

@@ -108,6 +108,10 @@ export function ConfirmStep({
     );
   };
   const sendWithoutBoundary = useRef(false);
+  // A required question (the weeds on a spraying job) asks once, then lets
+  // them send regardless — the same bargain as the boundary nudge.
+  const [askedFor, setAskedFor] = useState<string | null>(null);
+  const requiredAsked = useRef(false);
 
   // Step changes are state swaps, not navigations — the browser keeps the
   // old scroll position, leaving the customer mid-page. Reset on mount (the
@@ -183,6 +187,16 @@ export function ConfirmStep({
       action={action}
       className={`${a.card} ${s.card}`}
       onSubmit={(e) => {
+        const unanswered = choices.find((q) => q.required && !conditionValues[q.key]);
+        if (unanswered && !requiredAsked.current) {
+          e.preventDefault();
+          requiredAsked.current = true;
+          setAskedFor(unanswered.key);
+          document
+            .getElementById(`q-${unanswered.key}`)
+            ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          return;
+        }
         if (boundaryWanted && !sendWithoutBoundary.current) {
           e.preventDefault();
           setDrawRequest((n) => n + 1);
@@ -375,6 +389,7 @@ export function ConfirmStep({
         <div className={s.serviceBlock}>
           <ServiceQuestions
             questions={questions}
+            askedFor={askedFor && !conditionValues[askedFor] ? askedFor : null}
             values={conditionValues}
             onAnswer={(key, value) => setConditionValues((prev) => ({ ...prev, [key]: value }))}
             quantity={areaValue}

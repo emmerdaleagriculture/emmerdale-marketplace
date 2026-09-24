@@ -66,6 +66,29 @@ describe('fencing flow', () => {
   });
 });
 
+describe('weed question', () => {
+  it('is asked, and required, for both weed control and spraying', () => {
+    for (const svc of ['Weed control', 'Spraying']) {
+      const q = visibleChoices(svc, {}).find((x) => x.key === 'weeds');
+      expect(q?.required).toBe(true);
+      expect(q?.multi).toBe(true);
+    }
+  });
+
+  it('keeps several weeds, and not-sure only on its own', () => {
+    expect(conditionAnswers('Spraying', form({ condition_weeds: 'docks,ragwort' }))).toEqual({
+      weeds: 'ragwort,docks',
+    });
+    expect(conditionAnswers('Spraying', form({ condition_weeds: 'not_sure,docks' }))).toEqual({});
+  });
+
+  it('reads back for the contractor in words', () => {
+    expect(describeConditions('Weed control', { weeds: 'ragwort,bracken' })).toEqual([
+      ['Weeds', 'Ragwort, Bracken'],
+    ]);
+  });
+});
+
 describe('toggleMulti', () => {
   it('adds and removes', () => {
     expect(toggleMulti(gates, '', 'field')).toBe('field');
