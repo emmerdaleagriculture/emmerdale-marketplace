@@ -38,6 +38,10 @@ export const CANONICAL_SERVICES = [
   'Excavator work',
   'Road construction/repair',
   'Mounding',
+  'Lime spreading',
+  'Tree felling & chipping',
+  'Sub-soiling',
+  'Scarifying',
 ] as const;
 
 export type CanonicalService = (typeof CANONICAL_SERVICES)[number];

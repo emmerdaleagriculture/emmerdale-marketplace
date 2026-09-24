@@ -14,7 +14,13 @@ export type ServiceIconKey =
   | 'rotavating'
   | 'mole'
   | 'fencing'
-  | 'tractor_hire';
+  | 'tractor_hire'
+  | 'flail_collect'
+  | 'lime'
+  | 'tree'
+  | 'subsoil'
+  | 'scarify'
+  | 'stones';
 
 // Line-art glyphs for the service cards. All share one 40×40 frame and stroke
 // so the grid reads as a set.
@@ -138,6 +144,61 @@ const PATHS: Record<ServiceIconKey, ReactNode> = {
       <circle cx="12" cy="32" r="3" />
       <circle cx="22" cy="32" r="3" />
       <path d="M26 22 H34 L30 14 H20" />
+    </>
+  ),
+  // Flail with a collecting hopper behind it.
+  flail_collect: (
+    <>
+      <rect x="4" y="22" width="14" height="8" rx="2" />
+      <path d="M6 30 L8 34 M11 30 L13 34 M16 30 L18 34" />
+      <path d="M18 26 H22" />
+      <path d="M22 14 H36 V30 H22 Z" />
+      <path d="M22 20 H36" />
+    </>
+  ),
+  // Spreader throwing a fan of lime.
+  lime: (
+    <>
+      <path d="M10 10 H26 L22 22 H14 Z" />
+      <path d="M18 22 V26" />
+      <path d="M18 28 L8 34 M18 28 L18 35 M18 28 L28 34" />
+      <path d="M31 18 h.01 M34 24 h.01 M4 22 h.01" />
+    </>
+  ),
+  // A tree and a felled log.
+  tree: (
+    <>
+      <path d="M14 6 L22 20 H18 L24 30 H4 L10 20 H6 Z" />
+      <path d="M14 30 V35" />
+      <rect x="24" y="28" width="12" height="6" rx="3" />
+      <circle cx="33" cy="31" r="1.5" />
+    </>
+  ),
+  // A subsoiler leg reaching down through the soil layers.
+  subsoil: (
+    <>
+      <path d="M4 14 H36" />
+      <path d="M4 24 H36" strokeDasharray="2 3" />
+      <path d="M20 6 V28 L26 32" />
+      <path d="M14 6 H26" />
+    </>
+  ),
+  // Scarifier tines raking up thatch.
+  scarify: (
+    <>
+      <path d="M6 12 H34" />
+      <path d="M9 12 L7 24 M15 12 L13 24 M21 12 L19 24 M27 12 L25 24 M33 12 L31 24" />
+      <path d="M4 30 C 10 26, 14 34, 20 30 S 30 26, 36 30" />
+    </>
+  ),
+  // Stones going under a buried layer.
+  stones: (
+    <>
+      <path d="M4 16 H36" />
+      <ellipse cx="11" cy="26" rx="4" ry="3" />
+      <ellipse cx="22" cy="29" rx="5" ry="3.5" />
+      <ellipse cx="31" cy="24" rx="3.5" ry="2.5" />
+      <path d="M20 6 V12 M17 9 L20 12 L23 9" />
     </>
   ),
 };

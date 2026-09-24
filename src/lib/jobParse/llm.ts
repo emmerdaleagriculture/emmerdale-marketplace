@@ -12,7 +12,7 @@ import { LlmParseSchema, RECORD_JOB_PARSE_TOOL, type LlmParse } from './schema';
  */
 
 export const MODEL_VERSION = 'claude-haiku-4-5';
-export const PROMPT_VERSION = 'v3'; // v3: Fencing, Ditch clearance, and seven machinery/forestry services; v2: Hedge cutting
+export const PROMPT_VERSION = 'v4'; // v4: Lime spreading, Tree felling & chipping, Sub-soiling, Scarifying; v3: Fencing, Ditch clearance, and seven machinery/forestry services; v2: Hedge cutting
 
 /** Hard latency ceiling on the parse call (spec §4 step 2). */
 // 15 s, up from 8: Haiku averages ~2.7 s here, but one live customer hit the
@@ -50,6 +50,10 @@ Services (choose exactly one, or "unmatched"):
 - Fixed tooth mulching — forestry mulching with a fixed-tooth mulcher: grinding scrub, saplings, stumps or brash down to mulch; measured by area
 - Excavator work — digging with an excavator or digger: trenches, footings, ponds, spoil moving; usually by the hour or day
 - Road construction/repair — building or repairing farm tracks, drives or access roads: excavating, laying stone and surfacing; measured in metres of track
+- Lime spreading — spreading agricultural lime to correct soil pH on grassland or arable; measured by area
+- Tree felling & chipping — felling trees and chipping the brash, branches or whole trees; priced by the job
+- Sub-soiling — breaking up compacted subsoil with a subsoiler to improve drainage and rooting; measured by area
+- Scarifying — raking out thatch and moss from grassland or lawns with a scarifier; measured by area
 - Mounding — forestry mounding with an excavator to prepare ground for tree planting; measured by area
 
 Rules:

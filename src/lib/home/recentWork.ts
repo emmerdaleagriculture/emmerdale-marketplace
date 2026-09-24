@@ -94,8 +94,8 @@ export const getRecentWork = memoize<RecentWorkRow[]>(async () => {
  * The services actually present in the rows, in board order.
  *
  * Deliberately derived from the data rather than from HOME_SERVICES: the two
- * taxonomies don't line up (the services table has `Flailing` and `Flail
- * collecting`, which have no card at all), so chips built from the card list
+ * taxonomies don't line up (the services table has `Flailing`, which has no
+ * card at all, and cards merge rows the table keeps apart), so chips built from the card list
  * would silently hide real jobs.
  */
 export function serviceFilters(rows: RecentWorkRow[]): string[] {

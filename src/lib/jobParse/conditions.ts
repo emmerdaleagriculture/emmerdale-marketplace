@@ -298,6 +298,8 @@ const NON_AREA_PRICED: ReadonlySet<string> = new Set([
   'General tractor work',
   'Trailer work',
   'Excavator work',
+  // Priced by the job, not the acre.
+  'Tree felling & chipping',
 ]);
 
 export function isAreaPriced(service: string | null): boolean {
