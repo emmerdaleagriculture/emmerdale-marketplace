@@ -18,6 +18,7 @@ import { reconcile } from '@/lib/jobParse/reconcile';
 import { parseBoundary, ringAreaAcres } from '@/lib/jobParse/geometry';
 import { conditionAnswers, describeConditions, quantityFor } from '@/lib/jobParse/conditions';
 import { serviceFromPick, servicesMentioned } from '@/lib/jobParse/servicePick';
+import { HOME_SERVICES } from '@/lib/home/services';
 import { GATE_WIDTH_VALUES, gateWidthLabel, normaliseW3w } from '@/lib/jobParse/access';
 import {
   clientIp,
@@ -212,6 +213,11 @@ export async function parseJobAction(
     raw_text: String(formData.get('raw_text') ?? ''),
     location_raw: String(formData.get('location_raw') ?? ''),
   };
+  // A service picked from the job list is a description in itself: the box
+  // below it is optional once one is chosen. Its name stands in for the words,
+  // exactly as the home page's cards already type it in.
+  const pickedCard = HOME_SERVICES.find((c) => c.slug === String(formData.get('service_hint') ?? ''));
+  if (!values.raw_text.trim() && pickedCard) values.raw_text = pickedCard.name;
 
   // Read before the schema check rather than after it: a refusal needs an IP
   // to be recorded against, and reading a header costs nothing.
