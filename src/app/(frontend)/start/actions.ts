@@ -217,13 +217,17 @@ export async function parseJobAction(
   // below it is optional once one is chosen. Its name stands in for the words,
   // exactly as the home page's cards already type it in.
   const pickedCard = HOME_SERVICES.find((c) => c.slug === String(formData.get('service_hint') ?? ''));
-  if (!values.raw_text.trim() && pickedCard) values.raw_text = pickedCard.name;
+  // Applied to what is parsed, not to `values`: those go back to the form on
+  // a refusal, and the optional box should not come back holding a name the
+  // customer never typed.
+  const input =
+    !values.raw_text.trim() && pickedCard ? { ...values, raw_text: pickedCard.name } : values;
 
   // Read before the schema check rather than after it: a refusal needs an IP
   // to be recorded against, and reading a header costs nothing.
   const ip = await clientIp();
 
-  const parsed = ParseSchema.safeParse(values);
+  const parsed = ParseSchema.safeParse(input);
   if (!parsed.success) {
     const message = parsed.error.issues[0]?.message ?? 'Please check the form.';
     return { ...(await refuse(ip, 'parse', issueReason(parsed.error), message)), values };
