@@ -47,9 +47,12 @@ const START_HREF = '/start';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Get prices from approved operators near you',
+  // Search terms first (SEO review, 2026-09-24): Google already shows this page
+  // for "paddock maintenance near me", and the old title named neither that nor
+  // "agricultural contractors". Absolute so the brand isn't appended twice.
+  title: { absolute: 'Agricultural Contractors & Paddock Maintenance | Emmerdale Agriculture' },
   description:
-    'A managed marketplace for rural land. Tell us what needs doing and approved operators near you come back with prices you can compare side by side — with every job covered by our own insurance.',
+    'Paddock topping, harrowing, hedge cutting, fencing and more. Tell us the job and vetted local contractors send prices to compare. Every job insured.',
   alternates: { canonical: '/' },
 };
 
@@ -248,7 +251,7 @@ export default async function LandingPage() {
           <div className={`${s.container} ${s.heroGrid}`}>
             <div>
               <p className={s.kicker}>A managed marketplace for rural land</p>
-              <h1 className={s.heroH1}>Get prices from approved operators near you.</h1>
+              <h1 className={s.heroH1}>Get prices from agricultural contractors near you.</h1>
               <p className={s.heroSub}>
                 Tell us what needs doing. Vetted operators covering your patch
                 price the job, <strong>you see them side by side</strong>, and

@@ -15,6 +15,13 @@ export type TagDef = {
   description: string;
 };
 
+/**
+ * A tag hub is indexed (and listed in the sitemap) only once it holds this many
+ * posts. Below it the hub is a thin duplicate of the posts it lists — useful to
+ * a reader, not to search.
+ */
+export const MIN_INDEXED_TAG_POSTS = 3;
+
 export const CURATED_TAGS: TagDef[] = [
   {
     slug: 'topping',

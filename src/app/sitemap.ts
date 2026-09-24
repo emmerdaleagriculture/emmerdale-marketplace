@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { allCountyRefs } from '@/lib/verticals';
 import { getCountyCoverage } from '@/lib/reference';
 import { getNotesData, countByTag } from '@/lib/notes/data';
-import { CURATED_TAGS } from '@/lib/notes/tags';
+import { CURATED_TAGS, MIN_INDEXED_TAG_POSTS } from '@/lib/notes/tags';
 import { siteUrl } from '@/lib/site';
 
 const SITE = siteUrl();
@@ -74,7 +74,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             changeFrequency: 'monthly' as const,
             priority: 0.6,
           })),
-          ...CURATED_TAGS.filter((t) => (tagCounts.get(t.slug) ?? 0) > 0).map((t) => ({
+          // Only hubs with enough posts to be more than a copy of them — the
+          // same threshold that keeps the rest noindex.
+          ...CURATED_TAGS.filter((t) => (tagCounts.get(t.slug) ?? 0) >= MIN_INDEXED_TAG_POSTS).map((t) => ({
             url: `${SITE}/notes/tag/${t.slug}`,
             lastModified: latestDate(
               allNotes.filter((n) => n.tags.includes(t.slug)).map((n) => n.publishedAt),
