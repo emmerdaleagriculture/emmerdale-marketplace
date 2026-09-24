@@ -13,8 +13,8 @@ import s from './home.module.css';
  * round trip.
  *
  * Chips come from the services present in the data, not from HOME_SERVICES:
- * the two taxonomies disagree (the services table has `Flailing`, which has
- * no card, and cards merge rows the table keeps apart), so chips built from the card list
+ * the two taxonomies disagree (cards merge rows the table keeps apart, and a
+ * card name need not be a service name), so chips built from the card list
  * would quietly hide real jobs.
  */
 export function RecentWorkBoard({

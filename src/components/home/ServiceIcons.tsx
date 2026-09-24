@@ -15,6 +15,7 @@ export type ServiceIconKey =
   | 'mole'
   | 'fencing'
   | 'tractor_hire'
+  | 'flail'
   | 'flail_collect'
   | 'lime'
   | 'tree'
@@ -151,6 +152,15 @@ const PATHS: Record<ServiceIconKey, ReactNode> = {
       <circle cx="12" cy="32" r="3" />
       <circle cx="22" cy="32" r="3" />
       <path d="M26 22 H34 L30 14 H20" />
+    </>
+  ),
+  // A flail head, its hammers swinging through the grass.
+  flail: (
+    <>
+      <rect x="6" y="14" width="24" height="10" rx="2" />
+      <path d="M30 19 H36" />
+      <path d="M9 24 L7 30 M14 24 L12 30 M19 24 L17 30 M24 24 L22 30" />
+      <path d="M4 34 L8 30 L12 34 L16 30 L20 34 L24 30 L28 34" />
     </>
   ),
   // Flail with a collecting hopper behind it.
