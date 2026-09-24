@@ -7,7 +7,13 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { jsonLd } from '@/lib/jsonld';
-import { CURATED_TAGS, tagDef, ctaForTag, serviceLinksForTags } from '@/lib/notes/tags';
+import {
+  CURATED_TAGS,
+  MIN_INDEXED_TAG_POSTS,
+  tagDef,
+  ctaForTag,
+  serviceLinksForTags,
+} from '@/lib/notes/tags';
 import { getNotesData, countByTag } from '@/lib/notes/data';
 import { ServiceLinks } from '@/components/notes/ServiceLinks';
 import { PostCard } from '../../PostCard';
@@ -33,11 +39,16 @@ export async function generateMetadata({
   const { tag } = await params;
   const def = tagDef(tag);
   if (!def) return { title: 'Not found' };
+  const { featured, grid } = await getNotesData();
+  const count = countByTag([...(featured ? [featured] : []), ...grid]).get(def.slug) ?? 0;
   return {
     // Bare title — the layout template appends " | Emmerdale Agriculture".
     title: def.metaTitle,
     description: def.description,
     alternates: { canonical: `/notes/tag/${def.slug}` },
+    // A hub with one or two posts is a thin copy of those posts. Kept for
+    // readers, followed for the links, indexed once it has enough on it.
+    ...(count < MIN_INDEXED_TAG_POSTS ? { robots: { index: false, follow: true } } : {}),
   };
 }
 

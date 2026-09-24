@@ -53,8 +53,9 @@ export async function generateMetadata({
   const description = post.excerpt || 'Notes from the field — Emmerdale Agriculture.';
 
   return {
-    // Post title + suffix; the layout template appends the brand once.
-    title: `${post.title} — Notes from the field`,
+    // The post title alone; the layout template appends the brand. The old
+    // " — Notes from the field" suffix pushed every title past 100 characters.
+    title: post.title,
     description,
     openGraph: {
       title: post.title,

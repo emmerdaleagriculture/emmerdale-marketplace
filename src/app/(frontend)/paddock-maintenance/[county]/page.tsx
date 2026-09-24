@@ -56,8 +56,10 @@ export async function generateMetadata({
   const resolved = await resolveCountyBySlug(county);
   if (!resolved) return {};
   const name = resolved.county.name;
-  const title = `Paddock Maintenance in ${name} — Topping, Harrowing & Spraying`;
-  const description = `Need a paddock or field sorted in ${name}? Describe the job in your own words and we’ll pass it to agricultural contractors covering ${name} — topping, chain harrowing, rolling, weed spraying, hedge cutting and fencing. Free, no obligation.`;
+  // Kept short enough to show whole in results: the county is the part that
+  // matches the search, and a title past ~60 characters loses its tail.
+  const title = `Paddock Maintenance in ${name}`;
+  const description = `Paddock topping, harrowing, rolling, spraying, hedges and fencing in ${name}. Describe the job and local contractors send prices. Free, no obligation.`;
   return {
     title,
     description,

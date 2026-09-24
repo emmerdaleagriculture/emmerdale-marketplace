@@ -78,9 +78,9 @@ export const VERTICALS: Record<VerticalKey, VerticalConfig> = {
     category: 'tractor-hire',
     eyebrow: 'Tractor hire · Events',
     crumbLabel: 'Tractor hire',
-    metaTitle: (c) => `Tractor Hire in ${c} — Weddings, Proms & Events`,
+    metaTitle: (c) => `Tractor Hire in ${c} for Weddings & Events`,
     metaDescription: (c) =>
-      `Hire a tractor and trailer in ${c} for a wedding, prom, photoshoot or parade — matched with an experienced operator near you. Driver included, no obligation.`,
+      `Hire a tractor and trailer in ${c} for a wedding, prom or parade, with an experienced driver. Matched to an operator near you, no obligation.`,
     h1Main: (c) => `Tractor hire in ${c} —`,
     h1Em: 'for weddings, proms & events.',
     intro: (c) =>
