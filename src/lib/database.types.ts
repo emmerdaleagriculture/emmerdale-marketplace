@@ -1317,6 +1317,7 @@ export type Database = {
           distributed_at: string | null
           draft_chased_at: string | null
           expires_at: string | null
+          extra_work_of: string | null
           first_refusal: boolean
           gate_w3w: string | null
           gate_width: string | null
@@ -1382,6 +1383,7 @@ export type Database = {
           distributed_at?: string | null
           draft_chased_at?: string | null
           expires_at?: string | null
+          extra_work_of?: string | null
           first_refusal?: boolean
           gate_w3w?: string | null
           gate_width?: string | null
@@ -1447,6 +1449,7 @@ export type Database = {
           distributed_at?: string | null
           draft_chased_at?: string | null
           expires_at?: string | null
+          extra_work_of?: string | null
           first_refusal?: boolean
           gate_w3w?: string | null
           gate_width?: string | null
@@ -1511,6 +1514,34 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_submissions_extra_work_of_fkey"
+            columns: ["extra_work_of"]
+            isOneToOne: false
+            referencedRelation: "job_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_submissions_extra_work_of_fkey"
+            columns: ["extra_work_of"]
+            isOneToOne: false
+            referencedRelation: "my_sq_invitations"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "job_submissions_extra_work_of_fkey"
+            columns: ["extra_work_of"]
+            isOneToOne: false
+            referencedRelation: "my_sq_won_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_submissions_extra_work_of_fkey"
+            columns: ["extra_work_of"]
+            isOneToOne: false
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
           },
           {
             foreignKeyName: "job_submissions_preferred_contractor_id_fkey"
@@ -2261,6 +2292,17 @@ export type Database = {
       }
     }
     Functions: {
+      admin_add_extra_work: {
+        Args: {
+          p_actor_id: string
+          p_contractor_price_pence: number
+          p_description: string
+          p_price_basis: string
+          p_reason: string
+          p_submission_id: string
+        }
+        Returns: Json
+      }
       admin_dashboard: { Args: never; Returns: Json }
       admin_delete_submission: {
         Args: { p_submission_id: string }

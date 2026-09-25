@@ -6,6 +6,7 @@ import { notifyAdmins } from '@/lib/adminNotify';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
+import { formatGBP, poundsInputToPence } from '@/lib/sealedQuotes/money';
 
 async function assertAdmin() {
   const user = await getUser();
@@ -351,4 +352,50 @@ export async function deleteJobAction(_prev: FormState, formData: FormData): Pro
   revalidatePath('/admin/queues');
   revalidatePath('/');
   redirect('/admin/submissions');
+}
+
+/**
+ * Operator: the customer asked their contractor for more, and the contractor
+ * has priced it to us. admin_add_extra_work books it as a job of its own,
+ * held for that contractor with their price already on it, and the customer
+ * is emailed the price to accept and pay a deposit on — the normal checkout,
+ * so balance, payout and invoice need nothing new.
+ */
+export async function addExtraWorkAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await assertAdmin();
+  const id = String(formData.get('submission_id') ?? '');
+  const description = String(formData.get('description') ?? '').trim();
+  const basis = String(formData.get('price_basis') ?? 'unspecified');
+  const reason = String(formData.get('reason') ?? '').trim();
+  const pence = poundsInputToPence(String(formData.get('price') ?? ''));
+  if (!id) return { error: 'Missing the job.' };
+  if (description.length < 3) return { error: 'Say what the extra work is.' };
+  if (pence === null) return { error: 'Enter the contractor’s price in pounds, e.g. 1760.' };
+  if (!reason) return { error: 'Say where the price came from, e.g. “Nick’s email of 25 Sept”.' };
+
+  const { data, error } = await createServiceRoleClient().rpc('admin_add_extra_work', {
+    p_submission_id: id,
+    p_description: description,
+    p_contractor_price_pence: pence,
+    p_price_basis: basis,
+    p_actor_id: user.id,
+    p_reason: reason,
+  });
+  const res = data as { ok: boolean; reason?: string; id?: string; client_price_pence?: number } | null;
+  if (error || !res?.ok) {
+    if (error) console.error('[admin] admin_add_extra_work failed:', error.message);
+    const why: Record<string, string> = {
+      not_booked: 'Extra work can only be added to a booked job.',
+      bad_description: 'Keep the description between 3 and 200 characters.',
+      bad_price: 'Enter a price above zero.',
+      bad_basis: 'Pick a VAT option.',
+    };
+    return { error: why[res?.reason ?? ''] ?? 'That didn’t go through — nothing was sent.' };
+  }
+  refresh(id);
+  if (res.id) refresh(res.id);
+  return {
+    ok: true,
+    message: `Sent to the customer at ${formatGBP(res.client_price_pence ?? 0)}. They accept and pay the deposit on their job page.`,
+  };
 }
