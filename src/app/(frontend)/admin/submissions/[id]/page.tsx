@@ -9,6 +9,7 @@ import { getServices } from '@/lib/reference';
 import { DistributionPanel } from './DistributionPanel';
 import { ClearNoteButton } from './ClearNoteButton';
 import { DeleteJobButton } from './DeleteJobButton';
+import { ExtraWorkForm } from './ExtraWorkForm';
 import s from '../../admin.module.css';
 import { AdminTable } from '../../ui';
 import p from '../submissions.module.css';
@@ -78,6 +79,25 @@ export default async function SubmissionDetailPage({
       .limit(500),
   ]);
   const messages = messagesQ.data ?? [];
+
+  // Extra work: jobs booked off this one, and the one this extends.
+  const [extrasQ, contractorQ, markupQ] = await Promise.all([
+    admin
+      .from('job_submissions')
+      .select('id, service_verbatim, status, created_at')
+      .eq('extra_work_of', id)
+      .order('created_at'),
+    sub.awarded_contractor_id
+      ? admin.from('contractors').select('business_name').eq('id', sub.awarded_contractor_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    admin.from('app_config').select('value').eq('key', 'sq_markup_rate').maybeSingle(),
+  ]);
+  const extras = extrasQ.data ?? [];
+  const markupRate = Number(markupQ.data?.value ?? 0.1);
+  const booked = [
+    'awarded', 'contacted', 'scheduled', 'in_progress',
+    'completed_by_contractor', 'completed', 'paid',
+  ].includes(sub.status);
   const allQuotes = quotesQ.data ?? [];
   const events = eventsQ.data ?? [];
   const show: OutreachStage = isOutreachStage(sp.show) ? sp.show : 'emailed';
@@ -253,6 +273,41 @@ export default async function SubmissionDetailPage({
         serviceId={sub.service_id}
         services={services}
       />
+
+      {(booked || extras.length > 0 || sub.extra_work_of) && (
+        <>
+          <div className={s.sectionLabel}>Extra work</div>
+          {sub.extra_work_of && (
+            <p className={s.sub}>
+              This is extra work on{' '}
+              <Link href={`/admin/submissions/${sub.extra_work_of}`}>
+                {sub.extra_work_of.slice(0, 8)}
+              </Link>
+              .
+            </p>
+          )}
+          {extras.length > 0 && (
+            <AdminTable head={['Added', 'Extra work', 'Status']}>
+              {extras.map((x) => (
+                <tr key={x.id}>
+                  <td>{formatDateTime(x.created_at)}</td>
+                  <td>
+                    <Link href={`/admin/submissions/${x.id}`}>{x.service_verbatim ?? x.id.slice(0, 8)}</Link>
+                  </td>
+                  <td>{x.status}</td>
+                </tr>
+              ))}
+            </AdminTable>
+          )}
+          {booked && (
+            <ExtraWorkForm
+              submissionId={sub.id}
+              contractorName={contractorQ.data?.business_name ?? 'the contractor'}
+              markupRate={markupRate}
+            />
+          )}
+        </>
+      )}
 
       {outreach.lines.emailed.length > 0 && (
         <>

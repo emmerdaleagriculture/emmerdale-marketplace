@@ -111,9 +111,31 @@ export default async function ClientPortalPage({
   // button to open it up.
   const { data: directRow } = await createServiceRoleClient()
     .from('job_submissions')
-    .select('market_opens_at, preferred_contractor_id, first_refusal')
+    .select('market_opens_at, preferred_contractor_id, first_refusal, extra_work_of')
     .eq('id', js.id)
     .maybeSingle();
+
+  // Extra work on a booked job is booked as a job of its own
+  // (20260926090000). Each side links to the other, and the extra one is
+  // worded as what it is — work they asked their contractor for, priced by
+  // them — not as a job waiting on the market.
+  const [extraOfRes, extrasRes] = await Promise.all([
+    directRow?.extra_work_of
+      ? createServiceRoleClient()
+          .from('job_submissions')
+          .select('client_token, service_verbatim, service:services (name)')
+          .eq('id', directRow.extra_work_of)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    createServiceRoleClient()
+      .from('job_submissions')
+      .select('client_token, service_verbatim, status')
+      .eq('extra_work_of', js.id)
+      .order('created_at'),
+  ]);
+  const extraOf = extraOfRes.data;
+  const extras = extrasRes.data ?? [];
+  const isExtra = Boolean(directRow?.extra_work_of);
   const firstRefusalOpen = Boolean(directRow?.first_refusal && directRow.market_opens_at);
   const directName =
     directRow?.market_opens_at && directRow.preferred_contractor_id && !directRow.first_refusal
@@ -182,6 +204,18 @@ export default async function ClientPortalPage({
           <div className={a.eyebrow}>Your job</div>
           <h1 className={a.title}>{service ?? 'Your job'}</h1>
           <StatusTimeline status={js.status} />
+          {extraOf && (
+            <p className={a.sub}>
+              Extra work on your{' '}
+              <Link href={`/my/${extraOf.client_token}`}>
+                {(extraOf.service as { name: string } | null)?.name ??
+                  extraOf.service_verbatim ??
+                  'earlier'}{' '}
+                job
+              </Link>
+              .
+            </p>
+          )}
           {/* The threads sit below the prices; say when something is waiting. */}
           {threads.some((t) => t.unread > 0) && (
             <a className={m.messagesJump} href="#messages">
@@ -191,7 +225,12 @@ export default async function ClientPortalPage({
 
           {/* ── Pre-quotes ─────────────────────────────────────────── */}
           {(js.status === 'confirmed' || js.status === 'distributed') &&
-            (directName && directRow?.market_opens_at ? (
+            (isExtra ? (
+              <p className={a.sub}>
+                Hi {first} — we&rsquo;ve asked {directName ?? 'your contractor'} to price
+                the extra work, and we&rsquo;ll email you when it&rsquo;s in.
+              </p>
+            ) : directName && directRow?.market_opens_at ? (
               <>
                 <p className={a.sub}>
                   Hi {first} — we&rsquo;ve asked {directName} to price your job first.
@@ -213,12 +252,14 @@ export default async function ClientPortalPage({
           {js.status === 'quotes_receiving' && (
             <>
               <p className={a.sub}>
-                {quotes.length === 1
+                {isExtra
+                  ? `${directName ?? 'Your contractor'} has priced the extra work you asked for.`
+                  : quotes.length === 1
                   ? firstRefusalOpen
                     ? 'One price so far.'
                     : 'One price so far — more may follow.'
                   : `${quotes.length} prices to choose from.`}{' '}
-                Nothing is booked until you accept one and pay the deposit.
+                Nothing is booked until you accept {isExtra ? 'it' : 'one'} and pay the deposit.
               </p>
               <PriceList
                 token={token}
@@ -226,7 +267,7 @@ export default async function ClientPortalPage({
                 ratingWeight={ratingWeight}
                 depositRate={depositRate}
               />
-              {directName && (
+              {directName && !isExtra && (
                 <>
                   <p className={a.sub}>
                     You asked {directName} first, so only their price is here. Want to
@@ -363,6 +404,19 @@ export default async function ClientPortalPage({
             </p>
           )}
           {js.status === 'cancelled' && <p className={a.sub}>This job was cancelled.</p>}
+
+          {extras.length > 0 && (
+            <p className={a.sub}>
+              Extra work on this job:{' '}
+              {extras.map((x, i) => (
+                <span key={x.client_token}>
+                  {i > 0 ? ', ' : ''}
+                  <Link href={`/my/${x.client_token}`}>{x.service_verbatim ?? 'extra work'}</Link>
+                </span>
+              ))}
+              .
+            </p>
+          )}
 
           {/* ── Messages ───────────────────────────────────────────── */}
           {threads.length > 0 && (
