@@ -81,6 +81,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     .select('market_opens_at, preferred_contractor_id, first_refusal')
     .eq('id', js.id)
     .maybeSingle();
+  const unread = messages.filter((m) => m.sender === 'client' && !m.read).length;
   const directToYou =
     Boolean(offer?.market_opens_at) && offer?.preferred_contractor_id === invitation.contractor_id;
 
@@ -136,6 +137,17 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
             {spec.location ? `${spec.location}, ` : ''}
             {county ?? ''} · full address comes if you win the job
           </p>
+          {/* The thread sits below the pricing form, which is a long scroll on a
+              phone — so say it is there, and how much is waiting, up top. */}
+          {(threadState !== 'closed' || messages.length > 0) && (
+            <a className={q.messagesJump} href="#messages">
+              {unread > 0
+                ? `Messages (${unread} new) ↓`
+                : messages.length > 0
+                  ? `Messages (${messages.length}) ↓`
+                  : 'A question before you price? Message the customer ↓'}
+            </a>
+          )}
 
           <JobSpecCard spec={spec} />
           {js.lat !== null && js.lng !== null && (
@@ -312,7 +324,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 action={threadState === 'closed' ? null : sendContractorMessageAction}
                 closedNote="This conversation has closed."
                 hidden={{ token }}
-                unread={messages.filter((m) => m.sender === 'client' && !m.read).length}
+                unread={unread}
                 markRead={markContractorThreadReadAction.bind(null, token)}
               />
             </>

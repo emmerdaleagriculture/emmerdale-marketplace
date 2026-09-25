@@ -182,6 +182,12 @@ export default async function ClientPortalPage({
           <div className={a.eyebrow}>Your job</div>
           <h1 className={a.title}>{service ?? 'Your job'}</h1>
           <StatusTimeline status={js.status} />
+          {/* The threads sit below the prices; say when something is waiting. */}
+          {threads.some((t) => t.unread > 0) && (
+            <a className={m.messagesJump} href="#messages">
+              Messages ({threads.reduce((n, t) => n + t.unread, 0)} new) ↓
+            </a>
+          )}
 
           {/* ── Pre-quotes ─────────────────────────────────────────── */}
           {(js.status === 'confirmed' || js.status === 'distributed') &&
@@ -361,7 +367,7 @@ export default async function ClientPortalPage({
           {/* ── Messages ───────────────────────────────────────────── */}
           {threads.length > 0 && (
             <>
-              <div className={a.groupTitle} style={{ marginTop: 28 }}>
+              <div id="messages" className={a.groupTitle} style={{ marginTop: 28 }}>
                 Messages
               </div>
               {threads.map((t) => (

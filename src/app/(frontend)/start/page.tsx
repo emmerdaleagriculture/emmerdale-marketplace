@@ -30,7 +30,7 @@ const AFTER_STEPS: [string, string][] = [
   ],
   [
     'You see their prices side by side',
-    'With how far away they are. Sort by price, and pick the one you want.',
+    'With how far away they are. Message any contractor who’s priced with a question before you accept, then pick the one you want.',
   ],
   [
     'You book the one you choose',
