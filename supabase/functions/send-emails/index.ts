@@ -361,22 +361,42 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Nothing is booked until you accept a price.`,
       };
     }
-    case 'sq_first_quote':
+    case 'sq_first_quote': {
       // sole_offer: priced by the contractor holding the job under first
       // refusal, so no other prices are coming — don't promise them.
+      //
+      // Extra work on a booked job (extra_work_origin set) comes from a
+      // contractor the customer already knows by name, so the letter would
+      // be odd; and if it was the contractor's idea rather than the
+      // customer's, say so — "priced the work you asked for" is wrong when
+      // nobody asked.
+      const price = `${gbp(p.client_price_pence)}${vatSuffix(p.price_basis)}`;
+      const extra = p.extra_work_origin ? String(p.extra_work_description ?? p.service ?? 'extra work') : null;
+      const name = p.contractor_name ? String(p.contractor_name) : null;
+      const opening =
+        extra && p.extra_work_origin === 'contractor'
+          ? `${name ?? 'Your contractor'} has suggested some extra work on your job — ` +
+            `${extra} — and priced it at ${price}. It's entirely up to you: nothing ` +
+            `happens unless you accept it.`
+          : extra
+            ? `${name ?? 'Your contractor'} has priced the extra work you asked for — ` +
+              `${extra} — at ${price}.`
+            : `A contractor (${p.contractor_label ?? 'Contractor A'}) has priced your ` +
+              `${p.service ? `${p.service} ` : ''}job at ${price}.`;
       return {
-        subject: p.sole_offer
-          ? `Your price is in — ${gbp(p.client_price_pence)}`
-          : `Your first price is in — ${gbp(p.client_price_pence)}`,
+        subject: extra
+          ? `${p.extra_work_origin === 'contractor' ? 'Extra work suggested' : 'Your extra work is priced'} — ${gbp(p.client_price_pence)}`
+          : p.sole_offer
+            ? `Your price is in — ${gbp(p.client_price_pence)}`
+            : `Your first price is in — ${gbp(p.client_price_pence)}`,
         text:
-          `Hi ${first},\n\nA contractor (${p.contractor_label ?? 'Contractor A'}) has priced your ` +
-          `${p.service ? `${p.service} ` : ''}job at ${gbp(p.client_price_pence)}` +
-          `${vatSuffix(p.price_basis)}.\n\n` +
+          `Hi ${first},\n\n${opening}\n\n` +
           (p.sole_offer
             ? `See it and accept here:\n${portal}\n\n`
             : `More may follow — see them all and choose here:\n${portal}\n\n`) +
           `Nothing is booked until you accept a price and pay the deposit.`,
       };
+    }
     case 'sq_new_quotes':
       return {
         subject: `${p.new_count} new price${Number(p.new_count) === 1 ? '' : 's'} on your job`,

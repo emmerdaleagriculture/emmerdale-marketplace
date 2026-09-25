@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import type { FormState } from '@/lib/form';
+import { formatGBP, poundsInputToPence } from '@/lib/sealedQuotes/money';
+import { CLIENT_NOTE_MAX, clientNoteProblem } from '@/lib/sealedQuotes/clientNote';
 
 /**
  * First-contact log (§25): the signed-in winner records that they've been in
@@ -75,6 +77,86 @@ export async function markDoneAction(
   }
   revalidatePath('/won');
   return { ok: true, message: 'Marked done — we’ve asked the customer to confirm.' };
+}
+
+/**
+ * Extra work the contractor proposes on a job they've won (contractor terms
+ * clause 5: extras go through us). Makes a job of its own, held for them
+ * with their price on it, and emails the customer — who accepts and pays a
+ * deposit on their job page, or ignores it. The RPC checks the job is
+ * theirs; the session says who they are.
+ */
+export async function proposeExtraWorkAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Sign in to propose extra work.' };
+
+  const submissionId = String(formData.get('submission_id') ?? '');
+  const description = String(formData.get('description') ?? '').trim();
+  const basis = String(formData.get('price_basis') ?? 'unspecified');
+  const pence = poundsInputToPence(String(formData.get('price') ?? ''));
+  const note = String(formData.get('note_to_client') ?? '').trim().slice(0, CLIENT_NOTE_MAX);
+  if (!submissionId) return { error: 'Something went wrong — refresh and try again.' };
+  if (description.length < 3) return { error: 'Say what the extra work is.' };
+  if (description.length > 200) return { error: 'Keep the description under 200 characters.' };
+  if (pence === null) return { error: 'Enter your price in pounds, e.g. 250.' };
+  const noteProblem = clientNoteProblem(note);
+  if (noteProblem) return { error: noteProblem };
+
+  const admin = createServiceRoleClient();
+  const { data, error } = await admin.rpc('contractor_add_extra_work', {
+    p_submission_id: submissionId,
+    p_contractor_id: user.id,
+    p_description: description,
+    p_contractor_price_pence: pence,
+    p_price_basis: basis,
+    p_note_to_client: (note || null) as string,
+  });
+  if (error) {
+    console.error('[sq] contractor_add_extra_work failed:', error);
+    return { error: 'That didn’t go through — please try again.' };
+  }
+  const res = data as { ok: boolean; reason?: string; id?: string; client_price_pence?: number };
+  if (!res.ok) {
+    const why: Record<string, string> = {
+      not_yours: 'This job isn’t assigned to your account.',
+      one_open_already:
+        'The customer already has one proposal from you waiting on this job. Wait for their answer, or contact us to change it.',
+      not_booked: 'Extra work can only be proposed on a booked job.',
+      bad_description: 'Keep the description between 3 and 200 characters.',
+      bad_price: 'Enter a price above zero.',
+      bad_basis: 'Pick a VAT option.',
+    };
+    return { error: why[res.reason ?? ''] ?? 'That didn’t go through — nothing was sent.' };
+  }
+
+  const { data: contractor } = await admin
+    .from('contractors')
+    .select('business_name')
+    .eq('id', user.id)
+    .maybeSingle();
+  await notifyAdmins(
+    `Extra work proposed: ${contractor?.business_name ?? 'a contractor'}`,
+    [
+      `${contractor?.business_name ?? 'A contractor'} has proposed extra work on a booked job: ` +
+        `"${description}" at ${formatGBP(pence)} to them, ${formatGBP(res.client_price_pence ?? 0)} to the customer.`,
+      'The customer has been emailed and can accept it on their job page.',
+      '',
+      `Source job: ${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/admin/submissions/${submissionId}`,
+      `Extra work: ${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/admin/submissions/${res.id ?? ''}`,
+    ].join('\n'),
+  );
+
+  revalidatePath('/won');
+  return {
+    ok: true,
+    message: `Sent — the customer sees ${formatGBP(res.client_price_pence ?? 0)} and can accept it on their job page. We’ll tell you if they do.`,
+  };
 }
 
 const INVOICE_TYPES: Record<string, string> = {

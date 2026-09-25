@@ -111,7 +111,7 @@ export default async function ClientPortalPage({
   // button to open it up.
   const { data: directRow } = await createServiceRoleClient()
     .from('job_submissions')
-    .select('market_opens_at, preferred_contractor_id, first_refusal, extra_work_of')
+    .select('market_opens_at, preferred_contractor_id, first_refusal, extra_work_of, extra_work_origin')
     .eq('id', js.id)
     .maybeSingle();
 
@@ -253,7 +253,9 @@ export default async function ClientPortalPage({
             <>
               <p className={a.sub}>
                 {isExtra
-                  ? `${directName ?? 'Your contractor'} has priced the extra work you asked for.`
+                  ? directRow?.extra_work_origin === 'contractor'
+                    ? `${directName ?? 'Your contractor'} has suggested some extra work on your job and priced it. It's entirely up to you — nothing happens unless you accept it.`
+                    : `${directName ?? 'Your contractor'} has priced the extra work you asked for.`
                   : quotes.length === 1
                   ? firstRefusalOpen
                     ? 'One price so far.'
