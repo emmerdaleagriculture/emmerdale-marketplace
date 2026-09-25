@@ -708,6 +708,21 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `${SITE_URL}/admin/submissions/${p.submission_id}`,
       };
 
+    case 'sq_award_admin':
+      return {
+        subject: `Job won: ${p.service ?? 'land work'}${p.county ? `, ${p.county}` : ''} — ${gbp(p.client_price_pence)}`,
+        text:
+          `A customer accepted a price and paid their deposit. The job is awarded.\n\n` +
+          `Service:    ${p.service ?? '—'}\n` +
+          `Where:      ${p.postcode ?? '—'}${p.county ? `, ${p.county}` : ''}\n` +
+          `Customer:   ${p.contact_name ?? '—'}\n` +
+          `Contractor: ${p.contractor ?? '—'}\n\n` +
+          `Customer price:   ${gbp(p.client_price_pence)}${vatSuffix(p.price_basis)}\n` +
+          `Contractor price: ${gbp(p.contractor_price_pence)}\n` +
+          `Deposit paid:     ${gbp(p.deposit_pence)}\n\n` +
+          `${SITE_URL}/admin/submissions/${p.submission_id}`,
+      };
+
     case 'sq_payment_needs_refund':
       return {
         subject: `MANUAL REFUND NEEDED: payment into a closed job`,
