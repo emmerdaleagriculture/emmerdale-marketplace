@@ -1,0 +1,111 @@
+name: Mobile preview builds
+
+on:
+  pull_request:
+    paths:
+      - 'app-shell/**'
+      - '.github/workflows/mobile-*.yml'
+      - '.github/workflows/ios-testflight.yml'
+      - '.github/workflows/android-play.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  iphone-simulator:
+    runs-on: macos-15
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: app-shell
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app-shell/package-lock.json
+      - name: Select Xcode 26
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+          xcodebuild -version
+      - run: npm ci
+      - run: npx cap sync ios
+      - run: npx cap sync android
+      - run: npm run check
+      - run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - name: Build iPhone simulator app (no Apple credentials)
+        run: |
+          set -o pipefail
+          xcodebuild -project ios/App/App.xcodeproj -scheme App \
+            -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/ios-build.log"
+      - name: Launch app in a real iPhone simulator
+        run: |
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c \
+            'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for v in d["devices"].values() for x in v if "iPhone" in x["name"] and x["isAvailable"]))')
+          xcrun simctl boot "$DEVICE"
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator/App.app"
+          xcrun simctl launch "$DEVICE" com.emmerdaleagriculture.app
+          # Allow the remote live entry page to load before recording evidence.
+          sleep 15
+          xcrun simctl io "$DEVICE" screenshot "$RUNNER_TEMP/iphone-simulator.png"
+          ditto -c -k --sequesterRsrc --keepParent \
+            "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator/App.app" \
+            "$RUNNER_TEMP/iphone-simulator-app.zip"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iphone-simulator-preview
+          path: |
+            ${{ runner.temp }}/iphone-simulator.png
+            ${{ runner.temp }}/iphone-simulator-app.zip
+            ${{ runner.temp }}/ios-build.log
+          retention-days: 14
+
+  android-debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: app-shell
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app-shell/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npx cap sync android
+      - run: npx cap sync ios
+      - run: npm run check
+      - name: Install Android SDK 36
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Build installable Android preview and run checks
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug testDebugUnitTest lintDebug
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-debug-preview
+          path: |
+            app-shell/android/app/build/outputs/apk/debug/*.apk
+            app-shell/android/app/build/reports/
+          retention-days: 14
