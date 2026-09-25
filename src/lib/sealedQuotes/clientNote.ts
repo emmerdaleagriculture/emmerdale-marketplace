@@ -22,10 +22,10 @@
 
 export const CLIENT_NOTE_MAX = 200;
 
-const LINK = /\bhttps?:\/\/|\bwww\./i;
+export const LINK = /\bhttps?:\/\/|\bwww\./i;
 /** A bare domain, but only for endings that are not ordinary words. */
-const DOMAIN = /\b[a-z0-9][a-z0-9-]*\.(?:co\.uk|com|net|org|uk|io|co)\b/i;
-const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/;
+export const DOMAIN = /\b[a-z0-9][a-z0-9-]*\.(?:co\.uk|com|net|org|uk|io|co)\b/i;
+export const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/;
 /**
  * Any mention of money. Three shapes, because a price can be written without
  * a currency symbol and without a space:
@@ -41,7 +41,7 @@ const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/;
  * A bare total — "400 all in" — still gets through, and always will without
  * reading the sentence; that is what the admin Clear button is for.
  */
-const MONEY = new RegExp(
+export const MONEY = new RegExp(
   [
     '[£$€]',
     '\\bquid\\b',
@@ -57,7 +57,7 @@ const MONEY = new RegExp(
  * and "07123456789" read alike. +44…, 0… of 10-11 digits, or a bare 11-digit
  * run. Deliberately not matching shorter digit runs: acreages and dates.
  */
-function hasPhoneNumber(note: string): boolean {
+export function hasPhoneNumber(note: string): boolean {
   const digits = note.replace(/[\s().\-–—]/g, '');
   return /(?:\+44|0044)\d{9,10}/.test(digits) || /(?:^|\D)0\d{9,10}(?:\D|$)/.test(digits);
 }

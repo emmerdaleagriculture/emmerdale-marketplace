@@ -8,6 +8,9 @@ import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
 import { cancellationQuote } from '@/lib/sealedQuotes/cancellation';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import type { FormState } from '@/lib/form';
+import { getSubmissionByClientToken } from '@/lib/sealedQuotes/data';
+import { getThreadState } from '@/lib/sealedQuotes/messages';
+import { messageProblem, postRefusal } from '@/lib/sealedQuotes/messageText';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -452,4 +455,49 @@ export async function openToMarketAction(_prev: FormState, formData: FormData): 
       ? `Sent to ${n} more contractor${n === 1 ? '' : 's'} — their prices will appear here as they come in.`
       : 'Done — but no other contractors cover your area just now. We’ll keep it open.',
   };
+}
+
+/**
+ * A message from the customer to one contractor. The job token proves who
+ * they are; the invitation id says which thread, and must belong to this job —
+ * otherwise a customer holding their own link could write into anyone's.
+ */
+export async function sendClientMessageAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const token = String(formData.get('token') ?? '');
+  const invitationId = String(formData.get('invitation_id') ?? '');
+  const body = String(formData.get('body') ?? '');
+  if (!isTokenFormat(token)) return { error: 'This link is no longer valid.' };
+
+  const js = await getSubmissionByClientToken(token);
+  if (!js) return { error: 'This link is no longer valid.' };
+
+  const admin = createServiceRoleClient();
+  const { data: inv } = await admin
+    .from('job_invitations')
+    .select('id')
+    .eq('id', invitationId)
+    .eq('submission_id', js.id)
+    .maybeSingle();
+  if (!inv) return { error: 'That conversation isn’t on this job.' };
+
+  const state = await getThreadState(inv.id);
+  if (state === 'closed') return { error: postRefusal('closed') };
+  const problem = messageProblem(body, 'client', state);
+  if (problem) return { error: problem };
+
+  const { data, error } = await admin.rpc('sq_post_message', {
+    p_invitation_id: inv.id,
+    p_sender: 'client',
+    p_body: body.trim(),
+  });
+  const res = data as { ok: boolean; reason?: string } | null;
+  if (error || !res?.ok) {
+    if (error) console.error('[sq] client message failed:', error.message);
+    return { error: postRefusal(res?.reason) };
+  }
+  revalidatePath(`/my/${token}`);
+  return { ok: true };
 }

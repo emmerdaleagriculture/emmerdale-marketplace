@@ -25,6 +25,9 @@ import { PayBalance } from './PayBalance';
 import { formatDate, formatDateTime } from '@/lib/time';
 import { OpenToMarket } from './OpenToMarket';
 import { ContactUsButton } from '@/components/ContactUsButton';
+import { MessageThread } from '@/components/messages/MessageThread';
+import { getClientThreads, markThreadRead } from '@/lib/sealedQuotes/messages';
+import { sendClientMessageAction } from './actions';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import a from '../../auth.module.css';
 import m from './my.module.css';
@@ -148,6 +151,13 @@ export default async function ClientPortalPage({
           .then(() => undefined, (e) => console.error('[sq] mark viewed failed:', e))
       : Promise.resolve(undefined),
   ]);
+
+  // Read after the counts are taken, so the "new" badge shows on this visit
+  // and clears on the next.
+  const threads = await getClientThreads(js.id);
+  await Promise.all(
+    threads.filter((t) => t.unread > 0).map((t) => markThreadRead(t.invitationId, 'client')),
+  );
 
   const spec = {
     service,
@@ -350,6 +360,34 @@ export default async function ClientPortalPage({
             </p>
           )}
           {js.status === 'cancelled' && <p className={a.sub}>This job was cancelled.</p>}
+
+          {/* ── Messages ───────────────────────────────────────────── */}
+          {threads.length > 0 && (
+            <>
+              <div className={a.groupTitle} style={{ marginTop: 28 }}>
+                Messages
+              </div>
+              {threads.map((t) => (
+                <MessageThread
+                  key={t.invitationId}
+                  me="client"
+                  otherName={t.name}
+                  messages={t.messages}
+                  unread={t.unread}
+                  intro={
+                    t.state === 'pre_award'
+                      ? `Ask ${t.name} anything about the job. Leave out phone numbers and emails — the contractor you book gets your details when you accept their price.`
+                      : t.state === 'post_award'
+                        ? `Message ${t.name} about arranging the work. They get an email when you do.`
+                        : undefined
+                  }
+                  action={t.state === 'closed' ? null : sendClientMessageAction}
+                  closedNote="This conversation has closed."
+                  hidden={{ token, invitation_id: t.invitationId }}
+                />
+              ))}
+            </>
+          )}
 
           <div className={a.groupTitle} style={{ marginTop: 28 }}>
             What you told us
