@@ -72,17 +72,16 @@ export function EnquiryForm({
         <textarea className={f.textarea} name="details" required maxLength={800} placeholder={detailsPlaceholder} />
       </label>
 
-      {/* The enquiry now goes straight to contractors, so the customer has to
-          be told that before they send it — not afterwards. This is the same
-          substance as the consent an operator used to tick on their behalf in
-          NewJobForm, shown to the person it actually concerns. Sending is the
-          agreement, so there is no box to tick: an unticked box on the last
-          field of a form is a conversion tax, and a required one is consent
-          in name only. Wording version v3-portal in the stored record. */}
+      {/* Said before they send, not after. The enquiry becomes a job that
+          contractors price (components/enquiry/actions.ts), and it used to say
+          their name and number went straight to contractors to call them —
+          true of the retired job board, not of this. What contractors see is
+          the job; contact details go only to the one whose price they accept. */}
       <p className={f.hint} style={{ marginTop: 4 }}>
-        Sending this passes your name and number to vetted contractors covering
-        your county, so they can contact you directly about it. We don&rsquo;t
-        publish your postcode — only the county.
+        Sending this puts your job to vetted contractors covering your county, who
+        send prices to your job page. Your name, number and email go only to the
+        contractor whose price you accept. See our{' '}
+        <a href="/privacy">privacy policy</a>.
       </p>
 
       <div className={a.actions}>
