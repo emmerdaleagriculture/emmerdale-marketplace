@@ -69,6 +69,7 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
       { href: '/admin/reporting/sources', label: 'Sources' },
       // Reachable only from body links on three other pages until now.
       { href: '/admin/reporting/journey', label: 'Journey' },
+      { href: '/admin/reporting/messages', label: 'Messages' },
     ],
   },
   {
