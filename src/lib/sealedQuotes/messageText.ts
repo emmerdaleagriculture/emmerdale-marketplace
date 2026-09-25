@@ -59,6 +59,16 @@ export function messageProblem(
   return null;
 }
 
+/**
+ * What gets checked and stored: trimmed, with CRLF folded to LF. Browsers
+ * submit textarea line breaks as CRLF but count them as one character
+ * against maxLength, so without this a message the box accepted could fail
+ * the length check.
+ */
+export function normaliseMessage(body: string): string {
+  return body.replace(/\r\n?/g, '\n').trim();
+}
+
 /** The sentence for each refusal sq_post_message can return. */
 export function postRefusal(reason: string | undefined): string {
   switch (reason) {
@@ -66,6 +76,8 @@ export function postRefusal(reason: string | undefined): string {
       return 'This conversation has closed — the job has moved on.';
     case 'too_many':
       return 'That’s a lot of messages in an hour — please wait a little before sending more.';
+    case 'state_changed':
+      return 'The job has just changed — please check your message still fits and send it again.';
     case 'no_thread':
       return 'You can message a contractor once they’ve sent a price or a question.';
     default:

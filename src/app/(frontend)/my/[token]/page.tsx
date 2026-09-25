@@ -26,8 +26,8 @@ import { formatDate, formatDateTime } from '@/lib/time';
 import { OpenToMarket } from './OpenToMarket';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { MessageThread } from '@/components/messages/MessageThread';
-import { getClientThreads, markThreadRead } from '@/lib/sealedQuotes/messages';
-import { sendClientMessageAction } from './actions';
+import { getClientThreads } from '@/lib/sealedQuotes/messages';
+import { markClientThreadReadAction, sendClientMessageAction } from './actions';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import a from '../../auth.module.css';
 import m from './my.module.css';
@@ -130,6 +130,8 @@ export default async function ClientPortalPage({
   // latency. The accepted quote is fetched by id with no validity filter:
   // an award outlives its quote's valid-until date.
   const needQuotes = ['quotes_receiving', 'accepted_awaiting_payment'].includes(js.status);
+  // Started here, awaited after: kept out of the positional array below.
+  const threadsP = getClientThreads(js.id);
   const [quotes, ratingWeight, depositRate, photos, accepted] = await Promise.all([
     needQuotes ? getClientQuotes(js.id) : Promise.resolve([]),
     needQuotes ? getCompositeWeight() : Promise.resolve(0.3),
@@ -152,12 +154,7 @@ export default async function ClientPortalPage({
       : Promise.resolve(undefined),
   ]);
 
-  // Read after the counts are taken, so the "new" badge shows on this visit
-  // and clears on the next.
-  const threads = await getClientThreads(js.id);
-  await Promise.all(
-    threads.filter((t) => t.unread > 0).map((t) => markThreadRead(t.invitationId, 'client')),
-  );
+  const threads = await threadsP;
 
   const spec = {
     service,
@@ -384,6 +381,7 @@ export default async function ClientPortalPage({
                   action={t.state === 'closed' ? null : sendClientMessageAction}
                   closedNote="This conversation has closed."
                   hidden={{ token, invitation_id: t.invitationId }}
+                  markRead={markClientThreadReadAction.bind(null, token, t.invitationId)}
                 />
               ))}
             </>

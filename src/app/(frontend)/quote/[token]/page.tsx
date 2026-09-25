@@ -15,8 +15,8 @@ import { QuoteForm } from './QuoteForm';
 import { DeclineForm } from './DeclineForm';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { MessageThread } from '@/components/messages/MessageThread';
-import { getThreadMessages, getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
-import { sendContractorMessageAction } from './actions';
+import { getThreadMessages, getThreadState } from '@/lib/sealedQuotes/messages';
+import { markContractorThreadReadAction, sendContractorMessageAction } from './actions';
 import a from '../../auth.module.css';
 import q from './quote.module.css';
 
@@ -65,7 +65,6 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
       }),
     getThreadState(invitation.id),
     getThreadMessages(invitation.id),
-    markThreadRead(invitation.id, 'contractor'),
   ]);
   const position = (positionRes?.data as
     | {
@@ -313,6 +312,8 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 action={threadState === 'closed' ? null : sendContractorMessageAction}
                 closedNote="This conversation has closed."
                 hidden={{ token }}
+                unread={messages.filter((m) => m.sender === 'client' && !m.read).length}
+                markRead={markContractorThreadReadAction.bind(null, token)}
               />
             </>
           )}

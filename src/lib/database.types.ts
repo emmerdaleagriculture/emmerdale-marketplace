@@ -952,6 +952,7 @@ export type Database = {
       }
       job_messages: {
         Row: {
+          alerted_at: string | null
           body: string
           created_at: string
           id: string
@@ -962,6 +963,7 @@ export type Database = {
           submission_id: string
         }
         Insert: {
+          alerted_at?: string | null
           body: string
           created_at?: string
           id?: string
@@ -972,6 +974,7 @@ export type Database = {
           submission_id: string
         }
         Update: {
+          alerted_at?: string | null
           body?: string
           created_at?: string
           id?: string
@@ -2444,8 +2447,22 @@ export type Database = {
         Returns: number
       }
       sq_post_message: {
-        Args: { p_body: string; p_invitation_id: string; p_sender: string }
+        Args: {
+          p_body: string
+          p_checked_as: string
+          p_invitation_id: string
+          p_sender: string
+        }
         Returns: Json
+      }
+      sq_submission_threads: {
+        Args: { p_submission_id: string }
+        Returns: {
+          business_name: string
+          display_label: string
+          invitation_id: string
+          state: string
+        }[]
       }
       sq_thread_state: { Args: { p_invitation_id: string }; Returns: string }
       sq_notify_once: {

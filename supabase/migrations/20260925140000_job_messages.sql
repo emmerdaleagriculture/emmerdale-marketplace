@@ -46,8 +46,11 @@ begin
   if v_inv.display_label is not null then return v_inv.display_label; end if;
 
   -- Two contractors writing at the same moment must not both become "C".
-  -- An advisory lock rather than the submission row: award_submission and
-  -- the quote path already lock that row in their own order.
+  -- Lock order, everywhere: the job_submissions row first, then this. The
+  -- quote path holds that row FOR UPDATE before it gets here, and
+  -- sq_post_message takes it before calling in — the job_messages insert
+  -- needs a key-share lock on it, and taking that after this lock would
+  -- deadlock against a price being submitted at the same moment.
   perform pg_advisory_xact_lock(hashtext('sq_label:' || v_inv.submission_id::text));
 
   select display_label into v_label from job_invitations where id = p_invitation_id;
@@ -83,7 +86,9 @@ create table if not exists job_messages (
   -- checked for contact details.
   phase          text not null check (phase in ('pre_award', 'post_award')),
   created_at     timestamptz not null default now(),
-  read_at        timestamptz
+  read_at        timestamptz,
+  -- Set on the message whose arrival sent the other side an email.
+  alerted_at     timestamptz
 );
 create index if not exists job_messages_thread_idx on job_messages (invitation_id, created_at);
 create index if not exists job_messages_submission_idx on job_messages (submission_id, created_at);
@@ -102,7 +107,9 @@ language sql stable security definer set search_path = public as $$
       then 'pre_award'
     when js.awarded_contractor_id = ji.contractor_id
      and js.status in ('awarded', 'contacted', 'scheduled', 'in_progress',
-                       'completed_by_contractor', 'completed', 'paid')
+                       'completed_by_contractor', 'completed', 'paid',
+                       -- A dispute or a changed job is when they most need to talk.
+                       'variation_pending', 'variation_declined', 'disputed')
       then 'post_award'
     else 'closed'
   end
@@ -112,8 +119,12 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 -- One write path for both sides. Returns {ok, id} or {ok:false, reason}.
+-- p_checked_as is the state the caller checked the words against
+-- (messageText.ts). If the job moved between that check and this write — an
+-- award landing mid-send — the words were checked under the wrong rules, so
+-- the message is refused rather than stored with a phase that lies.
 create or replace function sq_post_message(
-  p_invitation_id uuid, p_sender text, p_body text
+  p_invitation_id uuid, p_sender text, p_body text, p_checked_as text
 ) returns jsonb
 language plpgsql volatile security definer set search_path = public as $$
 declare
@@ -125,6 +136,7 @@ declare
   v_id    uuid;
   v_body  text := btrim(coalesce(p_body, ''));
   v_to    text;
+  v_all   text;
 begin
   if p_sender not in ('client', 'contractor') then
     return jsonb_build_object('ok', false, 'reason', 'bad_sender');
@@ -135,12 +147,18 @@ begin
 
   select * into v_inv from job_invitations where id = p_invitation_id;
   if not found then return jsonb_build_object('ok', false, 'reason', 'not_found'); end if;
-  select * into v_js from job_submissions where id = v_inv.submission_id;
+  -- Before anything else, and before the label lock: see sq_invitation_label.
+  -- Key share is enough — it is what the insert below needs anyway — and it
+  -- still waits behind a price or an award holding the row.
+  select * into v_js from job_submissions where id = v_inv.submission_id for key share;
   select * into v_ct from contractors where id = v_inv.contractor_id;
 
   v_state := sq_thread_state(p_invitation_id);
   if v_state = 'closed' then
     return jsonb_build_object('ok', false, 'reason', 'closed');
+  end if;
+  if v_state is distinct from p_checked_as then
+    return jsonb_build_object('ok', false, 'reason', 'state_changed', 'state', v_state);
   end if;
 
   -- The customer can only see threads that have a label, so before award
@@ -164,14 +182,21 @@ begin
   values (v_js.id, p_invitation_id, p_sender, v_body, v_state)
   returning id into v_id;
 
-  -- Email the other side, unless they already have an unread message from
-  -- this sender in the last half hour: that one's alert is still sitting in
-  -- their inbox, and a back-and-forth should not become an email per line.
+  -- Email the other side, unless they were emailed about this sender in the
+  -- last half hour and still haven't read it — a back-and-forth should not
+  -- become an email per line. When an email does go, it carries every
+  -- unread message from this sender, so nothing said in the quiet spell is
+  -- only on the page.
   if not exists (
     select 1 from job_messages
      where invitation_id = p_invitation_id and sender = p_sender and id <> v_id
-       and read_at is null and created_at > now() - interval '30 minutes'
+       and read_at is null and alerted_at > now() - interval '30 minutes'
   ) then
+    update job_messages set alerted_at = now() where id = v_id;
+    select string_agg(body, E'\n\n' order by created_at) into v_all
+      from job_messages
+     where invitation_id = p_invitation_id and sender = p_sender and read_at is null;
+
     if p_sender = 'client' then
       v_to := v_ct.email;
       if v_to is not null then
@@ -182,7 +207,7 @@ begin
             'from', case when v_state = 'post_award'
                          then coalesce(v_js.contact_name, 'The customer')
                          else 'The customer' end,
-            'body', v_body,
+            'body', v_all,
             'token', v_inv.token));
       end if;
     else
@@ -193,7 +218,7 @@ begin
             'service', sq_service_label(v_js.service_id, v_js.service_verbatim),
             'from', case when v_state = 'post_award' then v_ct.business_name
                          else v_label end,
-            'body', v_body,
+            'body', v_all,
             'client_token', v_js.client_token));
       end if;
     end if;
@@ -201,6 +226,19 @@ begin
 
   return jsonb_build_object('ok', true, 'id', v_id);
 end;
+$$;
+
+-- Every labelled thread on a job with its state, for the customer's page:
+-- one call instead of one per contractor.
+create or replace function sq_submission_threads(p_submission_id uuid)
+returns table (invitation_id uuid, display_label text, business_name text, state text)
+language sql stable security definer set search_path = public as $$
+  select ji.id, ji.display_label, ct.business_name, sq_thread_state(ji.id)
+    from job_invitations ji
+    join contractors ct on ct.id = ji.contractor_id
+   where ji.submission_id = p_submission_id
+     and ji.display_label is not null
+   order by ji.display_label
 $$;
 
 -- The reader has opened the page: everything the other side sent is read.
@@ -216,11 +254,13 @@ $$;
 
 revoke execute on function sq_invitation_label(uuid)            from public, anon, authenticated;
 revoke execute on function sq_thread_state(uuid)                from public, anon, authenticated;
-revoke execute on function sq_post_message(uuid, text, text)    from public, anon, authenticated;
+revoke execute on function sq_post_message(uuid, text, text, text) from public, anon, authenticated;
+revoke execute on function sq_submission_threads(uuid)          from public, anon, authenticated;
 revoke execute on function sq_mark_thread_read(uuid, text)      from public, anon, authenticated;
 grant  execute on function sq_invitation_label(uuid)            to service_role;
 grant  execute on function sq_thread_state(uuid)                to service_role;
-grant  execute on function sq_post_message(uuid, text, text)    to service_role;
+grant  execute on function sq_post_message(uuid, text, text, text) to service_role;
+grant  execute on function sq_submission_threads(uuid)          to service_role;
 grant  execute on function sq_mark_thread_read(uuid, text)      to service_role;
 
 -- ── sq_publish_quote (live definition, from 20260922230000) ─────────────

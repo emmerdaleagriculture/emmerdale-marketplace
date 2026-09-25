@@ -1,13 +1,14 @@
 'use client';
 
-import { useActionState, useEffect, useRef } from 'react';
-import type { FormState } from '@/lib/form';
+import { useActionState, useEffect, useState } from 'react';
+import { emptyFormState, type FormState } from '@/lib/form';
 import { MESSAGE_MAX, type MessageSender } from '@/lib/sealedQuotes/messageText';
 import type { ThreadMessage } from '@/lib/sealedQuotes/messages';
 import f from '@/components/forms/forms.module.css';
 import s from './messages.module.css';
 
-const EMPTY: FormState = {};
+type SendState = FormState & { body?: string };
+type SendAction = (prev: SendState, data: FormData) => Promise<SendState>;
 
 type Props = {
   /** Who is looking: their messages sit on the right. */
@@ -19,7 +20,13 @@ type Props = {
   /** One sentence under the name: what this thread is for and what not to put in it. */
   intro?: string;
   /** Null when the thread is read-only; the sentence says why. */
-  action: ((prev: FormState, data: FormData) => Promise<FormState>) | null;
+  action: SendAction | null;
+  /**
+   * Marks the other side's messages read. Run from the browser once the
+   * thread is on screen, never during the server render: mail scanners
+   * fetch emailed links, and that fetch is not someone reading.
+   */
+  markRead?: () => Promise<void>;
   closedNote?: string;
   /** Posted with the message: the page token, and on the customer side which thread. */
   hidden: Record<string, string>;
@@ -39,7 +46,12 @@ export function MessageThread({
   action,
   closedNote,
   hidden,
+  markRead,
 }: Props) {
+  useEffect(() => {
+    if (unread > 0 && markRead) markRead().catch(() => undefined);
+  }, [unread, markRead]);
+
   return (
     <section className={s.thread} aria-label={`Messages with ${otherName}`}>
       <div className={s.head}>
@@ -77,21 +89,22 @@ function Composer({
   hidden,
   otherName,
 }: {
-  action: (prev: FormState, data: FormData) => Promise<FormState>;
+  action: SendAction;
   hidden: Record<string, string>;
   otherName: string;
 }) {
-  const [state, formAction, pending] = useActionState(action, EMPTY);
-  const form = useRef<HTMLFormElement>(null);
-
-  // Clear the box once it has gone; keep the words if it was refused, so
-  // they can be reworded rather than retyped.
+  const [state, formAction, pending] = useActionState(action, emptyFormState as SendState);
+  // Controlled, so React's reset of the form after every submission leaves
+  // it alone: a refused message keeps its words (the action hands them back)
+  // and only a sent one clears.
+  const [text, setText] = useState('');
   useEffect(() => {
-    if (state.ok) form.current?.reset();
+    if (state.ok) setText('');
+    else if (state.body !== undefined) setText(state.body);
   }, [state]);
 
   return (
-    <form ref={form} action={formAction}>
+    <form action={formAction}>
       {state.error && <p className={f.error}>{state.error}</p>}
       {Object.entries(hidden).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
@@ -104,6 +117,8 @@ function Composer({
           rows={3}
           maxLength={MESSAGE_MAX}
           required
+          value={text}
+          onChange={(e) => setText(e.target.value)}
         />
       </label>
       <button className={f.btnPrimary} type="submit" disabled={pending}>
