@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 import { proposeExtraWorkAction } from './actions';
 import { emptyFormState } from '@/lib/form';
+import { computeClientPricePence, formatGBP, poundsInputToPence } from '@/lib/sealedQuotes/money';
 import f from '@/components/forms/forms.module.css';
 
 /**
@@ -39,10 +40,10 @@ export function ProposeWorkForm({
     );
   }
 
-  // The same rule as client_price_pence(): margin on top, up to the next £5.
-  const pounds = Number(price.replace(/[£,\s]/g, ''));
-  const customer =
-    Number.isFinite(pounds) && pounds > 0 ? Math.ceil((pounds * (1 + markupRate)) / 5) * 5 : null;
+  // The same arithmetic as client_price_pence(), in integer pence — float
+  // maths here said £445 for £400 at 10%.
+  const pence = poundsInputToPence(price);
+  const customer = pence !== null ? computeClientPricePence(pence, markupRate) : null;
 
   return (
     <form action={act} style={{ maxWidth: 520, marginTop: 12 }}>
@@ -70,8 +71,8 @@ export function ProposeWorkForm({
           placeholder="250"
         />
         <span className={f.hint}>
-          {customer !== null
-            ? `You keep £${pounds.toLocaleString('en-GB')}. The customer sees £${customer.toLocaleString('en-GB')} and pays a deposit on that to book it.`
+          {customer !== null && pence !== null
+            ? `You keep ${formatGBP(pence)}. The customer sees ${formatGBP(customer)} and pays a deposit on that to book it.`
             : 'You keep this in full — our margin goes on top for the customer.'}
         </span>
       </label>

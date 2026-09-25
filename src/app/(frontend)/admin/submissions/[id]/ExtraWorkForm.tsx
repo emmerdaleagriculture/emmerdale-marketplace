@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 import { addExtraWorkAction } from './distribution-actions';
 import { emptyFormState } from '@/lib/form';
+import { computeClientPricePence, formatGBP, poundsInputToPence } from '@/lib/sealedQuotes/money';
 import f from '@/components/forms/forms.module.css';
 
 /**
@@ -31,10 +32,10 @@ export function ExtraWorkForm({
     );
   }
 
-  // The same rule as client_price_pence(): margin on top, up to the next £5.
-  const pounds = Number(price.replace(/[£,\s]/g, ''));
-  const customer =
-    Number.isFinite(pounds) && pounds > 0 ? Math.ceil((pounds * (1 + markupRate)) / 5) * 5 : null;
+  // The same arithmetic as client_price_pence(), in integer pence — float
+  // maths here said £445 for £400 at 10%.
+  const pence = poundsInputToPence(price);
+  const customer = pence !== null ? computeClientPricePence(pence, markupRate) : null;
 
   return (
     <form action={act} style={{ maxWidth: 520 }}>
@@ -57,7 +58,7 @@ export function ExtraWorkForm({
         />
         {customer !== null && (
           <span className={f.hint}>
-            The customer sees £{customer.toLocaleString('en-GB')}, and pays a deposit on that to book.
+            The customer sees {formatGBP(customer)}, and pays a deposit on that to book.
           </span>
         )}
       </label>

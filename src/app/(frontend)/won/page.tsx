@@ -69,15 +69,16 @@ export default async function WonJobsPage() {
     : { data: [] };
   const threadToken = new Map((invs ?? []).map((i) => [i.submission_id, i.token]));
 
-  // Extra work they've proposed that the customer hasn't answered. One at a
-  // time per job (contractor_add_extra_work refuses a second), so the card
-  // says so instead of offering a form that would be refused.
+  // Extra work on the job that the customer hasn't answered — theirs or one
+  // an admin keyed in. One at a time per job (contractor_add_extra_work
+  // refuses a second), so the card says so instead of offering a form that
+  // would be refused.
   const admin = createServiceRoleClient();
   const [openExtrasRes, markupRes] = await Promise.all([
     ids.length
       ? admin
           .from('job_submissions')
-          .select('extra_work_of, service_verbatim, created_at')
+          .select('extra_work_of, service_verbatim')
           .in('extra_work_of', ids)
           .in('status', ['confirmed', 'distributed', 'quotes_receiving', 'accepted_awaiting_payment'])
       : Promise.resolve({ data: [] }),
@@ -217,13 +218,13 @@ export default async function WonJobsPage() {
                     ['awarded', 'contacted', 'scheduled', 'in_progress', 'completed_by_contractor', 'completed', 'paid'].includes(job.status ?? '') &&
                     (openExtra.has(job.id) ? (
                       <p className={s.invoiceHint} style={{ marginTop: 12 }}>
-                        Extra work proposed — &ldquo;{openExtra.get(job.id)}&rdquo; — is with the
-                        customer. We&rsquo;ll tell you when they answer.
+                        Extra work — &ldquo;{openExtra.get(job.id)}&rdquo; — is priced and with
+                        the customer. We&rsquo;ll tell you when they answer.
                       </p>
                     ) : (
                       <ProposeWorkForm
                         submissionId={job.id}
-                        customerName={job.contact_name?.split(/\s+/)[0] ?? 'the customer'}
+                        customerName={job.contact_name?.trim().split(/\s+/)[0] || 'the customer'}
                         markupRate={markupRate}
                       />
                     ))}

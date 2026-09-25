@@ -105,6 +105,10 @@ export async function proposeExtraWorkAction(
   if (description.length < 3) return { error: 'Say what the extra work is.' };
   if (description.length > 200) return { error: 'Keep the description under 200 characters.' };
   if (pence === null) return { error: 'Enter your price in pounds, e.g. 250.' };
+  // The description is customer-facing too (email body, job page heading),
+  // so it gets the same screen as the note: no prices, no contact details.
+  const descriptionProblem = clientNoteProblem(description);
+  if (descriptionProblem) return { error: `In the description: ${descriptionProblem}` };
   const noteProblem = clientNoteProblem(note);
   if (noteProblem) return { error: noteProblem };
 
@@ -115,7 +119,7 @@ export async function proposeExtraWorkAction(
     p_description: description,
     p_contractor_price_pence: pence,
     p_price_basis: basis,
-    p_note_to_client: (note || null) as string,
+    ...(note ? { p_note_to_client: note } : {}),
   });
   if (error) {
     console.error('[sq] contractor_add_extra_work failed:', error);
@@ -126,7 +130,7 @@ export async function proposeExtraWorkAction(
     const why: Record<string, string> = {
       not_yours: 'This job isn’t assigned to your account.',
       one_open_already:
-        'The customer already has one proposal from you waiting on this job. Wait for their answer, or contact us to change it.',
+        'The customer already has an extra-work price waiting on this job. Wait for their answer, or contact us to change it.',
       not_booked: 'Extra work can only be proposed on a booked job.',
       bad_description: 'Keep the description between 3 and 200 characters.',
       bad_price: 'Enter a price above zero.',
