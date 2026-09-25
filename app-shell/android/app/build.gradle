@@ -7,7 +7,7 @@ android {
         applicationId "com.emmerdaleagriculture.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (System.getenv("APP_BUILD_NUMBER") ?: "1").toInteger()
+        versionCode = (System.getenv("APP_BUILD_NUMBER") ?: "1").toInteger()
         versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
