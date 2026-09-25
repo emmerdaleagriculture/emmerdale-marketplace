@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.1 — 22 September 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.2 — 25 September 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -85,6 +85,18 @@ export default function TermsPage() {
             You price it or you pass. There is no obligation to quote and no cost to
             quote. A price you give is <strong>your price</strong> for the job as
             described, and it is valid for the period shown, usually 7 days.
+          </p>
+          <p>
+            <strong>Messages.</strong> You can message the customer from the job page,
+            before and after you price. Until the job is yours the customer knows you
+            only by a letter (&ldquo;Contractor B&rdquo;), so a message must not contain a
+            phone number, email address or website — the page will not send one that
+            does. Once the job is yours you can share contact details to arrange the
+            work. <strong>Never put your price, or any charge, in a message</strong>, before
+            or after the job is yours: the customer&rsquo;s price includes our margin, and
+            a change of price or extra work goes through us (clause 5). Messages are kept
+            with the job, and we can read them — to help if something goes wrong, and to
+            make sure these terms are kept.
           </p>
 
           <h2>4. What you are paid</h2>

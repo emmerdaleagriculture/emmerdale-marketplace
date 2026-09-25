@@ -40,7 +40,7 @@ export default function CustomerTermsPage() {
             as Emmerdale Agriculture at emmerdaleagriculture.com (<strong>we</strong>,{' '}
             <strong>us</strong>, <strong>Emmerdale Agriculture</strong>).
             <br />
-            <strong>Version 2.1 — 22 September 2026</strong>
+            <strong>Version 2.2 — 25 September 2026</strong>
           </p>
 
           <p>
@@ -88,6 +88,15 @@ export default function CustomerTermsPage() {
           <p>
             2.4 Some Jobs cannot be priced remotely. If so we will tell you and either arrange a
             site visit or decline the Job.
+          </p>
+          <p>
+            2.5 <strong>Messages.</strong> You can message any Contractor who has priced your
+            Job, or who has sent you a question, from your Job page — before you accept a
+            Price and afterwards. Until you accept a Price the Contractor is shown to you by a
+            letter and does not have your details, so a message must not contain a phone
+            number, email address or website; the page will not send one that does. After you
+            accept, you can message the Contractor doing your Job by name. Messages do not
+            change the Price or the Job: extras and changes go through us (clauses 5.5 and 6).
           </p>
 
           <h2>3. Accepting and paying</h2>
@@ -322,6 +331,10 @@ export default function CustomerTermsPage() {
             12.3 Before and after photographs of the work belong to us. We may use them, with
             identifying features removed, to show our services. Tell us if you would rather we
             did not.
+          </p>
+          <p>
+            12.4 Messages between you and a Contractor are kept with your Job. We can read
+            them, and may use them to deal with a problem or complaint about the Job.
           </p>
 
           <h2>13. Reviews</h2>
