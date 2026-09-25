@@ -218,10 +218,12 @@ export default async function OpsPage() {
   ).length;
   const bounced = jobs.filter((j) => j.emails_failed > 0).length;
 
+  // Things to act on, not stage counts — the lanes strip below has those.
+  // "Awaiting deposit" used to sit here too, which put two identical pills
+  // on the page; a deposit unpaid past 12h already counts as Overdue.
   const attention: [string, number, string][] = [
     ['Overdue', overdue, lanes.find((l) => l.jobs.some((j) => j.overdue))?.key ?? 'quoting'],
     ['Closing with no prices', closingDry, 'quoting'],
-    ['Awaiting deposit', lane('deposit').length, 'deposit'],
     ['Payment failed', paymentProblems, 'delivery'],
     ['Jobs with failed emails', bounced, 'quoting'],
     ['Issues', lane('issues').length, 'issues'],
@@ -260,7 +262,7 @@ export default async function OpsPage() {
           <a
             key={label}
             href={`#${anchor}`}
-            className={`${s.attentionItem} ${n > 0 && label !== 'Awaiting deposit' ? s.attentionHot : ''} ${n === 0 ? o.zero : ''}`}
+            className={`${s.attentionItem} ${n > 0 ? s.attentionHot : ''} ${n === 0 ? o.zero : ''}`}
           >
             <strong>{n}</strong> {label}
           </a>
