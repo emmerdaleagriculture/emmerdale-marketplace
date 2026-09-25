@@ -55,6 +55,15 @@ export default function PrivacyPage() {
             except where you open a job and choose to make contact.
           </p>
 
+          <h2>Messages between customers and contractors</h2>
+          <p>
+            Customers and contractors can message each other about a job through the job
+            pages. We keep those messages with the job, our administrators can read them,
+            and we use them to arrange the work and to deal with any problem or complaint
+            about it. Each side is emailed when the other sends a message, and the email
+            includes the message.
+          </p>
+
           <h2>Payments</h2>
           <p>
             Card payments are processed by Stripe. We never see or store your full card
