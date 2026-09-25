@@ -25,6 +25,10 @@ for (const name of ['NSCameraUsageDescription', 'NSPhotoLibraryUsageDescription'
 assert.ok(read('ios/App/App.xcodeproj/project.pbxproj').includes(config.appId));
 assert.ok(read('android/app/build.gradle').includes(config.appId));
 assert.ok(read('android/app/src/main/AndroidManifest.xml').includes('android:usesCleartextTraffic="false"'));
+for (const permission of ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION']) {
+  assert.ok(read('android/app/src/main/AndroidManifest.xml').includes(`android.permission.${permission}`));
+}
+assert.ok(read('android/app/build.gradle').includes('ANDROID_KEYSTORE_PATH'));
 assert.ok(read('ios/App/CapApp-SPM/Package.swift').includes('exact: "8.5.2"'));
 for (const filename of ['ios/App/App/capacitor.config.json', 'android/app/src/main/assets/capacitor.config.json']) {
   assert.equal(JSON.parse(read(filename)).server.url, config.server.url, `${filename}: run cap sync`);
