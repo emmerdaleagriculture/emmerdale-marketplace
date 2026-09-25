@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.2 — 25 September 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.3 — 25 September 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -128,7 +128,9 @@ export default function TermsPage() {
             We will re-price it with the customer, and work continues once they have
             accepted the change; the difference is added to their balance. Do not agree extra work directly with the
             customer: it goes through us so it is recorded, insured and covered by these
-            terms.
+            terms. If you see more worth doing, propose it from your won-jobs page with
+            your price; the customer accepts it there, or not, and it is booked as a job
+            of its own with its own deposit.
           </p>
           <p>
             If a customer raises a problem within their three working days, we hold off

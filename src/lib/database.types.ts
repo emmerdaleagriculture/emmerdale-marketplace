@@ -1318,6 +1318,7 @@ export type Database = {
           draft_chased_at: string | null
           expires_at: string | null
           extra_work_of: string | null
+          extra_work_origin: string | null
           first_refusal: boolean
           gate_w3w: string | null
           gate_width: string | null
@@ -1384,6 +1385,7 @@ export type Database = {
           draft_chased_at?: string | null
           expires_at?: string | null
           extra_work_of?: string | null
+          extra_work_origin?: string | null
           first_refusal?: boolean
           gate_w3w?: string | null
           gate_width?: string | null
@@ -1450,6 +1452,7 @@ export type Database = {
           draft_chased_at?: string | null
           expires_at?: string | null
           extra_work_of?: string | null
+          extra_work_origin?: string | null
           first_refusal?: boolean
           gate_w3w?: string | null
           gate_width?: string | null
@@ -2304,6 +2307,17 @@ export type Database = {
         Returns: Json
       }
       admin_dashboard: { Args: never; Returns: Json }
+      contractor_add_extra_work: {
+        Args: {
+          p_contractor_id: string
+          p_contractor_price_pence: number
+          p_description: string
+          p_note_to_client?: string
+          p_price_basis: string
+          p_submission_id: string
+        }
+        Returns: Json
+      }
       admin_delete_submission: {
         Args: { p_submission_id: string }
         Returns: Json

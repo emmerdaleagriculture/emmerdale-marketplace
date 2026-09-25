@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { nonContractorPath } from '@/lib/auth';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -10,6 +10,7 @@ import { formatDateTime } from '@/lib/time';
 import { FirstContactButton } from './FirstContactButton';
 import { MarkDoneButton } from './MarkDoneButton';
 import { InvoiceUpload } from './InvoiceUpload';
+import { ProposeWorkForm } from './ProposeWorkForm';
 import a from '../auth.module.css';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import s from './won.module.css';
@@ -67,6 +68,26 @@ export default async function WonJobsPage() {
         .in('submission_id', ids)
     : { data: [] };
   const threadToken = new Map((invs ?? []).map((i) => [i.submission_id, i.token]));
+
+  // Extra work on the job that the customer hasn't answered — theirs or one
+  // an admin keyed in. One at a time per job (contractor_add_extra_work
+  // refuses a second), so the card says so instead of offering a form that
+  // would be refused.
+  const admin = createServiceRoleClient();
+  const [openExtrasRes, markupRes] = await Promise.all([
+    ids.length
+      ? admin
+          .from('job_submissions')
+          .select('extra_work_of, service_verbatim')
+          .in('extra_work_of', ids)
+          .in('status', ['confirmed', 'distributed', 'quotes_receiving', 'accepted_awaiting_payment'])
+      : Promise.resolve({ data: [] }),
+    admin.from('app_config').select('value').eq('key', 'sq_markup_rate').maybeSingle(),
+  ]);
+  const openExtra = new Map(
+    (openExtrasRes.data ?? []).map((x) => [x.extra_work_of, x.service_verbatim ?? 'extra work']),
+  );
+  const markupRate = Number(markupRes.data?.value ?? 0.1);
 
   return (
     <div className={a.wrap}>
@@ -189,6 +210,24 @@ export default async function WonJobsPage() {
                     job.status ?? '',
                   ) &&
                     job.id && <MarkDoneButton submissionId={job.id} />}
+                  {/* Extras go through us (terms clause 5) — and this is
+                      "through us": a job of its own, held for them, that the
+                      customer accepts or ignores. Every booked state
+                      qualifies, the same as the admin's form. */}
+                  {job.id &&
+                    ['awarded', 'contacted', 'scheduled', 'in_progress', 'completed_by_contractor', 'completed', 'paid'].includes(job.status ?? '') &&
+                    (openExtra.has(job.id) ? (
+                      <p className={s.invoiceHint} style={{ marginTop: 12 }}>
+                        Extra work — &ldquo;{openExtra.get(job.id)}&rdquo; — is priced and with
+                        the customer. We&rsquo;ll tell you when they answer.
+                      </p>
+                    ) : (
+                      <ProposeWorkForm
+                        submissionId={job.id}
+                        customerName={job.contact_name?.trim().split(/\s+/)[0] || 'the customer'}
+                        markupRate={markupRate}
+                      />
+                    ))}
                   {/* The customer has confirmed and the money is ours to
                       release — all that is missing is their invoice. */}
                   {['completed', 'paid'].includes(job.status ?? '') && job.id && (
