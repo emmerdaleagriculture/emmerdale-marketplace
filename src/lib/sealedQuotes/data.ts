@@ -16,6 +16,7 @@ export async function getInvitationByToken(token: string) {
     .from('job_invitations')
     .select(
       `id, token, status, decline_reason, distance_miles, sent_at, opened_at, contractor_id,
+       display_label,
        submission:job_submissions (
          id, status, expires_at, awarded_contractor_id, postcode, lat, lng, boundary,
          amended_at,

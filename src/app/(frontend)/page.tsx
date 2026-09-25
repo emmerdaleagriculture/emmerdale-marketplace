@@ -168,7 +168,7 @@ const TICKER = ['Several prices to choose from', 'Vetted & insured operators'];
 
 /** The hero's three promises, each the answer to a real hesitation. */
 const PROMISES: [string, string][] = [
-  ['Several prices, not one.', 'Approved operators near you price your job, usually inside 24 hours.'],
+  ['Several prices, not one.', 'Approved operators near you price your job, usually inside 24 hours, and you can message any of them before you accept.'],
   ['Vetted operators, and every job insured.', 'Our own £5m policy covers the work, whoever does it.'],
   ['We hold your deposit until you’re happy.', 'The contractor gets paid when you say the job’s right.'],
 ];
@@ -176,7 +176,7 @@ const PROMISES: [string, string][] = [
 const STEPS: [string, string][] = [
   ['You tell us the job', 'Pick a service and give us a postcode. About a minute.'],
   ['We ask operators near you', 'Vetted, and the work insured by us. They price your job directly.'],
-  ['You compare prices', 'Side by side, with distance. Sort by price.'],
+  ['You compare prices and ask questions', 'Side by side, with distance. Message any contractor who’s priced your job, before you accept anything.'],
   ['You book and pay online', 'A 15% deposit to book, and the rest once the work is done.'],
   ['The work gets done', 'Before and after photos land on your job page.'],
 ];

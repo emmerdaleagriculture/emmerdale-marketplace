@@ -48,7 +48,7 @@ export default async function SubmissionDetailPage({
 
   // Distribution state (Part 2): invitations, both-sides prices (§29 — this
   // page and /admin/money are the only places both appear), and the event log.
-  const [outreach, quotesQ, eventsQ, services] = await Promise.all([
+  const [outreach, quotesQ, eventsQ, services, messagesQ] = await Promise.all([
     loadOutreach(id),
     admin
       .from('client_quotes')
@@ -66,7 +66,18 @@ export default async function SubmissionDetailPage({
       .order('created_at', { ascending: true })
       .limit(200),
     getServices(),
+    // Customer↔contractor threads, read-only here.
+    admin
+      .from('job_messages')
+      .select(
+        `id, sender, body, phase, created_at, read_at,
+         inv:job_invitations(display_label, contractor:contractors(business_name))`,
+      )
+      .eq('submission_id', id)
+      .order('created_at', { ascending: true })
+      .limit(500),
   ]);
+  const messages = messagesQ.data ?? [];
   const allQuotes = quotesQ.data ?? [];
   const events = eventsQ.data ?? [];
   const show: OutreachStage = isOutreachStage(sp.show) ? sp.show : 'emailed';
@@ -292,6 +303,35 @@ export default async function SubmissionDetailPage({
                     )}
                   </td>
                   <td>{inner?.notes_internal ?? '—'}</td>
+                </tr>
+              );
+            })}
+          </AdminTable>
+        </>
+      )}
+
+      {messages.length > 0 && (
+        <>
+          <div className={s.sectionLabel}>Messages — customer and contractors</div>
+          <AdminTable head={['When', 'Thread', 'From', 'Message', 'Read']}>
+            {messages.map((msg) => {
+              const inv = msg.inv as {
+                display_label: string | null;
+                contractor: { business_name: string } | null;
+              } | null;
+              return (
+                <tr key={msg.id}>
+                  <td>{formatDateTime(msg.created_at)}</td>
+                  <td>
+                    {inv?.display_label ?? '—'}
+                    {inv?.contractor?.business_name ? ` · ${inv.contractor.business_name}` : ''}
+                  </td>
+                  <td>
+                    {msg.sender === 'client' ? 'Customer' : 'Contractor'}
+                    {msg.phase === 'pre_award' ? ' (before award)' : ''}
+                  </td>
+                  <td style={{ whiteSpace: 'pre-wrap', maxWidth: 420 }}>{msg.body}</td>
+                  <td>{msg.read_at ? formatDateTime(msg.read_at) : '—'}</td>
                 </tr>
               );
             })}

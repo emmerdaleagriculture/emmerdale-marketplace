@@ -44,7 +44,7 @@ const REPLY_DOMAIN = (Deno.env.get('SQ_INBOUND_REPLY_DOMAIN') ?? '').trim();
 // reach a real contractor.
 const SQ_CONTRACTOR_KINDS = new Set([
   'sq_invitation', 'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
-  'sq_job_amended',
+  'sq_job_amended', 'sq_message_to_contractor',
 ]);
 
 /**
@@ -706,6 +706,27 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             : `Nothing to refund and no balance will be taken — check `) +
           `that the contractor has been stood down.\n` +
           `${SITE_URL}/admin/submissions/${p.submission_id}`,
+      };
+
+    // A message in a customer↔contractor thread (20260925140000). The words
+    // go in the email — they were checked before they were stored, and
+    // making someone click through to read one line is how replies stop.
+    // Replying to the email does not reach the other side, so it says so.
+    case 'sq_message_to_contractor':
+      return {
+        subject: `Message from the customer: ${p.service ?? 'land work'}${p.postcode_district ? `, ${p.postcode_district}` : ''}`,
+        text:
+          `${p.from ?? 'The customer'} wrote:\n\n${p.body ?? ''}\n\n` +
+          `Reply on the job page (replies to this email don’t reach them):\n` +
+          `${SITE_URL}/quote/${p.token}#messages`,
+      };
+    case 'sq_message_to_client':
+      return {
+        subject: `Message from ${p.from ?? 'your contractor'} about your ${p.service ?? 'job'}`,
+        text:
+          `${p.from ?? 'Your contractor'} wrote:\n\n${p.body ?? ''}\n\n` +
+          `Reply on your job page (replies to this email don’t reach them):\n` +
+          `${SITE_URL}/my/${p.client_token}`,
       };
 
     case 'sq_award_admin':

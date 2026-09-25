@@ -117,3 +117,14 @@
   padding-top: 16px;
   border-top: 1px solid var(--rule);
 }
+
+/* Jump link to the message thread at the foot of the page. */
+.messagesJump {
+  display: inline-block;
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

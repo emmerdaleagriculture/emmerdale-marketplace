@@ -14,6 +14,9 @@ import { PricePosition } from './PricePosition';
 import { QuoteForm } from './QuoteForm';
 import { DeclineForm } from './DeclineForm';
 import { ContactUsButton } from '@/components/ContactUsButton';
+import { MessageThread } from '@/components/messages/MessageThread';
+import { getThreadMessages, getThreadState } from '@/lib/sealedQuotes/messages';
+import { markContractorThreadReadAction, sendContractorMessageAction } from './actions';
 import a from '../../auth.module.css';
 import q from './quote.module.css';
 
@@ -42,7 +45,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   // One round-trip of latency, not three: the view event, the live quote and
   // the photo signing are independent.
   const admin = createServiceRoleClient();
-  const [, live, photos, positionRes] = await Promise.all([
+  const [, live, photos, positionRes, threadState, messages] = await Promise.all([
     admin
       .rpc('record_invitation_view', { p_token: token })
       .then(() => undefined, (e) => console.error('[sq] record view failed:', e)),
@@ -60,6 +63,8 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
         console.error('[sq] quote position failed:', e);
         return { data: null };
       }),
+    getThreadState(invitation.id),
+    getThreadMessages(invitation.id),
   ]);
   const position = (positionRes?.data as
     | {
@@ -76,6 +81,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     .select('market_opens_at, preferred_contractor_id, first_refusal')
     .eq('id', js.id)
     .maybeSingle();
+  const unread = messages.filter((m) => m.sender === 'client' && !m.read).length;
   const directToYou =
     Boolean(offer?.market_opens_at) && offer?.preferred_contractor_id === invitation.contractor_id;
 
@@ -131,6 +137,17 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
             {spec.location ? `${spec.location}, ` : ''}
             {county ?? ''} · full address comes if you win the job
           </p>
+          {/* The thread sits below the pricing form, which is a long scroll on a
+              phone — so say it is there, and how much is waiting, up top. */}
+          {(threadState !== 'closed' || messages.length > 0) && (
+            <a className={q.messagesJump} href="#messages">
+              {unread > 0
+                ? `Messages (${unread} new) ↓`
+                : messages.length > 0
+                  ? `Messages (${messages.length}) ↓`
+                  : 'A question before you price? Message the customer ↓'}
+            </a>
+          )}
 
           <JobSpecCard spec={spec} />
           {js.lat !== null && js.lng !== null && (
@@ -280,6 +297,36 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
               />
 
               {!live && <DeclineForm token={token} />}
+            </>
+          )}
+
+          {/* The thread with the customer. Before award they see this
+              contractor only as a letter, so the rules are said up front
+              rather than discovered as a refusal. */}
+          {(threadState !== 'closed' || messages.length > 0) && (
+            <>
+              <div id="messages" className={a.groupTitle} style={{ marginTop: 28 }}>
+                Messages
+              </div>
+              <MessageThread
+                me="contractor"
+                otherName="The customer"
+                messages={messages}
+                intro={
+                  threadState === 'pre_award'
+                    ? `Ask about access, ground or timing. The customer sees you as ${
+                        invitation.display_label ?? 'a lettered contractor'
+                      }, not by name, so leave out phone numbers, emails and amounts — your details go to them when they accept your price.`
+                    : threadState === 'post_award'
+                      ? 'The customer reads and replies on their job page. Leave prices out: if the job has changed and the price should too, get in touch with us.'
+                      : undefined
+                }
+                action={threadState === 'closed' ? null : sendContractorMessageAction}
+                closedNote="This conversation has closed."
+                hidden={{ token }}
+                unread={unread}
+                markRead={markContractorThreadReadAction.bind(null, token)}
+              />
             </>
           )}
 

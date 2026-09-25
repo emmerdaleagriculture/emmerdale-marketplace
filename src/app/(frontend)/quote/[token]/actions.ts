@@ -6,6 +6,10 @@ import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
 import { poundsInputToPence } from '@/lib/sealedQuotes/money';
 import { CLIENT_NOTE_MAX, clientNoteProblem } from '@/lib/sealedQuotes/clientNote';
 import type { FormState } from '@/lib/form';
+import { revalidatePath } from 'next/cache';
+import { getInvitationByToken } from '@/lib/sealedQuotes/data';
+import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
+import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
 
 export type QuoteActionState = FormState & { closed?: boolean };
 
@@ -164,4 +168,49 @@ export async function declineInvitationAction(
     return { error: 'This job has already closed.' };
   }
   return { ok: true, message: 'Noted — thanks for the quick answer. It helps us send you the right jobs.' };
+}
+
+export type MessageActionState = FormState & { body?: string };
+
+/**
+ * A message to the customer from the pricing page. The page's token is the
+ * thread — one per invitation — so there is nothing else to choose. A refusal
+ * hands the words back so they can be reworded rather than retyped.
+ */
+export async function sendContractorMessageAction(
+  _prev: MessageActionState,
+  formData: FormData,
+): Promise<MessageActionState> {
+  const token = String(formData.get('token') ?? '');
+  const body = normaliseMessage(String(formData.get('body') ?? ''));
+  if (!isTokenFormat(token)) return { error: 'This link is not valid.', body };
+
+  const invitation = await getInvitationByToken(token);
+  if (!invitation) return { error: 'This link is not valid.', body };
+
+  const state = await getThreadState(invitation.id);
+  if (state === 'closed') return { error: postRefusal('closed'), body };
+  const problem = messageProblem(body, 'contractor', state);
+  if (problem) return { error: problem, body };
+
+  const { data, error } = await createServiceRoleClient().rpc('sq_post_message', {
+    p_invitation_id: invitation.id,
+    p_sender: 'contractor',
+    p_body: body,
+    p_checked_as: state,
+  });
+  const res = data as { ok: boolean; reason?: string } | null;
+  if (error || !res?.ok) {
+    if (error) console.error('[sq] contractor message failed:', error.message);
+    return { error: postRefusal(res?.reason), body };
+  }
+  revalidatePath(`/quote/${token}`);
+  return { ok: true };
+}
+
+/** The contractor has the thread open in a browser. */
+export async function markContractorThreadReadAction(token: string): Promise<void> {
+  if (!isTokenFormat(token)) return;
+  const invitation = await getInvitationByToken(token);
+  if (invitation) await markThreadRead(invitation.id, 'contractor');
 }

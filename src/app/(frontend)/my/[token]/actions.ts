@@ -8,6 +8,9 @@ import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
 import { cancellationQuote } from '@/lib/sealedQuotes/cancellation';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import type { FormState } from '@/lib/form';
+import { getSubmissionByClientToken } from '@/lib/sealedQuotes/data';
+import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
+import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -452,4 +455,61 @@ export async function openToMarketAction(_prev: FormState, formData: FormData): 
       ? `Sent to ${n} more contractor${n === 1 ? '' : 's'} — their prices will appear here as they come in.`
       : 'Done — but no other contractors cover your area just now. We’ll keep it open.',
   };
+}
+
+/**
+ * The thread on this job with that id, or null. The job token proves who the
+ * customer is; the invitation must belong to their job — otherwise someone
+ * holding their own link could read or write anyone's thread.
+ */
+async function clientThread(token: string, invitationId: string) {
+  if (!isTokenFormat(token)) return null;
+  const js = await getSubmissionByClientToken(token);
+  if (!js) return null;
+  const { data: inv } = await createServiceRoleClient()
+    .from('job_invitations')
+    .select('id')
+    .eq('id', invitationId)
+    .eq('submission_id', js.id)
+    .maybeSingle();
+  return inv;
+}
+
+/** A message from the customer to one contractor. Refusals hand the words back. */
+export async function sendClientMessageAction(
+  _prev: FormState & { body?: string },
+  formData: FormData,
+): Promise<FormState & { body?: string }> {
+  const token = String(formData.get('token') ?? '');
+  const body = normaliseMessage(String(formData.get('body') ?? ''));
+  const inv = await clientThread(token, String(formData.get('invitation_id') ?? ''));
+  if (!inv) return { error: 'This link is no longer valid.', body };
+
+  const state = await getThreadState(inv.id);
+  if (state === 'closed') return { error: postRefusal('closed'), body };
+  const problem = messageProblem(body, 'client', state);
+  if (problem) return { error: problem, body };
+
+  const { data, error } = await createServiceRoleClient().rpc('sq_post_message', {
+    p_invitation_id: inv.id,
+    p_sender: 'client',
+    p_body: body,
+    p_checked_as: state,
+  });
+  const res = data as { ok: boolean; reason?: string } | null;
+  if (error || !res?.ok) {
+    if (error) console.error('[sq] client message failed:', error.message);
+    return { error: postRefusal(res?.reason), body };
+  }
+  revalidatePath(`/my/${token}`);
+  return { ok: true };
+}
+
+/** The customer has this thread open in a browser. */
+export async function markClientThreadReadAction(
+  token: string,
+  invitationId: string,
+): Promise<void> {
+  const inv = await clientThread(token, invitationId);
+  if (inv) await markThreadRead(inv.id, 'client');
 }

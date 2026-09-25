@@ -166,3 +166,14 @@
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* Jump link to the message threads further down the page. */
+.messagesJump {
+  display: inline-block;
+  margin: 4px 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

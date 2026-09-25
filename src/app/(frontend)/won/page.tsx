@@ -56,6 +56,18 @@ export default async function WonJobsPage() {
     .limit(50);
   const jobs = data ?? [];
 
+  // Each job's thread with the customer lives on its pricing page, keyed by
+  // the invitation token. inv_select_own limits this to their own rows.
+  const ids = jobs.map((j) => j.id).filter((id): id is string => Boolean(id));
+  const { data: invs } = ids.length
+    ? await supabase
+        .from('job_invitations')
+        .select('submission_id, token')
+        .eq('contractor_id', user.id)
+        .in('submission_id', ids)
+    : { data: [] };
+  const threadToken = new Map((invs ?? []).map((i) => [i.submission_id, i.token]));
+
   return (
     <div className={a.wrap}>
       <SiteHeader />
@@ -163,6 +175,13 @@ export default async function WonJobsPage() {
                       <div>{job.awarded_at ? formatDateTime(job.awarded_at) : '—'}</div>
                     </div>
                   </div>
+                  {job.id && threadToken.get(job.id) && (
+                    <p>
+                      <a className={s.dLink} href={`/quote/${threadToken.get(job.id)}#messages`}>
+                        Messages with the customer →
+                      </a>
+                    </p>
+                  )}
                   {job.status === 'awarded' && job.id && (
                     <FirstContactButton submissionId={job.id} />
                   )}

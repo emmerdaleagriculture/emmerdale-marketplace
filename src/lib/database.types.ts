@@ -802,6 +802,7 @@ export type Database = {
         Row: {
           contractor_id: string
           decline_reason: string | null
+          display_label: string | null
           distance_miles: number | null
           id: string
           opened_at: string | null
@@ -813,6 +814,7 @@ export type Database = {
         Insert: {
           contractor_id: string
           decline_reason?: string | null
+          display_label?: string | null
           distance_miles?: number | null
           id?: string
           opened_at?: string | null
@@ -824,6 +826,7 @@ export type Database = {
         Update: {
           contractor_id?: string
           decline_reason?: string | null
+          display_label?: string | null
           distance_miles?: number | null
           id?: string
           opened_at?: string | null
@@ -946,6 +949,57 @@ export type Database = {
           reason?: string | null
         }
         Relationships: []
+      }
+      job_messages: {
+        Row: {
+          alerted_at: string | null
+          body: string
+          created_at: string
+          id: string
+          invitation_id: string
+          phase: string
+          read_at: string | null
+          sender: string
+          submission_id: string
+        }
+        Insert: {
+          alerted_at?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          invitation_id: string
+          phase: string
+          read_at?: string | null
+          sender: string
+          submission_id: string
+        }
+        Update: {
+          alerted_at?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          invitation_id?: string
+          phase?: string
+          read_at?: string | null
+          sender?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_messages_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "job_invitations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_messages_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "job_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       job_payments: {
         Row: {
@@ -2384,10 +2438,33 @@ export type Database = {
         Returns: boolean
       }
       sq_job_facts: { Args: { p_submission_id: string }; Returns: Json }
+      sq_mark_thread_read: {
+        Args: { p_invitation_id: string; p_reader: string }
+        Returns: undefined
+      }
       sq_mark_quotes_viewed: {
         Args: { p_submission_id: string }
         Returns: number
       }
+      sq_post_message: {
+        Args: {
+          p_body: string
+          p_checked_as: string
+          p_invitation_id: string
+          p_sender: string
+        }
+        Returns: Json
+      }
+      sq_submission_threads: {
+        Args: { p_submission_id: string }
+        Returns: {
+          business_name: string
+          display_label: string
+          invitation_id: string
+          state: string
+        }[]
+      }
+      sq_thread_state: { Args: { p_invitation_id: string }; Returns: string }
       sq_notify_once: {
         Args: {
           p_kind: string

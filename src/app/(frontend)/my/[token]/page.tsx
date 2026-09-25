@@ -25,6 +25,9 @@ import { PayBalance } from './PayBalance';
 import { formatDate, formatDateTime } from '@/lib/time';
 import { OpenToMarket } from './OpenToMarket';
 import { ContactUsButton } from '@/components/ContactUsButton';
+import { MessageThread } from '@/components/messages/MessageThread';
+import { getClientThreads } from '@/lib/sealedQuotes/messages';
+import { markClientThreadReadAction, sendClientMessageAction } from './actions';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import a from '../../auth.module.css';
 import m from './my.module.css';
@@ -127,6 +130,8 @@ export default async function ClientPortalPage({
   // latency. The accepted quote is fetched by id with no validity filter:
   // an award outlives its quote's valid-until date.
   const needQuotes = ['quotes_receiving', 'accepted_awaiting_payment'].includes(js.status);
+  // Started here, awaited after: kept out of the positional array below.
+  const threadsP = getClientThreads(js.id);
   const [quotes, ratingWeight, depositRate, photos, accepted] = await Promise.all([
     needQuotes ? getClientQuotes(js.id) : Promise.resolve([]),
     needQuotes ? getCompositeWeight() : Promise.resolve(0.3),
@@ -148,6 +153,8 @@ export default async function ClientPortalPage({
           .then(() => undefined, (e) => console.error('[sq] mark viewed failed:', e))
       : Promise.resolve(undefined),
   ]);
+
+  const threads = await threadsP;
 
   const spec = {
     service,
@@ -175,6 +182,12 @@ export default async function ClientPortalPage({
           <div className={a.eyebrow}>Your job</div>
           <h1 className={a.title}>{service ?? 'Your job'}</h1>
           <StatusTimeline status={js.status} />
+          {/* The threads sit below the prices; say when something is waiting. */}
+          {threads.some((t) => t.unread > 0) && (
+            <a className={m.messagesJump} href="#messages">
+              Messages ({threads.reduce((n, t) => n + t.unread, 0)} new) ↓
+            </a>
+          )}
 
           {/* ── Pre-quotes ─────────────────────────────────────────── */}
           {(js.status === 'confirmed' || js.status === 'distributed') &&
@@ -350,6 +363,35 @@ export default async function ClientPortalPage({
             </p>
           )}
           {js.status === 'cancelled' && <p className={a.sub}>This job was cancelled.</p>}
+
+          {/* ── Messages ───────────────────────────────────────────── */}
+          {threads.length > 0 && (
+            <>
+              <div id="messages" className={a.groupTitle} style={{ marginTop: 28 }}>
+                Messages
+              </div>
+              {threads.map((t) => (
+                <MessageThread
+                  key={t.invitationId}
+                  me="client"
+                  otherName={t.name}
+                  messages={t.messages}
+                  unread={t.unread}
+                  intro={
+                    t.state === 'pre_award'
+                      ? `Ask ${t.name} anything about the job. Leave out phone numbers and emails — the contractor you book gets your details when you accept their price.`
+                      : t.state === 'post_award'
+                        ? `Message ${t.name} about arranging the work. They get an email when you do.`
+                        : undefined
+                  }
+                  action={t.state === 'closed' ? null : sendClientMessageAction}
+                  closedNote="This conversation has closed."
+                  hidden={{ token, invitation_id: t.invitationId }}
+                  markRead={markClientThreadReadAction.bind(null, token, t.invitationId)}
+                />
+              ))}
+            </>
+          )}
 
           <div className={a.groupTitle} style={{ marginTop: 28 }}>
             What you told us
