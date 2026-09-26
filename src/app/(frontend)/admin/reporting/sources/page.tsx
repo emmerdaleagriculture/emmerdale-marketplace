@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { channelOf, compareChannels, isPaid, UNATTRIBUTED } from '@/lib/attribution';
+import { fetchAll } from '@/lib/supabase/fetchAll';
 import s from '../../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../../ui';
 
@@ -36,22 +37,30 @@ export default async function SourcesPage() {
   const admin = createServiceRoleClient();
   const cutoff = new Date(Date.now() - 30 * DAY).toISOString();
 
+  // Paged (see fetchAll): a response is 1000 rows at most, and the step
+  // beacon alone is thousands a month.
+  const settle = <T,>(p: Promise<T[]>) =>
+    p.then((data) => ({ data, error: null as Error | null }), (error: Error) => ({ data: [] as T[], error }));
   const [viewsQ, subsQ, stepsQ] = await Promise.all([
-    admin.from('landing_views').select('created_at, utm_source, gclid, referrer').gte('created_at', cutoff).limit(10000),
-    admin
+    settle(fetchAll((from, to) => admin.from('landing_views').select('created_at, utm_source, gclid, referrer').gte('created_at', cutoff).order('created_at').order('id').range(from, to), { max: 10000 })),
+    settle(fetchAll((from, to) => admin
       .from('job_submissions')
       .select('created_at, confirmed_at, status, utm_source, gclid')
       .gte('created_at', cutoff)
-      .limit(5000),
+      // Hidden = test runs and duplicates, already out of the dashboard.
+      .is('hidden_at', null)
+      .order('created_at').order('id')
+      .range(from, to), { max: 5000 })),
     // Milestones, for the people who never became a submission at all. These
     // live only in the beacon: no row is created until Send is pressed.
-    admin
+    settle(fetchAll((from, to) => admin
       .from('page_events')
       .select('session_key, label, utm_source, utm_medium, has_gclid')
       .eq('path', '/start')
       .eq('kind', 'step')
       .gte('created_at', cutoff)
-      .limit(20000),
+      .order('created_at').order('id')
+      .range(from, to), { max: 20000 })),
   ]);
 
   const views = (viewsQ.data ?? []) as ViewRow[];

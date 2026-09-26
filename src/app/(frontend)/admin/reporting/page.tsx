@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: 'Reporting — Admin' };
 
 const DAY = 24 * 60 * 60 * 1000;
 
-type ViewRow = { created_at: string; utm_source: string | null; utm_campaign: string | null; gclid: string | null };
+type ViewRow = { created_at: string; utm_source: string | null; utm_campaign: string | null; gclid: string | null; referrer: string | null; handoff: string | null };
 type SubRow = {
   created_at: string;
   confirmed_at: string | null;
@@ -31,6 +31,8 @@ type SubRow = {
   utm_source: string | null;
   /** Needed to tell an Ads job from a direct one — see @/lib/attribution. */
   gclid: string | null;
+  /** Which of our pages handed them to /start, if any. */
+  handoff: string | null;
   service: { name: string } | null;
   county: { name: string } | null;
 };
@@ -53,14 +55,18 @@ export default async function ReportingPage() {
 
   // Paged (see fetchAll): the API returns 1000 rows per call at most.
   const [viewsQ, subsQ, eventsQ, parsesQ] = await Promise.all([
-    fetchAll((from, to) => admin.from('landing_views').select('created_at, utm_source, utm_campaign, gclid').gte('created_at', cutoff).order('created_at').order('id').range(from, to), { max: 10000 })
+    fetchAll((from, to) => admin.from('landing_views').select('created_at, utm_source, utm_campaign, gclid, referrer, handoff').gte('created_at', cutoff).order('created_at').order('id').range(from, to), { max: 10000 })
       .then((data) => ({ data, error: null as Error | null }), (error: Error) => ({ data: [], error })),
     fetchAll((from, to) => admin
       .from('job_submissions')
       .select(
-        'created_at, confirmed_at, status, parse_source, service_confirmed, area_source, photo_paths, utm_source, gclid, service:services(name), county:counties(name)',
+        'created_at, confirmed_at, status, parse_source, service_confirmed, area_source, photo_paths, utm_source, gclid, handoff, service:services(name), county:counties(name)',
       )
       .gte('created_at', cutoff)
+      // Hidden = cleared off the board as not real (test runs, duplicates).
+      // The dashboard has ignored them since 2026-09-22; this page did not,
+      // and five cancelled test jobs read as a channel's conversions.
+      .is('hidden_at', null)
       .order('created_at').order('id')
       .range(from, to), { max: 5000 }),
     fetchAll((from, to) => admin.from('job_parse_events').select('action, outcome, reason, created_at').gte('created_at', cutoff).order('created_at').order('id').range(from, to), { max: 10000 }),
@@ -165,9 +171,9 @@ export default async function ReportingPage() {
   const byCounty = tally(confirmed, (r) => r.county?.name ?? '(unresolved)');
 
   // Attribution: views vs submissions vs confirms per utm_source.
-  const sources = new Map<string, { views: number; parses: number; confirms: number }>();
-  const bump = (key: string, field: 'views' | 'parses' | 'confirms') => {
-    const row = sources.get(key) ?? { views: 0, parses: 0, confirms: 0 };
+  const sources = new Map<string, { views: number; parses: number; confirms: number; viaSite: number }>();
+  const bump = (key: string, field: 'views' | 'parses' | 'confirms' | 'viaSite') => {
+    const row = sources.get(key) ?? { views: 0, parses: 0, confirms: 0, viaSite: 0 };
     row[field] += 1;
     sources.set(key, row);
   };
@@ -178,6 +184,9 @@ export default async function ReportingPage() {
   for (const v of views) bump(channelOf(v), 'views');
   for (const r of subs) bump(channelOf(r), 'parses');
   for (const r of confirmed) bump(channelOf(r), 'confirms');
+  // Of each channel's confirmed jobs, how many came through one of our pages
+  // (homepage, service page) rather than landing straight on /start.
+  for (const r of confirmed) if (r.handoff) bump(channelOf(r), 'viaSite');
 
   // Daily rollup, last 14 days.
   const days: { day: string; views: number; parses: number; confirms: number }[] = [];
@@ -325,7 +334,7 @@ export default async function ReportingPage() {
       <div className={s.sectionLabel}>Attribution — last 30 days</div>
       <PieCard title="Landings, by source" slices={sourceSlices} centre="landings" empty="No landings attributed." />
       <Fold summary="Every source, with parses and confirms">
-      <AdminTable head={['Source', 'Landings', 'Parses', 'Confirmed', 'Landing → job']}>
+      <AdminTable head={['Source', 'Landings', 'Parses', 'Confirmed', 'Via our pages', 'Landing → job']}>
         {[...sources.entries()]
           .sort((a, b) => b[1].views + b[1].parses - (a[1].views + a[1].parses))
           .map(([source, row]) => (
@@ -334,6 +343,7 @@ export default async function ReportingPage() {
               <td>{row.views}</td>
               <td>{row.parses}</td>
               <td>{row.confirms}</td>
+              <td>{row.confirms > 0 ? row.viaSite : '—'}</td>
               <td>{pct(row.confirms, row.views)}</td>
             </tr>
           ))}

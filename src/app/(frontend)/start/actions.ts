@@ -174,6 +174,7 @@ export async function recordLandingView(data: {
   utm_medium?: string;
   utm_campaign?: string;
   gclid?: string;
+  handoff?: string;
 }): Promise<void> {
   try {
     const clean = (v: unknown) =>
@@ -186,6 +187,7 @@ export async function recordLandingView(data: {
       utm_medium: clean(data.utm_medium),
       utm_campaign: clean(data.utm_campaign),
       gclid: clean(data.gclid),
+      handoff: clean(data.handoff),
     });
   } catch (err) {
     console.error('[jobParse] landing view insert failed:', err);
@@ -390,6 +392,7 @@ export async function parseJobAction(
       utm_medium: String(formData.get('utm_medium') || '') || null,
       utm_campaign: String(formData.get('utm_campaign') || '') || null,
       gclid: String(formData.get('gclid') || '') || null,
+      handoff: String(formData.get('handoff') || '').slice(0, 40) || null,
       service_id: serviceId,
       service_verbatim: merged.service_verbatim || null,
       service_alternatives: merged.service_alternatives,

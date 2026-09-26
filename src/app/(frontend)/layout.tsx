@@ -4,6 +4,7 @@ import './globals.css';
 import { COMPANY_LEGAL_NAME, SITE_NAME, SITE_STRAPLINE, siteUrl } from '@/lib/site';
 import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
 import { Analytics } from '@/components/Analytics';
+import { FirstTouchCapture } from '@/components/FirstTouch';
 
 const GA_ID = 'G-869MBRK9FD';
 const META_PIXEL_ID = '1714644666891790';
@@ -86,6 +87,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             the people it reports to. */}
         <FeedbackWidget />
         <Analytics />
+        <FirstTouchCapture />
       </body>
     </html>
   );
