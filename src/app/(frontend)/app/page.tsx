@@ -3,21 +3,29 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getUser, postLoginPath } from '@/lib/auth';
+import {
+  HEADLINE,
+  KICKER,
+  NO_OBLIGATION,
+  OPERATOR_CTA,
+  OPERATOR_QUESTION,
+  PROMISES,
+  STANDFIRST,
+} from '@/lib/home/proposition';
 import s from './app.module.css';
 
 /**
  * Entry screen for the wrapped mobile app. The Capacitor shell boots straight
  * here instead of at `/` — installing the app is necessarily a *second* visit
- * (someone found the site first), so the marketing homepage has nothing left
- * to sell. This puts the one thing people open the app to do — book a job —
- * under a single full-width button, with contractor signup as a footnote
- * rather than a competing choice.
+ * (someone found the site first), so the long-form homepage has nothing left
+ * to sell. This keeps the homepage's proposition and puts the one thing people
+ * open the app to do — get prices for a job — under a single full-width
+ * button, with contractor signup as a footnote.
  *
- * Every line of copy here is quoted from the live site rather than rewritten:
- * the h1 and standfirst are /start's own (the page this button leads to),
- * "Book online" is the site nav's CTA, "Free, and no obligation" and the three
- * trust chips are the homepage's, and the contractor footnote is the operators
- * section heading and its button. Nothing here is new marketing copy.
+ * All customer-facing wording comes from `@/lib/home/proposition`, the same
+ * module the homepage hero renders from. An earlier version copied its lines
+ * by hand and drifted ("we'll pass it to contractors", "Prices upfront")
+ * after the homepage changed. Do not add hard-coded proposition copy here.
  *
  * Signed-in visitors never see this screen: postLoginPath() — the same routing
  * /login already uses — sends a contractor to their dashboard (/account) and a
@@ -31,8 +39,6 @@ export const metadata: Metadata = {
   title: 'Emmerdale Agriculture',
   robots: { index: false, follow: false },
 };
-
-const TRUST = ['Prices upfront', 'Every job insured', 'Vetted contractors'];
 
 export default async function AppHomePage() {
   const user = await getUser();
@@ -58,29 +64,31 @@ export default async function AppHomePage() {
           </Link>
         </div>
         <div className={s.heroCopy}>
-          <p className={s.eyebrow}>Paddock, land &amp; equestrian jobs</p>
-          <h1 className={s.title}>
-            Tell us what <em>needs doing</em>.
-          </h1>
+          <p className={s.eyebrow}>{KICKER}</p>
+          <h1 className={s.title}>{HEADLINE}</h1>
           <p className={s.sub}>
-            In your own words &mdash; we&rsquo;ll pass it to contractors who cover your area.
+            {STANDFIRST.before}
+            <strong>{STANDFIRST.emphasis}</strong>
+            {STANDFIRST.after}
           </p>
         </div>
       </section>
 
       <main className={s.body}>
-        <Link href="/start" className={s.cta}>
-          Book online <span aria-hidden="true">›</span>
+        <Link href="/start?src=app" className={s.cta}>
+          Get prices <span aria-hidden="true">›</span>
         </Link>
-        <p className={s.ctaSub}>Free, and no obligation</p>
+        <p className={s.ctaSub}>{NO_OBLIGATION}</p>
 
-        <ul className={s.trust}>
-          {TRUST.map((t) => (
-            <li key={t} className={s.trustItem}>
+        <ul className={s.promises}>
+          {PROMISES.map(([title, body]) => (
+            <li key={title} className={s.promise}>
               <span aria-hidden="true" className={s.tick}>
                 ✓
               </span>
-              <span>{t}</span>
+              <span>
+                <strong>{title}</strong> {body}
+              </span>
             </li>
           ))}
         </ul>
@@ -88,9 +96,9 @@ export default async function AppHomePage() {
         <div className={s.spacer} />
 
         <div className={s.secondary}>
-          <p className={s.secondaryQ}>Do you run an agricultural contracting business?</p>
+          <p className={s.secondaryQ}>{OPERATOR_QUESTION}</p>
           <Link href="/signup" className={s.secondaryLink}>
-            Apply to join <span aria-hidden="true">→</span>
+            {OPERATOR_CTA} <span aria-hidden="true">→</span>
           </Link>
         </div>
       </main>
