@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { fetchAll } from '@/lib/supabase/fetchAll';
 import { HeatOverlay } from './HeatOverlay';
 import s from '../../admin.module.css';
 import { AdminTable } from '../../ui';
@@ -30,44 +31,50 @@ export default async function JourneyPage({
   const path = PATHS.some((p) => p.path === sp.path) ? sp.path! : '/';
   const admin = createServiceRoleClient();
 
+  // Paged (see fetchAll): the API returns 1000 rows per call at most, and
+  // this table is several thousand a week. Newest first, id as tiebreak.
   const [clicksQ, depthsQ, stepsQ, refusalsQ] = await Promise.all([
-    admin
+    fetchAll((from, to) => admin
       .from('page_events')
       .select('x_pct, y_pct, label, viewport_w')
       .eq('path', path)
       .eq('kind', 'click')
       .order('created_at', { ascending: false })
-      .limit(3000),
-    admin
+      .order('id', { ascending: false })
+      .range(from, to), { max: 3000 }),
+    fetchAll((from, to) => admin
       .from('page_events')
       .select('depth_pct, session_key, viewport_w')
       .eq('path', path)
       .eq('kind', 'depth')
       .order('created_at', { ascending: false })
-      .limit(5000),
-    admin
+      .order('id', { ascending: false })
+      .range(from, to), { max: 5000 }),
+    fetchAll((from, to) => admin
       .from('page_events')
       .select('label, session_key, seconds')
       .eq('path', path)
       .eq('kind', 'step')
       .order('created_at', { ascending: false })
-      .limit(10000),
+      .order('id', { ascending: false })
+      .range(from, to), { max: 10000 }),
     // The error milestones say only that a step errored. This says which —
     // recorded server-side by refuse() as the message is returned, so it does
     // not depend on the tab surviving long enough to flush a beacon.
-    admin
+    fetchAll((from, to) => admin
       .from('job_parse_events')
       .select('action, outcome, reason, created_at')
       .in('outcome', ['rejected', 'fallback'])
       .order('created_at', { ascending: false })
-      .limit(2000),
+      .order('id', { ascending: false })
+      .range(from, to), { max: 2000 }),
   ]);
 
-  const clicks = (clicksQ.data ?? []).filter(
+  const clicks = clicksQ.filter(
     (c): c is { x_pct: number; y_pct: number; label: string | null; viewport_w: number | null } =>
       c.x_pct !== null && c.y_pct !== null,
   );
-  const depths = (depthsQ.data ?? []).filter((d) => d.depth_pct !== null);
+  const depths = depthsQ.filter((d) => d.depth_pct !== null);
   // Visits are distinct tabs, not rows: /start unmounts and remounts the
   // tracker around a failed parse, so one tab can flush twice.
   const visits = new Set(depths.map((d) => d.session_key)).size;
@@ -113,7 +120,7 @@ export default async function JourneyPage({
     { key: 'parse_error', label: 'Step 1 came back with an error' },
     { key: 'confirm_error', label: 'Step 2 came back with an error' },
   ];
-  const steps = stepsQ.data ?? [];
+  const steps = stepsQ;
   const stepVisits = new Set(steps.map((r) => r.session_key));
   const allVisits = new Set([...depths.map((d) => d.session_key), ...stepVisits]).size;
   const median = (xs: number[]) => {
@@ -135,7 +142,7 @@ export default async function JourneyPage({
   // be made and was let through rather than costing the click — worth seeing,
   // but it is not a customer who was stopped.
   const refusalCounts = new Map<string, { n: number; last: string }>();
-  for (const r of refusalsQ.data ?? []) {
+  for (const r of refusalsQ) {
     const key = `${r.action}|${r.outcome}|${r.reason ?? '(unrecorded)'}`;
     const cur = refusalCounts.get(key);
     if (cur) cur.n += 1;

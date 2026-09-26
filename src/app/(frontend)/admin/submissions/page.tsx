@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { fetchAll } from '@/lib/supabase/fetchAll';
 import { dayHeading, formatDate, formatDateTime, londonDay, timeAgo, timeLeft } from '@/lib/time';
 import { URGENCY_LABELS } from '@/components/job/JobSpecCard';
 import s from '../admin.module.css';
@@ -305,13 +306,19 @@ export default async function AdminSubmissionsPage({
   const showHidden = view === 'drafts' && sp.hidden === '1';
 
   const admin = createServiceRoleClient();
-  const ids = async (q: PromiseLike<{ data: { submission_id: string | null }[] | null }>) =>
-    new Set(((await q).data ?? []).map((r) => r.submission_id));
+  // Paged (see fetchAll): a response is 1000 rows at most, and quotes
+  // outnumber jobs several to one.
+  const ids = async (
+    page: (from: number, to: number) => PromiseLike<{ data: { submission_id: string | null }[] | null; error: { message: string } | null }>,
+  ) => new Set((await fetchAll(page)).map((r) => r.submission_id));
   const [{ data, error }, pricedIds, paidIds] = await Promise.all([
     admin.rpc('admin_submission_board', { p_limit: LIMIT, p_include_hidden: showHidden }),
-    filter === 'priced' ? ids(admin.from('client_quotes').select('submission_id')) : new Set<string | null>(),
+    filter === 'priced'
+      ? ids((from, to) => admin.from('client_quotes').select('submission_id').order('id').range(from, to))
+      : new Set<string | null>(),
     filter === 'paid'
-      ? ids(admin.from('job_payments').select('submission_id').in('status', ['paid', 'partially_refunded', 'refunded']))
+      ? ids((from, to) =>
+          admin.from('job_payments').select('submission_id').in('status', ['paid', 'partially_refunded', 'refunded']).order('id').range(from, to))
       : new Set<string | null>(),
   ]);
   const all = ((data ?? []) as unknown as Row[]);

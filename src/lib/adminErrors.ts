@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { fetchAll } from '@/lib/supabase/fetchAll';
 import { MAX_DELIVERY_RETRIES } from '@/lib/email/deliveryRetry';
 
 /**
@@ -129,13 +130,15 @@ export async function loadAdminErrors(): Promise<AdminErrors> {
   const [refusalsQ, emailsQ, paymentsQ] = await Promise.all([
     // Why anyone was turned away from /start. Written by refuse() as the
     // message is returned, so it does not depend on a beacon being flushed.
-    admin
+    // Paged (see fetchAll): a response is 1000 rows at most.
+    fetchAll((lo, hi) => admin
       .from('job_parse_events')
       .select('action, outcome, reason, created_at')
       .in('outcome', ['rejected', 'fallback'])
       .gte('created_at', from)
       .order('created_at', { ascending: false })
-      .limit(2000),
+      .order('id', { ascending: false })
+      .range(lo, hi), { max: 2000 }),
     // Two different failures share this table: `status` is us failing to hand
     // the message over, `delivery_status` is the provider telling us later
     // that it never arrived. The second is invisible in the send logs.
@@ -166,12 +169,12 @@ export async function loadAdminErrors(): Promise<AdminErrors> {
   // A query that fails must never read as "nothing is wrong". `data ?? []`
   // turns a rejected query into an empty list, and on this page an empty list
   // is an all-clear — the one thing it exists to stop being wrong about.
-  for (const q of [refusalsQ, emailsQ, paymentsQ]) {
+  for (const q of [emailsQ, paymentsQ]) {
     if (q.error) throw new Error(`/admin/errors could not be loaded: ${q.error.message}`);
   }
 
   const refusals = new Map<string, Refusal>();
-  for (const r of refusalsQ.data ?? []) {
+  for (const r of refusalsQ) {
     const reason = r.reason ?? '(unrecorded)';
     const key = `${r.action}|${r.outcome}|${reason}`;
     const cur = refusals.get(key);

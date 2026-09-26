@@ -899,8 +899,14 @@ Deno.serve(async (req) => {
   // Addresses proven undeliverable, read once per drain.
   const dead = new Set<string>();
   try {
-    const { data } = await supabase.from('undeliverable_emails').select('email');
-    for (const r of data ?? []) dead.add(String(r.email).toLowerCase());
+    // Paged: the API returns 1000 rows per call at most, and a truncated
+    // list here means mailing addresses already known to bounce.
+    for (let from = 0; from < 50_000; from += 1000) {
+      const { data } = await supabase
+        .from('undeliverable_emails').select('email').order('email').range(from, from + 999);
+      for (const r of data ?? []) dead.add(String(r.email).toLowerCase());
+      if ((data ?? []).length < 1000) break;
+    }
   } catch { /* table may not exist yet — send as before */ }
 
   // `send_after` holds a row back. It is set only by the delivery webhook

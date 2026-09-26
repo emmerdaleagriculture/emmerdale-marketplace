@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { fetchAll } from '@/lib/supabase/fetchAll';
 import { channelOf } from '@/lib/attribution';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
@@ -49,23 +50,26 @@ export default async function ReportingPage() {
   const admin = createServiceRoleClient();
   const cutoff = since(30);
 
+  // Paged (see fetchAll): the API returns 1000 rows per call at most.
   const [viewsQ, subsQ, eventsQ, parsesQ] = await Promise.all([
-    admin.from('landing_views').select('created_at, utm_source, utm_campaign, gclid').gte('created_at', cutoff).limit(10000),
-    admin
+    fetchAll((from, to) => admin.from('landing_views').select('created_at, utm_source, utm_campaign, gclid').gte('created_at', cutoff).order('created_at').order('id').range(from, to), { max: 10000 })
+      .then((data) => ({ data, error: null as Error | null }), (error: Error) => ({ data: [], error })),
+    fetchAll((from, to) => admin
       .from('job_submissions')
       .select(
         'created_at, confirmed_at, status, parse_source, service_confirmed, area_source, photo_paths, utm_source, gclid, service:services(name), county:counties(name)',
       )
       .gte('created_at', cutoff)
-      .limit(5000),
-    admin.from('job_parse_events').select('action, outcome, reason, created_at').gte('created_at', cutoff).limit(10000),
-    admin.from('job_submission_parses').select('latency_ms, error, model_version, prompt_version').gte('created_at', cutoff).limit(5000),
+      .order('created_at').order('id')
+      .range(from, to), { max: 5000 }),
+    fetchAll((from, to) => admin.from('job_parse_events').select('action, outcome, reason, created_at').gte('created_at', cutoff).order('created_at').order('id').range(from, to), { max: 10000 }),
+    fetchAll((from, to) => admin.from('job_submission_parses').select('latency_ms, error, model_version, prompt_version').gte('created_at', cutoff).order('created_at').order('id').range(from, to), { max: 5000 }),
   ]);
 
-  const views = (viewsQ.data ?? []) as ViewRow[];
-  const subs = (subsQ.data ?? []) as unknown as SubRow[];
-  const events = (eventsQ.data ?? []) as EventRow[];
-  const parses = (parsesQ.data ?? []) as ParseRow[];
+  const views = viewsQ.data as ViewRow[];
+  const subs = subsQ as unknown as SubRow[];
+  const events = eventsQ as EventRow[];
+  const parses = parsesQ as ParseRow[];
   const viewsMissing = Boolean(viewsQ.error);
 
   // Part 2 moves status past 'confirmed' (distributed, awarded, …): a
