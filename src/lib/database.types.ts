@@ -2138,6 +2138,15 @@ export type Database = {
       }
     }
     Views: {
+      admin_contractor_outreach: {
+        Row: {
+          contractor_id: string | null
+          counties: number | null
+          invited: number | null
+          opened: number | null
+        }
+        Relationships: []
+      }
       jobs_in_progress: {
         Row: {
           county: string | null
