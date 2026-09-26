@@ -4,6 +4,8 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
+import { Fold, Pie, PieCard, type PieSlice } from '../Pie';
+import { fetchAll } from '@/lib/supabase/fetchAll';
 
 export const metadata: Metadata = { title: 'Dashboard — Admin' };
 export const dynamic = 'force-dynamic';
@@ -58,6 +60,7 @@ const PIPELINE_LABEL: Record<string, string> = {
 const n = (v: number | null | undefined) => (v === null || v === undefined ? '—' : v.toLocaleString('en-GB'));
 const gbp = (pence: number | null | undefined) => (pence == null ? '—' : formatGBP(pence));
 const pct = (num: number, den: number) => (den > 0 ? `${Math.round((100 * num) / den)}%` : '—');
+const nz = (v: number | null | undefined) => Math.max(0, v ?? 0);
 
 function Attention({ count, label, href }: { count: number; label: string; href: string }) {
   return (
@@ -71,7 +74,20 @@ export default async function AdminDashboard() {
   const admin = createServiceRoleClient();
   // One read now. The behaviour section used to load the whole /start journey
   // here as well, to render a copy of the journey page underneath it.
-  const { data, error } = await admin.rpc('admin_dashboard');
+  const [{ data, error }, invitations] = await Promise.all([
+    admin.rpc('admin_dashboard'),
+    // Every invitation of the last 30 days, for the response donut: the RPC
+    // carries rates, not the split. Paged; the month is past 600 already.
+    fetchAll((from, to) =>
+      admin
+        .from('job_invitations')
+        .select('status, opened_at')
+        .gte('sent_at', new Date(Date.now() - 30 * 86400 * 1000).toISOString())
+        .order('sent_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, to),
+    ).catch(() => [] as { status: string; opened_at: string | null }[]),
+  ]);
   if (error || !data) {
     return (
       <div>
@@ -103,6 +119,88 @@ export default async function AdminDashboard() {
 
   const weeklyMax = Math.max(1, ...d.weekly.map((w) => w.jobs));
 
+  // ── The donuts: one part-to-whole per section ──────────────────────
+  const attentionSlices: PieSlice[] = [
+    { label: 'Invoices to pay', value: nz(at.invoices_to_pay) },
+    { label: 'Awaiting customer confirmation', value: nz(at.awaiting_customer_confirm) },
+    { label: 'Accepted, deposit not paid', value: nz(at.awaiting_payment) },
+    { label: 'No price after 48h', value: nz(at.no_quotes_48h) },
+    { label: 'No contractor covered it', value: nz(at.no_matches) },
+    { label: 'Finished, no invoice', value: nz(at.awaiting_invoice) },
+    { label: 'Contractors awaiting approval', value: nz(co.pending) },
+    { label: 'Emails failed', value: nz(em.failed) },
+  ];
+  // Where the month's sent jobs stand now. The funnel counts are nested, so
+  // each stage is the difference from the next.
+  const funnelSlices: PieSlice[] = [
+    { label: 'Completed', value: nz(fu.completed_30d) },
+    { label: 'Booked, not yet done', value: nz(fu.paid_30d) - nz(fu.completed_30d) },
+    { label: 'Priced, not booked', value: nz(fu.priced_30d) - nz(fu.paid_30d) },
+    { label: 'Reached contractors, no price', value: nz(fu.distributed_30d) - nz(fu.priced_30d) },
+    { label: 'Sent, not yet reached contractors', value: nz(fu.confirmed_30d) - nz(fu.distributed_30d) },
+  ];
+  const pipelineSlices: PieSlice[] = pipeline.map(([status, count]) => ({
+    label: PIPELINE_LABEL[status] ?? status,
+    value: nz(count),
+  }));
+  const moneySlices: PieSlice[] = [
+    { label: 'Contractors’ share', value: nz(mo.gross_pence_30d) - nz(mo.margin_pence_30d) },
+    { label: 'Our margin', value: nz(mo.margin_pence_30d) },
+  ];
+  const customerSlices: PieSlice[] = [
+    { label: 'On a customer account', value: nz(fu.confirmed_all) - nz(cu.unclaimed_jobs) },
+    { label: 'Link only, no account', value: nz(cu.unclaimed_jobs) },
+  ];
+  const contractorSlices: PieSlice[] = [
+    { label: 'Approved & vetted', value: nz(co.vetted) },
+    { label: 'Approved, not vetted', value: nz(co.approved) - nz(co.vetted) },
+    { label: 'Awaiting approval', value: nz(co.pending) },
+    { label: 'Suspended', value: nz(co.suspended) },
+    { label: 'Other', value: nz(co.total) - nz(co.approved) - nz(co.pending) - nz(co.suspended) },
+  ];
+  const inv = { priced: 0, declined: 0, opened: 0, unopened: 0, closed: 0 };
+  for (const i of invitations) {
+    if (i.status === 'priced') inv.priced += 1;
+    else if (i.status === 'declined') inv.declined += 1;
+    else if (i.status === 'viewed') inv.opened += 1;
+    else if (i.status === 'sent') inv.unopened += 1;
+    else inv.closed += 1;
+  }
+  const responseSlices: PieSlice[] = [
+    { label: 'Priced', value: inv.priced },
+    { label: 'Passed', value: inv.declined },
+    { label: 'Opened, no answer', value: inv.opened },
+    { label: 'Not opened', value: inv.unopened },
+    { label: 'Job closed before they answered', value: inv.closed },
+  ];
+  const weeklyPaid = d.weekly.reduce((a, w) => a + nz(w.paid), 0);
+  const weeklyJobs = d.weekly.reduce((a, w) => a + nz(w.jobs), 0);
+  const weeklySlices: PieSlice[] = [
+    { label: 'Paid', value: weeklyPaid },
+    { label: 'Sent, not paid', value: weeklyJobs - weeklyPaid },
+  ];
+  // Jobs by region, the biggest six named and the rest folded together so
+  // the ring never needs a ninth colour.
+  const byRegion = new Map<string, number>();
+  for (const c of d.counties) byRegion.set(c.region, (byRegion.get(c.region) ?? 0) + nz(c.jobs));
+  const regions = [...byRegion.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  const regionSlices: PieSlice[] = [
+    ...regions.slice(0, 6).map(([label, value]) => ({ label, value })),
+    ...(regions.length > 6
+      ? [{ label: 'Other regions', value: regions.slice(6).reduce((a, [, v]) => a + v, 0) }]
+      : []),
+  ];
+  const emailSlices: PieSlice[] = [
+    { label: 'Delivered', value: nz(em.delivered_7d) },
+    { label: 'Bounced or failed', value: nz(em.bounced_7d) },
+    { label: 'No verdict yet', value: nz(em.sent_7d) - nz(em.delivered_7d) - nz(em.bounced_7d) },
+    { label: 'Waiting to send', value: nz(em.pending) },
+  ];
+  const legacySlices: PieSlice[] = [
+    { label: 'Open', value: nz(d.legacy.board_jobs_open) },
+    { label: 'Closed', value: nz(d.legacy.board_jobs_total) - nz(d.legacy.board_jobs_open) },
+  ];
+
   return (
     <div>
       <h1 className={s.h1}>Dashboard</h1>
@@ -122,6 +220,7 @@ export default async function AdminDashboard() {
         <Attention count={co.pending ?? 0} label="contractors awaiting approval" href="/admin/contractors" />
         <Attention count={em.failed} label="emails failed to send" href="/admin/email" />
       </div>
+      <PieCard title="What needs a person, by kind" slices={attentionSlices} centre="items" empty="Nothing needs attention." />
 
       {/* ── Funnel ────────────────────────────────────────────────────── */}
       <div className={s.sectionLabel}>Funnel — last 30 days</div>
@@ -147,6 +246,7 @@ export default async function AdminDashboard() {
         <Tile value={n(fu.completed_all)} label="Jobs completed, all time" />
         <Tile value={n(d.unplaced_jobs)} label="Jobs with no county" hint="Could not be routed" />
       </Tiles>
+      <PieCard title="Jobs sent in the last 30 days, where they stand" slices={funnelSlices} centre="jobs sent" empty="No jobs sent in the last 30 days." />
 
       {/* ── Behaviour on /start ───────────────────────────────────────── */}
       {/* The click heat, scroll depth and milestone tables used to be
@@ -171,6 +271,7 @@ export default async function AdminDashboard() {
           ))}
       </Tiles>
       )}
+      <PieCard title="In flight, by stage" slices={pipelineSlices} centre="jobs" empty="Nothing in progress." />
 
       {/* ── Money ─────────────────────────────────────────────────────── */}
       {/* Taken, "Collected on live jobs" and "Balances outstanding" were the
@@ -183,6 +284,14 @@ export default async function AdminDashboard() {
         <Tile value={gbp(mo.avg_job_pence)} label="Average job" />
         <Tile value={gbp(mo.refunded_pence_all)} label="Refunded, all time" />
       </Tiles>
+      <PieCard
+        title="Taken in the last 30 days, split"
+        slices={moneySlices}
+        format={(v) => formatGBP(v)}
+        total={gbp(mo.gross_pence_30d)}
+        centre="taken"
+        empty="Nothing taken in the last 30 days."
+      />
       <p className={s.metricHint}>
         Taken, held and outstanding are on the <Link href="/admin/money">money page</Link>,
         with every payment behind them.
@@ -199,6 +308,7 @@ export default async function AdminDashboard() {
             <Tile value={n(cu.schedules_active)} label="Repeat schedules running" />
             <Tile value={n(cu.unclaimed_jobs)} label="Jobs not on an account" hint="Customer has the link only" />
           </Tiles>
+          <PieCard title="Jobs sent, by whether the customer has an account" slices={customerSlices} centre="jobs" />
         </div>
         <div>
           <div className={s.sectionLabel}>Contractors</div>
@@ -209,6 +319,7 @@ export default async function AdminDashboard() {
             <Tile value={`${n(co.priced_30d)} / ${n(co.invited_30d)}`} label="Priced / invited, 30 days" hint={`${n(co.won_30d)} won a job`} />
             <Tile value={co.rating_avg == null ? '—' : `${co.rating_avg} ★`} label="Average rating" hint={`${n(co.ratings)} ratings`} />
           </Tiles>
+          <PieCard title="Registered contractors, by standing" slices={contractorSlices} centre="registered" />
         </div>
       </div>
 
@@ -220,6 +331,7 @@ export default async function AdminDashboard() {
         <Tile value={n(re.prices_per_job)} label="Prices per job" />
         <Tile value={re.decline_rate_pct == null ? '—' : `${re.decline_rate_pct}%`} label="Invitations declined" />
       </Tiles>
+      <PieCard title="Invitations sent in the last 30 days, by outcome" slices={responseSlices} centre="invitations" empty="No invitations in the last 30 days." />
 
       {/* ── Trend ─────────────────────────────────────────────────────── */}
       <div className={s.sectionLabel}>Jobs per week — last 12 weeks</div>
@@ -239,6 +351,7 @@ export default async function AdminDashboard() {
         <span style={{ ['--swatch' as string]: 'var(--jd-green-pale)' }}>Sent</span>
         <span style={{ ['--swatch' as string]: 'var(--jd-green-dark)' }}>Paid</span>
       </div>
+      <PieCard title="Across the 12 weeks" slices={weeklySlices} centre="jobs sent" empty="No jobs in the last 12 weeks." />
 
       {/* ── Locations ─────────────────────────────────────────────────── */}
       <div className={s.sectionLabel}>Where the work is</div>
@@ -255,6 +368,9 @@ export default async function AdminDashboard() {
             <Link href="/admin/coverage?view=jobs">on the map</Link>
           </span>
         </div>
+        <Pie slices={regionSlices} centre="jobs, by region" empty="No jobs yet." />
+        {/* The table folds: it is 25 rows and the donut above says the shape. */}
+        <Fold summary={`${d.counties.length > 25 ? 'Top 25 counties' : `All ${d.counties.length} counties`}, in a table`}>
         <div className={s.mapRow}>
           <div>
             <AdminTable head={['County', 'Jobs', '30d', 'Customers', 'Contractors', 'Unmatched', 'Taken']}>
@@ -281,6 +397,7 @@ export default async function AdminDashboard() {
             )}
           </div>
         </div>
+        </Fold>
       </div>
 
       {/* ── Email ─────────────────────────────────────────────────────── */}
@@ -291,6 +408,7 @@ export default async function AdminDashboard() {
         {n(em.sent_7d)} sent in the last 7 days, {n(em.bounced_7d)} bounced or failed,{' '}
         {n(em.pending)} waiting. <Link href="/admin/email">Email page →</Link>
       </div>
+      <PieCard title="Last 7 days, by what happened" slices={emailSlices} centre="emails" empty="No email in the last 7 days." />
 
       {/* ── Legacy ────────────────────────────────────────────────────── */}
       <div className={s.sectionLabel}>The old board</div>
@@ -298,6 +416,7 @@ export default async function AdminDashboard() {
         {n(d.legacy.board_jobs_open)} open of {n(d.legacy.board_jobs_total)} ever posted. Being retired —{' '}
         <Link href="/admin/jobs">see them</Link>.
       </div>
+      <PieCard title="The old board, open against closed" slices={legacySlices} centre="posted" />
 
       <p className={s.metricHint} style={{ marginTop: 24 }}>
         Generated {new Date(d.generated_at).toLocaleString('en-GB')}.

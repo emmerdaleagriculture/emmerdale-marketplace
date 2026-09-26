@@ -5,6 +5,7 @@ import { fetchAll } from '@/lib/supabase/fetchAll';
 import { channelOf } from '@/lib/attribution';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
+import { Fold, PieCard, type PieSlice } from '../Pie';
 
 export const metadata: Metadata = { title: 'Reporting — Admin' };
 
@@ -191,6 +192,46 @@ export default async function ReportingPage() {
     });
   }
 
+  // ── The donuts: one part-to-whole per section ──────────────────────
+  const landingSlices: PieSlice[] = [
+    { label: 'Confirmed a job', value: d30.confirms },
+    { label: 'Started, did not confirm', value: Math.max(0, d30.parses - d30.confirms) },
+    { label: 'Landed, did not start', value: Math.max(0, d30.views - d30.parses) },
+  ];
+  // Where the month's started jobs ended up: each funnel step less the next.
+  const lostSlices: PieSlice[] = funnel
+    .slice(1)
+    .map((row, i, arr) => ({
+      label: i === arr.length - 1 ? row.step : `${row.step}, no further`,
+      value: Math.max(0, row.n - (arr[i + 1]?.n ?? 0)),
+    }))
+    .reverse();
+  const leakSlices: PieSlice[] = leaks.map((l) => ({ label: l.label, value: l.n }));
+  const week = (from: number, to: number) => days.slice(from, to).reduce((a, x) => a + x.views, 0);
+  const dailySlices: PieSlice[] = [
+    { label: 'Landings, last 7 days', value: week(7, 14) },
+    { label: 'Landings, the 7 before', value: week(0, 7) },
+  ];
+  const sourceRows = [...sources.entries()].sort((a, b) => b[1].views - a[1].views);
+  const sourceSlices: PieSlice[] = [
+    ...sourceRows.slice(0, 6).map(([source, row]) => ({ label: source, value: row.views })),
+    ...(sourceRows.length > 6
+      ? [{ label: 'Other sources', value: sourceRows.slice(6).reduce((a, [, r]) => a + r.views, 0) }]
+      : []),
+  ];
+  const outcomeSlices: PieSlice[] = [
+    ...outcomes.slice(0, 7).map(([label, count]) => ({ label, value: count })),
+    ...(outcomes.length > 7
+      ? [{ label: 'Other outcomes', value: outcomes.slice(7).reduce((a, [, c]) => a + c, 0) }]
+      : []),
+  ];
+  const serviceSlices: PieSlice[] = [
+    ...byService.slice(0, 7).map(([name, count]) => ({ label: name, value: count })),
+    ...(byService.length > 7
+      ? [{ label: 'Other services', value: byService.slice(7).reduce((a, [, c]) => a + c, 0) }]
+      : []),
+  ];
+
   return (
     <div>
       <h1 className={s.h1}>Landing page reporting</h1>
@@ -213,6 +254,7 @@ export default async function ReportingPage() {
         <Tile value={d30.confirms} label="Jobs confirmed (30d)" hint={<>{pct(d30.confirms, d30.parses)} of parses</>} />
         <Tile value={pct(d30.confirms, d30.views)} label="Landing → job" hint="the number ads are buying" />
       </Tiles>
+      <PieCard title="Landings in the last 30 days, what happened next" slices={landingSlices} centre="landings" empty="No landings recorded." />
 
       <div className={s.sectionLabel}>Where people are lost — last 30 days</div>
       {(viewsMissing || funnel[1].n > funnel[0].n) && (
@@ -222,6 +264,8 @@ export default async function ReportingPage() {
           live. Steps below it are still sound; the landing→job rate is not.
         </div>
       )}
+      <PieCard title="Jobs started in the last 30 days, how far they got" slices={lostSlices} centre="jobs started" empty="No jobs started." />
+      <Fold summary="Every step, in a table">
       <AdminTable head={['Step', 'Reached', 'Of the step before', 'Lost here', '']}>
         {funnel.map((row, i) => {
           const prev = i === 0 ? null : funnel[i - 1].n;
@@ -243,10 +287,13 @@ export default async function ReportingPage() {
           );
         })}
       </AdminTable>
+      </Fold>
 
       {leaks.length > 0 && (
         <>
           <div className={s.sectionLabel}>Why they stopped</div>
+          <PieCard title="Jobs that stopped, by reason" slices={leakSlices} centre="stopped" />
+          <Fold summary="Reasons, in a table">
           <AdminTable head={['Reason', 'Jobs', 'Status']}>
             {leaks.map((l) => (
               <tr key={l.status}>
@@ -256,10 +303,13 @@ export default async function ReportingPage() {
               </tr>
             ))}
           </AdminTable>
+          </Fold>
         </>
       )}
 
       <div className={s.sectionLabel}>Daily — last 14 days</div>
+      <PieCard title="Landings, this week against last" slices={dailySlices} centre="landings, 14d" empty="No landings in the last 14 days." />
+      <Fold summary="Day by day">
       <AdminTable head={['Day', 'Landings', 'Parses', 'Confirmed']}>
         {days.map((d) => (
           <tr key={d.day}>
@@ -270,8 +320,11 @@ export default async function ReportingPage() {
           </tr>
         ))}
       </AdminTable>
+      </Fold>
 
       <div className={s.sectionLabel}>Attribution — last 30 days</div>
+      <PieCard title="Landings, by source" slices={sourceSlices} centre="landings" empty="No landings attributed." />
+      <Fold summary="Every source, with parses and confirms">
       <AdminTable head={['Source', 'Landings', 'Parses', 'Confirmed', 'Landing → job']}>
         {[...sources.entries()]
           .sort((a, b) => b[1].views + b[1].parses - (a[1].views + a[1].parses))
@@ -285,6 +338,7 @@ export default async function ReportingPage() {
             </tr>
           ))}
       </AdminTable>
+      </Fold>
 
       <div className={s.sectionLabel}>Parse pipeline — last 30 days</div>
       <Tiles>
@@ -308,6 +362,8 @@ export default async function ReportingPage() {
         <Tile value={unmatchedCount} label="Unmatched services" hint={<>of {confirmed.length} confirmed — taxonomy gaps</>} />
         <Tile value={declinedCount} label="Reclassified by customer" hint="said &ldquo;not quite&rdquo; — prompt feedback" />
       </Tiles>
+      <PieCard title="Parse outcomes" slices={outcomeSlices} centre="parses" empty="No parses in the last 30 days." />
+      <Fold summary="Outcomes and model versions, in a table">
       <AdminTable head={['Parse outcome', 'Count']}>
         {outcomes.map(([label, count]) => (
           <tr key={label}><td>{label}</td><td>{count}</td></tr>
@@ -316,22 +372,28 @@ export default async function ReportingPage() {
           <tr key={label}><td>model {label}</td><td>{count}</td></tr>
         ))}
       </AdminTable>
+      </Fold>
 
       <div className={s.sectionLabel}>Confirmed jobs — last 30 days</div>
       <Tiles>
         <Tile value={pct(boundaryCount, confirmed.length)} label="Boundary drawn" hint={<>{boundaryCount} of {confirmed.length}</>} />
         <Tile value={pct(photoCount, confirmed.length)} label="With photos" hint={<>{photoCount} of {confirmed.length}</>} />
       </Tiles>
+      <PieCard title="Confirmed jobs, by service" slices={serviceSlices} centre="confirmed" empty="No confirmed jobs in the last 30 days." />
+      <Fold summary="By service, in a table">
       <AdminTable head={['Service', 'Confirmed']}>
         {byService.map(([name, count]) => (
           <tr key={name}><td>{name}</td><td>{count}</td></tr>
         ))}
       </AdminTable>
+      </Fold>
+      <Fold summary="By county, in a table">
       <AdminTable head={['County', 'Confirmed']}>
         {byCounty.map(([name, count]) => (
           <tr key={name}><td>{name}</td><td>{count}</td></tr>
         ))}
       </AdminTable>
+      </Fold>
     </div>
   );
 }
