@@ -46,7 +46,12 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
     // /admin/leads still resolves (the lead-alert emails link straight to
     // it) but is no longer somewhere you navigate to, like /admin/jobs below.
     name: 'Intake',
-    items: [{ href: '/admin/submissions', label: 'Submissions' }],
+    items: [
+      { href: '/admin/submissions', label: 'Submissions' },
+      // Approving a contractor is intake work in the same sense a submission
+      // is: both are people arriving who need a decision.
+      { href: '/admin/contractors', label: 'Contractors' },
+    ],
   },
   {
     // Was 'Board', for the legacy jobs board now being retired: portal
@@ -55,10 +60,7 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
     // jobs are worked through — it is simply no longer somewhere you navigate
     // to, and the work it used to hold is on Intake › Submissions.
     name: 'Network',
-    items: [
-      { href: '/admin/contractors', label: 'Contractors' },
-      { href: '/admin/coverage', label: 'Coverage' },
-    ],
+    items: [{ href: '/admin/coverage', label: 'Coverage' }],
   },
   {
     name: 'Insight',
