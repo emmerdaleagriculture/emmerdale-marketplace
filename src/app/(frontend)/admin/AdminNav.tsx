@@ -43,11 +43,10 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
     ],
   },
   {
+    // /admin/leads still resolves (the lead-alert emails link straight to
+    // it) but is no longer somewhere you navigate to, like /admin/jobs below.
     name: 'Intake',
-    items: [
-      { href: '/admin/submissions', label: 'Submissions' },
-      { href: '/admin/leads', label: 'Leads' },
-    ],
+    items: [{ href: '/admin/submissions', label: 'Submissions' }],
   },
   {
     // Was 'Board', for the legacy jobs board now being retired: portal
