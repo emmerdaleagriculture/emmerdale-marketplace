@@ -16,6 +16,7 @@ import { QuoteWidget } from '@/components/home/QuoteWidget';
 import { Comparison } from '@/components/home/Comparison';
 import { UK_COUNTY_NAMES } from '@/lib/coverage';
 import { HOME_SERVICES } from '@/lib/home/services';
+import { HEADLINE, KICKER, PROMISES, STANDFIRST, TICKER } from '@/lib/home/proposition';
 import { getCountyCoverage } from '@/lib/reference';
 import { allCountyRefs } from '@/lib/verticals';
 import {
@@ -157,22 +158,6 @@ function PhotoStrip({ photos, label }: { photos: GalleryPhoto[]; label: string }
   );
 }
 
-/**
- * The trust ticker. "Prices upfront" came off: there is no price on the site
- * and the variance in this trade is too wide for an honest one, so the claim
- * was never quite true. "We hold your money until you're happy" came off next
- * — under the deposit model we hold 15%, not the money, and the balance is
- * charged after sign-off. The claim outgrew the mechanism.
- */
-const TICKER = ['Several prices to choose from', 'Vetted & insured operators'];
-
-/** The hero's three promises, each the answer to a real hesitation. */
-const PROMISES: [string, string][] = [
-  ['Several prices, not one.', 'Approved operators near you price your job, usually inside 24 hours, and you can message any of them before you accept.'],
-  ['Vetted operators, and every job insured.', 'Our own £5m policy covers the work, whoever does it.'],
-  ['We hold your deposit until you’re happy.', 'The contractor gets paid when you say the job’s right.'],
-];
-
 const STEPS: [string, string][] = [
   ['You tell us the job', 'Pick a service and give us a postcode. About a minute.'],
   ['We ask operators near you', 'Vetted, and the work insured by us. They price your job directly.'],
@@ -251,13 +236,12 @@ export default async function LandingPage() {
         <section className={s.hero} id="quote">
           <div className={`${s.container} ${s.heroGrid}`}>
             <div>
-              <p className={s.kicker}>A managed marketplace for rural land</p>
-              <h1 className={s.heroH1}>Get prices from agricultural contractors near you.</h1>
+              <p className={s.kicker}>{KICKER}</p>
+              <h1 className={s.heroH1}>{HEADLINE}</h1>
               <p className={s.heroSub}>
-                Tell us what needs doing. Vetted operators covering your patch
-                price the job, <strong>you see them side by side</strong>, and
-                you book the one you want — with the work insured by us. No
-                phone calls out of the blue.
+                {STANDFIRST.before}
+                <strong>{STANDFIRST.emphasis}</strong>
+                {STANDFIRST.after}
               </p>
               <ul className={s.promises}>
                 {PROMISES.map(([title, body]) => (
