@@ -43,7 +43,8 @@ const REPLY_DOMAIN = (Deno.env.get('SQ_INBOUND_REPLY_DOMAIN') ?? '').trim();
 // belongs here for the same reason as the rest: during testing it must not
 // reach a real contractor.
 const SQ_CONTRACTOR_KINDS = new Set([
-  'sq_invitation', 'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
+  'sq_invitation', 'sq_invitation_reminder',
+  'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
   'sq_invoice_request',
   'sq_job_amended', 'sq_message_to_contractor',
 ]);
@@ -288,8 +289,42 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             : `\nFirst come, first served: the customer sees prices as they arrive and can ` +
               `accept at any moment. ${deadline} — but the sooner you price, ` +
               `the better your chances.\n\n`) +
-          `Price it or pass (one tap): ${SITE_URL}/quote/${p.token}\n\n` +
-          `Photos, a satellite view of the drawn boundary and the full spec are on that page.`,
+          `Price it: ${SITE_URL}/quote/${p.token}\n\n` +
+          `Photos, a satellite view of the drawn boundary and the full spec are on that page.\n\n` +
+          // The spec above is enough to know it is not for you. Until now that
+          // meant nothing to click, so a deliberate no looked like an unread
+          // email. One tap, no login, undo on the page it lands on.
+          `Not one for you? One tap and we'll stop chasing this one: ${SITE_URL}/quote/${p.token}/pass`,
+      };
+    }
+    // A day on, still unopened, and the job is short of prices. Once only —
+    // the SQL side keys it on (job, contractor) — and never for a job that
+    // already has enough prices to give the customer a choice.
+    case 'sq_invitation_reminder': {
+      const dist = p.distance_miles != null ? `, ${p.distance_miles} miles from your base` : '';
+      const prices = Number(p.prices_so_far ?? 0);
+      const closes = p.expires_at
+        ? new Date(String(p.expires_at)).toLocaleDateString('en-GB', {
+            weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/London',
+          })
+        : null;
+      return {
+        subject: `Still open: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
+        text:
+          `The job we sent you yesterday is still open` +
+          (prices === 0
+            ? ` and nobody has priced it yet.`
+            : prices === 1
+              ? ` and only one price is in.`
+              : ` and only ${prices} prices are in.`) +
+          ` A price now has a good chance.\n\n` +
+          `In their words: “${p.description ?? '—'}”\n` +
+          `Where:     ${[p.postcode_district, p.county].filter(Boolean).join(', ') || 'see notes'}\n` +
+          `When:      ${p.urgency ?? 'not stated'}${p.target_date ? ` (by ${p.target_date})` : ''}\n` +
+          (closes ? `Pricing closes ${closes}.\n` : '') +
+          `\nPrice it: ${SITE_URL}/quote/${p.token}\n\n` +
+          `Not one for you? One tap and we'll stop chasing this one: ${SITE_URL}/quote/${p.token}/pass\n\n` +
+          `This is the only reminder we'll send for this job.`,
       };
     }
     case 'sq_award_won':
@@ -920,7 +955,7 @@ Deno.serve(async (req) => {
     // Invitation replies route back through the inbound parser when the
     // reply domain is live (§17).
     const replyTo =
-      e.kind === 'sq_invitation' && REPLY_DOMAIN && e.payload?.token
+      (e.kind === 'sq_invitation' || e.kind === 'sq_invitation_reminder') && REPLY_DOMAIN && e.payload?.token
         ? `quotes+${e.payload.token}@${REPLY_DOMAIN}`
         : undefined;
 

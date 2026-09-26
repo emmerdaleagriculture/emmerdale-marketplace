@@ -2514,6 +2514,11 @@ export type Database = {
         Args: { p_error: string; p_final?: boolean; p_payment_id: string }
         Returns: Json
       }
+      sq_in_invite_range: {
+        Args: { p_ct_lat: number; p_ct_lng: number; p_job_lat: number; p_job_lng: number }
+        Returns: boolean
+      }
+      sq_invitation_reminder_tick: { Args: never; Returns: number }
       sq_invitation_label: {
         Args: { p_invitation_id: string }
         Returns: string
@@ -2608,6 +2613,7 @@ export type Database = {
         }
         Returns: Json
       }
+      undo_decline_invitation: { Args: { p_token: string }; Returns: Json }
       void_acceptance: { Args: { p_session_id: string }; Returns: Json }
       working_days_since: { Args: { p_from: string }; Returns: number }
     }
