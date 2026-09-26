@@ -31,20 +31,18 @@ import styles from './admin.module.css';
  */
 const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
   {
-    // Ops left the bar on 2026-09-26: it had become the same board as
-    // Intake › Submissions. /admin/ops still resolves, like /admin/jobs.
-    name: 'Run',
-    items: [{ href: '/admin/money', label: 'Money' }],
-  },
-  {
+    // Was 'Run' + 'Intake'. Ops left the bar on 2026-09-26 (it had become
+    // the same board as Submissions; /admin/ops still resolves, like
+    // /admin/jobs) and Money, the last thing under Run, came here.
     // /admin/leads still resolves (the lead-alert emails link straight to
-    // it) but is no longer somewhere you navigate to, like /admin/jobs below.
+    // it) but is no longer somewhere you navigate to.
     name: 'Intake',
     items: [
       { href: '/admin/submissions', label: 'Submissions' },
       // Approving a contractor is intake work in the same sense a submission
       // is: both are people arriving who need a decision.
       { href: '/admin/contractors', label: 'Contractors' },
+      { href: '/admin/money', label: 'Money' },
     ],
   },
   {
@@ -95,7 +93,7 @@ function activeHref(pathname: string): string | null {
 export function AdminNav() {
   const pathname = usePathname() ?? '';
   const current = activeHref(pathname);
-  // The index page belongs to no group; default to Run so the bar is never
+  // The index page belongs to no group; default to Intake so the bar is never
   // a row of headings with nothing under it.
   const currentGroup =
     GROUPS.find((g) => g.items.some((i) => i.href === current)) ?? GROUPS[0];
