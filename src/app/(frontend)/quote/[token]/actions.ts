@@ -7,6 +7,7 @@ import { poundsInputToPence } from '@/lib/sealedQuotes/money';
 import { CLIENT_NOTE_MAX, clientNoteProblem } from '@/lib/sealedQuotes/clientNote';
 import type { FormState } from '@/lib/form';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { getInvitationByToken } from '@/lib/sealedQuotes/data';
 import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
 import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
@@ -168,6 +169,29 @@ export async function declineInvitationAction(
     return { error: 'This job has already closed.' };
   }
   return { ok: true, message: 'Noted — thanks for the quick answer. It helps us send you the right jobs.' };
+}
+
+/**
+ * Reverses a pass. The email's pass link records on arrival, so a slipped
+ * thumb (or a link scanner) must be one tap to undo. Lands on the pricing
+ * page, which is what "I didn't mean to pass" wants next.
+ */
+export async function undoDeclineAction(
+  _prev: QuoteActionState,
+  formData: FormData,
+): Promise<QuoteActionState> {
+  const token = String(formData.get('token') ?? '');
+  if (!isTokenFormat(token)) return { error: 'This link is not valid.' };
+
+  const admin = createServiceRoleClient();
+  const { data, error } = await admin.rpc('undo_decline_invitation', { p_token: token });
+  if (error) {
+    console.error('[sq] undo_decline_invitation failed:', error);
+    return { error: 'That didn’t go through — please try again.' };
+  }
+  const res = data as { ok: boolean; reason?: string };
+  if (!res.ok) return { error: 'This job has already closed, so there is nothing to reopen.' };
+  redirect(`/quote/${token}`);
 }
 
 export type MessageActionState = FormState & { body?: string };
