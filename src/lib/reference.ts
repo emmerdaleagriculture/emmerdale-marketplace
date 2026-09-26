@@ -32,15 +32,14 @@ export const getServices = memoize<ServiceOption[]>(async () => {
  */
 export async function getCountyCoverage(): Promise<Record<string, number>> {
   const supabase = createServiceRoleClient();
-  const { data } = await supabase
-    .from('contractor_counties')
-    .select('counties(name), contractors!inner(status)')
-    .eq('contractors.status', 'approved');
+  // Counted in SQL (county_coverage view). This used to pull every
+  // contractor-county row and count in here; the API caps a response at 1000
+  // rows, the table passed that, and 85 counties quietly lost contractors.
+  const { data } = await supabase.from('county_coverage').select('name, contractors');
 
   const counts: Record<string, number> = {};
   for (const row of data ?? []) {
-    const name = (row.counties as unknown as { name: string } | null)?.name;
-    if (name) counts[name] = (counts[name] ?? 0) + 1;
+    if (row.name && row.contractors) counts[row.name] = row.contractors;
   }
   return counts;
 }

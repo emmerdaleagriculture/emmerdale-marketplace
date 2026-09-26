@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { fetchAll } from '@/lib/supabase/fetchAll';
 import s from '../../admin.module.css';
 import { AdminTable, Tile, Tiles, ago } from '../../ui';
 
@@ -38,18 +39,20 @@ function weekStart(iso: string): string {
 export default async function MessagesReportPage() {
   const admin = createServiceRoleClient();
   const [msgsQ, alertsQ] = await Promise.all([
-    admin
+    fetchAll((from, to) => admin
       .from('job_messages')
       .select('submission_id, invitation_id, sender, phase, created_at, read_at')
       .order('created_at', { ascending: true })
-      .limit(20000),
+      .order('id')
+      .range(from, to), { max: 20000 })
+      .then((data) => ({ data, error: null as Error | null }), (error: Error) => ({ data: [], error })),
     admin
       .from('pending_emails')
       .select('id', { count: 'exact', head: true })
       .in('kind', ['sq_message_to_client', 'sq_message_to_contractor'])
       .eq('status', 'sent'),
   ]);
-  const msgs = (msgsQ.data ?? []) as Msg[];
+  const msgs = msgsQ.data as Msg[];
   const now = Date.now();
   const since = (days: number) => msgs.filter((m) => now - Date.parse(m.created_at) < days * DAY).length;
 

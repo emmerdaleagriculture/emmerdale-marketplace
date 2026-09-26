@@ -28,10 +28,11 @@ const PROBLEM = new Set(['bounced', 'complained', 'failed', 'suppressed']);
  */
 export default async function AdminEmailPage() {
   const admin = createServiceRoleClient();
-  const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
 
   const [counts, recent, stuck, undelivered, drain] = await Promise.all([
-    admin.from('pending_emails').select('status, attempts, created_at, send_after'),
+    // Counted in SQL. Reading the rows to count them here stopped being
+    // honest when the table passed the API's 1000-row cap.
+    admin.rpc('email_queue_counts'),
     admin
       .from('pending_emails')
       .select('id, kind, to_email, status, attempts, created_at, sent_at, delivery_status')
@@ -56,22 +57,19 @@ export default async function AdminEmailPage() {
     admin.rpc('email_drain_health', { p_limit: 5 }),
   ]);
 
-  const all = counts.data ?? [];
   // A row held back by send_after is a delivery retry waiting out its delay —
-  // deliberately parked, not stuck. Counting it here would put "Oldest
+  // deliberately parked, not stuck. Counting it as pending would put "Oldest
   // waiting: 4 hours ago" on a perfectly healthy drain, which is precisely
-  // the reading this page exists to make trustworthy.
-  const now = new Date().toISOString();
-  const held = all.filter((r) => r.status === 'pending' && r.send_after && r.send_after > now);
-  const pending = all.filter(
-    (r) => r.status === 'pending' && !(r.send_after && r.send_after > now),
-  );
-  const failed = all.filter((r) => r.status === 'failed');
-  const sentWeek = all.filter((r) => r.status === 'sent' && r.created_at >= since);
-  const oldestPending = pending
-    .map((r) => r.created_at)
-    .sort()
-    .at(0);
+  // the reading this page exists to make trustworthy. The split is made in
+  // email_queue_counts.
+  const q = (counts.data ?? {}) as {
+    pending?: number; held?: number; failed?: number; sent_week?: number; oldest_pending?: string | null;
+  };
+  const pending = q.pending ?? 0;
+  const held = q.held ?? 0;
+  const failed = q.failed ?? 0;
+  const sentWeek = q.sent_week ?? 0;
+  const oldestPending = q.oldest_pending ?? null;
 
   const ticks = (drain.data ?? []) as { status_code: number; body: string; called_at: string }[];
   const lastTick = ticks[0];
@@ -108,15 +106,15 @@ export default async function AdminEmailPage() {
       <div className={s.sectionLabel}>Queue</div>
       <AdminTable head={['Waiting', 'Given up', 'Failed', 'Sent, last 7 days', 'Oldest waiting']}>
         <tr>
-          <td>{pending.length}</td>
+          <td>{pending}</td>
           <td>{stuck.data?.length ?? 0}</td>
-          <td>{failed.length}</td>
-          <td>{sentWeek.length}</td>
+          <td>{failed}</td>
+          <td>{sentWeek}</td>
           <td>
             {oldestPending ? timeAgo(oldestPending) : '—'}
-            {held.length > 0 && (
+            {held > 0 && (
               <div className={s.metricHint}>
-                +{held.length} held for a later retry
+                +{held} held for a later retry
               </div>
             )}
           </td>

@@ -2147,6 +2147,13 @@ export type Database = {
         }
         Relationships: []
       }
+      county_coverage: {
+        Row: {
+          contractors: number | null
+          name: string | null
+        }
+        Relationships: []
+      }
       jobs_in_progress: {
         Row: {
           county: string | null
@@ -2413,6 +2420,7 @@ export type Database = {
         Returns: Json
       }
       drain_emails_tick: { Args: never; Returns: number }
+      email_queue_counts: { Args: never; Returns: Json }
       email_drain_health: {
         Args: { p_limit?: number }
         Returns: {

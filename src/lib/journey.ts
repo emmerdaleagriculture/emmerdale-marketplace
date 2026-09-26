@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { fetchAll } from '@/lib/supabase/fetchAll';
 
 /**
  * How people behave on a tracked page, aggregated per visit.
@@ -45,30 +46,36 @@ const median = (xs: number[]) => {
 export async function loadJourney(path: string, days = 30): Promise<Journey> {
   const admin = createServiceRoleClient();
   const since = new Date(Date.now() - days * 86400 * 1000).toISOString();
+  // Paged: the API returns 1000 rows at most per call, and a month of this
+  // table is several thousand. Newest first with id as the tiebreak so the
+  // pages line up.
   const [clicksQ, depthsQ, stepsQ] = await Promise.all([
-    admin
+    fetchAll((from, to) => admin
       .from('page_events')
       .select('x_pct, y_pct, viewport_w')
       .eq('path', path).eq('kind', 'click').gte('created_at', since)
-      .order('created_at', { ascending: false }).limit(3000),
-    admin
+      .order('created_at', { ascending: false }).order('id', { ascending: false }).range(from, to),
+      { max: 3000 }),
+    fetchAll((from, to) => admin
       .from('page_events')
       .select('depth_pct, session_key, viewport_w')
       .eq('path', path).eq('kind', 'depth').gte('created_at', since)
-      .order('created_at', { ascending: false }).limit(5000),
-    admin
+      .order('created_at', { ascending: false }).order('id', { ascending: false }).range(from, to),
+      { max: 5000 }),
+    fetchAll((from, to) => admin
       .from('page_events')
       .select('label, session_key, seconds')
       .eq('path', path).eq('kind', 'step').gte('created_at', since)
-      .order('created_at', { ascending: false }).limit(10000),
+      .order('created_at', { ascending: false }).order('id', { ascending: false }).range(from, to),
+      { max: 10000 }),
   ]);
 
-  const clicks = (clicksQ.data ?? []).filter(
+  const clicks = clicksQ.filter(
     (c): c is { x_pct: number; y_pct: number; viewport_w: number | null } =>
       c.x_pct !== null && c.y_pct !== null,
   );
-  const depths = (depthsQ.data ?? []).filter((d) => d.depth_pct !== null);
-  const steps = stepsQ.data ?? [];
+  const depths = depthsQ.filter((d) => d.depth_pct !== null);
+  const steps = stepsQ;
 
   // A visit is a tab. /start flushes more than once per tab as the flow
   // moves, so count keys, not rows.
