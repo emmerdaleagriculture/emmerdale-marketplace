@@ -63,6 +63,11 @@ type Row = {
   quotes_live: number;
   lowest_client_pence: number | null;
   hidden_at: string | null;
+  // Customer↔contractor thread messages on the job, all threads together.
+  // Optional until the migration that adds them has been applied.
+  messages?: number;
+  messages_from_client?: number;
+  messages_from_contractor?: number;
 };
 
 type Tone = 'open' | 'good' | 'bad' | 'muted' | 'draft';
@@ -190,6 +195,10 @@ function SubmissionRow({ r, selectable = false }: { r: Row; selectable?: boolean
       ? timeLeft(r.expires_at)
       : null;
 
+  // Messages sent between the customer and contractors, every thread together.
+  const messages = r.messages ?? 0;
+  const messagesSplit = `${r.messages_from_client ?? 0} from the customer · ${r.messages_from_contractor ?? 0} from contractors`;
+
   return (
     <li className={p.row}>
       {/* Plain input inside the bulk form — no client state, and it still
@@ -232,6 +241,16 @@ function SubmissionRow({ r, selectable = false }: { r: Row; selectable?: boolean
           <>
             <OutreachModal id={r.id} counts={r} title={title} />
             {standing && <span className={p.standing}>{standing}</span>}
+            {messages > 0 && (
+              <Link
+                href={`/admin/submissions/${r.id}#messages`}
+                className={p.messages}
+                title={messagesSplit}
+                aria-label={`${messages} message${messages === 1 ? '' : 's'} sent — ${messagesSplit}`}
+              >
+                <b>{messages}</b> message{messages === 1 ? '' : 's'} sent
+              </Link>
+            )}
           </>
         ) : (
           <span className={p.note}>
