@@ -294,7 +294,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           // The spec above is enough to know it is not for you. Until now that
           // meant nothing to click, so a deliberate no looked like an unread
           // email. One tap, no login, undo on the page it lands on.
-          `Not one for you? One tap and we'll stop chasing this one: ${SITE_URL}/quote/${p.token}/pass`,
+          `Not one for you? Say so here and we'll stop chasing this one: ${SITE_URL}/quote/${p.token}/pass`,
       };
     }
     // A day on, still unopened, and the job is short of prices. Once only —
@@ -303,6 +303,10 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     case 'sq_invitation_reminder': {
       const dist = p.distance_miles != null ? `, ${p.distance_miles} miles from your base` : '';
       const prices = Number(p.prices_so_far ?? 0);
+      // Sent a day ago at the earliest, three at the latest — say which.
+      const sentDay = p.sent_at
+        ? new Date(String(p.sent_at)).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'Europe/London' })
+        : null;
       const closes = p.expires_at
         ? new Date(String(p.expires_at)).toLocaleDateString('en-GB', {
             weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/London',
@@ -311,7 +315,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `Still open: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
         text:
-          `The job we sent you yesterday is still open` +
+          `The job we sent you${sentDay ? ` on ${sentDay}` : ''} is still open` +
           (prices === 0
             ? ` and nobody has priced it yet.`
             : prices === 1
@@ -323,7 +327,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `When:      ${p.urgency ?? 'not stated'}${p.target_date ? ` (by ${p.target_date})` : ''}\n` +
           (closes ? `Pricing closes ${closes}.\n` : '') +
           `\nPrice it: ${SITE_URL}/quote/${p.token}\n\n` +
-          `Not one for you? One tap and we'll stop chasing this one: ${SITE_URL}/quote/${p.token}/pass\n\n` +
+          `Not one for you? Say so here and we'll stop chasing this one: ${SITE_URL}/quote/${p.token}/pass\n\n` +
           `This is the only reminder we'll send for this job.`,
       };
     }
@@ -485,8 +489,17 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         return {
           subject: `SUPPLY GAP: no contractors for ${p.service ?? '?'} in ${p.county ?? '?'}`,
           text:
-            `A paid submission had zero matching contractors.\n\n` +
-            `Service: ${p.service ?? '—'}\nCounty:  ${p.county ?? '—'}\n\n` +
+            (p.market_opened
+              ? `A direct offer lapsed and nobody else is in range to price it.\n\n`
+              : `A paid submission had zero matching contractors.\n\n`) +
+            `Service: ${p.service ?? '—'}\nCounty:  ${p.county ?? '—'}\n` +
+            // Contractors who tick the county but sit outside the invitation
+            // radius: the difference between "nobody covers it" and "nobody
+            // near enough does", which is a different conversation.
+            (Number(p.too_far ?? 0) > 0
+              ? `Outside the radius: ${p.too_far} contractor${Number(p.too_far) === 1 ? '' : 's'} tick this county but are too far from the job.\n`
+              : '') +
+            `\n` +
             `This is the recruitment list talking. Review: ${SITE_URL}/admin/submissions`,
         };
       }
