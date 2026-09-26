@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Emmerdale Agriculture</string>
+    <string name="title_activity_main">Emmerdale Agriculture</string>
+    <string name="package_name">com.emmerdaleagriculture.app</string>
+    <string name="custom_url_scheme">com.emmerdaleagriculture.app</string>
+</resources>

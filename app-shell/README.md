@@ -1,138 +1,101 @@
-# Emmerdale Agriculture — app store shell
+# Emmerdale Agriculture mobile app
 
-What this is: a thin native wrapper (using [Capacitor](https://capacitorjs.com))
-around the live emmerdaleagriculture.com website, so it can be installed
-from the App Store and Play Store as a real app. It does **not** re-implement
-the site — the app just displays the live website inside a native container,
-starting at a dedicated `/app` entry screen instead of the marketing
-homepage. Whatever's live on the website is what app users see; there's no
-separate build/deploy step for app content, ever.
+Native iPhone/iPad and Android shells for the live marketplace. This directory
+is a separate Node project from the website. Changes here do not require changes
+to `src/`, the root package lock or the live database.
 
-This approach was chosen over building a separate native (React Native)
-app because the website's backend is under active, fast-moving development
-(new features shipping most days) — a second native codebase would mean
-re-implementing every change twice, forever. Wrapping the live site keeps
-one codebase, one source of truth. See the project's `/areas/mls-*`-style
-reasoning discussed with Nav for the full trade-off.
+## Current preparation
 
-## Why it needs its own entry screen
+- App ID: `com.emmerdaleagriculture.app`.
+- Startup: `https://www.emmerdaleagriculture.com/app`.
+- Capacitor 8.5.2, pinned across core, CLI and both platforms, with a committed lockfile.
+- Native Xcode project using Swift Package Manager; native Gradle Android project.
+- iOS minimum 15; Android minimum API 24, target/compile API 36.
+- Square brand icon, generated launcher assets, branded splash images.
+- Optional camera/photo and foreground-location purposes documented on iOS;
+  Android foreground location permissions for the website's user-initiated button.
+- Only the two Emmerdale website hosts are allowed in the WebView. Other hosts
+  follow Capacitor's external-navigation handling, which still needs device tests.
 
-Someone installs this app *after* already finding the website — the
-marketing homepage (hero, "how it works", testimonials) has nothing left to
-sell them. So the app boots straight to `/app`, a new route on the main
-site that skips straight to what people actually open the app to do: post
-a job, or join as a contractor. Signed-in users skip this screen entirely
-and land on their existing dashboard (job board for contractors, their jobs
-for customers) — same routing the website's own login page already uses.
+Capacitor 8 requires Node 22+ and Xcode 26+; new iOS projects default to SPM
+([Capacitor migration guide](https://capacitorjs.com/docs/updating/8-0)).
+Apple requires Xcode 26+ and iOS 26 SDK builds for App Store Connect uploads from
+28 April 2026 ([Apple requirements](https://developer.apple.com/news/upcoming-requirements/)).
 
-## What's included here
+## Local setup
 
-- `capacitor.config.ts` — points the app at `https://emmerdaleagriculture.com/app`.
-- `package.json` — Capacitor dependencies and a few convenience scripts.
-- `www/index.html` — an unused placeholder Capacitor's tooling requires (see
-  the comment in the file).
-- `assets/` — the app icon and splash screen, already generated from the
-  site's real brand mark (see `assets/README.md`).
+Use Node 22 or newer. Run from this directory, not the repository root:
 
-## Getting this live
-
-The `/app` route is **already written and pushed** to the main site repo as a
-pull request — it is not a patch you have to apply:
-
-> **PR #58 — "Add /app entry screen for the wrapped mobile app"**
-> `emmerdaleagriculture/emmerdale-marketplace`, branch `app-shell-entry-point`
-
-It adds two new files (`src/app/(frontend)/app/page.tsx` and its CSS module)
-and one line to `src/app/robots.ts`. Nothing existing is modified, and GitHub
-reports it as cleanly mergeable.
-
-1. **Merge PR #58.** Vercel deploys `main` automatically, so
-   `https://emmerdaleagriculture.com/app` is live a minute or two later.
-   Confirm it loads in a browser before going further.
-2. **Before it is merged**, you can still test this shell end-to-end against
-   the branch's own Vercel preview URL (Vercel builds every branch) — point
-   `capacitor.config.ts`'s `server.url` at that preview URL's `/app` path
-   temporarily, then switch it back to the production URL before submitting
-   to the stores.
-
-## Setup
-
-Requires Node.js. For iOS builds you additionally need a Mac with Xcode and
-an Apple Developer account (£79/$99 a year — required to submit to the App
-Store, and to test on a physical iPhone rather than just the simulator).
-For Android you need Android Studio (free).
-
-```bash
-npm install
-npx cap add ios       # generates the native Xcode project
-npx cap add android   # generates the native Android Studio project
+```sh
+npm ci
+npx cap sync ios
+npx cap sync android
+npm run check
+python3 -m unittest discover -s scripts -p 'test_*.py'
 ```
 
-This creates `ios/` and `android/` folders — the actual native projects.
-They're not included here since I can't run the Capacitor CLI in the
-environment I built this in (no network access to npm's package registry
-there) — `npx cap add` fetches and scaffolds them from Capacitor's own
-templates, which needs to happen wherever this is actually built.
+Do not run `cap add` again: both native projects are committed, including
+permissions and release settings. Generated native configuration and copied
+web assets are intentionally ignored and recreated by `cap sync`.
 
-Then open and run:
+### iOS
 
-```bash
-npm run open:ios       # opens ios/App/App.xcworkspace in Xcode
-npm run open:android   # opens android/ in Android Studio
+On a Mac with Xcode 26.3 installed:
+
+```sh
+npm run open:ios
 ```
 
-From Xcode or Android Studio, run on a simulator/emulator or a connected
-device exactly as you would any other app.
+Open `ios/App/App.xcodeproj` (not the old CocoaPods workspace). For a simulator
+build, no paid Apple credentials are needed. A physical-device/TestFlight
+build needs appropriate signing and Apple account access.
 
-If you change `capacitor.config.ts` later, run `npm run sync` to push the
-change into both native projects.
+### Android
 
-## App icon and splash screen
+With JDK 21 and Android SDK 36 installed:
 
-Already generated from the site's real brand mark (`src/app/icon.svg` in
-the main repo — pulled straight from GitHub, not invented) — see
-`assets/` for the ready-to-submit files and `assets/README.md` for how to
-turn them into the full platform-specific icon/splash set.
+```sh
+cd android
+./gradlew assembleDebug testDebugUnitTest lintDebug
+```
 
-## A note on Apple's app review
+The debug APK is `android/app/build/outputs/apk/debug/app-debug.apk`. It is for
+testing, not a Play release. Preview sessions use the live marketplace: do not
+post test jobs or make payments without an approved test plan.
 
-Apple has, in the past, rejected apps that read as "just a website in a
-box." A few things already work in this app's favour without extra effort:
+## Cloud previews
 
-- The site's job-posting flow (`/start`) already uses a plain file input
-  for photo uploads — inside the Capacitor shell, that automatically
-  triggers the native camera/photo picker, not a web upload dialog. No
-  code change needed for that; it's a side effect of running in a real
-  native WebView.
-- A proper app icon, splash screen, and native install experience (all
-  covered above) go a long way on their own.
+`Mobile preview builds` runs on relevant pull requests, or manually:
 
-The single most convincing addition, if review pushes back, is push
-notifications (see below) — that's a capability a plain website genuinely
-cannot offer, which is the crux of what reviewers are checking for.
+- iOS: selects Xcode 26.3, compiles without signing, boots an iPhone simulator,
+  launches the app, captures a screenshot, and uploads the simulator `.app` ZIP.
+- Android: builds a debug APK and runs unit tests and Android lint.
 
-## Not built yet: push notifications
+An iOS simulator `.app` cannot be installed on an iPhone. The screenshot is
+launch evidence only; it does not certify login, payment or photo-upload flows.
+GitHub artifacts from this public repository must contain no signed-in
+customer/admin screenshots, personal data or signing credentials.
 
-This shell doesn't include push notifications yet — that's real new
-backend work (a device-token table, wiring into the site's existing
-`notify-new-job` Edge Function so a push fires alongside the email it
-already sends, plus Apple/Google push credentials), not just app
-configuration, and it needs your own Apple Developer and
-Firebase/OneSignal accounts to set up. Worth doing as the very next piece
-of work — contractors deciding whether to bid on a job that closes in 24
-hours (or move fast in a 12-hour paid-member window) are exactly the
-audience push notifications help most — but it's a separate, self-contained
-follow-up rather than part of getting the app itself into the stores.
+## Store uploads are deliberately disabled
 
-## App Store / Play Store submission checklist
+No tag or push event uploads to a store. Both release workflows require:
 
-- Register the app in App Store Connect and the Google Play Console using
-  the exact `appId` from `capacitor.config.ts` (`com.emmerdaleagriculture.app`)
-  — change it now, before first submission, if you'd rather use a
-  different one; it can't be changed after the fact.
-- Both stores want a privacy policy URL — the site already has one at
-  `/privacy`.
-- Screenshots: at minimum, one from a phone-sized simulator/device for each
-  store. Whoever builds this can capture these straight from Xcode's/Android
-  Studio's simulator once it's running.
-- Apple's review typically takes 1–3 days; Google's is usually faster.
+1. Explicit approval to upload.
+2. Repository variable `MOBILE_STORE_UPLOADS_ENABLED=true`.
+3. Manual dispatch with `confirm_upload=true`.
+4. Valid signing credentials and a store app record.
+
+These gates have NOT been enabled by preparation. The Play workflow targets
+the internal track as a draft, never production. TestFlight uploading does not
+automatically invite testers or publish on the App Store.
+
+Read [release readiness](RELEASE-READINESS.md) before enabling either workflow.
+
+## Icons and dependency maintenance
+
+`npm run assets:ios` and `npm run assets:android` regenerate images from
+`assets/icon.png` (the square store mark) and `assets/splash.png`. Generated
+native images are committed, so CI builds do not need to run the image tool.
+Pinned overrides update the asset tooling's transitive tar, sharp and uuid
+dependencies; re-run asset generation, `cap sync`, and `npm audit` when changing
+these versions. The root website dependencies are untouched.

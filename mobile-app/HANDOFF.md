@@ -1,5 +1,11 @@
 # Emmerdale Agriculture mobile app — handoff
 
+> **Historical 12 September handoff.** For current native projects, build
+> commands and release blockers, use `app-shell/README.md` and
+> `app-shell/RELEASE-READINESS.md`. PRs #58 and #59 are merged. Native projects
+> and preview workflows have now been prepared. Older environment limitations,
+> store policy claims and account-status notes below are not current guidance.
+
 **Date:** 12 September 2026
 **Prepared for:** Nav Ramiah, and whoever picks up the build next
 **Status:** website code written and in an open PR; native build not yet started
