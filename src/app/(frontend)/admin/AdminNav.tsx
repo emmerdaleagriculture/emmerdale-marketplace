@@ -31,22 +31,20 @@ import styles from './admin.module.css';
  */
 const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
   {
+    // Ops left the bar on 2026-09-26: it had become the same board as
+    // Intake › Submissions. /admin/ops still resolves, like /admin/jobs.
     name: 'Run',
-    items: [
-      { href: '/admin/ops', label: 'Ops' },
-      { href: '/admin/queues', label: 'Queues' },
-      { href: '/admin/money', label: 'Money' },
-      { href: '/admin/email', label: 'Email' },
-      { href: '/admin/errors', label: 'Errors' },
-      { href: '/admin/feedback', label: 'Feedback' },
-      { href: '/admin/crons', label: 'Scheduled' },
-    ],
+    items: [{ href: '/admin/money', label: 'Money' }],
   },
   {
+    // /admin/leads still resolves (the lead-alert emails link straight to
+    // it) but is no longer somewhere you navigate to, like /admin/jobs below.
     name: 'Intake',
     items: [
       { href: '/admin/submissions', label: 'Submissions' },
-      { href: '/admin/leads', label: 'Leads' },
+      // Approving a contractor is intake work in the same sense a submission
+      // is: both are people arriving who need a decision.
+      { href: '/admin/contractors', label: 'Contractors' },
     ],
   },
   {
@@ -56,10 +54,7 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
     // jobs are worked through — it is simply no longer somewhere you navigate
     // to, and the work it used to hold is on Intake › Submissions.
     name: 'Network',
-    items: [
-      { href: '/admin/contractors', label: 'Contractors' },
-      { href: '/admin/coverage', label: 'Coverage' },
-    ],
+    items: [{ href: '/admin/coverage', label: 'Coverage' }],
   },
   {
     name: 'Insight',
@@ -70,6 +65,12 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
       // Reachable only from body links on three other pages until now.
       { href: '/admin/reporting/journey', label: 'Journey' },
       { href: '/admin/reporting/messages', label: 'Messages' },
+      // The health pages: what the system is doing, rather than what to do.
+      { href: '/admin/queues', label: 'Queues' },
+      { href: '/admin/email', label: 'Email' },
+      { href: '/admin/errors', label: 'Errors' },
+      { href: '/admin/feedback', label: 'Feedback' },
+      { href: '/admin/crons', label: 'Scheduled' },
     ],
   },
   {
@@ -79,11 +80,8 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
       { href: '/admin/seo/trends', label: 'Trends' },
       { href: '/admin/seo/queries', label: 'Queries' },
       { href: '/admin/seo/pages', label: 'Pages' },
+      { href: '/admin/notes', label: 'Notes' },
     ],
-  },
-  {
-    name: 'Content',
-    items: [{ href: '/admin/notes', label: 'Notes' }],
   },
 ];
 
