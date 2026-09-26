@@ -199,6 +199,10 @@ export async function loadAdminErrors(): Promise<AdminErrors> {
   for (const e of emailsQ.data ?? []) {
     const end = latest.get(e.id);
     if (end?.delivered) continue;
+    // The suppression list working: a message dropped because its address
+    // already hard-bounced. That bounce is on this page in its own right and
+    // is the thing to act on; every later drop is the same fact repeated.
+    if (e.delivery_detail?.startsWith('not sent — ')) continue;
 
     // Prefer the provider's verdict: 'failed to send' and 'sent, then bounced'
     // are different problems with different fixes. And prefer the last

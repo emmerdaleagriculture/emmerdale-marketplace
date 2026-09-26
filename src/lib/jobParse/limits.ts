@@ -25,12 +25,18 @@ export type ParseEventAction = 'parse' | 'confirm';
 export type ParseEventOutcome = 'ok' | 'rejected' | 'fallback';
 
 /** Append to the event log. Never throws — logging must not break the flow. */
+const LOCAL_IPS = new Set(['::1', '127.0.0.1', '::ffff:127.0.0.1']);
+
 export async function logParseEvent(
   ip: string,
   action: ParseEventAction,
   outcome: ParseEventOutcome,
   reason?: string,
 ): Promise<void> {
+  // A dev server has no Turnstile secret and every submit from it logs
+  // "not-configured — let through". Nine of those sat on the errors page as
+  // if customers had been turned away. Local traffic is not a refusal.
+  if (LOCAL_IPS.has(ip)) return;
   try {
     const admin = createServiceRoleClient();
     await admin.from('job_parse_events').insert({ ip, action, outcome, reason: reason ?? null });

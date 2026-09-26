@@ -991,8 +991,16 @@ Deno.serve(async (req) => {
       continue;
     }
 
+    // A header cannot hold a line break, and a subject built from the
+    // customer's own words can: two draft chasers died this way (Resend
+    // rejected them, five attempts each) with nothing recorded to say so.
+    subject = subject.replace(/\s+/g, ' ').trim();
+
     let success = false;
     let messageId: string | null = null;
+    // Why the provider said no, for the row and the errors page. Nothing was
+    // kept before, so a rejected message showed a dash for a reason.
+    let sendError: string | null = null;
     try {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -1010,9 +1018,14 @@ Deno.serve(async (req) => {
           const body = await res.json();
           messageId = typeof body?.id === 'string' ? body.id : null;
         } catch { /* accepted but unparseable — still sent */ }
+      } else {
+        let body = '';
+        try { body = (await res.text()).replace(/\s+/g, ' ').slice(0, 300); } catch { /* no body */ }
+        sendError = `send rejected (HTTP ${res.status})${body ? `: ${body}` : ''}`;
       }
-    } catch {
+    } catch (err) {
       success = false;
+      sendError = `send threw: ${String(err).slice(0, 300)}`;
     }
 
     if (success) {
@@ -1038,7 +1051,8 @@ Deno.serve(async (req) => {
       const attempts = (e.attempts ?? 0) + 1;
       await supabase
         .from('pending_emails')
-        .update({ attempts, status: attempts >= MAX_ATTEMPTS ? 'failed' : 'pending' })
+        .update({ attempts, status: attempts >= MAX_ATTEMPTS ? 'failed' : 'pending',
+                  delivery_detail: sendError })
         .eq('id', e.id);
       attempts >= MAX_ATTEMPTS ? failed++ : retried++;
     }
