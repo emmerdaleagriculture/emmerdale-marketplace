@@ -198,6 +198,23 @@
   font-size: 12px;
   color: var(--ink-2);
 }
+/* Messages sent on the job, linking to the threads on the job page. Its own
+   line under the outreach numbers, in the same small type. */
+.messages {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.messages b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.messages:hover {
+  color: var(--jd-green);
+  text-decoration: underline;
+}
 
 /* Under ~1080px the four columns stop fitting: stack them instead. */
 @media (max-width: 1080px) {

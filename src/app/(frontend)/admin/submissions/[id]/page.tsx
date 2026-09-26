@@ -367,7 +367,7 @@ export default async function SubmissionDetailPage({
 
       {messages.length > 0 && (
         <>
-          <div className={s.sectionLabel}>Messages — customer and contractors</div>
+          <div className={s.sectionLabel} id="messages">Messages — customer and contractors</div>
           <AdminTable head={['When', 'Thread', 'From', 'Message', 'Read']}>
             {messages.map((msg) => {
               const inv = msg.inv as {
