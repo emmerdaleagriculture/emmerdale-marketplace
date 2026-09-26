@@ -44,6 +44,7 @@ const REPLY_DOMAIN = (Deno.env.get('SQ_INBOUND_REPLY_DOMAIN') ?? '').trim();
 // reach a real contractor.
 const SQ_CONTRACTOR_KINDS = new Set([
   'sq_invitation', 'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
+  'sq_invoice_request',
   'sq_job_amended', 'sq_message_to_contractor',
 ]);
 
@@ -581,6 +582,19 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // The job is finished, the customer has confirmed and the money is sitting
     // here. Say that plainly: it is not a demand for paperwork, it is us
     // telling them we are trying to pay them.
+    // The customer has paid in full: the contractor is asked for their invoice
+    // straight away, not after the chase clock. Same upload, same page.
+    case 'sq_invoice_request':
+      return {
+        subject: `Paid in full — send your invoice for the ${p.service ?? 'job'}`,
+        text:
+          `${p.contact_name ?? 'The customer'} has paid in full for the ` +
+          `${p.service ? `${p.service} ` : ''}job${p.postcode_district ? ` in ${p.postcode_district}` : ''}.\n\n` +
+          `Send us your invoice for ${gbp(p.amount_pence)} and we'll pay it. A PDF or a photo ` +
+          `of a paper one is fine — upload it on the job:\n${SITE_URL}/won\n\n` +
+          `Already sent it another way? Reply and tell us and we'll match it up.`,
+      };
+
     case 'sq_invoice_chase':
       return {
         subject: `We owe you for the ${p.service ?? 'job'} — send your invoice`,
