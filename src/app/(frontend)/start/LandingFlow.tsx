@@ -1,5 +1,7 @@
 'use client';
 
+import { readFirstTouch } from '@/lib/firstTouch';
+import { sourceFromReferrer } from '@/lib/attribution';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { PageTracker, trackStep } from '@/components/PageTracker';
@@ -101,7 +103,7 @@ export function LandingFlow() {
     }, 8000);
     return () => clearTimeout(t);
   }, [awaitingToken]);
-  const [utm, setUtm] = useState({ source: '', medium: '', campaign: '', gclid: '' });
+  const [utm, setUtm] = useState({ source: '', medium: '', campaign: '', gclid: '', handoff: '' });
   // The front page's service pick, by card slug. The server decides what it
   // means (serviceFromPick); this only carries it across.
   const [serviceHint, setServiceHint] = useState('');
@@ -282,12 +284,23 @@ export function LandingFlow() {
     // source only when there's no real ad attribution, so organic arrivals stop
     // counting as "(direct)" against the paid funnel — without ever putting a
     // utm_* param on an internal link, which would reset the GA4 session.
+    //
+    // Where they really came from outranks the hand-off: this tab's first
+    // touch (FirstTouchCapture, on every page) carries the ad tags or the
+    // external referrer that the internal link dropped. The hand-off itself
+    // is kept apart, as `handoff`, so "Facebook, via the homepage" and
+    // "Facebook, straight to /start" stay distinguishable.
     const src = q.get('src');
-    const source = q.get('utm_source') ?? (src ? `site:${src}` : '');
-    const medium = q.get('utm_medium') ?? (src ? 'organic' : '');
-    const campaign = q.get('utm_campaign') ?? '';
-    const gclid = q.get('gclid') ?? '';
-    setUtm({ source, medium, campaign, gclid });
+    const ft = readFirstTouch();
+    const fromReferrer = sourceFromReferrer(ft?.referrer ?? document.referrer);
+    const source =
+      q.get('utm_source') ?? ft?.utm_source ?? (fromReferrer || (src ? `site:${src}` : ''));
+    const medium =
+      q.get('utm_medium') ?? ft?.utm_medium ?? (fromReferrer ? 'referral' : src ? 'organic' : '');
+    const campaign = q.get('utm_campaign') ?? ft?.utm_campaign ?? '';
+    const gclid = q.get('gclid') ?? ft?.gclid ?? '';
+    const handoff = src ? src.slice(0, 40) : '';
+    setUtm({ source, medium, campaign, gclid, handoff });
     // One view per pageload — the ref guards React strict mode's double effect.
     if (!viewLogged.current) {
       viewLogged.current = true;
@@ -300,6 +313,7 @@ export function LandingFlow() {
         utm_medium: medium || undefined,
         utm_campaign: campaign || undefined,
         gclid: gclid || undefined,
+        handoff: handoff || undefined,
       });
     }
   }, []);
@@ -376,6 +390,7 @@ export function LandingFlow() {
       <input type="hidden" name="utm_medium" value={utm.medium} />
       <input type="hidden" name="utm_campaign" value={utm.campaign} />
       <input type="hidden" name="gclid" value={utm.gclid} />
+      <input type="hidden" name="handoff" value={utm.handoff} />
       <input type="hidden" name="service_hint" value={serviceHint} />
       {/* Honeypot — real users never see or fill this. */}
       <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', height: 0, overflow: 'hidden' }}>

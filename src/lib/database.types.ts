@@ -1323,6 +1323,7 @@ export type Database = {
           gate_w3w: string | null
           gate_width: string | null
           gclid: string | null
+          handoff: string | null
           hidden_at: string | null
           hidden_by: string | null
           id: string
@@ -1390,6 +1391,7 @@ export type Database = {
           gate_w3w?: string | null
           gate_width?: string | null
           gclid?: string | null
+          handoff?: string | null
           hidden_at?: string | null
           hidden_by?: string | null
           id?: string
@@ -1457,6 +1459,7 @@ export type Database = {
           gate_w3w?: string | null
           gate_width?: string | null
           gclid?: string | null
+          handoff?: string | null
           hidden_at?: string | null
           hidden_by?: string | null
           id?: string
@@ -1671,6 +1674,7 @@ export type Database = {
         Row: {
           created_at: string
           gclid: string | null
+          handoff: string | null
           id: number
           ip: string | null
           path: string
@@ -1682,6 +1686,7 @@ export type Database = {
         Insert: {
           created_at?: string
           gclid?: string | null
+          handoff?: string | null
           id?: number
           ip?: string | null
           path?: string
@@ -1693,6 +1698,7 @@ export type Database = {
         Update: {
           created_at?: string
           gclid?: string | null
+          handoff?: string | null
           id?: number
           ip?: string | null
           path?: string
