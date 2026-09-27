@@ -1,21 +1,5 @@
 import { HOME_SERVICES } from '@/lib/home/services';
-import type { CanonicalService } from './schema';
-
-/**
- * Services whose front-page pick classifies the job outright. A pick is the
- * customer telling us, not us guessing, so it can skip the "Is that right?"
- * step — but only where that buys something: these are the services with a
- * question flow of their own on the confirm step, which a job never reaches
- * unless it is classified. Everything else still arrives as words in the
- * description box, as it always has.
- */
-const PICK_CLASSIFIES: ReadonlySet<CanonicalService> = new Set([
-  'Fencing',
-  'Weed control',
-  // Topping's questions (last cut, what's growing, the ground) were written
-  // first and almost never shown: the card never classified the job.
-  'Paddock topping',
-]);
+import { CANONICAL_SERVICES, type CanonicalService } from './services';
 
 /**
  * Cards whose name is not a canonical service but whose pick still means
@@ -25,19 +9,40 @@ const PICK_CLASSIFIES: ReadonlySet<CanonicalService> = new Set([
  */
 const CARD_SERVICE: Partial<Record<string, CanonicalService>> = {
   'weed-control': 'Weed control',
+  'muck-sweeping': 'Manure sweeping',
 };
 
 /**
+ * Cards that genuinely cover two jobs, where a pick must not quietly choose
+ * one. They are offered back as a choice instead.
+ */
+const CARD_CHOICES: Partial<Record<string, CanonicalService[]>> = {
+  'land-clearance': ['Land clearance', 'Ditch clearance'],
+};
+
+const CANONICAL: ReadonlySet<string> = new Set(CANONICAL_SERVICES);
+
+/**
  * The canonical service a home-page pick (`?service=<card slug>`) stands for,
- * or null. Resolved through the card's name, and only where that name IS a
- * canonical one: several cards merge two services ("Weed control" covers
- * Spraying too), and a merged card must not quietly choose one.
+ * or null. A pick is the customer telling us, not us guessing, so it
+ * classifies the job outright.
+ *
+ * It used to classify only the services with a question flow, and every
+ * other pick arrived as words with no service at all: on 26 Sep a Hedge
+ * cutting pick went to contractors as unmatched, and 23 of 32 jobs since 14
+ * Sep carried no service. A merged card (CARD_CHOICES) still returns null.
  */
 export function serviceFromPick(slug: string | null | undefined): CanonicalService | null {
   if (!slug) return null;
   const card = HOME_SERVICES.find((c) => c.slug === slug);
-  const name = CARD_SERVICE[slug] ?? (card?.name as CanonicalService | undefined);
-  return name && PICK_CLASSIFIES.has(name) ? name : null;
+  if (!card) return null;
+  const name = CARD_SERVICE[slug] ?? card.name;
+  return CANONICAL.has(name) ? (name as CanonicalService) : null;
+}
+
+/** The services a merged card's pick is offered as, or none. */
+export function choicesFromPick(slug: string | null | undefined): CanonicalService[] {
+  return (slug && CARD_CHOICES[slug]) || [];
 }
 
 /**

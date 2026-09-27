@@ -6,6 +6,7 @@ import { START_COMPLETE_PATH } from './copy';
 import { confirmJobAction, saveContactDraftAction, type ConfirmActionState } from './actions';
 import type { ParseResult } from '@/lib/jobParse/schema';
 import { conditionsFor, isAreaPriced, quantityFor, visibleChoices } from '@/lib/jobParse/conditions';
+import { CANONICAL_SERVICES } from '@/lib/jobParse/services';
 import { GATE_WIDTH_OPTIONS } from '@/lib/jobParse/access';
 import { areaDiscrepancy } from '@/lib/jobParse/geometry';
 import { submitForm } from '@/lib/submitForm';
@@ -56,6 +57,9 @@ export function ConfirmStep({
   );
   const [choice, setChoice] = useState<string>(result.service ?? '');
   const [otherOpen, setOtherOpen] = useState(false);
+  // The full job list, opened from "Something else" — or shown outright when
+  // nothing in the words matched a job.
+  const [listOpen, setListOpen] = useState(false);
   const [areaValue, setAreaValue] = useState(result.area_value?.toString() ?? '');
   // A repeat order or a resumed draft arrives with its answers already given.
   const [conditionValues, setConditionValues] = useState<Record<string, string>>(() => {
@@ -112,6 +116,10 @@ export function ConfirmStep({
   // them send regardless — the same bargain as the boundary nudge.
   const [askedFor, setAskedFor] = useState<string | null>(null);
   const requiredAsked = useRef(false);
+  // The same bargain for the service itself. A job that goes out as the
+  // customer's words alone reads like "3.5acres approx" to the contractor —
+  // that Dyfed job drew seven invitations, one question and no prices.
+  const serviceAsked = useRef(false);
 
   // Step changes are state swaps, not navigations — the browser keeps the
   // old scroll position, leaving the customer mid-page. Reset on mount (the
@@ -181,12 +189,35 @@ export function ConfirmStep({
     !mapState?.boundary;
   const nudged = drawRequest > 0 && boundaryWanted;
 
+  const listed = [...CANONICAL_SERVICES].sort((x, y) => x.localeCompare(y));
+  const showList = listOpen || alternatives.length === 0;
+  // The unit the figure in the box is in: a flow's own (hedge metres), else
+  // the generic area field's, which starts from the parsed unit.
+  const boxUnit = (service: string | null) => quantityFor(service)?.unit ?? result.area_unit;
+  // Switching service keeps the figure only when its unit stays the same:
+  // 200 metres of hedge must not become 200 acres of topping, nor the reverse.
+  const switchService = (name: string | null) => {
+    if (boxUnit(currentService) !== boxUnit(name)) setAreaValue('');
+    setChoice(name ?? '');
+    setOtherOpen(name === null);
+  };
+  const pickService = (name: string) => switchService(name);
+
   return (
     <form
       ref={formRef}
       action={action}
       className={`${a.card} ${s.card}`}
       onSubmit={(e) => {
+        if (view === 'alternatives' && !choice && !otherOpen && !serviceAsked.current) {
+          e.preventDefault();
+          serviceAsked.current = true;
+          setAskedFor('service');
+          document
+            .getElementById('q-service')
+            ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          return;
+        }
         const unanswered = choices.find((q) => q.required && !conditionValues[q.key]);
         if (unanswered && !requiredAsked.current) {
           e.preventDefault();
@@ -339,11 +370,9 @@ export function ConfirmStep({
       )}
 
       {view === 'alternatives' && (
-        <div className={s.serviceBlock}>
+        <div className={s.serviceBlock} id="q-service">
           <p className={s.servicePrompt}>
-            {alternatives.length
-              ? 'Which of these is closest?'
-              : 'Tell us about the work in your own words below.'}
+            {alternatives.length ? 'Which of these is closest?' : 'What work do you need?'}
           </p>
           {alternatives.length > 0 && (
             <div className={f.chips}>
@@ -353,8 +382,8 @@ export function ConfirmStep({
                   type="button"
                   className={choice === name && !otherOpen ? `${f.chip} ${f.chipOn}` : f.chip}
                   onClick={() => {
-                    setChoice(name);
-                    setOtherOpen(false);
+                    pickService(name);
+                    setListOpen(false);
                   }}
                 >
                   {name}
@@ -362,14 +391,52 @@ export function ConfirmStep({
               ))}
               <button
                 type="button"
-                className={otherOpen ? `${f.chip} ${f.chipOn}` : f.chip}
-                onClick={() => setOtherOpen(true)}
+                className={listOpen ? `${f.chip} ${f.chipOn}` : f.chip}
+                onClick={() => {
+                  setListOpen(true);
+                  if (boxUnit(currentService) !== boxUnit(null)) setAreaValue('');
+                  setChoice('');
+                }}
               >
                 Something else
               </button>
             </div>
           )}
-          {(otherOpen || alternatives.length === 0) && (
+          {showList && (
+            <label className={f.field}>
+              <span className={f.label}>
+                {alternatives.length ? 'Pick from the full list' : 'Pick the closest job'}
+              </span>
+              <select
+                className={f.input}
+                value={otherOpen ? 'other' : choice}
+                onChange={(e) => {
+                  if (e.target.value === 'other') {
+                    switchService(null);
+                  } else {
+                    pickService(e.target.value);
+                  }
+                }}
+              >
+                <option value="" disabled>
+                  Choose…
+                </option>
+                {listed.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+                <option value="other">None of these — I&rsquo;ll describe it</option>
+              </select>
+            </label>
+          )}
+          {askedFor === 'service' && !choice && !otherOpen && (
+            <p className={s.discrepancy} role="alert" style={{ margin: '4px 0' }}>
+              Pick the closest job so the right contractors can price it, or choose{' '}
+              <strong>None of these</strong> and describe it. Or press Send again to send it as it is.
+            </p>
+          )}
+          {otherOpen && (
             <label className={f.field}>
               <span className={f.label}>Describe it in your own words</span>
               <input
