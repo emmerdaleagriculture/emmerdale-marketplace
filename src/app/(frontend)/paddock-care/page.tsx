@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { TrackedLink } from '@/components/home/Track';
+import { FloatingJoin } from '@/components/contractors/FloatingJoin';
 import { PageTracker } from '@/components/PageTracker';
 import { CredSection, FaqSection } from '@/components/paddock/PaddockSections';
 import { HPM_URL } from '@/lib/site';
@@ -137,7 +138,7 @@ export default function PaddockCarePage() {
             )}
           </ul>
 
-          <div className={c.heroCta}>
+          <div className={c.heroCta} id="join">
             <TrackedLink
               href={SIGNUP}
               event="operator_apply"
@@ -209,7 +210,7 @@ export default function PaddockCarePage() {
         </p>
       </FaqSection>
 
-      <section className={c.closing}>
+      <section className={c.closing} id="join-end">
         <div className={c.closingInner}>
           <h2 className={c.closingTitle}>
             Put your kit in front of <em>the paddocks that need it.</em>
@@ -233,6 +234,7 @@ export default function PaddockCarePage() {
         </div>
       </section>
 
+      <FloatingJoin href={SIGNUP} location="paddock_care_float" after="join" until="join-end" />
       <SiteFooter />
     </div>
   );
