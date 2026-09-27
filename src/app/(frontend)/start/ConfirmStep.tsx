@@ -191,13 +191,17 @@ export function ConfirmStep({
 
   const listed = [...CANONICAL_SERVICES].sort((x, y) => x.localeCompare(y));
   const showList = listOpen || alternatives.length === 0;
-  const pickService = (name: string) => {
-    setChoice(name);
-    setOtherOpen(false);
-    // Acres in a metres box would be worse than an empty one.
-    const unit = quantityFor(name)?.unit;
-    if (unit && result.area_unit !== unit) setAreaValue('');
+  // The unit the figure in the box is in: a flow's own (hedge metres), else
+  // the generic area field's, which starts from the parsed unit.
+  const boxUnit = (service: string | null) => quantityFor(service)?.unit ?? result.area_unit;
+  // Switching service keeps the figure only when its unit stays the same:
+  // 200 metres of hedge must not become 200 acres of topping, nor the reverse.
+  const switchService = (name: string | null) => {
+    if (boxUnit(currentService) !== boxUnit(name)) setAreaValue('');
+    setChoice(name ?? '');
+    setOtherOpen(name === null);
   };
+  const pickService = (name: string) => switchService(name);
 
   return (
     <form
@@ -390,6 +394,7 @@ export function ConfirmStep({
                 className={listOpen ? `${f.chip} ${f.chipOn}` : f.chip}
                 onClick={() => {
                   setListOpen(true);
+                  if (boxUnit(currentService) !== boxUnit(null)) setAreaValue('');
                   setChoice('');
                 }}
               >
@@ -407,8 +412,7 @@ export function ConfirmStep({
                 value={otherOpen ? 'other' : choice}
                 onChange={(e) => {
                   if (e.target.value === 'other') {
-                    setChoice('');
-                    setOtherOpen(true);
+                    switchService(null);
                   } else {
                     pickService(e.target.value);
                   }
