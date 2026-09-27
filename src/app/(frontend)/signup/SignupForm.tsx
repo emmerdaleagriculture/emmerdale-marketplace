@@ -6,16 +6,21 @@ import { signUpAction } from './actions';
 import { emptyFormState } from '@/lib/form';
 import { EmailField } from '@/components/forms/EmailField';
 import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
+import { readFirstTouch, type FirstTouch } from '@/lib/firstTouch';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 
-export function SignupForm({ next }: { next?: string }) {
+export function SignupForm({ next, from }: { next?: string; from?: string }) {
   const [state, action, pending] = useActionState(signUpAction, emptyFormState);
   const [captchaToken, setCaptchaToken] = useState('');
   // Render timestamp for the server-side minimum-fill-time bot trap. Set after
   // mount to avoid a server/client hydration mismatch.
   const [formTs, setFormTs] = useState('');
   useEffect(() => setFormTs(String(Date.now())), []);
+  // Where this contractor came from — the ad behind the tab, if any — so a
+  // recruitment campaign can be judged by who actually signed up.
+  const [touch, setTouch] = useState<FirstTouch | null>(null);
+  useEffect(() => setTouch(readFirstTouch()), []);
   const captchaPending = turnstileEnabled && !captchaToken;
 
   if (state.ok) {
@@ -37,6 +42,12 @@ export function SignupForm({ next }: { next?: string }) {
 
       <input type="hidden" name="form_ts" value={formTs} />
       {next && <input type="hidden" name="next" value={next} />}
+      <input type="hidden" name="src_landing" value={from ?? ''} />
+      <input type="hidden" name="src_utm_source" value={touch?.utm_source ?? ''} />
+      <input type="hidden" name="src_utm_medium" value={touch?.utm_medium ?? ''} />
+      <input type="hidden" name="src_utm_campaign" value={touch?.utm_campaign ?? ''} />
+      <input type="hidden" name="src_gclid" value={touch?.gclid ?? ''} />
+      <input type="hidden" name="src_referrer" value={touch?.referrer ?? ''} />
       {/* Honeypot — real users never see or fill this. */}
       <div
         aria-hidden="true"

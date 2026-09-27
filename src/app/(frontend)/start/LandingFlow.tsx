@@ -43,18 +43,9 @@ async function downscaleInput(input: HTMLInputElement) {
  */
 export function LandingFlow({
   path = '/start',
-  featured,
-  placeholders = {
-    picked: 'e.g. about 7 acres, just off the A31 near Alresford',
-    free: 'e.g. I need my 7 acre field topped, it’s just off the A31 near Alresford',
-  },
 }: {
   /** The page this flow is running on, for its views, beacon and jobs. */
   path?: LandingFlowPath;
-  /** Card slugs listed first, for a page aimed at one kind of job. */
-  featured?: readonly string[];
-  /** The description box's example, with and without a job picked. */
-  placeholders?: { picked: string; free: string };
 } = {}) {
   const [state, action, pending] = useActionState(parseJobAction, EMPTY);
   // A parse error is a milestone too: it is where the flow broke for them.
@@ -432,29 +423,11 @@ export function LandingFlow({
           }}
         >
           <option value="">Choose a service…</option>
-          {featured ? (
-            <>
-              <optgroup label="Paddock jobs">
-                {featured.flatMap((slug) => {
-                  const svc = HOME_SERVICES.find((c) => c.slug === slug);
-                  return svc ? [<option key={slug} value={slug}>{svc.name}</option>] : [];
-                })}
-              </optgroup>
-              <optgroup label="Everything else">
-                {HOME_SERVICES.filter((c) => !featured.includes(c.slug)).map((svc) => (
-                  <option key={svc.slug} value={svc.slug}>
-                    {svc.name}
-                  </option>
-                ))}
-              </optgroup>
-            </>
-          ) : (
-            HOME_SERVICES.map((svc) => (
-              <option key={svc.slug} value={svc.slug}>
-                {svc.name}
-              </option>
-            ))
-          )}
+          {HOME_SERVICES.map((svc) => (
+            <option key={svc.slug} value={svc.slug}>
+              {svc.name}
+            </option>
+          ))}
           <option value="other">Something else — I&rsquo;ll describe it</option>
         </select>
       </label>
@@ -475,7 +448,11 @@ export function LandingFlow({
           minLength={3}
           maxLength={2000}
           rows={3}
-          placeholder={serviceHint ? placeholders.picked : placeholders.free}
+          placeholder={
+            serviceHint
+              ? 'e.g. about 7 acres, just off the A31 near Alresford'
+              : 'e.g. I need my 7 acre field topped, it’s just off the A31 near Alresford'
+          }
           defaultValue={state.values?.raw_text}
         />
       </label>

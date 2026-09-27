@@ -47,6 +47,9 @@ function Row({ c }: { c: ContractorRow }) {
     <tr>
       <td>
         <Link href={`/admin/contractors/${c.id}`}>{c.business_name}</Link>
+        {sourceLabel(c.signup_source) && (
+          <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{sourceLabel(c.signup_source)}</div>
+        )}
       </td>
       <td>{c.contact_name}</td>
       <td>{c.email}</td>
@@ -89,7 +92,29 @@ function Row({ c }: { c: ContractorRow }) {
   );
 }
 
+/**
+ * Where they came from, captured at sign-up (contractors.signup_source):
+ * "via /paddock-care · fb / paddock-contractors". Empty before 27 Sep 2026.
+ */
+function sourceLabel(src: ContractorRow['signup_source']): string {
+  if (!src) return '';
+  const ad = [src.utm_source, src.utm_campaign].filter(Boolean).join(' / ');
+  let ref = '';
+  try {
+    ref = src.referrer ? new URL(src.referrer).hostname.replace(/^www\./, '') : '';
+  } catch {
+    /* unparseable referrer: leave it out */
+  }
+  return [src.landing && `via /${src.landing.replace(/^\//, '')}`, ad || ref].filter(Boolean).join(' · ');
+}
+
 type ContractorRow = {
+  signup_source: {
+    landing?: string;
+    utm_source?: string;
+    utm_campaign?: string;
+    referrer?: string;
+  } | null;
   id: string;
   business_name: string;
   contact_name: string;
@@ -108,7 +133,7 @@ export default async function AdminContractorsPage() {
   const [{ data }, { data: outreach }] = await Promise.all([
     admin
       .from('contractors')
-      .select('id, business_name, contact_name, email, base_postcode, status, created_at')
+      .select('id, business_name, contact_name, email, base_postcode, status, created_at, signup_source')
       .order('created_at', { ascending: false }),
     // One row per contractor, counted in SQL: reading job_invitations here
     // would hit PostgREST's 1000-row cap and count wrong without saying so.

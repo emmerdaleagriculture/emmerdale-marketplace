@@ -13,8 +13,7 @@ import { CANONICAL_SERVICES, LLM_SERVICE_VALUES, RECORD_JOB_PARSE_TOOL } from '.
  */
 
 const START_DIR = path.resolve(import.meta.dirname, '../../app/(frontend)/start');
-// Every ad landing page that runs the flow speaks the same way.
-const LANDING_DIRS = [START_DIR, path.resolve(import.meta.dirname, '../../app/(frontend)/paddock-care')];
+const LANDING_DIRS = [START_DIR];
 // Whole words only. The bidding vocabulary — quote, proposal, estimate — is
 // what §10 is guarding against: the landing record is a job specification, not
 // a request for offers. "Price" is deliberately NOT here: it is the platform's

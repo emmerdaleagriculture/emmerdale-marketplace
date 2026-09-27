@@ -4,7 +4,7 @@
  * (job_submissions.landing_path), so one ad page can be judged against
  * another. /start/complete stays the single conversion URL for all of them.
  */
-export const LANDING_FLOW_PATHS = ['/start', '/paddock-care'] as const;
+export const LANDING_FLOW_PATHS = ['/start'] as const;
 export type LandingFlowPath = (typeof LANDING_FLOW_PATHS)[number];
 
 /** A path from the client, trusted only if it is one of ours. */

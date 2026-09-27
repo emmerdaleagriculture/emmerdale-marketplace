@@ -134,7 +134,7 @@ export default async function SignupPage({
             </>
           )}
 
-          <SignupForm next={next ?? undefined} />
+          <SignupForm next={next ?? undefined} from={params.from} />
         </div>
       </main>
       <SiteFooter />

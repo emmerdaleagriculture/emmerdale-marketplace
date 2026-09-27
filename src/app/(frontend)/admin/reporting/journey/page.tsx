@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 const PATHS = [
   { path: '/', label: 'Home' },
   { path: '/start', label: 'Job creation' },
-  { path: '/paddock-care', label: 'Paddock care' },
+  { path: '/paddock-care', label: 'Paddock contractors' },
 ];
 
 /**
@@ -233,10 +233,7 @@ export default async function JourneyPage({
                 </AdminTable>
               )}
 
-              {/* job_parse_events carries no page, so this is every landing
-                  page's errors together — said so, rather than letting the
-                  Paddock care tab borrow /start's. */}
-              <div className={s.sectionLabel}>Why errors happened — all landing pages together</div>
+              <div className={s.sectionLabel}>Why those errors happened</div>
               {refusals.length === 0 ? (
                 <div className={s.empty}>
                   Nothing refused yet. Every error either step can show is recorded with
