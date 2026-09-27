@@ -438,6 +438,7 @@ export type Database = {
           rating_avg: number | null
           rating_count: number
           services: number[]
+          signup_source: Json | null
           status: string
           vetted_at: string | null
         }
@@ -456,6 +457,7 @@ export type Database = {
           rating_avg?: number | null
           rating_count?: number
           services?: number[]
+          signup_source?: Json | null
           status?: string
           vetted_at?: string | null
         }
@@ -474,6 +476,7 @@ export type Database = {
           rating_avg?: number | null
           rating_count?: number
           services?: number[]
+          signup_source?: Json | null
           status?: string
           vetted_at?: string | null
         }

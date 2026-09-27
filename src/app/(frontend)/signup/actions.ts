@@ -9,6 +9,7 @@ import { claimJobForUser } from '@/lib/customers/claim';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
+import { cleanSignupSource, SIGNUP_SOURCE_KEYS } from '@/lib/signupSource';
 
 const SignupSchema = z.object({
   email: z.string().email('Enter a valid email address.'),
@@ -64,11 +65,18 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
   // Create the auth user only. The contractor profile is collected afterwards
   // in onboarding (the contractors row has NOT NULL business columns, so it
   // can't exist until those details are supplied).
+  // Attribution rides on the auth user until onboarding creates the
+  // contractors row (contractors.signup_source). Only filled keys are kept.
+  const signupSource = cleanSignupSource(
+    Object.fromEntries(SIGNUP_SOURCE_KEYS.map((k) => [k, formData.get(`src_${k}`)])),
+  );
+
   const supabase = await createClient();
   const { data: signUp, error: signUpErr } = await supabase.auth.signUp({
     email: d.email,
     password: d.password,
     options: {
+      data: signupSource ? { signup_source: signupSource } : undefined,
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/onboarding`,
       captchaToken,
     },

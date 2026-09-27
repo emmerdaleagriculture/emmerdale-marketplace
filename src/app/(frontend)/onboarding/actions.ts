@@ -7,6 +7,7 @@ import { notifyAdmins } from '@/lib/adminNotify';
 import { getCounties } from '@/lib/reference';
 import { resolveCounty } from '@/lib/postcodes';
 import type { FormState } from '@/lib/form';
+import { cleanSignupSource } from '@/lib/signupSource';
 
 const OnboardingSchema = z.object({
   business_name: z.string().trim().min(1, 'Business name is required.'),
@@ -57,6 +58,9 @@ export async function completeOnboardingAction(
     base_lat: geo.lat ?? null,
     base_lng: geo.lng ?? null,
     status: 'pending',
+    // Captured at sign-up and carried on the auth user until now — which the
+    // user can rewrite, so it is cleaned again rather than copied.
+    signup_source: cleanSignupSource(user.user_metadata?.signup_source),
   });
   // A duplicate means onboarding already ran (double submit / back button) —
   // treat that as done rather than an error.

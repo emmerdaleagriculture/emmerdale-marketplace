@@ -13,7 +13,8 @@ import { LANDING_FLOW_PATHS } from '@/lib/landingPaths';
  */
 
 const MAX_EVENTS = 40;
-const PATHS = new Set<string>(['/', ...LANDING_FLOW_PATHS]);
+// /paddock-care is the contractor recruitment page: clicks and depth only.
+const PATHS = new Set<string>(['/', ...LANDING_FLOW_PATHS, '/paddock-care']);
 
 type Incoming = {
   path?: unknown;
