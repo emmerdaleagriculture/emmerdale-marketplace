@@ -18,6 +18,7 @@ import { reconcile } from '@/lib/jobParse/reconcile';
 import { parseBoundary, ringAreaAcres } from '@/lib/jobParse/geometry';
 import { conditionAnswers, describeConditions, quantityFor } from '@/lib/jobParse/conditions';
 import { choicesFromPick, serviceFromPick, servicesMentioned } from '@/lib/jobParse/servicePick';
+import { landingFlowPath } from '@/lib/landingPaths';
 import { HOME_SERVICES } from '@/lib/home/services';
 import { GATE_WIDTH_VALUES, gateWidthLabel, normaliseW3w } from '@/lib/jobParse/access';
 import {
@@ -169,6 +170,7 @@ const ParseSchema = z.object({
  * throws, never blocks anything.
  */
 export async function recordLandingView(data: {
+  path?: string;
   referrer?: string;
   utm_source?: string;
   utm_medium?: string;
@@ -181,6 +183,7 @@ export async function recordLandingView(data: {
       typeof v === 'string' && v.trim() ? v.trim().slice(0, 300) : null;
     const admin = createServiceRoleClient();
     await admin.from('landing_views').insert({
+      path: landingFlowPath(data.path),
       ip: await clientIp(),
       referrer: clean(data.referrer),
       utm_source: clean(data.utm_source),
@@ -398,6 +401,7 @@ export async function parseJobAction(
       utm_campaign: String(formData.get('utm_campaign') || '') || null,
       gclid: String(formData.get('gclid') || '') || null,
       handoff: String(formData.get('handoff') || '').slice(0, 40) || null,
+      landing_path: landingFlowPath(formData.get('landing_path')),
       service_id: serviceId,
       service_verbatim: merged.service_verbatim || null,
       service_alternatives: merged.service_alternatives,

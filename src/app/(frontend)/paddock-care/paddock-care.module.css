@@ -1,0 +1,28 @@
+/* /paddock-care: the paddock jobs list. Everything else is /start's. */
+
+.jobs {
+  margin: 0 0 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.jobs dt {
+  color: var(--jd-green-deep);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.jobs dd {
+  margin: 2px 0 0;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+@media (min-width: 621px) {
+  .jobs {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 24px;
+  }
+}
