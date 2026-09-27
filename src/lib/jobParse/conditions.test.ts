@@ -89,6 +89,40 @@ describe('weed question', () => {
   });
 });
 
+describe('hedge cutting flow', () => {
+  it('asks its length as the job quantity, in metres, and never for a boundary', () => {
+    expect(quantityFor('Hedge cutting')).toMatchObject({ unit: 'linear_m' });
+    expect(isAreaPriced('Hedge cutting')).toBe(false);
+  });
+
+  it('asks the height, and requires which parts need cutting', () => {
+    const qs = visibleChoices('Hedge cutting', {});
+    expect(qs.map((q) => q.key)).toEqual(['hedge_height', 'hedge_sides']);
+    expect(qs.find((q) => q.key === 'hedge_sides')?.required).toBe(true);
+  });
+
+  it('keeps both sides and the top, and not-sure only on its own', () => {
+    expect(
+      conditionAnswers(
+        'Hedge cutting',
+        form({ condition_hedge_height: '6_10ft', condition_hedge_sides: 'top,far_side,my_side' }),
+      ),
+    ).toEqual({ hedge_height: '6_10ft', hedge_sides: 'my_side,far_side,top' });
+    expect(
+      conditionAnswers('Hedge cutting', form({ condition_hedge_sides: 'not_sure,top' })),
+    ).toEqual({});
+  });
+
+  it('reads back for the contractor in words', () => {
+    expect(
+      describeConditions('Hedge cutting', { hedge_sides: 'my_side,top', hedge_height: 'over_10ft' }),
+    ).toEqual([
+      ['Height', 'Over 10ft'],
+      ['Cutting', 'My side, The top'],
+    ]);
+  });
+});
+
 describe('toggleMulti', () => {
   it('adds and removes', () => {
     expect(toggleMulti(gates, '', 'field')).toBe('field');

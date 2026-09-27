@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { serviceFromPick, servicesMentioned } from './servicePick';
+import { HOME_SERVICES } from '@/lib/home/services';
+import { CANONICAL_SERVICES } from './services';
+import { choicesFromPick, serviceFromPick, servicesMentioned } from './servicePick';
 
 describe('serviceFromPick', () => {
   it('classifies a fencing pick', () => {
@@ -14,9 +16,24 @@ describe('serviceFromPick', () => {
     expect(serviceFromPick('topping')).toBe('Paddock topping');
   });
 
-  it('leaves services without a flow of their own as words', () => {
-    expect(serviceFromPick('harrowing')).toBeNull();
-    expect(serviceFromPick('hedge-cutting')).toBeNull();
+  it('classifies every card that is a single job, flow or not', () => {
+    expect(serviceFromPick('harrowing')).toBe('Harrowing');
+    expect(serviceFromPick('hedge-cutting')).toBe('Hedge cutting');
+    expect(serviceFromPick('muck-sweeping')).toBe('Manure sweeping');
+  });
+
+  it('every card either classifies or offers its jobs as a choice', () => {
+    for (const card of HOME_SERVICES) {
+      const resolved = serviceFromPick(card.slug) ?? choicesFromPick(card.slug)[0] ?? null;
+      expect(resolved, card.slug).not.toBeNull();
+      expect(CANONICAL_SERVICES as readonly string[], card.slug).toContain(resolved);
+    }
+  });
+
+  it('offers a merged card back as its two jobs rather than choosing one', () => {
+    expect(serviceFromPick('land-clearance')).toBeNull();
+    expect(choicesFromPick('land-clearance')).toEqual(['Land clearance', 'Ditch clearance']);
+    expect(choicesFromPick('harrowing')).toEqual([]);
   });
 
   it('ignores nothing and nonsense', () => {

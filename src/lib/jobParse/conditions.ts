@@ -6,7 +6,8 @@ import type { AreaUnit, CanonicalService } from './schema';
  * not compare across jobs. Answers land in `service_attributes` keyed by
  * question key.
  *
- * Content exists for Paddock topping (spec worked example) and Fencing; other
+ * Content exists for Paddock topping (spec worked example), Fencing, weed
+ * control/spraying and Hedge cutting; other
  * services get their sets as Tom supplies them — an empty entry simply renders
  * no questions, so adding a set is config-only.
  */
@@ -137,9 +138,51 @@ const WEED_QUESTIONS: ConditionQuestion[] = [
   },
 ];
 
+/**
+ * Hedge cutting is priced by the metre, and the metre price turns on how
+ * much of the hedge is cut: each side is a pass, the top is another, and a
+ * tall hedge needs a longer reach arm. A Devon job went out on 26 Sep as
+ * "10 acres" with nothing else — not a figure anyone can price a hedge from.
+ */
+const HEDGE_QUESTIONS: ConditionQuestion[] = [
+  {
+    kind: 'quantity',
+    key: 'quantity',
+    label: 'How many metres of hedge?',
+    unit: 'linear_m',
+    hint: 'The length of the hedge, measured once even if both sides need cutting. A rough figure is fine — pace it out if you can.',
+  },
+  {
+    key: 'hedge_height',
+    label: 'How tall is it?',
+    short: 'Height',
+    options: [
+      { value: 'under_6ft', label: 'Up to 6ft' },
+      { value: '6_10ft', label: '6–10ft' },
+      { value: 'over_10ft', label: 'Over 10ft' },
+    ],
+  },
+  {
+    key: 'hedge_sides',
+    label: 'Which parts need cutting?',
+    short: 'Cutting',
+    hint: 'Pick every one you want done.',
+    multi: true,
+    exclusive: 'not_sure',
+    required: true,
+    options: [
+      { value: 'my_side', label: 'My side' },
+      { value: 'far_side', label: 'The far side (road or neighbour)' },
+      { value: 'top', label: 'The top' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+];
+
 export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQuestion[]>> = {
   'Weed control': WEED_QUESTIONS,
   Spraying: WEED_QUESTIONS,
+  'Hedge cutting': HEDGE_QUESTIONS,
   'Paddock topping': [
     {
       key: 'last_cut',

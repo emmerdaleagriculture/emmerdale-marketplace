@@ -17,7 +17,7 @@ import { deterministicParse, toAcres } from '@/lib/jobParse/deterministic';
 import { reconcile } from '@/lib/jobParse/reconcile';
 import { parseBoundary, ringAreaAcres } from '@/lib/jobParse/geometry';
 import { conditionAnswers, describeConditions, quantityFor } from '@/lib/jobParse/conditions';
-import { serviceFromPick, servicesMentioned } from '@/lib/jobParse/servicePick';
+import { choicesFromPick, serviceFromPick, servicesMentioned } from '@/lib/jobParse/servicePick';
 import { HOME_SERVICES } from '@/lib/home/services';
 import { GATE_WIDTH_VALUES, gateWidthLabel, normaliseW3w } from '@/lib/jobParse/access';
 import {
@@ -337,7 +337,12 @@ export async function parseJobAction(
       merged.area_unit = unit;
     }
   } else if (!merged.service && merged.service_alternatives.length === 0) {
-    merged.service_alternatives = servicesMentioned(d.raw_text);
+    // A merged card ("Land & ditch clearance") is still the customer's pick,
+    // offered back as its two jobs; failing that, what the words name.
+    const hint = String(formData.get('service_hint') ?? '');
+    merged.service_alternatives = choicesFromPick(hint).length
+      ? choicesFromPick(hint)
+      : servicesMentioned(d.raw_text);
   }
 
   // A postcode that straddles a border (SO51 is Hampshire and Wiltshire) or is
