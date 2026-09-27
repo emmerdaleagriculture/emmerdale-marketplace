@@ -5,7 +5,8 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { ConfirmStep } from '../../ConfirmStep';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { AreaUnit, CanonicalService, ParseResult, Urgency } from '@/lib/jobParse/schema';
-import { START_COMPLETE_PATH } from '../../copy';
+import Link from 'next/link';
+import { CONFIRM_SUCCESS, START_COMPLETE_PATH } from '../../copy';
 import { ReplaceWith } from './ReplaceWith';
 import { justSentJob } from '@/lib/jobCookie';
 import a from '../../../auth.module.css';
@@ -33,7 +34,7 @@ export const dynamic = 'force-dynamic';
  * leads to would be security theatre.
  *
  * Only ever a draft form. Once a job is sent, `status` moves off 'draft' and
- * this route shows a bare "already sent" card — nothing of the job itself, so
+ * this route shows a bare "sent" or "closed" card — nothing of the job itself, so
  * a forwarded reminder cannot be used to look at a live job, and no form that
  * would quietly submit it a second time.
  *
@@ -57,27 +58,39 @@ export default async function ResumeDraftPage({ params }: { params: Promise<{ id
 
   if (src.status !== 'draft') {
     // Their own send, seconds ago: carry on to the thank-you page exactly as
-    // the /start flow does, so the ad conversion still counts.
+    // the /start flow does, so the ad conversion still counts. The card shows
+    // meanwhile, as ConfirmStep's own success card does.
     const justSent = await justSentJob();
-    if (justSent && justSent === src.client_token) {
-      return <ReplaceWith href={START_COMPLETE_PATH} />;
-    }
+    const ownSend = justSent !== null && justSent === src.client_token;
+    // Never confirmed means the draft was closed unsent (abandoned), not sent.
+    const sent = src.confirmed_at !== null;
     return (
       <div className={a.wrap}>
         <SiteHeader />
         <main className={a.main}>
           <div className={a.narrow}>
-            <div className={a.eyebrow}>Already sent</div>
-            <h1 className={a.title}>This job has gone to contractors.</h1>
+            <div className={a.eyebrow}>{sent ? 'Already sent' : 'Closed'}</div>
+            <h1 className={a.title}>
+              {sent ? 'This job has been sent.' : 'This draft has closed.'}
+            </h1>
             <div className={a.card}>
-              <p className={f.success} style={{ fontSize: 16, margin: 0 }}>
-                There&rsquo;s nothing more to do here. We emailed you a link to follow
-                the job and see prices as they come in.
-              </p>
+              {sent ? (
+                <p className={f.success} style={{ fontSize: 16, margin: 0 }}>
+                  {ownSend
+                    ? CONFIRM_SUCCESS
+                    : 'There’s nothing more to do here. We emailed you a link to follow the job.'}
+                </p>
+              ) : (
+                <p style={{ margin: 0 }}>
+                  It was never sent to contractors.{' '}
+                  <Link href="/start">Describe the job again</Link> to send it.
+                </p>
+              )}
             </div>
           </div>
         </main>
         <SiteFooter />
+        {ownSend && <ReplaceWith href={START_COMPLETE_PATH} />}
       </div>
     );
   }
