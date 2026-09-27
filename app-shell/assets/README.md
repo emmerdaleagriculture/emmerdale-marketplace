@@ -7,8 +7,8 @@ mark (`src/app/icon.svg` in the main repo — not a placeholder):
   This is the one to submit to both stores. (Both stores apply their own
   corner mask, so a pre-rounded icon gets rejected or double-rounded —
   this version has the SVG's built-in `rx="12"` rounding stripped out.)
-- `icon.png` — the same mark at 1024×1024 but with the SVG's rounded
-  corners left in, kept only as a reference; don't submit this one.
+- `icon.png` — a copy of the square store mark used by the asset generator.
+  It intentionally has no pre-rounded corners.
 - `splash.png` — 2732×2732, the mark centered on the site's dark green
   (`#17330d`) background with plenty of clear space around it.
 
