@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { TrackedLink } from '@/components/home/Track';
+import { FloatingJoin } from '@/components/contractors/FloatingJoin';
 import { ServicesSection, CredSection, FaqSection, faqSchema } from '@/components/paddock/PaddockSections';
 import { getServices, getCountyCoverage } from '@/lib/reference';
 import { UK_COUNTY_NAMES } from '@/lib/coverage';
@@ -217,7 +218,7 @@ export default async function AgriculturalContractorsPage() {
             ))}
           </ul>
 
-          <div className={c.heroCta}>
+          <div className={c.heroCta} id="join">
             {/* Same event as the homepage operators band, so the supply
                 funnel stays comparable across both entry points. */}
             <TrackedLink
@@ -353,7 +354,7 @@ export default async function AgriculturalContractorsPage() {
         </p>
       </FaqSection>
 
-      <section className={c.closing}>
+      <section className={c.closing} id="join-end">
         <div className={c.closingInner}>
           <h2 className={c.closingTitle}>
             Put your kit in front of <em>the people looking for it.</em>
@@ -377,6 +378,7 @@ export default async function AgriculturalContractorsPage() {
         </div>
       </section>
 
+      <FloatingJoin href="/signup" location="contractors_float" after="join" until="join-end" />
       <SiteFooter />
     </div>
   );
