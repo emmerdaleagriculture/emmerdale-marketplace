@@ -4,6 +4,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { fetchAll } from '@/lib/supabase/fetchAll';
 import { dayHeading, formatDate, formatDateTime, londonDay, timeAgo, timeLeft } from '@/lib/time';
 import { URGENCY_LABELS } from '@/components/job/JobSpecCard';
+import { formatGBP } from '@/lib/sealedQuotes/money';
 import s from '../admin.module.css';
 import p from './submissions.module.css';
 import { Tile, Tiles } from '../ui';
@@ -70,6 +71,28 @@ type Row = {
   messages_from_client?: number;
   messages_from_contractor?: number;
 };
+
+/** Prices a job drew, as the customer sees them (our markup included). */
+type PriceRange = { low: number; high: number; count: number };
+
+/**
+ * "£120–£340 · 4 prices", or "£150 · 1 price". Every price except a
+ * superseded one — a revision replaces it — so a closed or won job still
+ * shows what it drew, not just what is on offer today.
+ */
+function priceRanges(quotes: { submission_id: string; client_price_pence: number }[]) {
+  const ranges = new Map<string, PriceRange>();
+  for (const q of quotes) {
+    const r = ranges.get(q.submission_id);
+    if (!r) ranges.set(q.submission_id, { low: q.client_price_pence, high: q.client_price_pence, count: 1 });
+    else {
+      r.low = Math.min(r.low, q.client_price_pence);
+      r.high = Math.max(r.high, q.client_price_pence);
+      r.count += 1;
+    }
+  }
+  return ranges;
+}
 
 type Tone = 'open' | 'good' | 'bad' | 'muted' | 'draft';
 
@@ -161,7 +184,15 @@ function pct(n: number, of: number) {
 }
 
 /** One submission, one line: what it is, where it got to, how long ago. */
-function SubmissionRow({ r, selectable = false }: { r: Row; selectable?: boolean }) {
+function SubmissionRow({
+  r,
+  prices,
+  selectable = false,
+}: {
+  r: Row;
+  prices?: PriceRange;
+  selectable?: boolean;
+}) {
   const [label, tone] = STATUS[r.status] ?? [r.status, 'muted'];
   const isDraft = DRAFT.has(r.status);
   const raw = tidy(r.raw_text);
@@ -241,6 +272,16 @@ function SubmissionRow({ r, selectable = false }: { r: Row; selectable?: boolean
         ) : r.invited > 0 ? (
           <>
             <OutreachModal id={r.id} counts={r} title={title} />
+            {prices && (
+              <span
+                className={p.prices}
+                title="What the customer sees, our markup included. Superseded prices left out."
+              >
+                {formatGBP(prices.low)}
+                {prices.high !== prices.low && `–${formatGBP(prices.high)}`} · {prices.count}{' '}
+                price{prices.count === 1 ? '' : 's'}
+              </span>
+            )}
             {standing && <span className={p.standing}>{standing}</span>}
             {messages > 0 && (
               <Link
@@ -271,7 +312,15 @@ function SubmissionRow({ r, selectable = false }: { r: Row; selectable?: boolean
 }
 
 /** A list banded into days, newest first. */
-function Days({ rows, selectable = false }: { rows: Row[]; selectable?: boolean }) {
+function Days({
+  rows,
+  prices,
+  selectable = false,
+}: {
+  rows: Row[];
+  prices: Map<string, PriceRange>;
+  selectable?: boolean;
+}) {
   return (
     <>
       {byDay(rows).map(([key, day]) => (
@@ -281,7 +330,7 @@ function Days({ rows, selectable = false }: { rows: Row[]; selectable?: boolean 
           </h2>
           <ul className={p.rows}>
             {day.map((r) => (
-              <SubmissionRow key={r.id} r={r} selectable={selectable} />
+              <SubmissionRow key={r.id} r={r} prices={prices.get(r.id)} selectable={selectable} />
             ))}
           </ul>
         </section>
@@ -311,7 +360,7 @@ export default async function AdminSubmissionsPage({
   const ids = async (
     page: (from: number, to: number) => PromiseLike<{ data: { submission_id: string | null }[] | null; error: { message: string } | null }>,
   ) => new Set((await fetchAll(page)).map((r) => r.submission_id));
-  const [{ data, error }, pricedIds, paidIds] = await Promise.all([
+  const [{ data, error }, pricedIds, paidIds, quotes] = await Promise.all([
     admin.rpc('admin_submission_board', { p_limit: LIMIT, p_include_hidden: showHidden }),
     filter === 'priced'
       ? ids((from, to) => admin.from('client_quotes').select('submission_id').order('id').range(from, to))
@@ -320,7 +369,16 @@ export default async function AdminSubmissionsPage({
       ? ids((from, to) =>
           admin.from('job_payments').select('submission_id').in('status', ['paid', 'partially_refunded', 'refunded']).order('id').range(from, to))
       : new Set<string | null>(),
+    fetchAll((from, to) =>
+      admin
+        .from('client_quotes')
+        .select('submission_id, client_price_pence')
+        .neq('status', 'superseded')
+        .order('id')
+        .range(from, to),
+    ),
   ]);
+  const prices = priceRanges(quotes);
   const all = ((data ?? []) as unknown as Row[]);
   // When showing hidden we asked for everything; the tab shows only those.
   const rows = showHidden ? all.filter((r) => r.hidden_at) : all;
@@ -425,10 +483,10 @@ export default async function AdminSubmissionsPage({
         </div>
       ) : !filter && view === 'drafts' ? (
         <DraftToolbar count={shown.length} showingHidden={showHidden}>
-          <Days rows={shown} selectable />
+          <Days rows={shown} prices={prices} selectable />
         </DraftToolbar>
       ) : (
-        <Days rows={shown} />
+        <Days rows={shown} prices={prices} />
       )}
     </div>
   );

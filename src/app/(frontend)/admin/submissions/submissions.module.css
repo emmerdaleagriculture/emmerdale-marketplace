@@ -216,6 +216,20 @@
   text-decoration: underline;
 }
 
+/* The range of prices the job drew: a pill on its own line under the
+   outreach numbers, green like a won job so it reads as money in. */
+.prices {
+  composes: pillApproved from '../admin.module.css';
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* Under ~1080px the four columns stop fitting: stack them instead. */
 @media (max-width: 1080px) {
   .row {
