@@ -9,6 +9,7 @@ import { claimJobForUser } from '@/lib/customers/claim';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
+import { cleanSignupSource, SIGNUP_SOURCE_KEYS } from '@/lib/signupSource';
 
 const SignupSchema = z.object({
   email: z.string().email('Enter a valid email address.'),
@@ -66,10 +67,8 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
   // can't exist until those details are supplied).
   // Attribution rides on the auth user until onboarding creates the
   // contractors row (contractors.signup_source). Only filled keys are kept.
-  const signupSource = Object.fromEntries(
-    (['landing', 'utm_source', 'utm_medium', 'utm_campaign', 'gclid', 'referrer'] as const)
-      .map((k) => [k, String(formData.get(`src_${k}`) ?? '').trim().slice(0, 300)])
-      .filter(([, v]) => v),
+  const signupSource = cleanSignupSource(
+    Object.fromEntries(SIGNUP_SOURCE_KEYS.map((k) => [k, formData.get(`src_${k}`)])),
   );
 
   const supabase = await createClient();
@@ -77,7 +76,7 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
     email: d.email,
     password: d.password,
     options: {
-      data: Object.keys(signupSource).length ? { signup_source: signupSource } : undefined,
+      data: signupSource ? { signup_source: signupSource } : undefined,
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/onboarding`,
       captchaToken,
     },
