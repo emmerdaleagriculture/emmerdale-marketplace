@@ -9,6 +9,7 @@ import { submitForm } from '@/lib/submitForm';
 import { parseJobAction, recordLandingView, type ParseActionState } from './actions';
 import { downscalePhoto } from './photoDownscale';
 import { HOME_SERVICES } from '@/lib/home/services';
+import type { LandingFlowPath } from '@/lib/landingPaths';
 
 // The confirm step (and the map machinery it pulls in) is dead weight on
 // first paint — split it out, and warm the chunk during the parse wait so
@@ -40,7 +41,21 @@ async function downscaleInput(input: HTMLInputElement) {
  * failed LLM call arrives as a deterministic-fallback result, never an error
  * page (spec §6.4).
  */
-export function LandingFlow() {
+export function LandingFlow({
+  path = '/start',
+  featured,
+  placeholders = {
+    picked: 'e.g. about 7 acres, just off the A31 near Alresford',
+    free: 'e.g. I need my 7 acre field topped, it’s just off the A31 near Alresford',
+  },
+}: {
+  /** The page this flow is running on, for its views, beacon and jobs. */
+  path?: LandingFlowPath;
+  /** Card slugs listed first, for a page aimed at one kind of job. */
+  featured?: readonly string[];
+  /** The description box's example, with and without a job picked. */
+  placeholders?: { picked: string; free: string };
+} = {}) {
   const [state, action, pending] = useActionState(parseJobAction, EMPTY);
   // A parse error is a milestone too: it is where the flow broke for them.
   useEffect(() => {
@@ -308,6 +323,7 @@ export function LandingFlow() {
       // report must not manufacture the arrivals it reports.
       if (window.self !== window.top) return;
       void recordLandingView({
+        path,
         referrer: document.referrer,
         utm_source: source || undefined,
         utm_medium: medium || undefined,
@@ -324,7 +340,7 @@ export function LandingFlow() {
   if (state.ok && state.result) {
     return (
       <>
-        <PageTracker path="/start" />
+        <PageTracker path={path} />
         <ConfirmStep result={state.result} />
       </>
     );
@@ -336,7 +352,7 @@ export function LandingFlow() {
       aria-busy="true"
       aria-label="Working out the details of your job"
     >
-      {tracker && <PageTracker path="/start" />}
+      {tracker && <PageTracker path={path} />}
       <p className={s.skeletonNote}>Reading your description…</p>
       <div className={s.skeletonRow} style={{ width: '55%' }} />
       <div className={s.skeletonRow} style={{ width: '80%' }} />
@@ -382,7 +398,7 @@ export function LandingFlow() {
         }
       }}
     >
-      <PageTracker path="/start" />
+      <PageTracker path={path} />
       {state.error && <p className={f.error}>{state.error}</p>}
 
       <input type="hidden" name="form_ts" value={formTs} />
@@ -391,6 +407,7 @@ export function LandingFlow() {
       <input type="hidden" name="utm_campaign" value={utm.campaign} />
       <input type="hidden" name="gclid" value={utm.gclid} />
       <input type="hidden" name="handoff" value={utm.handoff} />
+      <input type="hidden" name="landing_path" value={path} />
       <input type="hidden" name="service_hint" value={serviceHint} />
       {/* Honeypot — real users never see or fill this. */}
       <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', height: 0, overflow: 'hidden' }}>
@@ -415,11 +432,29 @@ export function LandingFlow() {
           }}
         >
           <option value="">Choose a service…</option>
-          {HOME_SERVICES.map((svc) => (
-            <option key={svc.slug} value={svc.slug}>
-              {svc.name}
-            </option>
-          ))}
+          {featured ? (
+            <>
+              <optgroup label="Paddock jobs">
+                {featured.flatMap((slug) => {
+                  const svc = HOME_SERVICES.find((c) => c.slug === slug);
+                  return svc ? [<option key={slug} value={slug}>{svc.name}</option>] : [];
+                })}
+              </optgroup>
+              <optgroup label="Everything else">
+                {HOME_SERVICES.filter((c) => !featured.includes(c.slug)).map((svc) => (
+                  <option key={svc.slug} value={svc.slug}>
+                    {svc.name}
+                  </option>
+                ))}
+              </optgroup>
+            </>
+          ) : (
+            HOME_SERVICES.map((svc) => (
+              <option key={svc.slug} value={svc.slug}>
+                {svc.name}
+              </option>
+            ))
+          )}
           <option value="other">Something else — I&rsquo;ll describe it</option>
         </select>
       </label>
@@ -440,11 +475,7 @@ export function LandingFlow() {
           minLength={3}
           maxLength={2000}
           rows={3}
-          placeholder={
-            serviceHint
-              ? 'e.g. about 7 acres, just off the A31 near Alresford'
-              : 'e.g. I need my 7 acre field topped, it’s just off the A31 near Alresford'
-          }
+          placeholder={serviceHint ? placeholders.picked : placeholders.free}
           defaultValue={state.values?.raw_text}
         />
       </label>

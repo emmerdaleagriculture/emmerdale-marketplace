@@ -10,13 +10,14 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: '/',
         // Auth-gated or utility routes — nothing indexable behind these.
-        // /start is the paid-ads landing page: noindex by design (spec §1).
+        // /start and /paddock-care are paid-ads landing pages: noindex by
+        // design (spec §1).
         // /quote and /my are token-addressed sealed-quote pages; /invitations
         // and /won are the contractor portal. /app is the mobile app shell's
         // entry screen: noindex by design, same as /start. Robots rules are
         // prefix matches, so a bare '/app' would also block /apple-icon.png —
         // anchored to the route itself and anything under it instead.
-        disallow: ['/admin', '/account', '/onboarding', '/jobs', '/api/', '/auth/', '/reset-password', '/start', '/quote', '/my', '/invitations', '/won', '/app$', '/app/'],
+        disallow: ['/admin', '/account', '/onboarding', '/jobs', '/api/', '/auth/', '/reset-password', '/start', '/paddock-care', '/quote', '/my', '/invitations', '/won', '/app$', '/app/'],
       },
       {
         // AdsBot ignores the '*' group, so it needs its own. Google must be

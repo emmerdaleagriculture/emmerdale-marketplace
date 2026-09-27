@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { LANDING_FLOW_PATHS } from '@/lib/landingPaths';
 
 /**
  * POST /api/track — the landing-page beacon. Takes a small batch of clicks and
@@ -12,7 +13,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
  */
 
 const MAX_EVENTS = 40;
-const PATHS = new Set(['/', '/start']);
+const PATHS = new Set<string>(['/', ...LANDING_FLOW_PATHS]);
 
 type Incoming = {
   path?: unknown;

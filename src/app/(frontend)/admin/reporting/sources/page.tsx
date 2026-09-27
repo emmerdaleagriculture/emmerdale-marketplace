@@ -5,6 +5,7 @@ import { channelOf, compareChannels, isPaid, UNATTRIBUTED } from '@/lib/attribut
 import { fetchAll } from '@/lib/supabase/fetchAll';
 import s from '../../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../../ui';
+import { LANDING_FLOW_PATHS } from '@/lib/landingPaths';
 
 export const metadata: Metadata = { title: 'Sources — Admin' };
 export const dynamic = 'force-dynamic';
@@ -56,7 +57,7 @@ export default async function SourcesPage() {
     settle(fetchAll((from, to) => admin
       .from('page_events')
       .select('session_key, label, utm_source, utm_medium, has_gclid')
-      .eq('path', '/start')
+      .in('path', [...LANDING_FLOW_PATHS])
       .eq('kind', 'step')
       .gte('created_at', cutoff)
       .order('created_at').order('id')

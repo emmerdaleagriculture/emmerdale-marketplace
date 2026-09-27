@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { fetchAll } from '@/lib/supabase/fetchAll';
 import { HeatOverlay } from './HeatOverlay';
+import { LANDING_FLOW_PATHS } from '@/lib/landingPaths';
 import s from '../../admin.module.css';
 import { AdminTable } from '../../ui';
 
@@ -12,6 +13,7 @@ export const dynamic = 'force-dynamic';
 const PATHS = [
   { path: '/', label: 'Home' },
   { path: '/start', label: 'Job creation' },
+  { path: '/paddock-care', label: 'Paddock care' },
 ];
 
 /**
@@ -193,7 +195,7 @@ export default async function JourneyPage({
         </div>
       ) : (
         <>
-          {path === '/start' && (
+          {(LANDING_FLOW_PATHS as readonly string[]).includes(path) && (
             <>
               <div className={s.sectionLabel}>How far through the job people got</div>
               {stepVisits.size === 0 ? (
@@ -231,7 +233,10 @@ export default async function JourneyPage({
                 </AdminTable>
               )}
 
-              <div className={s.sectionLabel}>Why those errors happened</div>
+              {/* job_parse_events carries no page, so this is every landing
+                  page's errors together — said so, rather than letting the
+                  Paddock care tab borrow /start's. */}
+              <div className={s.sectionLabel}>Why errors happened — all landing pages together</div>
               {refusals.length === 0 ? (
                 <div className={s.empty}>
                   Nothing refused yet. Every error either step can show is recorded with

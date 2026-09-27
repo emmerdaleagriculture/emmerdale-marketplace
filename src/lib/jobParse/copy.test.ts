@@ -13,6 +13,8 @@ import { CANONICAL_SERVICES, LLM_SERVICE_VALUES, RECORD_JOB_PARSE_TOOL } from '.
  */
 
 const START_DIR = path.resolve(import.meta.dirname, '../../app/(frontend)/start');
+// Every ad landing page that runs the flow speaks the same way.
+const LANDING_DIRS = [START_DIR, path.resolve(import.meta.dirname, '../../app/(frontend)/paddock-care')];
 // Whole words only. The bidding vocabulary — quote, proposal, estimate — is
 // what §10 is guarding against: the landing record is a job specification, not
 // a request for offers. "Price" is deliberately NOT here: it is the platform's
@@ -30,9 +32,9 @@ const stripComments = (src: string) =>
 
 describe('spec §10 language constraints', () => {
   it('no banned vocabulary in the landing flow source', () => {
-    for (const file of readdirSync(START_DIR)) {
+    for (const [dir, file] of LANDING_DIRS.flatMap((d) => readdirSync(d).map((f) => [d, f]))) {
       if (!/\.(tsx?|css)$/.test(file)) continue;
-      const source = readFileSync(path.join(START_DIR, file), 'utf8');
+      const source = readFileSync(path.join(dir, file), 'utf8');
       const hits = stripComments(source).match(BANNED);
       expect(hits, `${file} contains banned word "${hits?.[0]}"`).toBeNull();
     }
