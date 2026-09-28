@@ -211,6 +211,95 @@ export async function markContactedAction(
   return { ok: true, message: 'Marked contacted.' };
 }
 
+/**
+ * Operator: record that the contractor has been paid for this job.
+ *
+ * Payouts go by bank transfer, by hand; this is the record of one, so the
+ * money page stops counting the job as owed. Amount and day are the
+ * operator's — what was actually sent and when — defaulting on the form to
+ * the contractor's price and today. One per job; a mistake is undone with
+ * removePayoutAction and recorded again.
+ */
+export async function recordPayoutAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const user = await assertAdmin();
+  const id = String(formData.get('submission_id') ?? '');
+  const amount = poundsInputToPence(String(formData.get('amount') ?? ''));
+  const paidOn = String(formData.get('paid_on') ?? '');
+  const note = String(formData.get('note') ?? '').trim() || null;
+  if (!amount) return { error: 'Enter the amount sent, e.g. 250 or 250.00.' };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(paidOn)) return { error: 'Pick the day it was paid.' };
+
+  const admin = createServiceRoleClient();
+  const { data: sub } = await admin
+    .from('job_submissions')
+    .select('awarded_contractor_id, status')
+    .eq('id', id)
+    .maybeSingle();
+  if (!sub?.awarded_contractor_id) return { error: 'This job has no contractor to pay.' };
+
+  const { error } = await admin.from('contractor_payouts').insert({
+    submission_id: id,
+    contractor_id: sub.awarded_contractor_id,
+    amount_pence: amount,
+    paid_on: paidOn,
+    note,
+    recorded_by: user.id,
+  });
+  if (error) {
+    return { error: error.code === '23505' ? 'A payout is already recorded for this job.' : error.message };
+  }
+
+  await admin.rpc('log_job_event', {
+    p_job_id: id,
+    p_event_type: 'contractor_paid',
+    p_from: sub.status,
+    p_to: sub.status,
+    p_actor_type: 'operator',
+    p_actor_id: user.id,
+    p_reason: `Payout of ${formatGBP(amount)} sent ${paidOn}`,
+    p_metadata: { amount_pence: amount, paid_on: paidOn },
+  });
+  refresh(id);
+  revalidatePath('/admin/money');
+  return { ok: true, message: `Recorded ${formatGBP(amount)} paid.` };
+}
+
+/** Operator: take back a payout recorded by mistake. */
+export async function removePayoutAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const user = await assertAdmin();
+  const id = String(formData.get('submission_id') ?? '');
+
+  const admin = createServiceRoleClient();
+  const { data: removed, error } = await admin
+    .from('contractor_payouts')
+    .delete()
+    .eq('submission_id', id)
+    .select('amount_pence, paid_on');
+  if (error) return { error: error.message };
+  if (!removed?.length) return { error: 'No payout recorded on this job.' };
+
+  const { data: sub } = await admin.from('job_submissions').select('status').eq('id', id).maybeSingle();
+  await admin.rpc('log_job_event', {
+    p_job_id: id,
+    p_event_type: 'contractor_payout_removed',
+    p_from: sub?.status ?? null,
+    p_to: sub?.status ?? null,
+    p_actor_type: 'operator',
+    p_actor_id: user.id,
+    p_reason: `Removed payout record of ${formatGBP(removed[0].amount_pence)} (${removed[0].paid_on})`,
+    p_metadata: {},
+  });
+  refresh(id);
+  revalidatePath('/admin/money');
+  return { ok: true, message: 'Payout record removed.' };
+}
+
 /** Operator: mark the work complete → triggers the rating request. */
 export async function markCompletedAction(
   _prev: FormState,

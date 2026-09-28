@@ -233,6 +233,82 @@ export type Database = {
           },
         ]
       }
+      contractor_payouts: {
+        Row: {
+          amount_pence: number
+          contractor_id: string
+          created_at: string
+          id: string
+          note: string | null
+          paid_on: string
+          recorded_by: string | null
+          submission_id: string
+        }
+        Insert: {
+          amount_pence: number
+          contractor_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          paid_on: string
+          recorded_by?: string | null
+          submission_id: string
+        }
+        Update: {
+          amount_pence?: number
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          paid_on?: string
+          recorded_by?: string | null
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_payouts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "admin_contractor_outreach"
+            referencedColumns: ["contractor_id"]
+          },
+          {
+            foreignKeyName: "contractor_payouts_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_payouts_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "job_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_payouts_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "my_sq_invitations"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "contractor_payouts_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "my_sq_won_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_payouts_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "sq_payout_ready"
+            referencedColumns: ["submission_id"]
+          },
+        ]
+      }
       contractor_quotes: {
         Row: {
           confirm_token: string | null

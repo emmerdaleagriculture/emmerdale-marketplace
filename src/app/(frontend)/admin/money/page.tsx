@@ -22,8 +22,9 @@ export const dynamic = 'force-dynamic';
  * contractor gets and what we keep. Accepted quotes with no deposit paid are
  * not money and sit in their own short list underneath.
  *
- * Contractor payouts are still paid by hand and nothing records them, so
- * "owed to contractors" is everything on a finished job, not a ledger.
+ * Contractor payouts are paid by hand and recorded on the job page
+ * (contractor_payouts), so "owed to contractors" is every finished job with
+ * no payout recorded yet.
  */
 
 type Payment = {
@@ -128,6 +129,10 @@ export default async function MoneyPage() {
     )
     .order('created_at', { ascending: false })
     .limit(400);
+  const { data: payoutRows } = await admin
+    .from('contractor_payouts')
+    .select('submission_id, amount_pence, paid_on');
+  const payouts = new Map((payoutRows ?? []).map((r) => [r.submission_id, r]));
 
   // Fold payment rows into jobs, newest job first.
   const jobs = new Map<string, Job>();
@@ -151,7 +156,7 @@ export default async function MoneyPage() {
     const taken = j.payments.reduce((n, p) => n + collected(p), 0);
     const balance = j.payments.find((p) => p.kind === 'balance');
     const left = STOPPED.has(j.status) ? 0 : Math.max(0, price - taken);
-    return { j, price, cost, taken, balance, left, margin: price - cost };
+    return { j, price, cost, taken, balance, left, margin: price - cost, payout: payouts.get(j.id) };
   });
 
   const taken = figures.reduce((n, f) => n + f.taken, 0);
@@ -161,8 +166,10 @@ export default async function MoneyPage() {
   const failed = dueNow.filter((f) => f.balance?.status === 'failed').length;
   const notYetDue = figures.filter((f) => f.left > 0 && !dueNow.includes(f));
   const notYetDuePence = notYetDue.reduce((n, f) => n + f.left, 0);
-  const owed = figures.filter((f) => FINISHED.has(f.j.status));
+  const owed = figures.filter((f) => FINISHED.has(f.j.status) && !f.payout);
   const owedPence = owed.reduce((n, f) => n + f.cost, 0);
+  const paidOutPence = figures.reduce((n, f) => n + (f.payout?.amount_pence ?? 0), 0);
+  const paidOutJobs = figures.filter((f) => f.payout).length;
   const owedNoInvoice = owed.filter((f) => !f.j.contractor_invoice_at).length;
   const marginPence = figures.reduce((n, f) => n + f.margin, 0);
   const marginBanked = figures.filter((f) => f.left === 0 && !STOPPED.has(f.j.status)).reduce((n, f) => n + f.margin, 0);
@@ -200,14 +207,13 @@ export default async function MoneyPage() {
           value={formatGBP(owedPence)}
           label="Owed to contractors"
           hint={
-            owed.length === 0 ? (
-              'No finished jobs'
-            ) : (
-              <>
-                {owed.length} finished job{owed.length === 1 ? '' : 's'}
-                {owedNoInvoice > 0 ? ` · ${owedNoInvoice} without an invoice yet` : ''} · paid by hand
-              </>
-            )
+            <>
+              {owed.length === 0
+                ? 'Nothing unpaid'
+                : `${owed.length} finished job${owed.length === 1 ? '' : 's'} not paid yet`}
+              {owedNoInvoice > 0 ? ` · ${owedNoInvoice} without an invoice yet` : ''}
+              {paidOutJobs > 0 ? ` · ${formatGBP(paidOutPence)} paid out on ${paidOutJobs}` : ''}
+            </>
           }
         />
         <Tile
@@ -224,7 +230,7 @@ export default async function MoneyPage() {
         <AdminTable
           head={['Job', 'Status', 'Quote', 'Deposit', 'Balance', 'Left to collect', 'Contractor gets', 'We keep']}
         >
-          {figures.map(({ j, price, cost, balance, left, margin }) => {
+          {figures.map(({ j, price, cost, balance, left, margin, payout }) => {
             const deposit = partLine(j.payments.find((p) => p.kind === 'deposit'), '—');
             const bal = partLine(
               balance,
@@ -251,7 +257,16 @@ export default async function MoneyPage() {
                   {bal.sub && <div style={{ fontSize: 12, color: bal.bad ? 'var(--error)' : 'var(--ink-3)' }}>{bal.sub}</div>}
                 </td>
                 <td>{left > 0 ? formatGBP(left) : 'Nothing'}</td>
-                <td>{formatGBP(cost)}</td>
+                <td>
+                  {formatGBP(cost)}
+                  {payout ? (
+                    <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+                      paid {formatGBP(payout.amount_pence)} {formatDate(payout.paid_on)}
+                    </div>
+                  ) : (
+                    FINISHED.has(j.status) && <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>not paid yet</div>
+                  )}
+                </td>
                 <td>{formatGBP(margin)}</td>
               </tr>
             );

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { formatDateTime } from '@/lib/time';
+import { formatDate, formatDateTime, londonDay } from '@/lib/time';
 import { gateWidthLabel } from '@/lib/jobParse/access';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { getServices } from '@/lib/reference';
@@ -10,6 +10,7 @@ import { DistributionPanel } from './DistributionPanel';
 import { ClearNoteButton } from './ClearNoteButton';
 import { DeleteJobButton } from './DeleteJobButton';
 import { ExtraWorkForm } from './ExtraWorkForm';
+import { PayoutPanel } from './PayoutPanel';
 import s from '../../admin.module.css';
 import { AdminTable } from '../../ui';
 import p from '../submissions.module.css';
@@ -113,6 +114,16 @@ export default async function SubmissionDetailPage({
     .select('id, kind, status, amount_pence, paid_at, due_at, attempts, last_error')
     .eq('submission_id', id)
     .order('created_at', { ascending: true });
+
+  // The payout, once one has been sent by hand and recorded here.
+  const { data: payout } = await admin
+    .from('contractor_payouts')
+    .select('amount_pence, paid_on, note')
+    .eq('submission_id', id)
+    .maybeSingle();
+  const acceptedCost =
+    (allQuotes.find((q) => q.status === 'accepted')?.cq as { contractor_price_pence: number } | null)
+      ?.contractor_price_pence ?? null;
 
   let invoiceUrl: string | null = null;
   if (sub.contractor_invoice_path) {
@@ -262,6 +273,28 @@ export default async function SubmissionDetailPage({
             ) : (
               <>Not sent yet. The job is finished; the payout is due once the balance above has cleared and the invoice is in.</>
             )}
+          </div>
+        </>
+      )}
+
+      {sub.awarded_contractor_id && (['completed', 'paid'].includes(sub.status) || payout) && (
+        <>
+          <div className={s.sectionLabel}>Contractor payout</div>
+          <div className={s.empty}>
+            <PayoutPanel
+              submissionId={sub.id}
+              payout={
+                payout
+                  ? {
+                      amount: formatGBP(payout.amount_pence),
+                      paidOn: `${formatDate(payout.paid_on)} ${payout.paid_on.slice(0, 4)}`,
+                      note: payout.note,
+                    }
+                  : null
+              }
+              suggestedPounds={acceptedCost ? (acceptedCost / 100).toFixed(2) : ''}
+              today={londonDay(Date.now())}
+            />
           </div>
         </>
       )}
