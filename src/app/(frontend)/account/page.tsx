@@ -84,7 +84,7 @@ export default async function AccountPage() {
       .limit(200),
     supabase
       .from('my_sq_won_jobs')
-      .select('id, service, status, contact_name, contractor_price_pence, awarded_at, contractor_invoice_at')
+      .select('id, service, status, contact_name, contractor_price_pence, awarded_at, contractor_invoice_at, paid_out_on')
       .order('awarded_at', { ascending: false })
       .limit(100),
     supabase
@@ -118,7 +118,10 @@ export default async function AccountPage() {
   const won = wonQ.data ?? [];
   const wonActive = won.filter((j) => WON_ACTIVE.has(j.status ?? ''));
   const toContact = won.filter((j) => j.status === 'awarded');
-  const toInvoice = won.filter((j) => WON_DONE.has(j.status ?? '') && !j.contractor_invoice_at);
+  // Once we've paid them there is nothing an invoice would release.
+  const toInvoice = won.filter(
+    (j) => WON_DONE.has(j.status ?? '') && !j.contractor_invoice_at && !j.paid_out_on,
+  );
   const sum = (list: typeof won) => list.reduce((n, j) => n + (j.contractor_price_pence ?? 0), 0);
   const earned = sum(won.filter((j) => WON_DONE.has(j.status ?? '')));
   const inProgress = sum(wonActive);

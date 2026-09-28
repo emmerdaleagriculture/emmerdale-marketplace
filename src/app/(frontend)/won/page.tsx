@@ -120,7 +120,11 @@ export default async function WonJobsPage() {
                 <div key={job.id} className={s.card}>
                   <div className={s.cardHead}>
                     <span className={s.service}>{job.service}</span>
-                    <span className={s.status}>{STATUS_LABELS[job.status ?? ''] ?? job.status}</span>
+                    <span className={s.status}>
+                      {job.paid_out_on
+                        ? 'Paid out — thank you'
+                        : (STATUS_LABELS[job.status ?? ''] ?? job.status)}
+                    </span>
                   </div>
                   <div className={s.detailGrid}>
                     <div>
@@ -228,9 +232,28 @@ export default async function WonJobsPage() {
                         markupRate={markupRate}
                       />
                     ))}
+                  {/* Paid out: say so, and stop asking for the invoice —
+                      there is no payout left for it to release. */}
+                  {job.paid_out_on && (
+                    <div className={s.invoiceDone}>
+                      <p>
+                        <strong>
+                          We paid you{' '}
+                          {job.paid_out_pence != null ? formatGBP(job.paid_out_pence) : 'for this job'} on{' '}
+                          {new Date(job.paid_out_on).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                          .
+                        </strong>
+                        {job.contractor_invoice_at && <> Invoice received{job.contractor_invoice_name ? ` — ${job.contractor_invoice_name}` : ''}.</>}
+                      </p>
+                    </div>
+                  )}
                   {/* The customer has confirmed and the money is ours to
                       release — all that is missing is their invoice. */}
-                  {['completed', 'paid'].includes(job.status ?? '') && job.id && (
+                  {['completed', 'paid'].includes(job.status ?? '') && job.id && !job.paid_out_on && (
                     <InvoiceUpload
                       submissionId={job.id}
                       sentName={job.contractor_invoice_name}
