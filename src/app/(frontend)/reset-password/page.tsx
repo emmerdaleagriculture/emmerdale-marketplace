@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { Suspense, useActionState, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { requestResetAction } from './actions';
 import { emptyFormState } from '@/lib/form';
@@ -9,6 +10,18 @@ import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
 import { SiteFooter } from '@/components/SiteFooter';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
+
+/** Shown when a reset link came back unused: expired, used, or opened oddly. */
+function LinkFailedNote() {
+  const failed = useSearchParams().get('error') === 'link';
+  if (!failed) return null;
+  return (
+    <p className={f.error}>
+      That reset link has expired or has already been used. Enter your email below and
+      we&rsquo;ll send a new one.
+    </p>
+  );
+}
 
 export default function ResetPasswordPage() {
   const [state, action, pending] = useActionState(requestResetAction, emptyFormState);
@@ -44,7 +57,13 @@ export default function ResetPasswordPage() {
             </div>
           ) : (
             <form action={action} className={a.card}>
-              {state.error && <p className={f.error}>{state.error}</p>}
+              {state.error ? (
+                <p className={f.error}>{state.error}</p>
+              ) : (
+                <Suspense fallback={null}>
+                  <LinkFailedNote />
+                </Suspense>
+              )}
               {/* A mistyped domain here sends the reset link somewhere real
                   and silent, and the person waits for a mail that arrived
                   at a typosquatter instead. */}
