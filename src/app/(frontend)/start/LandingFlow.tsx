@@ -1,7 +1,6 @@
 'use client';
 
-import { readFirstTouch } from '@/lib/firstTouch';
-import { sourceFromReferrer } from '@/lib/attribution';
+import { readFirstTouch, visitAttribution } from '@/lib/firstTouch';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { PageTracker, trackStep } from '@/components/PageTracker';
@@ -109,7 +108,7 @@ export function LandingFlow({
     }, 8000);
     return () => clearTimeout(t);
   }, [awaitingToken]);
-  const [utm, setUtm] = useState({ source: '', medium: '', campaign: '', gclid: '', handoff: '' });
+  const [utm, setUtm] = useState({ source: '', medium: '', campaign: '', gclid: '', handoff: '', referrer: '' });
   // The front page's service pick, by card slug. The server decides what it
   // means (serviceFromPick); this only carries it across.
   const [serviceHint, setServiceHint] = useState('');
@@ -297,16 +296,14 @@ export function LandingFlow({
     // is kept apart, as `handoff`, so "Facebook, via the homepage" and
     // "Facebook, straight to /start" stay distinguishable.
     const src = q.get('src');
-    const ft = readFirstTouch();
-    const fromReferrer = sourceFromReferrer(ft?.referrer ?? document.referrer);
-    const source =
-      q.get('utm_source') ?? ft?.utm_source ?? (fromReferrer || (src ? `site:${src}` : ''));
-    const medium =
-      q.get('utm_medium') ?? ft?.utm_medium ?? (fromReferrer ? 'referral' : src ? 'organic' : '');
-    const campaign = q.get('utm_campaign') ?? ft?.utm_campaign ?? '';
-    const gclid = q.get('gclid') ?? ft?.gclid ?? '';
+    const { source, medium, campaign, gclid, referrer } = visitAttribution(
+      q,
+      readFirstTouch(),
+      document.referrer,
+      window.location.host,
+    );
     const handoff = src ? src.slice(0, 40) : '';
-    setUtm({ source, medium, campaign, gclid, handoff });
+    setUtm({ source, medium, campaign, gclid, handoff, referrer });
     // One view per pageload — the ref guards React strict mode's double effect.
     if (!viewLogged.current) {
       viewLogged.current = true;
@@ -398,6 +395,7 @@ export function LandingFlow({
       <input type="hidden" name="utm_campaign" value={utm.campaign} />
       <input type="hidden" name="gclid" value={utm.gclid} />
       <input type="hidden" name="handoff" value={utm.handoff} />
+      <input type="hidden" name="referrer" value={utm.referrer} />
       <input type="hidden" name="landing_path" value={path} />
       <input type="hidden" name="service_hint" value={serviceHint} />
       {/* Honeypot — real users never see or fill this. */}

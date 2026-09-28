@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { channelOf, sourceFromReferrer, UNATTRIBUTED } from './attribution';
+import { channelOf, leadAttribution, sourceFromReferrer, UNATTRIBUTED } from './attribution';
 
 describe('sourceFromReferrer', () => {
   it('classifies search engines, social and other sites', () => {
@@ -43,5 +43,26 @@ describe('channelOf', () => {
   it('labels the sources the browser now stores on submissions', () => {
     expect(channelOf({ utm_source: 'search' })).toBe('Organic search');
     expect(channelOf({ utm_source: 'ref:example.org' })).toBe('Referral — example.org');
+  });
+});
+
+describe('leadAttribution', () => {
+  it('labels a Facebook lead-ad as paid Meta', () => {
+    const a = leadAttribution('facebook', {});
+    expect(a).toMatchObject({ utm_source: 'fb', utm_medium: 'lead-ad' });
+    expect(channelOf(a)).toBe('Meta — Facebook');
+  });
+
+  it('carries an enquiry form visit through, referrer included', () => {
+    const a = leadAttribution('hay', {
+      attribution: { utm_source: 'site:home', utm_medium: 'organic', referrer: 'https://m.facebook.com/' },
+    });
+    expect(a.referrer).toBe('https://m.facebook.com/');
+    expect(channelOf(a)).toBe('Facebook — untagged');
+  });
+
+  it('is empty, not invented, when the lead recorded nothing', () => {
+    expect(channelOf(leadAttribution('tractor-hire', { details: 'x' }))).toBe(UNATTRIBUTED);
+    expect(channelOf(leadAttribution('hay', null))).toBe(UNATTRIBUTED);
   });
 });

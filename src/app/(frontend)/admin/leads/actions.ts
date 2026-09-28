@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
+import { leadAttribution } from '@/lib/attribution';
 
 async function assertAdmin() {
   const user = await getUser();
@@ -136,7 +137,7 @@ export async function publishLeadAsSubmissionAction(
     .update({ status: 'converted' })
     .eq('id', leadId)
     .eq('status', 'pending')
-    .select('id')
+    .select('id, source, details')
     .maybeSingle();
   if (claimError) {
     console.error('[leads] claim failed:', claimError);
@@ -160,6 +161,9 @@ export async function publishLeadAsSubmissionAction(
       contact_phone: phone || null,
       contact_email: email || null,
       contact_preference: 'either',
+      // Where the lead came from — a Facebook lead-ad, or the visit behind a
+      // portal enquiry. Without it, published leads were all unattributed.
+      ...leadAttribution(claimed.source, claimed.details),
       // No expires_at: distribute_submission sets it unconditionally from
       // app_config.sq_job_expiry_days a moment later, so anything written
       // here is overwritten. A hardcoded window that looks authoritative

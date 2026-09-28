@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from 'react';
 import { submitEnquiryAction } from './actions';
 import { emptyFormState } from '@/lib/form';
+import { readFirstTouch, visitAttribution, type VisitAttribution } from '@/lib/firstTouch';
 import { EmailField } from '@/components/forms/EmailField';
 import f from '@/components/forms/forms.module.css';
 import a from '@/app/(frontend)/auth.module.css';
@@ -25,6 +26,21 @@ export function EnquiryForm({
   const [state, action, pending] = useActionState(submitEnquiryAction, emptyFormState);
   const [formTs, setFormTs] = useState('');
   useEffect(() => setFormTs(String(Date.now())), []);
+  // Where they came from, carried onto the lead and the job it becomes —
+  // without it every hay and tractor-hire job counted as unattributed.
+  const [visit, setVisit] = useState<VisitAttribution | null>(null);
+  useEffect(
+    () =>
+      setVisit(
+        visitAttribution(
+          new URLSearchParams(window.location.search),
+          readFirstTouch(),
+          document.referrer,
+          window.location.host,
+        ),
+      ),
+    [],
+  );
 
   if (state.ok) {
     return (
@@ -42,6 +58,11 @@ export function EnquiryForm({
 
       <input type="hidden" name="category" value={category} />
       <input type="hidden" name="form_ts" value={formTs} />
+      <input type="hidden" name="utm_source" value={visit?.source ?? ''} />
+      <input type="hidden" name="utm_medium" value={visit?.medium ?? ''} />
+      <input type="hidden" name="utm_campaign" value={visit?.campaign ?? ''} />
+      <input type="hidden" name="gclid" value={visit?.gclid ?? ''} />
+      <input type="hidden" name="referrer" value={visit?.referrer ?? ''} />
       {/* Honeypot — real users never see or fill this. */}
       <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', height: 0, overflow: 'hidden' }}>
         <label>

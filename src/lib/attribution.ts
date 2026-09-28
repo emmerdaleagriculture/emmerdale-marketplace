@@ -110,3 +110,50 @@ export function compareChannels(a: string, b: string): number {
   const pb = isPaid(b) ? 0 : 1;
   return pa - pb || a.localeCompare(b);
 }
+
+/** The attribution columns a job_submissions row carries. */
+export type SubmissionAttribution = {
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  gclid: string | null;
+  referrer: string | null;
+};
+
+const field = (v: unknown, max: number) => {
+  const s = typeof v === 'string' ? v.trim().slice(0, max) : '';
+  return s || null;
+};
+
+/** What a form posted from visitAttribution (firstTouch.ts), clamped. */
+export function attributionFromForm(formData: FormData): SubmissionAttribution {
+  return {
+    utm_source: field(formData.get('utm_source'), 200),
+    utm_medium: field(formData.get('utm_medium'), 200),
+    utm_campaign: field(formData.get('utm_campaign'), 200),
+    gclid: field(formData.get('gclid'), 300),
+    referrer: field(formData.get('referrer'), 300),
+  };
+}
+
+/**
+ * Where a lead came from, for the job an operator publishes from it.
+ *
+ * Portal enquiries (hay, tractor hire) keep the visit's attribution in
+ * `details.attribution`. A Facebook lead-ad has none to keep: the lead form is
+ * Meta's own, so the lead IS the paid click, and it is labelled that way —
+ * without this every one arrived on the Sources page as unattributed.
+ */
+export function leadAttribution(source: string | null, details: unknown): SubmissionAttribution {
+  if (source === 'facebook') {
+    return { utm_source: 'fb', utm_medium: 'lead-ad', utm_campaign: null, gclid: null, referrer: null };
+  }
+  const a = (details as { attribution?: Record<string, unknown> } | null)?.attribution ?? {};
+  return {
+    utm_source: field(a.utm_source, 200),
+    utm_medium: field(a.utm_medium, 200),
+    utm_campaign: field(a.utm_campaign, 200),
+    gclid: field(a.gclid, 300),
+    referrer: field(a.referrer, 300),
+  };
+}
