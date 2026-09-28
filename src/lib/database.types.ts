@@ -1403,6 +1403,7 @@ export type Database = {
           gate_width: string | null
           gclid: string | null
           handoff: string | null
+          referrer: string | null
           landing_path: string | null
           hidden_at: string | null
           hidden_by: string | null
@@ -1472,6 +1473,7 @@ export type Database = {
           gate_width?: string | null
           gclid?: string | null
           handoff?: string | null
+          referrer?: string | null
           landing_path?: string | null
           hidden_at?: string | null
           hidden_by?: string | null
@@ -1541,6 +1543,7 @@ export type Database = {
           gate_width?: string | null
           gclid?: string | null
           handoff?: string | null
+          referrer?: string | null
           landing_path?: string | null
           hidden_at?: string | null
           hidden_by?: string | null

@@ -401,6 +401,7 @@ export async function parseJobAction(
       utm_campaign: String(formData.get('utm_campaign') || '') || null,
       gclid: String(formData.get('gclid') || '') || null,
       handoff: String(formData.get('handoff') || '').slice(0, 40) || null,
+      referrer: String(formData.get('referrer') || '').slice(0, 300) || null,
       landing_path: landingFlowPath(formData.get('landing_path')),
       service_id: serviceId,
       service_verbatim: merged.service_verbatim || null,

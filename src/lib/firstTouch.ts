@@ -1,3 +1,5 @@
+import { sourceFromReferrer } from './attribution';
+
 /**
  * Where this visitor first arrived, kept for the length of the tab.
  *
@@ -64,4 +66,54 @@ export function readFirstTouch(): FirstTouch | null {
   } catch {
     return null;
   }
+}
+
+export type VisitAttribution = {
+  source: string;
+  medium: string;
+  campaign: string;
+  gclid: string;
+  /** The external page that sent them, or '' — never one of our own. */
+  referrer: string;
+};
+
+/**
+ * Where this visit came from, for a form to post with its job.
+ *
+ * What the URL says outranks the tab's first touch (a fresh ad click is the
+ * more specific answer), which outranks the referrer, which outranks an
+ * internal hand-off (`src`). The first touch can be missing on the very page
+ * that took the click — FirstTouchCapture lives in the layout, and a parent's
+ * effect runs after its children's — so the URL and document.referrer are
+ * read here too rather than trusted to have been captured already.
+ *
+ * The referrer itself travels as well as the source derived from it: a
+ * submission that stores only `site:home` can't be traced back to Facebook
+ * afterwards, and that is how half the jobs came to look internal.
+ */
+export function visitAttribution(
+  q: URLSearchParams,
+  ft: FirstTouch | null,
+  documentReferrer: string,
+  ownHost: string,
+): VisitAttribution {
+  let referrer = ft?.referrer ?? '';
+  if (!referrer) {
+    try {
+      if (documentReferrer && new URL(documentReferrer).host !== ownHost) {
+        referrer = documentReferrer.slice(0, 300);
+      }
+    } catch {
+      /* unparseable referrer: treat as none */
+    }
+  }
+  const src = q.get('src');
+  const fromReferrer = sourceFromReferrer(referrer);
+  return {
+    source: q.get('utm_source') ?? ft?.utm_source ?? (fromReferrer || (src ? `site:${src}` : '')),
+    medium: q.get('utm_medium') ?? ft?.utm_medium ?? (fromReferrer ? 'referral' : src ? 'organic' : ''),
+    campaign: q.get('utm_campaign') ?? ft?.utm_campaign ?? '',
+    gclid: q.get('gclid') ?? ft?.gclid ?? '',
+    referrer,
+  };
 }

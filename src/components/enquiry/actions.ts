@@ -5,6 +5,7 @@ import { emailDeliveryError } from '@/lib/email/deliverable';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { resolveCounty } from '@/lib/postcodes';
+import { attributionFromForm, type SubmissionAttribution } from '@/lib/attribution';
 import type { FormState } from '@/lib/form';
 
 /** New-vertical enquiry categories → the label used in admin notifications. */
@@ -57,6 +58,7 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
   );
   if (emailError) return { error: emailError };
   const d = parsed.data;
+  const attribution = attributionFromForm(formData);
   const label = CATEGORIES[d.category];
 
   // Resolve the county from the postcode now, so the admin sees the location and
@@ -82,6 +84,9 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
       county_id: geo.county_id ?? null,
       county: geo.county_name ?? null,
       town: geo.town ?? null,
+      // Kept on the lead as well as the job, so one an operator publishes
+      // by hand (admin/leads) is credited the same as one that auto-converts.
+      attribution,
     },
   })
     .select('id')
@@ -94,7 +99,7 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
   // distribution in start/actions.ts: a failure here must never cost the
   // customer their enquiry, and anything that does not convert simply stays
   // a pending lead — which is exactly the behaviour this replaces.
-  const converted = await autoConvertEnquiry(admin, lead.id, d, geo);
+  const converted = await autoConvertEnquiry(admin, lead.id, d, geo, attribution);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   await notifyAdmins(
@@ -162,6 +167,7 @@ async function autoConvertEnquiry(
   leadId: string,
   d: { category: string; name: string; phone: string; email: string; details: string; postcode: string },
   geo: { county_id?: number | null; county_name?: string | null },
+  attribution: SubmissionAttribution,
 ): Promise<string | null> {
   try {
     const spec = AUTO_CONVERT[d.category];
@@ -203,6 +209,7 @@ async function autoConvertEnquiry(
         contact_phone: d.phone,
         contact_email: d.email,
         contact_preference: 'either',
+        ...attribution,
         // No expires_at: distribute_submission sets it unconditionally from
         // app_config.sq_job_expiry_days a moment later, so anything written
         // here is overwritten. A hardcoded window that looks authoritative

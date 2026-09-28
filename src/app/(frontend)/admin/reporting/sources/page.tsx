@@ -20,6 +20,8 @@ type SubRow = {
   status: string;
   utm_source: string | null;
   gclid: string | null;
+  /** From 28 Sept: lets a `site:*` hand-off be credited to the site that sent it. */
+  referrer: string | null;
 };
 
 /**
@@ -46,7 +48,7 @@ export default async function SourcesPage() {
     settle(fetchAll((from, to) => admin.from('landing_views').select('created_at, utm_source, gclid, referrer').gte('created_at', cutoff).order('created_at').order('id').range(from, to), { max: 10000 })),
     settle(fetchAll((from, to) => admin
       .from('job_submissions')
-      .select('created_at, confirmed_at, status, utm_source, gclid')
+      .select('created_at, confirmed_at, status, utm_source, gclid, referrer')
       .gte('created_at', cutoff)
       // Hidden = test runs and duplicates, already out of the dashboard.
       .is('hidden_at', null)
