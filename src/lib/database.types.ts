@@ -2329,6 +2329,8 @@ export type Database = {
           lat: number | null
           lng: number | null
           obstacles: string | null
+          paid_out_on: string | null
+          paid_out_pence: number | null
           postcode: string | null
           service: string | null
           service_attributes: Json | null
