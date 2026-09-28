@@ -17,5 +17,11 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}${next}`);
     }
   }
+  // Reset emails sent before /auth/confirm existed still land here, and fail
+  // whenever they are opened in a different browser from the one that asked
+  // (no PKCE verifier cookie). Send those back to ask again, with the reason.
+  if (next === '/reset-password/update') {
+    return NextResponse.redirect(`${origin}/reset-password?error=link`);
+  }
   return NextResponse.redirect(`${origin}/login?error=link`);
 }

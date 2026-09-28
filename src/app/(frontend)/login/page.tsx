@@ -5,6 +5,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { LoginForm } from './LoginForm';
 import { getUser, postLoginPath, safeInternalPath } from '@/lib/auth';
 import a from '../auth.module.css';
+import f from '@/components/forms/forms.module.css';
 
 export const metadata: Metadata = {
   title: 'Log in',
@@ -18,9 +19,10 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }) {
-  const next = safeInternalPath((await searchParams).next);
+  const sp = await searchParams;
+  const next = safeInternalPath(sp.next);
   const user = await getUser();
   if (user) redirect(next ?? (await postLoginPath(user.id, user.email)));
 
@@ -35,6 +37,11 @@ export default async function LoginPage({
             One login for both sides. Tell us which you are and we&rsquo;ll take you
             to the right place.
           </p>
+          {sp.error === 'link' && (
+            <p className={f.error}>
+              That link has expired or has already been used. Log in below, or ask for a new one.
+            </p>
+          )}
           <LoginForm next={next ?? undefined} />
         </div>
       </main>
