@@ -53,9 +53,22 @@ export default async function AdminEmailPage() {
       .select('id, kind, to_email, delivery_status, delivery_detail, delivery_at')
       .in('delivery_status', ['bounced', 'complained', 'failed', 'suppressed'])
       .order('delivery_at', { ascending: false })
-      .limit(25),
+      // Over-fetched: rows that were retried are dropped below.
+      .limit(75),
     admin.rpc('email_drain_health', { p_limit: 5 }),
   ]);
+
+  // One line per message, at its newest attempt. A delivery retry is a new
+  // row cloning the one that bounced, so listing every row showed the same
+  // message two or three times — and a bounce whose retry is still queued
+  // or has since arrived as "did not arrive". Same rule as the board's counts
+  // (count_email_chains_once).
+  const bounced = undelivered.data ?? [];
+  const { data: retries } = bounced.length
+    ? await admin.from('pending_emails').select('retry_of').in('retry_of', bounced.map((r) => r.id))
+    : { data: [] as { retry_of: string | null }[] };
+  const retried = new Set((retries ?? []).map((r) => r.retry_of));
+  const notArrived = bounced.filter((r) => !retried.has(r.id)).slice(0, 25);
 
   // A row held back by send_after is a delivery retry waiting out its delay —
   // deliberately parked, not stuck. Counting it as pending would put "Oldest
@@ -139,13 +152,13 @@ export default async function AdminEmailPage() {
         </>
       )}
 
-      {(undelivered.data ?? []).length > 0 && (
+      {notArrived.length > 0 && (
         <>
           <div className={s.sectionLabel}>
             Did not arrive — accepted by Resend, then rejected by the recipient
           </div>
           <AdminTable head={['Kind', 'To', 'What happened', 'Reason', 'When']}>
-            {(undelivered.data ?? []).map((r) => (
+            {notArrived.map((r) => (
               <tr key={r.id}>
                 <td>{r.kind}</td>
                 <td>{r.to_email ?? '—'}</td>
