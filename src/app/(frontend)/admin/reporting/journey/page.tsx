@@ -116,6 +116,8 @@ export default async function JourneyPage({
     { key: 'parsed', label: 'Saw step 2' },
     { key: 'map_drawn', label: 'Drew the field' },
     { key: 'contact', label: 'Started contact details' },
+    { key: 'send_bar_shown', label: 'Saw the pinned Send bar' },
+    { key: 'send_bar_pressed', label: 'Pressed the pinned Send' },
     { key: 'sent', label: 'Sent the job' },
   ];
   const ERRORS: { key: string; label: string }[] = [

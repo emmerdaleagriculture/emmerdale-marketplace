@@ -112,6 +112,52 @@ export function ConfirmStep({
     );
   };
   const sendWithoutBoundary = useRef(false);
+
+  /**
+   * The Send bar pinned to the foot of a phone screen.
+   *
+   * On a phone this form is ~5,000px — seven screens — and Send is the last
+   * thing on it. In the week to 29 Sept, 20 of the 45 people who typed their
+   * name went no further; they spent a median 112s here but reached a median
+   * 57% of the page, while every one of the 25 who sent reached 100%. They
+   * were never shown the button.
+   *
+   * So once there is a name and an email — the two things a lead costs — a
+   * Send button follows them down the page. It is the same submit button in
+   * every way that matters (same form, same nudges for the map and required
+   * questions), and it gets out of the way when it would be a nuisance: while
+   * the real button is on screen, and while a field has focus, so it never
+   * sits over the keyboard or the box being typed in. Phones only (CSS).
+   */
+  const [contactReady, setContactReady] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [footVisible, setFootVisible] = useState(false);
+  const footRef = useRef<HTMLDivElement>(null);
+  const readContact = () => {
+    const form = formRef.current;
+    if (!form) return;
+    const data = new FormData(form);
+    const name = String(data.get('contact_name') ?? '').trim();
+    const email = String(data.get('contact_email') ?? '').trim();
+    setContactReady(name.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+  };
+  useEffect(() => {
+    const el = footRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => setFootVisible(e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const barShown = contactReady && !editing && !footVisible;
+  useEffect(() => {
+    if (!barShown) return;
+    trackStep('send_bar_shown');
+    // The feedback tab is fixed to the same corner; this lifts it clear.
+    document.body.dataset.sendBar = 'on';
+    return () => {
+      delete document.body.dataset.sendBar;
+    };
+  }, [barShown]);
   // A required question (the weeds on a spraying job) asks once, then lets
   // them send regardless — the same bargain as the boundary nudge.
   const [askedFor, setAskedFor] = useState<string | null>(null);
@@ -208,6 +254,13 @@ export function ConfirmStep({
       ref={formRef}
       action={action}
       className={`${a.card} ${s.card}`}
+      onInput={readContact}
+      onFocus={(e) => setEditing(isTypingField(e.target))}
+      onBlur={() => {
+        setEditing(false);
+        // Autofill fills without an input event in some browsers.
+        readContact();
+      }}
       onSubmit={(e) => {
         if (view === 'alternatives' && !choice && !otherOpen && !serviceAsked.current) {
           e.preventDefault();
@@ -679,7 +732,7 @@ export function ConfirmStep({
         />
       </label>
 
-      <div className={a.actions}>
+      <div className={a.actions} ref={footRef}>
         {boundaryWanted && (
           <p className={f.hint}>
             {nudged
@@ -691,6 +744,26 @@ export function ConfirmStep({
           {pending ? 'Sending…' : sendLabel}
         </button>
       </div>
+
+      <div className={`${s.sendBar}${barShown ? ` ${s.sendBarOn}` : ''}`} aria-hidden={!barShown}>
+        <button
+          className={`${f.btnYellow} ${s.sendBarButton}`}
+          type="submit"
+          disabled={pending}
+          tabIndex={barShown ? 0 : -1}
+          onClick={() => trackStep('send_bar_pressed')}
+        >
+          {pending ? 'Sending…' : sendLabel}
+        </button>
+        <p className={s.sendBarHint}>You can send now. The details below help contractors price it.</p>
+      </div>
     </form>
   );
+}
+
+/** A field that raises the on-screen keyboard (or a picker) on a phone. */
+function isTypingField(el: EventTarget): boolean {
+  if (el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) return true;
+  if (!(el instanceof HTMLInputElement)) return false;
+  return !['button', 'submit', 'checkbox', 'radio', 'hidden', 'range', 'file'].includes(el.type);
 }

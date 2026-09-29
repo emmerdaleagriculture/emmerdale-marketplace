@@ -13,6 +13,14 @@
   /* The home page's sticky CTA bar sits at the bottom too. */
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+/* The /start confirm form pins a Send bar to the foot of a phone screen
+   (ConfirmStep) and marks <body> while it shows: step up over it rather than
+   sit on the button. */
+@media (max-width: 620px) {
+  :global(body[data-send-bar='on']) .root {
+    bottom: 112px;
+  }
+}
 .tab {
   border: 0;
   border-radius: 999px;
