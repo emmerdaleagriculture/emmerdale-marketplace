@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation';
 import { getInvitationByToken } from '@/lib/sealedQuotes/data';
 import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
 import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
+import { flagOffPlatform } from '@/lib/sealedQuotes/offPlatformAlert';
 
 export type QuoteActionState = FormState & { closed?: boolean };
 
@@ -64,7 +65,17 @@ export async function submitQuoteAction(
   // Checked before the price is even converted: nothing reviews this note
   // between here and the customer reading it.
   const noteProblem = clientNoteProblem(d.note_to_client ?? '');
-  if (noteProblem) return { error: noteProblem };
+  if (noteProblem) {
+    const invitation = await getInvitationByToken(d.token);
+    await flagOffPlatform({
+      text: d.note_to_client ?? '',
+      where: 'quote note',
+      sender: 'contractor',
+      submissionId: invitation?.submission?.id,
+      contractorId: invitation?.contractor_id,
+    });
+    return { error: noteProblem };
+  }
   const noteToClient = (d.note_to_client ?? '').trim().slice(0, CLIENT_NOTE_MAX);
 
   let pricePence: number | null = null;
@@ -215,7 +226,16 @@ export async function sendContractorMessageAction(
   const state = await getThreadState(invitation.id);
   if (state === 'closed') return { error: postRefusal('closed'), body };
   const problem = messageProblem(body, 'contractor', state);
-  if (problem) return { error: problem, body };
+  if (problem) {
+    await flagOffPlatform({
+      text: body,
+      where: 'message',
+      sender: 'contractor',
+      submissionId: invitation.submission?.id,
+      contractorId: invitation.contractor_id,
+    });
+    return { error: problem, body };
+  }
 
   const { data, error } = await createServiceRoleClient().rpc('sq_post_message', {
     p_invitation_id: invitation.id,

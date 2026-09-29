@@ -3,7 +3,7 @@
  *
  * This is the only contractor-authored free text a customer ever sees, and
  * nothing reviews it: submit_contractor_quote publishes in the same
- * transaction that stores it. Three things must not get through.
+ * transaction that stores it. Four things must not get through.
  *
  * - **Their own price.** The customer is looking at contractor price +
  *   sq_markup_rate. "£400 all in" on a quote showing £440 hands them the
@@ -13,6 +13,8 @@
  *   walks straight round that, and round clause 8 of the contractor terms.
  * - **Links.** Same reason, and the email renderer linkifies anything
  *   URL-shaped, so a link that reached an email would be clickable.
+ * - **Paying some other way.** Cash, a transfer, VAT off — see OFF_PLATFORM.
+ *   These are also flagged to admin (offPlatformAlert.ts).
  *
  * We refuse rather than silently strip: a contractor who thinks the customer
  * read something they never saw is worse off than one who is told to reword
@@ -53,6 +55,35 @@ export const MONEY = new RegExp(
 );
 
 /**
+ * An offer to be paid outside the platform: cash, a transfer or a cheque
+ * straight to the contractor, or VAT "knocked off" for doing it that way.
+ * Found live on 29 Sept ("If it is cash on the day I will take the VAT
+ * off"). Every job is paid through us — deposit, then balance — so this
+ * cuts out the margin and the customer's protection at once.
+ *
+ * Not refused on its own: "no VAT" and "without VAT" are how a contractor
+ * who isn't registered says so, and the price box already asks. Only VAT
+ * taken OFF, which only makes sense as a deal for paying some other way.
+ */
+export const OFF_PLATFORM = new RegExp(
+  [
+    '\\bcash\\b',
+    '\\bcheques?\\b',
+    '\\bbank\\s+transfer\\b',
+    '\\bbacs\\b',
+    '\\b(?:pay|paid|paying)\\s+(?:me\\s+|us\\s+)?direct(?:ly)?\\b',
+    '\\bvat\\s+off\\b',
+    '\\b(?:take|knock|drop)\\s+(?:the\\s+)?vat\\b',
+    '\\boff\\s+the\\s+books\\b',
+    '\\b(?:outside|not\\s+through|bypass)\\s+(?:the\\s+)?(?:site|website|platform|app)\\b',
+  ].join('|'),
+  'i',
+);
+
+export const OFF_PLATFORM_REFUSAL =
+  'Please leave payment arrangements out — every job is paid through us, deposit and balance, and nothing is paid to the contractor directly.';
+
+/**
  * UK-shaped phone numbers, after separators are removed so "07123 456 789"
  * and "07123456789" read alike. +44…, 0… of 10-11 digits, or a bare 11-digit
  * run. Deliberately not matching shorter digit runs: acreages and dates.
@@ -78,6 +109,9 @@ export function clientNoteProblem(note: string): string | null {
   if (hasPhoneNumber(t)) {
     return 'Please take the phone number out — we pass your details on once the customer accepts your price.';
   }
+  // Before MONEY: "400 quid cash" should be told about the cash, which is
+  // the part admin gets flagged about.
+  if (OFF_PLATFORM.test(t)) return OFF_PLATFORM_REFUSAL;
   if (MONEY.test(t)) {
     return 'Please leave amounts out of the note — the customer sees our price, not yours, so a figure here will confuse them. Put it in the price box instead.';
   }

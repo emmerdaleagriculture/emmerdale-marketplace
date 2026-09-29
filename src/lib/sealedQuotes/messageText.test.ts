@@ -38,4 +38,12 @@ describe('messageProblem', () => {
   it('refuses an over-long message', () => {
     expect(messageProblem('a'.repeat(2001), 'client', 'post_award')).toMatch(/too long/);
   });
+
+  it('refuses paying some other way, from either side, before and after award', () => {
+    for (const state of ['pre_award', 'post_award'] as const) {
+      expect(messageProblem('Cash for the balance is fine', 'contractor', state)).toMatch(/payment arrangements/);
+      expect(messageProblem('Can I pay you cash instead?', 'client', state)).toMatch(/payment arrangements/);
+      expect(messageProblem('I’ll knock the VAT off if you pay me directly', 'contractor', state)).toMatch(/payment arrangements/);
+    }
+  });
 });

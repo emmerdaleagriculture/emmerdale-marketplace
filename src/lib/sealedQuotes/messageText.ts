@@ -1,4 +1,4 @@
-import { DOMAIN, EMAIL, LINK, MONEY, hasPhoneNumber } from './clientNote';
+import { DOMAIN, EMAIL, LINK, MONEY, OFF_PLATFORM, OFF_PLATFORM_REFUSAL, hasPhoneNumber } from './clientNote';
 
 /**
  * A message between a customer and a contractor, checked before it is stored.
@@ -14,6 +14,10 @@ import { DOMAIN, EMAIL, LINK, MONEY, hasPhoneNumber } from './clientNote';
  *   after award an "extra £50 for the bank" is extra work agreed off the
  *   books. The customer may mention money; it tells the contractor nothing
  *   about ours.
+ *
+ * - **Never paying some other way**, from either side, before or after
+ *   award: cash, a transfer, VAT off (clientNote.ts OFF_PLATFORM). After
+ *   award is exactly when "cash for the balance" gets suggested.
  *
  * After award contact details are fine: the contractor already has the
  * customer's, and the customer is welcome to theirs.
@@ -38,6 +42,11 @@ export function messageProblem(
   if (!t) return 'Write a message first.';
   if (t.length > MESSAGE_MAX) {
     return `That message is too long — keep it under ${MESSAGE_MAX} characters.`;
+  }
+  if (OFF_PLATFORM.test(t)) {
+    return sender === 'contractor'
+      ? OFF_PLATFORM_REFUSAL
+      : 'Please leave payment arrangements out — you pay for the job through us, and the contractor is paid by us.';
   }
   if (state === 'pre_award') {
     if (LINK.test(t) || DOMAIN.test(t) || EMAIL.test(t)) {

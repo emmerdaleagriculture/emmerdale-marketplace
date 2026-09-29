@@ -6,6 +6,7 @@ import { notifyAdmins } from '@/lib/adminNotify';
 import type { FormState } from '@/lib/form';
 import { formatGBP, poundsInputToPence } from '@/lib/sealedQuotes/money';
 import { CLIENT_NOTE_MAX, clientNoteProblem } from '@/lib/sealedQuotes/clientNote';
+import { flagOffPlatform } from '@/lib/sealedQuotes/offPlatformAlert';
 
 /**
  * First-contact log (§25): the signed-in winner records that they've been in
@@ -108,9 +109,17 @@ export async function proposeExtraWorkAction(
   // The description is customer-facing too (email body, job page heading),
   // so it gets the same screen as the note: no prices, no contact details.
   const descriptionProblem = clientNoteProblem(description);
-  if (descriptionProblem) return { error: `In the description: ${descriptionProblem}` };
   const noteProblem = clientNoteProblem(note);
-  if (noteProblem) return { error: noteProblem };
+  if (descriptionProblem || noteProblem) {
+    await flagOffPlatform({
+      text: [description, note],
+      where: 'extra-work proposal',
+      sender: 'contractor',
+      submissionId,
+      contractorId: user.id,
+    });
+    return { error: descriptionProblem ? `In the description: ${descriptionProblem}` : noteProblem! };
+  }
 
   const admin = createServiceRoleClient();
   const { data, error } = await admin.rpc('contractor_add_extra_work', {
