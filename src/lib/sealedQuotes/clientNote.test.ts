@@ -84,4 +84,26 @@ describe('clientNoteProblem — what a customer may be shown', () => {
       expect(msg).toMatch(/please|keep it/i);
     }
   });
+
+  it('blocks arranging payment outside the platform', () => {
+    // The three notes found live on 29 Sept.
+    const cash = /payment arrangements/;
+    expect(clientNoteProblem('If it is cash on the day I will take the VAT off , I am available either to come any evening or one day at the weekend')).toMatch(cash);
+    expect(clientNoteProblem('If it is cash VAT will be taken off I can come one evening or at the weekend')).toMatch(cash);
+    expect(clientNoteProblem('Cash price \r\nminimum charge for a hours of tractor to work  as it will take less than an hour to do')).toMatch(cash);
+    // And the other ways of saying it.
+    expect(clientNoteProblem('Happy to take a bank transfer')).toMatch(cash);
+    expect(clientNoteProblem('Cheque is fine')).toMatch(cash);
+    expect(clientNoteProblem('Pay me direct and I can knock the VAT off')).toMatch(cash);
+    expect(clientNoteProblem('Cheaper if paid directly')).toMatch(cash);
+    expect(clientNoteProblem('Can do it off the books')).toMatch(cash);
+    expect(clientNoteProblem('Better if we sort it outside the site')).toMatch(cash);
+    // Reported as the cash, not the figure: the cash is what admin is told about.
+    expect(clientNoteProblem('400 quid cash')).toMatch(cash);
+  });
+
+  it('lets a VAT status through', () => {
+    ok('I am not VAT registered so there is no VAT on this.');
+    ok('Price is without VAT.');
+  });
 });

@@ -11,6 +11,7 @@ import type { FormState } from '@/lib/form';
 import { getSubmissionByClientToken } from '@/lib/sealedQuotes/data';
 import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
 import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
+import { flagOffPlatform } from '@/lib/sealedQuotes/offPlatformAlert';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -468,7 +469,7 @@ async function clientThread(token: string, invitationId: string) {
   if (!js) return null;
   const { data: inv } = await createServiceRoleClient()
     .from('job_invitations')
-    .select('id')
+    .select('id, submission_id')
     .eq('id', invitationId)
     .eq('submission_id', js.id)
     .maybeSingle();
@@ -488,7 +489,10 @@ export async function sendClientMessageAction(
   const state = await getThreadState(inv.id);
   if (state === 'closed') return { error: postRefusal('closed'), body };
   const problem = messageProblem(body, 'client', state);
-  if (problem) return { error: problem, body };
+  if (problem) {
+    await flagOffPlatform({ text: body, where: 'message', sender: 'customer', submissionId: inv.submission_id });
+    return { error: problem, body };
+  }
 
   const { data, error } = await createServiceRoleClient().rpc('sq_post_message', {
     p_invitation_id: inv.id,
