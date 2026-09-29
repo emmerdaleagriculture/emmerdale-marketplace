@@ -422,3 +422,47 @@
     margin-top: 20px;
   }
 }
+
+/* ── The Send bar (ConfirmStep) ─────────────────────────────────────────
+   Pinned to the foot of a phone screen once name and email are in, so Send
+   is never seven screens away. Hidden by default and on anything wider than
+   a phone, where the form fits and the real button is easy to find. */
+.sendBar {
+  display: none;
+}
+@media (max-width: 620px) {
+  .sendBar {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: #fff;
+    box-shadow: 0 -6px 18px rgba(23, 51, 13, 0.14);
+    transform: translateY(110%);
+    transition: transform 0.2s ease;
+    pointer-events: none;
+  }
+  .sendBarOn {
+    transform: none;
+    pointer-events: auto;
+  }
+}
+@media (max-width: 620px) and (prefers-reduced-motion: reduce) {
+  .sendBar {
+    transition: none;
+  }
+}
+.sendBarButton {
+  width: 100%;
+  justify-content: center;
+}
+.sendBarHint {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
