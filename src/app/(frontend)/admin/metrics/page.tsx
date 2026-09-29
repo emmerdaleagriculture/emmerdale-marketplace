@@ -6,6 +6,10 @@ import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
 import { Fold, Pie, PieCard, type PieSlice } from '../Pie';
 import { fetchAll } from '@/lib/supabase/fetchAll';
+import {
+  groupOf, jobSources, SOURCE_GROUPS,
+  type LandingView, type ParseEvent, type SourceSub,
+} from '@/lib/jobSources';
 
 export const metadata: Metadata = { title: 'Dashboard — Admin' };
 export const dynamic = 'force-dynamic';
@@ -74,7 +78,11 @@ export default async function AdminDashboard() {
   const admin = createServiceRoleClient();
   // One read now. The behaviour section used to load the whole /start journey
   // here as well, to render a copy of the journey page underneath it.
-  const [{ data, error }, invitations] = await Promise.all([
+  // Sources are read row by row, all time: the tables are small, and the
+  // early jobs need the IP join in jobSources to say anything at all.
+  const page = <T,>(q: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) =>
+    fetchAll(q).catch(() => [] as T[]);
+  const [{ data, error }, invitations, sourceSubs, parses, views] = await Promise.all([
     admin.rpc('admin_dashboard'),
     // Every invitation of the last 30 days, for the response donut: the RPC
     // carries rates, not the split. Paged; the month is past 600 already.
@@ -87,6 +95,26 @@ export default async function AdminDashboard() {
         .order('id', { ascending: false })
         .range(from, to),
     ).catch(() => [] as { status: string; opened_at: string | null }[]),
+    page<SourceSub>((from, to) =>
+      admin
+        .from('job_submissions')
+        .select('id, created_at, utm_source, utm_medium, gclid, referrer')
+        .not('confirmed_at', 'is', null)
+        // Hidden = test runs and duplicates, already out of the dashboard.
+        .is('hidden_at', null)
+        .order('created_at').order('id')
+        .range(from, to),
+    ),
+    page<ParseEvent>((from, to) =>
+      admin.from('job_parse_events').select('ip, created_at').eq('action', 'parse').order('id').range(from, to),
+    ),
+    page<LandingView>((from, to) =>
+      admin
+        .from('landing_views')
+        .select('ip, created_at, utm_source, utm_medium, gclid, referrer')
+        .order('id')
+        .range(from, to),
+    ),
   ]);
   if (error || !data) {
     return (
@@ -196,6 +224,24 @@ export default async function AdminDashboard() {
     { label: 'No verdict yet', value: nz(em.sent_7d) - nz(em.delivered_7d) - nz(em.bounced_7d) },
     { label: 'Waiting to send', value: nz(em.pending) },
   ];
+  // Where confirmed jobs came from, all time, grouped coarse enough for a
+  // donut. The fine channel stays in the folded table underneath.
+  const sources = jobSources(sourceSubs, parses, views);
+  const since30d = new Date(Date.now() - 30 * 86400 * 1000).toISOString();
+  const sourceSlices: PieSlice[] = SOURCE_GROUPS.map((g) => ({
+    label: g,
+    value: sources.filter((j) => groupOf(j.channel) === g).length,
+  }));
+  const recovered = sources.filter((j) => j.recovered).length;
+  const byChannel = new Map<string, { all: number; d30: number; recovered: number }>();
+  for (const j of sources) {
+    const row = byChannel.get(j.channel) ?? { all: 0, d30: 0, recovered: 0 };
+    row.all += 1;
+    if (j.created_at >= since30d) row.d30 += 1;
+    if (j.recovered) row.recovered += 1;
+    byChannel.set(j.channel, row);
+  }
+  const channelRows = [...byChannel.entries()].sort((a, b) => b[1].all - a[1].all);
   const legacySlices: PieSlice[] = [
     { label: 'Open', value: nz(d.legacy.board_jobs_open) },
     { label: 'Closed', value: nz(d.legacy.board_jobs_total) - nz(d.legacy.board_jobs_open) },
@@ -247,6 +293,29 @@ export default async function AdminDashboard() {
         <Tile value={n(d.unplaced_jobs)} label="Jobs with no county" hint="Could not be routed" />
       </Tiles>
       <PieCard title="Jobs sent in the last 30 days, where they stand" slices={funnelSlices} centre="jobs sent" empty="No jobs sent in the last 30 days." />
+
+      {/* ── Sources ───────────────────────────────────────────────────── */}
+      <div className={s.sectionLabel}>Where jobs came from — all time</div>
+      <PieCard title="Jobs sent, by where the customer came from" slices={sourceSlices} centre="jobs sent" empty="No jobs sent yet." />
+      <Fold summary={`By channel, in a table (${channelRows.length} channels)`}>
+        <AdminTable head={['Channel', 'Jobs', '30d', 'Traced by IP']}>
+          {channelRows.map(([channel, r]) => (
+            <tr key={channel}>
+              <td>{channel}<span className={s.metricHint}> {groupOf(channel)}</span></td>
+              <td>{n(r.all)}</td>
+              <td>{r.d30 > 0 ? n(r.d30) : '—'}</td>
+              <td>{r.recovered > 0 ? n(r.recovered) : '—'}</td>
+            </tr>
+          ))}
+        </AdminTable>
+      </Fold>
+      <p className={s.metricHint}>
+        {n(recovered)} of {n(sources.length)} jobs carried no usable source of their own (mostly
+        before 26 Sept, when the homepage hand-off overwrote it) and were traced through the
+        visitor&rsquo;s earlier landing views. &ldquo;Unknown&rdquo; is what that could not
+        recover, including everything before 13 Sept, when landing views start.{' '}
+        <Link href="/admin/reporting/sources">Sources page →</Link>
+      </p>
 
       {/* ── Behaviour on /start ───────────────────────────────────────── */}
       {/* The click heat, scroll depth and milestone tables used to be
