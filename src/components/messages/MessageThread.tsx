@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
+import { downscalePhoto } from '@/lib/photoDownscale';
 import { emptyFormState, type FormState } from '@/lib/form';
 import { MESSAGE_MAX, type MessageSender } from '@/lib/sealedQuotes/messageText';
 import type { ThreadMessage } from '@/lib/sealedQuotes/messages';
@@ -64,6 +65,17 @@ export function MessageThread({
         <div className={s.list}>
           {messages.map((m) => (
             <div key={m.id} className={`${s.msg} ${m.sender === me ? s.mine : s.theirs}`}>
+              {m.photos.length > 0 && (
+                <div className={s.photos}>
+                  {m.photos.map((url, i) => (
+                    <a key={url} href={url} target="_blank" rel="noopener noreferrer" className={s.photo}>
+                      {/* Signed, short-lived storage URLs: next/image would cache them past expiry. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt={`Photo ${i + 1} from ${m.sender === me ? 'you' : otherName}`} loading="lazy" />
+                    </a>
+                  ))}
+                </div>
+              )}
               {m.body}
               <span className={s.meta}>
                 {m.sender === me ? 'You' : otherName} · {m.when}
@@ -84,6 +96,11 @@ export function MessageThread({
   );
 }
 
+/** The most photos one message can carry; sq_post_message holds the same line. */
+const PHOTOS_MAX = 4;
+
+type Picked = { file: File; preview: string };
+
 function Composer({
   action,
   hidden,
@@ -98,13 +115,50 @@ function Composer({
   // it alone: a refused message keeps its words (the action hands them back)
   // and only a sent one clears.
   const [text, setText] = useState('');
+  // Photos are held here, already downscaled, and added to the form when it
+  // is sent — the file input itself has no name, so a phone's 6MB originals
+  // never go up the wire.
+  const [photos, setPhotos] = useState<Picked[]>([]);
+  const [shrinking, setShrinking] = useState(false);
+  const picker = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
-    if (state.ok) setText('');
-    else if (state.body !== undefined) setText(state.body);
+    if (state.ok) {
+      setText('');
+      setPhotos((prev) => {
+        prev.forEach((p) => URL.revokeObjectURL(p.preview));
+        return [];
+      });
+    } else if (state.body !== undefined) setText(state.body);
   }, [state]);
 
+  async function pick(list: FileList | null) {
+    if (!list || list.length === 0) return;
+    const room = PHOTOS_MAX - photos.length;
+    const chosen = Array.from(list).slice(0, Math.max(0, room));
+    setShrinking(true);
+    const small = await Promise.all(chosen.map(downscalePhoto));
+    setShrinking(false);
+    setPhotos((prev) =>
+      [...prev, ...small.map((file) => ({ file, preview: URL.createObjectURL(file) }))].slice(0, PHOTOS_MAX),
+    );
+    if (picker.current) picker.current.value = '';
+  }
+
+  function remove(i: number) {
+    setPhotos((prev) => {
+      URL.revokeObjectURL(prev[i].preview);
+      return prev.filter((_, j) => j !== i);
+    });
+  }
+
+  function send(data: FormData) {
+    for (const p of photos) data.append('photos', p.file);
+    formAction(data);
+  }
+
   return (
-    <form action={formAction}>
+    <form action={send}>
       {state.error && <p className={f.error}>{state.error}</p>}
       {Object.entries(hidden).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
@@ -116,14 +170,45 @@ function Composer({
           name="body"
           rows={3}
           maxLength={MESSAGE_MAX}
-          required
+          required={photos.length === 0}
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
       </label>
-      <button className={f.btnPrimary} type="submit" disabled={pending}>
-        {pending ? 'Sending…' : 'Send'}
-      </button>
+
+      {photos.length > 0 && (
+        <ul className={s.picked} aria-label="Photos to send">
+          {photos.map((p, i) => (
+            <li key={p.preview} className={s.pickedItem}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.preview} alt={`Photo ${i + 1} to send`} />
+              <button type="button" className={s.unpick} onClick={() => remove(i)} aria-label={`Remove photo ${i + 1}`}>
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className={s.actions}>
+        <button className={f.btnPrimary} type="submit" disabled={pending || shrinking}>
+          {pending ? 'Sending…' : 'Send'}
+        </button>
+        {photos.length < PHOTOS_MAX && (
+          <label className={s.addPhoto}>
+            <input
+              ref={picker}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className={s.fileInput}
+              onChange={(e) => pick(e.target.files)}
+              disabled={pending}
+            />
+            {shrinking ? 'Adding…' : photos.length > 0 ? 'Add another photo' : 'Add photos'}
+          </label>
+        )}
+      </div>
     </form>
   );
 }

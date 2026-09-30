@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/time';
 import type { MessageSender, ThreadState } from './messageText';
+import { signMessagePhotos } from './messagePhotos';
 
 /**
  * Reads for the customer↔contractor threads (20260925140000_job_messages).
@@ -15,6 +16,8 @@ export type ThreadMessage = {
   body: string;
   when: string;
   read: boolean;
+  /** Signed, short-lived URLs for the photos sent with it. */
+  photos: string[];
 };
 
 type MessageRow = {
@@ -23,16 +26,23 @@ type MessageRow = {
   body: string;
   created_at: string;
   read_at: string | null;
+  photo_paths: string[];
 };
 
-function toMessage(m: MessageRow): ThreadMessage {
+function toMessage(m: MessageRow, urls: Map<string, string>): ThreadMessage {
   return {
     id: m.id,
     sender: m.sender as MessageSender,
     body: m.body,
     when: formatDateTime(m.created_at),
     read: m.read_at !== null,
+    photos: m.photo_paths.map((p) => urls.get(p)).filter((u): u is string => !!u),
   };
+}
+
+/** Sign every photo on these rows in one call. */
+function signAll(rows: MessageRow[]) {
+  return signMessagePhotos(rows.flatMap((m) => m.photo_paths));
 }
 
 export async function getThreadState(invitationId: string): Promise<ThreadState> {
@@ -45,11 +55,13 @@ export async function getThreadState(invitationId: string): Promise<ThreadState>
 export async function getThreadMessages(invitationId: string): Promise<ThreadMessage[]> {
   const { data } = await createServiceRoleClient()
     .from('job_messages')
-    .select('id, sender, body, created_at, read_at')
+    .select('id, sender, body, created_at, read_at, photo_paths')
     .eq('invitation_id', invitationId)
     .order('created_at', { ascending: true })
     .limit(500);
-  return (data ?? []).map(toMessage);
+  const rows = data ?? [];
+  const urls = await signAll(rows);
+  return rows.map((m) => toMessage(m, urls));
 }
 
 /**
@@ -88,7 +100,7 @@ export async function getClientThreads(submissionId: string): Promise<ClientThre
     admin.rpc('sq_submission_threads', { p_submission_id: submissionId }),
     admin
       .from('job_messages')
-      .select('id, invitation_id, sender, body, created_at, read_at')
+      .select('id, invitation_id, sender, body, created_at, read_at, photo_paths')
       .eq('submission_id', submissionId)
       .order('created_at', { ascending: true })
       .limit(2000),
@@ -100,10 +112,12 @@ export async function getClientThreads(submissionId: string): Promise<ClientThre
     state: ThreadState;
   }[];
 
+  const messageRows = messagesRes.data ?? [];
+  const urls = await signAll(messageRows);
   const byThread = new Map<string, ThreadMessage[]>();
-  for (const m of messagesRes.data ?? []) {
+  for (const m of messageRows) {
     const list = byThread.get(m.invitation_id) ?? [];
-    list.push(toMessage(m));
+    list.push(toMessage(m, urls));
     byThread.set(m.invitation_id, list);
   }
 

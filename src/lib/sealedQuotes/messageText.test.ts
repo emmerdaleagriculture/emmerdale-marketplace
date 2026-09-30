@@ -11,6 +11,7 @@ describe('messageProblem', () => {
 
   it('refuses an empty message', () => {
     expect(messageProblem('   ', 'client', 'pre_award')).toMatch(/write a message/i);
+    expect(messageProblem('   ', 'client', 'pre_award', true)).toBeNull();
   });
 
   it('refuses contact details before award, from either side', () => {

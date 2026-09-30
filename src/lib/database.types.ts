@@ -960,6 +960,7 @@ export type Database = {
           id: string
           invitation_id: string
           phase: string
+          photo_paths: string[]
           read_at: string | null
           sender: string
           submission_id: string
@@ -971,6 +972,7 @@ export type Database = {
           id?: string
           invitation_id: string
           phase: string
+          photo_paths?: string[]
           read_at?: string | null
           sender: string
           submission_id: string
@@ -982,6 +984,7 @@ export type Database = {
           id?: string
           invitation_id?: string
           phase?: string
+          photo_paths?: string[]
           read_at?: string | null
           sender?: string
           submission_id?: string
@@ -2667,6 +2670,7 @@ export type Database = {
           p_body: string
           p_checked_as: string
           p_invitation_id: string
+          p_photo_paths?: string[]
           p_sender: string
         }
         Returns: Json

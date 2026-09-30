@@ -7,6 +7,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
 import { formatGBP, poundsInputToPence } from '@/lib/sealedQuotes/money';
+import { removeJobMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 
 async function assertAdmin() {
   const user = await getUser();
@@ -424,6 +425,8 @@ export async function deleteJobAction(_prev: FormState, formData: FormData): Pro
     const { error: rmError } = await admin.storage.from('job-photos').remove(res.photo_paths);
     if (rmError) console.error('[admin] job photo removal failed:', rmError.message);
   }
+  // And anything sent in the messages, which the delete cascade took with it.
+  await removeJobMessagePhotos(id);
 
   await notifyAdmins(
     `Job deleted: ${id.slice(0, 8)}`,

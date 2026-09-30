@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation';
 import { getInvitationByToken } from '@/lib/sealedQuotes/data';
 import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
 import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
+import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 import { flagOffPlatform } from '@/lib/sealedQuotes/offPlatformAlert';
 
 export type QuoteActionState = FormState & { closed?: boolean };
@@ -225,7 +226,9 @@ export async function sendContractorMessageAction(
 
   const state = await getThreadState(invitation.id);
   if (state === 'closed') return { error: postRefusal('closed'), body };
-  const problem = messageProblem(body, 'contractor', state);
+  const photos = readMessagePhotos(formData);
+  if ('error' in photos) return { error: photos.error, body };
+  const problem = messageProblem(body, 'contractor', state, photos.files.length > 0);
   if (problem) {
     await flagOffPlatform({
       text: body,
@@ -237,15 +240,22 @@ export async function sendContractorMessageAction(
     return { error: problem, body };
   }
 
+  const submissionId = invitation.submission?.id;
+  if (!submissionId) return { error: postRefusal(undefined), body };
+  const photoPaths = await uploadMessagePhotos(submissionId, photos.files);
+  if (!photoPaths) return { error: 'The photos didn’t upload — please try again.', body };
+
   const { data, error } = await createServiceRoleClient().rpc('sq_post_message', {
     p_invitation_id: invitation.id,
     p_sender: 'contractor',
     p_body: body,
     p_checked_as: state,
+    p_photo_paths: photoPaths,
   });
   const res = data as { ok: boolean; reason?: string } | null;
   if (error || !res?.ok) {
     if (error) console.error('[sq] contractor message failed:', error.message);
+    await removeMessagePhotos(photoPaths);
     return { error: postRefusal(res?.reason), body };
   }
   revalidatePath(`/quote/${token}`);

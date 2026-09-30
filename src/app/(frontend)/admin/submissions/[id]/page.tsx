@@ -16,6 +16,7 @@ import { AdminTable } from '../../ui';
 import p from '../submissions.module.css';
 import { OutreachList, OutreachStats, STAGE_TITLES, isOutreachStage, type OutreachStage } from '../OutreachStats';
 import { loadOutreach } from '../outreach';
+import { signMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 
 export const metadata: Metadata = { title: 'Submission — Admin' };
 
@@ -27,6 +28,7 @@ type AdminMessage = {
   phase: string;
   created_at: string;
   read_at: string | null;
+  photo_paths: string[];
   inv: unknown;
 };
 
@@ -37,7 +39,15 @@ type AdminMessage = {
  * of "From: Customer" rows left the reader working out which contractor a
  * customer message went to.
  */
-function MessageThreads({ messages, customer }: { messages: AdminMessage[]; customer: string | null }) {
+function MessageThreads({
+  messages,
+  customer,
+  photoUrls,
+}: {
+  messages: AdminMessage[];
+  customer: string | null;
+  photoUrls: Map<string, string>;
+}) {
   const threads = new Map<string, AdminMessage[]>();
   for (const m of messages) {
     const t = threads.get(m.invitation_id);
@@ -79,7 +89,29 @@ function MessageThreads({ messages, customer }: { messages: AdminMessage[]; cust
                       <div className={p.bubbleMeta}>
                         <b>{fromClient ? customerName : contractor}</b> → {fromClient ? contractor : customerName}
                       </div>
-                      <p className={p.bubbleBody}>{m.body}</p>
+                      {m.photo_paths.length > 0 && (
+                        <>
+                          <div className={p.bubblePhotos}>
+                            {m.photo_paths.map((path, j) => {
+                              const url = photoUrls.get(path);
+                              return url ? (
+                                <a key={path} href={url} target="_blank" rel="noopener noreferrer">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={url} alt={`Photo ${j + 1}`} loading="lazy" />
+                                </a>
+                              ) : null;
+                            })}
+                          </div>
+                          {/* Words are checked for contact details before award; a
+                              picture can't be, so it is shown for a person to look at. */}
+                          {m.phase === 'pre_award' && (
+                            <p className={p.photoCheck}>
+                              Sent before award — check for phone numbers, names or signwriting
+                            </p>
+                          )}
+                        </>
+                      )}
+                      {m.body && <p className={p.bubbleBody}>{m.body}</p>}
                       <div className={p.bubbleTime}>
                         {formatDateTime(m.created_at)} ·{' '}
                         {m.read_at ? `read ${formatDateTime(m.read_at)}` : 'not read yet'}
@@ -149,7 +181,7 @@ export default async function SubmissionDetailPage({
     admin
       .from('job_messages')
       .select(
-        `id, invitation_id, sender, body, phase, created_at, read_at,
+        `id, invitation_id, sender, body, phase, created_at, read_at, photo_paths,
          inv:job_invitations(display_label, contractor:contractors(business_name))`,
       )
       .eq('submission_id', id)
@@ -157,6 +189,7 @@ export default async function SubmissionDetailPage({
       .limit(500),
   ]);
   const messages = messagesQ.data ?? [];
+  const messagePhotoUrls = await signMessagePhotos(messages.flatMap((m) => m.photo_paths));
 
   // Extra work: jobs booked off this one, and the one this extends.
   const [extrasQ, contractorQ, markupQ] = await Promise.all([
@@ -478,7 +511,7 @@ export default async function SubmissionDetailPage({
       {messages.length > 0 && (
         <>
           <div className={s.sectionLabel} id="messages">Messages — customer and contractors</div>
-          <MessageThreads messages={messages} customer={sub.contact_name} />
+          <MessageThreads messages={messages} customer={sub.contact_name} photoUrls={messagePhotoUrls} />
         </>
       )}
 
