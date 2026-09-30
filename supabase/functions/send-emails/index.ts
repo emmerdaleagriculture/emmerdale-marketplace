@@ -47,6 +47,7 @@ const SQ_CONTRACTOR_KINDS = new Set([
   'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
   'sq_invoice_request',
   'sq_job_amended', 'sq_message_to_contractor',
+  'sq_visit_reminder', 'sq_visit_accepted', 'sq_visit_declined',
 ]);
 
 /**
@@ -721,6 +722,62 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `The balance on submission ${p.submission_id} passed its due date ` +
           `(${p.due_at ?? '?'}) without being settled.\n\n` +
           `${SITE_URL}/admin/submissions/${p.submission_id}`,
+      };
+
+    // ── Booking with a site visit (20260930160000) ──────────────────
+    case 'sq_visit_revised':
+      return {
+        subject: `New price after the site visit — ${gbp(p.new_pence)}`,
+        text:
+          `Hi ${first},\n\n` +
+          `${p.contractor_business_name ?? 'Your contractor'} has been to look at the job and ` +
+          `has revised the price.\n\n` +
+          `Was:  ${gbp(p.old_pence)}\n` +
+          `Now:  ${gbp(p.new_pence)}\n\n` +
+          `Their reason: “${p.reason ?? ''}”\n\n` +
+          `You can accept the new price, or decline it and have your deposit refunded in ` +
+          `full. Either way, it’s on your job page:\n${portal}`,
+      };
+
+    case 'sq_visit_confirmed':
+      return {
+        subject: `Your price is confirmed`,
+        text:
+          `Hi ${first},\n\n` +
+          (p.auto
+            ? `${p.contractor_business_name ?? 'Your contractor'} hasn’t asked to change the price ` +
+              `since booking, so it now stands as quoted.`
+            : `${p.contractor_business_name ?? 'Your contractor'} has seen the site and confirmed the ` +
+              `price you booked at.`) +
+          `\n\nThey’ll arrange the work with you. Your job page: ${portal}`,
+      };
+
+    case 'sq_visit_reminder':
+      return {
+        subject: `Confirm or revise the price for ${p.contact_name ?? 'your customer'}`,
+        text:
+          `You booked ${p.contact_name ?? 'this customer'}’s job subject to a site visit.\n\n` +
+          `Once you’ve seen it, confirm the price or revise it on your won jobs page. If we ` +
+          `don’t hear from you in the next two days, the price you quoted stands.\n\n` +
+          `${SITE_URL}/won`,
+      };
+
+    case 'sq_visit_accepted':
+      return {
+        subject: `${p.contact_name ?? 'The customer'} accepted your revised price`,
+        text:
+          `${p.contact_name ?? 'The customer'} has accepted your revised price of ` +
+          `${gbp(p.contractor_pence)}. The job is back on — arrange the work with them.\n\n` +
+          `${SITE_URL}/won`,
+      };
+
+    case 'sq_visit_declined':
+      return {
+        subject: `${p.contact_name ?? 'The customer'} declined the revised price`,
+        text:
+          `${p.contact_name ?? 'The customer'} has decided not to go ahead at the revised price, ` +
+          `so the job is cancelled and their deposit has been refunded. You don’t need to do ` +
+          `anything.\n\nThanks for going to look at it.`,
       };
 
     case 'sq_job_cancelled_contractor':

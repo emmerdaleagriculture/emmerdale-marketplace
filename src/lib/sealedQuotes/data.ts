@@ -54,6 +54,7 @@ export async function getSubmissionByClientToken(token: string) {
     .from('job_submissions')
     .select(
       `id, status, expires_at, awarded_at, accepted_client_quote_id, customer_id, contact_name,
+       visit_status, visit_due_at, visit_revised_client_pence, visit_revision_reason,
        postcode, lat, lng, boundary, area_value, area_unit, area_mapped_value,
        urgency, target_date, access_notes, obstacles, gate_width, gate_w3w,
        service_attributes, photo_paths, service_verbatim,

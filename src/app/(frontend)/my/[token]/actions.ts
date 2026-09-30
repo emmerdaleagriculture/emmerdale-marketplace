@@ -13,6 +13,7 @@ import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
 import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
 import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 import { flagOffPlatform } from '@/lib/sealedQuotes/offPlatformAlert';
+import { notifyAdmins } from '@/lib/adminNotify';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -526,4 +527,91 @@ export async function markClientThreadReadAction(
 ): Promise<void> {
   const inv = await clientThread(token, invitationId);
   if (inv) await markThreadRead(inv.id, 'client');
+}
+
+/**
+ * The customer's answer to a price revised after a site visit
+ * (20260930160000_site_visit_booking). Accepting changes the price and puts
+ * the job back where it was; the balance follows the new price.
+ */
+export async function acceptRevisedPriceAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const token = String(formData.get('token') ?? '');
+  const js = await getSubmissionByClientToken(token);
+  if (!js) return { error: 'This link is no longer valid.' };
+
+  const { data, error } = await createServiceRoleClient().rpc('sq_visit_accept', { p_submission_id: js.id });
+  if (error || !(data as { ok: boolean } | null)?.ok) {
+    if (error) console.error('[sq] sq_visit_accept failed:', error.message);
+    return { error: 'This has already been decided — refresh to see where the job is.' };
+  }
+  revalidatePath(`/my/${token}`);
+  return { ok: true, message: 'Accepted — the job goes ahead at the new price.' };
+}
+
+/**
+ * Declining the revised price: the whole deposit goes back (the visit is the
+ * contractor's cost), and the job is cancelled. Refund FIRST, then record it,
+ * for the reason cancelJobAction gives: cancelling and then failing to return
+ * the money is the one order that leaves the customer worse off.
+ */
+export async function declineRevisedPriceAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const token = String(formData.get('token') ?? '');
+  const js = await getSubmissionByClientToken(token);
+  if (!js) return { error: 'This link is no longer valid.' };
+  if (js.status !== 'variation_pending' || js.visit_status !== 'revised') {
+    return { error: 'This has already been decided — refresh to see where the job is.' };
+  }
+
+  const admin = createServiceRoleClient();
+  const { data: deposit } = await admin
+    .from('job_payments')
+    .select('amount_pence, stripe_payment_intent_id')
+    .eq('submission_id', js.id)
+    .eq('kind', 'deposit')
+    .eq('status', 'paid')
+    .order('paid_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!deposit?.stripe_payment_intent_id) {
+    return { error: 'We couldn’t find your deposit payment — please contact us and we’ll refund it by hand.' };
+  }
+
+  try {
+    await getStripe().refunds.create(
+      {
+        payment_intent: deposit.stripe_payment_intent_id,
+        amount: deposit.amount_pence,
+        reason: 'requested_by_customer',
+        metadata: { submission_id: js.id, kind: 'sq_visit_declined' },
+      },
+      // A double click must not become a second refund attempt.
+      { idempotencyKey: `sq_visit_declined:${js.id}` },
+    );
+  } catch (err) {
+    console.error('[sq] visit decline refund failed:', err);
+    return {
+      error:
+        'We couldn’t process the refund just now, so nothing has changed. Try again shortly, or contact us and we’ll do it by hand.',
+    };
+  }
+
+  const { data, error } = await admin.rpc('sq_visit_declined', {
+    p_submission_id: js.id,
+    p_refund_pence: deposit.amount_pence,
+  });
+  if (error || !(data as { ok: boolean } | null)?.ok) {
+    console.error('[sq] sq_visit_declined failed AFTER refund:', error ?? data);
+    await notifyAdmins(
+      'MANUAL FIX: visit decline refunded but not recorded',
+      `Job ${js.id}: the deposit of ${formatGBP(deposit.amount_pence)} was refunded in Stripe, but the job could not be marked cancelled.`,
+    );
+    return {
+      error: 'Your deposit has been refunded, but something went wrong finishing the cancellation. We’ve been alerted and will confirm shortly.',
+    };
+  }
+  revalidatePath(`/my/${token}`);
+  return {
+    ok: true,
+    message: `Cancelled. Your ${formatGBP(deposit.amount_pence)} deposit is on its way back to your card, usually within 5 working days.`,
+  };
 }

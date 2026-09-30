@@ -116,6 +116,21 @@ export function PriceList({
                     depositRate,
                   );
                   const note = vatNote(q.price_basis);
+                  // Booking with a site visit: the same deposit, but the price
+                  // is confirmed on the ground and the customer is protected
+                  // if it changes (20260930160000_site_visit_booking).
+                  if (q.site_visit_required) {
+                    return (
+                      <p>
+                        You&rsquo;re booking <strong>{q.contractor_display_label}</strong> at{' '}
+                        <strong>{formatGBP(q.client_price_pence)}</strong>
+                        {note ? ` (${note})` : ''}, subject to a site visit. You pay{' '}
+                        <strong>{formatGBP(deposit)}</strong> now, and they get your details to
+                        arrange the visit. If they change the price afterwards, you can accept the
+                        new one or decline it and have the {formatGBP(deposit)} back in full.
+                      </p>
+                    );
+                  }
                   return balance > 0 ? (
                     <p>
                       You&rsquo;re accepting <strong>{q.contractor_display_label}</strong> at{' '}
@@ -135,7 +150,11 @@ export function PriceList({
                 })()}
                 <div className={m.acceptButtons}>
                   <button className={f.btnYellow} type="submit" disabled={pending}>
-                    {pending ? 'Setting up payment…' : 'Accept and book'}
+                    {pending
+                      ? 'Setting up payment…'
+                      : q.site_visit_required
+                        ? 'Book the site visit'
+                        : 'Accept and book'}
                   </button>
                   <button
                     type="button"
@@ -153,7 +172,7 @@ export function PriceList({
                 className={f.btnPrimary}
                 onClick={() => setConfirming(q.id)}
               >
-                Accept this price
+                {q.site_visit_required ? 'Book a site visit' : 'Accept this price'}
               </button>
             )}
           </div>
