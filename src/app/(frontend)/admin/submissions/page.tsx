@@ -188,10 +188,12 @@ function SubmissionRow({
   r,
   prices,
   selectable = false,
+  depositPaid = false,
 }: {
   r: Row;
   prices?: PriceRange;
   selectable?: boolean;
+  depositPaid?: boolean;
 }) {
   const [label, tone] = STATUS[r.status] ?? [r.status, 'muted'];
   const isDraft = DRAFT.has(r.status);
@@ -238,7 +240,10 @@ function SubmissionRow({
       {selectable && (
         <input type="checkbox" name="ids" value={r.id} className={p.rowPick} aria-label={`Select ${title}`} />
       )}
-      <span className={`${p.status} ${p[tone]}`}>{label}</span>
+      <div className={p.pills}>
+        <span className={`${p.status} ${p[tone]}`}>{label}</span>
+        {depositPaid && <span className={`${p.status} ${p.good}`}>Deposit paid</span>}
+      </div>
 
       <div className={p.rowMain}>
         <Link href={`/admin/submissions/${r.id}`} className={p.title}>
@@ -316,10 +321,13 @@ function Days({
   rows,
   prices,
   selectable = false,
+  depositPaid,
 }: {
   rows: Row[];
   prices: Map<string, PriceRange>;
   selectable?: boolean;
+  /** Jobs whose deposit is in, marked on the Won tab. */
+  depositPaid?: Set<string | null>;
 }) {
   return (
     <>
@@ -330,7 +338,13 @@ function Days({
           </h2>
           <ul className={p.rows}>
             {day.map((r) => (
-              <SubmissionRow key={r.id} r={r} prices={prices.get(r.id)} selectable={selectable} />
+              <SubmissionRow
+                key={r.id}
+                r={r}
+                prices={prices.get(r.id)}
+                selectable={selectable}
+                depositPaid={depositPaid?.has(r.id)}
+              />
             ))}
           </ul>
         </section>
@@ -360,7 +374,7 @@ export default async function AdminSubmissionsPage({
   const ids = async (
     page: (from: number, to: number) => PromiseLike<{ data: { submission_id: string | null }[] | null; error: { message: string } | null }>,
   ) => new Set((await fetchAll(page)).map((r) => r.submission_id));
-  const [{ data, error }, pricedIds, paidIds, quotes] = await Promise.all([
+  const [{ data, error }, pricedIds, paidIds, depositIds, quotes] = await Promise.all([
     admin.rpc('admin_submission_board', { p_limit: LIMIT, p_include_hidden: showHidden }),
     filter === 'priced'
       ? ids((from, to) => admin.from('client_quotes').select('submission_id').order('id').range(from, to))
@@ -368,6 +382,11 @@ export default async function AdminSubmissionsPage({
     filter === 'paid'
       ? ids((from, to) =>
           admin.from('job_payments').select('submission_id').in('status', ['paid', 'partially_refunded', 'refunded']).order('id').range(from, to))
+      : new Set<string | null>(),
+    // A deposit still counts as paid after a partial refund.
+    view === 'won' && !filter
+      ? ids((from, to) =>
+          admin.from('job_payments').select('submission_id').eq('kind', 'deposit').in('status', ['paid', 'partially_refunded']).order('id').range(from, to))
       : new Set<string | null>(),
     fetchAll((from, to) =>
       admin
@@ -486,7 +505,7 @@ export default async function AdminSubmissionsPage({
           <Days rows={shown} prices={prices} selectable />
         </DraftToolbar>
       ) : (
-        <Days rows={shown} prices={prices} />
+        <Days rows={shown} prices={prices} depositPaid={depositIds} />
       )}
     </div>
   );
