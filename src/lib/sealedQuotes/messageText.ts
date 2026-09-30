@@ -37,9 +37,11 @@ export function messageProblem(
   body: string,
   sender: MessageSender,
   state: ThreadState,
+  /** A photo on its own is a message; words are then optional. */
+  hasPhotos = false,
 ): string | null {
   const t = body.trim();
-  if (!t) return 'Write a message first.';
+  if (!t) return hasPhotos ? null : 'Write a message or add a photo first.';
   if (t.length > MESSAGE_MAX) {
     return `That message is too long — keep it under ${MESSAGE_MAX} characters.`;
   }
@@ -87,6 +89,8 @@ export function postRefusal(reason: string | undefined): string {
       return 'That’s a lot of messages in an hour — please wait a little before sending more.';
     case 'state_changed':
       return 'The job has just changed — please check your message still fits and send it again.';
+    case 'too_many_photos':
+      return 'That’s too many photos for one message — send up to four at a time.';
     case 'no_thread':
       return 'You can message a contractor once they’ve sent a price or a question.';
     default:

@@ -11,6 +11,7 @@ import type { FormState } from '@/lib/form';
 import { getSubmissionByClientToken } from '@/lib/sealedQuotes/data';
 import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
 import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
+import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 import { flagOffPlatform } from '@/lib/sealedQuotes/offPlatformAlert';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -488,21 +489,30 @@ export async function sendClientMessageAction(
 
   const state = await getThreadState(inv.id);
   if (state === 'closed') return { error: postRefusal('closed'), body };
-  const problem = messageProblem(body, 'client', state);
+  const photos = readMessagePhotos(formData);
+  if ('error' in photos) return { error: photos.error, body };
+  const problem = messageProblem(body, 'client', state, photos.files.length > 0);
   if (problem) {
     await flagOffPlatform({ text: body, where: 'message', sender: 'customer', submissionId: inv.submission_id });
     return { error: problem, body };
   }
+
+  const submissionId = inv.submission_id;
+  if (!submissionId) return { error: postRefusal(undefined), body };
+  const photoPaths = await uploadMessagePhotos(submissionId, photos.files);
+  if (!photoPaths) return { error: 'The photos didn’t upload — please try again.', body };
 
   const { data, error } = await createServiceRoleClient().rpc('sq_post_message', {
     p_invitation_id: inv.id,
     p_sender: 'client',
     p_body: body,
     p_checked_as: state,
+    p_photo_paths: photoPaths,
   });
   const res = data as { ok: boolean; reason?: string } | null;
   if (error || !res?.ok) {
     if (error) console.error('[sq] client message failed:', error.message);
+    await removeMessagePhotos(photoPaths);
     return { error: postRefusal(res?.reason), body };
   }
   revalidatePath(`/my/${token}`);

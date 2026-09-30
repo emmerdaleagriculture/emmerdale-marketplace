@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getInvitationByToken, getLiveQuote, signPhotos } from '@/lib/sealedQuotes/data';
 import { formatGBP, formatRate, vatNote } from '@/lib/sealedQuotes/money';
-import { timeLeft, formatDateTime } from '@/lib/time';
+import { timeLeft, formatDate, formatDateTime } from '@/lib/time';
 import { MinimalHeader } from '@/components/MinimalHeader';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -15,7 +15,7 @@ import { QuoteForm } from './QuoteForm';
 import { DeclineForm } from './DeclineForm';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { MessageThread } from '@/components/messages/MessageThread';
-import { getThreadMessages, getThreadState } from '@/lib/sealedQuotes/messages';
+import { getModeratedUntil, getThreadMessages, getThreadState } from '@/lib/sealedQuotes/messages';
 import { markContractorThreadReadAction, sendContractorMessageAction } from './actions';
 import a from '../../auth.module.css';
 import q from './quote.module.css';
@@ -64,8 +64,9 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
         return { data: null };
       }),
     getThreadState(invitation.id),
-    getThreadMessages(invitation.id),
+    getThreadMessages(invitation.id, 'contractor'),
   ]);
+  const moderatedUntil = await getModeratedUntil(invitation.contractor_id);
   const position = (positionRes?.data as
     | {
         price_rank: number;
@@ -320,6 +321,11 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                     : threadState === 'post_award'
                       ? 'The customer reads and replies on their job page. Leave prices out: if the job has changed and the price should too, get in touch with us.'
                       : undefined
+                }
+                notice={
+                  threadState === 'pre_award' && moderatedUntil
+                    ? `Until ${formatDate(moderatedUntil.toISOString())}, your messages with customers are checked by a moderator before they are delivered, and so are theirs to you. This follows contact details being exchanged before a job was booked, which is against clause 8 of the contractor terms. Replies may take a few hours to reach the customer, and they may book another contractor in the meantime.`
+                    : undefined
                 }
                 action={threadState === 'closed' ? null : sendContractorMessageAction}
                 closedNote="This conversation has closed."

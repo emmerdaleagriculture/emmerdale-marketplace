@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { PageTracker, trackStep } from '@/components/PageTracker';
 import { submitForm } from '@/lib/submitForm';
 import { parseJobAction, recordLandingView, type ParseActionState } from './actions';
-import { downscalePhoto } from './photoDownscale';
+import { downscalePhoto } from '@/lib/photoDownscale';
 import { HOME_SERVICES } from '@/lib/home/services';
 import type { LandingFlowPath } from '@/lib/landingPaths';
 

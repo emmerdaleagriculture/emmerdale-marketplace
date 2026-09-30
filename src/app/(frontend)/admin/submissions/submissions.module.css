@@ -612,3 +612,21 @@
     max-width: 88%;
   }
 }
+.bubblePhotos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0;
+}
+.bubblePhotos img {
+  display: block;
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.photoCheck {
+  margin: 2px 0 4px;
+  font-size: 11px;
+  color: #8a5a00;
+}

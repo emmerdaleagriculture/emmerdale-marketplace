@@ -7,6 +7,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
 import { formatGBP, poundsInputToPence } from '@/lib/sealedQuotes/money';
+import { removeJobMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 
 async function assertAdmin() {
   const user = await getUser();
@@ -424,6 +425,8 @@ export async function deleteJobAction(_prev: FormState, formData: FormData): Pro
     const { error: rmError } = await admin.storage.from('job-photos').remove(res.photo_paths);
     if (rmError) console.error('[admin] job photo removal failed:', rmError.message);
   }
+  // And anything sent in the messages, which the delete cascade took with it.
+  await removeJobMessagePhotos(id);
 
   await notifyAdmins(
     `Job deleted: ${id.slice(0, 8)}`,
@@ -487,4 +490,32 @@ export async function addExtraWorkAction(_prev: FormState, formData: FormData): 
     ok: true,
     message: `Sent to the customer at ${formatGBP(res.client_price_pence ?? 0)}. They accept and pay the deposit on their job page.`,
   };
+}
+
+/**
+ * A moderator's decision on a held message (20260930140000_message_moderation).
+ * Approving delivers it and sends the email posting it would have;
+ * rejecting leaves it with its sender, marked as not delivered.
+ */
+export async function moderateMessageAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  await assertAdmin();
+  const submissionId = String(formData.get('submission_id') ?? '');
+  const messageId = String(formData.get('message_id') ?? '');
+  const approve = formData.get('decision') === 'approve';
+  if (!submissionId || !messageId) return { error: 'Missing the message.' };
+
+  const { data, error } = await createServiceRoleClient().rpc('sq_moderate_message', {
+    p_message_id: messageId,
+    p_approve: approve,
+  });
+  const res = data as { ok: boolean; reason?: string } | null;
+  if (error || !res?.ok) {
+    if (error) console.error('[admin] moderate message failed:', error.message);
+    return { error: res?.reason === 'not_held' ? 'Already decided.' : 'That didn’t go through — try again.' };
+  }
+  revalidatePath(`/admin/submissions/${submissionId}`);
+  return { ok: true };
 }
