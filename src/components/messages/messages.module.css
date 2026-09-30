@@ -194,3 +194,13 @@
 .rejected {
   color: #a3261b;
 }
+
+/* The standing warning on every open conversation. */
+.monitored {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  border-left: 3px solid #d9a400;
+  padding: 2px 0 2px 10px;
+  margin-bottom: 14px;
+}
