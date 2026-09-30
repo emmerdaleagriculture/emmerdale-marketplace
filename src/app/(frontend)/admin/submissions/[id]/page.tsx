@@ -19,6 +19,83 @@ import { loadOutreach } from '../outreach';
 
 export const metadata: Metadata = { title: 'Submission — Admin' };
 
+type AdminMessage = {
+  id: string;
+  invitation_id: string;
+  sender: string;
+  body: string;
+  phase: string;
+  created_at: string;
+  read_at: string | null;
+  inv: unknown;
+};
+
+/**
+ * Every customer↔contractor conversation on the job, one card per
+ * contractor, as a chat: the customer on the left, the contractor on the
+ * right, and each message saying in words who sent it to whom. A flat table
+ * of "From: Customer" rows left the reader working out which contractor a
+ * customer message went to.
+ */
+function MessageThreads({ messages, customer }: { messages: AdminMessage[]; customer: string | null }) {
+  const threads = new Map<string, AdminMessage[]>();
+  for (const m of messages) {
+    const t = threads.get(m.invitation_id);
+    if (t) t.push(m);
+    else threads.set(m.invitation_id, [m]);
+  }
+  const customerName = customer ? `${customer} (customer)` : 'Customer';
+
+  return (
+    <div className={p.threads}>
+      {[...threads].map(([id, thread]) => {
+        const inv = thread[0].inv as {
+          display_label: string | null;
+          contractor: { business_name: string } | null;
+        } | null;
+        const contractor = inv?.contractor?.business_name ?? 'Contractor';
+        const label = inv?.display_label;
+        return (
+          <section key={id} className={p.thread}>
+            <header className={p.threadHead}>
+              <span className={p.threadWho}>
+                <b>{customerName}</b> <span aria-hidden="true">⇄</span> <b>{contractor}</b>
+                {label && <span className={p.threadLabel}>{label}</span>}
+              </span>
+              <span className={p.threadCount}>
+                {thread.length} message{thread.length === 1 ? '' : 's'}
+              </span>
+            </header>
+            <ol className={p.bubbles}>
+              {thread.map((m, i) => {
+                const fromClient = m.sender === 'client';
+                // Mark the point the job was awarded, where the thread changes
+                // from "asking about a quote" to "arranging the work".
+                const awardedHere = m.phase === 'post_award' && (i === 0 || thread[i - 1].phase !== 'post_award');
+                return (
+                  <li key={m.id} className={p.bubbleRow}>
+                    {awardedHere && <div className={p.phaseBreak}>Job awarded</div>}
+                    <div className={`${p.bubble} ${fromClient ? p.fromClient : p.fromContractor}`}>
+                      <div className={p.bubbleMeta}>
+                        <b>{fromClient ? customerName : contractor}</b> → {fromClient ? contractor : customerName}
+                      </div>
+                      <p className={p.bubbleBody}>{m.body}</p>
+                      <div className={p.bubbleTime}>
+                        {formatDateTime(m.created_at)} ·{' '}
+                        {m.read_at ? `read ${formatDateTime(m.read_at)}` : 'not read yet'}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * Full view of one landing-page submission, including every parse attempt.
  * The diff between what the model said and what the customer confirmed is
@@ -72,7 +149,7 @@ export default async function SubmissionDetailPage({
     admin
       .from('job_messages')
       .select(
-        `id, sender, body, phase, created_at, read_at,
+        `id, invitation_id, sender, body, phase, created_at, read_at,
          inv:job_invitations(display_label, contractor:contractors(business_name))`,
       )
       .eq('submission_id', id)
@@ -401,29 +478,7 @@ export default async function SubmissionDetailPage({
       {messages.length > 0 && (
         <>
           <div className={s.sectionLabel} id="messages">Messages — customer and contractors</div>
-          <AdminTable head={['When', 'Thread', 'From', 'Message', 'Read']}>
-            {messages.map((msg) => {
-              const inv = msg.inv as {
-                display_label: string | null;
-                contractor: { business_name: string } | null;
-              } | null;
-              return (
-                <tr key={msg.id}>
-                  <td>{formatDateTime(msg.created_at)}</td>
-                  <td>
-                    {inv?.display_label ?? '—'}
-                    {inv?.contractor?.business_name ? ` · ${inv.contractor.business_name}` : ''}
-                  </td>
-                  <td>
-                    {msg.sender === 'client' ? 'Customer' : 'Contractor'}
-                    {msg.phase === 'pre_award' ? ' (before award)' : ''}
-                  </td>
-                  <td style={{ whiteSpace: 'pre-wrap', maxWidth: 420 }}>{msg.body}</td>
-                  <td>{msg.read_at ? formatDateTime(msg.read_at) : '—'}</td>
-                </tr>
-              );
-            })}
-          </AdminTable>
+          <MessageThreads messages={messages} customer={sub.contact_name} />
         </>
       )}
 
