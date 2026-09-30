@@ -48,6 +48,7 @@ const SQ_CONTRACTOR_KINDS = new Set([
   'sq_invoice_request',
   'sq_job_amended', 'sq_message_to_contractor',
   'sq_visit_reminder', 'sq_visit_accepted', 'sq_visit_declined',
+  'sq_weekly_digest',
 ]);
 
 /**
@@ -723,6 +724,52 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `(${p.due_at ?? '?'}) without being settled.\n\n` +
           `${SITE_URL}/admin/submissions/${p.submission_id}`,
       };
+
+    // ── Monday round-up for contractors (20260930180000) ─────────────
+    case 'sq_weekly_digest': {
+      const jobs = Array.isArray(p.jobs) ? (p.jobs as Record<string, unknown>[]) : [];
+      const openCount = Number(p.open_count ?? jobs.length);
+      const areaNew = Number(p.area_new ?? 0);
+      const counties = Array.isArray(p.counties) ? (p.counties as string[]) : [];
+      const countyCount = Number(p.county_count ?? counties.length);
+      const where =
+        counties.length === 0 ? 'your counties'
+          : countyCount > counties.length ? `${counties.slice(0, 3).join(', ')} and your other counties`
+            : counties.length === 1 ? counties[0]
+              : `${counties.slice(0, -1).join(', ')} and ${counties[counties.length - 1]}`;
+      const hi = p.contact_name ? `Hi ${String(p.contact_name).split(/\s+/)[0]},` : 'Hello,';
+      const lines = jobs.map((j, i) => {
+        const acres = typeof j.acres === 'number' ? ` · ${j.acres < 1 ? 'under an acre' : `${Math.round(j.acres * 10) / 10} acres`}` : '';
+        const dist = j.distance_miles != null ? ` · ${j.distance_miles} miles away` : '';
+        const closes = j.expires_at
+          ? new Date(String(j.expires_at)).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/London' })
+          : null;
+        const prices = Number(j.prices_so_far ?? 0);
+        const competition = prices === 0 ? 'no prices yet' : prices === 1 ? '1 price in' : `${prices} prices in`;
+        return (
+          `${i + 1}. ${j.service ?? 'Land work'} — ${[j.postcode_district, j.county].filter(Boolean).join(', ')}${acres}${dist}\n` +
+          `   ${competition}${closes ? ` · closes ${closes}` : ''}\n` +
+          `   ${SITE_URL}/quote/${j.token}`
+        );
+      });
+      const subject =
+        openCount > 0
+          ? `${openCount} job${openCount === 1 ? '' : 's'} waiting for your price this week`
+          : `${areaNew} new job${areaNew === 1 ? '' : 's'} in ${counties.length === 1 ? counties[0] : 'your counties'} this week`;
+      const text =
+        `${hi}\n\n` +
+        (openCount > 0
+          ? `Here’s what you can still price. A price only takes a minute from the link, and jobs ` +
+            `with few prices in are the ones worth a look.\n\n${lines.join('\n\n')}\n\n`
+          : `Nothing is waiting on you right now, but work is coming in.\n\n`) +
+        `In ${where}: ${areaNew} new job${areaNew === 1 ? '' : 's'} this week. ` +
+        `${Number(p.national_open ?? 0)} jobs are open across the country.\n\n` +
+        `Cover more counties or services to see more work: ${SITE_URL}/account\n\n` +
+        `You get this once a week because job emails are on in your account. You can turn them off there.`;
+      return p.preview
+        ? { subject: `[Preview for ${p.business_name ?? 'a contractor'}] ${subject}`, text }
+        : { subject, text };
+    }
 
     // ── Booking with a site visit (20260930160000) ──────────────────
     case 'sq_visit_revised':

@@ -105,7 +105,7 @@ export function AccountForm({
         <div className={ac.sectionBody}>
           <label className={f.checkRow}>
             <input type="checkbox" name="notify_new_jobs" defaultChecked={contractor.notify_new_jobs} />
-            <span>Email me each new job to price in my counties.</span>
+            <span>Email me each new job to price in my counties, and a Monday round-up of what&rsquo;s still open.</span>
           </label>
           <p className={f.hint} style={{ marginTop: 8 }}>
             Turned off, new jobs still appear on this dashboard and under Jobs to
