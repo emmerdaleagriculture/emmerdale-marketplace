@@ -307,6 +307,11 @@ export default async function SubmissionDetailPage({
         .join(' · ') || '—',
     ],
     ['Obstacles', sub.obstacles ?? '—'],
+    ['Site visit', !sub.visit_status ? '—'
+      : sub.visit_status === 'awaiting_visit' ? `Awaiting the contractor — price stands ${sub.visit_due_at ? formatDate(sub.visit_due_at) : ''} if nothing is sent`
+      : sub.visit_status === 'revised' ? `Revised to ${formatGBP(sub.visit_revised_client_pence ?? 0)} — waiting on the customer. “${sub.visit_revision_reason ?? ''}”`
+      : sub.visit_status === 'declined' ? 'Revised price declined — deposit refunded, job cancelled'
+      : 'Price confirmed after the visit'],
     ['Contact', sub.contact_name ? `${sub.contact_name} · ${sub.contact_phone ?? '—'} · ${sub.contact_email ?? '—'} (prefers ${sub.contact_preference ?? '—'})` : '—'],
     ['Parse', `${sub.parse_source ?? '—'} · ${sub.model_version ?? 'no model'} · prompt ${sub.prompt_version ?? '—'}`],
     ['Missing after parse', missing.length ? missing.join(', ') : 'nothing'],

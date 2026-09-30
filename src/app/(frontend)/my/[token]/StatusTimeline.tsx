@@ -18,6 +18,8 @@ const ORDER: Record<string, number> = {
   scheduled: 3,
   in_progress: 3,
   completed_by_contractor: 3,
+  // A price revised after the site visit, waiting on the customer: still booked.
+  variation_pending: 3,
   completed: 4,
   paid: 4,
 };

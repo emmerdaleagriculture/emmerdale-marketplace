@@ -271,3 +271,81 @@ export async function uploadInvoiceAction(
   revalidatePath('/won');
   return { ok: true, message: 'Invoice received — thanks. It’s paid once the customer’s balance has cleared.' };
 }
+
+/**
+ * After a site visit (20260930160000_site_visit_booking): the price the job
+ * was booked at stands. The RPC checks the job is theirs and still waiting.
+ */
+export async function confirmVisitPriceAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Sign in to update a job.' };
+  const submissionId = String(formData.get('submission_id') ?? '');
+  if (!submissionId) return { error: 'Something went wrong — refresh and try again.' };
+
+  const { data, error } = await createServiceRoleClient().rpc('sq_visit_confirm', {
+    p_submission_id: submissionId,
+    p_contractor_id: user.id,
+  });
+  const res = data as { ok: boolean; reason?: string } | null;
+  if (error || !res?.ok) {
+    if (error) console.error('[sq] sq_visit_confirm failed:', error.message);
+    return { error: res?.reason === 'not_yours' ? 'This job isn’t assigned to your account.' : 'This has already been settled — refresh to see the job.' };
+  }
+  revalidatePath('/won');
+  return { ok: true, message: 'Price confirmed — we’ve let the customer know.' };
+}
+
+/**
+ * After a site visit: a different price, and why. The customer accepts it or
+ * declines and gets their deposit back; until then the job is paused.
+ */
+export async function reviseVisitPriceAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Sign in to update a job.' };
+  const submissionId = String(formData.get('submission_id') ?? '');
+  const pence = poundsInputToPence(String(formData.get('price') ?? ''));
+  const reason = String(formData.get('reason') ?? '').trim();
+  if (!submissionId) return { error: 'Something went wrong — refresh and try again.' };
+  if (pence == null || pence <= 0) return { error: 'Enter the new price in pounds, e.g. 450.' };
+  if (reason.length < 3) return { error: 'Say what you found that changes the price — the customer will see it.' };
+  // The reason goes to the customer after award, so contact details are fine;
+  // an off-platform payment arrangement is not.
+  const problem = clientNoteProblem(reason);
+  if (problem && /paid|payment|cash|transfer|VAT/i.test(problem)) {
+    await flagOffPlatform({ text: reason, where: 'message', sender: 'contractor', submissionId, contractorId: user.id });
+    return { error: problem };
+  }
+
+  const { data, error } = await createServiceRoleClient().rpc('sq_visit_revise', {
+    p_submission_id: submissionId,
+    p_contractor_id: user.id,
+    p_contractor_pence: pence,
+    p_reason: reason,
+  });
+  const res = data as { ok: boolean; reason?: string; min_contractor_pence?: number } | null;
+  if (error || !res?.ok) {
+    if (error) console.error('[sq] sq_visit_revise failed:', error.message);
+    switch (res?.reason) {
+      case 'below_deposit':
+        return {
+          error: `That’s less than the customer has already paid. The lowest price you can set here is ${formatGBP(res.min_contractor_pence ?? 0)} — for less than that, get in touch with us.`,
+        };
+      case 'same_price':
+        return { error: 'That’s the price you quoted — use “Confirm the price” instead.' };
+      case 'not_yours':
+        return { error: 'This job isn’t assigned to your account.' };
+      case 'bad_reason':
+        return { error: 'Keep the reason under 1,000 characters.' };
+      default:
+        return { error: 'This has already been settled — refresh to see the job.' };
+    }
+  }
+  revalidatePath('/won');
+  return { ok: true, message: 'Sent — the customer will accept the new price or decline it. We’ll email you either way.' };
+}

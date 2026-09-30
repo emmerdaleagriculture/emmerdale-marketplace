@@ -40,7 +40,7 @@ export default function CustomerTermsPage() {
             as Emmerdale Agriculture at emmerdaleagriculture.com (<strong>we</strong>,{' '}
             <strong>us</strong>, <strong>Emmerdale Agriculture</strong>).
             <br />
-            <strong>Version 2.2 — 25 September 2026</strong>
+            <strong>Version 2.3 — 30 September 2026</strong>
           </p>
 
           <p>
@@ -88,6 +88,16 @@ export default function CustomerTermsPage() {
           <p>
             2.4 Some Jobs cannot be priced remotely. If so we will tell you and either arrange a
             site visit or decline the Job.
+          </p>
+          <p>
+            2.4A <strong>Booking with a site visit.</strong> Where a Contractor&rsquo;s Price says
+            they need to see the site first, you book it in the usual way, paying the deposit,
+            and they receive your details to arrange a visit. After the visit they either
+            confirm the Price or send a revised one with their reason. If they do neither
+            within 7 days of booking, the Price stands. If the Price is revised you may accept
+            it — the balance is then worked out from the new Price — or decline it, in which
+            case the Job is cancelled and your deposit is refunded in full. You are not charged
+            for the visit.
           </p>
           <p>
             2.5 <strong>Messages.</strong> You can message any Contractor who has priced your

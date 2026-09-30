@@ -21,6 +21,7 @@ import { EditJobForm } from './EditJobForm';
 import { PayNow } from './PayNow';
 import { SaveToAccount } from './SaveToAccount';
 import { CancelJob } from './CancelJob';
+import { VisitDecision } from './VisitDecision';
 import { PayBalance } from './PayBalance';
 import { formatDate, formatDateTime } from '@/lib/time';
 import { OpenToMarket } from './OpenToMarket';
@@ -92,6 +93,22 @@ export default async function ClientPortalPage({
           .maybeSingle()
       ).data
     : null;
+
+  // What the customer has paid to book it, for the full refund a declined
+  // revision gives back.
+  const depositPaidLabel =
+    js.status === 'variation_pending'
+      ? formatGBP(
+          (
+            await createServiceRoleClient()
+              .from('job_payments')
+              .select('amount_pence')
+              .eq('submission_id', js.id)
+              .eq('kind', 'deposit')
+              .eq('status', 'paid')
+          ).data?.reduce((n, r) => n + r.amount_pence, 0) ?? 0,
+        )
+      : '';
 
   // Only quoted while cancelling is actually on offer — 9.1 is "before the
   // work starts", and after that 9.3 needs a person, not a button.
@@ -326,8 +343,29 @@ export default async function ClientPortalPage({
                 deposit is paid; the rest is due once the work is done and
                 you&rsquo;ve confirmed it.
               </p>
-              <p>They&rsquo;ll be in touch within 24 hours to arrange it.</p>
+              {js.visit_status === 'awaiting_visit' ? (
+                <p>
+                  This price is subject to a site visit. They&rsquo;ll be in touch to arrange it,
+                  then confirm the price or send you a revised one
+                  {js.visit_due_at ? ` by ${formatDate(js.visit_due_at)}` : ''}. If it changes, you can
+                  decline and have your deposit back in full.
+                </p>
+              ) : (
+                <p>They&rsquo;ll be in touch within 24 hours to arrange it.</p>
+              )}
             </div>
+          )}
+
+          {/* ── A price revised after the site visit ───────────────── */}
+          {js.status === 'variation_pending' && js.visit_status === 'revised' && accepted && (
+            <VisitDecision
+              token={token}
+              contractorName={accepted.contractor_real_name ?? 'Your contractor'}
+              oldLabel={formatGBP(accepted.client_price_pence)}
+              newLabel={formatGBP(js.visit_revised_client_pence ?? 0)}
+              reason={js.visit_revision_reason ?? ''}
+              depositLabel={depositPaidLabel}
+            />
           )}
 
           {/* ── Cancelling before work starts (terms 9.1) ──────────── */}

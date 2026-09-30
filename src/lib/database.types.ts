@@ -1380,6 +1380,14 @@ export type Database = {
       }
       job_submissions: {
         Row: {
+          visit_decided_at: string | null
+          visit_due_at: string | null
+          visit_prev_status: string | null
+          visit_reminded_at: string | null
+          visit_revised_client_pence: number | null
+          visit_revised_contractor_pence: number | null
+          visit_revision_reason: string | null
+          visit_status: string | null
           accepted_client_quote_id: string | null
           access_notes: string | null
           amended_at: string | null
@@ -1450,6 +1458,14 @@ export type Database = {
           utm_source: string | null
         }
         Insert: {
+          visit_decided_at?: string | null
+          visit_due_at?: string | null
+          visit_prev_status?: string | null
+          visit_reminded_at?: string | null
+          visit_revised_client_pence?: number | null
+          visit_revised_contractor_pence?: number | null
+          visit_revision_reason?: string | null
+          visit_status?: string | null
           accepted_client_quote_id?: string | null
           access_notes?: string | null
           amended_at?: string | null
@@ -1520,6 +1536,14 @@ export type Database = {
           utm_source?: string | null
         }
         Update: {
+          visit_decided_at?: string | null
+          visit_due_at?: string | null
+          visit_prev_status?: string | null
+          visit_reminded_at?: string | null
+          visit_revised_client_pence?: number | null
+          visit_revised_contractor_pence?: number | null
+          visit_revision_reason?: string | null
+          visit_status?: string | null
           accepted_client_quote_id?: string | null
           access_notes?: string | null
           amended_at?: string | null
@@ -2678,6 +2702,25 @@ export type Database = {
         Args: { p_approve: boolean; p_message_id: string }
         Returns: Json
       }
+      sq_visit_accept: { Args: { p_submission_id: string }; Returns: Json }
+      sq_visit_confirm: {
+        Args: { p_contractor_id: string; p_submission_id: string }
+        Returns: Json
+      }
+      sq_visit_declined: {
+        Args: { p_refund_pence: number; p_submission_id: string }
+        Returns: Json
+      }
+      sq_visit_revise: {
+        Args: {
+          p_contractor_id: string
+          p_contractor_pence: number
+          p_reason: string
+          p_submission_id: string
+        }
+        Returns: Json
+      }
+      sq_visit_tick: { Args: never; Returns: Json }
       sq_post_message: {
         Args: {
           p_body: string

@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.3 — 25 September 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.4 — 30 September 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -123,6 +123,18 @@ export default function TermsPage() {
           </p>
 
           <h2>5. Changes, extras and problems</h2>
+          <p>
+            <strong>Pricing subject to a site visit.</strong> If you cannot stand behind a
+            price without seeing the site, tick &ldquo;I&rsquo;d need to see the site before
+            confirming this price&rdquo; when you price the job. The customer books it with the
+            usual deposit and you receive their details to arrange the visit. Within 7 days of
+            the booking, confirm your price or revise it, with your reason, from your won-jobs
+            page; if you do neither, the price you quoted stands. A revised price cannot be
+            below what the customer has already paid. If the customer declines a revised
+            price the job is cancelled, their deposit is refunded in full, and the visit is
+            not paid for. Contact details exchanged before a job is booked must not be used to
+            arrange a visit or any work.
+          </p>
           <p>
             If the site is materially different from the description, stop and tell us.
             We will re-price it with the customer, and work continues once they have
