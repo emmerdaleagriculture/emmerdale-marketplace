@@ -29,6 +29,13 @@ import { DOMAIN, EMAIL, LINK, MONEY, OFF_PLATFORM, OFF_PLATFORM_REFUSAL, hasPhon
 
 export const MESSAGE_MAX = 2000;
 
+/**
+ * A full UK postcode — "DH1 3SS", not the "DH1" contractors already see.
+ * Before award it is the customer's front door: on 29 Sep 2026 one sent their
+ * whole address, which nothing checked for.
+ */
+const FULL_POSTCODE = /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i;
+
 export type MessageSender = 'client' | 'contractor';
 export type ThreadState = 'pre_award' | 'post_award' | 'closed';
 
@@ -53,6 +60,11 @@ export function messageProblem(
       return sender === 'contractor'
         ? 'Please take the link or email address out — the customer deals with us until they accept a price.'
         : 'Please take the link or email address out — contractors get your details once you accept a price.';
+    }
+    if (FULL_POSTCODE.test(t)) {
+      return sender === 'contractor'
+        ? 'Please take the full postcode out — the customer gets your details once they accept your price.'
+        : 'Please take the full postcode or address out — the contractor sees your area now, and gets your address once you accept a price.';
     }
     if (hasPhoneNumber(t)) {
       return sender === 'contractor'

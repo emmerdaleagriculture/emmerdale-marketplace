@@ -46,4 +46,12 @@ describe('messageProblem', () => {
       expect(messageProblem('I’ll knock the VAT off if you pay me directly', 'contractor', state)).toMatch(/payment arrangements/);
     }
   });
+
+  it('keeps a full postcode out before award, not the district', () => {
+    expect(messageProblem('2 Riverside Lodge, Durham DH1 3SS', 'client', 'pre_award')).toMatch(/postcode/);
+    expect(messageProblem('we are at dh13ss', 'client', 'pre_award')).toMatch(/postcode/);
+    expect(messageProblem('I am in DH1, near the river', 'client', 'pre_award')).toBeNull();
+    expect(messageProblem('Cut to 3 inches, 2 passes', 'client', 'pre_award')).toBeNull();
+    expect(messageProblem('Our address is DH1 3SS', 'client', 'post_award')).toBeNull();
+  });
 });
