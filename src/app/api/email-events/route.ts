@@ -47,22 +47,19 @@ const EVENTS: Record<string, Delivery> = {
   'email.suppressed': 'suppressed',
 };
 
-/** Reached nobody. Everything here is worth a human knowing about. */
-const DID_NOT_ARRIVE = new Set<Delivery>(['bounced', 'complained', 'failed', 'suppressed']);
-
 /**
- * The kinds a customer or contractor is actively waiting on.
+ * The one delivery failure worth an email to the admins.
  *
- * `application_approved` is named explicitly because the prefixes do not
- * reach it, and its absence was the most expensive thing on this page: 12 of
- * the 17 delivery failures in the 30 days to 21 Sep 2026 were approval
- * emails, and not one of them told anybody. A contractor signed up on 11
- * September, was approved the next day, and heard nothing for nine days —
- * the bounce was recorded the whole time and simply never announced.
- *
- * The rule for adding to this list is whether a person is waiting on the
- * other end, not how serious the kind sounds.
+ * Bounces, failures and suppressions used to announce themselves too, one
+ * email each, and the admin asked to stop being told every time one happened
+ * (30 Sep 2026). They are still recorded on the row, still retried where
+ * that helps, and still listed on /admin/email — they just do not interrupt
+ * anybody. A complaint is different: someone marked us as spam, and that is
+ * rare and needs a person to decide what happens next.
  */
+const ANNOUNCED = new Set<Delivery>(['complained']);
+
+/** The kinds a customer or contractor is actively waiting on. */
 const LOUD_KINDS = /^(sq_|customer_|job_|contractor_announcement|application_approved)/;
 
 type ResendEvent = {
@@ -216,26 +213,17 @@ export async function POST(request: Request) {
   // worker re-checks undeliverable_emails before every send, so an address
   // that hard-bounces in the meantime is caught there and never written to,
   // whatever this decides.
-  const retried = await maybeRetry(admin, row, status, event);
+  await maybeRetry(admin, row, status, event);
 
-  // Someone has to be told. A bounced invitation is a contractor who never
-  // saw the job; a bounced quote alert is a customer who thinks we forgot.
-  //
-  // A retry in hand changes what the alert should say but not whether to
-  // send one: a full mailbox that we will try again at teatime is still
-  // something an admin should know is happening.
-  if (DID_NOT_ARRIVE.has(status) && LOUD_KINDS.test(row.kind)) {
-    const consequence =
-      status === 'complained'
-        ? 'They marked it as spam. Do not send to this address again without asking.'
-        : status === 'suppressed'
-          ? 'Resend would not send to this address — it is on the suppression list from an earlier failure. It needs clearing there before anything else will reach them.'
-          : retried
-            ? `They did not receive it. This looks temporary, so it is ${retried} — no action needed unless that one fails too.`
-            : 'They did not receive it. If this is a customer mid-job, they need contacting another way.';
+  if (ANNOUNCED.has(status) && LOUD_KINDS.test(row.kind)) {
     await notifyAdmins(
       `Email ${status}: ${row.kind}`,
-      [`${row.kind} to ${row.to_email} was ${status}.`, detail, '', consequence].join('\n'),
+      [
+        `${row.kind} to ${row.to_email} was ${status}.`,
+        detail,
+        '',
+        'They marked it as spam. Do not send to this address again without asking.',
+      ].join('\n'),
     );
   }
 
