@@ -332,3 +332,44 @@ grant  execute on function sq_visit_revise(uuid, uuid, int, text)    to service_
 grant  execute on function sq_visit_accept(uuid)                     to service_role;
 grant  execute on function sq_visit_declined(uuid, int)              to service_role;
 grant  execute on function sq_visit_tick()                           to service_role;
+
+-- ── /won keeps showing a job while a revised price waits ────────────────
+-- Otherwise a contractor who revises the price watches the job vanish from
+-- their list, customer's details and all, until the customer answers. The
+-- live definition with 'variation_pending' added to the statuses.
+create or replace view my_sq_won_jobs as
+SELECT js.id,
+    COALESCE(s.name, js.service_verbatim, 'Job'::text) AS service,
+    js.contact_name,
+    js.contact_phone,
+    js.contact_email,
+    js.contact_preference,
+    js.postcode,
+    js.lat,
+    js.lng,
+    js.gate_w3w,
+    js.gate_width,
+    js.access_notes,
+    js.obstacles,
+    js.area_value,
+    js.area_unit,
+    js.area_mapped_value,
+    js.boundary,
+    js.urgency,
+    js.target_date,
+    js.service_attributes,
+    js.status,
+    js.awarded_at,
+    c.name AS county,
+    cq.contractor_price_pence,
+    js.contractor_invoice_name,
+    js.contractor_invoice_at,
+    cp.amount_pence AS paid_out_pence,
+    cp.paid_on AS paid_out_on
+   FROM job_submissions js
+     LEFT JOIN services s ON s.id = js.service_id
+     LEFT JOIN counties c ON c.id = js.county_id
+     LEFT JOIN client_quotes clq ON clq.id = js.accepted_client_quote_id
+     LEFT JOIN contractor_quotes cq ON cq.id = clq.contractor_quote_id
+     LEFT JOIN contractor_payouts cp ON cp.submission_id = js.id
+  WHERE js.awarded_contractor_id = auth.uid() AND (js.status = ANY (ARRAY['awarded'::text, 'contacted'::text, 'scheduled'::text, 'in_progress'::text, 'completed_by_contractor'::text, 'completed'::text, 'paid'::text, 'variation_pending'::text]));

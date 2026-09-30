@@ -6,9 +6,10 @@ import { ContactUsButton } from '@/components/ContactUsButton';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { formatGBP } from '@/lib/sealedQuotes/money';
-import { formatDateTime } from '@/lib/time';
+import { formatDate, formatDateTime } from '@/lib/time';
 import { FirstContactButton } from './FirstContactButton';
 import { MarkDoneButton } from './MarkDoneButton';
+import { VisitPanel } from './VisitPanel';
 import { InvoiceUpload } from './InvoiceUpload';
 import { ProposeWorkForm } from './ProposeWorkForm';
 import a from '../auth.module.css';
@@ -28,6 +29,7 @@ const STATUS_LABELS: Record<string, string> = {
   completed_by_contractor: 'Done — awaiting the customer’s confirmation',
   completed: 'Complete — waiting for the customer’s balance',
   paid: 'Customer paid in full — payout due on your invoice',
+  variation_pending: 'New price with the customer',
 };
 
 /**
@@ -74,7 +76,7 @@ export default async function WonJobsPage() {
   // refuses a second), so the card says so instead of offering a form that
   // would be refused.
   const admin = createServiceRoleClient();
-  const [openExtrasRes, markupRes] = await Promise.all([
+  const [openExtrasRes, markupRes, visitsRes] = await Promise.all([
     ids.length
       ? admin
           .from('job_submissions')
@@ -83,7 +85,16 @@ export default async function WonJobsPage() {
           .in('status', ['confirmed', 'distributed', 'quotes_receiving', 'accepted_awaiting_payment'])
       : Promise.resolve({ data: [] }),
     admin.from('app_config').select('value').eq('key', 'sq_markup_rate').maybeSingle(),
+    // Jobs booked subject to a site visit, still waiting on the contractor.
+    ids.length
+      ? admin
+          .from('job_submissions')
+          .select('id, visit_status, visit_due_at')
+          .in('id', ids)
+          .in('visit_status', ['awaiting_visit', 'revised'])
+      : Promise.resolve({ data: [] }),
   ]);
+  const visits = new Map((visitsRes.data ?? []).map((v) => [v.id, v]));
   const openExtra = new Map(
     (openExtrasRes.data ?? []).map((x) => [x.extra_work_of, x.service_verbatim ?? 'extra work']),
   );
@@ -205,6 +216,18 @@ export default async function WonJobsPage() {
                       <a className={s.dLink} href={`/quote/${threadToken.get(job.id)}#messages`}>
                         Messages with the customer →
                       </a>
+                    </p>
+                  )}
+                  {job.id && visits.get(job.id)?.visit_status === 'awaiting_visit' && (
+                    <VisitPanel
+                      submissionId={job.id}
+                      priceLabel={job.contractor_price_pence != null ? formatGBP(job.contractor_price_pence) : 'your price'}
+                      dueLabel={visits.get(job.id)?.visit_due_at ? formatDate(visits.get(job.id)!.visit_due_at!) : null}
+                    />
+                  )}
+                  {job.id && visits.get(job.id)?.visit_status === 'revised' && (
+                    <p style={{ marginTop: 12, fontSize: 14 }}>
+                      Your revised price is with the customer to accept or decline. We&rsquo;ll email you when they do.
                     </p>
                   )}
                   {job.status === 'awarded' && job.id && (
