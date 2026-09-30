@@ -738,6 +738,30 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             : counties.length === 1 ? counties[0]
               : `${counties.slice(0, -1).join(', ')} and ${counties[counties.length - 1]}`;
       const hi = p.contact_name ? `Hi ${String(p.contact_name).split(/\s+/)[0]},` : 'Hello,';
+      const messages = Array.isArray(p.messages) ? (p.messages as Record<string, unknown>[]) : [];
+      const won = Array.isArray(p.won) ? (p.won as Record<string, unknown>[]) : [];
+      const day = (iso: unknown) =>
+        new Date(String(iso)).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/London' });
+      const messageLines = messages.map((m) => {
+        const what = `${m.service ?? 'Your job'} in ${m.postcode_district ?? 'your area'}`;
+        const n = Number(m.unread ?? 1);
+        const snippet = String(m.snippet ?? '').replace(/\s+/g, ' ').trim();
+        return (
+          `• ${what} — ${m.from ?? 'The customer'} sent ${n === 1 ? 'a message' : `${n} messages`}:\n` +
+          `  “${snippet}${snippet.length >= 120 ? '…' : ''}”\n` +
+          `  Reply: ${SITE_URL}/quote/${m.token}#messages`
+        );
+      });
+      const wonLines = won.map((w) => {
+        const what = `${w.service ?? 'Job'} for ${w.customer ?? 'the customer'} (${w.postcode_district ?? ''})`;
+        const next =
+          w.next === 'visit'
+            ? `confirm or revise the price after your site visit${w.due_at ? ` — it stands as quoted on ${day(w.due_at)}` : ''}`
+            : w.next === 'invoice'
+              ? 'send us your invoice so we can pay you'
+              : 'mark it done when the work is finished';
+        return `• ${what}: ${next}`;
+      });
       const lines = jobs.map((j, i) => {
         const acres = typeof j.acres === 'number' ? ` · ${j.acres < 1 ? 'under an acre' : `${Math.round(j.acres * 10) / 10} acres`}` : '';
         const dist = j.distance_miles != null ? ` · ${j.distance_miles} miles away` : '';
@@ -753,15 +777,28 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         );
       });
       const subject =
-        openCount > 0
+        messages.length > 0
+          ? `${messages.length === 1 ? 'A customer is' : `${messages.length} customers are`} waiting for your reply`
+          : won.some((w) => w.next === 'visit' || w.next === 'invoice')
+            ? 'Your booked jobs need you this week'
+            : openCount === 0 && areaNew === 0 && won.length > 0
+              ? 'Your booked jobs this week'
+              : openCount > 0
           ? `${openCount} job${openCount === 1 ? '' : 's'} waiting for your price this week`
           : `${areaNew} new job${areaNew === 1 ? '' : 's'} in ${counties.length === 1 ? counties[0] : 'your counties'} this week`;
       const text =
         `${hi}\n\n` +
+        (messageLines.length > 0
+          ? `WAITING FOR YOUR REPLY\n\n${messageLines.join('\n\n')}\n\n`
+          : '') +
+        (wonLines.length > 0
+          ? `YOUR BOOKED JOBS\n\n${wonLines.join('\n')}\nAll on your won jobs page: ${SITE_URL}/won\n\n`
+          : '') +
+        (messageLines.length > 0 || wonLines.length > 0 ? 'JOBS TO PRICE\n\n' : '') +
         (openCount > 0
           ? `Here’s what you can still price. A price only takes a minute from the link, and jobs ` +
             `with few prices in are the ones worth a look.\n\n${lines.join('\n\n')}\n\n`
-          : `Nothing is waiting on you right now, but work is coming in.\n\n`) +
+          : `No jobs are waiting for your price right now, but work is coming in.\n\n`) +
         `In ${where}: ${areaNew} new job${areaNew === 1 ? '' : 's'} this week. ` +
         `${Number(p.national_open ?? 0)} jobs are open across the country.\n\n` +
         `Cover more counties or services to see more work: ${SITE_URL}/account\n\n` +
