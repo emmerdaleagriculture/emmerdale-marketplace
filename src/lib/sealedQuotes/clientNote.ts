@@ -83,14 +83,38 @@ export const OFF_PLATFORM = new RegExp(
 export const OFF_PLATFORM_REFUSAL =
   'Please leave payment arrangements out — every job is paid through us, deposit and balance, and nothing is paid to the contractor directly.';
 
+/** What people put between the digits of a phone number. */
+const PHONE_SEPARATOR = /[\s().\-–—]+/;
+
 /**
- * UK-shaped phone numbers, after separators are removed so "07123 456 789"
- * and "07123456789" read alike. +44…, 0… of 10-11 digits, or a bare 11-digit
- * run. Deliberately not matching shorter digit runs: acreages and dates.
+ * UK-shaped phone numbers: +44… or 0… of 10–11 digits, written however it is
+ * spaced or broken over lines. Deliberately not matching shorter digit runs:
+ * acreages and dates.
+ *
+ * Read as groups of digits, not as one string with the gaps taken out. The
+ * gaps used to be stripped and the result searched, which let a number
+ * through as soon as anything numeric followed it: a customer on 29 Sep 2026
+ * sent "077 66 / 400 / 300" on three lines with their house number on the
+ * next, and the "2" joined the run and made it twelve digits long. Now any
+ * run of whole groups that adds up to a phone number is one, whatever sits
+ * either side of it.
  */
 export function hasPhoneNumber(note: string): boolean {
-  const digits = note.replace(/[\s().\-–—]/g, '');
-  return /(?:\+44|0044)\d{9,10}/.test(digits) || /(?:^|\D)0\d{9,10}(?:\D|$)/.test(digits);
+  // A letter O standing in for a zero, touching a digit: "O7786 06394O" was
+  // sent on 29 Sep 2026. Only an O beside a digit, so words are left alone.
+  note = note.replace(/[oO](?=\d)|(?<=\d)[oO]/g, '0');
+  const runs = note.split(/[^\d+\s().\-–—]+/);
+  for (const run of runs) {
+    const groups = run.split(PHONE_SEPARATOR).filter(Boolean);
+    for (let i = 0; i < groups.length; i++) {
+      let joined = '';
+      for (let j = i; j < groups.length && joined.length < 14; j++) {
+        joined += groups[j];
+        if (/^(?:\+44|0044)\d{9,10}$/.test(joined) || /^0\d{9,10}$/.test(joined)) return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**

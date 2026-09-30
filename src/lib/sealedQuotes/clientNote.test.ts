@@ -70,6 +70,16 @@ describe('clientNoteProblem — what a customer may be shown', () => {
     ok('Free from 12 October.');
     ok('Done 40 paddocks like this one.');
     ok('Cutting height 75mm.');
+    ok('Free 01/10/2026 to 05/10/2026.');
+    ok('Did 12 acres in 3 hours, 2 passes.');
+  });
+
+  it('finds a number broken over lines, whatever follows it', () => {
+    // The message that got through on 29 Sep 2026.
+    blocked('077 66\n400\n300\n\n2 riverside lodge\nBurn hall');
+    blocked('07766 400300 then 2 more');
+    blocked('Name is Ben O7786 06394O');
+    ok('Two or three passes, 40 acres.');
   });
 
   it('caps the length', () => {
