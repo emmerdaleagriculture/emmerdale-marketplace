@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { TrackedLink } from '@/components/home/Track';
 import { FloatingJoin } from '@/components/contractors/FloatingJoin';
 import { ServicesSection, CredSection, FaqSection, faqSchema } from '@/components/paddock/PaddockSections';
 import { getServices, getCountyCoverage } from '@/lib/reference';
+import { getOpenJobsByCounty, type CountyJobs } from '@/lib/openJobs';
 import { UK_COUNTY_NAMES } from '@/lib/coverage';
 import { jsonLd } from '@/lib/jsonld';
 import { COMPANY_LEGAL_NAME, HPM_URL, SERVICE_AREA, siteUrl } from '@/lib/site';
@@ -30,7 +32,8 @@ import c from './contractors.module.css';
  * terms change, this page changes with them.
  */
 
-// ISR: the only live data is the service taxonomy and county coverage.
+// ISR: the live data is the service taxonomy, county coverage and the jobs
+// open right now — an hour stale is still "right now" for this purpose.
 export const revalidate = 3600;
 
 const SITE = siteUrl();
@@ -159,9 +162,43 @@ const faqs = [
   },
 ];
 
+/** The busiest counties on show; the rest behind a toggle, so a phone isn't scrolling for ever. */
+const FIELDS_SHOWN = 9;
+
+/** One card per county — a field, headed with a strip of mown stripes. */
+function CountyFields({ counties }: { counties: CountyJobs[] }) {
+  return (
+    <ul className={c.fields}>
+      {counties.map(({ county, jobs }) => (
+        <li key={county} className={c.field}>
+          <div className={c.fieldHead}>
+            <h3 className={c.fieldName}>{county}</h3>
+            <span className={c.fieldCount}>
+              {jobs.length} job{jobs.length === 1 ? '' : 's'}
+            </span>
+          </div>
+          <ul className={c.fieldJobs}>
+            {jobs.map((job, i) => (
+              <li key={i} className={c.fieldJob}>
+                <span>{job.service}</span>
+                {job.size && <span className={c.fieldSize}>{job.size}</span>}
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default async function AgriculturalContractorsPage() {
-  const [services, coverage] = await Promise.all([getServices(), getCountyCoverage()]);
+  const [services, coverage, openJobs] = await Promise.all([
+    getServices(),
+    getCountyCoverage(),
+    getOpenJobsByCounty(),
+  ]);
   const coveredCount = UK_COUNTY_NAMES.filter((n) => (coverage[n] ?? 0) > 0).length;
+  const openCount = openJobs.reduce((n, c) => n + c.jobs.length, 0);
 
   return (
     <div className={a.wrap}>
@@ -235,6 +272,62 @@ export default async function AgriculturalContractorsPage() {
           </div>
         </div>
       </main>
+
+      {/* The work on the board today. Hidden when there is none: an empty
+          board is not an argument for joining. */}
+      {openCount > 0 && (
+        <section className={`${s.section} ${c.board}`}>
+          <div className={s.sectionInner}>
+            <div className={s.kicker}>On the board today</div>
+            <h2 className={s.sectionTitle}>
+              {openCount} jobs waiting <em>for a price.</em>
+            </h2>
+            <p className={s.sectionLede}>
+              Work customers have asked for across {openJobs.length} counties,
+              out with local contractors now and still taking prices. Join and
+              the ones in your patch come to you.
+            </p>
+            <div className={c.boardGrid}>
+              <figure className={c.boardMapWrap}>
+                <Image
+                  src="/jobs-map.svg"
+                  alt={`Map of Great Britain with the ${openJobs.length} counties that have open jobs shaded green`}
+                  width={730}
+                  height={1357}
+                  unoptimized
+                  className={c.boardMap}
+                />
+                <figcaption className={c.boardKey}>
+                  <span><i style={{ background: '#86b267' }} />1 job</span>
+                  <span><i style={{ background: '#4f8638' }} />2</span>
+                  <span><i style={{ background: '#245018' }} />3 or more</span>
+                </figcaption>
+              </figure>
+              <div>
+                <CountyFields counties={openJobs.slice(0, FIELDS_SHOWN)} />
+                {openJobs.length > FIELDS_SHOWN && (
+                  <details className={c.moreFields}>
+                    <summary>
+                      {openJobs.length - FIELDS_SHOWN} more counties with work on
+                    </summary>
+                    <CountyFields counties={openJobs.slice(FIELDS_SHOWN)} />
+                  </details>
+                )}
+              </div>
+            </div>
+            <div className={c.boardCta}>
+              <TrackedLink
+                href="/signup"
+                event="operator_apply"
+                params={{ location: 'contractors_board' }}
+                className={f.btnPrimary}
+              >
+                Join to price them →
+              </TrackedLink>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className={`${s.section} ${s.sectionAlt}`}>
         <div className={s.sectionInner}>
