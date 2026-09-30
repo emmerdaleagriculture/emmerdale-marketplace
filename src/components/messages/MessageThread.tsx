@@ -36,16 +36,13 @@ type Props = {
 };
 
 /**
- * Said on every conversation, to both sides: the platform reads these, and
- * what happens to someone who uses them to take the work elsewhere. Written
- * after two jobs were arranged privately through the messages in Sep 2026.
+ * Said on every open conversation a contractor sees: the platform reads
+ * these, and what happens to anyone who uses them to take the work
+ * elsewhere. Written after two jobs were arranged privately through the
+ * messages in Sep 2026. Contractors only — customers aren't shown it.
  */
-const MONITORED: Record<MessageSender, string> = {
-  contractor:
-    'Messages are monitored. Any attempt to take work off the platform — swapping contact details before a job is booked, or arranging to be paid directly — can lead to your messages being moderated or to being removed from the network.',
-  client:
-    'Messages are monitored. Any attempt to arrange the work or payment outside Emmerdale Agriculture can lead to your messages being moderated or your account being removed.',
-};
+const MONITORED =
+  'Messages are monitored. Any attempt to take work off the platform — swapping contact details before a job is booked, or arranging to be paid directly — can lead to your messages being moderated or to being removed from the network.';
 
 /**
  * One customer↔contractor conversation. Rendered on the server's list of
@@ -75,7 +72,7 @@ export function MessageThread({
         {unread > 0 && <span className={s.badge}>{unread} new</span>}
       </div>
       {intro && <p className={s.intro}>{intro}</p>}
-      {action && <p className={s.monitored}>{MONITORED[me]}</p>}
+      {action && me === 'contractor' && <p className={s.monitored}>{MONITORED}</p>}
       {notice && (
         <p className={s.notice} role="note">
           {notice}
