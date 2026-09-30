@@ -78,6 +78,8 @@ describe('clientNoteProblem — what a customer may be shown', () => {
     // The message that got through on 29 Sep 2026.
     blocked('077 66\n400\n300\n\n2 riverside lodge\nBurn hall');
     blocked('07766 400300 then 2 more');
+    blocked('Name is Ben O7786 06394O');
+    ok('Two or three passes, 40 acres.');
   });
 
   it('caps the length', () => {

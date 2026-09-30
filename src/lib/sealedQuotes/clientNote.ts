@@ -100,6 +100,9 @@ const PHONE_SEPARATOR = /[\s().\-–—]+/;
  * either side of it.
  */
 export function hasPhoneNumber(note: string): boolean {
+  // A letter O standing in for a zero, touching a digit: "O7786 06394O" was
+  // sent on 29 Sep 2026. Only an O beside a digit, so words are left alone.
+  note = note.replace(/[oO](?=\d)|(?<=\d)[oO]/g, '0');
   const runs = note.split(/[^\d+\s().\-–—]+/);
   for (const run of runs) {
     const groups = run.split(PHONE_SEPARATOR).filter(Boolean);
