@@ -19,11 +19,6 @@ import { loadOutreach } from '../outreach';
 
 export const metadata: Metadata = { title: 'Submission — Admin' };
 
-/**
- * Full view of one landing-page submission, including every parse attempt.
- * The diff between what the model said and what the customer confirmed is
- * the eval corpus (spec §5.1) — this page is where that diff is read.
- */
 type AdminMessage = {
   id: string;
   invitation_id: string;
@@ -101,6 +96,11 @@ function MessageThreads({ messages, customer }: { messages: AdminMessage[]; cust
   );
 }
 
+/**
+ * Full view of one landing-page submission, including every parse attempt.
+ * The diff between what the model said and what the customer confirmed is
+ * the eval corpus (spec §5.1) — this page is where that diff is read.
+ */
 export default async function SubmissionDetailPage({
   params,
   searchParams,
