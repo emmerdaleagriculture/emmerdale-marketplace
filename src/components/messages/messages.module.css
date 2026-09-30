@@ -168,3 +168,29 @@
   opacity: 0;
   pointer-events: none;
 }
+
+/* Moderation: the standing notice, and the state of the reader's own
+   held or refused messages. */
+.notice {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6b4700;
+  background: #fff6db;
+  border: 1px solid #f0d98a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+.held,
+.rejected {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.held {
+  color: #8a5a00;
+}
+.rejected {
+  color: #a3261b;
+}

@@ -491,3 +491,31 @@ export async function addExtraWorkAction(_prev: FormState, formData: FormData): 
     message: `Sent to the customer at ${formatGBP(res.client_price_pence ?? 0)}. They accept and pay the deposit on their job page.`,
   };
 }
+
+/**
+ * A moderator's decision on a held message (20260930140000_message_moderation).
+ * Approving delivers it and sends the email posting it would have;
+ * rejecting leaves it with its sender, marked as not delivered.
+ */
+export async function moderateMessageAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  await assertAdmin();
+  const submissionId = String(formData.get('submission_id') ?? '');
+  const messageId = String(formData.get('message_id') ?? '');
+  const approve = formData.get('decision') === 'approve';
+  if (!submissionId || !messageId) return { error: 'Missing the message.' };
+
+  const { data, error } = await createServiceRoleClient().rpc('sq_moderate_message', {
+    p_message_id: messageId,
+    p_approve: approve,
+  });
+  const res = data as { ok: boolean; reason?: string } | null;
+  if (error || !res?.ok) {
+    if (error) console.error('[admin] moderate message failed:', error.message);
+    return { error: res?.reason === 'not_held' ? 'Already decided.' : 'That didn’t go through — try again.' };
+  }
+  revalidatePath(`/admin/submissions/${submissionId}`);
+  return { ok: true };
+}
