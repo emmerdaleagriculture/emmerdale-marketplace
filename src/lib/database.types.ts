@@ -500,6 +500,7 @@ export type Database = {
       }
       contractors: {
         Row: {
+          messages_moderated_until: string | null
           base_lat: number | null
           base_lng: number | null
           base_postcode: string
@@ -519,6 +520,7 @@ export type Database = {
           vetted_at: string | null
         }
         Insert: {
+          messages_moderated_until?: string | null
           base_lat?: number | null
           base_lng?: number | null
           base_postcode: string
@@ -538,6 +540,7 @@ export type Database = {
           vetted_at?: string | null
         }
         Update: {
+          messages_moderated_until?: string | null
           base_lat?: number | null
           base_lng?: number | null
           base_postcode?: string
@@ -959,6 +962,8 @@ export type Database = {
           created_at: string
           id: string
           invitation_id: string
+          moderated_at: string | null
+          moderation: string | null
           phase: string
           photo_paths: string[]
           read_at: string | null
@@ -971,6 +976,8 @@ export type Database = {
           created_at?: string
           id?: string
           invitation_id: string
+          moderated_at?: string | null
+          moderation?: string | null
           phase: string
           photo_paths?: string[]
           read_at?: string | null
@@ -983,6 +990,8 @@ export type Database = {
           created_at?: string
           id?: string
           invitation_id?: string
+          moderated_at?: string | null
+          moderation?: string | null
           phase?: string
           photo_paths?: string[]
           read_at?: string | null
@@ -2665,6 +2674,10 @@ export type Database = {
       }
       sq_open_balance: { Args: { p_submission_id: string }; Returns: number }
       sq_payment_plan: { Args: { p_client_quote_id: string }; Returns: Json }
+      sq_moderate_message: {
+        Args: { p_approve: boolean; p_message_id: string }
+        Returns: Json
+      }
       sq_post_message: {
         Args: {
           p_body: string

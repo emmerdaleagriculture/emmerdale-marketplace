@@ -736,6 +736,13 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // A one-off announcement to existing contractors. Deliberately NOT an
     // sq_ contractor kind: those are redirected to the test allowlist, and
     // this one is meant to reach the real list.
+    // Words an admin (or the database, for an admin alert) wrote in full: a
+    // held message waiting for approval, or a one-off note to a contractor.
+    // Not an sq_ kind, so it is never redirected to the test allowlist.
+    case 'admin_direct':
+      if (typeof p.subject !== 'string' || typeof p.text !== 'string') return null;
+      return { subject: p.subject, text: p.text };
+
     case 'contractor_announcement':
       return {
         subject: `Changes to how Emmerdale Agriculture sends you work`,
@@ -973,10 +980,13 @@ Deno.serve(async (req) => {
 
     // Invitation replies route back through the inbound parser when the
     // reply domain is live (§17).
+    // An admin's own note to someone else is answered to the admin.
     const replyTo =
       (e.kind === 'sq_invitation' || e.kind === 'sq_invitation_reminder') && REPLY_DOMAIN && e.payload?.token
         ? `quotes+${e.payload.token}@${REPLY_DOMAIN}`
-        : undefined;
+        : e.kind === 'admin_direct' && e.to_email !== '__admin__' && admins[0]
+          ? admins[0]
+          : undefined;
 
     // An address that has already hard-bounced will bounce again. Sending
     // anyway costs reputation and buries the real failures.

@@ -440,6 +440,11 @@ export default async function ClientPortalPage({
                         ? `Message ${t.name} about arranging the work. They get an email when you do.`
                         : undefined
                   }
+                  notice={
+                    t.state === 'pre_award' && t.moderated
+                      ? `Messages in this conversation are checked by us before they are passed on, so a reply can take a few hours. Please keep phone numbers and your address out until you have accepted a price.`
+                      : undefined
+                  }
                   action={t.state === 'closed' ? null : sendClientMessageAction}
                   closedNote="This conversation has closed."
                   hidden={{ token, invitation_id: t.invitationId }}

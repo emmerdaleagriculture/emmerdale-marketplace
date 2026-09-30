@@ -11,6 +11,7 @@ import { ClearNoteButton } from './ClearNoteButton';
 import { DeleteJobButton } from './DeleteJobButton';
 import { ExtraWorkForm } from './ExtraWorkForm';
 import { PayoutPanel } from './PayoutPanel';
+import { ModerateMessage } from './ModerateMessage';
 import s from '../../admin.module.css';
 import { AdminTable } from '../../ui';
 import p from '../submissions.module.css';
@@ -29,6 +30,7 @@ type AdminMessage = {
   created_at: string;
   read_at: string | null;
   photo_paths: string[];
+  moderation: string | null;
   inv: unknown;
 };
 
@@ -43,10 +45,12 @@ function MessageThreads({
   messages,
   customer,
   photoUrls,
+  submissionId,
 }: {
   messages: AdminMessage[];
   customer: string | null;
   photoUrls: Map<string, string>;
+  submissionId: string;
 }) {
   const threads = new Map<string, AdminMessage[]>();
   for (const m of messages) {
@@ -112,6 +116,13 @@ function MessageThreads({
                         </>
                       )}
                       {m.body && <p className={p.bubbleBody}>{m.body}</p>}
+                      {m.moderation === 'held' && (
+                        <>
+                          <p className={p.photoCheck}>Held — the other side hasn’t seen this</p>
+                          <ModerateMessage submissionId={submissionId} messageId={m.id} />
+                        </>
+                      )}
+                      {m.moderation === 'rejected' && <p className={p.photoCheck}>Rejected — not delivered</p>}
                       <div className={p.bubbleTime}>
                         {formatDateTime(m.created_at)} ·{' '}
                         {m.read_at ? `read ${formatDateTime(m.read_at)}` : 'not read yet'}
@@ -181,7 +192,7 @@ export default async function SubmissionDetailPage({
     admin
       .from('job_messages')
       .select(
-        `id, invitation_id, sender, body, phase, created_at, read_at, photo_paths,
+        `id, invitation_id, sender, body, phase, created_at, read_at, photo_paths, moderation,
          inv:job_invitations(display_label, contractor:contractors(business_name))`,
       )
       .eq('submission_id', id)
@@ -511,7 +522,7 @@ export default async function SubmissionDetailPage({
       {messages.length > 0 && (
         <>
           <div className={s.sectionLabel} id="messages">Messages — customer and contractors</div>
-          <MessageThreads messages={messages} customer={sub.contact_name} photoUrls={messagePhotoUrls} />
+          <MessageThreads messages={messages} customer={sub.contact_name} photoUrls={messagePhotoUrls} submissionId={id} />
         </>
       )}
 

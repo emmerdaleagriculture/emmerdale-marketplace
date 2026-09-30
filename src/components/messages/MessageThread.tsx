@@ -20,6 +20,8 @@ type Props = {
   unread?: number;
   /** One sentence under the name: what this thread is for and what not to put in it. */
   intro?: string;
+  /** Something the reader must not miss, above the messages: moderation, for one. */
+  notice?: string;
   /** Null when the thread is read-only; the sentence says why. */
   action: SendAction | null;
   /**
@@ -44,6 +46,7 @@ export function MessageThread({
   messages,
   unread = 0,
   intro,
+  notice,
   action,
   closedNote,
   hidden,
@@ -60,6 +63,11 @@ export function MessageThread({
         {unread > 0 && <span className={s.badge}>{unread} new</span>}
       </div>
       {intro && <p className={s.intro}>{intro}</p>}
+      {notice && (
+        <p className={s.notice} role="note">
+          {notice}
+        </p>
+      )}
 
       {messages.length > 0 ? (
         <div className={s.list}>
@@ -80,6 +88,12 @@ export function MessageThread({
               <span className={s.meta}>
                 {m.sender === me ? 'You' : otherName} · {m.when}
               </span>
+              {m.moderation === 'held' && (
+                <span className={s.held}>Waiting for a moderator — not delivered yet</span>
+              )}
+              {m.moderation === 'rejected' && (
+                <span className={s.rejected}>Not delivered — removed by a moderator</span>
+              )}
             </div>
           ))}
         </div>
