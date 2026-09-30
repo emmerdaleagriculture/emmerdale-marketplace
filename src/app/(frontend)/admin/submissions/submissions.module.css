@@ -89,9 +89,13 @@
 .row + .row {
   border-top: 1px solid var(--rule);
 }
-.row > .status {
+/* The status, and on the Won tab whether the deposit is in, stacked. */
+.pills {
   grid-area: status;
   justify-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
   margin-top: 2px;
 }
 .rowMain {
