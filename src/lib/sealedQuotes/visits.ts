@@ -178,6 +178,11 @@ export async function runVisitOp(
   const op = String(formData.get('op') ?? '');
   const visitId = String(formData.get('visit_id') ?? '');
   const admin = createServiceRoleClient();
+  // A uuid parameter refuses anything else with an error that would carry
+  // the submitted text into the logs; checked here instead.
+  if (op !== 'propose' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(visitId)) {
+    return { error: visitRefusal(undefined) };
+  }
 
   let res: { data: unknown; error: { message: string } | null };
   if (op === 'propose') {

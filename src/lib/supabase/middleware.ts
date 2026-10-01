@@ -1,5 +1,14 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { isAdminEmail } from '@/lib/adminEmails';
+
+/** Signed out, or signed in as someone who is not an admin: to the login page. */
+function toLogin(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  url.pathname = '/login';
+  url.search = `?next=${encodeURIComponent(request.nextUrl.pathname)}`;
+  return NextResponse.redirect(url);
+}
 
 /**
  * Refreshes the Supabase auth session on every request and rewrites the auth
@@ -14,8 +23,9 @@ export async function updateSession(request: NextRequest) {
   const hasAuthCookie = request.cookies
     .getAll()
     .some((c) => c.name.startsWith('sb-'));
+  const adminPath = request.nextUrl.pathname.startsWith('/admin');
   if (!hasAuthCookie) {
-    return NextResponse.next({ request });
+    return adminPath ? toLogin(request) : NextResponse.next({ request });
   }
 
   let supabaseResponse = NextResponse.next({ request });
@@ -47,7 +57,22 @@ export async function updateSession(request: NextRequest) {
   // verified here against the cached key with no call to Supabase Auth. An
   // expired one is still refreshed over the network, which is the one job
   // this middleware has.
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+
+  // /admin is gated here as well as in its layout. A layout is not re-run on
+  // a soft navigation and a crafted RSC request can ask for the page segment
+  // alone, so the layout's redirect is not a boundary on its own; this runs
+  // on every request to the path. The claims are signature-verified above,
+  // so the email in them is the signed-in user's.
+  if (adminPath && !isAdminEmail(data?.claims?.email as string | undefined)) {
+    // Signed in but not an admin: to their own account, as the layout does;
+    // signed out (claims absent or unverifiable): to login.
+    if (!data?.claims) return toLogin(request);
+    const url = request.nextUrl.clone();
+    url.pathname = '/account';
+    url.search = '';
+    return NextResponse.redirect(url);
+  }
 
   return supabaseResponse;
 }

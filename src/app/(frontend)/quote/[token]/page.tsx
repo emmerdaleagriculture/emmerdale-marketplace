@@ -52,7 +52,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     if (error) console.error('[sq] record view failed:', error.message);
   });
   // Everything depends only on the invitation: one round trip, not four.
-  const [live, photos, positionRes, threadState, messages, moderatedUntil, visits, visitBlock, contactIfVisit] = await Promise.all([
+  const [live, photos, positionRes, threadState, messages, moderatedUntil, visits, visitBlock] = await Promise.all([
     getLiveQuote(js.id, invitation.contractor_id),
     signPhotos(js.photo_paths),
     // Where their price sits, and whether the customer has seen it. Returns no
@@ -72,12 +72,16 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     getModeratedUntil(invitation.contractor_id),
     getThreadVisits(invitation.id),
     visitBlocked(invitation.id, 'contractor'),
-    customerContactForVisit(js.id),
   ]);
   // An agreed visit is the one thing before award that shows the contractor
-  // where the customer is and how to reach them. Read with the rest and
-  // kept only when there is one.
-  const visitContact = visits.some((v) => v.status === 'accepted' || v.status === 'held') ? contactIfVisit : null;
+  // where the customer is and how to reach them. Read only when there is one
+  // to show it for, and not once the thread has closed around a job that
+  // went elsewhere: they met the customer, but the address does not stay on
+  // this page afterwards.
+  const visitContact =
+    threadState !== 'closed' && visits.some((v) => v.status === 'accepted' || v.status === 'held')
+      ? await customerContactForVisit(js.id)
+      : null;
   const position = (positionRes?.data as
     | {
         price_rank: number;
