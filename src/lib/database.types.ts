@@ -2725,6 +2725,7 @@ export type Database = {
         Returns: Json
       }
       admin_metrics: { Args: never; Returns: Json }
+      admin_priority_summary: { Args: never; Returns: Json }
       admin_submission_board: {
         Args: {
           p_include_hidden?: boolean

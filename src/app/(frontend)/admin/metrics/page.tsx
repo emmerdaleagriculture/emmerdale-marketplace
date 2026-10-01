@@ -48,6 +48,14 @@ type Dashboard = {
   generated_at: string;
 };
 
+type PrioritySummary = {
+  computed_on: string | null;
+  standing: Record<string, number>;
+  flags_30d: number;
+  shadow: Record<string, number | null>;
+  visits: Record<string, number>;
+};
+
 const PIPELINE_LABEL: Record<string, string> = {
   confirmed: 'Confirmed, not yet sent',
   distributed: 'Out to contractors',
@@ -82,7 +90,7 @@ export default async function AdminDashboard() {
   // early jobs need the IP join in jobSources to say anything at all.
   const page = <T,>(q: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) =>
     fetchAll(q).catch(() => [] as T[]);
-  const [{ data, error }, invitations, sourceSubs, parses, views] = await Promise.all([
+  const [{ data, error }, invitations, sourceSubs, parses, views, priorityQ] = await Promise.all([
     admin.rpc('admin_dashboard'),
     // Every invitation of the last 30 days, for the response donut: the RPC
     // carries rates, not the split. Paged; the month is past 600 already.
@@ -115,7 +123,11 @@ export default async function AdminDashboard() {
         .order('id')
         .range(from, to),
     ),
+    // Priority Access in the shadows (20261001160000): one jsonb, like the
+    // dashboard itself. Its absence must not take the page down.
+    admin.rpc('admin_priority_summary').then((r) => r, () => ({ data: null })),
   ]);
+  const pr = (priorityQ?.data ?? null) as PrioritySummary | null;
   if (error || !data) {
     return (
       <div>
@@ -391,6 +403,50 @@ export default async function AdminDashboard() {
           <PieCard title="Registered contractors, by standing" slices={contractorSlices} centre="registered" />
         </div>
       </div>
+
+      {/* ── Priority Access, in the shadows ──────────────────────────── */}
+      {pr && (
+        <>
+          <div className={s.sectionLabel}>
+            Priority Access — shadow run · <Link href="/admin/priority">full picture</Link>
+          </div>
+          <Tiles>
+            <Tile
+              value={`${n(pr.standing.priority)} / ${n(pr.standing.responsive)} / ${n(pr.standing.standard)}`}
+              label="Priority / Responsive / Standard"
+              hint={pr.computed_on ? `standing as of ${pr.computed_on}` : 'not computed yet'}
+            />
+            <Tile value={n(pr.standing.watch)} label="On watch" hint={`contact without bookings · ${n(pr.standing.contacting)} contractors in contact`} warn={nz(pr.standing.watch) > 0} />
+            <Tile value={n(pr.standing.unclean)} label="Standing lost" hint={`${n(pr.flags_30d)} refused messages or notes in 30 days`} warn={nz(pr.standing.unclean) > 0} />
+            <Tile
+              value={pct(nz(pr.shadow.with_priority), nz(pr.shadow.jobs))}
+              label="Jobs with a Priority contractor in range"
+              hint={`${n(pr.shadow.jobs)} jobs in 30 days · ${pct(nz(pr.shadow.with_any), nz(pr.shadow.jobs))} with Priority or Responsive`}
+            />
+            <Tile
+              value={pct(nz(pr.shadow.held_back), nz(pr.shadow.priced))}
+              label="First prices the window would hold back"
+              hint={pr.shadow.avg_delay_h != null ? `by ${pr.shadow.avg_delay_h}h on average · ${pct(nz(pr.shadow.standard_only), nz(pr.shadow.priced))} priced by Standard only` : undefined}
+              warn={nz(pr.shadow.held_back) > nz(pr.shadow.priced) / 2}
+            />
+            <Tile
+              value={nz(pr.shadow.booked) ? `${n(pr.shadow.booked_from_tier)} of ${n(pr.shadow.booked)}` : '—'}
+              label="Bookings from Priority or Responsive"
+              hint={`${pct(nz(pr.shadow.first_from_tier), nz(pr.shadow.priced))} of first prices came from them`}
+            />
+            <Tile
+              value={`${n(pr.visits.agreed)} / ${n(pr.visits.proposed)}`}
+              label="Site visits agreed / suggested, 30 days"
+              hint={`${n(pr.visits.upcoming)} upcoming · ${n(pr.visits.held)} took place · ${n(pr.visits.declined)} declined · ${n(pr.visits.called_off)} called off`}
+            />
+            <Tile
+              value={nz(pr.visits.held) ? `${n(pr.visits.held_then_booked)} of ${n(pr.visits.held)}` : '—'}
+              label="Visits that became a booking"
+              hint="took place, then booked with that contractor"
+            />
+          </Tiles>
+        </>
+      )}
 
       {/* ── Response ──────────────────────────────────────────────────── */}
       <div className={s.sectionLabel}>How contractors respond</div>
