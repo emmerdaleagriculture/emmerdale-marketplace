@@ -23,6 +23,10 @@ const nextConfig = {
   images: {
     // Modern formats — Next serves AVIF/WebP to browsers that support them
     formats: ['image/avif', 'image/webp'],
+    // Files in /public carry max-age=0, so without this the optimiser
+    // re-transforms every size and format a minute after the last request.
+    // The photos are content-stable; a changed one gets a new name.
+    minimumCacheTTL: 2592000,
     // Notes hero/inline images live in the public notes-media bucket.
     remotePatterns: [
       {
