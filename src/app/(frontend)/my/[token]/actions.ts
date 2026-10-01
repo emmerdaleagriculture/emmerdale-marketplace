@@ -11,6 +11,7 @@ import type { FormState } from '@/lib/form';
 import { getSubmissionByClientToken } from '@/lib/sealedQuotes/data';
 import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
 import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
+import { runVisitOp } from '@/lib/sealedQuotes/visits';
 import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 import { flagOffPlatform } from '@/lib/sealedQuotes/offPlatformAlert';
 import { notifyAdmins } from '@/lib/adminNotify';
@@ -614,4 +615,15 @@ export async function declineRevisedPriceAction(_prev: FormState, formData: Form
     ok: true,
     message: `Cancelled. Your ${formatGBP(deposit.amount_pence)} deposit is on its way back to your card, usually within 5 working days.`,
   };
+}
+
+/** A site visit suggested, answered or called off in one thread (lib/sealedQuotes/visits.ts). */
+export async function clientVisitAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const token = String(formData.get('token') ?? '');
+  const inv = await clientThread(token, String(formData.get('invitation_id') ?? ''));
+  if (!inv) return { error: 'This link is no longer valid.' };
+
+  const res = await runVisitOp(inv.id, 'client', formData);
+  if (res.ok) revalidatePath(`/my/${token}`);
+  return res;
 }

@@ -48,7 +48,7 @@ const SQ_CONTRACTOR_KINDS = new Set([
   'sq_invoice_request',
   'sq_job_amended', 'sq_message_to_contractor',
   'sq_visit_reminder', 'sq_visit_accepted', 'sq_visit_declined',
-  'sq_weekly_digest',
+  'sq_weekly_digest', 'sq_thread_visit_to_contractor',
 ]);
 
 /**
@@ -124,6 +124,19 @@ function toHtml(text: string): string {
 
 // Returns null for an unknown kind: the row is marked failed immediately. A
 // typo'd kind used to send a useless generic email — silently.
+/** "Thu 9 Oct, 10:30" in London, from an ISO timestamp. */
+function visitWhen(iso: unknown): string {
+  if (typeof iso !== 'string') return 'the agreed time';
+  return new Date(iso).toLocaleString('en-GB', {
+    timeZone: 'Europe/London',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function render(kind: string, p: Record<string, unknown>): { subject: string; text: string } | null {
   const title = String(p.title ?? 'a job');
   const where = [p.town, p.postcode_district].filter(Boolean).join(', ') || String(p.county ?? '');
@@ -942,6 +955,109 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // go in the email — they were checked before they were stored, and
     // making someone click through to read one line is how replies stop.
     // Replying to the email does not reach the other side, so it says so.
+    // A site visit arranged in the messages (20261001120000_thread_visits).
+    // Addresses and phone numbers stay on the page, not in the email.
+    case 'sq_thread_visit_to_contractor': {
+      const when = visitWhen(p.starts_at);
+      const job = `${p.service ?? 'land work'}${p.postcode_district ? `, ${p.postcode_district}` : ''}`;
+      const link = `${SITE_URL}/quote/${p.token}#messages`;
+      switch (p.event) {
+        case 'proposed':
+          return {
+            subject: `Site visit suggested: ${job}`,
+            text:
+              `The customer has suggested you visit the site on ${when}.\n\n` +
+              `Accept it, decline it, or suggest another time on the job page. If you accept, ` +
+              `you get their address and phone number.\n\n${link}`,
+          };
+        case 'accepted':
+          return {
+            subject: `Site visit agreed: ${when}`,
+            text:
+              `The customer has agreed to your site visit on ${when}. Their address and phone ` +
+              `number are on the job page.\n\n${link}`,
+          };
+        case 'declined':
+          return {
+            subject: `Site visit declined: ${job}`,
+            text: `The customer can’t do ${when}. You can suggest another time on the job page.\n\n${link}`,
+          };
+        case 'withdrawn':
+          return {
+            subject: `Site visit withdrawn: ${job}`,
+            text: `The customer has withdrawn the visit they suggested for ${when}. Nothing is needed from you.\n\n${link}`,
+          };
+        case 'cancelled':
+          return {
+            subject: `Site visit called off: ${when}`,
+            text:
+              `The customer has called off the site visit on ${when} — please don’t go. You can ` +
+              `suggest another time on the job page.\n\n${link}`,
+          };
+        default: // 'off': the job moved on
+          return {
+            subject: `Site visit off: ${job}`,
+            text:
+              (p.reason === 'booked_elsewhere'
+                ? `The customer has booked another contractor, so the site visit on ${when} is off — please don’t go.`
+                : `The job has closed, so the site visit on ${when} is off — please don’t go.`) +
+              `\n\nThanks for making the time.`,
+          };
+      }
+    }
+
+    case 'sq_thread_visit_to_client': {
+      const when = visitWhen(p.starts_at);
+      const who = String(p.from ?? 'The contractor');
+      const link = `${portal}#messages`;
+      switch (p.event) {
+        case 'proposed':
+          return {
+            subject: `${who} would like to see the site`,
+            text:
+              `Hi ${first},\n\n${who} would like to visit the site on ${when} before confirming a price.\n\n` +
+              `Accept it, decline it, or suggest another time on your job page. If you accept, they get ` +
+              `your address and phone number, and you get their name and number.\n\n${link}`,
+          };
+        case 'accepted':
+          return {
+            subject: `Site visit agreed: ${when}`,
+            text:
+              `Hi ${first},\n\n${who} has agreed to visit on ${when}. Their name and phone number are ` +
+              `on your job page.\n\n${link}`,
+          };
+        case 'declined':
+          return {
+            subject: `${who} can’t make that time`,
+            text: `Hi ${first},\n\n${who} can’t do ${when}. You can suggest another time on your job page.\n\n${link}`,
+          };
+        case 'withdrawn':
+          return {
+            subject: `Site visit withdrawn`,
+            text: `Hi ${first},\n\n${who} has withdrawn the visit they suggested for ${when}.\n\n${link}`,
+          };
+        case 'cancelled':
+          return {
+            subject: `Site visit called off: ${when}`,
+            text:
+              `Hi ${first},\n\n${who} has called off the site visit on ${when}. You can suggest ` +
+              `another time on your job page.\n\n${link}`,
+          };
+        default: // 'off': the job moved on
+          return {
+            subject: `Site visit off: ${when}`,
+            text:
+              `Hi ${first},\n\n` +
+              (p.reason === 'contractor_passed'
+                ? `${who} has passed on the job, so their site visit on ${when} is off.`
+                : p.reason === 'booked_elsewhere'
+                  ? `As you’ve booked another contractor, the site visit from ${who} on ${when} is off. We’ve told them.`
+                  : `Your job has closed, so the site visit from ${who} on ${when} is off. We’ve told them.`) +
+              `\n\n${link}`,
+          };
+      }
+    }
+
     case 'sq_message_to_contractor':
       return {
         subject: `Message from the customer: ${p.service ?? 'land work'}${p.postcode_district ? `, ${p.postcode_district}` : ''}`,

@@ -13,6 +13,7 @@ import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
 import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
 import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 import { flagOffPlatform } from '@/lib/sealedQuotes/offPlatformAlert';
+import { runVisitOp } from '@/lib/sealedQuotes/visits';
 
 export type QuoteActionState = FormState & { closed?: boolean };
 
@@ -267,4 +268,16 @@ export async function markContractorThreadReadAction(token: string): Promise<voi
   if (!isTokenFormat(token)) return;
   const invitation = await getInvitationByToken(token);
   if (invitation) await markThreadRead(invitation.id, 'contractor');
+}
+
+/** A site visit suggested, answered or called off in the thread (lib/sealedQuotes/visits.ts). */
+export async function contractorVisitAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const token = String(formData.get('token') ?? '');
+  if (!isTokenFormat(token)) return { error: 'This link is not valid.' };
+  const invitation = await getInvitationByToken(token);
+  if (!invitation) return { error: 'This link is not valid.' };
+
+  const res = await runVisitOp(invitation.id, 'contractor', formData);
+  if (res.ok) revalidatePath(`/quote/${token}`);
+  return res;
 }

@@ -18,6 +18,7 @@ import p from '../submissions.module.css';
 import { OutreachList, OutreachStats, STAGE_TITLES, isOutreachStage, type OutreachStage } from '../OutreachStats';
 import { loadOutreach } from '../outreach';
 import { signMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
+import { formatVisitWhen } from '@/lib/sealedQuotes/visits';
 
 export const metadata: Metadata = { title: 'Submission — Admin' };
 
@@ -200,6 +201,13 @@ export default async function SubmissionDetailPage({
       .limit(500),
   ]);
   const messages = messagesQ.data ?? [];
+  // Site visits arranged in the threads before award (20261001120000).
+  const { data: visitRows } = await admin
+    .from('thread_visits')
+    .select('id, proposed_by, starts_at, status, cancelled_by, created_at, inv:job_invitations(contractor:contractors(business_name))')
+    .eq('submission_id', id)
+    .order('created_at', { ascending: true });
+  const visits = visitRows ?? [];
   const messagePhotoUrls = await signMessagePhotos(messages.flatMap((m) => m.photo_paths));
 
   // Extra work: jobs booked off this one, and the one this extends.
@@ -528,6 +536,26 @@ export default async function SubmissionDetailPage({
         <>
           <div className={s.sectionLabel} id="messages">Messages — customer and contractors</div>
           <MessageThreads messages={messages} customer={sub.contact_name} photoUrls={messagePhotoUrls} submissionId={id} />
+        </>
+      )}
+
+      {visits.length > 0 && (
+        <>
+          <div className={s.sectionLabel}>Site visits arranged in the messages</div>
+          <AdminTable head={['Contractor', 'Visit', 'Suggested by', 'Status', 'Suggested']}>
+            {visits.map((v) => (
+              <tr key={v.id}>
+                <td>{(v.inv as { contractor: { business_name: string } | null } | null)?.contractor?.business_name ?? '—'}</td>
+                <td>{formatVisitWhen(v.starts_at)}</td>
+                <td>{v.proposed_by === 'client' ? 'Customer' : 'Contractor'}</td>
+                <td>
+                  {v.status}
+                  {v.cancelled_by ? ` (by ${v.cancelled_by === 'client' ? 'customer' : v.cancelled_by})` : ''}
+                </td>
+                <td>{formatDateTime(v.created_at)}</td>
+              </tr>
+            ))}
+          </AdminTable>
         </>
       )}
 

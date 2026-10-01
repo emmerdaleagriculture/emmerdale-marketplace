@@ -16,7 +16,8 @@ import { DeclineForm } from './DeclineForm';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { MessageThread } from '@/components/messages/MessageThread';
 import { getModeratedUntil, getThreadMessages, getThreadState } from '@/lib/sealedQuotes/messages';
-import { markContractorThreadReadAction, sendContractorMessageAction } from './actions';
+import { customerContactForVisit, getThreadVisits, visitBlocked } from '@/lib/sealedQuotes/visits';
+import { contractorVisitAction, markContractorThreadReadAction, sendContractorMessageAction } from './actions';
 import a from '../../auth.module.css';
 import q from './quote.module.css';
 
@@ -66,7 +67,15 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     getThreadState(invitation.id),
     getThreadMessages(invitation.id, 'contractor'),
   ]);
-  const moderatedUntil = await getModeratedUntil(invitation.contractor_id);
+  const [moderatedUntil, visits, visitBlock] = await Promise.all([
+    getModeratedUntil(invitation.contractor_id),
+    getThreadVisits(invitation.id),
+    visitBlocked(invitation.id, 'contractor'),
+  ]);
+  // An agreed visit is the one thing before award that shows the contractor
+  // where the customer is and how to reach them.
+  const agreedVisit = visits.some((v) => v.status === 'accepted');
+  const visitContact = agreedVisit ? await customerContactForVisit(js.id) : null;
   const position = (positionRes?.data as
     | {
         price_rank: number;
@@ -136,7 +145,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
           <h1 className={a.title}>{service?.name ?? 'Land work'}</h1>
           <p className={a.sub}>
             {spec.location ? `${spec.location}, ` : ''}
-            {county ?? ''} · full address comes if you win the job
+            {county ?? ''} · full address comes if you win the job or agree a site visit
           </p>
           {/* The thread sits below the pricing form, which is a long scroll on a
               phone — so say it is there, and how much is waiting, up top. */}
@@ -144,6 +153,8 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
             <a className={q.messagesJump} href="#messages">
               {unread > 0
                 ? `Messages (${unread} new) ↓`
+                : visits.some((v) => v.status === 'proposed' && v.proposedBy === 'client')
+                  ? 'The customer suggested a site visit ↓'
                 : messages.length > 0
                   ? `Messages (${messages.length}) ↓`
                   : 'A question before you price? Message the customer ↓'}
@@ -315,9 +326,9 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 messages={messages}
                 intro={
                   threadState === 'pre_award'
-                    ? `Ask about access, ground or timing. The customer sees you as ${
+                    ? `Ask about access, ground or timing, or suggest a site visit if you need to see it before pricing. The customer sees you as ${
                         invitation.display_label ?? 'a lettered contractor'
-                      }, not by name, so leave out phone numbers, emails and amounts — your details go to them when they accept your price.`
+                      }, not by name, so leave out phone numbers, emails and amounts — your details go to them when they accept your price or a visit.`
                     : threadState === 'post_award'
                       ? 'The customer reads and replies on their job page. Leave prices out: if the job has changed and the price should too, get in touch with us.'
                       : undefined
@@ -332,6 +343,9 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 hidden={{ token }}
                 unread={unread}
                 markRead={markContractorThreadReadAction.bind(null, token)}
+                visits={visits}
+                visitAction={visitBlock ? null : contractorVisitAction}
+                visitContact={visitContact}
               />
             </>
           )}

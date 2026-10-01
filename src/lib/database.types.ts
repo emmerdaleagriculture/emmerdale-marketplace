@@ -2236,6 +2236,57 @@ export type Database = {
           },
         ]
       }
+      thread_visits: {
+        Row: {
+          cancelled_by: string | null
+          created_at: string
+          decided_at: string | null
+          id: string
+          invitation_id: string
+          proposed_by: string
+          starts_at: string
+          status: string
+          submission_id: string
+        }
+        Insert: {
+          cancelled_by?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          invitation_id: string
+          proposed_by: string
+          starts_at: string
+          status?: string
+          submission_id: string
+        }
+        Update: {
+          cancelled_by?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          invitation_id?: string
+          proposed_by?: string
+          starts_at?: string
+          status?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thread_visits_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "job_invitations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "thread_visits_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "job_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       undeliverable_emails: {
         Row: {
           bounces: number
@@ -2759,6 +2810,27 @@ export type Database = {
         }[]
       }
       sq_thread_state: { Args: { p_invitation_id: string }; Returns: string }
+      sq_thread_visit_answer: {
+        Args: {
+          p_accept: boolean
+          p_by: string
+          p_invitation_id: string
+          p_visit_id: string
+        }
+        Returns: Json
+      }
+      sq_thread_visit_blocked: {
+        Args: { p_by: string; p_invitation_id: string }
+        Returns: string
+      }
+      sq_thread_visit_cancel: {
+        Args: { p_by: string; p_invitation_id: string; p_visit_id: string }
+        Returns: Json
+      }
+      sq_thread_visit_propose: {
+        Args: { p_by: string; p_invitation_id: string; p_local: string }
+        Returns: Json
+      }
       sq_token: { Args: never; Returns: string }
       submit_client_rating: {
         Args: { p_client_token: string; p_comment: string; p_stars: number }
