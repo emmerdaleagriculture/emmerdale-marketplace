@@ -30,7 +30,10 @@ export const getServices = memoize<ServiceOption[]>(async () => {
  * service role (contractor rows aren't world-readable) but stays cookie-less,
  * so ISR pages can call it without becoming dynamic.
  */
-export async function getCountyCoverage(): Promise<Record<string, number>> {
+// Memoised like the loaders above: every county page calls this twice (its
+// metadata and its body), and a build or a daily revalidation sweep walks
+// ~270 of them.
+export const getCountyCoverage = memoize<Record<string, number>>(async () => {
   const supabase = createServiceRoleClient();
   // Counted in SQL (county_coverage view). This used to pull every
   // contractor-county row and count in here; the API caps a response at 1000
@@ -42,4 +45,4 @@ export async function getCountyCoverage(): Promise<Record<string, number>> {
     if (row.name && row.contractors) counts[row.name] = row.contractors;
   }
   return counts;
-}
+}, REFERENCE_TTL_MS);

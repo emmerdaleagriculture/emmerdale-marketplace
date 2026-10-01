@@ -1,17 +1,22 @@
+import { cache } from 'react';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import type { User } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
 
 export type Contractor = Database['public']['Tables']['contractors']['Row'];
 
-/** The signed-in Supabase auth user, or null. */
-export async function getUser(): Promise<User | null> {
+/**
+ * The signed-in Supabase auth user, or null. One network call per request
+ * however many of a layout, its page and their helpers ask: the admin layout
+ * and every admin page each asked Supabase Auth separately.
+ */
+export const getUser = cache(async (): Promise<User | null> => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
-}
+});
 
 /**
  * Admin gating (spec §7.1, §12.5). We gate admin routes on the server-side
@@ -40,12 +45,10 @@ export function safeInternalPath(next: string | null | undefined): string | null
 
 /** The current user's contractor profile row, or null if none exists yet. */
 export async function getContractor(): Promise<Contractor | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) return null;
 
+  const supabase = await createClient();
   const { data } = await supabase
     .from('contractors')
     .select('*')

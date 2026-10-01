@@ -39,9 +39,15 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // IMPORTANT: do not run code between createServerClient and getUser() — it
+  // IMPORTANT: do not run code between createServerClient and this call — it
   // can cause hard-to-debug session-refresh races.
-  await supabase.auth.getUser();
+  //
+  // getClaims, not getUser: the project signs tokens with an asymmetric key
+  // (ES256, published at /auth/v1/.well-known/jwks.json), so a live token is
+  // verified here against the cached key with no call to Supabase Auth. An
+  // expired one is still refreshed over the network, which is the one job
+  // this middleware has.
+  await supabase.auth.getClaims();
 
   return supabaseResponse;
 }

@@ -372,6 +372,15 @@ export default async function AgriculturalContractorsPage() {
               </div>
             ))}
           </div>
+          {/* Priority Access: standing earned by booking through the platform
+              (20261001160000_priority_access_shadow). */}
+          <p className={s.sectionLede} style={{ marginTop: 28 }}>
+            <strong>Book through us and you go to the front of the queue.</strong>{' '}
+            Contractors who book jobs on the platform are given priority on new
+            jobs as they come in: you hear about work in your area first, before
+            it goes out to everyone else. The more you book, the higher your
+            priority.
+          </p>
         </div>
       </section>
 
