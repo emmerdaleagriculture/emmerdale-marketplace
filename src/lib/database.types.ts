@@ -206,6 +206,13 @@ export type Database = {
       contractor_standing: {
         Row: {
           clean: boolean
+          contact_other: number
+          contact_quiet: number
+          contact_won: number
+          contacts: number
+          visits: number
+          visits_quiet: number
+          watch: boolean
           computed_at: string
           computed_on: string
           contractor_id: string
@@ -221,6 +228,13 @@ export type Database = {
         }
         Insert: {
           clean: boolean
+          contact_other?: number
+          contact_quiet?: number
+          contact_won?: number
+          contacts?: number
+          visits?: number
+          visits_quiet?: number
+          watch?: boolean
           computed_at?: string
           computed_on: string
           contractor_id: string
@@ -236,6 +250,13 @@ export type Database = {
         }
         Update: {
           clean?: boolean
+          contact_other?: number
+          contact_quiet?: number
+          contact_won?: number
+          contacts?: number
+          visits?: number
+          visits_quiet?: number
+          watch?: boolean
           computed_at?: string
           computed_on?: string
           contractor_id?: string
@@ -2475,6 +2496,13 @@ export type Database = {
       contractor_standing_latest: {
         Row: {
           clean: boolean | null
+          contact_other: number | null
+          contact_quiet: number | null
+          contact_won: number | null
+          contacts: number | null
+          visits: number | null
+          visits_quiet: number | null
+          watch: boolean | null
           computed_at: string | null
           computed_on: string | null
           contractor_id: string | null

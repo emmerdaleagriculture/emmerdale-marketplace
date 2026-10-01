@@ -35,6 +35,13 @@ type Standing = {
   clean: boolean;
   reasons: string[];
   computed_on: string;
+  contacts: number;
+  contact_won: number;
+  contact_other: number;
+  contact_quiet: number;
+  visits: number;
+  visits_quiet: number;
+  watch: boolean;
 };
 
 type Shadow = {
@@ -97,9 +104,14 @@ export default async function PriorityPage() {
   const byTier = { priority: 0, responsive: 0, standard: 0 } as Record<string, number>;
   for (const r of standings) byTier[r.tier] = (byTier[r.tier] ?? 0) + 1;
   const unclean = standings.filter((r) => !r.clean).length;
+  // Contact that didn't become a booking: the shape of work going elsewhere.
+  const watch = standings
+    .filter((r) => r.watch)
+    .sort((a, b) => b.visits - a.visits || b.contact_quiet - a.contact_quiet);
+  const contacting = standings.filter((r) => r.contacts > 0).length;
   const computedOn = standings[0]?.computed_on ?? null;
   const notable = standings
-    .filter((r) => r.tier !== 'standard' || !r.clean || r.priced > 0)
+    .filter((r) => r.tier !== 'standard' || !r.clean || r.watch || r.priced > 0 || r.contacts > 0)
     .sort((a, b) => {
       const order = { priority: 0, responsive: 1, standard: 2 } as Record<string, number>;
       return order[a.tier] - order[b.tier] || b.won - a.won || b.priced - a.priced;
@@ -150,6 +162,9 @@ export default async function PriorityPage() {
         {config.sq_responsive_window_hours ?? '48'}h. Priority = booked a job in {config.sq_priority_won_days ?? '180'} days;
         Responsive = priced {config.sq_priority_priced_min ?? '3'}+ jobs in {config.sq_priority_priced_days ?? '60'} days with a
         median under {config.sq_priority_response_hours ?? '24'}h; both need a clean {config.sq_priority_clean_days ?? '90'} days.
+        Watch = {config.sq_priority_watch_contacts ?? '3'}+ customers contacted before award with none booked and{' '}
+        {config.sq_priority_watch_quiet ?? '2'}+ of those jobs gone quiet, or {config.sq_priority_watch_visits ?? '2'}+ site visits
+        with none booked; held at Standard until it clears.
       </p>
 
       <div className={s.sectionLabel}>Who would hold each standing</div>
@@ -158,7 +173,32 @@ export default async function PriorityPage() {
         <Tile value={byTier.responsive} label="Responsive" hint="price promptly, haven't won yet" />
         <Tile value={byTier.standard} label="Standard" hint="everyone else approved and vetted" />
         <Tile value={unclean} label="Standing lost" hint="a flag, a removed message or moderation" warn />
+        <Tile value={watch.length} label="On watch" hint={`contact without bookings; ${contacting} contractors have messaged or visited`} warn />
       </Tiles>
+
+      <div className={s.sectionLabel}>Watch list — contact that hasn&rsquo;t become a booking</div>
+      {watch.length === 0 ? (
+        <p className={s.empty}>
+          Nobody on watch. A job counts as quiet {config.sq_priority_quiet_days ?? '14'} days after its last price or message, so
+          this list fills in as conversations age.
+        </p>
+      ) : (
+        <AdminTable head={['Contractor', 'Customers contacted', 'Booked with them', 'Booked elsewhere', 'Went quiet', 'Site visits', 'Visits gone quiet']}>
+          {watch.map((r) => (
+            <tr key={r.contractor_id}>
+              <td>
+                <Link href={`/admin/contractors/${r.contractor_id}`}>{names.get(r.contractor_id) ?? r.contractor_id.slice(0, 8)}</Link>
+              </td>
+              <td>{r.contacts}</td>
+              <td>{r.contact_won}</td>
+              <td>{r.contact_other}</td>
+              <td style={{ color: 'var(--error)' }}>{r.contact_quiet}</td>
+              <td>{r.visits}</td>
+              <td style={r.visits_quiet ? { color: 'var(--error)' } : undefined}>{r.visits_quiet}</td>
+            </tr>
+          ))}
+        </AdminTable>
+      )}
 
       <div className={s.sectionLabel}>The window, against the last 90 days of jobs</div>
       <Tiles>
@@ -206,16 +246,18 @@ export default async function PriorityPage() {
       </AdminTable>
 
       <div className={s.sectionLabel}>Contractors with a standing to show</div>
-      <AdminTable head={['Contractor', 'Standing', 'Won', 'Priced', 'Median to price', 'Why']}>
+      <AdminTable head={['Contractor', 'Standing', 'Won', 'Priced', 'Median to price', 'Contacted / quiet', 'Visits', 'Why']}>
         {notable.map((r) => (
           <tr key={r.contractor_id}>
             <td>
               <Link href={`/admin/contractors/${r.contractor_id}`}>{names.get(r.contractor_id) ?? r.contractor_id.slice(0, 8)}</Link>
             </td>
-            <td style={!r.clean ? { color: 'var(--error)' } : undefined}>{TIER_LABEL[r.tier] ?? r.tier}</td>
+            <td style={!r.clean || r.watch ? { color: 'var(--error)' } : undefined}>{TIER_LABEL[r.tier] ?? r.tier}</td>
             <td>{r.won}</td>
             <td>{r.priced}</td>
             <td>{h(r.median_hours)}</td>
+            <td>{r.contacts ? `${r.contacts} / ${r.contact_quiet}` : '—'}</td>
+            <td>{r.visits || '—'}</td>
             <td>{r.reasons.join('; ')}</td>
           </tr>
         ))}
