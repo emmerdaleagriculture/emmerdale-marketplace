@@ -5,6 +5,8 @@ import { downscalePhoto } from '@/lib/photoDownscale';
 import { emptyFormState, type FormState } from '@/lib/form';
 import { MESSAGE_MAX, type MessageSender } from '@/lib/sealedQuotes/messageText';
 import type { ThreadMessage } from '@/lib/sealedQuotes/messages';
+import type { ThreadVisit, VisitContact } from '@/lib/sealedQuotes/visits';
+import { Hidden, VisitCard, VisitProposer, type VisitAction } from './ThreadVisits';
 import f from '@/components/forms/forms.module.css';
 import s from './messages.module.css';
 
@@ -33,6 +35,12 @@ type Props = {
   closedNote?: string;
   /** Posted with the message: the page token, and on the customer side which thread. */
   hidden: Record<string, string>;
+  /** Site visits suggested in this thread, shown in order among the messages. */
+  visits?: ThreadVisit[];
+  /** Null when a visit can't be suggested or answered here now. */
+  visitAction?: VisitAction | null;
+  /** The other side's details, shown on an agreed visit. */
+  visitContact?: VisitContact | null;
 };
 
 /**
@@ -60,6 +68,9 @@ export function MessageThread({
   closedNote,
   hidden,
   markRead,
+  visits = [],
+  visitAction = null,
+  visitContact = null,
 }: Props) {
   useEffect(() => {
     if (unread > 0 && markRead) markRead().catch(() => undefined);
@@ -79,36 +90,36 @@ export function MessageThread({
         </p>
       )}
 
-      {messages.length > 0 ? (
+      {messages.length + visits.length > 0 ? (
         <div className={s.list}>
-          {messages.map((m) => (
-            <div key={m.id} className={`${s.msg} ${m.sender === me ? s.mine : s.theirs}`}>
-              {m.photos.length > 0 && (
-                <div className={s.photos}>
-                  {m.photos.map((url, i) => (
-                    <a key={url} href={url} target="_blank" rel="noopener noreferrer" className={s.photo}>
-                      {/* Signed, short-lived storage URLs: next/image would cache them past expiry. */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={url} alt={`Photo ${i + 1} from ${m.sender === me ? 'you' : otherName}`} loading="lazy" />
-                    </a>
-                  ))}
-                </div>
-              )}
-              {m.body}
-              <span className={s.meta}>
-                {m.sender === me ? 'You' : otherName} · {m.when}
-              </span>
-              {m.moderation === 'held' && (
-                <span className={s.held}>Waiting for a moderator — not delivered yet</span>
-              )}
-              {m.moderation === 'rejected' && (
-                <span className={s.rejected}>Not delivered — removed by a moderator</span>
-              )}
-            </div>
-          ))}
+          {timeline(messages, visits).map((item) =>
+            item.kind === 'visit' ? (
+              <VisitCard
+                key={item.v.id}
+                visit={item.v}
+                me={me}
+                otherName={otherName}
+                action={visitAction}
+                hidden={hidden}
+                contact={visitContact}
+              />
+            ) : (
+              <MessageBubble key={item.m.id} m={item.m} me={me} otherName={otherName} />
+            ),
+          )}
         </div>
       ) : (
         action && <p className={s.empty}>No messages yet.</p>
+      )}
+
+      {visitAction && !visits.some((v) => v.status === 'accepted' && !v.past) && (
+        <VisitProposer
+          me={me}
+          otherName={otherName}
+          action={visitAction}
+          hidden={hidden}
+          replacing={visits.some((v) => v.status === 'proposed')}
+        />
       )}
 
       {action ? (
@@ -118,6 +129,44 @@ export function MessageThread({
       )}
     </section>
   );
+}
+
+function MessageBubble({ m, me, otherName }: { m: ThreadMessage; me: MessageSender; otherName: string }) {
+  return (
+    <div className={`${s.msg} ${m.sender === me ? s.mine : s.theirs}`}>
+      {m.photos.length > 0 && (
+        <div className={s.photos}>
+          {m.photos.map((url, i) => (
+            <a key={url} href={url} target="_blank" rel="noopener noreferrer" className={s.photo}>
+              {/* Signed, short-lived storage URLs: next/image would cache them past expiry. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt={`Photo ${i + 1} from ${m.sender === me ? 'you' : otherName}`} loading="lazy" />
+            </a>
+          ))}
+        </div>
+      )}
+      {m.body}
+      <span className={s.meta}>
+        {m.sender === me ? 'You' : otherName} · {m.when}
+      </span>
+      {m.moderation === 'held' && (
+        <span className={s.held}>Waiting for a moderator — not delivered yet</span>
+      )}
+      {m.moderation === 'rejected' && (
+        <span className={s.rejected}>Not delivered — removed by a moderator</span>
+      )}
+    </div>
+  );
+}
+
+type TimelineItem = { kind: 'message'; at: string; m: ThreadMessage } | { kind: 'visit'; at: string; v: ThreadVisit };
+
+/** Messages and visits in the order they happened. */
+function timeline(messages: ThreadMessage[], visits: ThreadVisit[]): TimelineItem[] {
+  return [
+    ...messages.map((m) => ({ kind: 'message' as const, at: m.createdAt, m })),
+    ...visits.map((v) => ({ kind: 'visit' as const, at: v.createdAt, v })),
+  ].sort((a, b) => a.at.localeCompare(b.at));
 }
 
 /** The most photos one message can carry; sq_post_message holds the same line. */
@@ -184,9 +233,7 @@ function Composer({
   return (
     <form action={send}>
       {state.error && <p className={f.error}>{state.error}</p>}
-      {Object.entries(hidden).map(([k, v]) => (
-        <input key={k} type="hidden" name={k} value={v} />
-      ))}
+      <Hidden hidden={hidden} />
       <label className={f.field}>
         <span className={f.label}>Message {otherName}</span>
         <textarea

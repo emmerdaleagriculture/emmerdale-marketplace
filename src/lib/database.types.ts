@@ -203,6 +203,75 @@ export type Database = {
           },
         ]
       }
+      contractor_standing: {
+        Row: {
+          clean: boolean
+          contact_other: number
+          contact_quiet: number
+          contact_won: number
+          contacts: number
+          visits: number
+          visits_quiet: number
+          watch: boolean
+          computed_at: string
+          computed_on: string
+          contractor_id: string
+          flags: number
+          id: number
+          median_hours: number | null
+          moderated: boolean
+          priced: number
+          reasons: string[]
+          rejected_msgs: number
+          tier: string
+          won: number
+        }
+        Insert: {
+          clean: boolean
+          contact_other?: number
+          contact_quiet?: number
+          contact_won?: number
+          contacts?: number
+          visits?: number
+          visits_quiet?: number
+          watch?: boolean
+          computed_at?: string
+          computed_on: string
+          contractor_id: string
+          flags: number
+          id?: number
+          median_hours?: number | null
+          moderated: boolean
+          priced: number
+          reasons: string[]
+          rejected_msgs: number
+          tier: string
+          won: number
+        }
+        Update: {
+          clean?: boolean
+          contact_other?: number
+          contact_quiet?: number
+          contact_won?: number
+          contacts?: number
+          visits?: number
+          visits_quiet?: number
+          watch?: boolean
+          computed_at?: string
+          computed_on?: string
+          contractor_id?: string
+          flags?: number
+          id?: number
+          median_hours?: number | null
+          moderated?: boolean
+          priced?: number
+          reasons?: string[]
+          rejected_msgs?: number
+          tier?: string
+          won?: number
+        }
+        Relationships: []
+      }
       contractor_counties: {
         Row: {
           contractor_id: string
@@ -2092,6 +2161,114 @@ export type Database = {
           },
         ]
       }
+      platform_flags: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          id: number
+          rule: string
+          sender: string
+          submission_id: string | null
+          surface: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: number
+          rule: string
+          sender: string
+          submission_id?: string | null
+          surface: string
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          id?: number
+          rule?: string
+          sender?: string
+          submission_id?: string | null
+          surface?: string
+        }
+        Relationships: []
+      }
+      priority_shadow: {
+        Row: {
+          backfilled: boolean
+          booked_at: string | null
+          booked_by: string | null
+          booked_tier: string | null
+          county_id: number | null
+          direct: boolean
+          distributed_at: string
+          first_price_at: string | null
+          first_price_by: string | null
+          first_price_delay_h: number | null
+          first_price_hours: number | null
+          first_price_tier: string | null
+          invited: number
+          market_opens_at: string
+          outcome: string | null
+          prices_priority: number
+          prices_responsive: number
+          prices_standard: number
+          priority_ids: string[]
+          responsive_ids: string[]
+          submission_id: string
+          updated_at: string
+          window_opens_at: string
+        }
+        Insert: {
+          backfilled?: boolean
+          booked_at?: string | null
+          booked_by?: string | null
+          booked_tier?: string | null
+          county_id?: number | null
+          direct: boolean
+          distributed_at: string
+          first_price_at?: string | null
+          first_price_by?: string | null
+          first_price_delay_h?: number | null
+          first_price_hours?: number | null
+          first_price_tier?: string | null
+          invited: number
+          market_opens_at: string
+          outcome?: string | null
+          prices_priority?: number
+          prices_responsive?: number
+          prices_standard?: number
+          priority_ids: string[]
+          responsive_ids: string[]
+          submission_id: string
+          updated_at?: string
+          window_opens_at: string
+        }
+        Update: {
+          backfilled?: boolean
+          booked_at?: string | null
+          booked_by?: string | null
+          booked_tier?: string | null
+          county_id?: number | null
+          direct?: boolean
+          distributed_at?: string
+          first_price_at?: string | null
+          first_price_by?: string | null
+          first_price_delay_h?: number | null
+          first_price_hours?: number | null
+          first_price_tier?: string | null
+          invited?: number
+          market_opens_at?: string
+          outcome?: string | null
+          prices_priority?: number
+          prices_responsive?: number
+          prices_standard?: number
+          priority_ids?: string[]
+          responsive_ids?: string[]
+          submission_id?: string
+          updated_at?: string
+          window_opens_at?: string
+        }
+        Relationships: []
+      }
       recent_work_seed: {
         Row: {
           amount_pence: number
@@ -2236,6 +2413,57 @@ export type Database = {
           },
         ]
       }
+      thread_visits: {
+        Row: {
+          cancelled_by: string | null
+          created_at: string
+          decided_at: string | null
+          id: string
+          invitation_id: string
+          proposed_by: string
+          starts_at: string
+          status: string
+          submission_id: string
+        }
+        Insert: {
+          cancelled_by?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          invitation_id: string
+          proposed_by: string
+          starts_at: string
+          status?: string
+          submission_id: string
+        }
+        Update: {
+          cancelled_by?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          invitation_id?: string
+          proposed_by?: string
+          starts_at?: string
+          status?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thread_visits_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "job_invitations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "thread_visits_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "job_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       undeliverable_emails: {
         Row: {
           bounces: number
@@ -2265,6 +2493,31 @@ export type Database = {
       }
     }
     Views: {
+      contractor_standing_latest: {
+        Row: {
+          clean: boolean | null
+          contact_other: number | null
+          contact_quiet: number | null
+          contact_won: number | null
+          contacts: number | null
+          visits: number | null
+          visits_quiet: number | null
+          watch: boolean | null
+          computed_at: string | null
+          computed_on: string | null
+          contractor_id: string | null
+          flags: number | null
+          id: number | null
+          median_hours: number | null
+          moderated: boolean | null
+          priced: number | null
+          reasons: string[] | null
+          rejected_msgs: number | null
+          tier: string | null
+          won: number | null
+        }
+        Relationships: []
+      }
       admin_contractor_outreach: {
         Row: {
           contractor_id: string | null
@@ -2758,7 +3011,31 @@ export type Database = {
           state: string
         }[]
       }
+      sq_priority_nightly: { Args: never; Returns: Json }
+      sq_priority_shadow_tick: { Args: never; Returns: Json }
+      sq_standing_compute: { Args: { p_on?: string }; Returns: Json }
       sq_thread_state: { Args: { p_invitation_id: string }; Returns: string }
+      sq_thread_visit_answer: {
+        Args: {
+          p_accept: boolean
+          p_by: string
+          p_invitation_id: string
+          p_visit_id: string
+        }
+        Returns: Json
+      }
+      sq_thread_visit_blocked: {
+        Args: { p_by: string; p_invitation_id: string }
+        Returns: string
+      }
+      sq_thread_visit_cancel: {
+        Args: { p_by: string; p_invitation_id: string; p_visit_id: string }
+        Returns: Json
+      }
+      sq_thread_visit_propose: {
+        Args: { p_by: string; p_invitation_id: string; p_local: string }
+        Returns: Json
+      }
       sq_token: { Args: never; Returns: string }
       submit_client_rating: {
         Args: { p_client_token: string; p_comment: string; p_stars: number }

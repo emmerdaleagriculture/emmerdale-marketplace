@@ -204,3 +204,96 @@
   padding: 2px 0 2px 10px;
   margin-bottom: 14px;
 }
+
+/* A site visit suggested in the thread (ThreadVisits.tsx): a card in the
+   conversation where it was suggested, on the suggester's side. */
+.visit {
+  max-width: 85%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.visitLive {
+  border: 2px solid var(--jd-green);
+  background: var(--white);
+}
+.visitDone {
+  border: 1px dashed var(--rule);
+  background: var(--white);
+  color: var(--ink-3);
+}
+.visitTitle {
+  font-weight: 600;
+  color: var(--ink);
+}
+.visitTitle::before {
+  content: '📅 ';
+}
+.visitStatus {
+  font-size: 13px;
+}
+.visitContact {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+  padding: 8px 10px;
+  background: var(--jd-green-pale);
+  border-radius: 6px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.visitContactTitle {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+.visitActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 6px;
+}
+.visitActions .visitNote {
+  flex-basis: 100%;
+}
+.visitNote {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: 0 0 10px;
+}
+.visitOpen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jd-green);
+  padding: 10px 14px;
+  border: 1px solid var(--jd-green);
+  border-radius: 8px;
+  background: var(--white);
+  cursor: pointer;
+  margin-bottom: 14px;
+}
+.visitOpen::before {
+  content: '📅';
+}
+.visitForm {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 14px;
+  background: var(--cream);
+}
+.visitFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0 12px;
+}

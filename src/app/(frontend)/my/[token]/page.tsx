@@ -28,7 +28,8 @@ import { OpenToMarket } from './OpenToMarket';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { MessageThread } from '@/components/messages/MessageThread';
 import { getClientThreads } from '@/lib/sealedQuotes/messages';
-import { markClientThreadReadAction, sendClientMessageAction } from './actions';
+import { contractorContactForVisit, getSubmissionVisits, type VisitContact } from '@/lib/sealedQuotes/visits';
+import { clientVisitAction, markClientThreadReadAction, sendClientMessageAction } from './actions';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import a from '../../auth.module.css';
 import m from './my.module.css';
@@ -170,7 +171,10 @@ export default async function ClientPortalPage({
   // an award outlives its quote's valid-until date.
   const needQuotes = ['quotes_receiving', 'accepted_awaiting_payment'].includes(js.status);
   // Started here, awaited after: kept out of the positional array below.
-  const threadsP = getClientThreads(js.id);
+  const visitsP = getSubmissionVisits(js.id);
+  // A thread with a visit on it stays on the page after it closes: the
+  // "called off" email points here.
+  const threadsP = visitsP.then((v) => getClientThreads(js.id, new Set(v.keys())));
   const [quotes, ratingWeight, depositRate, photos, accepted] = await Promise.all([
     needQuotes ? getClientQuotes(js.id) : Promise.resolve([]),
     needQuotes ? getCompositeWeight() : Promise.resolve(0.3),
@@ -193,7 +197,21 @@ export default async function ClientPortalPage({
       : Promise.resolve(undefined),
   ]);
 
-  const threads = await threadsP;
+  const [threads, visits] = await Promise.all([threadsP, visitsP]);
+  const visitsToAnswer = threads
+    .filter((t) => t.state === 'pre_award')
+    .reduce(
+      (n, t) => n + (visits.get(t.invitationId) ?? []).filter((v) => v.status === 'proposed' && v.proposedBy === 'contractor').length,
+      0,
+    );
+  // Whoever is coming onto their land, for each visit they've agreed.
+  const visitContacts = new Map<string, VisitContact | null>(
+    await Promise.all(
+      [...visits]
+        .filter(([, list]) => list.some((v) => v.status === 'accepted'))
+        .map(async ([id]) => [id, await contractorContactForVisit(id)] as const),
+    ),
+  );
 
   const spec = {
     service,
@@ -234,10 +252,16 @@ export default async function ClientPortalPage({
             </p>
           )}
           {/* The threads sit below the prices; say when something is waiting. */}
-          {threads.some((t) => t.unread > 0) && (
+          {threads.some((t) => t.unread > 0) ? (
             <a className={m.messagesJump} href="#messages">
               Messages ({threads.reduce((n, t) => n + t.unread, 0)} new) ↓
             </a>
+          ) : (
+            visitsToAnswer > 0 && (
+              <a className={m.messagesJump} href="#messages">
+                A site visit to answer ↓
+              </a>
+            )
           )}
 
           {/* ── Pre-quotes ─────────────────────────────────────────── */}
@@ -278,13 +302,26 @@ export default async function ClientPortalPage({
                     ? 'One price so far.'
                     : 'One price so far — more may follow.'
                   : `${quotes.length} prices to choose from.`}{' '}
-                Nothing is booked until you accept {isExtra ? 'it' : 'one'} and pay the deposit.
+                Nothing is booked until you accept {isExtra ? 'it' : 'one'} and pay the deposit
+                {isExtra ? '.' : ' — and you can have any of them out to look at the site first, without paying anything.'}
               </p>
               <PriceList
                 token={token}
                 quotes={quotes as ClientQuoteView[]}
                 ratingWeight={ratingWeight}
                 depositRate={depositRate}
+                visitThreads={Object.fromEntries(
+                  threads
+                    // Not while a visit is already agreed: the thread shows
+                    // no proposer then, so there would be nothing to open.
+                    .filter(
+                      (t) =>
+                        t.state === 'pre_award' &&
+                        !t.moderated &&
+                        !(visits.get(t.invitationId) ?? []).some((v) => v.status === 'accepted' && !v.past),
+                    )
+                    .map((t) => [t.name, t.invitationId]),
+                )}
               />
               {directName && !isExtra && (
                 <>
@@ -473,7 +510,7 @@ export default async function ClientPortalPage({
                   unread={t.unread}
                   intro={
                     t.state === 'pre_award'
-                      ? `Ask ${t.name} anything about the job. Leave out phone numbers and emails — the contractor you book gets your details when you accept their price.`
+                      ? `Ask ${t.name} anything about the job, or suggest a time for them to see the site. Leave out phone numbers and emails — the contractor you book gets your details when you accept their price or a visit.`
                       : t.state === 'post_award'
                         ? `Message ${t.name} about arranging the work. They get an email when you do.`
                         : undefined
@@ -487,6 +524,10 @@ export default async function ClientPortalPage({
                   closedNote="This conversation has closed."
                   hidden={{ token, invitation_id: t.invitationId }}
                   markRead={markClientThreadReadAction.bind(null, token, t.invitationId)}
+                  visits={visits.get(t.invitationId)}
+                  // Moderation holds back exactly what a visit would hand over.
+                  visitAction={t.state === 'pre_award' && !t.moderated ? clientVisitAction : null}
+                  visitContact={visitContacts.get(t.invitationId) ?? null}
                 />
               ))}
             </>

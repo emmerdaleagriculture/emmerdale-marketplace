@@ -10,9 +10,10 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
 import type { FormState } from '@/lib/form';
 import { getSubmissionByClientToken } from '@/lib/sealedQuotes/data';
 import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
-import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
+import { messageRefusal, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
+import { runVisitOp } from '@/lib/sealedQuotes/visits';
 import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
-import { flagOffPlatform } from '@/lib/sealedQuotes/offPlatformAlert';
+import { flagOffPlatform, recordRefusal } from '@/lib/sealedQuotes/offPlatformAlert';
 import { notifyAdmins } from '@/lib/adminNotify';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -492,10 +493,16 @@ export async function sendClientMessageAction(
   if (state === 'closed') return { error: postRefusal('closed'), body };
   const photos = readMessagePhotos(formData);
   if ('error' in photos) return { error: photos.error, body };
-  const problem = messageProblem(body, 'client', state, photos.files.length > 0);
-  if (problem) {
-    await flagOffPlatform({ text: body, where: 'message', sender: 'customer', submissionId: inv.submission_id });
-    return { error: problem, body };
+  const refusal = messageRefusal(body, 'client', state, photos.files.length > 0);
+  if (refusal) {
+    // Recorded against the job, never a contractor's standing: it is the
+    // customer's doing.
+    if (refusal.flag === 'off_platform') {
+      await flagOffPlatform({ text: body, where: 'message', sender: 'customer', submissionId: inv.submission_id });
+    } else if (refusal.flag) {
+      await recordRefusal({ rule: refusal.flag, surface: 'message', sender: 'customer', submissionId: inv.submission_id });
+    }
+    return { error: refusal.text, body };
   }
 
   const submissionId = inv.submission_id;
@@ -614,4 +621,15 @@ export async function declineRevisedPriceAction(_prev: FormState, formData: Form
     ok: true,
     message: `Cancelled. Your ${formatGBP(deposit.amount_pence)} deposit is on its way back to your card, usually within 5 working days.`,
   };
+}
+
+/** A site visit suggested, answered or called off in one thread (lib/sealedQuotes/visits.ts). */
+export async function clientVisitAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const token = String(formData.get('token') ?? '');
+  const inv = await clientThread(token, String(formData.get('invitation_id') ?? ''));
+  if (!inv) return { error: 'This link is no longer valid.' };
+
+  const res = await runVisitOp(inv.id, 'client', formData);
+  if (res.ok) revalidatePath(`/my/${token}`);
+  return res;
 }

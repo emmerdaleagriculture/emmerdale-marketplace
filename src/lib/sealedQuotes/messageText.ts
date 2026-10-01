@@ -39,47 +39,87 @@ const FULL_POSTCODE = /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i;
 export type MessageSender = 'client' | 'contractor';
 export type ThreadState = 'pre_award' | 'post_award' | 'closed';
 
-/** null when the message can be sent, otherwise the sentence to show. */
-export function messageProblem(
+/**
+ * Why a message was refused. The `flag` rules are the ones that count
+ * against a contractor's standing (platform_flags); the rest are shape and
+ * tidiness, nobody's record.
+ */
+export type MessageRefusal = {
+  text: string;
+  flag: 'off_platform' | 'phone' | 'email_or_link' | 'postcode' | null;
+};
+
+/** null when the message can be sent, otherwise what to say and why. */
+export function messageRefusal(
   body: string,
   sender: MessageSender,
   state: ThreadState,
   /** A photo on its own is a message; words are then optional. */
   hasPhotos = false,
-): string | null {
+): MessageRefusal | null {
   const t = body.trim();
-  if (!t) return hasPhotos ? null : 'Write a message or add a photo first.';
+  if (!t) return hasPhotos ? null : { text: 'Write a message or add a photo first.', flag: null };
   if (t.length > MESSAGE_MAX) {
-    return `That message is too long — keep it under ${MESSAGE_MAX} characters.`;
+    return { text: `That message is too long — keep it under ${MESSAGE_MAX} characters.`, flag: null };
   }
   if (OFF_PLATFORM.test(t)) {
-    return sender === 'contractor'
-      ? OFF_PLATFORM_REFUSAL
-      : 'Please leave payment arrangements out — you pay for the job through us, and the contractor is paid by us.';
+    return {
+      flag: 'off_platform',
+      text:
+        sender === 'contractor'
+          ? OFF_PLATFORM_REFUSAL
+          : 'Please leave payment arrangements out — you pay for the job through us, and the contractor is paid by us.',
+    };
   }
   if (state === 'pre_award') {
     if (LINK.test(t) || DOMAIN.test(t) || EMAIL.test(t)) {
-      return sender === 'contractor'
-        ? 'Please take the link or email address out — the customer deals with us until they accept a price.'
-        : 'Please take the link or email address out — contractors get your details once you accept a price.';
+      return {
+        flag: 'email_or_link',
+        text:
+          sender === 'contractor'
+            ? 'Please take the link or email address out — the customer deals with us until they accept a price.'
+            : 'Please take the link or email address out — contractors get your details once you accept a price.',
+      };
     }
     if (FULL_POSTCODE.test(t)) {
-      return sender === 'contractor'
-        ? 'Please take the full postcode out — the customer gets your details once they accept your price.'
-        : 'Please take the full postcode or address out — the contractor sees your area now, and gets your address once you accept a price.';
+      return {
+        flag: 'postcode',
+        text:
+          sender === 'contractor'
+            ? 'Please take the full postcode out — the customer gets your details once they accept your price.'
+            : 'Please take the full postcode or address out — the contractor sees your area now, and gets your address once you accept a price.',
+      };
     }
     if (hasPhoneNumber(t)) {
-      return sender === 'contractor'
-        ? 'Please take the phone number out — we pass your details on once the customer accepts your price.'
-        : 'Please take the phone number out — the contractor you book gets it once you accept their price.';
+      return {
+        flag: 'phone',
+        text:
+          sender === 'contractor'
+            ? 'Please take the phone number out — we pass your details on once the customer accepts your price.'
+            : 'Please take the phone number out — the contractor you book gets it once you accept their price.',
+      };
     }
   }
   if (sender === 'contractor' && MONEY.test(t)) {
-    return state === 'pre_award'
-      ? 'Please leave amounts out — the customer sees our price, not yours. Put a figure in the price box instead.'
-      : 'Please leave amounts out — the customer’s price is fixed and includes our fee. If the job has changed and the price should too, get in touch with us.';
+    return {
+      flag: null,
+      text:
+        state === 'pre_award'
+          ? 'Please leave amounts out — the customer sees our price, not yours. Put a figure in the price box instead.'
+          : 'Please leave amounts out — the customer’s price is fixed and includes our fee. If the job has changed and the price should too, get in touch with us.',
+    };
   }
   return null;
+}
+
+/** null when the message can be sent, otherwise the sentence to show. */
+export function messageProblem(
+  body: string,
+  sender: MessageSender,
+  state: ThreadState,
+  hasPhotos = false,
+): string | null {
+  return messageRefusal(body, sender, state, hasPhotos)?.text ?? null;
 }
 
 /**

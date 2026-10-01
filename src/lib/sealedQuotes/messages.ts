@@ -15,6 +15,8 @@ export type ThreadMessage = {
   sender: MessageSender;
   body: string;
   when: string;
+  /** ISO, for ordering alongside the thread's visits. */
+  createdAt: string;
   read: boolean;
   /** Signed, short-lived URLs for the photos sent with it. */
   photos: string[];
@@ -50,6 +52,7 @@ function toMessage(m: MessageRow, urls: Map<string, string>): ThreadMessage {
     sender: m.sender as MessageSender,
     body: m.body,
     when: formatDateTime(m.created_at),
+    createdAt: m.created_at,
     read: m.read_at !== null,
     photos: m.photo_paths.map((p) => urls.get(p)).filter((u): u is string => !!u),
     moderation: m.moderation === 'held' || m.moderation === 'rejected' ? m.moderation : null,
@@ -115,7 +118,11 @@ export type ClientThread = {
  * winner's thread, plus the others only if something was said in them.
  * Two queries whatever the number of contractors.
  */
-export async function getClientThreads(submissionId: string): Promise<ClientThread[]> {
+export async function getClientThreads(
+  submissionId: string,
+  /** Threads to show even when closed and silent: one with a visit on it. */
+  keep: Set<string> = new Set(),
+): Promise<ClientThread[]> {
   const admin = createServiceRoleClient();
   const [threadsRes, messagesRes] = await Promise.all([
     admin.rpc('sq_submission_threads', { p_submission_id: submissionId }),
@@ -167,7 +174,7 @@ export async function getClientThreads(submissionId: string): Promise<ClientThre
         moderated: moderated.has(t.invitation_id),
       };
     })
-    .filter((t) => t.state !== 'closed' || t.messages.length > 0)
+    .filter((t) => t.state !== 'closed' || t.messages.length > 0 || keep.has(t.invitationId))
     // The live conversation first: the winner after award, open ones before.
     .sort((a, b) => Number(b.state !== 'closed') - Number(a.state !== 'closed'));
 }
