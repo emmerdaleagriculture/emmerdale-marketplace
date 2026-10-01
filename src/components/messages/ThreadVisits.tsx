@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { emptyFormState, type FormState } from '@/lib/form';
+import { londonDay } from '@/lib/time';
 import type { MessageSender } from '@/lib/sealedQuotes/messageText';
 import type { ThreadVisit, VisitContact } from '@/lib/sealedQuotes/visits';
 import f from '@/components/forms/forms.module.css';
@@ -9,7 +10,7 @@ import s from './messages.module.css';
 
 export type VisitAction = (prev: FormState, data: FormData) => Promise<FormState>;
 
-function Hidden({ hidden }: { hidden: Record<string, string> }) {
+export function Hidden({ hidden }: { hidden: Record<string, string> }) {
   return (
     <>
       {Object.entries(hidden).map(([k, v]) => (
@@ -25,7 +26,9 @@ function statusLine(v: ThreadVisit, me: MessageSender, otherName: string): strin
     case 'proposed':
       return mine ? `Suggested by you — waiting for ${otherName}` : `Suggested by ${otherName}`;
     case 'accepted':
-      return v.past ? 'Agreed' : 'Agreed — see you then';
+      return v.past ? 'Visit took place' : 'Agreed — see you then';
+    case 'held':
+      return 'Visit took place';
     case 'declined':
       return mine ? `${otherName} can’t make it` : 'You couldn’t make it';
     case 'withdrawn':
@@ -69,7 +72,7 @@ export function VisitCard({
       <span className={s.visitTitle}>Site visit · {visit.when}</span>
       <span className={s.visitStatus}>{statusLine(visit, me, otherName)}</span>
 
-      {visit.status === 'accepted' && contact && contact.lines.length > 0 && (
+      {(visit.status === 'accepted' || visit.status === 'held') && contact && contact.lines.length > 0 && (
         <div className={s.visitContact}>
           <span className={s.visitContactTitle}>{contact.title}</span>
           {contact.lines.map((l) => (
@@ -119,10 +122,6 @@ const TIMES = Array.from({ length: 25 }, (_, i) => {
   return `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
 });
 
-function londonToday(): string {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
-}
-
 /** "Suggest a site visit": a day and a time, sent to the other side to answer. */
 export function VisitProposer({
   me,
@@ -143,7 +142,7 @@ export function VisitProposer({
   // The date input wants a local "today"; computed in the browser so the
   // server render and the first paint agree on nothing that could differ.
   const [min, setMin] = useState<string>();
-  useEffect(() => setMin(londonToday()), []);
+  useEffect(() => setMin(londonDay(Date.now())), []);
   useEffect(() => {
     if (state.ok) setOpen(false);
   }, [state]);

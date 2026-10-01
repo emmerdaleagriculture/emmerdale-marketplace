@@ -67,15 +67,16 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     getThreadState(invitation.id),
     getThreadMessages(invitation.id, 'contractor'),
   ]);
-  const [moderatedUntil, visits, visitBlock] = await Promise.all([
+  const [moderatedUntil, visits, visitBlock, contactIfVisit] = await Promise.all([
     getModeratedUntil(invitation.contractor_id),
     getThreadVisits(invitation.id),
     visitBlocked(invitation.id, 'contractor'),
+    customerContactForVisit(js.id),
   ]);
   // An agreed visit is the one thing before award that shows the contractor
-  // where the customer is and how to reach them.
-  const agreedVisit = visits.some((v) => v.status === 'accepted');
-  const visitContact = agreedVisit ? await customerContactForVisit(js.id) : null;
+  // where the customer is and how to reach them. Read with the rest and
+  // kept only when there is one.
+  const visitContact = visits.some((v) => v.status === 'accepted' || v.status === 'held') ? contactIfVisit : null;
   const position = (positionRes?.data as
     | {
         price_rank: number;

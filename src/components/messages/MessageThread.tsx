@@ -6,7 +6,7 @@ import { emptyFormState, type FormState } from '@/lib/form';
 import { MESSAGE_MAX, type MessageSender } from '@/lib/sealedQuotes/messageText';
 import type { ThreadMessage } from '@/lib/sealedQuotes/messages';
 import type { ThreadVisit, VisitContact } from '@/lib/sealedQuotes/visits';
-import { VisitCard, VisitProposer, type VisitAction } from './ThreadVisits';
+import { Hidden, VisitCard, VisitProposer, type VisitAction } from './ThreadVisits';
 import f from '@/components/forms/forms.module.css';
 import s from './messages.module.css';
 
@@ -233,9 +233,7 @@ function Composer({
   return (
     <form action={send}>
       {state.error && <p className={f.error}>{state.error}</p>}
-      {Object.entries(hidden).map(([k, v]) => (
-        <input key={k} type="hidden" name={k} value={v} />
-      ))}
+      <Hidden hidden={hidden} />
       <label className={f.field}>
         <span className={f.label}>Message {otherName}</span>
         <textarea

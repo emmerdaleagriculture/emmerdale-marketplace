@@ -171,8 +171,10 @@ export default async function ClientPortalPage({
   // an award outlives its quote's valid-until date.
   const needQuotes = ['quotes_receiving', 'accepted_awaiting_payment'].includes(js.status);
   // Started here, awaited after: kept out of the positional array below.
-  const threadsP = getClientThreads(js.id);
   const visitsP = getSubmissionVisits(js.id);
+  // A thread with a visit on it stays on the page after it closes: the
+  // "called off" email points here.
+  const threadsP = visitsP.then((v) => getClientThreads(js.id, new Set(v.keys())));
   const [quotes, ratingWeight, depositRate, photos, accepted] = await Promise.all([
     needQuotes ? getClientQuotes(js.id) : Promise.resolve([]),
     needQuotes ? getCompositeWeight() : Promise.resolve(0.3),
@@ -310,7 +312,14 @@ export default async function ClientPortalPage({
                 depositRate={depositRate}
                 visitThreads={Object.fromEntries(
                   threads
-                    .filter((t) => t.state === 'pre_award' && !t.moderated)
+                    // Not while a visit is already agreed: the thread shows
+                    // no proposer then, so there would be nothing to open.
+                    .filter(
+                      (t) =>
+                        t.state === 'pre_award' &&
+                        !t.moderated &&
+                        !(visits.get(t.invitationId) ?? []).some((v) => v.status === 'accepted' && !v.past),
+                    )
                     .map((t) => [t.name, t.invitationId]),
                 )}
               />

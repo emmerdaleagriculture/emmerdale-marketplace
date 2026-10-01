@@ -10,7 +10,7 @@ import type { MessageSender } from './messageText';
  * like the messages: thread_visits has RLS on and no policies.
  */
 
-export type VisitStatus = 'proposed' | 'accepted' | 'declined' | 'withdrawn' | 'cancelled' | 'lapsed';
+export type VisitStatus = 'proposed' | 'accepted' | 'held' | 'declined' | 'withdrawn' | 'cancelled' | 'lapsed';
 
 export type ThreadVisit = {
   id: string;

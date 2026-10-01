@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatDateTime } from '@/lib/time';
+import { fetchAll } from '@/lib/supabase/fetchAll';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
 
@@ -81,7 +82,10 @@ export default async function PriorityPage() {
     admin.from('priority_shadow').select('*').gte('distributed_at', since).order('distributed_at', { ascending: false }),
     admin.from('contractors').select('id, business_name, status').eq('status', 'approved'),
     admin.from('counties').select('id, name'),
-    admin.from('contractor_counties').select('contractor_id, county_id'),
+    // Over 1000 rows: PostgREST caps a response, so this one pages.
+    fetchAll((from, to) =>
+      admin.from('contractor_counties').select('contractor_id, county_id').order('contractor_id').order('county_id').range(from, to),
+    ),
     admin
       .from('platform_flags')
       .select('id, created_at, rule, surface, sender, submission_id, contractor_id')
@@ -89,7 +93,7 @@ export default async function PriorityPage() {
       .limit(50),
     admin.from('app_config').select('key, value').like('key', 'sq_priority_%'),
   ]);
-  for (const q of [standingQ, shadowQ, contractorsQ, countiesQ, coverQ, flagsQ]) {
+  for (const q of [standingQ, shadowQ, contractorsQ, countiesQ, flagsQ]) {
     if (q.error) throw new Error(`Priority page read failed: ${q.error.message}`);
   }
 
@@ -121,7 +125,7 @@ export default async function PriorityPage() {
   const countyJobs = new Map<number, number>();
   for (const j of shadow) if (j.county_id != null) countyJobs.set(j.county_id, (countyJobs.get(j.county_id) ?? 0) + 1);
   const countyTiers = new Map<number, { priority: number; responsive: number; standard: number }>();
-  for (const c of coverQ.data ?? []) {
+  for (const c of coverQ) {
     const t = tierOf.get(c.contractor_id);
     if (!t) continue; // not approved and vetted
     const row = countyTiers.get(c.county_id) ?? { priority: 0, responsive: 0, standard: 0 };

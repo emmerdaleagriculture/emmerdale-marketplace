@@ -495,9 +495,8 @@ export async function sendClientMessageAction(
   if ('error' in photos) return { error: photos.error, body };
   const refusal = messageRefusal(body, 'client', state, photos.files.length > 0);
   if (refusal) {
-    // Recorded against the job, not a standing: it is the customer's doing.
-    // The contractor on the thread is kept so the admin page can see who
-    // was being given the details.
+    // Recorded against the job, never a contractor's standing: it is the
+    // customer's doing.
     if (refusal.flag === 'off_platform') {
       await flagOffPlatform({ text: body, where: 'message', sender: 'customer', submissionId: inv.submission_id });
     } else if (refusal.flag) {
