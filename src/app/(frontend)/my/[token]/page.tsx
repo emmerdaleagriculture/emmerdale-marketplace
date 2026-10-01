@@ -300,13 +300,19 @@ export default async function ClientPortalPage({
                     ? 'One price so far.'
                     : 'One price so far — more may follow.'
                   : `${quotes.length} prices to choose from.`}{' '}
-                Nothing is booked until you accept {isExtra ? 'it' : 'one'} and pay the deposit.
+                Nothing is booked until you accept {isExtra ? 'it' : 'one'} and pay the deposit
+                {isExtra ? '.' : ' — and you can have any of them out to look at the site first, without paying anything.'}
               </p>
               <PriceList
                 token={token}
                 quotes={quotes as ClientQuoteView[]}
                 ratingWeight={ratingWeight}
                 depositRate={depositRate}
+                visitThreads={Object.fromEntries(
+                  threads
+                    .filter((t) => t.state === 'pre_award' && !t.moderated)
+                    .map((t) => [t.name, t.invitationId]),
+                )}
               />
               {directName && !isExtra && (
                 <>

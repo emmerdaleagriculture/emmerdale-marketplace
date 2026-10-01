@@ -148,16 +148,31 @@ export function VisitProposer({
     if (state.ok) setOpen(false);
   }, [state]);
 
+  // "Arrange a site visit" on a price card sends the page here (#visit-<thread>):
+  // the form is open and in view when they arrive, not a button to find.
+  const anchor = `visit-${hidden.invitation_id ?? 'thread'}`;
+  useEffect(() => {
+    const check = () => {
+      if (window.location.hash === `#${anchor}`) {
+        setOpen(true);
+        document.getElementById(anchor)?.scrollIntoView({ block: 'center' });
+      }
+    };
+    check();
+    window.addEventListener('hashchange', check);
+    return () => window.removeEventListener('hashchange', check);
+  }, [anchor]);
+
   if (!open) {
     return (
-      <button type="button" className={s.visitOpen} onClick={() => setOpen(true)}>
+      <button id={anchor} type="button" className={s.visitOpen} onClick={() => setOpen(true)}>
         {replacing ? 'Suggest a different time' : 'Suggest a site visit'}
       </button>
     );
   }
 
   return (
-    <form action={formAction} className={s.visitForm}>
+    <form id={anchor} action={formAction} className={s.visitForm}>
       <Hidden hidden={{ ...hidden, op: 'propose' }} />
       <p className={s.visitNote}>
         {me === 'contractor'

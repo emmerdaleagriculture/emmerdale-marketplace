@@ -45,12 +45,19 @@ export function PriceList({
   quotes,
   ratingWeight,
   depositRate,
+  visitThreads,
 }: {
   token: string;
   quotes: ClientQuoteView[];
   ratingWeight: number;
   /** 1 = the deposit is the whole price, and the split is never mentioned. */
   depositRate: number;
+  /**
+   * Contractor label → the thread where a site visit can be suggested
+   * (20261001120000_thread_visits). Absent when it can't be, there: the
+   * conversation is moderated, or closed.
+   */
+  visitThreads: Record<string, string>;
 }) {
   const [state, action, pending] = useActionState(acceptQuoteAction, EMPTY);
   const [mode, setMode] = useState<SortMode>('recommended');
@@ -167,13 +174,36 @@ export function PriceList({
                 </div>
               </form>
             ) : (
-              <button
-                type="button"
-                className={f.btnPrimary}
-                onClick={() => setConfirming(q.id)}
-              >
-                {q.site_visit_required ? 'Book a site visit' : 'Accept this price'}
-              </button>
+              <div className={m.acceptButtons}>
+                {/* A look before any money: the visit is arranged in the
+                    thread, and the deposit only comes with a booking. Where
+                    the contractor has asked to see the site, that is the
+                    main action and the deposit route the quieter one. */}
+                {q.site_visit_required && visitThreads[q.contractor_display_label] ? (
+                  <>
+                    <a
+                      className={f.btnPrimary}
+                      href={`#visit-${visitThreads[q.contractor_display_label]}`}
+                    >
+                      Arrange a site visit — no deposit
+                    </a>
+                    <button type="button" className={f.btnGhost} onClick={() => setConfirming(q.id)}>
+                      Book now, visit after
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" className={f.btnPrimary} onClick={() => setConfirming(q.id)}>
+                      {q.site_visit_required ? 'Book a site visit' : 'Accept this price'}
+                    </button>
+                    {visitThreads[q.contractor_display_label] && (
+                      <a className={f.btnGhost} href={`#visit-${visitThreads[q.contractor_display_label]}`}>
+                        Arrange a visit first
+                      </a>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </div>
         ))}
