@@ -10,9 +10,9 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getInvitationByToken } from '@/lib/sealedQuotes/data';
 import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
-import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
+import { messageRefusal, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
 import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
-import { flagOffPlatform } from '@/lib/sealedQuotes/offPlatformAlert';
+import { flagOffPlatform, recordRefusal } from '@/lib/sealedQuotes/offPlatformAlert';
 import { runVisitOp } from '@/lib/sealedQuotes/visits';
 
 export type QuoteActionState = FormState & { closed?: boolean };
@@ -229,16 +229,28 @@ export async function sendContractorMessageAction(
   if (state === 'closed') return { error: postRefusal('closed'), body };
   const photos = readMessagePhotos(formData);
   if ('error' in photos) return { error: photos.error, body };
-  const problem = messageProblem(body, 'contractor', state, photos.files.length > 0);
-  if (problem) {
-    await flagOffPlatform({
-      text: body,
-      where: 'message',
-      sender: 'contractor',
-      submissionId: invitation.submission?.id,
-      contractorId: invitation.contractor_id,
-    });
-    return { error: problem, body };
+  const refusal = messageRefusal(body, 'contractor', state, photos.files.length > 0);
+  if (refusal) {
+    // Paying some other way is emailed to admin as well as recorded; a
+    // phone number before award is recorded against the standing only.
+    if (refusal.flag === 'off_platform') {
+      await flagOffPlatform({
+        text: body,
+        where: 'message',
+        sender: 'contractor',
+        submissionId: invitation.submission?.id,
+        contractorId: invitation.contractor_id,
+      });
+    } else if (refusal.flag) {
+      await recordRefusal({
+        rule: refusal.flag,
+        surface: 'message',
+        sender: 'contractor',
+        submissionId: invitation.submission?.id,
+        contractorId: invitation.contractor_id,
+      });
+    }
+    return { error: refusal.text, body };
   }
 
   const submissionId = invitation.submission?.id;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { messageProblem } from './messageText';
+import { messageProblem, messageRefusal } from './messageText';
 
 describe('messageProblem', () => {
   it('passes an ordinary question either way, before and after award', () => {
@@ -54,5 +54,20 @@ describe('messageProblem', () => {
     expect(messageProblem('I am in DH1, near the river', 'client', 'pre_award')).toBeNull();
     expect(messageProblem('Cut to 3 inches, 2 passes', 'client', 'pre_award')).toBeNull();
     expect(messageProblem('Our address is DH1 3SS', 'client', 'post_award')).toBeNull();
+  });
+});
+
+describe('messageRefusal flags', () => {
+  it('names the rule that counts against a standing', () => {
+    expect(messageRefusal('Ring me on 07123 456 789', 'contractor', 'pre_award')?.flag).toBe('phone');
+    expect(messageRefusal('email me at a@b.com', 'client', 'pre_award')?.flag).toBe('email_or_link');
+    expect(messageRefusal('we are at DH1 3SS', 'client', 'pre_award')?.flag).toBe('postcode');
+    expect(messageRefusal('cash is fine', 'contractor', 'post_award')?.flag).toBe('off_platform');
+  });
+
+  it('does not flag shape or tidiness refusals', () => {
+    expect(messageRefusal('   ', 'client', 'pre_award')?.flag).toBeNull();
+    expect(messageRefusal('I can do it for £400', 'contractor', 'pre_award')?.flag).toBeNull();
+    expect(messageRefusal('Is the gate wide?', 'contractor', 'pre_award')).toBeNull();
   });
 });

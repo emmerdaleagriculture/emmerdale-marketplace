@@ -10,10 +10,10 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
 import type { FormState } from '@/lib/form';
 import { getSubmissionByClientToken } from '@/lib/sealedQuotes/data';
 import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
-import { messageProblem, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
+import { messageRefusal, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
 import { runVisitOp } from '@/lib/sealedQuotes/visits';
 import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
-import { flagOffPlatform } from '@/lib/sealedQuotes/offPlatformAlert';
+import { flagOffPlatform, recordRefusal } from '@/lib/sealedQuotes/offPlatformAlert';
 import { notifyAdmins } from '@/lib/adminNotify';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -493,10 +493,17 @@ export async function sendClientMessageAction(
   if (state === 'closed') return { error: postRefusal('closed'), body };
   const photos = readMessagePhotos(formData);
   if ('error' in photos) return { error: photos.error, body };
-  const problem = messageProblem(body, 'client', state, photos.files.length > 0);
-  if (problem) {
-    await flagOffPlatform({ text: body, where: 'message', sender: 'customer', submissionId: inv.submission_id });
-    return { error: problem, body };
+  const refusal = messageRefusal(body, 'client', state, photos.files.length > 0);
+  if (refusal) {
+    // Recorded against the job, not a standing: it is the customer's doing.
+    // The contractor on the thread is kept so the admin page can see who
+    // was being given the details.
+    if (refusal.flag === 'off_platform') {
+      await flagOffPlatform({ text: body, where: 'message', sender: 'customer', submissionId: inv.submission_id });
+    } else if (refusal.flag) {
+      await recordRefusal({ rule: refusal.flag, surface: 'message', sender: 'customer', submissionId: inv.submission_id });
+    }
+    return { error: refusal.text, body };
   }
 
   const submissionId = inv.submission_id;

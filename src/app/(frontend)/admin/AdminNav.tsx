@@ -52,7 +52,12 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
     // jobs are worked through — it is simply no longer somewhere you navigate
     // to, and the work it used to hold is on Intake › Submissions.
     name: 'Network',
-    items: [{ href: '/admin/coverage', label: 'Coverage' }],
+    items: [
+      { href: '/admin/coverage', label: 'Coverage' },
+      // Priority Access, run in the shadows: who would qualify, and what the
+      // window would have done to the jobs we actually had.
+      { href: '/admin/priority', label: 'Priority' },
+    ],
   },
   {
     name: 'Insight',
