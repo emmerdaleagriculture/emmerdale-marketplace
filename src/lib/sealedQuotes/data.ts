@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { memoize } from '@/lib/memo';
 import { isTokenFormat } from './tokens';
 import type { JobSpecPhoto } from '@/components/job/JobSpecCard';
 
@@ -19,7 +20,7 @@ export async function getInvitationByToken(token: string) {
        display_label,
        submission:job_submissions (
          id, status, expires_at, awarded_contractor_id, postcode, lat, lng, boundary,
-         amended_at,
+         amended_at, market_opens_at, preferred_contractor_id, first_refusal,
          area_value, area_unit, area_mapped_value, area_source,
          urgency, target_date, access_notes, obstacles, gate_width,
          service_attributes, photo_paths, service_verbatim,
@@ -55,6 +56,7 @@ export async function getSubmissionByClientToken(token: string) {
     .select(
       `id, status, expires_at, awarded_at, accepted_client_quote_id, customer_id, contact_name,
        visit_status, visit_due_at, visit_revised_client_pence, visit_revision_reason,
+       market_opens_at, preferred_contractor_id, first_refusal, extra_work_of, extra_work_origin,
        postcode, lat, lng, boundary, area_value, area_unit, area_mapped_value,
        urgency, target_date, access_notes, obstacles, gate_width, gate_w3w,
        service_attributes, photo_paths, service_verbatim,
@@ -125,16 +127,13 @@ const PHOTO_LABELS: Record<string, string> = {
 
 export async function signPhotos(paths: string[] | null): Promise<JobSpecPhoto[]> {
   if (!paths?.length) return [];
-  const admin = createServiceRoleClient();
-  const signed = await Promise.all(
-    paths.map(async (path) => {
-      const { data } = await admin.storage.from('job-photos').createSignedUrl(path, 3600);
-      if (!data?.signedUrl) return null;
-      const stem = path.split('/').pop()?.split('.')[0] ?? 'photo';
-      return { url: data.signedUrl, label: PHOTO_LABELS[stem] ?? 'Photo' };
-    }),
-  );
-  return signed.filter((p): p is JobSpecPhoto => p !== null);
+  // One request for the lot, not one per photo.
+  const { data } = await createServiceRoleClient().storage.from('job-photos').createSignedUrls(paths, 3600);
+  return (data ?? []).flatMap((row) => {
+    if (!row.signedUrl || !row.path) return [];
+    const stem = row.path.split('/').pop()?.split('.')[0] ?? 'photo';
+    return [{ url: row.signedUrl, label: PHOTO_LABELS[stem] ?? 'Photo' }];
+  });
 }
 
 /**
@@ -143,18 +142,20 @@ export async function signPhotos(paths: string[] | null): Promise<JobSpecPhoto[]
  * the pages read this rather than assuming 0.15, so the flag moves the copy
  * too and nothing has to be remembered at switch-on.
  */
-export async function getDepositRate(): Promise<number> {
+// Both are flags that change on deploy days, read on every customer page view:
+// held for a minute rather than fetched each time.
+export const getDepositRate = memoize(async (): Promise<number> => {
   const admin = createServiceRoleClient();
   const { data } = await admin
     .from('app_config').select('value').eq('key', 'sq_deposit_rate').maybeSingle();
   const n = Number(data?.value);
   return Number.isFinite(n) && n >= 0 && n <= 1 ? n : 1;
-}
+}, 60_000);
 
-export async function getCompositeWeight(): Promise<number> {
+export const getCompositeWeight = memoize(async (): Promise<number> => {
   const admin = createServiceRoleClient();
   const { data } = await admin
     .from('app_config').select('value').eq('key', 'sq_composite_weight').maybeSingle();
   const n = Number(data?.value);
   return Number.isFinite(n) ? n : 0.3;
-}
+}, 60_000);

@@ -120,11 +120,14 @@ export type ClientThread = {
  */
 export async function getClientThreads(
   submissionId: string,
-  /** Threads to show even when closed and silent: one with a visit on it. */
-  keep: Set<string> = new Set(),
+  /**
+   * Keep closed, silent threads too (the page drops the ones without a
+   * visit on them, once it knows which those are). Default: drop them here.
+   */
+  keepClosed = false,
 ): Promise<ClientThread[]> {
   const admin = createServiceRoleClient();
-  const [threadsRes, messagesRes] = await Promise.all([
+  const [threadsRes, messagesRes, { data: moderatedRows }] = await Promise.all([
     admin.rpc('sq_submission_threads', { p_submission_id: submissionId }),
     admin
       .from('job_messages')
@@ -132,6 +135,10 @@ export async function getClientThreads(
       .eq('submission_id', submissionId)
       .order('created_at', { ascending: true })
       .limit(2000),
+    admin
+      .from('job_invitations')
+      .select('id, contractor:contractors (messages_moderated_until)')
+      .eq('submission_id', submissionId),
   ]);
   const rows = (threadsRes.data ?? []) as {
     invitation_id: string;
@@ -141,10 +148,6 @@ export async function getClientThreads(
   }[];
 
   const messageRows = (messagesRes.data ?? []).filter((m) => visibleTo(m, 'client'));
-  const { data: moderatedRows } = await admin
-    .from('job_invitations')
-    .select('id, contractor:contractors (messages_moderated_until)')
-    .eq('submission_id', submissionId);
   const now = new Date();
   const moderated = new Set(
     (moderatedRows ?? [])
@@ -174,7 +177,7 @@ export async function getClientThreads(
         moderated: moderated.has(t.invitation_id),
       };
     })
-    .filter((t) => t.state !== 'closed' || t.messages.length > 0 || keep.has(t.invitationId))
+    .filter((t) => keepClosed || t.state !== 'closed' || t.messages.length > 0)
     // The live conversation first: the winner after award, open ones before.
     .sort((a, b) => Number(b.state !== 'closed') - Number(a.state !== 'closed'));
 }

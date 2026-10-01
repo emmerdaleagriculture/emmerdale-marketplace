@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { after } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getInvitationByToken, getLiveQuote, signPhotos } from '@/lib/sealedQuotes/data';
 import { formatGBP, formatRate, vatNote } from '@/lib/sealedQuotes/money';
@@ -43,13 +44,15 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   const service = js.service as { id: number; name: string; area_priced: boolean } | null;
   const county = (js.county as { name: string } | null)?.name ?? null;
 
-  // One round-trip of latency, not three: the view event, the live quote and
-  // the photo signing are independent.
+  // Viewing is itself an event (it is what "viewed" means), but a write
+  // has no place on the contractor's wait: recorded after the response.
   const admin = createServiceRoleClient();
-  const [, live, photos, positionRes, threadState, messages] = await Promise.all([
-    admin
-      .rpc('record_invitation_view', { p_token: token })
-      .then(() => undefined, (e) => console.error('[sq] record view failed:', e)),
+  after(async () => {
+    const { error } = await admin.rpc('record_invitation_view', { p_token: token });
+    if (error) console.error('[sq] record view failed:', error.message);
+  });
+  // Everything depends only on the invitation: one round trip, not four.
+  const [live, photos, positionRes, threadState, messages, moderatedUntil, visits, visitBlock, contactIfVisit] = await Promise.all([
     getLiveQuote(js.id, invitation.contractor_id),
     signPhotos(js.photo_paths),
     // Where their price sits, and whether the customer has seen it. Returns no
@@ -66,8 +69,6 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
       }),
     getThreadState(invitation.id),
     getThreadMessages(invitation.id, 'contractor'),
-  ]);
-  const [moderatedUntil, visits, visitBlock, contactIfVisit] = await Promise.all([
     getModeratedUntil(invitation.contractor_id),
     getThreadVisits(invitation.id),
     visitBlocked(invitation.id, 'contractor'),
@@ -87,11 +88,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     | null)?.[0] ?? null;
   // Offered to this contractor alone until market_opens_at: a repeat the
   // customer asked them for again, or a new job under first refusal.
-  const { data: offer } = await admin
-    .from('job_submissions')
-    .select('market_opens_at, preferred_contractor_id, first_refusal')
-    .eq('id', js.id)
-    .maybeSingle();
+  const offer = js;
   const unread = messages.filter((m) => m.sender === 'client' && !m.read).length;
   const directToYou =
     Boolean(offer?.market_opens_at) && offer?.preferred_contractor_id === invitation.contractor_id;

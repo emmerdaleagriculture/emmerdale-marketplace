@@ -4,7 +4,6 @@ import {
   SENTRY_DSN,
   SENTRY_ENVIRONMENT,
   SENTRY_RELEASE,
-  TRACES_SAMPLE_RATE,
   warnIfDsnMissing,
 } from '@/lib/sentry/options';
 import { scrubEvent } from '@/lib/sentry/scrub';
@@ -26,7 +25,9 @@ Sentry.init({
   dsn: SENTRY_DSN,
   environment: SENTRY_ENVIRONMENT,
   release: SENTRY_RELEASE,
-  tracesSampleRate: TRACES_SAMPLE_RATE,
+  // Browser spans are not collected: see bundleSizeOptimizations in
+  // next.config.mjs, which also drops the tracing code from the bundle.
+  tracesSampleRate: 0,
   dataCollection: DATA_COLLECTION,
   enableLogs: false,
   beforeSend: scrubEvent,
