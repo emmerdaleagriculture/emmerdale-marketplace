@@ -118,5 +118,17 @@ export default withSentryConfig(nextConfig, {
   // past — see the matcher there.
   tunnelRoute: '/monitoring',
 
+  // No browser performance tracing: nobody reads client spans, and the
+  // integration is 20–30 KB gzipped on every page, including the paid
+  // /start landing where most arrivals are on phones. Server tracing is
+  // unaffected (sentry.server.config / instrumentation.ts).
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeTracing: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+    excludeReplayWorker: true,
+  },
+
   silent: !process.env.CI,
 });

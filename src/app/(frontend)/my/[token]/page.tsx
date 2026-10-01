@@ -30,6 +30,7 @@ import { MessageThread } from '@/components/messages/MessageThread';
 import { getClientThreads } from '@/lib/sealedQuotes/messages';
 import { contractorContactForVisit, getSubmissionVisits, type VisitContact } from '@/lib/sealedQuotes/visits';
 import { clientVisitAction, markClientThreadReadAction, sendClientMessageAction } from './actions';
+import { after } from 'next/server';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import a from '../../auth.module.css';
 import m from './my.module.css';
@@ -56,34 +57,47 @@ export default async function ClientPortalPage({
   const js = await getSubmissionByClientToken(token);
   if (!js) notFound();
 
-  // Who's looking. Signed in and the job unclaimed is the one moment an
-  // account can start, because holding this link is the only proof there is.
-  const {
-    data: { user },
-  } = await (await createClient()).auth.getUser();
-  // Shown to signed-out customers too: they are the whole audience for it,
-  // and gating on a session made the feature reachable only by people who
-  // already had a contractor login.
-  const claimable = !js.customer_id;
-  const mine = Boolean(user) && js.customer_id === user?.id;
-
-  // One rating per job (§18a). Read here so the done panel can show what they
-  // said rather than asking again.
-  const rated = ['completed', 'paid'].includes(js.status)
-    ? (
-        await createServiceRoleClient()
-          .from('contractor_ratings')
-          .select('stars')
-          .eq('submission_id', js.id)
-          .maybeSingle()
-      ).data
-    : null;
-
-  // The balance after sign-off (terms 7.2): due, failed, or already settled.
-  // Read only for finished jobs — nothing else can have one.
-  const balance = ['completed', 'paid'].includes(js.status)
-    ? (
-        await createServiceRoleClient()
+  // Everything below depends only on the job row, so it all goes in one
+  // batch: this page used to make nine to twelve round trips in series
+  // before the first byte. The accepted quote is fetched by id with no
+  // validity filter: an award outlives its quote's valid-until date.
+  const admin = createServiceRoleClient();
+  const done = ['completed', 'paid'].includes(js.status);
+  const needQuotes = ['quotes_receiving', 'accepted_awaiting_payment'].includes(js.status);
+  // A repeat offered to the customer's previous contractor first
+  // (market_opens_at is set only while that offer stands). They chose them by
+  // name, so the name is shown here even before any price. A first-refusal
+  // job (a new job offered to one contractor before the market) is not
+  // theirs to know about: it reads as an ordinary job, with no name and no
+  // button to open it up.
+  const directOffer = Boolean(js.market_opens_at && js.preferred_contractor_id && !js.first_refusal);
+  const [
+    userRes,
+    ratedRes,
+    balanceRes,
+    depositRes,
+    cancelQuote,
+    extraOfRes,
+    extrasRes,
+    directRes,
+    quotes,
+    ratingWeight,
+    depositRate,
+    photos,
+    accepted,
+    allThreads,
+    visits,
+  ] = await Promise.all([
+    // Who's looking. Signed in and the job unclaimed is the one moment an
+    // account can start, because holding this link is the only proof there
+    // is. Free for a customer with no session cookie.
+    createClient().then((c) => c.auth.getUser()),
+    // One rating per job (§18a), so the done panel can show what they said
+    // rather than asking again.
+    done ? admin.from('contractor_ratings').select('stars').eq('submission_id', js.id).maybeSingle() : Promise.resolve({ data: null }),
+    // The balance after sign-off (terms 7.2): due, failed, or already settled.
+    done
+      ? admin
           .from('job_payments')
           .select('amount_pence, status, due_at')
           .eq('submission_id', js.id)
@@ -92,123 +106,76 @@ export default async function ClientPortalPage({
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()
-      ).data
-    : null;
-
-  // What the customer has paid to book it, for the full refund a declined
-  // revision gives back.
-  const depositPaidLabel =
-    js.status === 'variation_pending'
-      ? formatGBP(
-          (
-            await createServiceRoleClient()
-              .from('job_payments')
-              .select('amount_pence')
-              .eq('submission_id', js.id)
-              .eq('kind', 'deposit')
-              .eq('status', 'paid')
-          ).data?.reduce((n, r) => n + r.amount_pence, 0) ?? 0,
-        )
-      : '';
-
-  // Only quoted while cancelling is actually on offer — 9.1 is "before the
-  // work starts", and after that 9.3 needs a person, not a button.
-  const cancelQuote = ['awarded', 'contacted', 'scheduled'].includes(js.status)
-    ? await cancellationQuote(js.id)
-    : null;
-
-  const service = (js.service as { id: number; name: string } | null)?.name ?? js.service_verbatim;
-  const county = (js.county as { name: string } | null)?.name ?? null;
-  const first = js.contact_name?.split(/\s+/)[0] ?? 'there';
-
-  // A repeat offered to the customer's previous contractor first
-  // (market_opens_at is set only while that offer stands). They chose them by
-  // name, so the name is shown here even before any price. A first-refusal
-  // job (a new job offered to one contractor before the market) is not
-  // theirs to know about: it reads as an ordinary job, with no name and no
-  // button to open it up.
-  const { data: directRow } = await createServiceRoleClient()
-    .from('job_submissions')
-    .select('market_opens_at, preferred_contractor_id, first_refusal, extra_work_of, extra_work_origin')
-    .eq('id', js.id)
-    .maybeSingle();
-
-  // Extra work on a booked job is booked as a job of its own
-  // (20260926090000). Each side links to the other, and the extra one is
-  // worded as what it is — work they asked their contractor for, priced by
-  // them — not as a job waiting on the market.
-  const [extraOfRes, extrasRes] = await Promise.all([
-    directRow?.extra_work_of
-      ? createServiceRoleClient()
-          .from('job_submissions')
-          .select('client_token, service_verbatim, service:services (name)')
-          .eq('id', directRow.extra_work_of)
-          .maybeSingle()
       : Promise.resolve({ data: null }),
-    createServiceRoleClient()
-      .from('job_submissions')
-      .select('client_token, service_verbatim, status')
-      .eq('extra_work_of', js.id)
-      .order('created_at'),
-  ]);
-  const extraOf = extraOfRes.data;
-  const extras = extrasRes.data ?? [];
-  const isExtra = Boolean(directRow?.extra_work_of);
-  const firstRefusalOpen = Boolean(directRow?.first_refusal && directRow.market_opens_at);
-  const directName =
-    directRow?.market_opens_at && directRow.preferred_contractor_id && !directRow.first_refusal
-      ? ((
-          await createServiceRoleClient()
-            .from('contractors')
-            .select('business_name')
-            .eq('id', directRow.preferred_contractor_id)
-            .maybeSingle()
-        ).data?.business_name ?? 'your contractor')
-      : null;
-
-  // Everything after the token lookup is independent — one round-trip of
-  // latency. The accepted quote is fetched by id with no validity filter:
-  // an award outlives its quote's valid-until date.
-  const needQuotes = ['quotes_receiving', 'accepted_awaiting_payment'].includes(js.status);
-  // Started here, awaited after: kept out of the positional array below.
-  const visitsP = getSubmissionVisits(js.id);
-  // A thread with a visit on it stays on the page after it closes: the
-  // "called off" email points here.
-  const threadsP = visitsP.then((v) => getClientThreads(js.id, new Set(v.keys())));
-  const [quotes, ratingWeight, depositRate, photos, accepted] = await Promise.all([
+    // What the customer has paid to book it, for the full refund a declined
+    // revision gives back.
+    js.status === 'variation_pending'
+      ? admin.from('job_payments').select('amount_pence').eq('submission_id', js.id).eq('kind', 'deposit').eq('status', 'paid')
+      : Promise.resolve({ data: null }),
+    // Only quoted while cancelling is actually on offer — 9.1 is "before the
+    // work starts", and after that 9.3 needs a person, not a button.
+    ['awarded', 'contacted', 'scheduled'].includes(js.status) ? cancellationQuote(js.id) : Promise.resolve(null),
+    // Extra work on a booked job is booked as a job of its own
+    // (20260926090000). Each side links to the other.
+    js.extra_work_of
+      ? admin.from('job_submissions').select('client_token, service_verbatim, service:services (name)').eq('id', js.extra_work_of).maybeSingle()
+      : Promise.resolve({ data: null }),
+    admin.from('job_submissions').select('client_token, service_verbatim, status').eq('extra_work_of', js.id).order('created_at'),
+    directOffer
+      ? admin.from('contractors').select('business_name').eq('id', js.preferred_contractor_id!).maybeSingle()
+      : Promise.resolve({ data: null }),
     needQuotes ? getClientQuotes(js.id) : Promise.resolve([]),
     needQuotes ? getCompositeWeight() : Promise.resolve(0.3),
     getDepositRate(),
     signPhotos(js.photo_paths),
-    js.accepted_client_quote_id
-      ? getClientQuoteById(js.accepted_client_quote_id)
-      : Promise.resolve(null),
-    // Record that these prices have been seen, so the contractor who sent one
-    // knows it reached the customer. First view only — the function ignores
-    // rows that already carry a timestamp, so this never becomes a log of
-    // someone's visits. Failure must not cost the customer their page.
-    //
-    // LAST in the array on purpose: the five bindings above are positional,
-    // and inserting anything before them silently shifts every one.
-    needQuotes
-      ? createServiceRoleClient()
-          .rpc('sq_mark_quotes_viewed', { p_submission_id: js.id })
-          .then(() => undefined, (e) => console.error('[sq] mark viewed failed:', e))
-      : Promise.resolve(undefined),
+    js.accepted_client_quote_id ? getClientQuoteById(js.accepted_client_quote_id) : Promise.resolve(null),
+    // Closed, silent threads included: the ones with a visit on them stay
+    // (the "called off" email points here), and which those are is only
+    // known once the visits are in.
+    getClientThreads(js.id, true),
+    getSubmissionVisits(js.id),
   ]);
+  const user = userRes.data.user;
+  const claimable = !js.customer_id;
+  const mine = Boolean(user) && js.customer_id === user?.id;
+  const rated = ratedRes.data;
+  const balance = balanceRes.data;
+  const depositPaidLabel =
+    js.status === 'variation_pending' ? formatGBP(depositRes.data?.reduce((n, r) => n + r.amount_pence, 0) ?? 0) : '';
+  const extraOf = extraOfRes.data;
+  const extras = extrasRes.data ?? [];
+  const isExtra = Boolean(js.extra_work_of);
+  const firstRefusalOpen = Boolean(js.first_refusal && js.market_opens_at);
+  const directName = directOffer ? (directRes.data?.business_name ?? 'your contractor') : null;
+  const threads = allThreads.filter((t) => t.state !== 'closed' || t.messages.length > 0 || visits.has(t.invitationId));
 
-  const [threads, visits] = await Promise.all([threadsP, visitsP]);
+  // Record that these prices have been seen, so the contractor who sent one
+  // knows it reached the customer. First view only — the function ignores
+  // rows that already carry a timestamp, so this never becomes a log of
+  // someone's visits. After the response: a write has no place on the
+  // customer's wait, and its failure must not cost them their page.
+  if (needQuotes) {
+    after(async () => {
+      const { error } = await admin.rpc('sq_mark_quotes_viewed', { p_submission_id: js.id });
+      if (error) console.error('[sq] mark viewed failed:', error.message);
+    });
+  }
+
+  const service = (js.service as { id: number; name: string } | null)?.name ?? js.service_verbatim;
+  const county = (js.county as { name: string } | null)?.name ?? null;
+  const first = js.contact_name?.split(/\s+/)[0] ?? 'there';
   const visitsToAnswer = threads
     .filter((t) => t.state === 'pre_award')
     .reduce(
       (n, t) => n + (visits.get(t.invitationId) ?? []).filter((v) => v.status === 'proposed' && v.proposedBy === 'contractor').length,
       0,
     );
-  // Whoever is coming onto their land, for each visit they've agreed.
+  // Whoever is coming onto their land, for each visit they've agreed. The
+  // one read that has to wait for another.
   const visitContacts = new Map<string, VisitContact | null>(
     await Promise.all(
       [...visits]
-        .filter(([, list]) => list.some((v) => v.status === 'accepted'))
+        .filter(([, list]) => list.some((v) => v.status === 'accepted' || v.status === 'held'))
         .map(async ([id]) => [id, await contractorContactForVisit(id)] as const),
     ),
   );
@@ -271,11 +238,11 @@ export default async function ClientPortalPage({
                 Hi {first} — we&rsquo;ve asked {directName ?? 'your contractor'} to price
                 the extra work, and we&rsquo;ll email you when it&rsquo;s in.
               </p>
-            ) : directName && directRow?.market_opens_at ? (
+            ) : directName && js.market_opens_at ? (
               <>
                 <p className={a.sub}>
                   Hi {first} — we&rsquo;ve asked {directName} to price your job first.
-                  If they can&rsquo;t by {formatDateTime(directRow.market_opens_at)}, we&rsquo;ll
+                  If they can&rsquo;t by {formatDateTime(js.market_opens_at)}, we&rsquo;ll
                   send it to other contractors who cover {county ?? 'your area'} — or you
                   can do that now.
                 </p>
@@ -294,7 +261,7 @@ export default async function ClientPortalPage({
             <>
               <p className={a.sub}>
                 {isExtra
-                  ? directRow?.extra_work_origin === 'contractor'
+                  ? js.extra_work_origin === 'contractor'
                     ? `${directName ?? 'Your contractor'} has suggested some extra work on your job and priced it. It's entirely up to you — nothing happens unless you accept it.`
                     : `${directName ?? 'Your contractor'} has priced the extra work you asked for.`
                   : quotes.length === 1
