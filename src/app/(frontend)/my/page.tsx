@@ -5,6 +5,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { DetailsForm } from './DetailsForm';
+import { CloseAccount } from './CloseAccount';
 import { formatDateTime } from '@/lib/time';
 import { CancelRepeat, RepeatSetup, SwitchRepeatMode } from './RepeatControls';
 import { startReorderAction } from './actions';
@@ -114,6 +115,7 @@ export default async function MyJobsPage() {
               phone: customer?.phone ?? null,
             }}
           />
+          <CloseAccount />
 
           {jobs.length === 0 ? (
             <p className={a.sub}>

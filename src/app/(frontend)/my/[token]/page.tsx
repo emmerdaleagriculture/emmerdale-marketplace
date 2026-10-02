@@ -22,6 +22,7 @@ import { PayNow } from './PayNow';
 import { SaveToAccount } from './SaveToAccount';
 import { CancelJob } from './CancelJob';
 import { VisitDecision } from './VisitDecision';
+import { WithdrawJob } from './WithdrawJob';
 import { PayBalance } from './PayBalance';
 import { formatDate, formatDateTime } from '@/lib/time';
 import { OpenToMarket } from './OpenToMarket';
@@ -369,6 +370,15 @@ export default async function ClientPortalPage({
               newLabel={formatGBP(js.visit_revised_client_pence ?? 0)}
               reason={js.visit_revision_reason ?? ''}
               depositLabel={depositPaidLabel}
+            />
+          )}
+
+          {/* ── Taking an open job back ────────────────────────────── */}
+          {['confirmed', 'distributed', 'quotes_receiving', 'accepted_awaiting_payment'].includes(js.status) && (
+            <WithdrawJob
+              token={token}
+              contractors={threads.map((t) => ({ label: t.name, invitationId: t.invitationId }))}
+              hasAccount={Boolean(js.customer_id)}
             />
           )}
 

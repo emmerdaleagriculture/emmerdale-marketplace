@@ -3022,7 +3022,12 @@ export type Database = {
           state: string
         }[]
       }
+      sq_close_customer: { Args: { p_email: string }; Returns: Json }
       sq_job_markup_rate: { Args: { p_submission_id: string }; Returns: number }
+      sq_withdraw_job: {
+        Args: { p_contractor_id?: string; p_reason: string; p_submission_id: string }
+        Returns: Json
+      }
       sq_priority_nightly: { Args: never; Returns: Json }
       sq_priority_shadow_tick: { Args: never; Returns: Json }
       sq_standing_compute: { Args: { p_on?: string }; Returns: Json }

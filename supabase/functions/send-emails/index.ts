@@ -48,7 +48,7 @@ const SQ_CONTRACTOR_KINDS = new Set([
   'sq_invoice_request',
   'sq_job_amended', 'sq_message_to_contractor',
   'sq_visit_reminder', 'sq_visit_accepted', 'sq_visit_declined',
-  'sq_weekly_digest', 'sq_thread_visit_to_contractor',
+  'sq_weekly_digest', 'sq_thread_visit_to_contractor', 'sq_job_withdrawn',
 ]);
 
 /**
@@ -1057,6 +1057,18 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           };
       }
     }
+
+    // The customer withdrew a job this contractor had priced
+    // (20261002140000_withdraw_and_close). Short: there is nothing to do.
+    case 'sq_job_withdrawn':
+      return {
+        subject: `Job withdrawn: ${p.service ?? 'land work'}${p.postcode_district ? `, ${p.postcode_district}` : ''}`,
+        text:
+          `The customer has withdrawn their ${p.service ?? 'land work'} job` +
+          `${p.postcode_district ? ` in ${p.postcode_district}` : ''}, so it won’t be going ahead through us. ` +
+          `Nothing else is needed from you — thanks for pricing it.\n\n` +
+          `We’ll be in touch when the next job in your area comes up.`,
+      };
 
     case 'sq_message_to_contractor':
       return {
