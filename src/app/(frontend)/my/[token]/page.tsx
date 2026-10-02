@@ -23,6 +23,7 @@ import { SaveToAccount } from './SaveToAccount';
 import { CancelJob } from './CancelJob';
 import { VisitDecision } from './VisitDecision';
 import { WithdrawJob } from './WithdrawJob';
+import { getQuotePasses } from '@/lib/sealedQuotes/passes';
 import { PayBalance } from './PayBalance';
 import { formatDate, formatDateTime } from '@/lib/time';
 import { OpenToMarket } from './OpenToMarket';
@@ -88,6 +89,7 @@ export default async function ClientPortalPage({
     accepted,
     allThreads,
     visits,
+    quotePasses,
   ] = await Promise.all([
     // Who's looking. Signed in and the job unclaimed is the one moment an
     // account can start, because holding this link is the only proof there
@@ -135,7 +137,27 @@ export default async function ClientPortalPage({
     // known once the visits are in.
     getClientThreads(js.id, true),
     getSubmissionVisits(js.id),
+    needQuotes ? getQuotePasses(js.id) : Promise.resolve({ live: [], all: [] }),
   ]);
+  // Prices passed on, and prices that came after a pass on the same
+  // contractor's earlier one — those are shown as new.
+  const passMap = Object.fromEntries(quotePasses.live.map((p) => [p.clientQuoteId, p.reason]));
+  const passedContractors = new Set(quotePasses.all.map((p) => p.contractorId));
+  const newSincePass = quotePasses.all.length
+    ? (
+        await createServiceRoleClient()
+          .from('client_quotes')
+          .select('id, contractor_id, created_at')
+          .in('id', quotes.map((q) => q.id))
+      ).data
+        ?.filter(
+          (q) =>
+            !passMap[q.id] &&
+            passedContractors.has(q.contractor_id) &&
+            quotePasses.all.some((p) => p.contractorId === q.contractor_id && p.createdAt < q.created_at),
+        )
+        .map((q) => q.id) ?? []
+    : [];
   const user = userRes.data.user;
   const claimable = !js.customer_id;
   const mine = Boolean(user) && js.customer_id === user?.id;
@@ -290,6 +312,8 @@ export default async function ClientPortalPage({
                     )
                     .map((t) => [t.name, t.invitationId]),
                 )}
+                passes={passMap}
+                newSincePass={newSincePass}
               />
               {directName && !isExtra && (
                 <>

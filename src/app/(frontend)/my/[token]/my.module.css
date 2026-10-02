@@ -177,3 +177,29 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* A price the customer passed on: folded to one line, undo beside it. */
+.quotePassed {
+  opacity: 0.7;
+  background: var(--cream);
+}
+.quotePassed .quotePrice {
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: line-through;
+  color: var(--ink-3);
+}
+/* A revised price from a contractor the customer had passed on. */
+.newPrice {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--jd-green-deep);
+  background: var(--jd-yellow);
+  border-radius: 999px;
+  padding: 2px 8px;
+  vertical-align: middle;
+}

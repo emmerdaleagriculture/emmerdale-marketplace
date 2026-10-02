@@ -18,6 +18,7 @@ import { ContactUsButton } from '@/components/ContactUsButton';
 import { MessageThread } from '@/components/messages/MessageThread';
 import { getModeratedUntil, getThreadMessages, getThreadState } from '@/lib/sealedQuotes/messages';
 import { customerContactForVisit, getThreadVisits, visitBlocked } from '@/lib/sealedQuotes/visits';
+import { getPassOnCurrentPrice } from '@/lib/sealedQuotes/passes';
 import { contractorVisitAction, markContractorThreadReadAction, sendContractorMessageAction } from './actions';
 import a from '../../auth.module.css';
 import q from './quote.module.css';
@@ -52,7 +53,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     if (error) console.error('[sq] record view failed:', error.message);
   });
   // Everything depends only on the invitation: one round trip, not four.
-  const [live, photos, positionRes, threadState, messages, moderatedUntil, visits, visitBlock] = await Promise.all([
+  const [live, photos, positionRes, threadState, messages, moderatedUntil, visits, visitBlock, passed] = await Promise.all([
     getLiveQuote(js.id, invitation.contractor_id),
     signPhotos(js.photo_paths),
     // Where their price sits, and whether the customer has seen it. Returns no
@@ -72,6 +73,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     getModeratedUntil(invitation.contractor_id),
     getThreadVisits(invitation.id),
     visitBlocked(invitation.id, 'contractor'),
+    getPassOnCurrentPrice(js.id, invitation.contractor_id),
   ]);
   // An agreed visit is the one thing before award that shows the contractor
   // where the customer is and how to reach them. Read only when there is one
@@ -261,6 +263,27 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                   {vatNote(live.price_basis) ? ` (${vatNote(live.price_basis)})` : ''}{' '}
                   (sent {formatDateTime(live.created_at)}, valid until {live.valid_until}).
                   Send a new price below — the latest one is what the customer sees.
+                  {/* The customer passed on this price (20261002170000): the
+                      category, and the way back in. Gone once a new price is
+                      sent, because that one starts clean. */}
+                  {passed && (
+                    <>
+                      {' '}
+                      <strong>
+                        The customer passed on this price on {formatDateTime(passed.createdAt)}
+                        {passed.reason === 'too_expensive'
+                          ? ' — it was more than they wanted to pay.'
+                          : passed.reason === 'too_far'
+                            ? ' — they felt you were too far away.'
+                            : passed.reason === 'visit_first'
+                              ? ' — they wanted someone to see the site before pricing.'
+                              : passed.reason === 'terms'
+                                ? ' — something in the price or your note didn’t suit them.'
+                                : '.'}
+                      </strong>{' '}
+                      The job is still open: a revised price shows to them as new.
+                    </>
+                  )}
                   {/* The customer changed the job after this price was sent. Shown
                       here as well as emailed, because the email is easy to miss and
                       this page is where a price gets revised. Compared as dates, not
