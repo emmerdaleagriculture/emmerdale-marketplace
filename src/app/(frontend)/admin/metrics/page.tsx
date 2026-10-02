@@ -82,6 +82,30 @@ type MarkupTest = {
   passes_30d: Record<string, number>;
 };
 
+type PassSummary = {
+  passes: number;
+  undone: number;
+  prices: number;
+  jobs_with_pass: number;
+  reasons: Record<string, number>;
+  revised: number;
+  revised_booked: number;
+  passed_then_booked_other: number;
+  median_hours_to_pass: number | null;
+  avg_passed_pence: number | null;
+  avg_price_pence: number | null;
+  all_passed_open: number;
+  contractors: { id: string; business_name: string; passes: number; too_expensive: number; prices: number }[];
+};
+
+const PASS_REASON_LABEL: Record<string, string> = {
+  too_expensive: 'More than they wanted to pay',
+  too_far: 'Too far away',
+  visit_first: 'Wanted a site visit first',
+  terms: 'Price or note didn’t suit',
+  other: 'Something else',
+};
+
 /** An arm with no jobs yet, so the table shows both columns from day one. */
 function emptyArm(rate: number): MarkupArm {
   return { rate, jobs: 0, priced: 0, prices: 0, passes: 0, passes_price: 0, booked: 0, completed: 0, cancelled: 0, lapsed: 0, avg_client_pence: null, avg_contractor_pence: null, margin_pence: 0, median_days_to_book: null, since: null };
@@ -140,7 +164,7 @@ export default async function AdminDashboard() {
   // early jobs need the IP join in jobSources to say anything at all.
   const page = <T,>(q: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) =>
     fetchAll(q).catch(() => [] as T[]);
-  const [{ data, error }, invitations, sourceSubs, parses, views, priorityQ, markupQ] = await Promise.all([
+  const [{ data, error }, invitations, sourceSubs, parses, views, priorityQ, markupQ, passQ] = await Promise.all([
     admin.rpc('admin_dashboard'),
     // Every invitation of the last 30 days, for the response donut: the RPC
     // carries rates, not the split. Paged; the month is past 600 already.
@@ -178,9 +202,12 @@ export default async function AdminDashboard() {
     admin.rpc('admin_priority_summary').then((r) => r, () => ({ data: null })),
     // The commission split test (20261002100000): the two arms side by side.
     admin.rpc('admin_markup_test_summary').then((r) => r, () => ({ data: null })),
+    // Prices passed on (20261002170000): why, and what happened next.
+    admin.rpc('admin_pass_summary').then((r) => r, () => ({ data: null })),
   ]);
   const pr = (priorityQ?.data ?? null) as PrioritySummary | null;
   const mt = (markupQ?.data ?? null) as MarkupTest | null;
+  const ps = (passQ?.data ?? null) as PassSummary | null;
   if (error || !data) {
     return (
       <div>
@@ -508,6 +535,82 @@ export default async function AdminDashboard() {
           </>
         );
       })()}
+
+      {/* ── Passed prices ────────────────────────────────────────────── */}
+      {ps && (
+        <>
+          <div className={s.sectionLabel}>Passed prices — last 30 days</div>
+          <p className={s.sub}>
+            A customer passing on a price says why, in a word; the contractor is told the category and can send a
+            revised price, which comes back to the customer as new. Passes close nothing and never count against a
+            contractor&rsquo;s standing.
+          </p>
+          <Tiles>
+            <Tile
+              value={pct(nz(ps.passes), nz(ps.prices))}
+              label="Prices passed on"
+              hint={`${n(ps.passes)} of ${n(ps.prices)} prices, on ${n(ps.jobs_with_pass)} jobs · ${n(ps.undone)} taken back`}
+            />
+            <Tile
+              value={nz(ps.passes) ? `${n(ps.revised)} — ${pct(nz(ps.revised), nz(ps.passes))}` : '—'}
+              label="Followed by a revised price"
+              hint={`${n(ps.revised_booked)} of those revisions were booked`}
+            />
+            <Tile
+              value={n(ps.passed_then_booked_other)}
+              label="Jobs where a pass preceded booking someone else"
+              hint="the pass was a choice, not a drop-out"
+            />
+            <Tile
+              value={n(ps.all_passed_open)}
+              label="Open jobs with every price passed"
+              hint="waiting for more, or about to withdraw"
+              warn={nz(ps.all_passed_open) > 0}
+            />
+            <Tile
+              value={ps.avg_passed_pence != null ? gbp(ps.avg_passed_pence) : '—'}
+              label="Average passed price"
+              hint={ps.avg_price_pence != null ? `average price overall ${gbp(ps.avg_price_pence)}` : undefined}
+            />
+            <Tile
+              value={ps.median_hours_to_pass != null ? `${ps.median_hours_to_pass}h` : '—'}
+              label="Price shown → passed"
+              hint="median"
+            />
+          </Tiles>
+          {Object.keys(ps.reasons ?? {}).length > 0 && (
+            <AdminTable head={['Why', 'Passes', 'Share']}>
+              {Object.entries(ps.reasons)
+                .sort((x, y) => y[1] - x[1])
+                .map(([r, c]) => (
+                  <tr key={r}>
+                    <td>{PASS_REASON_LABEL[r] ?? r}</td>
+                    <td>{n(c)}</td>
+                    <td>{pct(c, nz(ps.passes))}</td>
+                  </tr>
+                ))}
+            </AdminTable>
+          )}
+          {ps.contractors.length > 0 && (
+            <>
+              <div className={s.sectionLabel}>Passed on most — two or more passes in 30 days</div>
+              <AdminTable head={['Contractor', 'Passes', 'As too expensive', 'Prices sent', 'Pass rate']}>
+                {ps.contractors.map((c) => (
+                  <tr key={c.id}>
+                    <td>
+                      <Link href={`/admin/contractors/${c.id}`}>{c.business_name}</Link>
+                    </td>
+                    <td>{n(c.passes)}</td>
+                    <td>{n(c.too_expensive)}</td>
+                    <td>{n(c.prices)}</td>
+                    <td>{pct(c.passes, c.prices)}</td>
+                  </tr>
+                ))}
+              </AdminTable>
+            </>
+          )}
+        </>
+      )}
 
       {/* ── Priority Access, in the shadows ──────────────────────────── */}
       {pr && (

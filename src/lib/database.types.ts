@@ -2762,6 +2762,7 @@ export type Database = {
       }
       admin_markup_test_summary: { Args: never; Returns: Json }
       admin_metrics: { Args: never; Returns: Json }
+      admin_pass_summary: { Args: never; Returns: Json }
       admin_priority_summary: { Args: never; Returns: Json }
       admin_submission_board: {
         Args: {
