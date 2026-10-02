@@ -1449,6 +1449,9 @@ export type Database = {
       }
       job_submissions: {
         Row: {
+          markup_arm: string | null
+          markup_assigned_at: string | null
+          markup_rate: number | null
           visit_decided_at: string | null
           visit_due_at: string | null
           visit_prev_status: string | null
@@ -1527,6 +1530,9 @@ export type Database = {
           utm_source: string | null
         }
         Insert: {
+          markup_arm?: string | null
+          markup_assigned_at?: string | null
+          markup_rate?: number | null
           visit_decided_at?: string | null
           visit_due_at?: string | null
           visit_prev_status?: string | null
@@ -1605,6 +1611,9 @@ export type Database = {
           utm_source?: string | null
         }
         Update: {
+          markup_arm?: string | null
+          markup_assigned_at?: string | null
+          markup_rate?: number | null
           visit_decided_at?: string | null
           visit_due_at?: string | null
           visit_prev_status?: string | null
@@ -2724,6 +2733,7 @@ export type Database = {
         Args: { p_actor: string; p_ids: string[] }
         Returns: Json
       }
+      admin_markup_test_summary: { Args: never; Returns: Json }
       admin_metrics: { Args: never; Returns: Json }
       admin_priority_summary: { Args: never; Returns: Json }
       admin_submission_board: {
@@ -3012,6 +3022,7 @@ export type Database = {
           state: string
         }[]
       }
+      sq_job_markup_rate: { Args: { p_submission_id: string }; Returns: number }
       sq_priority_nightly: { Args: never; Returns: Json }
       sq_priority_shadow_tick: { Args: never; Returns: Json }
       sq_standing_compute: { Args: { p_on?: string }; Returns: Json }

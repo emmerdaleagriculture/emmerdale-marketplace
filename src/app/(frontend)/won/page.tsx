@@ -85,16 +85,20 @@ export default async function WonJobsPage() {
           .in('status', ['confirmed', 'distributed', 'quotes_receiving', 'accepted_awaiting_payment'])
       : Promise.resolve({ data: [] }),
     admin.from('app_config').select('value').eq('key', 'sq_markup_rate').maybeSingle(),
-    // Jobs booked subject to a site visit, still waiting on the contractor.
+    // Jobs booked subject to a site visit, still waiting on the contractor;
+    // and each job's own markup rate (a split-test arm, 20261002100000),
+    // which extra work on it inherits.
     ids.length
       ? admin
           .from('job_submissions')
-          .select('id, visit_status, visit_due_at')
+          .select('id, visit_status, visit_due_at, markup_rate')
           .in('id', ids)
-          .in('visit_status', ['awaiting_visit', 'revised'])
       : Promise.resolve({ data: [] }),
   ]);
-  const visits = new Map((visitsRes.data ?? []).map((v) => [v.id, v]));
+  const jobRows = new Map((visitsRes.data ?? []).map((v) => [v.id, v]));
+  const visits = new Map(
+    (visitsRes.data ?? []).filter((v) => v.visit_status === 'awaiting_visit' || v.visit_status === 'revised').map((v) => [v.id, v]),
+  );
   const openExtra = new Map(
     (openExtrasRes.data ?? []).map((x) => [x.extra_work_of, x.service_verbatim ?? 'extra work']),
   );
@@ -252,7 +256,7 @@ export default async function WonJobsPage() {
                       <ProposeWorkForm
                         submissionId={job.id}
                         customerName={job.contact_name?.trim().split(/\s+/)[0] || 'the customer'}
-                        markupRate={markupRate}
+                        markupRate={jobRows.get(job.id)?.markup_rate ?? markupRate}
                       />
                     ))}
                   {/* Paid out: say so, and stop asking for the invoice —
