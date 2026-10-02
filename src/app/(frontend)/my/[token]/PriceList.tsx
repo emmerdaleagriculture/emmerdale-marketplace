@@ -2,13 +2,17 @@
 
 import { useActionState, useState } from 'react';
 import { acceptQuoteAction, type AcceptActionState } from './actions';
+import { passPriceAction } from './passPrice';
 import { depositSplitPence, formatGBP, formatRate, formatUnitPrice, vatNote } from '@/lib/sealedQuotes/money';
 import { sortClientQuotes, type SortMode } from '@/lib/sealedQuotes/quoteSort';
+import { PASS_REASONS } from '@/lib/sealedQuotes/passReasons';
 import { RatingStars } from '@/components/RatingStars';
+import type { FormState } from '@/lib/form';
 import f from '@/components/forms/forms.module.css';
 import m from './my.module.css';
 
 const EMPTY: AcceptActionState = {};
+const EMPTY_PASS: FormState = {};
 
 export type ClientQuoteView = {
   id: string;
@@ -35,10 +39,16 @@ const SORT_LABELS: [SortMode, string][] = [
   ['rating', 'Highest rated'],
 ];
 
+const PASS_LABEL = Object.fromEntries(PASS_REASONS);
+
 /**
  * The live price list (§18): masked labels until award, all prices received,
  * no hint of how many contractors stayed silent. Sorting is option C — a
  * composite default with a visible, client-controlled toggle.
+ *
+ * A customer can pass on a price (20261002170000): the card folds away, with
+ * undo, and the contractor is told why and can send a new one, which comes
+ * back marked as new.
  */
 export function PriceList({
   token,
@@ -46,6 +56,8 @@ export function PriceList({
   ratingWeight,
   depositRate,
   visitThreads,
+  passes,
+  newSincePass,
 }: {
   token: string;
   quotes: ClientQuoteView[];
@@ -58,16 +70,25 @@ export function PriceList({
    * conversation is moderated, or closed.
    */
   visitThreads: Record<string, string>;
+  /** Quote id → reason, for the prices passed on. */
+  passes: Record<string, string>;
+  /** Quote ids that arrived after the customer passed on that contractor's earlier price. */
+  newSincePass: string[];
 }) {
   const [state, action, pending] = useActionState(acceptQuoteAction, EMPTY);
+  const [passState, passAction, passPending] = useActionState(passPriceAction, EMPTY_PASS);
   const [mode, setMode] = useState<SortMode>('recommended');
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [passing, setPassing] = useState<string | null>(null);
 
   const sorted = sortClientQuotes(quotes, mode, { ratingWeight });
+  const live = sorted.filter((q) => !passes[q.id]);
+  const passed = sorted.filter((q) => passes[q.id]);
 
   return (
     <div>
       {state.error && <p className={f.error}>{state.error}</p>}
+      {passState.error && <p className={f.error}>{passState.error}</p>}
 
       <div className={f.chips} style={{ marginBottom: 14 }}>
         {SORT_LABELS.map(([value, label]) => (
@@ -82,11 +103,21 @@ export function PriceList({
         ))}
       </div>
 
+      {live.length === 0 && passed.length > 0 && (
+        <p className={m.fixLine}>
+          You&rsquo;ve passed on every price so far. More may come in, and a contractor you passed on can
+          send a new one. If nothing suits, you can withdraw the job below.
+        </p>
+      )}
+
       <div className={m.quoteList}>
-        {sorted.map((q) => (
+        {live.map((q) => (
           <div key={q.id} className={m.quoteCard}>
             <div className={m.quoteHead}>
-              <span className={m.quoteLabel}>{q.contractor_display_label}</span>
+              <span className={m.quoteLabel}>
+                {q.contractor_display_label}
+                {newSincePass.includes(q.id) && <span className={m.newPrice}>New price</span>}
+              </span>
               <span className={m.quotePriceWrap}>
                 <span className={m.quotePrice}>{formatGBP(q.client_price_pence)}</span>
                 {vatNote(q.price_basis) && (
@@ -173,6 +204,33 @@ export function PriceList({
                   </button>
                 </div>
               </form>
+            ) : passing === q.id ? (
+              <form action={passAction} className={m.acceptConfirm}>
+                <input type="hidden" name="token" value={token} />
+                <input type="hidden" name="client_quote_id" value={q.id} />
+                <input type="hidden" name="op" value="pass" />
+                <p>
+                  <strong>Pass on {q.contractor_display_label}&rsquo;s price?</strong> They&rsquo;ll be told
+                  why, in a word, and can send a new price if they want to. You can change your mind at
+                  any time.
+                </p>
+                <div className={f.field}>
+                  {PASS_REASONS.map(([value, label]) => (
+                    <label key={value} className={f.checkRow}>
+                      <input type="radio" name="reason" value={value} required />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className={m.acceptButtons}>
+                  <button className={f.btnPrimary} type="submit" disabled={passPending}>
+                    {passPending ? 'Passing…' : 'Pass on this price'}
+                  </button>
+                  <button type="button" className={f.btnGhost} onClick={() => setPassing(null)} disabled={passPending}>
+                    Back
+                  </button>
+                </div>
+              </form>
             ) : (
               <div className={m.acceptButtons}>
                 {/* A look before any money: the visit is arranged in the
@@ -203,8 +261,31 @@ export function PriceList({
                     )}
                   </>
                 )}
+                <button type="button" className={f.linkButton} onClick={() => setPassing(q.id)}>
+                  Not for me
+                </button>
               </div>
             )}
+          </div>
+        ))}
+
+        {passed.map((q) => (
+          <div key={q.id} className={`${m.quoteCard} ${m.quotePassed}`}>
+            <div className={m.quoteHead}>
+              <span className={m.quoteLabel}>{q.contractor_display_label}</span>
+              <span className={m.quotePriceWrap}>
+                <span className={m.quotePrice}>{formatGBP(q.client_price_pence)}</span>
+              </span>
+            </div>
+            <form action={passAction} className={m.quoteMeta}>
+              <input type="hidden" name="token" value={token} />
+              <input type="hidden" name="client_quote_id" value={q.id} />
+              <input type="hidden" name="op" value="undo" />
+              <span>Passed — {(PASS_LABEL[passes[q.id]] ?? 'no reason given').toLowerCase()}</span>
+              <button type="submit" className={f.linkButton} disabled={passPending}>
+                Undo
+              </button>
+            </form>
           </div>
         ))}
       </div>

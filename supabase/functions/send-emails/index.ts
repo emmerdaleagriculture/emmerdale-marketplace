@@ -48,8 +48,17 @@ const SQ_CONTRACTOR_KINDS = new Set([
   'sq_invoice_request',
   'sq_job_amended', 'sq_message_to_contractor',
   'sq_visit_reminder', 'sq_visit_accepted', 'sq_visit_declined',
-  'sq_weekly_digest', 'sq_thread_visit_to_contractor', 'sq_job_withdrawn',
+  'sq_weekly_digest', 'sq_thread_visit_to_contractor', 'sq_job_withdrawn', 'sq_price_passed',
 ]);
+
+/** The customer's reason for passing on a price, in the contractor's email. */
+const PASS_REASON: Record<string, string> = {
+  too_expensive: 'it was more than they wanted to pay',
+  too_far: 'they felt you were too far away',
+  visit_first: 'they wanted someone to see the site before pricing',
+  terms: 'something in the price or the note didn’t suit them',
+  other: 'they didn’t say why',
+};
 
 /**
  * Tom's line, for the customer-facing follow-ups that offer a call.
@@ -1068,6 +1077,20 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `${p.postcode_district ? ` in ${p.postcode_district}` : ''}, so it won’t be going ahead through us. ` +
           `Nothing else is needed from you — thanks for pricing it.\n\n` +
           `We’ll be in touch when the next job in your area comes up.`,
+      };
+
+    // The customer passed on this contractor's price (20261002170000). The
+    // category only, and the way back in: a revised price is what the
+    // customer sees next.
+    case 'sq_price_passed':
+      return {
+        subject: `The customer passed on your price: ${p.service ?? 'land work'}${p.postcode_district ? `, ${p.postcode_district}` : ''}`,
+        text:
+          `The customer has passed on your price for their ${p.service ?? 'land work'} job` +
+          `${p.postcode_district ? ` in ${p.postcode_district}` : ''} — ${PASS_REASON[String(p.reason)] ?? PASS_REASON.other}.\n\n` +
+          `The job is still open. If you can do it for less, or want to add a word about what’s ` +
+          `included, send a revised price and they’ll see it as new:\n${SITE_URL}/quote/${p.token}\n\n` +
+          `If not, nothing else is needed — thanks for pricing it.`,
       };
 
     case 'sq_message_to_contractor':

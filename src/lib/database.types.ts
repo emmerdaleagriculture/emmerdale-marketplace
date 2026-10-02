@@ -32,6 +32,33 @@ export type Database = {
         }
         Relationships: []
       }
+      client_quote_passes: {
+        Row: {
+          client_quote_id: string
+          contractor_id: string
+          created_at: string
+          reason: string
+          submission_id: string
+          undone_at: string | null
+        }
+        Insert: {
+          client_quote_id: string
+          contractor_id: string
+          created_at?: string
+          reason: string
+          submission_id: string
+          undone_at?: string | null
+        }
+        Update: {
+          client_quote_id?: string
+          contractor_id?: string
+          created_at?: string
+          reason?: string
+          submission_id?: string
+          undone_at?: string | null
+        }
+        Relationships: []
+      }
       client_quotes: {
         Row: {
           client_price_pence: number
@@ -3023,6 +3050,14 @@ export type Database = {
         }[]
       }
       sq_close_customer: { Args: { p_email: string }; Returns: Json }
+      sq_pass_price: {
+        Args: { p_client_quote_id: string; p_reason: string; p_submission_id: string }
+        Returns: Json
+      }
+      sq_unpass_price: {
+        Args: { p_client_quote_id: string; p_submission_id: string }
+        Returns: Json
+      }
       sq_job_markup_rate: { Args: { p_submission_id: string }; Returns: number }
       sq_withdraw_job: {
         Args: { p_contractor_id?: string; p_reason: string; p_submission_id: string }

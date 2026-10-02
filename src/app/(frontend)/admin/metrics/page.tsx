@@ -61,6 +61,8 @@ type MarkupArm = {
   jobs: number;
   priced: number;
   prices: number;
+  passes: number;
+  passes_price: number;
   booked: number;
   completed: number;
   cancelled: number;
@@ -76,11 +78,13 @@ type MarkupTest = {
   rates: Partial<Record<'a' | 'b', number>>;
   arms: Partial<Record<'a' | 'b', MarkupArm>>;
   since: string | null;
+  /** Every pass in 30 days, all jobs, by reason. */
+  passes_30d: Record<string, number>;
 };
 
 /** An arm with no jobs yet, so the table shows both columns from day one. */
 function emptyArm(rate: number): MarkupArm {
-  return { rate, jobs: 0, priced: 0, prices: 0, booked: 0, completed: 0, cancelled: 0, lapsed: 0, avg_client_pence: null, avg_contractor_pence: null, margin_pence: 0, median_days_to_book: null, since: null };
+  return { rate, jobs: 0, priced: 0, prices: 0, passes: 0, passes_price: 0, booked: 0, completed: 0, cancelled: 0, lapsed: 0, avg_client_pence: null, avg_contractor_pence: null, margin_pence: 0, median_days_to_book: null, since: null };
 }
 
 /**
@@ -478,10 +482,21 @@ export default async function AdminDashboard() {
               {pv != null
                 ? ` On booking rate, the chance the arms are really the same is ${pv < 0.001 ? 'under 0.1%' : `${Math.round(pv * 100)}%`}${pv < 0.05 ? ' — a difference you can act on' : ' — not enough to call yet'}.`
                 : ' A reading on booking rate needs at least five priced jobs in each arm.'}
+              {Object.keys(mt.passes_30d ?? {}).length > 0 && (
+                <>
+                  {' '}Prices passed on in 30 days, all jobs:{' '}
+                  {Object.entries(mt.passes_30d)
+                    .sort((x, y) => y[1] - x[1])
+                    .map(([r, c]) => `${c} ${r.replace(/_/g, ' ')}`)
+                    .join(', ')}
+                  .
+                </>
+              )}
             </p>
             <AdminTable head={['', ...arms.map((x) => `${Math.round(x.rate * 100)}% commission`)]}>
               {row('Jobs in the arm', (x) => n(x.jobs))}
               {row('Priced', (x) => `${n(x.priced)} (${n(x.prices)} prices)`)}
+              {row('Passed on', (x) => (x.prices ? `${n(x.passes)} of ${n(x.prices)} prices — ${n(x.passes_price)} as too expensive` : '0'))}
               {row('Booked', (x) => (x.priced ? `${n(x.booked)} — ${rate(x)} of priced` : '0'))}
               {row('Completed', (x) => n(x.completed))}
               {row('Cancelled / lapsed', (x) => `${n(x.cancelled)} / ${n(x.lapsed)}`)}
