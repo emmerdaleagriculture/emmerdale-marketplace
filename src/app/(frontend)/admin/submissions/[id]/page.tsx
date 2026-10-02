@@ -211,7 +211,7 @@ export default async function SubmissionDetailPage({
   const messagePhotoUrls = await signMessagePhotos(messages.flatMap((m) => m.photo_paths));
 
   // Extra work: jobs booked off this one, and the one this extends.
-  const [extrasQ, contractorQ, markupQ] = await Promise.all([
+  const [extrasQ, contractorQ, markupQ, jobRateQ] = await Promise.all([
     admin
       .from('job_submissions')
       .select('id, service_verbatim, status, created_at')
@@ -221,9 +221,12 @@ export default async function SubmissionDetailPage({
       ? admin.from('contractors').select('business_name').eq('id', sub.awarded_contractor_id).maybeSingle()
       : Promise.resolve({ data: null }),
     admin.from('app_config').select('value').eq('key', 'sq_markup_rate').maybeSingle(),
+    // The job's own rate (split-test arm), which extra work inherits.
+    admin.from('job_submissions').select('markup_rate, markup_arm').eq('id', id).maybeSingle(),
   ]);
   const extras = extrasQ.data ?? [];
-  const markupRate = Number(markupQ.data?.value ?? 0.1);
+  const markupRate = jobRateQ.data?.markup_rate ?? Number(markupQ.data?.value ?? 0.1);
+  const markupArm = jobRateQ.data?.markup_arm ?? null;
   const booked = [
     'awarded', 'contacted', 'scheduled', 'in_progress',
     'completed_by_contractor', 'completed', 'paid',
@@ -489,7 +492,10 @@ export default async function SubmissionDetailPage({
 
       {allQuotes.length > 0 && (
         <>
-          <div className={s.sectionLabel}>Prices — both sides (never shown elsewhere)</div>
+          <div className={s.sectionLabel}>
+            Prices — both sides (never shown elsewhere) · commission {Math.round(markupRate * 100)}%
+            {markupArm ? ` (split test, arm ${markupArm.toUpperCase()})` : ''}
+          </div>
           <AdminTable head={['Label', 'Contractor', 'Contractor price', 'Client price', 'Margin', 'Status', 'Note to the customer', 'Notes to us (historic)']}>
             {allQuotes.map((cq) => {
               const inner = cq.cq as {

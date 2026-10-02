@@ -56,6 +56,52 @@ type PrioritySummary = {
   visits: Record<string, number>;
 };
 
+type MarkupArm = {
+  rate: number;
+  jobs: number;
+  priced: number;
+  prices: number;
+  booked: number;
+  completed: number;
+  cancelled: number;
+  lapsed: number;
+  avg_client_pence: number | null;
+  avg_contractor_pence: number | null;
+  margin_pence: number;
+  median_days_to_book: number | null;
+  since: string | null;
+};
+type MarkupTest = {
+  enabled: boolean;
+  rates: Partial<Record<'a' | 'b', number>>;
+  arms: Partial<Record<'a' | 'b', MarkupArm>>;
+  since: string | null;
+};
+
+/** An arm with no jobs yet, so the table shows both columns from day one. */
+function emptyArm(rate: number): MarkupArm {
+  return { rate, jobs: 0, priced: 0, prices: 0, booked: 0, completed: 0, cancelled: 0, lapsed: 0, avg_client_pence: null, avg_contractor_pence: null, margin_pence: 0, median_days_to_book: null, since: null };
+}
+
+/**
+ * Two-sided p-value for "the two arms book priced jobs at the same rate"
+ * (pooled two-proportion z-test). Null until both arms have something to
+ * compare. Small samples make this generous rather than strict; it is a
+ * reading aid, not a verdict.
+ */
+function bookingRatePValue(a: MarkupArm, b: MarkupArm): number | null {
+  if (a.priced < 5 || b.priced < 5) return null;
+  const p1 = a.booked / a.priced, p2 = b.booked / b.priced;
+  const p = (a.booked + b.booked) / (a.priced + b.priced);
+  const se = Math.sqrt(p * (1 - p) * (1 / a.priced + 1 / b.priced));
+  if (se === 0) return null;
+  const z = Math.abs(p1 - p2) / se;
+  // Φ(z) via the Abramowitz–Stegun erf approximation.
+  const t = 1 / (1 + 0.3275911 * (z / Math.SQRT2));
+  const erf = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-(z * z) / 2);
+  return Math.max(0, Math.min(1, 1 - erf));
+}
+
 const PIPELINE_LABEL: Record<string, string> = {
   confirmed: 'Confirmed, not yet sent',
   distributed: 'Out to contractors',
@@ -90,7 +136,7 @@ export default async function AdminDashboard() {
   // early jobs need the IP join in jobSources to say anything at all.
   const page = <T,>(q: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) =>
     fetchAll(q).catch(() => [] as T[]);
-  const [{ data, error }, invitations, sourceSubs, parses, views, priorityQ] = await Promise.all([
+  const [{ data, error }, invitations, sourceSubs, parses, views, priorityQ, markupQ] = await Promise.all([
     admin.rpc('admin_dashboard'),
     // Every invitation of the last 30 days, for the response donut: the RPC
     // carries rates, not the split. Paged; the month is past 600 already.
@@ -126,8 +172,11 @@ export default async function AdminDashboard() {
     // Priority Access in the shadows (20261001160000): one jsonb, like the
     // dashboard itself. Its absence must not take the page down.
     admin.rpc('admin_priority_summary').then((r) => r, () => ({ data: null })),
+    // The commission split test (20261002100000): the two arms side by side.
+    admin.rpc('admin_markup_test_summary').then((r) => r, () => ({ data: null })),
   ]);
   const pr = (priorityQ?.data ?? null) as PrioritySummary | null;
+  const mt = (markupQ?.data ?? null) as MarkupTest | null;
   if (error || !data) {
     return (
       <div>
@@ -403,6 +452,47 @@ export default async function AdminDashboard() {
           <PieCard title="Registered contractors, by standing" slices={contractorSlices} centre="registered" />
         </div>
       </div>
+
+      {/* ── Commission split test ────────────────────────────────────── */}
+      {mt && (mt.enabled || mt.arms.a || mt.arms.b) && (() => {
+        const a = mt.arms.a ?? (mt.rates.a != null ? emptyArm(mt.rates.a) : undefined);
+        const b = mt.arms.b ?? (mt.rates.b != null ? emptyArm(mt.rates.b) : undefined);
+        const arms = [a, b].filter((x): x is MarkupArm => Boolean(x));
+        const rate = (x: MarkupArm) => pct(x.booked, x.priced);
+        const pv = a && b ? bookingRatePValue(a, b) : null;
+        const row = (label: string, f: (x: MarkupArm) => React.ReactNode) => (
+          <tr key={label}>
+            <td>{label}</td>
+            {arms.map((x) => <td key={x.rate}>{f(x)}</td>)}
+          </tr>
+        );
+        return (
+          <>
+            <div className={s.sectionLabel}>
+              Commission split test{mt.enabled ? '' : ' — paused'}
+              {mt.since ? ` · since ${new Date(mt.since).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}
+            </div>
+            <p className={s.sub}>
+              Each job is put in an arm when its first price is published, and every price on it carries that rate.
+              Extra work and repeats inherit the parent job&rsquo;s arm. Jobs priced before the test stay at 10% and are not counted.
+              {pv != null
+                ? ` On booking rate, the chance the arms are really the same is ${pv < 0.001 ? 'under 0.1%' : `${Math.round(pv * 100)}%`}${pv < 0.05 ? ' — a difference you can act on' : ' — not enough to call yet'}.`
+                : ' A reading on booking rate needs at least five priced jobs in each arm.'}
+            </p>
+            <AdminTable head={['', ...arms.map((x) => `${Math.round(x.rate * 100)}% commission`)]}>
+              {row('Jobs in the arm', (x) => n(x.jobs))}
+              {row('Priced', (x) => `${n(x.priced)} (${n(x.prices)} prices)`)}
+              {row('Booked', (x) => (x.priced ? `${n(x.booked)} — ${rate(x)} of priced` : '0'))}
+              {row('Completed', (x) => n(x.completed))}
+              {row('Cancelled / lapsed', (x) => `${n(x.cancelled)} / ${n(x.lapsed)}`)}
+              {row('Average booked price (customer)', (x) => gbp(x.avg_client_pence))}
+              {row('Average booked price (contractor)', (x) => gbp(x.avg_contractor_pence))}
+              {row('Our margin on bookings', (x) => gbp(x.margin_pence))}
+              {row('Median days from first price to booking', (x) => (x.median_days_to_book == null ? '—' : `${x.median_days_to_book}`))}
+            </AdminTable>
+          </>
+        );
+      })()}
 
       {/* ── Priority Access, in the shadows ──────────────────────────── */}
       {pr && (
