@@ -12,6 +12,7 @@ import { DeleteJobButton } from './DeleteJobButton';
 import { ExtraWorkForm } from './ExtraWorkForm';
 import { PayoutPanel } from './PayoutPanel';
 import { ModerateMessage } from './ModerateMessage';
+import { CloseCustomerButton } from './CloseCustomerButton';
 import s from '../../admin.module.css';
 import { AdminTable } from '../../ui';
 import p from '../submissions.module.css';
@@ -537,6 +538,11 @@ export default async function SubmissionDetailPage({
           </AdminTable>
         </>
       )}
+
+      <div className={s.sectionLabel}>Customer</div>
+      {/* "Take my jobs off and close my account" (Samantha, 2 Oct 2026):
+          every job under this email, one click, and the numbers stay. */}
+      <CloseCustomerButton submissionId={id} customer={sub.contact_name} />
 
       {messages.length > 0 && (
         <>
