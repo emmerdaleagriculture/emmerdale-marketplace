@@ -8,6 +8,7 @@ import { getCounties } from '@/lib/reference';
 import { resolveCounty } from '@/lib/postcodes';
 import type { FormState } from '@/lib/form';
 import { cleanSignupSource } from '@/lib/signupSource';
+import { premiumCheckoutUrl, type PremiumPlan } from '@/lib/stripe';
 
 const OnboardingSchema = z.object({
   business_name: z.string().trim().min(1, 'Business name is required.'),
@@ -16,6 +17,7 @@ const OnboardingSchema = z.object({
   base_postcode: z.string().trim().min(3, 'Base postcode is required.'),
   county_ids: z.array(z.coerce.number().int()).min(1, 'Select at least one county.'),
   service_ids: z.array(z.coerce.number().int()).min(1, 'Pick at least one service.'),
+  membership: z.enum(['free', 'monthly', 'annual']).catch('free'),
 });
 
 export async function completeOnboardingAction(
@@ -35,6 +37,7 @@ export async function completeOnboardingAction(
     base_postcode: formData.get('base_postcode'),
     county_ids: formData.getAll('county_ids'),
     service_ids: formData.getAll('service_ids'),
+    membership: formData.get('membership') ?? 'free',
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Please check the form.' };
@@ -92,9 +95,25 @@ export async function completeOnboardingAction(
       `Email:     ${user.email ?? '—'}\n` +
       `Phone:     ${d.phone}\n` +
       `Postcode:  ${d.base_postcode}\n` +
-      `Counties:  ${countyNames || d.county_ids.length}\n\n` +
+      `Counties:  ${countyNames || d.county_ids.length}\n` +
+      `Plan:      ${d.membership === 'free' ? 'Free' : `Premium (${d.membership}) — sent to Stripe to pay; refunded automatically if rejected`}\n\n` +
       `Review and approve: ${siteUrl}/admin/contractors`,
   );
 
+  // Premium chosen: straight to Stripe. The application is already in, so
+  // backing out of Checkout lands them on the dashboard as a free applicant
+  // who can pay from there. A Stripe failure must not lose the application.
+  if (d.membership !== 'free' && process.env.STRIPE_SECRET_KEY) {
+    let url: string | null = null;
+    try {
+      url = await premiumCheckoutUrl(user.id, d.membership as PremiumPlan);
+    } catch (err) {
+      console.error('[onboarding] premium checkout failed:', err);
+    }
+    if (url) redirect(url);
+    redirect('/account?sub=unconfigured#premium');
+  }
+
   redirect('/account');
 }
+

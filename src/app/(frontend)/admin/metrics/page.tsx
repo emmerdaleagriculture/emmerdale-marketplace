@@ -81,6 +81,8 @@ type PremiumSummary = {
   cancelling: number;
   comped: number;
   new_30d: number;
+  at_signup_30d: number;
+  awaiting_approval: number;
   ended_30d: number;
   mrr_pence: number;
   windows_30d: { jobs: number; premium_priced: number; premium_booked: number };
@@ -527,7 +529,7 @@ export default async function AdminDashboard() {
             <Tile
               value={n(pm.new_30d)}
               label="Signed up, 30 days"
-              hint={`${n(pm.ended_30d)} ended${pm.cancelling ? ` · ${n(pm.cancelling)} cancelling` : ''}`}
+              hint={`${n(pm.at_signup_30d)} when applying · ${n(pm.ended_30d)} ended${pm.cancelling ? ` · ${n(pm.cancelling)} cancelling` : ''}`}
             />
             <Tile
               value={n(pm.windows_30d.jobs)}
@@ -540,6 +542,13 @@ export default async function AdminDashboard() {
               hint={`${gbp(pm.prices_30d.margin_pence)} our margin at 5%`}
             />
           </Tiles>
+          {pm.awaiting_approval > 0 && (
+            <p className={s.sub}>
+              {n(pm.awaiting_approval)} paid at sign-up and {pm.awaiting_approval === 1 ? 'is' : 'are'} waiting for
+              approval. <Link href="/admin/contractors">Review applications</Link> — rejecting one refunds them
+              automatically.
+            </p>
+          )}
           {pm.past_due > 0 && (
             <p className={s.sub}>
               {n(pm.past_due)} member{pm.past_due === 1 ? '' : 's'} with a failed payment — Stripe is retrying;

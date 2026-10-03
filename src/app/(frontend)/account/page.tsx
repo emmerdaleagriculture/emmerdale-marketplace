@@ -239,6 +239,14 @@ export default async function AccountPage({
               your details below in the meantime.
             </div>
           )}
+          {status === 'pending' && (
+            <PremiumPanel
+              sub={subQ.data ?? null}
+              compedUntil={contractor.premium_comped_until ?? null}
+              notice={subNotice}
+              pending
+            />
+          )}
           {status === 'suspended' && (
             <div className={`${ac.banner} ${ac.suspended}`}>
               <div className={ac.bannerTitle}>Account suspended</div>

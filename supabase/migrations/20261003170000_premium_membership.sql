@@ -740,6 +740,13 @@ language sql stable security definer set search_path = public as $$
     'cancelling', (select count(*) from paid where cancel_at_period_end),
     'comped',     (select count(*) from comped),
     'new_30d',    (select count(*) from subscriptions where started_at > now() - interval '30 days'),
+    -- Joined in the onboarding step, before approval. Rejected applicants are
+    -- refunded and deleted, so they leave no row to count here.
+    'at_signup_30d', (select count(*) from subscriptions s join contractors c on c.id = s.contractor_id
+                       where s.started_at > now() - interval '30 days'
+                         and (c.vetted_at is null or s.started_at < c.vetted_at)),
+    'awaiting_approval', (select count(*) from paid p join contractors c on c.id = p.contractor_id
+                           where c.vetted_at is null),
     'ended_30d',  (select count(*) from subscriptions where ended_at > now() - interval '30 days'),
     -- Annual plans spread over twelve months.
     'mrr_pence',  (select coalesce(sum(case plan when 'annual' then 19900 / 12.0 else 2000 end), 0)::int

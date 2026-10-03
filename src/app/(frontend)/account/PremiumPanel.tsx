@@ -21,10 +21,13 @@ export function PremiumPanel({
   sub,
   compedUntil,
   notice,
+  pending = false,
 }: {
   sub: Sub;
   compedUntil: string | null;
   notice?: string;
+  /** Application not yet approved: paid premium waits for approval. */
+  pending?: boolean;
 }) {
   const active = sub?.status === 'active' || sub?.status === 'past_due';
   const comped = !active && compedUntil && new Date(compedUntil) > new Date();
@@ -64,8 +67,9 @@ export function PremiumPanel({
                 {sub?.current_period_end ? `, renews ${day(sub.current_period_end)}` : ''}.
               </>
             )}{' '}
-            New jobs in your area come to you a week before anyone else, and every price you send
-            carries 5% commission instead of 15%.
+            {pending
+              ? 'Premium starts working the moment we approve your application. If we can’t approve it, we cancel your membership and refund you in full.'
+              : 'New jobs in your area come to you a week before anyone else, and every price you send carries 5% commission instead of 15%.'}
           </p>
           <form action="/api/stripe/portal" method="post">
             <button className={f.btnGhost} type="submit">
@@ -91,6 +95,12 @@ export function PremiumPanel({
               yours lands cheaper. Price a job at £400 and the customer sees £420, not £460 — or
               charge more and still come in under everyone else.
             </p>
+            {pending && (
+              <p>
+                You can join now: premium starts the moment we approve you, and if we can’t, we
+                refund you in full.
+              </p>
+            )}
             <p>
               Cancel any time; you keep it to the end of the period you’ve paid for. The details
               are in <a href="/terms">clause 12 of the contractor terms</a>.

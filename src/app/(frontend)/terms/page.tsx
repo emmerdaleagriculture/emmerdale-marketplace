@@ -217,7 +217,9 @@ export default function TermsPage() {
             <strong>£199 a year</strong>, paid by card through Stripe. It renews
             automatically until you cancel. You can cancel at any time from your
             dashboard; membership then runs to the end of the period you have paid for,
-            and we do not refund part-periods.
+            and we do not refund part-periods. You can join when you apply: premium then
+            starts working once we approve you, and if we do not approve your application
+            we cancel the membership and refund what you paid in full.
           </p>
           <p>
             <strong>First refusal.</strong> A new job in a county you cover, and within
