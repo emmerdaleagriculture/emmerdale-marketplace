@@ -17,10 +17,10 @@ export async function getInvitationByToken(token: string) {
     .from('job_invitations')
     .select(
       `id, token, status, decline_reason, distance_miles, sent_at, opened_at, contractor_id,
-       display_label,
+       display_label, premium_offer,
        submission:job_submissions (
          id, status, expires_at, awarded_contractor_id, postcode, lat, lng, boundary,
-         amended_at, market_opens_at, preferred_contractor_id, first_refusal,
+         amended_at, market_opens_at, preferred_contractor_id, first_refusal, premium_window,
          area_value, area_unit, area_mapped_value, area_source,
          urgency, target_date, access_notes, obstacles, gate_width,
          service_attributes, photo_paths, service_verbatim,
