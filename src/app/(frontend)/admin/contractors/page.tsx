@@ -48,6 +48,7 @@ function Row({ c }: { c: ContractorRow }) {
     <tr>
       <td>
         <Link href={`/admin/contractors/${c.id}`}>{c.business_name}</Link>
+        {c.premium && <b style={{ fontSize: 12, marginLeft: 6 }}>Premium</b>}
         {sourceLabel(c.signup_source) && (
           <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{sourceLabel(c.signup_source)}</div>
         )}
@@ -124,12 +125,13 @@ type ContractorRow = {
   counties: number;
   invited: number;
   opened: number;
+  premium: boolean;
 };
 
 export default async function AdminContractorsPage() {
   const admin = createServiceRoleClient();
   // The county coverage read went with the map it fed.
-  const [{ data }, { data: outreach }] = await Promise.all([
+  const [{ data }, { data: outreach }, { data: premiumSummary }] = await Promise.all([
     admin
       .from('contractors')
       .select('id, business_name, contact_name, email, base_postcode, status, created_at, signup_source')
@@ -137,12 +139,22 @@ export default async function AdminContractorsPage() {
     // One row per contractor, counted in SQL: reading job_invitations here
     // would hit PostgREST's 1000-row cap and count wrong without saying so.
     admin.from('admin_contractor_outreach').select('contractor_id, counties, invited, opened').limit(10000),
+    admin.rpc('admin_premium_summary').then((r) => r, () => ({ data: null })),
   ]);
+  const premiumIds = new Set(
+    ((premiumSummary as { members?: { id: string }[] } | null)?.members ?? []).map((m) => m.id),
+  );
 
   const byId = new Map((outreach ?? []).map((o) => [o.contractor_id, o]));
   const contractors = (data ?? []).map((c) => {
     const o = byId.get(c.id);
-    return { ...c, counties: o?.counties ?? 0, invited: o?.invited ?? 0, opened: o?.opened ?? 0 };
+    return {
+      ...c,
+      counties: o?.counties ?? 0,
+      invited: o?.invited ?? 0,
+      opened: o?.opened ?? 0,
+      premium: premiumIds.has(c.id),
+    };
   }) as ContractorRow[];
   const pending = contractors.filter((c) => c.status === 'pending');
   const rest = contractors.filter((c) => c.status !== 'pending');

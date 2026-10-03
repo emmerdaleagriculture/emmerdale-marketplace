@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.4 — 30 September 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.5 — 3 October 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -209,6 +209,37 @@ export default function TermsPage() {
           </p>
           <p>
             Questions: <a href="mailto:tom@emmerdaleagriculture.com">tom@emmerdaleagriculture.com</a>.
+          </p>
+
+          <h2>12. Premium membership</h2>
+          <p>
+            Premium membership is optional and costs <strong>£20 a month</strong> or{' '}
+            <strong>£199 a year</strong>, paid by card through Stripe. It renews
+            automatically until you cancel. You can cancel at any time from your
+            dashboard; membership then runs to the end of the period you have paid for,
+            and we do not refund part-periods.
+          </p>
+          <p>
+            <strong>First refusal.</strong> A new job in a county you cover, and within
+            reach of your base, goes to premium members before anyone else. It is held
+            for up to <strong>7 days</strong>, or until every premium member it was sent
+            to has priced or passed, whichever comes first; then it goes to other
+            contractors as usual. Where another contractor already has first refusal in an
+            area by separate agreement, that comes first and premium follows it. Repeat
+            jobs a customer has asked a named contractor for are not included. The
+            customer can accept any price at any time, including during the window.
+          </p>
+          <p>
+            <strong>Lower margin.</strong> While you are a member, the margin we add to
+            each price you give is <strong>5%</strong> instead of our standard rate
+            (currently 15%). You still keep the price you quote (clause 4); the customer
+            simply sees a lower total. The rate is fixed when you send the price.
+          </p>
+          <p>
+            Premium does not guarantee any volume of work (clause 10). If your payment
+            fails, Stripe will retry; membership lapses if it cannot be collected. We may
+            change the price or what premium includes with 30 days&rsquo; notice, and you
+            can cancel before the change takes effect.
           </p>
 
           <h2>The previous job board</h2>

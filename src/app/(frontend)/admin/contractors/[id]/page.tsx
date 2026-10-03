@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { setContractorStatus } from '../actions';
+import { setContractorStatus, setPremiumComp } from '../actions';
 import { DeleteContractorButton } from '../DeleteContractorButton';
 import s from '../../admin.module.css';
 import { StatusPill } from '../../ui';
@@ -27,6 +27,19 @@ export default async function ContractorDetailPage({
     .from('contractor_counties')
     .select('counties(name, region)')
     .eq('contractor_id', id);
+
+  const [{ data: sub }, { data: isPremium }] = await Promise.all([
+    admin
+      .from('subscriptions')
+      .select('status, plan, current_period_end, cancel_at_period_end, stripe_customer_id')
+      .eq('contractor_id', id)
+      .maybeSingle(),
+    admin.rpc('contractor_is_premium', { p_contractor_id: id }),
+  ]);
+  const compedUntil = c.premium_comped_until && new Date(c.premium_comped_until) > new Date()
+    ? c.premium_comped_until
+    : null;
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB');
 
   const countyNames = (ccRows ?? [])
     .map((r) => (r.counties as { name: string } | null)?.name)
@@ -79,6 +92,38 @@ export default async function ContractorDetailPage({
           ))
         ) : (
           <span className={s.dValue}>None selected</span>
+        )}
+      </div>
+
+      <div className={s.sectionLabel}>Premium membership</div>
+      <p className={s.dValue}>
+        {isPremium ? <b>Premium</b> : 'Not premium'}
+        {sub && sub.status !== 'none'
+          ? ` · Stripe: ${sub.status}${sub.plan ? `, ${sub.plan}` : ''}` +
+            (sub.current_period_end
+              ? sub.cancel_at_period_end
+                ? `, ends ${day(sub.current_period_end)}`
+                : `, renews ${day(sub.current_period_end)}`
+              : '')
+          : ''}
+        {compedUntil ? ` · comped until ${day(compedUntil)}` : ''}
+      </p>
+      <div className={s.actions}>
+        <form action={setPremiumComp}>
+          <input type="hidden" name="id" value={c.id} />
+          <input type="hidden" name="months" value="12" />
+          <button type="submit" className={s.btnApprove}>
+            {compedUntil ? 'Extend comp to 12 months from today' : 'Comp premium for 12 months'}
+          </button>
+        </form>
+        {compedUntil && (
+          <form action={setPremiumComp}>
+            <input type="hidden" name="id" value={c.id} />
+            <input type="hidden" name="months" value="0" />
+            <button type="submit" className={s.btnSuspend}>
+              Remove comp
+            </button>
+          </form>
         )}
       </div>
 

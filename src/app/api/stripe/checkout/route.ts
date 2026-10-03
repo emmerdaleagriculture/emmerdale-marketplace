@@ -1,24 +1,27 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
-import { getStripe } from '@/lib/stripe';
+import { getStripe, premiumPriceId, PREMIUM_PLANS, type PremiumPlan } from '@/lib/stripe';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 /**
- * POST /api/stripe/checkout — start a £20/mo subscription Checkout for the
- * signed-in contractor. Reuses (or creates) their Stripe customer, then
- * redirects to Stripe Checkout.
+ * POST /api/stripe/checkout — start a premium membership Checkout (form field
+ * `plan`: monthly £20 or annual £199) for the signed-in contractor. Reuses (or
+ * creates) their Stripe customer, then redirects to Stripe Checkout. Someone
+ * already subscribed goes to the billing portal instead of a second plan.
  */
-export async function POST() {
+export async function POST(request: Request) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.redirect(`${SITE()}/login`, { status: 303 });
 
-  const priceId = process.env.STRIPE_PRICE_ID;
-  if (!priceId) {
-    return NextResponse.redirect(`${SITE()}/account?sub=unconfigured`, { status: 303 });
+  const form = await request.formData().catch(() => null);
+  const planField = String(form?.get('plan') ?? 'monthly');
+  const plan: PremiumPlan = planField in PREMIUM_PLANS ? (planField as PremiumPlan) : 'monthly';
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.redirect(`${SITE()}/account?sub=unconfigured#premium`, { status: 303 });
   }
 
   const admin = createServiceRoleClient();
@@ -31,9 +34,12 @@ export async function POST() {
 
   const { data: sub } = await admin
     .from('subscriptions')
-    .select('stripe_customer_id')
+    .select('stripe_customer_id, status')
     .eq('contractor_id', user.id)
     .maybeSingle();
+  if (sub?.status === 'active' || sub?.status === 'past_due') {
+    return NextResponse.redirect(`${SITE()}/api/stripe/portal`, { status: 307 });
+  }
 
   const stripe = getStripe();
   let customerId = sub?.stripe_customer_id ?? null;
@@ -52,9 +58,10 @@ export async function POST() {
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${SITE()}/account?sub=success`,
-    cancel_url: `${SITE()}/account?sub=cancelled`,
+    line_items: [{ price: await premiumPriceId(stripe, plan), quantity: 1 }],
+    subscription_data: { metadata: { contractor_id: user.id, plan } },
+    success_url: `${SITE()}/account?sub=success#premium`,
+    cancel_url: `${SITE()}/account?sub=cancelled#premium`,
     allow_promotion_codes: true,
   });
 

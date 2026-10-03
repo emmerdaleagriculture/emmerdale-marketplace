@@ -273,13 +273,18 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         ? new Date(String(p.last_job_at)).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'Europe/London' })
         : null;
       return {
-        subject: p.first_refusal
+        subject: p.premium
+          ? `Premium first look: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
+          : p.first_refusal
           ? `New job, offered to you first: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
           : p.direct
             ? `A previous customer wants you again: ${p.service ?? 'land work'}, ${p.county ?? ''}`
             : `Job to price: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
         text:
-          (p.first_refusal
+          (p.premium
+            ? `A job in your area needs pricing. As a premium member you see it before ` +
+              `anyone else.\n\n`
+            : p.first_refusal
             ? `A new job in your area needs pricing, and it’s offered to you before anyone else.\n\n`
             : p.direct
             ? `A customer you’ve done this job for has asked for you again, so it’s offered ` +
@@ -323,7 +328,11 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           (p.gate_width ? `Access:    ${p.gate_width} gate\n` : '') +
           (p.access_notes ? `Notes:     ${p.access_notes}\n` : '') +
           (p.obstacles ? `Obstacles: ${p.obstacles}\n` : '') +
-          (p.direct
+          (p.premium
+            ? `\nOnly premium members have it until ${opens}, or until you’ve all priced ` +
+              `or passed. Then it goes to other contractors in the area. Your price carries ` +
+              `5% commission, not 15%.\n\n`
+            : p.direct
             ? `\nIt’s yours alone until ${opens}. Price it or pass by then — after that it ` +
               `goes to other contractors in the area.\n\n`
             : `\nFirst come, first served: the customer sees prices as they arrive and can ` +

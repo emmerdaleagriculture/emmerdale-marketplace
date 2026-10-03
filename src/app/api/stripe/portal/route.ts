@@ -27,10 +27,25 @@ export async function POST() {
   }
 
   const stripe = getStripe();
-  const session = await stripe.billingPortal.sessions.create({
-    customer: sub.stripe_customer_id,
-    return_url: `${SITE()}/account`,
-  });
+  const params = { customer: sub.stripe_customer_id, return_url: `${SITE()}/account#premium` };
+  let session;
+  try {
+    session = await stripe.billingPortal.sessions.create(params);
+  } catch (err) {
+    // A live account has no portal configuration until someone saves one in
+    // the dashboard. Rather than a dead button, make a plain one: card,
+    // invoices, and cancel at the end of the period already paid for.
+    console.error('[stripe] portal session failed, creating a configuration:', err);
+    const config = await stripe.billingPortal.configurations.create({
+      business_profile: { headline: 'Emmerdale Agriculture premium membership' },
+      features: {
+        payment_method_update: { enabled: true },
+        invoice_history: { enabled: true },
+        subscription_cancel: { enabled: true, mode: 'at_period_end' },
+      },
+    });
+    session = await stripe.billingPortal.sessions.create({ ...params, configuration: config.id });
+  }
 
   return NextResponse.redirect(session.url, { status: 303 });
 }
