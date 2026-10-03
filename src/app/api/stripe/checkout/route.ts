@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
-import { getStripe, premiumPriceId, PREMIUM_PLANS, type PremiumPlan } from '@/lib/stripe';
+import { premiumCheckoutUrl, PREMIUM_PLANS, type PremiumPlan } from '@/lib/stripe';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -25,45 +25,20 @@ export async function POST(request: Request) {
   }
 
   const admin = createServiceRoleClient();
-  const { data: contractor } = await admin
-    .from('contractors')
-    .select('email, business_name')
-    .eq('id', user.id)
-    .maybeSingle();
-  if (!contractor) return NextResponse.redirect(`${SITE()}/account`, { status: 303 });
-
   const { data: sub } = await admin
     .from('subscriptions')
-    .select('stripe_customer_id, status')
+    .select('status')
     .eq('contractor_id', user.id)
     .maybeSingle();
   if (sub?.status === 'active' || sub?.status === 'past_due') {
     return NextResponse.redirect(`${SITE()}/api/stripe/portal`, { status: 307 });
   }
 
-  const stripe = getStripe();
-  let customerId = sub?.stripe_customer_id ?? null;
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: contractor.email,
-      name: contractor.business_name,
-      metadata: { contractor_id: user.id },
-    });
-    customerId = customer.id;
-    await admin
-      .from('subscriptions')
-      .upsert({ contractor_id: user.id, stripe_customer_id: customerId, status: 'none' });
+  try {
+    const url = await premiumCheckoutUrl(user.id, plan);
+    return NextResponse.redirect(url, { status: 303 });
+  } catch (err) {
+    console.error('[stripe] premium checkout failed:', err);
+    return NextResponse.redirect(`${SITE()}/account?sub=unconfigured#premium`, { status: 303 });
   }
-
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    customer: customerId,
-    line_items: [{ price: await premiumPriceId(stripe, plan), quantity: 1 }],
-    subscription_data: { metadata: { contractor_id: user.id, plan } },
-    success_url: `${SITE()}/account?sub=success#premium`,
-    cancel_url: `${SITE()}/account?sub=cancelled#premium`,
-    allow_promotion_codes: true,
-  });
-
-  return NextResponse.redirect(session.url!, { status: 303 });
 }

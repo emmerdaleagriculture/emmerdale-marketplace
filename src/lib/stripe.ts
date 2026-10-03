@@ -129,3 +129,101 @@ export async function syncSubscription(sub: Stripe.Subscription) {
     );
   }
 }
+
+/**
+ * A Checkout session for a premium plan, for this contractor. Reuses (or
+ * creates) their Stripe customer. Shared by the dashboard button and the
+ * choice at the end of onboarding.
+ */
+export async function premiumCheckoutUrl(
+  contractorId: string,
+  plan: PremiumPlan,
+  returnPath = '/account',
+): Promise<string> {
+  const site = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const admin = createServiceRoleClient();
+  const [{ data: contractor }, { data: sub }] = await Promise.all([
+    admin.from('contractors').select('email, business_name').eq('id', contractorId).maybeSingle(),
+    admin.from('subscriptions').select('stripe_customer_id').eq('contractor_id', contractorId).maybeSingle(),
+  ]);
+  if (!contractor) throw new Error('No contractor profile.');
+
+  const stripe = getStripe();
+  let customerId = sub?.stripe_customer_id ?? null;
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: contractor.email,
+      name: contractor.business_name,
+      metadata: { contractor_id: contractorId },
+    });
+    customerId = customer.id;
+    await admin
+      .from('subscriptions')
+      .upsert({ contractor_id: contractorId, stripe_customer_id: customerId, status: 'none' });
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    customer: customerId,
+    line_items: [{ price: await premiumPriceId(stripe, plan), quantity: 1 }],
+    subscription_data: { metadata: { contractor_id: contractorId, plan } },
+    success_url: `${site}${returnPath}?sub=success#premium`,
+    cancel_url: `${site}${returnPath}?sub=cancelled#premium`,
+    allow_promotion_codes: true,
+  });
+  return session.url!;
+}
+
+/**
+ * Turned down after paying at sign-up: cancel the membership now and refund
+ * everything they paid for it. Only for a contractor never approved — a
+ * member who was approved and later suspended is a different conversation,
+ * and nothing here touches their billing. Returns the pence refunded; throws
+ * if Stripe refuses, so the caller stops rather than deleting the record of a
+ * payment it could not give back.
+ */
+export async function refundUnapprovedPremium(contractorId: string): Promise<number> {
+  const admin = createServiceRoleClient();
+  const [{ data: ct }, { data: sub }] = await Promise.all([
+    admin.from('contractors').select('vetted_at, business_name').eq('id', contractorId).maybeSingle(),
+    admin
+      .from('subscriptions')
+      .select('stripe_customer_id')
+      .eq('contractor_id', contractorId)
+      .maybeSingle(),
+  ]);
+  if (!ct || ct.vetted_at || !sub?.stripe_customer_id) return 0;
+
+  // By customer, not the stored subscription id: a payment can land a moment
+  // before its webhook writes that id, and it must still come back.
+  const stripe = getStripe();
+  const subs = await stripe.subscriptions.list({ customer: sub.stripe_customer_id, status: 'all', limit: 10 });
+  for (const s of subs.data) {
+    if (s.status !== 'canceled' && s.status !== 'incomplete_expired') await stripe.subscriptions.cancel(s.id);
+  }
+
+  let refunded = 0;
+  const invoices = await stripe.invoices.list({ customer: sub.stripe_customer_id, status: 'paid', limit: 20 });
+  for (const inv of invoices.data) {
+    const pi = (inv as unknown as { payment_intent?: string | { id: string } | null }).payment_intent;
+    const intentId = typeof pi === 'string' ? pi : pi?.id;
+    if (!intentId || !inv.amount_paid) continue;
+    const existing = await stripe.refunds.list({ payment_intent: intentId, limit: 1 });
+    if (existing.data.length) continue; // already refunded — a retried rejection
+    await stripe.refunds.create({ payment_intent: intentId, reason: 'requested_by_customer' });
+    refunded += inv.amount_paid;
+  }
+
+  await admin
+    .from('subscriptions')
+    .update({ status: 'canceled', cancel_at_period_end: false, ended_at: new Date().toISOString() })
+    .eq('contractor_id', contractorId);
+  if (refunded) {
+    await notifyAdmins(
+      `Premium refunded: ${ct.business_name}`,
+      `${ct.business_name} paid for premium at sign-up and was not approved. The membership is ` +
+        `cancelled and £${(refunded / 100).toFixed(2)} refunded to their card.`,
+    );
+  }
+  return refunded;
+}

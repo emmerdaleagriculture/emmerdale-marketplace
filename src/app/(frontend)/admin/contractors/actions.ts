@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
+import { refundUnapprovedPremium } from '@/lib/stripe';
 
 async function assertAdmin() {
   const user = await getUser();
@@ -40,6 +41,11 @@ export async function setContractorStatus(formData: FormData) {
     .select('status, email, business_name')
     .eq('id', id)
     .maybeSingle();
+
+  // Suspending an application that was never approved is turning it down:
+  // anything paid for premium at sign-up goes back first. (A no-op for
+  // everyone else, including approved members.)
+  if (status === 'suspended') await refundUnapprovedPremium(id);
 
   const { error } = await admin.from('contractors').update({ status }).eq('id', id);
   if (error) throw new Error(error.message);
@@ -87,6 +93,11 @@ export async function deleteContractor(formData: FormData) {
   if (history.some((n) => n > 0)) {
     redirect(`/admin/contractors/${id}?blocked=history`);
   }
+
+  // Rejecting someone who paid for premium at sign-up: refund before the
+  // delete, which cascades away the subscription row that records the payment.
+  // If Stripe refuses, this throws and nothing is deleted.
+  await refundUnapprovedPremium(id);
 
   const { error: authErr } = await admin.auth.admin.deleteUser(id);
   if (authErr) {
