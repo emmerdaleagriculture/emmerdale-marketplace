@@ -5,7 +5,7 @@ import { verifySvixSignature } from '@/lib/webhooks/svix';
 import type { Json } from '@/lib/database.types';
 import {
   describeDelay,
-  isHardBounce,
+  isUndeliverable,
   isWorthRetrying,
   retryDelayMs,
   type Delivery,
@@ -193,8 +193,12 @@ export async function POST(request: Request) {
   if (!row) return NextResponse.json({ received: true, matched: false });
 
   // Suppression is Resend telling us the address is already known bad, which
-  // is the same conclusion a hard bounce reaches, one step earlier.
-  if (status === 'suppressed' || (status === 'bounced' && isHardBounce(event.data?.bounce))) {
+  // is the same conclusion a hard bounce reaches, one step earlier. A soft
+  // bounce gets there too once its retries are spent: three refusals over
+  // four hours is an address that is not taking our mail, whatever the
+  // provider calls it. Marking it stops both email and job invitations until
+  // the contractor proves an address from /account.
+  if (isUndeliverable(status, event.data?.bounce, row.retry_count ?? 0)) {
     await admin.rpc('record_undeliverable_email', {
       p_email: row.to_email,
       p_kind: row.kind,

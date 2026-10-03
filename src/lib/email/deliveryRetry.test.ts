@@ -3,6 +3,7 @@ import {
   MAX_DELIVERY_RETRIES,
   describeDelay,
   isHardBounce,
+  isUndeliverable,
   isWorthRetrying,
   retryDelayMs,
 } from './deliveryRetry';
@@ -82,5 +83,27 @@ describe('describeDelay', () => {
   it('reads as English in an admin alert', () => {
     expect(describeDelay(15 * 60 * 1000)).toBe('in 15 minutes');
     expect(describeDelay(4 * 60 * 60 * 1000)).toBe('in 4 hours');
+  });
+});
+
+describe('isUndeliverable', () => {
+  const soft = { type: 'Transient', subType: 'General' };
+
+  it('blocks a hard bounce or a suppression straight away', () => {
+    expect(isUndeliverable('bounced', { type: 'Permanent', subType: 'General' }, 0)).toBe(true);
+    expect(isUndeliverable('suppressed', undefined, 0)).toBe(true);
+  });
+
+  it('gives a soft bounce its retries before blocking the address', () => {
+    for (let n = 0; n < MAX_DELIVERY_RETRIES; n++) {
+      expect(isUndeliverable('bounced', soft, n)).toBe(false);
+    }
+    expect(isUndeliverable('bounced', soft, MAX_DELIVERY_RETRIES)).toBe(true);
+  });
+
+  it('never blames the address for our provider failing to send', () => {
+    expect(isUndeliverable('failed', undefined, MAX_DELIVERY_RETRIES)).toBe(false);
+    expect(isUndeliverable('delayed', undefined, MAX_DELIVERY_RETRIES)).toBe(false);
+    expect(isUndeliverable('delivered', undefined, 0)).toBe(false);
   });
 });

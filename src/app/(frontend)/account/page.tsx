@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
+import { EmailBanner } from './EmailBanner';
+import { contractorEmailHealth } from '@/lib/contractors/emailConfirm';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
@@ -74,7 +76,8 @@ export default async function AccountPage() {
   // No profile: a customer (→ their jobs) or a contractor mid-onboarding.
   if (!contractor) redirect(await nonContractorPath(user.id));
 
-  const [counties, services, ccRows, invQ, wonQ, quoteQ] = await Promise.all([
+  const [emailHealth, counties, services, ccRows, invQ, wonQ, quoteQ] = await Promise.all([
+    contractorEmailHealth(contractor.id, contractor.email),
     getCounties(),
     getServices(),
     supabase.from('contractor_counties').select('county_id').eq('contractor_id', user.id),
@@ -212,6 +215,10 @@ export default async function AccountPage() {
             )}
             <span className={ac.email}>{user.email}</span>
           </div>
+
+          {emailHealth.undeliverable && (
+            <EmailBanner email={emailHealth.email} pending={emailHealth.pending} />
+          )}
 
           {status === 'pending' && (
             <div className={`${ac.banner} ${ac.pending}`}>
