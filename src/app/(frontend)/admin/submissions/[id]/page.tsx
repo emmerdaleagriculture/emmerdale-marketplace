@@ -177,7 +177,7 @@ export default async function SubmissionDetailPage({
     admin
       .from('client_quotes')
       .select(
-        `id, status, client_price_pence, markup_rate, contractor_display_label, contractor_real_name, valid_until, created_at, contractor_note,
+        `id, status, client_price_pence, markup_rate, premium, contractor_display_label, contractor_real_name, valid_until, created_at, contractor_note,
          cq:contractor_quotes(contractor_price_pence, quote_type, rate_value_pence, rate_minimum_pence, source, notes_internal, site_visit_required,
            contractor:contractors(business_name))`,
       )
@@ -519,7 +519,10 @@ export default async function SubmissionDetailPage({
               return (
                 <tr key={cq.id}>
                   <td>{cq.contractor_display_label}</td>
-                  <td>{inner?.contractor?.business_name ?? '—'}</td>
+                  <td>
+                    {inner?.contractor?.business_name ?? '—'}
+                    {cq.premium && <span style={{ color: '#8a6d00' }}> ★ Premium</span>}
+                  </td>
                   <td>
                     {inner ? formatGBP(inner.contractor_price_pence) : '—'}
                     {inner?.quote_type === 'rate' ? ' (rate)' : ''}
@@ -529,7 +532,7 @@ export default async function SubmissionDetailPage({
                   <td>
                     {inner ? formatGBP(cq.client_price_pence - inner.contractor_price_pence) : '—'}
                     {cq.markup_rate != null && Number(cq.markup_rate) !== markupRate
-                      ? ` (${Math.round(Number(cq.markup_rate) * 100)}% on this price)`
+                      ? ` (${Math.round(Number(cq.markup_rate) * 100)}%)`
                       : ''}
                   </td>
                   <td>{cq.status}</td>

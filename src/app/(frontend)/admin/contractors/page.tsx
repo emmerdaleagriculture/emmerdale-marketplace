@@ -48,7 +48,7 @@ function Row({ c }: { c: ContractorRow }) {
     <tr>
       <td>
         <Link href={`/admin/contractors/${c.id}`}>{c.business_name}</Link>
-        {c.premium && <b style={{ fontSize: 12, marginLeft: 6 }}>Premium</b>}
+        {c.premium && <b style={{ fontSize: 12, marginLeft: 6, color: '#8a6d00' }}>★ Premium</b>}
         {sourceLabel(c.signup_source) && (
           <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{sourceLabel(c.signup_source)}</div>
         )}

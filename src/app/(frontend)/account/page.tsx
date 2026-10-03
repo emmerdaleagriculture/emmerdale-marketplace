@@ -206,6 +206,10 @@ export default async function AccountPage({
   ];
 
   const status = contractor.status;
+  const isPremium =
+    subQ.data?.status === 'active' ||
+    subQ.data?.status === 'past_due' ||
+    Boolean(contractor.premium_comped_until && new Date(contractor.premium_comped_until) > new Date());
   const serviceCount = (contractor.services ?? []).length;
 
   return (
@@ -218,6 +222,7 @@ export default async function AccountPage({
           <h1 className={a.title}>{contractor.business_name}</h1>
           <div className={ac.statusRow}>
             <span className={`${ac.badge} ${ac[status] ?? ''}`}>{STATUS_LABELS[status] ?? status}</span>
+            {isPremium && <span className={`${ac.badge} ${ac.premiumBadge}`}>★ Premium</span>}
             {(contractor.rating_count ?? 0) > 0 && contractor.rating_avg != null && (
               <span>
                 ★ {Number(contractor.rating_avg).toFixed(1)} · {contractor.rating_count} rating
