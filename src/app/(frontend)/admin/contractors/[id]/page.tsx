@@ -50,7 +50,10 @@ export default async function ContractorDetailPage({
       <Link href="/admin/contractors" className={s.back}>
         ← All contractors
       </Link>
-      <h1 className={s.h1}>{c.business_name}</h1>
+      <h1 className={s.h1}>
+        {c.business_name}
+        {isPremium && <span style={{ color: '#8a6d00', fontSize: '0.6em', marginLeft: 10 }}>★ Premium</span>}
+      </h1>
       <p className={s.sub}>
         <StatusPill status={c.status} />
       </p>
@@ -106,7 +109,11 @@ export default async function ContractorDetailPage({
                 : `, renews ${day(sub.current_period_end)}`
               : '')
           : ''}
-        {compedUntil ? ` · comped until ${day(compedUntil)}` : ''}
+        {compedUntil
+          ? new Date(compedUntil).getFullYear() >= 2099
+            ? ' · comped, no end date'
+            : ` · comped until ${day(compedUntil)}`
+          : ''}
       </p>
       <div className={s.actions}>
         <form action={setPremiumComp}>

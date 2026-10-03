@@ -31,6 +31,8 @@ export type ClientQuoteView = {
   unit_quantity: number | null;
   /** The contractor's own words, in their voice. May be null. */
   contractor_note: string | null;
+  /** Sent by a premium member of the network. */
+  premium?: boolean;
 };
 
 const SORT_LABELS: [SortMode, string][] = [
@@ -116,6 +118,11 @@ export function PriceList({
             <div className={m.quoteHead}>
               <span className={m.quoteLabel}>
                 {q.contractor_display_label}
+                {q.premium && (
+                  <span className={m.premiumTag} title="A premium member of the Emmerdale Agriculture network">
+                    ★ Premium member
+                  </span>
+                )}
                 {newSincePass.includes(q.id) && <span className={m.newPrice}>New price</span>}
               </span>
               <span className={m.quotePriceWrap}>

@@ -79,8 +79,9 @@ export function PremiumPanel({
         </>
       ) : comped ? (
         <p className={ac.subBody}>
-          You have premium on us until {day(compedUntil!)}: first refusal on new jobs in your area
-          and 5% commission on your prices.
+          You have premium on us
+          {new Date(compedUntil!).getFullYear() < 2099 ? ` until ${day(compedUntil!)}` : ''}: first
+          refusal on new jobs in your area and 5% commission on your prices.
         </p>
       ) : (
         <>

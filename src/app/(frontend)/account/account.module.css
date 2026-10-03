@@ -339,3 +339,8 @@
 .subBody a {
   text-decoration: underline;
 }
+.premiumBadge {
+  background: var(--jd-yellow);
+  border-color: #d9b800;
+  color: var(--jd-green-deep);
+}
