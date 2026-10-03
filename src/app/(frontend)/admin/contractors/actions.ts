@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
+import { refundUnapprovedPremium } from '@/lib/stripe';
 
 async function assertAdmin() {
   const user = await getUser();
@@ -40,6 +41,11 @@ export async function setContractorStatus(formData: FormData) {
     .select('status, email, business_name')
     .eq('id', id)
     .maybeSingle();
+
+  // Suspending an application that was never approved is turning it down:
+  // anything paid for premium at sign-up goes back first. (A no-op for
+  // everyone else, including approved members.)
+  if (status === 'suspended') await refundUnapprovedPremium(id);
 
   const { error } = await admin.from('contractors').update({ status }).eq('id', id);
   if (error) throw new Error(error.message);
@@ -88,6 +94,11 @@ export async function deleteContractor(formData: FormData) {
     redirect(`/admin/contractors/${id}?blocked=history`);
   }
 
+  // Rejecting someone who paid for premium at sign-up: refund before the
+  // delete, which cascades away the subscription row that records the payment.
+  // If Stripe refuses, this throws and nothing is deleted.
+  await refundUnapprovedPremium(id);
+
   const { error: authErr } = await admin.auth.admin.deleteUser(id);
   if (authErr) {
     console.error('[admin] auth user delete failed, removing contractor row only:', authErr.message);
@@ -97,4 +108,25 @@ export async function deleteContractor(formData: FormData) {
 
   revalidatePath('/admin/contractors');
   redirect('/admin/contractors');
+}
+
+/**
+ * Give a contractor premium without a subscription (comp), or take it back.
+ * `months` 0 removes it. Granting catches them up on jobs already in a
+ * premium window, as a paid sign-up does (syncSubscription).
+ */
+export async function setPremiumComp(formData: FormData) {
+  await assertAdmin();
+
+  const id = String(formData.get('id') || '');
+  const months = Number(formData.get('months') || 0);
+  if (!id || !Number.isFinite(months) || months < 0 || months > 36) return;
+
+  const until = months > 0 ? new Date(Date.now() + months * 30.44 * 24 * 60 * 60 * 1000).toISOString() : null;
+  const admin = createServiceRoleClient();
+  const { error } = await admin.from('contractors').update({ premium_comped_until: until }).eq('id', id);
+  if (error) throw new Error(error.message);
+  if (until) await admin.rpc('invite_contractor_to_open_jobs', { p_contractor_id: id });
+
+  revalidatePath(`/admin/contractors/${id}`);
 }

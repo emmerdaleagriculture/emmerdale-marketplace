@@ -177,7 +177,7 @@ export default async function SubmissionDetailPage({
     admin
       .from('client_quotes')
       .select(
-        `id, status, client_price_pence, contractor_display_label, contractor_real_name, valid_until, created_at, contractor_note,
+        `id, status, client_price_pence, markup_rate, contractor_display_label, contractor_real_name, valid_until, created_at, contractor_note,
          cq:contractor_quotes(contractor_price_pence, quote_type, rate_value_pence, rate_minimum_pence, source, notes_internal, site_visit_required,
            contractor:contractors(business_name))`,
       )
@@ -212,7 +212,7 @@ export default async function SubmissionDetailPage({
   const messagePhotoUrls = await signMessagePhotos(messages.flatMap((m) => m.photo_paths));
 
   // Extra work: jobs booked off this one, and the one this extends.
-  const [extrasQ, contractorQ, markupQ, jobRateQ] = await Promise.all([
+  const [extrasQ, contractorQ, markupQ, jobRateQ, awardedPremiumQ, premiumRateQ] = await Promise.all([
     admin
       .from('job_submissions')
       .select('id, service_verbatim, status, created_at')
@@ -224,10 +224,19 @@ export default async function SubmissionDetailPage({
     admin.from('app_config').select('value').eq('key', 'sq_markup_rate').maybeSingle(),
     // The job's own rate (split-test arm), which extra work inherits.
     admin.from('job_submissions').select('markup_rate, markup_arm').eq('id', id).maybeSingle(),
+    // Extra work for a premium member is priced at the premium rate.
+    sub.awarded_contractor_id
+      ? admin.rpc('contractor_is_premium', { p_contractor_id: sub.awarded_contractor_id })
+      : Promise.resolve({ data: false }),
+    admin.from('app_config').select('value').eq('key', 'sq_premium_markup_rate').maybeSingle(),
   ]);
   const extras = extrasQ.data ?? [];
   const markupRate = jobRateQ.data?.markup_rate ?? Number(markupQ.data?.value ?? 0.1);
   const markupArm = jobRateQ.data?.markup_arm ?? null;
+  const extraWorkRate =
+    awardedPremiumQ.data === true
+      ? Math.min(markupRate, Number(premiumRateQ.data?.value ?? 0.05))
+      : markupRate;
   const booked = [
     'awarded', 'contacted', 'scheduled', 'in_progress',
     'completed_by_contractor', 'completed', 'paid',
@@ -474,7 +483,7 @@ export default async function SubmissionDetailPage({
             <ExtraWorkForm
               submissionId={sub.id}
               contractorName={contractorQ.data?.business_name ?? 'the contractor'}
-              markupRate={markupRate}
+              markupRate={extraWorkRate}
             />
           )}
         </>
@@ -517,7 +526,12 @@ export default async function SubmissionDetailPage({
                     {inner?.source === 'email_parsed' ? ' · from email' : ''}
                   </td>
                   <td>{formatGBP(cq.client_price_pence)}</td>
-                  <td>{inner ? formatGBP(cq.client_price_pence - inner.contractor_price_pence) : '—'}</td>
+                  <td>
+                    {inner ? formatGBP(cq.client_price_pence - inner.contractor_price_pence) : '—'}
+                    {cq.markup_rate != null && Number(cq.markup_rate) !== markupRate
+                      ? ` (${Math.round(Number(cq.markup_rate) * 100)}% on this price)`
+                      : ''}
+                  </td>
                   <td>{cq.status}</td>
                   {/* Nothing reviews this before the customer reads it,
                       so the only control is taking it back afterwards. */}

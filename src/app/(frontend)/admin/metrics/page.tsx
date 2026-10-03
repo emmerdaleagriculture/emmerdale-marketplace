@@ -73,6 +73,34 @@ type MarkupArm = {
   median_days_to_book: number | null;
   since: string | null;
 };
+type PremiumSummary = {
+  paid: number;
+  monthly: number;
+  annual: number;
+  past_due: number;
+  cancelling: number;
+  comped: number;
+  new_30d: number;
+  at_signup_30d: number;
+  awaiting_approval: number;
+  ended_30d: number;
+  mrr_pence: number;
+  windows_30d: { jobs: number; premium_priced: number; premium_booked: number };
+  prices_30d: { prices: number; booked: number; margin_pence: number };
+  members: {
+    id: string;
+    name: string;
+    kind: 'monthly' | 'annual' | 'comped' | null;
+    status: string;
+    since: string | null;
+    until: string | null;
+    cancelling: boolean;
+    offered_30d: number;
+    priced_30d: number;
+    won_30d: number;
+  }[];
+};
+
 type MarkupTest = {
   enabled: boolean;
   rates: Partial<Record<'a' | 'b', number>>;
@@ -164,7 +192,7 @@ export default async function AdminDashboard() {
   // early jobs need the IP join in jobSources to say anything at all.
   const page = <T,>(q: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) =>
     fetchAll(q).catch(() => [] as T[]);
-  const [{ data, error }, invitations, sourceSubs, parses, views, priorityQ, markupQ, passQ] = await Promise.all([
+  const [{ data, error }, invitations, sourceSubs, parses, views, priorityQ, markupQ, passQ, premiumQ] = await Promise.all([
     admin.rpc('admin_dashboard'),
     // Every invitation of the last 30 days, for the response donut: the RPC
     // carries rates, not the split. Paged; the month is past 600 already.
@@ -204,7 +232,10 @@ export default async function AdminDashboard() {
     admin.rpc('admin_markup_test_summary').then((r) => r, () => ({ data: null })),
     // Prices passed on (20261002170000): why, and what happened next.
     admin.rpc('admin_pass_summary').then((r) => r, () => ({ data: null })),
+    // Premium membership (20261003170000).
+    admin.rpc('admin_premium_summary').then((r) => r, () => ({ data: null })),
   ]);
+  const pm = (premiumQ?.data ?? null) as PremiumSummary | null;
   const pr = (priorityQ?.data ?? null) as PrioritySummary | null;
   const mt = (markupQ?.data ?? null) as MarkupTest | null;
   const ps = (passQ?.data ?? null) as PassSummary | null;
@@ -483,6 +514,74 @@ export default async function AdminDashboard() {
           <PieCard title="Registered contractors, by standing" slices={contractorSlices} centre="registered" />
         </div>
       </div>
+
+      {/* ── Premium membership ───────────────────────────────────────── */}
+      {pm && (
+        <>
+          <div className={s.sectionLabel}>Premium membership</div>
+          <Tiles>
+            <Tile
+              value={n(pm.paid + pm.comped)}
+              label="Members"
+              hint={`${n(pm.monthly)} monthly · ${n(pm.annual)} yearly${pm.comped ? ` · ${n(pm.comped)} comped` : ''}`}
+            />
+            <Tile value={gbp(pm.mrr_pence)} label="Monthly recurring" hint="Yearly plans spread over 12 months" />
+            <Tile
+              value={n(pm.new_30d)}
+              label="Signed up, 30 days"
+              hint={`${n(pm.at_signup_30d)} when applying · ${n(pm.ended_30d)} ended${pm.cancelling ? ` · ${n(pm.cancelling)} cancelling` : ''}`}
+            />
+            <Tile
+              value={n(pm.windows_30d.jobs)}
+              label="Jobs held for premium, 30 days"
+              hint={`${n(pm.windows_30d.premium_priced)} priced by a member · ${n(pm.windows_30d.premium_booked)} booked`}
+            />
+            <Tile
+              value={`${n(pm.prices_30d.booked)} / ${n(pm.prices_30d.prices)}`}
+              label="Premium prices booked, 30 days"
+              hint={`${gbp(pm.prices_30d.margin_pence)} our margin at 5%`}
+            />
+          </Tiles>
+          {pm.awaiting_approval > 0 && (
+            <p className={s.sub}>
+              {n(pm.awaiting_approval)} paid at sign-up and {pm.awaiting_approval === 1 ? 'is' : 'are'} waiting for
+              approval. <Link href="/admin/contractors">Review applications</Link> — rejecting one refunds them
+              automatically.
+            </p>
+          )}
+          {pm.past_due > 0 && (
+            <p className={s.sub}>
+              {n(pm.past_due)} member{pm.past_due === 1 ? '' : 's'} with a failed payment — Stripe is retrying;
+              they keep premium for 3 days past the period end.
+            </p>
+          )}
+          {pm.members.length > 0 ? (
+            <AdminTable head={['Member', 'Plan', 'Since', 'Renews / ends', 'Offered first, 30d', 'Priced, 30d', 'Won, 30d']}>
+              {pm.members.map((m) => (
+                <tr key={m.id}>
+                  <td>
+                    <Link href={`/admin/contractors/${m.id}`}>{m.name}</Link>
+                  </td>
+                  <td>
+                    {m.kind === 'annual' ? 'Yearly' : m.kind === 'comped' ? 'Comped' : 'Monthly'}
+                    {m.status === 'past_due' ? ' · payment failed' : ''}
+                  </td>
+                  <td>{m.since ? new Date(m.since).toLocaleDateString('en-GB') : '—'}</td>
+                  <td>
+                    {m.until ? new Date(m.until).toLocaleDateString('en-GB') : '—'}
+                    {m.cancelling ? ' (cancelling)' : ''}
+                  </td>
+                  <td>{n(m.offered_30d)}</td>
+                  <td>{n(m.priced_30d)}</td>
+                  <td>{n(m.won_30d)}</td>
+                </tr>
+              ))}
+            </AdminTable>
+          ) : (
+            <p className={s.sub}>No premium members yet.</p>
+          )}
+        </>
+      )}
 
       {/* ── Commission split test ────────────────────────────────────── */}
       {mt && (mt.enabled || mt.arms.a || mt.arms.b) && (() => {

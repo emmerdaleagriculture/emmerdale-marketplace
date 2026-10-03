@@ -326,3 +326,16 @@
   font-size: 13px;
   opacity: 0.85;
 }
+
+/* ── Premium membership ────────────────────────────────────────────────── */
+.subBody p {
+  margin: 0 0 10px;
+}
+.premiumButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.subBody a {
+  text-decoration: underline;
+}

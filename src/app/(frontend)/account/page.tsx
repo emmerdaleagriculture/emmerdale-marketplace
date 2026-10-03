@@ -5,6 +5,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
 import { EmailBanner } from './EmailBanner';
+import { PremiumPanel } from './PremiumPanel';
 import { contractorEmailHealth } from '@/lib/contractors/emailConfirm';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { createClient } from '@/lib/supabase/server';
@@ -58,7 +59,12 @@ function clip(text: string, n: number) {
 
 const when = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : Infinity);
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sub?: string }>;
+}) {
+  const { sub: subNotice } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -76,7 +82,7 @@ export default async function AccountPage() {
   // No profile: a customer (→ their jobs) or a contractor mid-onboarding.
   if (!contractor) redirect(await nonContractorPath(user.id));
 
-  const [emailHealth, counties, services, ccRows, invQ, wonQ, quoteQ] = await Promise.all([
+  const [emailHealth, counties, services, ccRows, invQ, wonQ, quoteQ, subQ] = await Promise.all([
     contractorEmailHealth(contractor.id, contractor.email),
     getCounties(),
     getServices(),
@@ -96,6 +102,11 @@ export default async function AccountPage() {
       .eq('contractor_id', user.id)
       .is('superseded_by', null)
       .limit(500),
+    supabase
+      .from('subscriptions')
+      .select('status, plan, current_period_end, cancel_at_period_end')
+      .eq('contractor_id', user.id)
+      .maybeSingle(),
   ]);
   const selectedCounties = (ccRows.data ?? []).map((r) => r.county_id!).filter(Boolean);
 
@@ -228,6 +239,14 @@ export default async function AccountPage() {
               your details below in the meantime.
             </div>
           )}
+          {status === 'pending' && (
+            <PremiumPanel
+              sub={subQ.data ?? null}
+              compedUntil={contractor.premium_comped_until ?? null}
+              notice={subNotice}
+              pending
+            />
+          )}
           {status === 'suspended' && (
             <div className={`${ac.banner} ${ac.suspended}`}>
               <div className={ac.bannerTitle}>Account suspended</div>
@@ -310,6 +329,12 @@ export default async function AccountPage() {
                 <Link href="/invitations">All invitations &amp; history</Link>
                 <Link href="/won">Won jobs</Link>
               </div>
+
+              <PremiumPanel
+                sub={subQ.data ?? null}
+                compedUntil={contractor.premium_comped_until ?? null}
+                notice={subNotice}
+              />
             </>
           )}
 

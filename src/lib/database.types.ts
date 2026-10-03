@@ -61,6 +61,7 @@ export type Database = {
       }
       client_quotes: {
         Row: {
+          premium: boolean
           client_price_pence: number
           client_rate_minimum_pence: number | null
           client_rate_value_pence: number | null
@@ -85,6 +86,7 @@ export type Database = {
           viewed_at: string | null
         }
         Insert: {
+          premium?: boolean
           client_price_pence: number
           client_rate_minimum_pence?: number | null
           client_rate_value_pence?: number | null
@@ -109,6 +111,7 @@ export type Database = {
           viewed_at?: string | null
         }
         Update: {
+          premium?: boolean
           client_price_pence?: number
           client_rate_minimum_pence?: number | null
           client_rate_value_pence?: number | null
@@ -634,6 +637,7 @@ export type Database = {
       }
       contractors: {
         Row: {
+          premium_comped_until: string | null
           messages_moderated_until: string | null
           base_lat: number | null
           base_lng: number | null
@@ -654,6 +658,7 @@ export type Database = {
           vetted_at: string | null
         }
         Insert: {
+          premium_comped_until?: string | null
           messages_moderated_until?: string | null
           base_lat?: number | null
           base_lng?: number | null
@@ -674,6 +679,7 @@ export type Database = {
           vetted_at?: string | null
         }
         Update: {
+          premium_comped_until?: string | null
           messages_moderated_until?: string | null
           base_lat?: number | null
           base_lng?: number | null
@@ -1016,6 +1022,7 @@ export type Database = {
       }
       job_invitations: {
         Row: {
+          premium_offer: boolean
           contractor_id: string
           decline_reason: string | null
           display_label: string | null
@@ -1028,6 +1035,7 @@ export type Database = {
           token: string
         }
         Insert: {
+          premium_offer?: boolean
           contractor_id: string
           decline_reason?: string | null
           display_label?: string | null
@@ -1040,6 +1048,7 @@ export type Database = {
           token: string
         }
         Update: {
+          premium_offer?: boolean
           contractor_id?: string
           decline_reason?: string | null
           display_label?: string | null
@@ -1514,6 +1523,8 @@ export type Database = {
       }
       job_submissions: {
         Row: {
+          premium_started_at: string | null
+          premium_window: boolean
           markup_arm: string | null
           markup_assigned_at: string | null
           markup_rate: number | null
@@ -1595,6 +1606,8 @@ export type Database = {
           utm_source: string | null
         }
         Insert: {
+          premium_started_at?: string | null
+          premium_window?: boolean
           markup_arm?: string | null
           markup_assigned_at?: string | null
           markup_rate?: number | null
@@ -1676,6 +1689,8 @@ export type Database = {
           utm_source?: string | null
         }
         Update: {
+          premium_started_at?: string | null
+          premium_window?: boolean
           markup_arm?: string | null
           markup_assigned_at?: string | null
           markup_rate?: number | null
@@ -2454,6 +2469,10 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          ended_at: string | null
+          started_at: string | null
+          cancel_at_period_end: boolean
+          plan: string | null
           contractor_id: string
           current_period_end: string | null
           status: string
@@ -2462,6 +2481,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ended_at?: string | null
+          started_at?: string | null
+          cancel_at_period_end?: boolean
+          plan?: string | null
           contractor_id: string
           current_period_end?: string | null
           status?: string
@@ -2470,6 +2493,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ended_at?: string | null
+          started_at?: string | null
+          cancel_at_period_end?: boolean
+          plan?: string | null
           contractor_id?: string
           current_period_end?: string | null
           status?: string
@@ -2645,6 +2672,7 @@ export type Database = {
       }
       my_sq_invitations: {
         Row: {
+          premium_offer: boolean | null
           access_notes: string | null
           area_mapped_value: number | null
           area_source: string | null
@@ -2767,6 +2795,11 @@ export type Database = {
       }
     }
     Functions: {
+      admin_premium_summary: { Args: never; Returns: Json }
+      contractor_is_premium: {
+        Args: { p_contractor_id: string }
+        Returns: boolean
+      }
       admin_add_extra_work: {
         Args: {
           p_actor_id: string

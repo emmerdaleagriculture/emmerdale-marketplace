@@ -115,7 +115,13 @@ export default async function InvitationsPage() {
                           Past it and still held means they priced in time and
                           keep it — no other contractor is coming. */}
                       <div className={s.deadline}>
-                        {inv.offered_until
+                        {inv.offered_until && inv.premium_offer
+                          ? new Date(inv.offered_until) > new Date()
+                            ? `Premium first look until ${formatDateTime(inv.offered_until)}`
+                            : inv.expires_at
+                              ? timeLeft(inv.expires_at)
+                              : ''
+                          : inv.offered_until
                           ? new Date(inv.offered_until) > new Date()
                             ? `Yours alone until ${formatDateTime(inv.offered_until)}`
                             : 'Yours alone'

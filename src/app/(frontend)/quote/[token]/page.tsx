@@ -98,6 +98,11 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   const unread = messages.filter((m) => m.sender === 'client' && !m.read).length;
   const directToYou =
     Boolean(offer?.market_opens_at) && offer?.preferred_contractor_id === invitation.contractor_id;
+  // A premium window: this job is with premium members only, until it lapses
+  // or every one of them has priced or passed.
+  const premiumFirst =
+    Boolean(invitation.premium_offer && offer?.premium_window && offer?.market_opens_at) &&
+    new Date(offer!.market_opens_at!) > new Date();
 
   const jobOpen =
     ['distributed', 'quotes_receiving', 'accepted_awaiting_payment'].includes(js.status) &&
@@ -221,7 +226,15 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
           {jobOpen && (
             <>
-              {directToYou && offer?.market_opens_at && new Date(offer.market_opens_at) > new Date() ? (
+              {premiumFirst ? (
+                <div className={q.pricedPanel}>
+                  <strong>Premium first look.</strong> Only premium members have this job.
+                  Price it or message the customer within 24 hours of it arriving and it stays
+                  that way until {formatDateTime(offer!.market_opens_at!)}, or until you&rsquo;ve
+                  all priced or passed; if no member responds in 24 hours it goes to other
+                  contractors in the area. The customer can accept a price at any time.
+                </div>
+              ) : directToYou && offer?.market_opens_at && new Date(offer.market_opens_at) > new Date() ? (
                 <div className={q.pricedPanel}>
                   {offer.first_refusal ? (
                     <>

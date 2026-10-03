@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/draft-chaser",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/premium-sync",
+      "schedule": "40 3 * * *"
     }
   ]
 }

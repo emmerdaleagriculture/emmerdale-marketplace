@@ -76,7 +76,7 @@ export default async function WonJobsPage() {
   // refuses a second), so the card says so instead of offering a form that
   // would be refused.
   const admin = createServiceRoleClient();
-  const [openExtrasRes, markupRes, visitsRes] = await Promise.all([
+  const [openExtrasRes, markupRes, visitsRes, premiumRes, premiumRateRes] = await Promise.all([
     ids.length
       ? admin
           .from('job_submissions')
@@ -94,6 +94,9 @@ export default async function WonJobsPage() {
           .select('id, visit_status, visit_due_at, markup_rate')
           .in('id', ids)
       : Promise.resolve({ data: [] }),
+    // Premium members' prices carry the premium rate (sq_publish_quote).
+    admin.rpc('contractor_is_premium', { p_contractor_id: user.id }),
+    admin.from('app_config').select('value').eq('key', 'sq_premium_markup_rate').maybeSingle(),
   ]);
   const jobRows = new Map((visitsRes.data ?? []).map((v) => [v.id, v]));
   const visits = new Map(
@@ -103,6 +106,11 @@ export default async function WonJobsPage() {
     (openExtrasRes.data ?? []).map((x) => [x.extra_work_of, x.service_verbatim ?? 'extra work']),
   );
   const markupRate = Number(markupRes.data?.value ?? 0.1);
+  const premiumRate = premiumRes.data === true ? Number(premiumRateRes.data?.value ?? 0.05) : null;
+  const rateFor = (jobRate: number | null | undefined) => {
+    const r = jobRate ?? markupRate;
+    return premiumRate == null ? r : Math.min(r, premiumRate);
+  };
 
   return (
     <div className={a.wrap}>
@@ -256,7 +264,7 @@ export default async function WonJobsPage() {
                       <ProposeWorkForm
                         submissionId={job.id}
                         customerName={job.contact_name?.trim().split(/\s+/)[0] || 'the customer'}
-                        markupRate={jobRows.get(job.id)?.markup_rate ?? markupRate}
+                        markupRate={rateFor(jobRows.get(job.id)?.markup_rate)}
                       />
                     ))}
                   {/* Paid out: say so, and stop asking for the invoice —

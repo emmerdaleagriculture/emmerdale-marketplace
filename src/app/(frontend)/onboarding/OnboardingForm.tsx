@@ -1,12 +1,13 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { completeOnboardingAction } from './actions';
 import { emptyFormState } from '@/lib/form';
 import { CountyPicker, type CountyOption } from '@/components/forms/CountyPicker';
 import { ServicePicker, type ServiceOption } from '@/components/forms/ServicePicker';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
+import o from './onboarding.module.css';
 
 export function OnboardingForm({
   counties,
@@ -16,6 +17,7 @@ export function OnboardingForm({
   services: ServiceOption[];
 }) {
   const [state, action, pending] = useActionState(completeOnboardingAction, emptyFormState);
+  const [membership, setMembership] = useState<'free' | 'monthly' | 'annual'>('free');
 
   return (
     <form action={action}>
@@ -59,11 +61,61 @@ export function OnboardingForm({
       </p>
       <CountyPicker counties={counties} />
 
+      <div className={a.groupTitle}>Choose your membership</div>
+      <div className={o.plans} role="radiogroup" aria-label="Membership">
+        {PLANS.map((p) => (
+          <label
+            key={p.value}
+            className={`${o.plan} ${membership === p.value ? o.planOn : ''} ${p.value !== 'free' ? o.planPremium : ''}`}
+          >
+            <input
+              type="radio"
+              name="membership"
+              value={p.value}
+              checked={membership === p.value}
+              onChange={() => setMembership(p.value)}
+              className={o.radio}
+            />
+            <span className={o.planName}>{p.name}</span>
+            <span className={o.planPrice}>{p.price}</span>
+            <span className={o.planNote}>{p.note}</span>
+          </label>
+        ))}
+      </div>
+      <ul className={o.perks}>
+        <li>
+          <b>Free:</b> jobs in your counties, first come, first served. We add 15% to your price.
+        </li>
+        <li>
+          <b>Premium:</b> new jobs come to you <b>before anyone else</b>, held for up to 7 days
+          if you reply within 24 hours, and we add
+          only <b>5%</b> to your price, so a £400 price shows the customer £420, not £460.
+        </li>
+      </ul>
+      {membership !== 'free' && (
+        <p className={f.hint}>
+          You’ll pay securely with Stripe next. Premium starts working the moment we approve you,
+          usually within a few hours. If we can’t approve your application, we cancel it and refund
+          you in full. Cancel any time after that; see{' '}
+          <a href="/terms" target="_blank" style={{ textDecoration: 'underline' }}>clause 12 of the contractor terms</a>.
+        </p>
+      )}
+
       <div className={a.actions}>
         <button className={f.btnPrimary} type="submit" disabled={pending}>
-          {pending ? 'Saving…' : 'Finish and submit application'}
+          {pending
+            ? 'Saving…'
+            : membership === 'free'
+              ? 'Finish and submit application'
+              : `Submit and pay ${membership === 'annual' ? '£199' : '£20'}`}
         </button>
       </div>
     </form>
   );
 }
+
+const PLANS = [
+  { value: 'free', name: 'Free', price: '£0', note: '15% added to your prices' },
+  { value: 'monthly', name: 'Premium', price: '£20 a month', note: 'First refusal · 5%' },
+  { value: 'annual', name: 'Premium yearly', price: '£199 a year', note: 'Same as monthly · save £41' },
+] as const;
