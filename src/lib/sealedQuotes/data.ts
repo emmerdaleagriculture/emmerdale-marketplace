@@ -78,7 +78,7 @@ export async function getClientQuotes(submissionId: string) {
   const { data, error } = await admin
     .from('client_quotes')
     .select(
-      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status, contractor_note, unit_label, unit_quantity',
+      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status, contractor_note, unit_label, unit_quantity, premium',
     )
     .eq('submission_id', submissionId)
     .in('status', ['active', 'accepted'])
@@ -107,7 +107,7 @@ export async function getClientQuoteById(id: string) {
   const { data, error } = await admin
     .from('client_quotes')
     .select(
-      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status, contractor_note, unit_label, unit_quantity',
+      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status, contractor_note, unit_label, unit_quantity, premium',
     )
     .eq('id', id)
     .maybeSingle();
