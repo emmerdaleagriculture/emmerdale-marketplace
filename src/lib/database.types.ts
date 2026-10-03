@@ -1523,6 +1523,7 @@ export type Database = {
       }
       job_submissions: {
         Row: {
+          premium_started_at: string | null
           premium_window: boolean
           markup_arm: string | null
           markup_assigned_at: string | null
@@ -1605,6 +1606,7 @@ export type Database = {
           utm_source: string | null
         }
         Insert: {
+          premium_started_at?: string | null
           premium_window?: boolean
           markup_arm?: string | null
           markup_assigned_at?: string | null
@@ -1687,6 +1689,7 @@ export type Database = {
           utm_source?: string | null
         }
         Update: {
+          premium_started_at?: string | null
           premium_window?: boolean
           markup_arm?: string | null
           markup_assigned_at?: string | null

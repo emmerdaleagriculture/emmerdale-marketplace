@@ -226,7 +226,9 @@ export default function TermsPage() {
             reach of your base, goes to premium members before anyone else. It is held
             for up to <strong>7 days</strong>, or until every premium member it was sent
             to has priced or passed, whichever comes first; then it goes to other
-            contractors as usual. Where another contractor already has first refusal in an
+            contractors as usual. If no premium member has priced it or messaged the
+            customer within <strong>24 hours</strong>, it goes to other contractors
+            then. Where another contractor already has first refusal in an
             area by separate agreement, that comes first and premium follows it. Repeat
             jobs a customer has asked a named contractor for are not included. The
             customer can accept any price at any time, including during the window.

@@ -87,7 +87,8 @@ export function OnboardingForm({
           <b>Free:</b> jobs in your counties, first come, first served. We add 15% to your price.
         </li>
         <li>
-          <b>Premium:</b> new jobs come to you up to <b>7 days before anyone else</b>, and we add
+          <b>Premium:</b> new jobs come to you <b>before anyone else</b>, held for up to 7 days
+          if you reply within 24 hours, and we add
           only <b>5%</b> to your price, so a £400 price shows the customer £420, not £460.
         </li>
       </ul>
@@ -115,6 +116,6 @@ export function OnboardingForm({
 
 const PLANS = [
   { value: 'free', name: 'Free', price: '£0', note: '15% added to your prices' },
-  { value: 'monthly', name: 'Premium', price: '£20 a month', note: '7-day first refusal · 5%' },
+  { value: 'monthly', name: 'Premium', price: '£20 a month', note: 'First refusal · 5%' },
   { value: 'annual', name: 'Premium yearly', price: '£199 a year', note: 'Same as monthly · save £41' },
 ] as const;

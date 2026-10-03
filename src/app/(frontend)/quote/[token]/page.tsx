@@ -228,10 +228,11 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
             <>
               {premiumFirst ? (
                 <div className={q.pricedPanel}>
-                  <strong>Premium first look.</strong> Only premium members have this job
-                  until {formatDateTime(offer!.market_opens_at!)}, or until you&rsquo;ve all
-                  priced or passed. Then it goes to other contractors in the area. The customer
-                  can accept a price at any time.
+                  <strong>Premium first look.</strong> Only premium members have this job.
+                  Price it or message the customer within 24 hours of it arriving and it stays
+                  that way until {formatDateTime(offer!.market_opens_at!)}, or until you&rsquo;ve
+                  all priced or passed; if no member responds in 24 hours it goes to other
+                  contractors in the area. The customer can accept a price at any time.
                 </div>
               ) : directToYou && offer?.market_opens_at && new Date(offer.market_opens_at) > new Date() ? (
                 <div className={q.pricedPanel}>

@@ -37,6 +37,13 @@ export const HTTP_CRONS: CronJob[] = [
     everyMinutes: 30,
     what: 'One reminder to anyone who described a job, left an email and never pressed Send.',
   },
+  {
+    name: 'premium-sync',
+    path: '/api/cron/premium-sync',
+    schedule: '40 3 * * *',
+    everyMinutes: 24 * 60,
+    what: 'Re-reads every premium membership from Stripe, so renewals and cancellations land even if the webhook missed them.',
+  },
 ];
 
 /**

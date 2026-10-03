@@ -4,8 +4,10 @@
 -- Two things for the money:
 --   1. First refusal. A new job goes to every premium member in range before
 --      anyone else, for up to sq_premium_window_hours (7 days). The market
---      opens when that lapses or as soon as every premium member offered it
---      has priced or passed. In HPM's area HPM's own 24h first refusal still
+--      opens when that lapses, as soon as every premium member offered it
+--      has priced or passed, or after sq_premium_reply_hours (24) if none of
+--      them has priced or messaged the customer — a customer must not wait a
+--      week on a member who never looked. In HPM's area HPM's own 24h first refusal still
 --      runs first; premium comes after it, then the market. Repeat jobs keep
 --      their direct offer and skip premium: the customer asked for someone.
 --   2. Commission. sq_premium_markup_rate (5%) on every price a premium member
@@ -53,12 +55,14 @@ comment on column client_quotes.premium is
 alter table job_submissions add column if not exists premium_window boolean not null default false;
 comment on column job_submissions.premium_window is
   'The job went to premium members first. While market_opens_at is set, the window is running.';
+alter table job_submissions add column if not exists premium_started_at timestamptz;
 alter table job_invitations add column if not exists premium_offer boolean not null default false;
 comment on column job_invitations.premium_offer is
   'Sent during a premium window, as first refusal.';
 
 insert into app_config (key, value) values
   ('sq_premium_window_hours', '168'),
+  ('sq_premium_reply_hours', '24'),
   ('sq_premium_markup_rate', '0.05')
 on conflict (key) do nothing;
 
@@ -113,6 +117,7 @@ begin
   if v_n > 0 then
     update job_submissions
        set premium_window = true,
+           premium_started_at = now(),
            market_opens_at = v_opens,
            expires_at = greatest(coalesce(expires_at, now()),
              v_opens + make_interval(days => app_config_num('sq_job_expiry_days', 7)::int))
@@ -491,11 +496,15 @@ begin
 
     union all
 
-    -- Branch C: a premium window. Opens when it lapses, or as soon as every
-    -- premium member offered it has priced or passed.
+    -- Branch C: a premium window. Opens when it lapses, as soon as every
+    -- premium member offered it has priced or passed, or after
+    -- sq_premium_reply_hours with no member having priced or messaged.
     select js.id,
            case when js.market_opens_at <= now() then 'premium_timeout'
-                else 'premium_answered' end as reason
+                when not exists (select 1 from job_invitations ji
+                                  where ji.submission_id = js.id and ji.premium_offer
+                                    and ji.status in ('sent', 'viewed')) then 'premium_answered'
+                else 'premium_no_reply' end as reason
       from job_submissions js
      where js.premium_window
        and js.market_opens_at is not null
@@ -504,7 +513,16 @@ begin
             or not exists (select 1 from job_invitations ji
                             where ji.submission_id = js.id
                               and ji.premium_offer
-                              and ji.status in ('sent', 'viewed')))
+                              and ji.status in ('sent', 'viewed'))
+            or (js.premium_started_at
+                  <= now() - make_interval(hours => app_config_num('sq_premium_reply_hours', 24)::int)
+                and not exists (select 1 from job_invitations ji
+                                 where ji.submission_id = js.id
+                                   and ji.premium_offer
+                                   and (ji.status = 'priced'
+                                        or exists (select 1 from job_messages m
+                                                    where m.invitation_id = ji.id
+                                                      and m.sender = 'contractor')))))
   loop
     perform open_submission_to_market(r.id, r.reason);
     v_n := v_n + 1;

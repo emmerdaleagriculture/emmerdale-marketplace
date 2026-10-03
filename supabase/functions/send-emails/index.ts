@@ -329,9 +329,10 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           (p.access_notes ? `Notes:     ${p.access_notes}\n` : '') +
           (p.obstacles ? `Obstacles: ${p.obstacles}\n` : '') +
           (p.premium
-            ? `\nOnly premium members have it until ${opens}, or until you’ve all priced ` +
-              `or passed. Then it goes to other contractors in the area. Your price carries ` +
-              `5% commission, not 15%.\n\n`
+            ? `\nOnly premium members have it. Price it or message the customer within 24 ` +
+              `hours and it stays that way until ${opens}, or until you’ve all priced or ` +
+              `passed. If no member responds in 24 hours, it goes to other contractors in ` +
+              `the area. Your price carries 5% commission, not 15%.\n\n`
             : p.direct
             ? `\nIt’s yours alone until ${opens}. Price it or pass by then — after that it ` +
               `goes to other contractors in the area.\n\n`
