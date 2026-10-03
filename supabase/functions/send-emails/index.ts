@@ -1126,6 +1126,41 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `${SITE_URL}/my/${p.client_token}`,
       };
 
+    // A day on, the customer still hasn't read what a contractor sent. One
+    // email per job, every contractor waiting; sq_message_reminder_tick
+    // decides who and when.
+    case 'sq_message_reminder_to_client': {
+      const threads = Array.isArray(p.threads)
+        ? (p.threads as { from?: string; count?: number; since?: string; body?: string }[])
+        : [];
+      const day = (iso?: string) =>
+        iso
+          ? new Date(iso).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'Europe/London' })
+          : null;
+      const one = threads.length === 1 ? threads[0] : null;
+      const blocks = threads.map((t) => {
+        const n = Number(t.count ?? 1);
+        const when = day(t.since);
+        return (
+          `${t.from ?? 'A contractor'} — ${n === 1 ? 'a message' : `${n} messages`}` +
+          `${when ? `, since ${when}` : ''}:\n\n${t.body ?? ''}`
+        );
+      });
+      return {
+        subject: one
+          ? `${one.from ?? 'A contractor'} is waiting for your reply about your ${p.service ?? 'job'}`
+          : `${threads.length} contractors are waiting for your reply about your ${p.service ?? 'job'}`,
+        text:
+          `You have unread ${threads.length === 1 && Number(one?.count ?? 1) === 1 ? 'message' : 'messages'} ` +
+          `about your ${p.service ?? 'job'}. They may need your answer before they can price or plan the work.\n\n` +
+          blocks.join('\n\n———\n\n') +
+          `\n\nReply on your job page (replies to this email don’t reach them):\n` +
+          `${SITE_URL}/my/${p.client_token}\n\n` +
+          `If you no longer need the work, you can withdraw the job from the same page ` +
+          `and we’ll stop the messages.`,
+      };
+    }
+
     case 'sq_award_admin':
       return {
         subject: `Job won: ${p.service ?? 'land work'}${p.county ? `, ${p.county}` : ''} — ${gbp(p.client_price_pence)}`,
