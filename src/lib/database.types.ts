@@ -299,6 +299,44 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_email_verifications: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_email_verifications_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_counties: {
         Row: {
           contractor_id: string

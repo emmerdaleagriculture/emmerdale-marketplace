@@ -75,6 +75,22 @@ export function retryDelayMs(attemptsSoFar: number): number | null {
   return RETRY_DELAYS_MS[attemptsSoFar] ?? RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1];
 }
 
+/**
+ * Whether this report should put the address on undeliverable_emails, which
+ * stops every email to it and every job invitation for a contractor using it.
+ *
+ * Suppression and a Permanent bounce say so outright. A soft bounce says so
+ * only when it was the last attempt — the retries above exist because a full
+ * mailbox or a provider blip usually clears, and blocking on the first one
+ * would cut a contractor off over a minute's outage. `failed` never counts:
+ * that is our provider failing to send, not the address refusing.
+ */
+export function isUndeliverable(status: Delivery, bounce: BounceInfo, attemptsSoFar: number): boolean {
+  if (status === 'suppressed') return true;
+  if (status !== 'bounced') return false;
+  return isHardBounce(bounce) || retryDelayMs(attemptsSoFar) === null;
+}
+
 /** "in 15 minutes" / "in 4 hours", for the admin alert. */
 export function describeDelay(ms: number): string {
   return ms >= 60 * 60 * 1000

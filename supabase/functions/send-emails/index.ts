@@ -189,6 +189,22 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `A paid member has marked "${title}" as booked during the exclusive window. ` +
           `Review it at ${SITE_URL}/admin/jobs and withdraw the job to confirm.`,
       };
+    // A contractor whose address bounced, proving a working one from
+    // /account. The only kind allowed through to an undeliverable address
+    // (see the dead-address check below): opening this link is how that
+    // address gets cleared.
+    case 'contractor_email_verify':
+      return {
+        subject: 'Confirm your email address to start getting jobs again',
+        text:
+          `Hi ${first},\n\n` +
+          `You asked us to send job invitations for ${p.business_name ?? 'your business'} ` +
+          `to this address. Open the link below and press Confirm, and we'll start ` +
+          `sending you jobs again, including any still open in your counties:\n\n` +
+          `${SITE_URL}/account/confirm-email/${p.token ?? ''}\n\n` +
+          `The link works for 24 hours. If you didn't ask for this, ignore it ` +
+          `and nothing will change.`,
+      };
     case 'application_approved':
       return {
         subject: `You’re approved — welcome to the network`,
@@ -1280,13 +1296,16 @@ Deno.serve(async (req) => {
           ? admins[0]
           : undefined;
 
-    // An address that has already hard-bounced will bounce again. Sending
-    // anyway costs reputation and buries the real failures.
-    if (dead.has(to.toLowerCase())) {
+    // An address that has already bounced for good will bounce again.
+    // Sending anyway costs reputation and buries the real failures. The one
+    // exception is the confirmation a contractor asks for from /account: it
+    // is a single message they requested, and delivering it is the only way
+    // the address can prove it works again.
+    if (dead.has(to.toLowerCase()) && e.kind !== 'contractor_email_verify') {
       await supabase
         .from('pending_emails')
         .update({ status: 'failed', delivery_status: 'bounced',
-                  delivery_detail: 'not sent — address has already hard-bounced',
+                  delivery_detail: 'not sent — address is marked undeliverable',
                   delivery_at: new Date().toISOString() })
         .eq('id', e.id);
       failed++;

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { resolveCounty } from '@/lib/postcodes';
 import type { FormState } from '@/lib/form';
+import { sendEmailConfirmation } from '@/lib/contractors/emailConfirm';
 
 const ProfileSchema = z.object({
   business_name: z.string().trim().min(1, 'Business name is required.'),
@@ -67,4 +68,26 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
 
   revalidatePath('/account');
   return { ok: true, message: 'Your details have been saved.' };
+}
+
+/**
+ * Send a confirmation link to the address a bounced contractor wants jobs
+ * sent to. Nothing changes until the link is opened — see emailConfirm.ts.
+ */
+export async function requestEmailConfirmAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'You are not signed in.' };
+
+  const email = String(formData.get('email') || '');
+  const res = await sendEmailConfirmation(user.id, email);
+  if (!res.ok) return { error: res.error };
+
+  revalidatePath('/account');
+  return {
+    ok: true,
+    message: `We’ve sent a link to ${email.trim().toLowerCase()}. Open it and press Confirm. If it hasn’t arrived in ten minutes, check spam or try a different address.`,
+  };
 }
