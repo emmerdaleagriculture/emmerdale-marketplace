@@ -10,10 +10,10 @@
 const MAX_DIMENSION = 1600;
 const JPEG_QUALITY = 0.8;
 
-export async function downscalePhoto(file: File): Promise<File> {
+export async function downscalePhoto(file: File, maxDimension = MAX_DIMENSION): Promise<File> {
   try {
     const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
     if (scale === 1 && file.type === 'image/jpeg') {
       bitmap.close();
       return file;

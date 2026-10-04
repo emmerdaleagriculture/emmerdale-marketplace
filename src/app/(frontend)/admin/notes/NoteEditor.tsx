@@ -1,14 +1,23 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { saveNoteAction, deleteNoteAction } from './actions';
+import { downscalePhoto } from '@/lib/photoDownscale';
 import { CURATED_TAGS } from '@/lib/notes/tags';
 import type { FormState } from '@/lib/form';
 import f from '@/components/forms/forms.module.css';
 import s from '../admin.module.css';
 
 const EMPTY: FormState = {};
+
+/**
+ * Vercel refuses a request body over 4.5MB with a bare 413 page before the
+ * action runs, and a phone photo is often bigger than that. Heroes are shrunk
+ * in the browser first; 2400px is still sharp across a full-width hero.
+ */
+const HERO_MAX_DIMENSION = 2400;
+const HERO_MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
 export type EditableNote = {
   id: string;
@@ -28,12 +37,28 @@ export type EditableNote = {
 export function NoteEditor({ note, heroUrl }: { note: EditableNote | null; heroUrl: string | null }) {
   const [state, action, pending] = useActionState(saveNoteAction, EMPTY);
   const [delState, delAction, delPending] = useActionState(deleteNoteAction, EMPTY);
+  const [heroError, setHeroError] = useState<string | null>(null);
+
+  async function submit(formData: FormData) {
+    setHeroError(null);
+    const hero = formData.get('hero');
+    if (hero instanceof File && hero.size > 0) {
+      const small = await downscalePhoto(hero, HERO_MAX_DIMENSION);
+      if (small.size > HERO_MAX_UPLOAD_BYTES) {
+        setHeroError('That image is too large to upload. Save it as a JPEG under 4MB and try again.');
+        return;
+      }
+      formData.set('hero', small);
+    }
+    action(formData);
+  }
 
   return (
     <div style={{ maxWidth: 860 }}>
-      <form action={action}>
+      <form action={submit}>
         {note && <input type="hidden" name="id" value={note.id} />}
 
+        {heroError && <p className={f.error}>{heroError}</p>}
         {state.error && <p className={f.error}>{state.error}</p>}
         {state.ok && state.message && <p className={f.success}>{state.message}</p>}
 
