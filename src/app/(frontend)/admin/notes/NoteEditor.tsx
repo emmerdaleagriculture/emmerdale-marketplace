@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { startTransition, useActionState, useState } from 'react';
 import Link from 'next/link';
 import { saveNoteAction, deleteNoteAction } from './actions';
 import { downscalePhoto } from '@/lib/photoDownscale';
@@ -50,7 +50,9 @@ export function NoteEditor({ note, heroUrl }: { note: EditableNote | null; heroU
       }
       formData.set('hero', small);
     }
-    action(formData);
+    // After an await we are outside the form's transition; without this the
+    // pending flag never flips and Save stays clickable mid-upload.
+    startTransition(() => action(formData));
   }
 
   return (
