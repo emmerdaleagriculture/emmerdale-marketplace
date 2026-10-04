@@ -648,6 +648,7 @@ export type Database = {
           email: string
           id: string
           notify_new_jobs: boolean
+          notify_sms: boolean
           payout_before_balance: boolean
           phone: string
           rating_avg: number | null
@@ -669,6 +670,7 @@ export type Database = {
           email: string
           id: string
           notify_new_jobs?: boolean
+          notify_sms?: boolean
           payout_before_balance?: boolean
           phone: string
           rating_avg?: number | null
@@ -690,6 +692,7 @@ export type Database = {
           email?: string
           id?: string
           notify_new_jobs?: boolean
+          notify_sms?: boolean
           payout_before_balance?: boolean
           phone?: string
           rating_avg?: number | null

@@ -36,6 +36,7 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   }
   const d = parsed.data;
   const notify = formData.get('notify_new_jobs') === 'on';
+  const notifySms = formData.get('notify_sms') === 'on';
 
   // Refresh display-only base coords when the geocode succeeds (§15). A
   // transient postcodes.io failure must not wipe previously stored coords —
@@ -53,6 +54,7 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
       services: d.service_ids,
       ...(geo.lat != null && geo.lng != null ? { base_lat: geo.lat, base_lng: geo.lng } : {}),
       notify_new_jobs: notify,
+      notify_sms: notifySms,
     })
     .eq('id', user.id);
   if (upErr) return { error: `Could not save: ${upErr.message}` };

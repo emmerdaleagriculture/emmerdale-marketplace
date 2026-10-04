@@ -80,6 +80,10 @@ export default async function ContractorDetailPage({
           <div className={s.dValue}>{c.notify_new_jobs ? 'Yes' : 'No'}</div>
         </div>
         <div>
+          <div className={s.dLabel}>Texts</div>
+          <div className={s.dValue}>{c.notify_sms ? 'Yes' : 'No'}</div>
+        </div>
+        <div>
           <div className={s.dLabel}>Registered</div>
           <div className={s.dValue}>{new Date(c.created_at).toLocaleDateString('en-GB')}</div>
         </div>
