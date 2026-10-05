@@ -174,7 +174,8 @@ export async function getClientThreads(
 
   return rows
     .map((t) => {
-      const messages = byThread.get(t.invitation_id) ?? [];
+      // A suspended contractor's words never leave the server.
+      const messages = suspended.has(t.invitation_id) ? [] : (byThread.get(t.invitation_id) ?? []);
       return {
         invitationId: t.invitation_id,
         name: t.state === 'post_award' && t.business_name ? t.business_name : t.display_label,
@@ -185,7 +186,7 @@ export async function getClientThreads(
         suspended: suspended.has(t.invitation_id),
       };
     })
-    .filter((t) => keepClosed || t.state !== 'closed' || t.messages.length > 0)
+    .filter((t) => keepClosed || t.state !== 'closed' || t.messages.length > 0 || t.suspended)
     // The live conversation first: the winner after award, open ones before.
     .sort((a, b) => Number(b.state !== 'closed') - Number(a.state !== 'closed'));
 }

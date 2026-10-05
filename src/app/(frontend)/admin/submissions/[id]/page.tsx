@@ -13,6 +13,7 @@ import { ExtraWorkForm } from './ExtraWorkForm';
 import { PayoutPanel } from './PayoutPanel';
 import { ModerateMessage } from './ModerateMessage';
 import { CloseCustomerButton } from './CloseCustomerButton';
+import { SuspendedBanner } from '@/components/messages/MessageThread';
 import s from '../../admin.module.css';
 import { AdminTable } from '../../ui';
 import p from '../submissions.module.css';
@@ -67,7 +68,7 @@ function MessageThreads({
       {[...threads].map(([id, thread]) => {
         const inv = thread[0].inv as {
           display_label: string | null;
-          contractor: { business_name: string } | null;
+          contractor: { business_name: string; status: string } | null;
         } | null;
         const contractor = inv?.contractor?.business_name ?? 'Contractor';
         const label = inv?.display_label;
@@ -82,6 +83,9 @@ function MessageThreads({
                 {thread.length} message{thread.length === 1 ? '' : 's'}
               </span>
             </header>
+            {/* Admin keeps the words — they are the evidence — under the banner
+                everyone else sees in their place. */}
+            {inv?.contractor?.status === 'suspended' && <SuspendedBanner who={contractor} admin />}
             <ol className={p.bubbles}>
               {thread.map((m, i) => {
                 const fromClient = m.sender === 'client';
@@ -195,7 +199,7 @@ export default async function SubmissionDetailPage({
       .from('job_messages')
       .select(
         `id, invitation_id, sender, body, phase, created_at, read_at, photo_paths, moderation,
-         inv:job_invitations(display_label, contractor:contractors(business_name))`,
+         inv:job_invitations(display_label, contractor:contractors(business_name, status))`,
       )
       .eq('submission_id', id)
       .order('created_at', { ascending: true })
