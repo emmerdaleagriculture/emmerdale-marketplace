@@ -109,6 +109,8 @@ export type ClientThread = {
   unread: number;
   /** The contractor's conversations are under moderation. */
   moderated: boolean;
+  /** The contractor has been removed; the thread is closed both ways (20261005200000). */
+  suspended: boolean;
 };
 
 /**
@@ -137,7 +139,7 @@ export async function getClientThreads(
       .limit(2000),
     admin
       .from('job_invitations')
-      .select('id, contractor:contractors (messages_moderated_until)')
+      .select('id, contractor:contractors (messages_moderated_until, status)')
       .eq('submission_id', submissionId),
   ]);
   const rows = (threadsRes.data ?? []) as {
@@ -157,6 +159,11 @@ export async function getClientThreads(
       })
       .map((r) => r.id),
   );
+  const suspended = new Set(
+    (moderatedRows ?? [])
+      .filter((r) => (r.contractor as { status: string } | null)?.status === 'suspended')
+      .map((r) => r.id),
+  );
   const urls = await signAll(messageRows);
   const byThread = new Map<string, ThreadMessage[]>();
   for (const m of messageRows) {
@@ -171,10 +178,11 @@ export async function getClientThreads(
       return {
         invitationId: t.invitation_id,
         name: t.state === 'post_award' && t.business_name ? t.business_name : t.display_label,
-        state: t.state,
+        state: suspended.has(t.invitation_id) ? ('closed' as const) : t.state,
         messages,
         unread: messages.filter((m) => m.sender === 'contractor' && !m.read).length,
         moderated: moderated.has(t.invitation_id),
+        suspended: suspended.has(t.invitation_id),
       };
     })
     .filter((t) => keepClosed || t.state !== 'closed' || t.messages.length > 0)
