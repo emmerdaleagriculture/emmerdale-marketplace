@@ -517,12 +517,14 @@ export default async function ClientPortalPage({
                         : undefined
                   }
                   notice={
-                    t.state === 'pre_award' && t.moderated
+                    t.suspended
+                      ? `${t.name} has been suspended from Emmerdale Agriculture and can no longer message you or be booked through us. Please don’t arrange work with them privately — it wouldn’t be covered by us.`
+                      : t.state === 'pre_award' && t.moderated
                       ? `Messages in this conversation are checked by us before they are passed on, so a reply can take a few hours. Please keep phone numbers and your address out until you have accepted a price.`
                       : undefined
                   }
                   action={t.state === 'closed' ? null : sendClientMessageAction}
-                  closedNote="This conversation has closed."
+                  closedNote={t.suspended ? 'This user has been suspended.' : 'This conversation has closed.'}
                   hidden={{ token, invitation_id: t.invitationId }}
                   markRead={markClientThreadReadAction.bind(null, token, t.invitationId)}
                   visits={visits.get(t.invitationId)}
