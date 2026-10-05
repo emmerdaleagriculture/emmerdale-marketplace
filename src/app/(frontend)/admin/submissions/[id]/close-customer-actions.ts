@@ -14,7 +14,7 @@ export async function closeCustomerAction(_prev: FormState, formData: FormData):
   const user = await getUser();
   if (!user || !isAdminEmail(user.email)) return { error: 'Not allowed.' };
   const id = String(formData.get('submission_id') ?? '');
-  if (String(formData.get('confirm') ?? '') !== 'close') return { error: 'Type "close" to confirm.' };
+  if (String(formData.get('confirm') ?? '').trim().toLowerCase() !== 'close') return { error: 'Type "close" to confirm.' };
 
   const admin = createServiceRoleClient();
   const { data: js } = await admin.from('job_submissions').select('contact_email').eq('id', id).maybeSingle();

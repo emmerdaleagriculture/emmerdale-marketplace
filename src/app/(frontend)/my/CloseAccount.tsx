@@ -32,7 +32,7 @@ export function CloseAccount() {
       </p>
       <label className={f.field}>
         <span className={f.label}>Type &ldquo;close&rdquo; to confirm</span>
-        <input className={f.input} type="text" name="confirm" autoComplete="off" required />
+        <input className={f.input} type="text" name="confirm" autoComplete="off" autoCapitalize="none" required />
       </label>
       <div className={a.actions}>
         <button className={f.btnDanger} type="submit" disabled={pending}>
