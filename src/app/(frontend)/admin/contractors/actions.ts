@@ -50,6 +50,17 @@ export async function setContractorStatus(formData: FormData) {
   const { error } = await admin.from('contractors').update({ status }).eq('id', id);
   if (error) throw new Error(error.message);
 
+  // Their live prices come off customers' lists too: suspension also refuses
+  // acceptance (20261005200000), and a price that can't be taken shouldn't show.
+  if (status === 'suspended') {
+    const { error: cqErr } = await admin
+      .from('client_quotes')
+      .update({ status: 'closed' })
+      .eq('contractor_id', id)
+      .eq('status', 'active');
+    if (cqErr) console.error('[admin] suspend: live prices not closed:', cqErr.message);
+  }
+
   if (status === 'approved' && before?.status === 'pending') {
     await admin.from('pending_emails').insert({
       kind: 'application_approved',
