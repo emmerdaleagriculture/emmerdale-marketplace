@@ -32,7 +32,7 @@ export function CloseCustomerButton({ submissionId, customer }: { submissionId: 
       </p>
       <label className={f.field}>
         <span className={f.label}>Type &ldquo;close&rdquo; to confirm</span>
-        <input className={f.input} type="text" name="confirm" autoComplete="off" required />
+        <input className={f.input} type="text" name="confirm" autoComplete="off" autoCapitalize="none" required />
       </label>
       <div className={s.actions}>
         <button className={s.btnSuspend} type="submit" disabled={pending}>

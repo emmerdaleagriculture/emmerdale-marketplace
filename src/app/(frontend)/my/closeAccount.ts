@@ -7,7 +7,7 @@ import type { FormState } from '@/lib/form';
 
 /** The signed-in customer closes their own account. */
 export async function closeAccountAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (String(formData.get('confirm') ?? '') !== 'close') return { error: 'Type "close" to confirm.' };
+  if (String(formData.get('confirm') ?? '').trim().toLowerCase() !== 'close') return { error: 'Type "close" to confirm.' };
   const supabase = await createClient();
   const {
     data: { user },
