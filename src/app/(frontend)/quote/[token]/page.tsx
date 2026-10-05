@@ -53,7 +53,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     if (error) console.error('[sq] record view failed:', error.message);
   });
   // Everything depends only on the invitation: one round trip, not four.
-  const [live, photos, positionRes, threadState, messages, moderatedUntil, visits, visitBlock, passed] = await Promise.all([
+  const [live, photos, positionRes, threadState, threadMessages, moderatedUntil, visits, visitBlock, passed, contractorRes] = await Promise.all([
     getLiveQuote(js.id, invitation.contractor_id),
     signPhotos(js.photo_paths),
     // Where their price sits, and whether the customer has seen it. Returns no
@@ -74,7 +74,11 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     getThreadVisits(invitation.id),
     visitBlocked(invitation.id, 'contractor'),
     getPassOnCurrentPrice(js.id, invitation.contractor_id),
+    admin.from('contractors').select('status').eq('id', invitation.contractor_id).maybeSingle(),
   ]);
+  // Suspended: the thread is the banner alone, and the words stay on the server.
+  const suspended = contractorRes.data?.status === 'suspended';
+  const messages = suspended ? [] : threadMessages;
   // An agreed visit is the one thing before award that shows the contractor
   // where the customer is and how to reach them. Read only when there is one
   // to show it for, and not once the thread has closed around a job that
@@ -158,7 +162,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
           </p>
           {/* The thread sits below the pricing form, which is a long scroll on a
               phone — so say it is there, and how much is waiting, up top. */}
-          {(threadState !== 'closed' || messages.length > 0) && (
+          {(threadState !== 'closed' || messages.length > 0 || suspended) && (
             <a className={q.messagesJump} href="#messages">
               {unread > 0
                 ? `Messages (${unread} new) ↓`
@@ -353,7 +357,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
           {/* The thread with the customer. Before award they see this
               contractor only as a letter, so the rules are said up front
               rather than discovered as a refusal. */}
-          {(threadState !== 'closed' || messages.length > 0) && (
+          {(threadState !== 'closed' || messages.length > 0 || suspended) && (
             <>
               <div id="messages" className={a.groupTitle} style={{ marginTop: 28 }}>
                 Messages
@@ -362,6 +366,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 me="contractor"
                 otherName="The customer"
                 messages={messages}
+                suspended={suspended}
                 intro={
                   threadState === 'pre_award'
                     ? `Ask about access, ground or timing, or suggest a site visit if you need to see it before pricing. The customer sees you as ${

@@ -41,6 +41,11 @@ type Props = {
   visitAction?: VisitAction | null;
   /** The other side's details, shown on an agreed visit. */
   visitContact?: VisitContact | null;
+  /**
+   * The contractor in this thread has been removed from the platform. The
+   * whole thread is replaced by the banner: no messages, no visits, no box.
+   */
+  suspended?: boolean;
 };
 
 /**
@@ -71,10 +76,22 @@ export function MessageThread({
   visits = [],
   visitAction = null,
   visitContact = null,
+  suspended = false,
 }: Props) {
   useEffect(() => {
     if (unread > 0 && markRead) markRead().catch(() => undefined);
   }, [unread, markRead]);
+
+  if (suspended) {
+    return (
+      <section className={s.thread} aria-label={`Messages with ${otherName}`}>
+        <div className={s.head}>
+          <span className={s.name}>{otherName}</span>
+        </div>
+        <SuspendedBanner who={me === 'contractor' ? 'Your account' : otherName} />
+      </section>
+    );
+  }
 
   return (
     <section className={s.thread} aria-label={`Messages with ${otherName}`}>
@@ -128,6 +145,22 @@ export function MessageThread({
         closedNote && <p className={s.closed}>{closedNote}</p>
       )}
     </section>
+  );
+}
+
+/** Replaces a suspended contractor's thread; the admin page shows it above theirs. */
+export function SuspendedBanner({ who, admin = false }: { who: string; admin?: boolean }) {
+  return (
+    <div className={s.suspended} role="alert">
+      <span className={s.suspendedWord}>Suspended</span>
+      <span className={s.suspendedNote}>
+        {admin
+          ? `${who} is suspended. The customer and the contractor see only this banner; the messages below are kept here for the record.`
+          : who === 'Your account'
+          ? 'Your account has been suspended. These messages are no longer available.'
+          : `${who} has been suspended from Emmerdale Agriculture. Their messages have been removed, and they can’t be booked through us. Please don’t arrange work with them privately — it wouldn’t be covered by us.`}
+      </span>
+    </div>
   );
 }
 

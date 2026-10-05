@@ -297,3 +297,28 @@
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0 12px;
 }
+
+/* A suspended contractor's thread: the banner is all there is. */
+.suspended {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+  padding: 28px 16px;
+  margin: 4px 0 8px;
+  border: 3px solid #a3261b;
+  border-radius: 10px;
+  background: #fdecea;
+  color: #a3261b;
+}
+.suspendedWord {
+  font-size: clamp(34px, 9vw, 56px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.suspendedNote {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #6e1a12;
+}

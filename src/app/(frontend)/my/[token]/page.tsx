@@ -170,7 +170,9 @@ export default async function ClientPortalPage({
   const isExtra = Boolean(js.extra_work_of);
   const firstRefusalOpen = Boolean(js.first_refusal && js.market_opens_at);
   const directName = directOffer ? (directRes.data?.business_name ?? 'your contractor') : null;
-  const threads = allThreads.filter((t) => t.state !== 'closed' || t.messages.length > 0 || visits.has(t.invitationId));
+  const threads = allThreads.filter(
+    (t) => t.state !== 'closed' || t.messages.length > 0 || visits.has(t.invitationId) || t.suspended,
+  );
 
   // Record that these prices have been seen, so the contractor who sent one
   // knows it reached the customer. First view only — the function ignores
@@ -516,15 +518,14 @@ export default async function ClientPortalPage({
                         ? `Message ${t.name} about arranging the work. They get an email when you do.`
                         : undefined
                   }
+                  suspended={t.suspended}
                   notice={
-                    t.suspended
-                      ? `${t.name} has been suspended from Emmerdale Agriculture and can no longer message you or be booked through us. Please don’t arrange work with them privately — it wouldn’t be covered by us.`
-                      : t.state === 'pre_award' && t.moderated
+                    t.state === 'pre_award' && t.moderated
                       ? `Messages in this conversation are checked by us before they are passed on, so a reply can take a few hours. Please keep phone numbers and your address out until you have accepted a price.`
                       : undefined
                   }
                   action={t.state === 'closed' ? null : sendClientMessageAction}
-                  closedNote={t.suspended ? 'This user has been suspended.' : 'This conversation has closed.'}
+                  closedNote="This conversation has closed."
                   hidden={{ token, invitation_id: t.invitationId }}
                   markRead={markClientThreadReadAction.bind(null, token, t.invitationId)}
                   visits={visits.get(t.invitationId)}
