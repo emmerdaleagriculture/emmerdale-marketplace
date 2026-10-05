@@ -148,6 +148,8 @@ export async function submitQuoteAction(
         return { error: 'This job has no usable acreage for a per-acre rate — give a total price instead.' };
       case 'declined':
         return { error: 'You’ve passed on this job. If that’s changed, get in touch and we’ll re-open it.' };
+      case 'suspended':
+        return { error: 'Your account is no longer active, so this price can’t be sent.' };
       case 'not_found':
         return { error: 'This link is not valid.' };
       default:
