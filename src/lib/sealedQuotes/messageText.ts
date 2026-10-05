@@ -36,6 +36,25 @@ export const MESSAGE_MAX = 2000;
  */
 const FULL_POSTCODE = /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i;
 
+/**
+ * Asking to carry on somewhere else, with or without a number in the same
+ * message: "Do u want to message me on WhatsApp" (5 Oct 2026) came after a
+ * refused number and was followed by one disguised as model numbers.
+ */
+const CONTACT_ELSEWHERE = new RegExp(
+  [
+    '\\bwhats\\s*app\\b',
+    '\\bwa\\s+me\\b',
+    '\\b(?:text|call|ring|phone|bell)\\s+(?:me|us)\\b',
+    '\\bgive\\s+(?:me|us)\\s+a\\s+(?:call|ring|bell|text)\\b',
+    '\\b(?:my|our)\\s+(?:mobile|mob)\\b',
+    '\\b(?:message|msg|contact|find)\\s+(?:me|us)\\s+on\\b',
+    '\\b(?:facebook|messenger|instagram|insta|snapchat|telegram|signal)\\b',
+    '\\bdm\\s+(?:me|us)\\b',
+  ].join('|'),
+  'i',
+);
+
 export type MessageSender = 'client' | 'contractor';
 export type ThreadState = 'pre_award' | 'post_award' | 'closed';
 
@@ -90,13 +109,13 @@ export function messageRefusal(
             : 'Please take the full postcode or address out — the contractor sees your area now, and gets your address once you accept a price.',
       };
     }
-    if (hasPhoneNumber(t)) {
+    if (hasPhoneNumber(t) || CONTACT_ELSEWHERE.test(t)) {
       return {
         flag: 'phone',
         text:
           sender === 'contractor'
-            ? 'Please take the phone number out — we pass your details on once the customer accepts your price.'
-            : 'Please take the phone number out — the contractor you book gets it once you accept their price.',
+            ? 'Please keep the conversation here — no phone numbers or other apps until the customer accepts your price, and then we pass your details on.'
+            : 'Please keep the conversation here — no phone numbers or other apps until you accept a price, and the contractor you book gets your details then.',
       };
     }
   }

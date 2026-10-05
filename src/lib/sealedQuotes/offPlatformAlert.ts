@@ -29,6 +29,55 @@ export async function recordRefusal(args: {
   if (error) console.error('[sq] platform flag not recorded:', error.message);
 }
 
+/** How long a contractor's messages are held for approval after one contact attempt. */
+const HOLD_DAYS = 30;
+
+/**
+ * A contractor tried to get a contact detail or another channel past the
+ * message box before award. Refusing it was not enough on 5 Oct 2026: a
+ * phone number was refused at 18:43 and the same number, disguised as two
+ * model numbers, went through at 18:44 — and the job was arranged on
+ * WhatsApp. From the first attempt their messages before award wait for an
+ * admin (sq_post_message holds them while messages_moderated_until is in
+ * the future), and admin gets the words. Never throws.
+ */
+export async function holdAfterContactAttempt(args: {
+  rule: FlagRule;
+  body: string;
+  submissionId: string | null | undefined;
+  contractorId: string | null | undefined;
+}): Promise<void> {
+  if (!args.contractorId) return;
+  const admin = createServiceRoleClient();
+  const until = new Date(Date.now() + HOLD_DAYS * 86_400_000).toISOString();
+  const { data: ct, error } = await admin
+    .from('contractors')
+    .select('business_name, email, messages_moderated_until')
+    .eq('id', args.contractorId)
+    .maybeSingle();
+  if (error) console.error('[sq] contact attempt: contractor lookup failed:', error.message);
+  const already = ct?.messages_moderated_until && ct.messages_moderated_until > until;
+  if (!already) {
+    const { error: upErr } = await admin
+      .from('contractors')
+      .update({ messages_moderated_until: until })
+      .eq('id', args.contractorId);
+    if (upErr) console.error('[sq] contact attempt: hold not set:', upErr.message);
+  }
+  const who = ct?.business_name || ct?.email || 'A contractor';
+  await notifyAdmins(
+    `Contact-detail attempt: ${who} — messages now held`,
+    [
+      `${who} tried to send a message before award that was refused (${args.rule.replace(/_/g, ' ')}).`,
+      `Their messages before award are now held for your approval for ${HOLD_DAYS} days.`,
+      '',
+      `"${args.body}"`,
+      '',
+      args.submissionId ? `Job: ${siteUrl()}/admin/submissions/${args.submissionId}#messages` : '',
+    ].join('\n'),
+  );
+}
+
 /**
  * Tells admin when someone tries to arrange payment outside the platform,
  * and records it.
