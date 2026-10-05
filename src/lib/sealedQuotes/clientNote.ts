@@ -50,6 +50,9 @@ export const MONEY = new RegExp(
     '\\bpounds?\\b',
     '\\bgbp\\s*\\d|\\d\\s*gbp\\b',
     '\\d\\s*(?:\\/|\\bper\\b|\\ban?\\b)\\s*(?:acre|hour|hr|day|metre|meter|m|yard|bale|tonne|ton)\\b',
+    // A bare figure as a price: "3 hours would be 150" (5 Oct 2026). Not
+    // when a unit follows — "is 51 miles", "be 2 hours", "is 10 acres".
+    "\\b(?:would\\s+be|will\\s+be|it'?s|that'?s|costs?|costing|charge|charging)\\s+(?:about\\s+|around\\s+|roughly\\s+)?\\d{2,5}(?:\\.\\d\\d)?\\b(?!\\s*(?:acres?|hours?|hrs?|days?|mins?|minutes?|miles?|metres?|meters?|m\\b|yards?|bales?|tonnes?|tons?|%|am\\b|pm\\b|th\\b|st\\b|nd\\b|rd\\b|o'?clock|years?|ft\\b|foot|feet|inch(?:es)?|cm\\b|mm\\b|hp\\b|horse))",
   ].join('|'),
   'i',
 );
@@ -112,6 +115,19 @@ export function hasPhoneNumber(note: string): boolean {
         joined += groups[j];
         if (/^(?:\+44|0044)\d{9,10}$/.test(joined) || /^0\d{9,10}$/.test(joined)) return true;
       }
+    }
+  }
+  // A mobile split by words: "My tractor is a Massey 07824 my topper is
+  // 170203" (5 Oct 2026) — two "model numbers" that join into 07824 170203.
+  // Mobiles only, and exactly eleven digits, so acreages, dates and times
+  // in between never add up to one; groups of three or more digits only, as
+  // a number is written — "07/10 … 8am … 20 minutes" joined into one before.
+  const digitGroups = (note.match(/\d+/g) ?? []).filter((g) => g.length >= 3);
+  for (let i = 0; i < digitGroups.length; i++) {
+    let joined = '';
+    for (let j = i; j < digitGroups.length && joined.length < 12; j++) {
+      joined += digitGroups[j];
+      if (/^07\d{9}$/.test(joined) || /^447\d{9}$/.test(joined)) return true;
     }
   }
   return false;

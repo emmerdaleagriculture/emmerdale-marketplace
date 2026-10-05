@@ -12,7 +12,7 @@ import { getInvitationByToken } from '@/lib/sealedQuotes/data';
 import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
 import { messageRefusal, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
 import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
-import { flagOffPlatform, recordRefusal } from '@/lib/sealedQuotes/offPlatformAlert';
+import { flagOffPlatform, holdAfterContactAttempt, recordRefusal } from '@/lib/sealedQuotes/offPlatformAlert';
 import { runVisitOp } from '@/lib/sealedQuotes/visits';
 
 export type QuoteActionState = FormState & { closed?: boolean };
@@ -251,6 +251,18 @@ export async function sendContractorMessageAction(
         submissionId: invitation.submission?.id,
         contractorId: invitation.contractor_id,
       });
+      // A contact detail or another channel: one attempt and their messages
+      // before award wait for an admin, so a reworded second try is caught.
+      await holdAfterContactAttempt({
+        rule: refusal.flag,
+        body,
+        submissionId: invitation.submission?.id,
+        contractorId: invitation.contractor_id,
+      });
+      return {
+        error: `${refusal.text} Your messages will now be checked by us before they are passed on.`,
+        body,
+      };
     }
     return { error: refusal.text, body };
   }

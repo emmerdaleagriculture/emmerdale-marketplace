@@ -71,3 +71,41 @@ describe('messageRefusal flags', () => {
     expect(messageRefusal('Is the gate wide?', 'contractor', 'pre_award')).toBeNull();
   });
 });
+
+describe('the 5 Oct 2026 messages (West Sussex land services)', () => {
+  it('refuses a mobile split across words', () => {
+    expect(
+      messageProblem('My tractor is a Massey 07824 my topper is 170203', 'contractor', 'pre_award'),
+    ).toMatch(/phone/);
+  });
+
+  it('refuses moving the conversation to another app or a call', () => {
+    for (const t of [
+      'Do u want to message me on WhatsApp',
+      'whats app me',
+      'Give me a ring',
+      'text me and we can sort it',
+      'find me on facebook',
+    ]) {
+      expect(messageProblem(t, 'contractor', 'pre_award'), t).toMatch(/conversation here/);
+    }
+  });
+
+  it('refuses a bare figure as a price from a contractor', () => {
+    expect(messageProblem('3 hours would be 150', 'contractor', 'pre_award')).toMatch(/amounts/);
+    expect(messageProblem("it's about 300 all in", 'contractor', 'pre_award')).toMatch(/amounts/);
+  });
+
+  it('still lets ordinary job talk through', () => {
+    for (const t of [
+      'Hi, we couldn’t do the job in 3 hours because there is almost 4 hours of transport as you are 51 miles away',
+      'It would be 2 hours on site',
+      "That's 10 acres of topping, the gate is 12 foot",
+      'My tractor is 120 hp, the topper is 6 ft wide',
+      'Could do 07/10 or 14/10, start 8am, it’s 20 minutes from the yard',
+      'Happy to call in and look at the field next week',
+    ]) {
+      expect(messageProblem(t, 'contractor', 'pre_award'), t).toBeNull();
+    }
+  });
+});
