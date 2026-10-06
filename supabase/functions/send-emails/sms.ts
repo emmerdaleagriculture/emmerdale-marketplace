@@ -9,6 +9,8 @@
 // replies work).
 
 // deno-lint-ignore-file no-explicit-any
+import { smsCallbackKey, smsCallbackUrl } from '../_shared/smsCallback.ts';
+
 type Supabase = any;
 
 const BATCH = 50;
@@ -53,7 +55,16 @@ function gsm(s: unknown, max = 60): string {
   return t.length > max ? `${t.slice(0, max - 3).trimEnd()}...` : t;
 }
 
-export function renderSms(kind: string, p: Record<string, unknown>, site: string): string | null {
+/**
+ * A text's body. Every URL goes through `link`, which the worker uses to swap
+ * it for a short /t/<code> link that counts taps; the default leaves it be.
+ */
+export function renderSms(
+  kind: string,
+  p: Record<string, unknown>,
+  site: string,
+  link: (url: string) => string = (u) => u,
+): string | null {
   const service = gsm(p.service || 'land work', 40);
   const where = gsm(p.postcode_district || p.county || '', 25);
   const job = where ? `${service}, ${where}` : service;
@@ -61,7 +72,7 @@ export function renderSms(kind: string, p: Record<string, unknown>, site: string
     case 'sq_invitation': {
       if (!p.token) return null;
       const dist = p.distance_miles != null ? ` (${p.distance_miles} mi)` : '';
-      const url = `${site}/quote/${p.token}`;
+      const url = link(`${site}/quote/${p.token}`);
       if (p.premium || p.first_refusal) {
         return `Emmerdale Agriculture: a new job is offered to you first - ${job}${dist}. Price it or pass: ${url}`;
       }
@@ -75,31 +86,37 @@ export function renderSms(kind: string, p: Record<string, unknown>, site: string
       return `Emmerdale Agriculture: you've got the job - ${service}` +
         (p.postcode ? `, ${gsm(p.postcode, 10)}` : '') + '. ' +
         (who ? `Customer: ${who}. ` : '') +
-        `Please contact them within 24h. Details: ${site}/won`;
+        `Please contact them within 24h. Details: ${link(`${site}/won`)}`;
     }
     case 'sq_message_to_contractor':
       if (!p.token) return null;
       return `Emmerdale Agriculture: the customer has sent you a message about ${job}. ` +
-        `Read and reply: ${site}/quote/${p.token}#messages`;
+        `Read and reply: ${link(`${site}/quote/${p.token}#messages`)}`;
 
     // To customers who turned texts on for the job.
     case 'sq_first_quote':
       if (!p.client_token) return null;
       return `Emmerdale Agriculture: a contractor has priced your ${service} job. ` +
-        `See it: ${site}/my/${p.client_token}`;
+        `See it: ${link(`${site}/my/${p.client_token}`)}`;
     case 'sq_new_quotes': {
       if (!p.client_token) return null;
       const n = Number(p.new_count) || 1;
       return `Emmerdale Agriculture: ${n} new price${n === 1 ? '' : 's'} on your job. ` +
-        `See them: ${site}/my/${p.client_token}`;
+        `See them: ${link(`${site}/my/${p.client_token}`)}`;
     }
     case 'sq_message_to_client':
       if (!p.client_token) return null;
       return `Emmerdale Agriculture: ${gsm(p.from || 'your contractor', 30)} has sent you a message about your ${service} job. ` +
-        `Read and reply: ${site}/my/${p.client_token}#messages`;
+        `Read and reply: ${link(`${site}/my/${p.client_token}#messages`)}`;
     default:
       return null;
   }
+}
+
+/** 7 characters of base62: 3.5 trillion codes, so a guess finds nothing. */
+function linkCode(): string {
+  const abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return [...crypto.getRandomValues(new Uint8Array(7))].map((b) => abc[b % 62]).join('');
 }
 
 function londonHour(now: Date): number {
@@ -123,6 +140,9 @@ export async function drainSms(
   const service = Deno.env.get('TWILIO_MESSAGING_SERVICE_SID');
   const fromNumber = Deno.env.get('TWILIO_FROM');
   if (!sid || !token || !(service || fromNumber)) return { configured: false };
+
+  const callbackKey = await smsCallbackKey();
+  const statusCallback = callbackKey ? smsCallbackUrl(callbackKey) : null;
 
   const now = new Date();
   const hour = londonHour(now);
@@ -164,14 +184,26 @@ export async function drainSms(
       skipped++;
       continue;
     }
-    const body = renderSms(m.kind, m.payload ?? {}, site);
+    // One link per text; its code is saved before the text goes, so a tap
+    // can never arrive ahead of the row that answers it.
+    const code = linkCode();
+    let target: string | null = null;
+    const body = renderSms(m.kind, m.payload ?? {}, site, (url) => {
+      target = url;
+      return `${site}/t/${code}`;
+    });
     if (!body) {
       await finish(m.id, { status: 'failed', detail: 'nothing to render' });
       failed++;
       continue;
     }
+    if (target) {
+      const { error: linkErr } = await finish(m.id, { link: target, link_code: code });
+      if (linkErr) continue; // a code collision, or the database: next run tries again
+    }
 
     const form = new URLSearchParams({ To: to, Body: body });
+    if (statusCallback) form.set('StatusCallback', statusCallback);
     if (service) form.set('MessagingServiceSid', service);
     else form.set('From', fromNumber!);
 
