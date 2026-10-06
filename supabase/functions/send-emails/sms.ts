@@ -3,8 +3,10 @@
 // app_config.sq_sms_enabled = 1, and nothing is sent until the TWILIO_*
 // secrets are set, so this is inert until both are switched on.
 //
-// Secrets: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and either
-// TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM (a number, so STOP replies work).
+// Secrets: TWILIO_ACCOUNT_SID (AC…); to sign in, either an API key
+// (TWILIO_API_KEY_SID, SK…, and TWILIO_API_KEY_SECRET) or TWILIO_AUTH_TOKEN;
+// and either TWILIO_MESSAGING_SERVICE_SID or TWILIO_FROM (a number, so STOP
+// replies work).
 
 // deno-lint-ignore-file no-explicit-any
 type Supabase = any;
@@ -112,7 +114,12 @@ export async function drainSms(
   allowlist: string[],
 ): Promise<Record<string, unknown>> {
   const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
-  const token = Deno.env.get('TWILIO_AUTH_TOKEN');
+  // An API key is preferred: it can be revoked without touching the
+  // account's own auth token.
+  const keySid = Deno.env.get('TWILIO_API_KEY_SID');
+  const keySecret = Deno.env.get('TWILIO_API_KEY_SECRET');
+  const login = keySid && keySecret ? `${keySid}:${keySecret}` : `${sid}:${Deno.env.get('TWILIO_AUTH_TOKEN') ?? ''}`;
+  const token = keySid && keySecret ? keySecret : Deno.env.get('TWILIO_AUTH_TOKEN');
   const service = Deno.env.get('TWILIO_MESSAGING_SERVICE_SID');
   const fromNumber = Deno.env.get('TWILIO_FROM');
   if (!sid || !token || !(service || fromNumber)) return { configured: false };
@@ -175,7 +182,7 @@ export async function drainSms(
       const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
         method: 'POST',
         headers: {
-          Authorization: `Basic ${btoa(`${sid}:${token}`)}`,
+          Authorization: `Basic ${btoa(login)}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: form,
