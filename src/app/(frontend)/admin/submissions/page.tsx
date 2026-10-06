@@ -62,6 +62,10 @@ type Row = {
   emails_sent: number;
   emails_delivered: number;
   emails_failed: number;
+  texts_sent?: number;
+  texts_delivered?: number;
+  texts_failed?: number;
+  texts_tapped?: number;
   quotes_live: number;
   lowest_client_pence: number | null;
   hidden_at: string | null;
@@ -414,6 +418,9 @@ export default async function AdminSubmissionsPage({
   const delivered = sum('emails_delivered');
   const failed = sum('emails_failed');
   const opened = sum('opened');
+  const textsSent = sum('texts_sent');
+  const textsDelivered = sum('texts_delivered');
+  const textsTapped = sum('texts_tapped');
   const priced = sum('priced');
   const declined = sum('declined');
 
@@ -425,6 +432,7 @@ export default async function AdminSubmissionsPage({
   const tiles: [string, string | number, string][] = [
     ['Jobs', jobs.length, `${jobs.filter((r) => QUOTING.has(r.status)).length} getting quotes`],
     ['Emails sent', sent, failed > 0 ? `${delivered} delivered · ${failed} failed` : `${delivered} delivered`],
+    ['Texts sent', textsSent, `${textsDelivered} delivered · ${textsTapped} tapped`],
     ['Opened', opened, `${pct(opened, invited)}% of ${invited} invited`],
     ['Responded', priced + declined, `${priced} priced · ${declined} passed`],
     ['Drafts', drafts.length, 'started, not finished'],
@@ -436,7 +444,9 @@ export default async function AdminSubmissionsPage({
       <p className={s.sub}>
         Jobs described on the landing page, newest first
         {rows.length >= LIMIT ? ` — latest ${LIMIT}` : ''}. Opened means the
-        contractor opened the job from their email; tap the numbers on a row to
+        contractor opened the job, from the email or the text; tapped means they
+        tapped the link in the text (texts have no read receipts, so delivered
+        is as far as they report). Tap the numbers on a row to
         see who.
       </p>
 

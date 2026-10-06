@@ -415,3 +415,6 @@ enabled = true
 
 [functions.send-emails]
 verify_jwt = false
+
+[functions.sms-events]
+verify_jwt = false

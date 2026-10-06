@@ -53,6 +53,13 @@ export function OutreachModal({ id, counts, title }: { id: string; counts: Outre
         <span className={p.miniNums} aria-hidden="true">
           <b>{counts.invited}</b> invited · <b>{counts.opened}</b> opened · <b>{counts.priced}</b> priced
           {counts.emails_failed > 0 && <em className={p.miniBad}>{counts.emails_failed} failed to send</em>}
+          {(counts.texts_sent ?? 0) > 0 && (
+            <span className={p.miniTexts}>
+              <b>{counts.texts_sent}</b> texted · <b>{counts.texts_delivered ?? 0}</b> delivered ·{' '}
+              <b>{counts.texts_tapped ?? 0}</b> tapped
+              {(counts.texts_failed ?? 0) > 0 && <em className={p.miniBad}>{counts.texts_failed} texts failed</em>}
+            </span>
+          )}
         </span>
       </button>
       <dialog

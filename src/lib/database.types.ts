@@ -3000,6 +3000,10 @@ export type Database = {
       sealed_quote_tick: { Args: never; Returns: undefined }
       send_chase_emails: { Args: never; Returns: Json }
       service_label_from_text: { Args: { p_text: string }; Returns: string }
+      sms_link_hit: {
+        Args: { p_code: string; p_count?: boolean }
+        Returns: string
+      }
       sq_alert_overdue_balances: { Args: never; Returns: number }
       sq_cancellation_split: {
         Args: { p_submission_id: string }
