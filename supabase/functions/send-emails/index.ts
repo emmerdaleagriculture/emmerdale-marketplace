@@ -17,6 +17,7 @@
 // testing.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { drainSms } from './sms.ts';
 
 const MAX_ATTEMPTS = 5;
 const BATCH = 50;
@@ -1424,8 +1425,17 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Texts go after the emails, so a Twilio problem can't hold mail up.
+  let sms: Record<string, unknown>;
+  try {
+    sms = await drainSms(supabase, SITE_URL, sqAllowlist);
+  } catch (err) {
+    console.error('[send-emails] sms drain failed:', err);
+    sms = { error: String(err).slice(0, 300) };
+  }
+
   return new Response(
-    JSON.stringify({ processed: (pending ?? []).length, sent, retried, failed }),
+    JSON.stringify({ processed: (pending ?? []).length, sent, retried, failed, sms }),
     { headers: { 'Content-Type': 'application/json' } },
   );
 });

@@ -100,7 +100,11 @@ export function AccountForm({
       <details className={ac.section}>
         <summary className={ac.sectionHead}>
           Notifications
-          <span className={ac.sectionMeta}>{contractor.notify_new_jobs ? 'Emails on' : 'Emails off'}</span>
+          <span className={ac.sectionMeta}>
+            {contractor.notify_new_jobs ? 'Emails on' : 'Emails off'}
+            {' · '}
+            {contractor.notify_sms ? 'Texts on' : 'Texts off'}
+          </span>
         </summary>
         <div className={ac.sectionBody}>
           <label className={f.checkRow}>
@@ -110,6 +114,13 @@ export function AccountForm({
           <p className={f.hint} style={{ marginTop: 8 }}>
             Turned off, new jobs still appear on this dashboard and under Jobs to
             price — you just won&rsquo;t be emailed about them.
+          </p>
+          <label className={f.checkRow} style={{ marginTop: 16 }}>
+            <input type="checkbox" name="notify_sms" defaultChecked={contractor.notify_sms} />
+            <span>Text me too: new jobs to price, jobs I&rsquo;ve won and messages from customers, to the phone number above.</span>
+          </label>
+          <p className={f.hint} style={{ marginTop: 8 }}>
+            Texts go out between 8am and 9pm. You can also reply STOP to any of them.
           </p>
         </div>
       </details>

@@ -15,6 +15,7 @@ import { runVisitOp } from '@/lib/sealedQuotes/visits';
 import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 import { flagOffPlatform, recordRefusal } from '@/lib/sealedQuotes/offPlatformAlert';
 import { notifyAdmins } from '@/lib/adminNotify';
+import { ukMobile } from '@/lib/sms/ukMobile';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -632,4 +633,36 @@ export async function clientVisitAction(_prev: FormState, formData: FormData): P
   const res = await runVisitOp(inv.id, 'client', formData);
   if (res.ok) revalidatePath(`/my/${token}`);
   return res;
+}
+
+/**
+ * Turn texts on or off for this job. On needs a UK mobile, which is kept in
+ * sms_phone and used for our texts only: unlike contact_phone it is never
+ * passed to the contractor.
+ */
+export async function setTextAlertsAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const token = String(formData.get('token') ?? '');
+  if (!isTokenFormat(token)) return { error: 'This link is no longer valid.' };
+  const on = formData.get('on') === '1';
+
+  let phone: string | null = null;
+  if (on) {
+    phone = ukMobile(String(formData.get('phone') ?? ''));
+    if (!phone) return { error: 'That doesn’t look like a UK mobile number — it should start 07.' };
+  }
+
+  const { data, error } = await createServiceRoleClient()
+    .from('job_submissions')
+    .update(on ? { notify_sms: true, sms_phone: phone } : { notify_sms: false })
+    .eq('client_token', token)
+    .is('client_token_revoked_at', null)
+    .select('id');
+  if (error) {
+    console.error('[sq] setTextAlerts failed:', error);
+    return { error: 'That didn’t save — please try again.' };
+  }
+  if (!data?.length) return { error: 'This link is no longer valid.' };
+
+  revalidatePath(`/my/${token}`);
+  return { ok: true, message: on ? 'Texts are on.' : 'Texts are off.' };
 }
