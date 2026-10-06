@@ -27,6 +27,8 @@ import { getQuotePasses } from '@/lib/sealedQuotes/passes';
 import { PayBalance } from './PayBalance';
 import { formatDate, formatDateTime } from '@/lib/time';
 import { OpenToMarket } from './OpenToMarket';
+import { TextAlerts } from './TextAlerts';
+import { ukMobile } from '@/lib/sms/ukMobile';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { MessageThread } from '@/components/messages/MessageThread';
 import { getClientThreads } from '@/lib/sealedQuotes/messages';
@@ -43,6 +45,12 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-dynamic';
+
+/** The statuses in which a price can still arrive or a contractor still write. */
+const TEXTABLE = [
+  'confirmed', 'distributed', 'quotes_receiving', 'accepted_awaiting_payment',
+  'awarded', 'contacted', 'scheduled', 'variation_pending', 'completed_by_contractor',
+];
 
 /**
  * The client portal (§19): the system of record for one job, reached by the
@@ -254,6 +262,17 @@ export default async function ClientPortalPage({
                 A site visit to answer ↓
               </a>
             )
+          )}
+
+          {/* Texts for this job: prices in, contractors writing. Offered while
+              either can still happen. */}
+          {TEXTABLE.includes(js.status) && (
+            <TextAlerts
+              token={token}
+              on={js.notify_sms}
+              phone={js.sms_phone}
+              suggested={js.contact_phone && ukMobile(js.contact_phone) ? js.contact_phone : null}
+            />
           )}
 
           {/* ── Pre-quotes ─────────────────────────────────────────── */}

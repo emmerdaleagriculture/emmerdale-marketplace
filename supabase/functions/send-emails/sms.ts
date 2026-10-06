@@ -1,5 +1,5 @@
 // Drain pending_sms via Twilio, after the email batch (see migration
-// 20261004150000_contractor_sms). Rows only exist while
+// 20261006170000_contractor_sms). Rows only exist while
 // app_config.sq_sms_enabled = 1, and nothing is sent until the TWILIO_*
 // secrets are set, so this is inert until both are switched on.
 //
@@ -26,8 +26,10 @@ type PendingSms = {
   payload: Record<string, unknown>;
   attempts: number;
   created_at: string;
-  contractor_id: string;
+  contractor_id: string | null;
+  submission_id: string | null;
   contractors: { email: string | null; notify_sms: boolean } | null;
+  job_submissions: { contact_email: string | null; notify_sms: boolean } | null;
 };
 
 /** "07700 900123" / "+44 (0)7700 900123" / "447700900123" → "+447700900123"; null if not a UK mobile. */
@@ -77,6 +79,22 @@ export function renderSms(kind: string, p: Record<string, unknown>, site: string
       if (!p.token) return null;
       return `Emmerdale Agriculture: the customer has sent you a message about ${job}. ` +
         `Read and reply: ${site}/quote/${p.token}#messages`;
+
+    // To customers who turned texts on for the job.
+    case 'sq_first_quote':
+      if (!p.client_token) return null;
+      return `Emmerdale Agriculture: a contractor has priced your ${service} job. ` +
+        `See it: ${site}/my/${p.client_token}`;
+    case 'sq_new_quotes': {
+      if (!p.client_token) return null;
+      const n = Number(p.new_count) || 1;
+      return `Emmerdale Agriculture: ${n} new price${n === 1 ? '' : 's'} on your job. ` +
+        `See them: ${site}/my/${p.client_token}`;
+    }
+    case 'sq_message_to_client':
+      if (!p.client_token) return null;
+      return `Emmerdale Agriculture: ${gsm(p.from || 'your contractor', 30)} has sent you a message about your ${service} job. ` +
+        `Read and reply: ${site}/my/${p.client_token}#messages`;
     default:
       return null;
   }
@@ -105,7 +123,8 @@ export async function drainSms(
 
   const { data, error } = await supabase
     .from('pending_sms')
-    .select('id, kind, to_phone, payload, attempts, created_at, contractor_id, contractors(email, notify_sms)')
+    .select('id, kind, to_phone, payload, attempts, created_at, contractor_id, submission_id, ' +
+      'contractors(email, notify_sms), job_submissions(contact_email, notify_sms)')
     .eq('status', 'pending')
     .order('created_at')
     .limit(BATCH);
@@ -117,9 +136,13 @@ export async function drainSms(
 
   for (const m of (data ?? []) as PendingSms[]) {
     // Re-checked at send time: they may have opted out since it was queued.
+    // In test mode a customer is held to the allowlist too, by the job's email.
+    const who = m.contractor_id
+      ? { optedIn: Boolean(m.contractors?.notify_sms), email: m.contractors?.email }
+      : { optedIn: Boolean(m.job_submissions?.notify_sms), email: m.job_submissions?.contact_email };
     const skipReason =
-      !m.contractors?.notify_sms ? 'opted out'
-      : allowlist.length > 0 && !allowlist.includes(String(m.contractors.email ?? '').toLowerCase())
+      !who.optedIn ? 'opted out'
+      : allowlist.length > 0 && !allowlist.includes(String(who.email ?? '').toLowerCase())
         ? 'test mode: not on the allowlist'
       : now.getTime() - new Date(m.created_at).getTime() > MAX_AGE_MS ? 'too old to send'
       : null;
@@ -168,8 +191,14 @@ export async function drainSms(
                            provider_message_id: res.sid ?? null, attempts: m.attempts + 1 });
       sent++;
     } else if (res.code === UNSUBSCRIBED) {
-      // They texted STOP. Record it where /account can show and undo it.
-      await supabase.from('contractors').update({ notify_sms: false }).eq('id', m.contractor_id);
+      // They texted STOP. Record it where /account or the job page can show
+      // and undo it. Twilio blocks the number outright, so for a customer that
+      // is every job they gave it on.
+      if (m.contractor_id) {
+        await supabase.from('contractors').update({ notify_sms: false }).eq('id', m.contractor_id);
+      } else {
+        await supabase.from('job_submissions').update({ notify_sms: false }).eq('sms_phone', m.to_phone);
+      }
       await finish(m.id, { status: 'skipped', detail: 'replied STOP' });
       skipped++;
     } else {

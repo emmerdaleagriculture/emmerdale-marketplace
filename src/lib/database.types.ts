@@ -1585,6 +1585,7 @@ export type Database = {
           market_opens_at: string | null
           missing_fields: string[]
           model_version: string | null
+          notify_sms: boolean
           obstacles: string | null
           parse_confidence: Json
           parse_source: string | null
@@ -1601,6 +1602,7 @@ export type Database = {
           service_confirmed: boolean | null
           service_id: number | null
           service_verbatim: string | null
+          sms_phone: string | null
           status: string
           target_date: string | null
           urgency: string | null
@@ -1668,6 +1670,7 @@ export type Database = {
           market_opens_at?: string | null
           missing_fields?: string[]
           model_version?: string | null
+          notify_sms?: boolean
           obstacles?: string | null
           parse_confidence?: Json
           parse_source?: string | null
@@ -1684,6 +1687,7 @@ export type Database = {
           service_confirmed?: boolean | null
           service_id?: number | null
           service_verbatim?: string | null
+          sms_phone?: string | null
           status?: string
           target_date?: string | null
           urgency?: string | null
@@ -1751,6 +1755,7 @@ export type Database = {
           market_opens_at?: string | null
           missing_fields?: string[]
           model_version?: string | null
+          notify_sms?: boolean
           obstacles?: string | null
           parse_confidence?: Json
           parse_source?: string | null
@@ -1767,6 +1772,7 @@ export type Database = {
           service_confirmed?: boolean | null
           service_id?: number | null
           service_verbatim?: string | null
+          sms_phone?: string | null
           status?: string
           target_date?: string | null
           urgency?: string | null
