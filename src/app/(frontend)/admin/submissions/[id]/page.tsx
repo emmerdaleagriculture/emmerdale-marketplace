@@ -19,6 +19,7 @@ import { AdminTable } from '../../ui';
 import p from '../submissions.module.css';
 import { OutreachList, OutreachStats, STAGE_TITLES, isOutreachStage, type OutreachStage } from '../OutreachStats';
 import { loadOutreach } from '../outreach';
+import { ContractorLink } from '../ContractorLink';
 import { signMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 import { formatVisitWhen } from '@/lib/sealedQuotes/visits';
 
@@ -68,15 +69,17 @@ function MessageThreads({
       {[...threads].map(([id, thread]) => {
         const inv = thread[0].inv as {
           display_label: string | null;
-          contractor: { business_name: string; status: string } | null;
+          contractor: { id: string; business_name: string; status: string } | null;
         } | null;
         const contractor = inv?.contractor?.business_name ?? 'Contractor';
+        const contractorId = inv?.contractor?.id;
+        const contractorLink = <ContractorLink id={contractorId}>{contractor}</ContractorLink>;
         const label = inv?.display_label;
         return (
           <section key={id} className={p.thread}>
             <header className={p.threadHead}>
               <span className={p.threadWho}>
-                <b>{customerName}</b> <span aria-hidden="true">⇄</span> <b>{contractor}</b>
+                <b>{customerName}</b> <span aria-hidden="true">⇄</span> <b>{contractorLink}</b>
                 {label && <span className={p.threadLabel}>{label}</span>}
               </span>
               <span className={p.threadCount}>
@@ -97,7 +100,7 @@ function MessageThreads({
                     {awardedHere && <div className={p.phaseBreak}>Job awarded</div>}
                     <div className={`${p.bubble} ${fromClient ? p.fromClient : p.fromContractor}`}>
                       <div className={p.bubbleMeta}>
-                        <b>{fromClient ? customerName : contractor}</b> → {fromClient ? contractor : customerName}
+                        <b>{fromClient ? customerName : contractorLink}</b> → {fromClient ? contractorLink : customerName}
                       </div>
                       {m.photo_paths.length > 0 && (
                         <>
@@ -183,7 +186,7 @@ export default async function SubmissionDetailPage({
       .select(
         `id, status, client_price_pence, markup_rate, premium, contractor_display_label, contractor_real_name, valid_until, created_at, contractor_note,
          cq:contractor_quotes(contractor_price_pence, quote_type, rate_value_pence, rate_minimum_pence, source, notes_internal, site_visit_required,
-           contractor:contractors(business_name))`,
+           contractor:contractors(id, business_name))`,
       )
       .eq('submission_id', id)
       .order('created_at', { ascending: true }),
@@ -199,7 +202,7 @@ export default async function SubmissionDetailPage({
       .from('job_messages')
       .select(
         `id, invitation_id, sender, body, phase, created_at, read_at, photo_paths, moderation,
-         inv:job_invitations(display_label, contractor:contractors(business_name, status))`,
+         inv:job_invitations(display_label, contractor:contractors(id, business_name, status))`,
       )
       .eq('submission_id', id)
       .order('created_at', { ascending: true })
@@ -209,7 +212,7 @@ export default async function SubmissionDetailPage({
   // Site visits arranged in the threads before award (20261001120000).
   const { data: visitRows } = await admin
     .from('thread_visits')
-    .select('id, proposed_by, starts_at, status, cancelled_by, created_at, inv:job_invitations(contractor:contractors(business_name))')
+    .select('id, proposed_by, starts_at, status, cancelled_by, created_at, inv:job_invitations(contractor:contractors(id, business_name))')
     .eq('submission_id', id)
     .order('created_at', { ascending: true });
   const visits = visitRows ?? [];
@@ -518,13 +521,13 @@ export default async function SubmissionDetailPage({
                 source: string;
                 notes_internal: string | null;
                 site_visit_required: boolean;
-                contractor: { business_name: string } | null;
+                contractor: { id: string; business_name: string } | null;
               } | null;
               return (
                 <tr key={cq.id}>
                   <td>{cq.contractor_display_label}</td>
                   <td>
-                    {inner?.contractor?.business_name ?? '—'}
+                    <ContractorLink id={inner?.contractor?.id}>{inner?.contractor?.business_name ?? '—'}</ContractorLink>
                     {cq.premium && <span style={{ color: '#8a6d00' }}> ★ Premium</span>}
                   </td>
                   <td>
@@ -578,7 +581,12 @@ export default async function SubmissionDetailPage({
           <AdminTable head={['Contractor', 'Visit', 'Suggested by', 'Status', 'Suggested']}>
             {visits.map((v) => (
               <tr key={v.id}>
-                <td>{(v.inv as { contractor: { business_name: string } | null } | null)?.contractor?.business_name ?? '—'}</td>
+                <td>
+                  {(() => {
+                    const c = (v.inv as { contractor: { id: string; business_name: string } | null } | null)?.contractor;
+                    return <ContractorLink id={c?.id}>{c?.business_name ?? '—'}</ContractorLink>;
+                  })()}
+                </td>
                 <td>{formatVisitWhen(v.starts_at)}</td>
                 <td>{v.proposed_by === 'client' ? 'Customer' : 'Contractor'}</td>
                 <td>
