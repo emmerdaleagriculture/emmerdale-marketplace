@@ -1,95 +1,80 @@
-# .github/workflows/android-play.yml
-#
-# Builds the Capacitor Android app and uploads it to the Play Console's
-# internal testing track. Runs on Linux, so it is cheaper and faster than the
-# iOS job and needs no Apple hardware at all.
-#
-# ─── REQUIRED REPO SECRETS ───────────────────────────────────────────────
-#   ANDROID_KEYSTORE_BASE64      your release keystore (.jks), base64-encoded
-#   ANDROID_KEYSTORE_PASSWORD    keystore password
-#   ANDROID_KEY_ALIAS            key alias inside the keystore
-#   ANDROID_KEY_PASSWORD         password for that alias
-#   PLAY_SERVICE_ACCOUNT_JSON    Google Play service-account JSON, pasted whole
-#
-# ⚠️  THE KEYSTORE IS IRREPLACEABLE. If it is lost, Google will not let you
-#     update this app ever again under the same listing — a new listing and a
-#     new URL would be the only option. Back the .jks file up somewhere
-#     outside this repo (a password manager is ideal) before you start.
-#
-# Create a keystore once, on any machine with a JDK:
-#   keytool -genkey -v -keystore release.jks -keyalg RSA -keysize 2048 \
-#           -validity 10000 -alias emmerdale
-#   base64 -i release.jks | pbcopy     # paste into ANDROID_KEYSTORE_BASE64
-
 name: Android Play
 
+# First AAB may need manual Play Console upload before publishing API is usable.
+# This workflow NEVER publishes to production. See app-shell/RELEASE-READINESS.md.
 on:
   workflow_dispatch:
-  push:
-    tags: ['android-v*']
+    inputs:
+      confirm_upload:
+        description: 'Upload signed AAB to Play internal testing as a draft (requires approval)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-play-upload
+  cancel-in-progress: false
 
 jobs:
-  build:
+  release:
+    if: inputs.confirm_upload && vars.MOBILE_STORE_UPLOADS_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
+    defaults:
+      run:
+        working-directory: app-shell
+        shell: bash
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app-shell/package-lock.json
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '21'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Add Android platform
-        run: |
-          if [ ! -d android ]; then
-            npx cap add android
-          fi
-          npx cap sync android
-
-      - name: Decode keystore
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - run: npm ci
+      - run: npx cap sync android
+      - run: npx cap sync ios
+      - run: npm run check
+      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Build signed Android bundle
         env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: echo -n "$KEYSTORE_B64" | base64 --decode > android/app/release.jks
-
-      - name: Build signed release bundle
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          APP_BUILD_NUMBER: ${{ github.run_number }}
         run: |
+          set -euo pipefail
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then echo "::error::Missing $name"; exit 1; fi
+          done
+          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/emmerdale-upload.jks"
+          trap 'rm -f "$ANDROID_KEYSTORE_PATH"' EXIT
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+          chmod 600 "$ANDROID_KEYSTORE_PATH"
           cd android
-          ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file=$(pwd)/app/release.jks \
-            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
-            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
-            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
-
-      - name: Upload to Play internal testing
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-signed-bundle
+          path: app-shell/android/app/build/outputs/bundle/release/*.aab
+          retention-days: 7
+      - name: Upload draft to internal testing only
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.emmerdaleagriculture.app
-          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          releaseFiles: app-shell/android/app/build/outputs/bundle/release/app-release.aab
           track: internal
-          status: completed
-
-      - name: Keep the bundle as an artefact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-aab
-          path: android/app/build/outputs/bundle/release/*.aab
-          if-no-files-found: ignore
-
-      - name: Remove keystore from the runner
-        if: always()
-        run: rm -f android/app/release.jks
+          status: draft

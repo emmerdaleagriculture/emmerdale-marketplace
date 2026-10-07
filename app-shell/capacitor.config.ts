@@ -21,11 +21,11 @@ const config: CapacitorConfig = {
     // definition, so there's nothing left to sell — see the /app route's
     // doc comment in the main site repo for the reasoning.
     //
-    // IMPORTANT: this only resolves once /app exists in production — see
-    // ../0001-add-app-entry-screen.patch and the README's "Getting this
-    // live" section. Point this at a Vercel preview URL in the meantime to
-    // test against the branch before it's merged.
-    url: 'https://emmerdaleagriculture.com/app',
+    // Use the canonical origin to avoid leaving the WebView on the site's
+    // apex -> www redirect. Only our two website hosts may stay in-app;
+    // payment-provider and other external links must be device-tested.
+    url: 'https://www.emmerdaleagriculture.com/app',
+    allowNavigation: ['www.emmerdaleagriculture.com', 'emmerdaleagriculture.com'],
     cleartext: false,
   },
 

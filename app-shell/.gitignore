@@ -1,0 +1,11 @@
+node_modules/
+*.p12
+*.p8
+*.mobileprovision
+*.jks
+*.keystore
+ExportOptions.plist
+DerivedData/
+release/
+__pycache__/
+*.pyc
