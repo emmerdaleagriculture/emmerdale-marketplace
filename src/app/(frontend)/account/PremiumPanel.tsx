@@ -22,12 +22,15 @@ export function PremiumPanel({
   compedUntil,
   notice,
   pending = false,
+  suspended = false,
 }: {
   sub: Sub;
   compedUntil: string | null;
   notice?: string;
   /** Application not yet approved: paid premium waits for approval. */
   pending?: boolean;
+  /** Suspended after approval: joining premium restores the account. */
+  suspended?: boolean;
 }) {
   const active = sub?.status === 'active' || sub?.status === 'past_due';
   const comped = !active && compedUntil && new Date(compedUntil) > new Date();
@@ -44,7 +47,7 @@ export function PremiumPanel({
       {notice === 'success' && (
         <p className={ac.subBody}>
           <b>Thanks — you’re in.</b> It can take a minute for Stripe to confirm; refresh if this
-          still shows the sign-up buttons.
+          still shows the sign-up buttons{suspended ? ' or says your account is suspended' : ''}.
         </p>
       )}
       {notice === 'unconfigured' && (
@@ -97,6 +100,13 @@ export function PremiumPanel({
               yours lands cheaper. Price a job at £400 and the customer sees £420, not £460 — or
               charge more and still come in under everyone else.
             </p>
+            {suspended && (
+              <p>
+                <b>Join and your account is restored straight away</b>, with everything above. It
+                stays active for as long as you&rsquo;re a member: if your membership ends, the
+                account is suspended again.
+              </p>
+            )}
             {pending && (
               <p>
                 You can join now: premium starts the moment we approve you, and if we can’t, we
