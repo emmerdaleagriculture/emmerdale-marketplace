@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { formatDateTime } from '@/lib/time';
 import p from './submissions.module.css';
+import { ContractorLink } from './ContractorLink';
 
 /**
  * The outreach boxes on a submission — emailed, texted, tapped, opened,
@@ -34,7 +35,7 @@ export type OutreachCounts = {
   lowest_client_pence: number | null;
 };
 
-export type OutreachLine = { key: string; who: string; sub?: string; what: string; when: string | null; bad?: boolean };
+export type OutreachLine = { key: string; who: string; whoId?: string | null; sub?: string; what: string; when: string | null; bad?: boolean };
 
 export const STAGE_TITLES: Record<OutreachStage, string> = {
   emailed: 'Invitation emails',
@@ -131,7 +132,7 @@ export function OutreachList({ stage, lines }: { stage: OutreachStage; lines: Ou
       {lines.map((l) => (
         <li key={l.key} className={p.person}>
           <div className={p.personWho}>
-            {l.who}
+            <ContractorLink id={l.whoId}>{l.who}</ContractorLink>
             {l.sub && <small>{l.sub}</small>}
           </div>
           <div className={`${p.personWhat} ${l.bad ? p.personBad : ''}`}>

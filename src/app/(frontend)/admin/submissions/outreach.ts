@@ -31,7 +31,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
       .order('created_at', { ascending: true }),
     admin
       .from('client_quotes')
-      .select('id, status, client_price_pence, contractor_display_label, contractor_real_name, created_at, cq:contractor_quotes(contractor:contractors(business_name))')
+      .select('id, status, client_price_pence, contractor_display_label, contractor_real_name, created_at, cq:contractor_quotes(contractor:contractors(id, business_name))')
       .eq('submission_id', id)
       .order('created_at', { ascending: true }),
     // pending_sms isn't in the generated types yet, hence the loose shape below.
@@ -110,6 +110,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
   const invLine = (inv: Inv, when: string | null): OutreachLine => ({
     key: inv.id,
     who: contractorOf(inv)?.business_name ?? '—',
+    whoId: inv.contractor_id,
     sub: inv.distance_miles != null ? `${inv.distance_miles} mi` : undefined,
     what: outcome(inv),
     when,
@@ -122,6 +123,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
     return {
       key: e.id,
       who: (inv && contractorOf(inv)?.business_name) ?? e.to_email,
+      whoId: inv?.contractor_id,
       sub: inv ? e.to_email : undefined,
       what: bad
         ? `Failed — ${e.delivery_detail ?? e.delivery_status ?? e.status}`
@@ -145,7 +147,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
   const invByContractor = new Map(invitations.map((inv) => [inv.contractor_id, inv] as const));
   const textWho = (t: Text) => {
     const inv = t.contractor_id ? invByContractor.get(t.contractor_id) : undefined;
-    return { who: (inv && contractorOf(inv)?.business_name) ?? t.to_phone, sub: inv ? t.to_phone : undefined };
+    return { who: (inv && contractorOf(inv)?.business_name) ?? t.to_phone, whoId: t.contractor_id, sub: inv ? t.to_phone : undefined };
   };
   const texted: OutreachLine[] = texts.map((t) => {
     const bad = failedText(t);
@@ -187,10 +189,11 @@ export async function loadOutreach(id: string): Promise<Outreach> {
         ...invitations.filter(passed).map((i) => ({ ...invLine(i, null), bad: true })),
       ],
       client: clientQuotes.map((cq) => {
-        const inner = cq.cq as { contractor: { business_name: string } | null } | null;
+        const inner = cq.cq as { contractor: { id: string; business_name: string } | null } | null;
         return {
           key: cq.id,
           who: inner?.contractor?.business_name ?? cq.contractor_real_name ?? cq.contractor_display_label,
+          whoId: inner?.contractor?.id,
           sub: `shown as ${cq.contractor_display_label}`,
           what: `${formatGBP(cq.client_price_pence)} · ${cq.status}`,
           when: cq.created_at,
