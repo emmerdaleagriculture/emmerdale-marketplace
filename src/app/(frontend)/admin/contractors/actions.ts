@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import { refundUnapprovedPremium } from '@/lib/stripe';
+import { WARNING_SUBJECT } from '@/lib/sealedQuotes/contractorWarning';
 
 async function assertAdmin() {
   const user = await getUser();
@@ -140,4 +141,34 @@ export async function setPremiumComp(formData: FormData) {
   if (until) await admin.rpc('invite_contractor_to_open_jobs', { p_contractor_id: id });
 
   revalidatePath(`/admin/contractors/${id}`);
+}
+
+/**
+ * Warn a contractor that trying to take work off the platform again means
+ * removal. Queued as an admin_direct email in the admin's own words (the
+ * page pre-fills a draft); warning_contractor_id in the payload is what the
+ * contractor page lists past warnings by, and submission_id the job it was
+ * about.
+ */
+export async function sendContractorWarning(formData: FormData) {
+  await assertAdmin();
+
+  const id = String(formData.get('id') || '');
+  const text = String(formData.get('text') || '').replace(/\r\n?/g, '\n').trim();
+  const submissionId = String(formData.get('submission_id') || '') || null;
+  if (!id || text.length < 20) throw new Error('Invalid request');
+
+  const admin = createServiceRoleClient();
+  const { data: c } = await admin.from('contractors').select('email').eq('id', id).maybeSingle();
+  if (!c?.email) throw new Error('No email address for this contractor');
+
+  const { error } = await admin.from('pending_emails').insert({
+    kind: 'admin_direct',
+    to_email: c.email,
+    payload: { subject: WARNING_SUBJECT, text, warning_contractor_id: id, submission_id: submissionId },
+  });
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/contractors/${id}`);
+  redirect(`/admin/contractors/${id}?warned=1#warning`);
 }

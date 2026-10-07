@@ -81,6 +81,11 @@ function MessageThreads({
               <span className={p.threadWho}>
                 <b>{customerName}</b> <span aria-hidden="true">⇄</span> <b>{contractorLink}</b>
                 {label && <span className={p.threadLabel}>{label}</span>}
+                {contractorId && (
+                  <Link href={`/admin/contractors/${contractorId}?warn=${submissionId}#warning`} className={p.threadLabel}>
+                    Warn
+                  </Link>
+                )}
               </span>
               <span className={p.threadCount}>
                 {thread.length} message{thread.length === 1 ? '' : 's'}

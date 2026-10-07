@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { setContractorStatus, setPremiumComp } from '../actions';
+import { sendContractorWarning, setContractorStatus, setPremiumComp } from '../actions';
+import { warningDraft } from '@/lib/sealedQuotes/contractorWarning';
+import { formatDateTime } from '@/lib/time';
+import { AdminTable } from '../../ui';
 import { DeleteContractorButton } from '../DeleteContractorButton';
 import s from '../../admin.module.css';
 import { StatusPill } from '../../ui';
@@ -17,7 +20,8 @@ export default async function ContractorDetailPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
-  const { blocked } = await searchParams;
+  const { blocked, warn, warned } = await searchParams;
+  const warnJobId = typeof warn === 'string' && /^[0-9a-f-]{36}$/i.test(warn) ? warn : null;
   const admin = createServiceRoleClient();
 
   const { data: c } = await admin.from('contractors').select('*').eq('id', id).maybeSingle();
@@ -36,6 +40,28 @@ export default async function ContractorDetailPage({
       .maybeSingle(),
     admin.rpc('contractor_is_premium', { p_contractor_id: id }),
   ]);
+  // Warnings sent before, and the job a "Warn" link on a submission came from.
+  const [{ data: warningRows }, { data: warnJob }] = await Promise.all([
+    admin
+      .from('pending_emails')
+      .select('id, created_at, status, delivery_status, payload')
+      .eq('kind', 'admin_direct')
+      .eq('payload->>warning_contractor_id', id)
+      .order('created_at', { ascending: false }),
+    warnJobId
+      ? admin.from('job_submissions').select('id, postcode, service:services(name)').eq('id', warnJobId).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const warnings = warningRows ?? [];
+  const jobName = warnJob
+    ? [
+        `${((warnJob.service as { name: string } | null)?.name ?? 'recent').toLowerCase()} job`,
+        warnJob.postcode && `in ${warnJob.postcode.trim().split(/\s+/)[0].toUpperCase()}`,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : null;
+
   const compedUntil = c.premium_comped_until && new Date(c.premium_comped_until) > new Date()
     ? c.premium_comped_until
     : null;
@@ -137,6 +163,49 @@ export default async function ContractorDetailPage({
           </form>
         )}
       </div>
+
+      <div className={s.sectionLabel} id="warning">
+        Warnings{warnings.length > 0 ? ` (${warnings.length})` : ''}
+      </div>
+      {warned === '1' && <p className={s.dValue}>Warning queued — it goes out within a minute.</p>}
+      {warnings.length > 0 && (
+        <AdminTable head={['Sent', 'Job', 'Email']}>
+          {warnings.map((w) => {
+            const p = w.payload as { submission_id?: string | null };
+            return (
+              <tr key={w.id}>
+                <td>{formatDateTime(w.created_at)}</td>
+                <td>{p.submission_id ? <Link href={`/admin/submissions/${p.submission_id}`}>View job</Link> : '—'}</td>
+                <td>{w.delivery_status ?? w.status}</td>
+              </tr>
+            );
+          })}
+        </AdminTable>
+      )}
+      {/* Removal is the Suspend button below; this is the step before it. */}
+      <details className={s.fold} open={!!warnJobId}>
+        <summary>Send a warning: one more attempt to go off the platform means removal</summary>
+        <form action={sendContractorWarning}>
+          <input type="hidden" name="id" value={c.id} />
+          {warnJobId && <input type="hidden" name="submission_id" value={warnJobId} />}
+          <p className={s.dValue}>
+            To {c.email} · subject “A warning about your Emmerdale Agriculture account”. Edit before sending.
+          </p>
+          <textarea
+            name="text"
+            required
+            minLength={20}
+            rows={16}
+            defaultValue={warningDraft({ contactName: c.contact_name, job: jobName })}
+            style={{ width: '100%', maxWidth: 640, font: 'inherit', padding: 10, boxSizing: 'border-box' }}
+          />
+          <div className={s.actions}>
+            <button type="submit" className={s.btnSuspend}>
+              Send warning
+            </button>
+          </div>
+        </form>
+      </details>
 
       <div className={s.sectionLabel}>Actions</div>
       {blocked === 'history' && (
