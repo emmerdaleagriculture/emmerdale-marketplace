@@ -256,8 +256,22 @@ export default async function AccountPage({
             <div className={`${ac.banner} ${ac.suspended}`}>
               <div className={ac.bannerTitle}>Account suspended</div>
               Your account is currently suspended and won’t receive job
-              notifications. Please get in touch if you think this is a mistake.
+              notifications.{' '}
+              {/* Vetted and not already paying: premium brings them back
+                  (20261007200000). A member suspended while paying, or an
+                  application we turned down, has to talk to us. */}
+              {contractor.vetted_at && !isPremium
+                ? 'You can come back by taking out premium membership below — your account is restored as soon as you join.'
+                : 'Please get in touch if you think this is a mistake.'}
             </div>
+          )}
+          {status === 'suspended' && contractor.vetted_at && !isPremium && (
+            <PremiumPanel
+              sub={subQ.data ?? null}
+              compedUntil={contractor.premium_comped_until ?? null}
+              notice={subNotice}
+              suspended
+            />
           )}
 
           {status === 'approved' && (

@@ -638,6 +638,7 @@ export type Database = {
       contractors: {
         Row: {
           premium_comped_until: string | null
+          premium_reinstated_at: string | null
           messages_moderated_until: string | null
           base_lat: number | null
           base_lng: number | null
@@ -660,6 +661,7 @@ export type Database = {
         }
         Insert: {
           premium_comped_until?: string | null
+          premium_reinstated_at?: string | null
           messages_moderated_until?: string | null
           base_lat?: number | null
           base_lng?: number | null
@@ -682,6 +684,7 @@ export type Database = {
         }
         Update: {
           premium_comped_until?: string | null
+          premium_reinstated_at?: string | null
           messages_moderated_until?: string | null
           base_lat?: number | null
           base_lng?: number | null

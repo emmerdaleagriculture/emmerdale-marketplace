@@ -47,7 +47,10 @@ export async function setContractorStatus(formData: FormData) {
   // everyone else, including approved members.)
   if (status === 'suspended') await refundUnapprovedPremium(id);
 
-  const { error } = await admin.from('contractors').update({ status }).eq('id', id);
+  // An admin's decision replaces "back because of premium": a lapse no
+  // longer suspends someone the admin reinstated, or re-suspends someone the
+  // admin already suspended (20261007200000).
+  const { error } = await admin.from('contractors').update({ status, premium_reinstated_at: null }).eq('id', id);
   if (error) throw new Error(error.message);
 
   // Their live prices come off customers' lists too: suspension also refuses
