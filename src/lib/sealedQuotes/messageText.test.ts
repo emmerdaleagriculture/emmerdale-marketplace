@@ -22,6 +22,34 @@ describe('messageProblem', () => {
     }
   });
 
+  it('refuses an email address sent in pieces (7 Oct 2026)', () => {
+    const pieces = ['Fielding.natalie@ it won’t let me send it so I’ll try in 2 messages', 'Yahoo', '. co . uk'];
+    expect(messageRefusal(pieces[0], 'client', 'pre_award')?.flag).toBe('email_or_link');
+    expect(messageRefusal(pieces[1], 'client', 'pre_award', false, [pieces[0]])?.flag).toBe('email_or_link');
+    expect(messageRefusal(pieces[2], 'client', 'pre_award', false, pieces.slice(0, 2))?.flag).toBe('email_or_link');
+    // Each piece that names nothing on its own is still caught joined up.
+    expect(messageRefusal('com', 'client', 'pre_award', false, ['natalie', '@', 'yahoo.'])?.flag).toBe('email_or_link');
+    for (const body of [
+      'natalie at yahoo dot co dot uk',
+      'jim (at) farm . com',
+      'its my gmail',
+      'Could you send me your email address please?',
+      'email me and I’ll reply',
+    ]) {
+      expect(messageRefusal(body, 'contractor', 'pre_award')?.flag, body).toBe('email_or_link');
+    }
+  });
+
+  it('refuses a mobile split across messages', () => {
+    expect(messageRefusal('170203', 'contractor', 'pre_award', false, ['ok', 'it’s 07824'])?.flag).toBe('phone');
+  });
+
+  it('leaves ordinary words and times alone, alone or joined', () => {
+    for (const body of ['Can start @ 9am Monday', 'The outlook is wet this week', 'Live in the area', 'Sky’s clear, ground is firm']) {
+      expect(messageRefusal(body, 'contractor', 'pre_award', false, ['Gate is 12ft', 'About 3 acres'])).toBeNull();
+    }
+  });
+
   it('allows contact details after award', () => {
     expect(messageProblem('My number is 07123 456789', 'contractor', 'post_award')).toBeNull();
     expect(messageProblem('Call me on 07123 456789', 'client', 'post_award')).toBeNull();

@@ -55,6 +55,31 @@ const CONTACT_ELSEWHERE = new RegExp(
   'i',
 );
 
+/**
+ * An email address in pieces. On 7 Oct 2026 a contractor asked for the
+ * customer's email "and I'll send the quotation over"; EMAIL refused the
+ * address, so she sent "Fielding.natalie@", "Yahoo" and ". co . uk" as three
+ * messages, none of which looked like an address on its own. So: an @ touching
+ * a word, an address spelled out ("at yahoo dot com"), a mail provider's name,
+ * a spaced or spelled domain ending, and asking for or offering an email.
+ * "Outlook", "live" and "sky" are left out — they are ordinary words here.
+ */
+const EMAIL_PIECE = new RegExp(
+  [
+    '[a-z0-9._%+-]@',
+    '@[a-z0-9]',
+    '[(\\[]\\s*at\\s*[)\\]]',
+    '\\bat\\s+[a-z0-9-]+\\s*(?:\\.|[(\\[]?\\s*dot\\s*[)\\]]?)\\s*(?:com|co|net|org|uk)\\b',
+    '\\b(?:g\\s?mail|googlemail|yahoo|hotmail|icloud|btinternet|btopenworld|aol|protonmail|virginmedia|talktalk|ntlworld|msn)\\b',
+    '(?:^|\\s)\\.\\s*(?:co\\s*\\.\\s*uk|com|net|org)\\b',
+    '\\bdot\\s+(?:com|co|net|org|uk)\\b',
+    '\\b(?:your|ur|my|our)\\s+e-?mail\\b',
+    '\\be-?mail\\s+(?:me|us)\\b',
+    '\\b(?:send|drop)\\s+(?:me|us)\\s+an?\\s+e-?mail\\b',
+  ].join('|'),
+  'i',
+);
+
 export type MessageSender = 'client' | 'contractor';
 export type ThreadState = 'pre_award' | 'post_award' | 'closed';
 
@@ -75,6 +100,12 @@ export function messageRefusal(
   state: ThreadState,
   /** A photo on its own is a message; words are then optional. */
   hasPhotos = false,
+  /**
+   * The sender's own last few messages in this thread, oldest first. A
+   * number or address sent in pieces is only visible joined up, so the new
+   * message is checked with them as well as alone.
+   */
+  recent: string[] = [],
 ): MessageRefusal | null {
   const t = body.trim();
   if (!t) return hasPhotos ? null : { text: 'Write a message or add a photo first.', flag: null };
@@ -91,7 +122,16 @@ export function messageRefusal(
     };
   }
   if (state === 'pre_award') {
-    if (LINK.test(t) || DOMAIN.test(t) || EMAIL.test(t)) {
+    const pieces = [...recent, t];
+    const joined = pieces.join(' ');
+    const squashed = pieces.join('').replace(/\s+/g, '');
+    if (
+      LINK.test(t) ||
+      DOMAIN.test(t) ||
+      EMAIL.test(t) ||
+      EMAIL_PIECE.test(t) ||
+      (recent.length > 0 && (EMAIL.test(squashed) || DOMAIN.test(squashed) || EMAIL_PIECE.test(joined)))
+    ) {
       return {
         flag: 'email_or_link',
         text:
@@ -109,7 +149,7 @@ export function messageRefusal(
             : 'Please take the full postcode or address out — the contractor sees your area now, and gets your address once you accept a price.',
       };
     }
-    if (hasPhoneNumber(t) || CONTACT_ELSEWHERE.test(t)) {
+    if (hasPhoneNumber(t) || CONTACT_ELSEWHERE.test(t) || (recent.length > 0 && hasPhoneNumber(joined))) {
       return {
         flag: 'phone',
         text:

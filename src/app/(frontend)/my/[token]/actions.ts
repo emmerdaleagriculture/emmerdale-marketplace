@@ -9,7 +9,7 @@ import { cancellationQuote } from '@/lib/sealedQuotes/cancellation';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import type { FormState } from '@/lib/form';
 import { getSubmissionByClientToken } from '@/lib/sealedQuotes/data';
-import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
+import { getRecentOwnBodies, getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
 import { messageRefusal, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
 import { runVisitOp } from '@/lib/sealedQuotes/visits';
 import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
@@ -494,7 +494,8 @@ export async function sendClientMessageAction(
   if (state === 'closed') return { error: postRefusal('closed'), body };
   const photos = readMessagePhotos(formData);
   if ('error' in photos) return { error: photos.error, body };
-  const refusal = messageRefusal(body, 'client', state, photos.files.length > 0);
+  const recent = state === 'pre_award' ? await getRecentOwnBodies(inv.id, 'client') : [];
+  const refusal = messageRefusal(body, 'client', state, photos.files.length > 0, recent);
   if (refusal) {
     // Recorded against the job, never a contractor's standing: it is the
     // customer's doing.
