@@ -9,7 +9,7 @@ import type { FormState } from '@/lib/form';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getInvitationByToken } from '@/lib/sealedQuotes/data';
-import { getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
+import { getRecentOwnBodies, getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
 import { messageRefusal, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
 import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 import { flagOffPlatform, holdAfterContactAttempt, recordRefusal } from '@/lib/sealedQuotes/offPlatformAlert';
@@ -231,7 +231,8 @@ export async function sendContractorMessageAction(
   if (state === 'closed') return { error: postRefusal('closed'), body };
   const photos = readMessagePhotos(formData);
   if ('error' in photos) return { error: photos.error, body };
-  const refusal = messageRefusal(body, 'contractor', state, photos.files.length > 0);
+  const recent = state === 'pre_award' ? await getRecentOwnBodies(invitation.id, 'contractor') : [];
+  const refusal = messageRefusal(body, 'contractor', state, photos.files.length > 0, recent);
   if (refusal) {
     // Paying some other way is emailed to admin as well as recorded; a
     // phone number before award is recorded against the standing only.

@@ -71,6 +71,29 @@ export async function getThreadState(invitationId: string): Promise<ThreadState>
   return (data as ThreadState | null) ?? 'closed';
 }
 
+/**
+ * The sender's own last few messages in a thread, oldest first, for checking
+ * a new one against (messageRefusal's `recent`): a number or address sent in
+ * pieces only shows up joined. Recent ones only, so a postcode district last
+ * week and a digit today don't add up to anything.
+ */
+export async function getRecentOwnBodies(
+  invitationId: string,
+  sender: MessageSender,
+  { max = 3, minutes = 60 } = {},
+): Promise<string[]> {
+  const since = new Date(Date.now() - minutes * 60_000).toISOString();
+  const { data } = await createServiceRoleClient()
+    .from('job_messages')
+    .select('body')
+    .eq('invitation_id', invitationId)
+    .eq('sender', sender)
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(max);
+  return (data ?? []).map((m) => m.body).reverse();
+}
+
 export async function getThreadMessages(
   invitationId: string,
   reader: MessageSender,
