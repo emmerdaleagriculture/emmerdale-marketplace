@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { PHOTO_MIN_BYTES } from '@/lib/photoDownscale';
 
 /**
  * Photos sent in a customer↔contractor message (20260930120000_message_photos).
@@ -12,7 +13,11 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 
 export const MESSAGE_PHOTOS_BUCKET = 'message-photos';
 export const MESSAGE_PHOTOS_MAX = 4;
-/** The browser downscales to ~0.5MB; this only stops something absurd. */
+/**
+ * The browser downscales to ~0.5MB; the ceiling only stops something absurd.
+ * The floor catches a phone that uploaded a 1×1 blank in place of the photo
+ * (see photoDownscale.ts) — better told now than a broken thread later.
+ */
 const PHOTO_MAX_BYTES = 8 * 1024 * 1024;
 const PHOTO_TYPES: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -33,6 +38,7 @@ export function readMessagePhotos(formData: FormData): { files: File[] } | { err
   for (const f of files) {
     if (!PHOTO_TYPES[f.type]) return { error: 'Photos need to be JPEG, PNG or WebP pictures.' };
     if (f.size > PHOTO_MAX_BYTES) return { error: 'One of those photos is too large — try a smaller one.' };
+    if (f.size < PHOTO_MIN_BYTES) return { error: 'One of those photos came through empty — remove it and add it again.' };
   }
   return { files };
 }
