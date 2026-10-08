@@ -7,6 +7,7 @@ import { MESSAGE_MAX, type MessageSender } from '@/lib/sealedQuotes/messageText'
 import type { ThreadMessage } from '@/lib/sealedQuotes/messages';
 import type { ThreadVisit, VisitContact } from '@/lib/sealedQuotes/visits';
 import { Hidden, VisitCard, VisitProposer, type VisitAction } from './ThreadVisits';
+import { openProblemReport } from '@/components/feedback/FeedbackWidget';
 import f from '@/components/forms/forms.module.css';
 import s from './messages.module.css';
 
@@ -144,6 +145,15 @@ export function MessageThread({
       ) : (
         closedNote && <p className={s.closed}>{closedNote}</p>
       )}
+      {/* Said here, where things go wrong, not only in the corner tab: a
+          contractor whose photos would not load told the customer, who told
+          us two days later. */}
+      <p className={s.report}>
+        Photos not showing, or something else not working here?{' '}
+        <button type="button" className={s.reportLink} onClick={openProblemReport}>
+          Tell us
+        </button>
+      </p>
     </section>
   );
 }

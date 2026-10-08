@@ -165,9 +165,10 @@ export default function PrivacyPage() {
 
           <h2>Feedback and contacting us</h2>
           <p>
-            If you use the feedback button we keep your message, your email if you give it or
-            are signed in, the page you were on and your browser type. If you email or phone
-            us, we keep what is needed to deal with it.
+            If you use the &ldquo;Report a problem&rdquo; button we keep your message, your
+            email if you give it or are signed in, the page you were on, which job it concerned
+            if you were on a job page, and your browser type. If you email or phone us, we keep
+            what is needed to deal with it.
           </p>
 
           <h2>Security and site records</h2>
