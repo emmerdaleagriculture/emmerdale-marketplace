@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import { downscalePhoto } from '@/lib/photoDownscale';
+import { downscalePhotos } from '@/lib/photoDownscale';
 import { emptyFormState, type FormState } from '@/lib/form';
 import { MESSAGE_MAX, type MessageSender } from '@/lib/sealedQuotes/messageText';
 import type { ThreadMessage } from '@/lib/sealedQuotes/messages';
@@ -243,7 +243,7 @@ function Composer({
     const room = PHOTOS_MAX - photos.length;
     const chosen = Array.from(list).slice(0, Math.max(0, room));
     setShrinking(true);
-    const small = await Promise.all(chosen.map(downscalePhoto));
+    const small = await downscalePhotos(chosen);
     setShrinking(false);
     setPhotos((prev) =>
       [...prev, ...small.map((file) => ({ file, preview: URL.createObjectURL(file) }))].slice(0, PHOTOS_MAX),
