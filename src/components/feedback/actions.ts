@@ -5,9 +5,10 @@ import { headers } from 'next/headers';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { redactPath } from '@/lib/analyticsPaths';
+import { parseJobPath } from '@/lib/feedback/jobPath';
 import type { FormState } from '@/lib/form';
 
-const SUCCESS = 'Thanks — that has gone straight to us.';
+const SUCCESS = 'Thanks — that has gone straight to us, and we will look at it today.';
 
 const FeedbackSchema = z.object({
   message: z.string().trim().min(3, 'Tell us a little more than that.').max(4000),
@@ -17,17 +18,63 @@ const FeedbackSchema = z.object({
 });
 
 /**
- * Feedback from anywhere on the site, from anyone.
+ * A problem report, or any other feedback, from anywhere on the site.
  *
  * Who they are is resolved HERE, from the session, rather than sent by the
  * page: a hidden role field is a field anyone can edit, and the whole value
  * of knowing whether a complaint came from a contractor or a customer is
  * that it is true.
  *
- * The path is redacted before it is stored — /my/<token> and /quote/<token>
- * are keys, and the reason to capture the page at all is to know which screen
- * annoyed someone, which the redacted form still tells you.
+ * On the job pages nobody is signed in: the token in the path is who they
+ * are. It is resolved the same way the page itself resolves it, and what it
+ * gives — the job, the thread, the person's name and address — is kept, so
+ * a report from a thread lands with a link to that thread. The path is still
+ * redacted before it is stored: the token is a key, and the reason to keep
+ * the page at all is to know which screen went wrong.
  */
+type JobContext = {
+  submissionId: string | null;
+  invitationId: string | null;
+  contactName: string | null;
+  email: string | null;
+  role: 'customer' | 'contractor';
+};
+
+async function resolveJobContext(path: string): Promise<JobContext | null> {
+  const job = parseJobPath(path);
+  if (!job) return null;
+  const admin = createServiceRoleClient();
+  if (job.side === 'customer') {
+    const { data } = await admin
+      .from('job_submissions')
+      .select('id, contact_name, contact_email')
+      .eq('client_token', job.token)
+      .maybeSingle();
+    if (!data) return null;
+    return {
+      submissionId: data.id,
+      invitationId: null,
+      contactName: data.contact_name ?? null,
+      email: data.contact_email ?? null,
+      role: 'customer',
+    };
+  }
+  const { data } = await admin
+    .from('job_invitations')
+    .select('id, submission_id, contractor:contractors (business_name, email)')
+    .eq('token', job.token)
+    .maybeSingle();
+  if (!data) return null;
+  const c = data.contractor as { business_name: string | null; email: string | null } | null;
+  return {
+    submissionId: data.submission_id,
+    invitationId: data.id,
+    contactName: c?.business_name ?? null,
+    email: c?.email ?? null,
+    role: 'contractor',
+  };
+}
+
 export async function submitFeedbackAction(_prev: FormState, formData: FormData): Promise<FormState> {
   // Same invisible traps as the enquiry form: a filled honeypot or a form
   // returned within three seconds is a bot. Answer as if it worked.
@@ -76,6 +123,19 @@ export async function submitFeedbackAction(_prev: FormState, formData: FormData)
     console.error('[feedback] viewer lookup failed:', err);
   }
 
+  // The job page's token says who they are when the session does not. A
+  // typed email still wins: it is where they asked for the reply to go.
+  let job: JobContext | null = null;
+  try {
+    job = d.path ? await resolveJobContext(d.path) : null;
+  } catch (err) {
+    console.error('[feedback] job lookup failed:', err);
+  }
+  if (job) {
+    if (!userId) role = job.role;
+    email = email ?? job.email;
+  }
+
   const path = d.path ? redactPath(d.path).slice(0, 512) : null;
   const userAgent = (await headers()).get('user-agent')?.slice(0, 400) ?? null;
 
@@ -87,6 +147,9 @@ export async function submitFeedbackAction(_prev: FormState, formData: FormData)
     role,
     path,
     user_agent: userAgent,
+    submission_id: job?.submissionId ?? null,
+    invitation_id: job?.invitationId ?? null,
+    contact_name: job?.contactName ?? null,
   });
   if (error) {
     console.error('[feedback] insert failed:', error);
@@ -96,12 +159,15 @@ export async function submitFeedbackAction(_prev: FormState, formData: FormData)
   // Stored first, then told: an email that fails must not lose the message.
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   await notifyAdmins(
-    `Feedback from a ${role}`,
+    `Problem report from a ${role}${job?.contactName ? ` (${job.contactName})` : ''}`,
     `${d.message}\n\n` +
-      `From:  ${email ?? '(not given)'}\n` +
+      `From:  ${job?.contactName ? `${job.contactName} ` : ''}${email ?? '(no email)'}\n` +
       `Role:  ${role}\n` +
-      `Page:  ${path ?? '(unknown)'}\n\n` +
-      `All feedback: ${siteUrl}/admin/feedback`,
+      `Page:  ${path ?? '(unknown)'}\n` +
+      (job?.submissionId
+        ? `Job:   ${siteUrl}/admin/submissions/${job.submissionId}${job.invitationId ? '#messages' : ''}\n`
+        : '') +
+      `\nAll reports: ${siteUrl}/admin/feedback`,
   );
 
   return { ok: true, message: SUCCESS };

@@ -810,42 +810,66 @@ export type Database = {
       }
       feedback: {
         Row: {
+          contact_name: string | null
           created_at: string
           email: string | null
           handled_at: string | null
           handled_by: string | null
           id: string
+          invitation_id: string | null
           message: string
           path: string | null
           role: string
+          submission_id: string | null
           user_agent: string | null
           user_id: string | null
         }
         Insert: {
+          contact_name?: string | null
           created_at?: string
           email?: string | null
           handled_at?: string | null
           handled_by?: string | null
           id?: string
+          invitation_id?: string | null
           message: string
           path?: string | null
           role?: string
+          submission_id?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
         Update: {
+          contact_name?: string | null
           created_at?: string
           email?: string | null
           handled_at?: string | null
           handled_by?: string | null
           id?: string
+          invitation_id?: string | null
           message?: string
           path?: string | null
           role?: string
+          submission_id?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "feedback_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "job_invitations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "job_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gsc_auth: {
         Row: {

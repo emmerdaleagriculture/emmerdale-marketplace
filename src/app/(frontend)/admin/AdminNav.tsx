@@ -72,7 +72,7 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
       { href: '/admin/queues', label: 'Queues' },
       { href: '/admin/email', label: 'Email' },
       { href: '/admin/errors', label: 'Errors' },
-      { href: '/admin/feedback', label: 'Feedback' },
+      { href: '/admin/feedback', label: 'Problems' },
       { href: '/admin/crons', label: 'Scheduled' },
     ],
   },

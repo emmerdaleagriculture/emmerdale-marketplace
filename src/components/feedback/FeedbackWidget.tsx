@@ -10,12 +10,28 @@ import s from './feedback.module.css';
 const EMPTY: FormState = {};
 
 /**
- * "Something's not right" — on every page, for everyone.
+ * The event any part of a page can fire to open the panel: the message
+ * thread's "something not working?" line, for one. A window event rather
+ * than context so the widget can stay in the root layout and the caller
+ * needs nothing but this function.
+ */
+const OPEN_EVENT = 'ea:report-problem';
+
+export function openProblemReport() {
+  window.dispatchEvent(new Event(OPEN_EVENT));
+}
+
+/**
+ * "Report a problem" — on every page, for everyone.
  *
  * A tab pinned to the bottom corner rather than a link in the footer,
  * because the person worth hearing from is annoyed right now and is not
  * going to go looking. It opens in place: nothing they have typed elsewhere
  * on the page is lost, and there is no page to come back from.
+ *
+ * It was called "Feedback" for its first fortnight and got two messages;
+ * the people with a broken page told each other instead. The tab now says
+ * what it is for, and the thread has a line pointing at it.
  *
  * Signed-in visitors are not asked for an email — the action already has it
  * from their session, and asking a contractor for an address we emailed them
@@ -49,14 +65,20 @@ export function FeedbackWidget() {
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_EVENT, onOpen);
+  }, []);
+
   if (pathname.startsWith('/admin')) return null;
 
   return (
     <div className={s.root}>
       {open && (
-        <div className={s.panel} role="dialog" aria-label="Send feedback">
+        <div className={s.panel} role="dialog" aria-label="Report a problem">
           <div className={s.head}>
-            <strong>How&rsquo;s it going?</strong>
+            <strong>Something not working?</strong>
             <button type="button" className={s.close} onClick={() => setOpen(false)} aria-label="Close">
               ×
             </button>
@@ -78,7 +100,7 @@ export function FeedbackWidget() {
 
               <label className={s.field}>
                 <span className={s.label}>
-                  Anything at all — what&rsquo;s broken, what&rsquo;s missing, what&rsquo;s annoying
+                  What went wrong, or what&rsquo;s missing — anything at all, in your own words
                 </span>
                 <textarea ref={box} className={s.textarea} name="message" rows={4} required maxLength={4000} />
               </label>
@@ -96,7 +118,7 @@ export function FeedbackWidget() {
                 {pending ? 'Sending…' : 'Send'}
               </button>
               <p className={s.note}>
-                We&rsquo;ll see the page you were on.
+                We&rsquo;ll see the page you were on, so there&rsquo;s no need to describe where.
                 {viewer.signedIn ? ' Your account comes with it, so we can reply.' : ''}
               </p>
             </form>
@@ -110,7 +132,7 @@ export function FeedbackWidget() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
       >
-        {open ? 'Close' : 'Feedback'}
+        {open ? 'Close' : 'Report a problem'}
       </button>
     </div>
   );

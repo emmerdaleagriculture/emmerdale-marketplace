@@ -5,17 +5,18 @@ import { setFeedbackHandledAction } from './actions';
 import s from '../admin.module.css';
 import { AdminTable } from '../ui';
 
-export const metadata: Metadata = { title: 'Feedback — Admin' };
+export const metadata: Metadata = { title: 'Problem reports — Admin' };
 export const dynamic = 'force-dynamic';
 
 /**
- * What people said about using the site.
+ * What people said went wrong, or what they thought of the site.
  *
  * Open first, then everything dealt with, because the list exists to be
  * emptied. Role and page come from the server at submission time, not from
  * the form, so "a contractor said this on the quote page" is a fact rather
  * than a claim — and the path is redacted, so a message sent from a
- * tokenised page shows the screen without handing over the key.
+ * tokenised page shows the screen without handing over the key. A report
+ * from a job page carries the job, so the row links to it.
  */
 const ROLE_LABEL: Record<string, string> = {
   contractor: 'Contractor',
@@ -33,13 +34,16 @@ type Row = {
   role: string;
   path: string | null;
   handled_at: string | null;
+  submission_id: string | null;
+  invitation_id: string | null;
+  contact_name: string | null;
 };
 
 export default async function AdminFeedbackPage() {
   const admin = createServiceRoleClient();
   const { data, error } = await admin
     .from('feedback')
-    .select('id, created_at, message, email, role, path, handled_at')
+    .select('id, created_at, message, email, role, path, handled_at, submission_id, invitation_id, contact_name')
     .order('created_at', { ascending: false })
     .limit(200);
 
@@ -49,13 +53,13 @@ export default async function AdminFeedbackPage() {
 
   return (
     <div>
-      <h1 className={s.h1}>Feedback</h1>
+      <h1 className={s.h1}>Problem reports</h1>
       <p className={s.sub}>
-        From the tab on every page. {open.length} to look at
+        From the tab on every page and the line under every thread. {open.length} to look at
         {done.length > 0 ? `, ${done.length} dealt with` : ''}.
       </p>
 
-      {error && <div className={s.blocked}>Couldn’t load feedback: {error.message}</div>}
+      {error && <div className={s.blocked}>Couldn’t load reports: {error.message}</div>}
 
       {open.length === 0 && done.length === 0 && (
         <div className={s.empty}>Nothing yet.</div>
@@ -73,7 +77,13 @@ export default async function AdminFeedbackPage() {
                 <tr key={r.id}>
                   <td title={formatDateTime(r.created_at)}>{timeAgo(r.created_at)}</td>
                   <td>
-                    {ROLE_LABEL[r.role] ?? r.role}
+                    {r.contact_name ? <strong>{r.contact_name}</strong> : (ROLE_LABEL[r.role] ?? r.role)}
+                    {r.contact_name && (
+                      <>
+                        <br />
+                        {ROLE_LABEL[r.role] ?? r.role}
+                      </>
+                    )}
                     {r.email && (
                       <>
                         <br />
@@ -81,7 +91,17 @@ export default async function AdminFeedbackPage() {
                       </>
                     )}
                   </td>
-                  <td>{r.path ?? '—'}</td>
+                  <td>
+                    {r.path ?? '—'}
+                    {r.submission_id && (
+                      <>
+                        <br />
+                        <a href={`/admin/submissions/${r.submission_id}${r.invitation_id ? '#messages' : ''}`}>
+                          Open the job
+                        </a>
+                      </>
+                    )}
+                  </td>
                   <td style={{ whiteSpace: 'pre-wrap', maxWidth: 480 }}>{r.message}</td>
                   <td>
                     <form action={setFeedbackHandledAction}>
