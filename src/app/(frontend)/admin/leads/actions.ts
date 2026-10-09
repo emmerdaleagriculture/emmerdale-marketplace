@@ -1,5 +1,6 @@
 'use server';
 
+import type { Json } from '@/lib/database.types';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
@@ -83,6 +84,17 @@ export type PublishLeadState = FormState & { values?: PublishLeadValues };
  * back to county-only, which is right when the lead has no postcode, and
  * when the job is plainly somewhere other than the enquirer's address.
  */
+/** The answers a portal enquiry carried, as job columns; nothing for a lead without them. */
+function leadAnswers(details: unknown): { service_attributes?: Json; details_text?: string | null } {
+  const d = (details ?? {}) as Record<string, unknown>;
+  const attrs = d.attributes;
+  if (!attrs || typeof attrs !== 'object' || Array.isArray(attrs) || Object.keys(attrs).length === 0) return {};
+  return {
+    service_attributes: attrs as Json,
+    details_text: typeof d.details_text === 'string' ? d.details_text : null,
+  };
+}
+
 export async function publishLeadAsSubmissionAction(
   _prev: PublishLeadState,
   formData: FormData,
@@ -164,6 +176,10 @@ export async function publishLeadAsSubmissionAction(
       // Where the lead came from — a Facebook lead-ad, or the visit behind a
       // portal enquiry. Without it, published leads were all unattributed.
       ...leadAttribution(claimed.source, claimed.details),
+      // A portal enquiry's tapped answers (bales, size, how often), stored on
+      // the lead by submitEnquiryAction, go out with the job as they would
+      // have had it auto-converted.
+      ...leadAnswers(claimed.details),
       // No expires_at: distribute_submission sets it unconditionally from
       // app_config.sq_job_expiry_days a moment later, so anything written
       // here is overwritten. A hardcoded window that looks authoritative

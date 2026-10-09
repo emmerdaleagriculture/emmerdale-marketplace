@@ -11,7 +11,8 @@ import s from './start.module.css';
  *
  * The quantity question is the one exception to tapping: it is the job's
  * area_value, the figure contractors price against, so it is a real number
- * field here and the generic area field is not shown alongside it.
+ * field here and the generic area field is not shown alongside it. A count
+ * (bales of hay) is typed too, but is an ordinary answer.
  */
 export function ServiceQuestions({
   questions,
@@ -68,11 +69,29 @@ export function ServiceQuestions({
               {q.hint && <span className={f.hint}>{q.hint}</span>}
               {askedFor === q.key && (
                 <p className={s.discrepancy} role="alert" style={{ margin: '4px 0' }}>
-                  The contractor needs this to price your job — tap any that apply, or{' '}
-                  <strong>Not sure</strong>. Or press Send again to send it as it is.
+                  The contractor needs this to price your job —{' '}
+                  {q.kind === 'number' ? (
+                    <>a rough figure is fine.</>
+                  ) : (
+                    <>
+                      tap any that apply, or <strong>Not sure</strong>.
+                    </>
+                  )}{' '}
+                  Or press Send again to send it as it is.
                 </p>
               )}
-              {q.options.some((o) => o.image) ? (
+              {q.kind === 'number' ? (
+                <input
+                  className={`${f.input} ${s.quantityInput}`}
+                  type="number"
+                  inputMode={q.integer ? 'numeric' : 'decimal'}
+                  step={q.integer ? 1 : 'any'}
+                  min="0"
+                  value={values[q.key] ?? ''}
+                  onChange={(e) => onAnswer(q.key, e.target.value)}
+                  aria-label={q.label}
+                />
+              ) : q.options.some((o) => o.image) ? (
                 <div className={s.optionCards}>
                   {q.options.map((o) => (
                     <button

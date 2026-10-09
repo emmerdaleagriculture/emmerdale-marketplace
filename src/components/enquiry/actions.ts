@@ -6,7 +6,9 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { resolveCounty } from '@/lib/postcodes';
 import { attributionFromForm, type SubmissionAttribution } from '@/lib/attribution';
+import { conditionAnswers, describeConditions } from '@/lib/jobParse/conditions';
 import type { FormState } from '@/lib/form';
+import type { Json } from '@/lib/database.types';
 
 /** New-vertical enquiry categories → the label used in admin notifications. */
 const CATEGORIES: Record<string, string> = {
@@ -61,6 +63,16 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
   const attribution = attributionFromForm(formData);
   const label = CATEGORIES[d.category];
 
+  // The vertical's own questions (bales, size, how often for hay), validated
+  // against the configured options exactly as the /start flow does, and the
+  // same answers in words for the job emails and the admin's.
+  const serviceName = AUTO_CONVERT[d.category]?.serviceName ?? null;
+  const attributes = conditionAnswers(serviceName, (n) => formData.get(n));
+  const detailsText =
+    describeConditions(serviceName, attributes)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join('\n') || null;
+
   // Resolve the county from the postcode now, so the admin sees the location and
   // coverage on the lead and publishing to the contractor network is one click.
   // Never blocks the enquiry — an unresolvable postcode just stores no county.
@@ -87,6 +99,9 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
       // Kept on the lead as well as the job, so one an operator publishes
       // by hand (admin/leads) is credited the same as one that auto-converts.
       attribution,
+      // Likewise the answers: a hand-published lead keeps its spec.
+      attributes,
+      details_text: detailsText,
     },
   })
     .select('id')
@@ -99,7 +114,10 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
   // distribution in start/actions.ts: a failure here must never cost the
   // customer their enquiry, and anything that does not convert simply stays
   // a pending lead — which is exactly the behaviour this replaces.
-  const converted = await autoConvertEnquiry(admin, lead.id, d, geo, attribution);
+  const converted = await autoConvertEnquiry(admin, lead.id, d, geo, attribution, {
+    attributes,
+    detailsText,
+  });
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   await notifyAdmins(
@@ -110,7 +128,9 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
       `Email:     ${d.email}\n` +
       `Postcode:  ${d.postcode}\n` +
       `County:    ${geo.county_name ?? '(not resolved — check the postcode)'}\n` +
-      `Wants:     ${d.details}\n\n` +
+      `Wants:     ${d.details}\n` +
+      (detailsText ? detailsText.split('\n').map((l) => `           ${l}\n`).join('') : '') +
+      `\n` +
       (converted
         ? `ALREADY SENT to contractors covering ${geo.county_name}: ${siteUrl}/admin/submissions/${converted}\n` +
           `Withdraw it there if it shouldn't have gone out.\n\n`
@@ -121,13 +141,13 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
   return { ok: true, message: SUCCESS_MESSAGE };
 }
 
-/** The vertical's canonical service, and how its job is titled. */
-const AUTO_CONVERT: Record<string, { serviceId: number; title: string }> = {
-  hay: { serviceId: 16, title: 'Hay, straw or haylage wanted' },
-  'tractor-hire': { serviceId: 17, title: 'Tractor hire for an event' },
+/** The vertical's canonical service (id and the name its questions are keyed by), and how its job is titled. */
+const AUTO_CONVERT: Record<string, { serviceId: number; serviceName: string; title: string }> = {
+  hay: { serviceId: 16, serviceName: 'Hay, straw & haylage', title: 'Hay, straw or haylage wanted' },
+  'tractor-hire': { serviceId: 17, serviceName: 'Tractor hire (events)', title: 'Tractor hire for an event' },
 };
 
-/** Enough words to be a real enquiry rather than a test or a slip. */
+/** Enough words to be a real enquiry rather than a test or a slip — unless the answers already say what it is. */
 const MIN_DETAIL = 15;
 
 /**
@@ -168,12 +188,15 @@ async function autoConvertEnquiry(
   d: { category: string; name: string; phone: string; email: string; details: string; postcode: string },
   geo: { county_id?: number | null; county_name?: string | null },
   attribution: SubmissionAttribution,
+  spec_: { attributes: Record<string, string>; detailsText: string | null },
 ): Promise<string | null> {
   try {
     const spec = AUTO_CONVERT[d.category];
     // An unresolved postcode has no county to publish to, and a two-word
-    // enquiry is not worth sixteen contractors' attention.
-    if (!spec || !geo.county_id || d.details.trim().length < MIN_DETAIL) return null;
+    // enquiry is not worth sixteen contractors' attention — unless the
+    // tapped answers (20 small bales, delivered, monthly) already are the job.
+    const thin = d.details.trim().length < MIN_DETAIL && Object.keys(spec_.attributes).length === 0;
+    if (!spec || !geo.county_id || thin) return null;
 
     // The same person twice in an hour is a double-submit or a bot, not two
     // jobs. The second one waits for a human.
@@ -210,6 +233,10 @@ async function autoConvertEnquiry(
         contact_email: d.email,
         contact_preference: 'either',
         ...attribution,
+        // Their answers to the vertical's questions, and the same in words
+        // for the invitation email (sq_job_facts reads details_text).
+        service_attributes: spec_.attributes as Json,
+        details_text: spec_.detailsText,
         // No expires_at: distribute_submission sets it unconditionally from
         // app_config.sq_job_expiry_days a moment later, so anything written
         // here is overwritten. A hardcoded window that looks authoritative

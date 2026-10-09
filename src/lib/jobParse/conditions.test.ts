@@ -69,7 +69,7 @@ describe('fencing flow', () => {
 describe('weed question', () => {
   it('is asked, and required, for both weed control and spraying', () => {
     for (const svc of ['Weed control', 'Spraying']) {
-      const q = visibleChoices(svc, {}).find((x) => x.key === 'weeds');
+      const q = visibleChoices(svc, {}).find((x) => x.key === 'weeds') as ChoiceQuestion;
       expect(q?.required).toBe(true);
       expect(q?.multi).toBe(true);
     }
@@ -159,6 +159,66 @@ describe('describeConditions', () => {
   it('keeps keys it does not know rather than hiding them', () => {
     expect(describeConditions(null, { soil_type: 'heavy_clay' })).toEqual([
       ['soil type', 'heavy clay'],
+    ]);
+  });
+});
+
+describe('hay, straw & haylage flow', () => {
+  const hay = 'Hay, straw & haylage';
+
+  it('asks what, how many, what size, delivery and whether it repeats — by the bale, not the acre', () => {
+    expect(visibleChoices(hay, {}).map((q) => q.key)).toEqual([
+      'forage',
+      'bale_count',
+      'bale_size',
+      'delivery',
+      'order',
+    ]);
+    expect(quantityFor(hay)).toBeNull();
+    expect(isAreaPriced(hay)).toBe(false);
+  });
+
+  it('asks how often only for a regular order', () => {
+    const keys = (a: Record<string, string>) => visibleChoices(hay, a).map((q) => q.key);
+    expect(keys({ order: 'regular' })).toContain('frequency');
+    expect(keys({ order: 'one_off' })).not.toContain('frequency');
+    expect(keys({})).not.toContain('frequency');
+  });
+
+  it('keeps a bale count only when it is a positive whole number', () => {
+    expect(conditionAnswers(hay, form({ condition_bale_count: '20' }))).toEqual({ bale_count: '20' });
+    expect(conditionAnswers(hay, form({ condition_bale_count: ' 1,000 ' }))).toEqual({ bale_count: '1000' });
+    expect(conditionAnswers(hay, form({ condition_bale_count: '2.6' }))).toEqual({ bale_count: '3' });
+    expect(conditionAnswers(hay, form({ condition_bale_count: '0' }))).toEqual({});
+    expect(conditionAnswers(hay, form({ condition_bale_count: 'twenty' }))).toEqual({});
+  });
+
+  it('drops a frequency given for a one-off', () => {
+    expect(
+      conditionAnswers(hay, form({ condition_order: 'one_off', condition_frequency: 'weekly' })),
+    ).toEqual({ order: 'one_off' });
+    expect(
+      conditionAnswers(hay, form({ condition_order: 'regular', condition_frequency: 'fortnightly' })),
+    ).toEqual({ order: 'regular', frequency: 'fortnightly' });
+  });
+
+  it('reads back as a spec a supplier can price from', () => {
+    expect(
+      describeConditions(hay, {
+        forage: 'hay,straw',
+        bale_count: '20',
+        bale_size: 'small',
+        delivery: 'delivered',
+        order: 'regular',
+        frequency: 'fortnightly',
+      }),
+    ).toEqual([
+      ['Forage', 'Hay, Straw'],
+      ['Bales', '20'],
+      ['Bale size', 'Small (conventional)'],
+      ['Delivery', 'Delivered'],
+      ['Order', 'Regular order'],
+      ['How often', 'Every 2 weeks'],
     ]);
   });
 });

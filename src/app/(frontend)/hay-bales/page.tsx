@@ -97,8 +97,8 @@ export default function HayBalesPage() {
           <div className={a.groupTitle}>Send an enquiry</div>
           <EnquiryForm
             category="hay"
-            detailsLabel="What do you need?"
-            detailsPlaceholder="e.g. 20 large square bales of meadow hay, delivered near SO23 — needed within 2 weeks"
+            detailsLabel="Anything else the supplier should know?"
+            detailsPlaceholder="e.g. good meadow hay for two horses, needed by the end of the month — access is fine for a tractor and trailer"
             submitLabel="Send hay enquiry"
           />
         </div>

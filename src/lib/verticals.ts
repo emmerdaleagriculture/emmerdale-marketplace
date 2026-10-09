@@ -55,8 +55,8 @@ export const VERTICALS: Record<VerticalKey, VerticalConfig> = {
     serviceType: ['Hay supply', 'Straw supply', 'Haylage supply'],
     serviceDescription: (c) =>
       `Sourcing hay, straw and haylage for horse owners, smallholders, farms and equestrian yards in ${c} — matched to local suppliers.`,
-    detailsLabel: 'What do you need?',
-    detailsPlaceholder: 'e.g. 20 large square bales of meadow hay, delivered — needed within 2 weeks',
+    detailsLabel: 'Anything else the supplier should know?',
+    detailsPlaceholder: 'e.g. good meadow hay for two horses, needed by the end of the month — access is fine for a tractor and trailer',
     submitLabel: 'Send hay enquiry',
     faqs: (c) => [
       {
