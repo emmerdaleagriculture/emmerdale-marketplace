@@ -28,7 +28,14 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
 
   const cleanHint = tidyJobHint(lead.job_hint);
   // County auto-resolved from the postcode when the enquiry was submitted.
-  const details = lead.details as { county?: string | null; county_id?: number | null } | null;
+  const details = lead.details as {
+    county?: string | null;
+    county_id?: number | null;
+    details_text?: string | null;
+  } | null;
+  // What a portal enquiry answered (bales, size, how often), as stored by
+  // submitEnquiryAction — the operator sees the spec they are about to publish.
+  const answerLines = (details?.details_text ?? '').split('\n').filter(Boolean);
   const detectedCounty = details?.county ?? null;
   const detectedCountyId = details?.county_id ?? undefined;
 
@@ -63,6 +70,16 @@ export default async function LeadReviewPage({ params }: { params: Promise<{ id:
           <div className={s.dLabel}>Wants</div>
           <div className={s.dValue}>{cleanHint ?? '—'}</div>
         </div>
+        {answerLines.length > 0 && (
+          <div>
+            <div className={s.dLabel}>Their answers</div>
+            <div className={s.dValue}>
+              {answerLines.map((l) => (
+                <div key={l}>{l}</div>
+              ))}
+            </div>
+          </div>
+        )}
         <div style={{ gridColumn: '1 / -1' }}>
           <div className={s.dLabel}>Raw form payload</div>
           <div className={s.dValue}>

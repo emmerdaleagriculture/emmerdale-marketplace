@@ -472,9 +472,11 @@ export function toggleMulti(q: ChoiceQuestion, current: string | undefined, valu
 /** A stored answer checked against the question: null when it isn't valid. */
 function validAnswer(q: AnsweredQuestion, raw: string): string | null {
   if (q.kind === 'number') {
-    const n = Number(raw.trim().replace(/,/g, ''));
+    const typed = Number(raw.trim().replace(/,/g, ''));
+    // Round first: 0.3 of a bale is no bales, not "0" stored as an answer.
+    const n = q.integer ? Math.round(typed) : typed;
     if (!Number.isFinite(n) || n <= 0) return null;
-    return String(q.integer ? Math.round(n) : n);
+    return String(n);
   }
   const allowed = new Set(q.options.map((o) => o.value));
   if (!q.multi) return allowed.has(raw) ? raw : null;
@@ -485,6 +487,24 @@ function validAnswer(q: AnsweredQuestion, raw: string): string | null {
     .map((o) => o.value)
     .filter((v) => picked.includes(v))
     .join(',');
+}
+
+/**
+ * Whether a stored or typed value counts as an answer to the question — the
+ * same test the server applies, so a "0" in the bales box is asked about
+ * rather than sent and silently dropped.
+ */
+export function hasAnswer(q: AnsweredQuestion, raw: string | undefined): boolean {
+  return typeof raw === 'string' && validAnswer(q, raw) !== null;
+}
+
+/**
+ * Every required question still showing has a valid answer. What the portal
+ * form's auto-conversion treats as "the answers already are the job".
+ */
+export function requiredAnswered(service: string | null, answers: Record<string, string>): boolean {
+  const asked = visibleChoices(service, answers).filter((q) => q.required);
+  return asked.length > 0 && asked.every((q) => hasAnswer(q, answers[q.key]));
 }
 
 /**

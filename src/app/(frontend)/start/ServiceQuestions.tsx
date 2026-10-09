@@ -19,9 +19,9 @@ export function ServiceQuestions({
   askedFor = null,
   values,
   onAnswer,
-  quantity,
+  quantity = '',
   onQuantity,
-  quantityClassName,
+  quantityClassName = f.field,
 }: {
   /** Already filtered to the questions the current answers leave showing. */
   questions: ConditionQuestion[];
@@ -29,9 +29,10 @@ export function ServiceQuestions({
   askedFor?: string | null;
   values: Record<string, string>;
   onAnswer: (key: string, value: string) => void;
-  quantity: string;
-  onQuantity: (value: string) => void;
-  quantityClassName: string;
+  /** Only read by a flow whose service asks a quantity question. */
+  quantity?: string;
+  onQuantity?: (value: string) => void;
+  quantityClassName?: string;
 }) {
   const tap = (q: ChoiceQuestion, value: string) => {
     if (q.multi) onAnswer(q.key, toggleMulti(q, values[q.key], value));
@@ -58,7 +59,7 @@ export function ServiceQuestions({
                 step="any"
                 min="0"
                 value={quantity}
-                onChange={(e) => onQuantity(e.target.value)}
+                onChange={(e) => onQuantity?.(e.target.value)}
               />
               <input type="hidden" name="area_unit" value={q.unit} />
               {q.hint && <span className={f.hint}>{q.hint}</span>}

@@ -6,15 +6,10 @@ import { emptyFormState } from '@/lib/form';
 import { readFirstTouch, visitAttribution, type VisitAttribution } from '@/lib/firstTouch';
 import { EmailField } from '@/components/forms/EmailField';
 import { ServiceQuestions } from '@/app/(frontend)/start/ServiceQuestions';
-import { visibleChoices } from '@/lib/jobParse/conditions';
+import { hasAnswer, visibleChoices } from '@/lib/jobParse/conditions';
+import { ENQUIRY_CATEGORIES, type EnquiryCategory } from '@/lib/enquiryCategories';
 import f from '@/components/forms/forms.module.css';
 import a from '@/app/(frontend)/auth.module.css';
-
-/** The canonical service each vertical's enquiry becomes — and whose questions it asks. */
-const VERTICAL_SERVICE: Record<'hay' | 'tractor-hire', string> = {
-  hay: 'Hay, straw & haylage',
-  'tractor-hire': 'Tractor hire (events)',
-};
 
 /**
  * Reusable customer-enquiry form for new marketplace verticals (hay, tractor
@@ -31,7 +26,7 @@ export function EnquiryForm({
   detailsPlaceholder,
   submitLabel,
 }: {
-  category: 'hay' | 'tractor-hire';
+  category: EnquiryCategory;
   detailsLabel: string;
   detailsPlaceholder: string;
   submitLabel: string;
@@ -43,7 +38,7 @@ export function EnquiryForm({
   // lead, and a lead without a count is still a lead.
   const [askedFor, setAskedFor] = useState<string | null>(null);
   const requiredAsked = useRef(false);
-  const questions = visibleChoices(VERTICAL_SERVICE[category], answers);
+  const questions = visibleChoices(ENQUIRY_CATEGORIES[category].serviceName, answers);
   const [formTs, setFormTs] = useState('');
   useEffect(() => setFormTs(String(Date.now())), []);
   // Where they came from, carried onto the lead and the job it becomes —
@@ -77,7 +72,7 @@ export function EnquiryForm({
       action={action}
       className={a.card}
       onSubmit={(e) => {
-        const unanswered = questions.find((q) => q.required && !answers[q.key]);
+        const unanswered = questions.find((q) => q.required && !hasAnswer(q, answers[q.key]));
         if (unanswered && !requiredAsked.current) {
           e.preventDefault();
           requiredAsked.current = true;
@@ -124,7 +119,7 @@ export function EnquiryForm({
         <>
           <ServiceQuestions
             questions={questions}
-            askedFor={askedFor && !answers[askedFor] ? askedFor : null}
+            askedFor={askedFor && !questions.some((q) => q.key === askedFor && hasAnswer(q, answers[q.key])) ? askedFor : null}
             values={answers}
             onAnswer={(key, value) => setAnswers((prev) => ({ ...prev, [key]: value }))}
             quantity=""
@@ -133,7 +128,7 @@ export function EnquiryForm({
           />
           {questions.map(
             (q) =>
-              answers[q.key] && (
+              hasAnswer(q, answers[q.key]) && (
                 <input key={q.key} type="hidden" name={`condition_${q.key}`} value={answers[q.key]} />
               ),
           )}
@@ -142,7 +137,15 @@ export function EnquiryForm({
 
       <label className={f.field}>
         <span className={f.label}>{detailsLabel}</span>
-        <textarea className={f.textarea} name="details" required maxLength={800} placeholder={detailsPlaceholder} />
+        {/* With the questions above carrying the job, the words are extra;
+            without them (tractor hire) they are the job and stay required. */}
+        <textarea
+          className={f.textarea}
+          name="details"
+          required={questions.length === 0}
+          maxLength={800}
+          placeholder={detailsPlaceholder}
+        />
       </label>
 
       {/* Said before they send, not after. The enquiry becomes a job that

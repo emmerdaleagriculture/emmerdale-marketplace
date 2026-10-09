@@ -7,6 +7,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
 import { leadAttribution } from '@/lib/attribution';
+import { ENQUIRY_CATEGORIES, isEnquiryCategory } from '@/lib/enquiryCategories';
 
 async function assertAdmin() {
   const user = await getUser();
@@ -84,8 +85,18 @@ export type PublishLeadState = FormState & { values?: PublishLeadValues };
  * back to county-only, which is right when the lead has no postcode, and
  * when the job is plainly somewhere other than the enquirer's address.
  */
-/** The answers a portal enquiry carried, as job columns; nothing for a lead without them. */
-function leadAnswers(details: unknown): { service_attributes?: Json; details_text?: string | null } {
+/**
+ * The answers a portal enquiry carried, as job columns — only when the job
+ * is published under the service they were asked for. Bale counts on a job
+ * the operator re-filed as tractor work would render as raw keys to the
+ * contractor; nothing for a lead without answers.
+ */
+function leadAnswers(
+  source: string | null,
+  details: unknown,
+  serviceId: number,
+): { service_attributes?: Json; details_text?: string | null } {
+  if (!isEnquiryCategory(source) || ENQUIRY_CATEGORIES[source].serviceId !== serviceId) return {};
   const d = (details ?? {}) as Record<string, unknown>;
   const attrs = d.attributes;
   if (!attrs || typeof attrs !== 'object' || Array.isArray(attrs) || Object.keys(attrs).length === 0) return {};
@@ -179,7 +190,7 @@ export async function publishLeadAsSubmissionAction(
       // A portal enquiry's tapped answers (bales, size, how often), stored on
       // the lead by submitEnquiryAction, go out with the job as they would
       // have had it auto-converted.
-      ...leadAnswers(claimed.details),
+      ...leadAnswers(claimed.source, claimed.details, serviceId),
       // No expires_at: distribute_submission sets it unconditionally from
       // app_config.sq_job_expiry_days a moment later, so anything written
       // here is overwritten. A hardcoded window that looks authoritative
