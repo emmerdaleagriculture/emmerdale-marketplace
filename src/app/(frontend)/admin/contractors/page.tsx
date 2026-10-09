@@ -58,13 +58,22 @@ function Row({ c }: { c: ContractorRow }) {
       <td>{c.base_postcode}</td>
       <td>
         {c.counties}
-        {c.counties >= MANY_COUNTIES && (
+        {c.servicesOnly ? (
           <>
             {' '}
-            <span className={`${s.pill} ${s.pillSuspended}`} title="Covers most of the map — worth a word">
-              blanket
+            <span className={`${s.pill} ${s.pillApproved}`} title="Invited only to jobs for the services they ticked">
+              services only
             </span>
           </>
+        ) : (
+          c.counties >= MANY_COUNTIES && (
+            <>
+              {' '}
+              <span className={`${s.pill} ${s.pillSuspended}`} title="Covers most of the map — worth a word">
+                blanket
+              </span>
+            </>
+          )
         )}
       </td>
       <td>
@@ -126,6 +135,7 @@ type ContractorRow = {
   invited: number;
   opened: number;
   premium: boolean;
+  servicesOnly: boolean;
 };
 
 export default async function AdminContractorsPage() {
@@ -138,7 +148,7 @@ export default async function AdminContractorsPage() {
       .order('created_at', { ascending: false }),
     // One row per contractor, counted in SQL: reading job_invitations here
     // would hit PostgREST's 1000-row cap and count wrong without saying so.
-    admin.from('admin_contractor_outreach').select('contractor_id, counties, invited, opened').limit(10000),
+    admin.from('admin_contractor_outreach').select('contractor_id, counties, invited, opened, services_only').limit(10000),
     admin.rpc('admin_premium_summary').then((r) => r, () => ({ data: null })),
   ]);
   const premiumIds = new Set(
@@ -154,6 +164,7 @@ export default async function AdminContractorsPage() {
       invited: o?.invited ?? 0,
       opened: o?.opened ?? 0,
       premium: premiumIds.has(c.id),
+      servicesOnly: o?.services_only ?? false,
     };
   }) as ContractorRow[];
   const pending = contractors.filter((c) => c.status === 'pending');

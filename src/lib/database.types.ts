@@ -639,6 +639,8 @@ export type Database = {
         Row: {
           premium_comped_until: string | null
           premium_reinstated_at: string | null
+          services_only: boolean
+          invite_radius_miles: number | null
           messages_moderated_until: string | null
           base_lat: number | null
           base_lng: number | null
@@ -662,6 +664,8 @@ export type Database = {
         Insert: {
           premium_comped_until?: string | null
           premium_reinstated_at?: string | null
+          services_only?: boolean
+          invite_radius_miles?: number | null
           messages_moderated_until?: string | null
           base_lat?: number | null
           base_lng?: number | null
@@ -685,6 +689,8 @@ export type Database = {
         Update: {
           premium_comped_until?: string | null
           premium_reinstated_at?: string | null
+          services_only?: boolean
+          invite_radius_miles?: number | null
           messages_moderated_until?: string | null
           base_lat?: number | null
           base_lng?: number | null
@@ -2661,6 +2667,7 @@ export type Database = {
           counties: number | null
           invited: number | null
           opened: number | null
+          services_only: boolean | null
         }
         Relationships: []
       }

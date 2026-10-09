@@ -175,3 +175,62 @@ export async function sendContractorWarning(formData: FormData) {
   revalidatePath(`/admin/contractors/${id}`);
   redirect(`/admin/contractors/${id}?warned=1#warning`);
 }
+
+/**
+ * Only the work they ticked. With services_only on, every market invitation
+ * path (distribution, late joins, the premium window, reminders — see
+ * 20261009120000) skips this contractor for jobs whose service is not in
+ * contractors.services. Off is how every other contractor works: county and
+ * distance only. Switching it on does not withdraw invitations already sent.
+ */
+export async function setServicesOnly(formData: FormData) {
+  await assertAdmin();
+
+  const id = String(formData.get('id') || '');
+  const on = String(formData.get('services_only') || '') === '1';
+  if (!id) throw new Error('Invalid request');
+
+  const admin = createServiceRoleClient();
+  const { error } = await admin.from('contractors').update({ services_only: on }).eq('id', id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath('/admin/contractors');
+  revalidatePath(`/admin/contractors/${id}`);
+}
+
+/** Further than any two points in the UK: a radius that never excludes a job. */
+const NATIONWIDE_RADIUS_MILES = 1000;
+
+/**
+ * Cover the whole country: every county, and a per-contractor radius no UK
+ * job can exceed (the default is sq_invite_radius_miles, 40). Ticking the
+ * counties fires contractor_counties_invite, which catches them up on every
+ * open job they qualify for — so for anyone not on services_only this is
+ * every open job in the country, and the page says so before the button.
+ */
+export async function coverWholeCountry(formData: FormData) {
+  await assertAdmin();
+
+  const id = String(formData.get('id') || '');
+  if (!id) throw new Error('Invalid request');
+
+  const admin = createServiceRoleClient();
+  const { error: radiusErr } = await admin
+    .from('contractors')
+    .update({ invite_radius_miles: NATIONWIDE_RADIUS_MILES })
+    .eq('id', id);
+  if (radiusErr) throw new Error(radiusErr.message);
+
+  const { data: counties, error: cErr } = await admin.from('counties').select('id');
+  if (cErr) throw new Error(cErr.message);
+  const { error: ccErr } = await admin
+    .from('contractor_counties')
+    .upsert((counties ?? []).map((c) => ({ contractor_id: id, county_id: c.id })), {
+      onConflict: 'contractor_id,county_id',
+      ignoreDuplicates: true,
+    });
+  if (ccErr) throw new Error(ccErr.message);
+
+  revalidatePath('/admin/contractors');
+  revalidatePath(`/admin/contractors/${id}`);
+}
