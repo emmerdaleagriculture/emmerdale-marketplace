@@ -7,7 +7,7 @@ import type { AreaUnit, CanonicalService } from './schema';
  * question key.
  *
  * Content exists for Paddock topping (spec worked example), Fencing, weed
- * control/spraying and Hedge cutting; other
+ * control/spraying, Hedge cutting and Hay, straw & haylage; other
  * services get their sets as Tom supplies them — an empty entry simply renders
  * no questions, so adding a set is config-only.
  */
@@ -59,7 +59,27 @@ export type QuantityQuestion = {
   group?: string;
 };
 
-export type ConditionQuestion = ChoiceQuestion | QuantityQuestion;
+/**
+ * A count the customer types rather than taps — bales of hay — stored as an
+ * attribute like any other answer. Unlike `quantity` it is not the job's
+ * area_value: twenty bales have no area, and the figure's unit is in its key.
+ */
+export type NumberQuestion = {
+  kind: 'number';
+  key: string;
+  label: string;
+  short?: string;
+  hint?: string;
+  group?: string;
+  /** Whole numbers only (a bale count); the default accepts decimals. */
+  integer?: boolean;
+  showIf?: (answers: Record<string, string>) => boolean;
+  required?: boolean;
+};
+
+export type ConditionQuestion = ChoiceQuestion | QuantityQuestion | NumberQuestion;
+/** A question whose answer lands in service_attributes (everything but the quantity). */
+export type AnsweredQuestion = ChoiceQuestion | NumberQuestion;
 
 const YES_NO: ConditionOption[] = [
   { value: 'yes', label: 'Yes' },
@@ -179,10 +199,91 @@ const HEDGE_QUESTIONS: ConditionQuestion[] = [
   },
 ];
 
+/**
+ * Hay, straw and haylage are priced by the bale, and the bale price turns on
+ * what the bale is: a conventional small bale and a Heston are a different
+ * load, a different trailer and a different price. Every hay job to date (9,
+ * to 9 Oct 2026) went out as the customer's words alone — "25 small square
+ * bales, or 1 big round bale", "2 square bales of hay 2 of straw every 2
+ * weeks" — with no count, size or frequency a supplier could price from
+ * without ringing round. A regular order is a different proposition from a
+ * one-off, so it is asked, and how often.
+ */
+const HAY_QUESTIONS: ConditionQuestion[] = [
+  {
+    key: 'forage',
+    label: 'What do you need?',
+    short: 'Forage',
+    hint: 'Pick every one you need.',
+    multi: true,
+    required: true,
+    options: [
+      { value: 'hay', label: 'Hay' },
+      { value: 'straw', label: 'Straw' },
+      { value: 'haylage', label: 'Haylage' },
+    ],
+  },
+  {
+    kind: 'number',
+    key: 'bale_count',
+    label: 'How many bales?',
+    short: 'Bales',
+    hint: 'A rough figure is fine. For a regular order, how many each time.',
+    integer: true,
+    required: true,
+  },
+  {
+    key: 'bale_size',
+    label: 'What size of bale?',
+    short: 'Bale size',
+    required: true,
+    options: [
+      { value: 'small', label: 'Small (conventional)' },
+      { value: 'round', label: 'Round' },
+      { value: 'large_square', label: 'Large square (Heston)' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'delivery',
+    label: 'Delivered, or will you collect?',
+    short: 'Delivery',
+    options: [
+      { value: 'delivered', label: 'Delivered' },
+      { value: 'collect', label: 'I can collect' },
+      { value: 'either', label: 'Either' },
+    ],
+  },
+  {
+    key: 'order',
+    label: 'Is this a one-off, or a regular order?',
+    short: 'Order',
+    required: true,
+    options: [
+      { value: 'one_off', label: 'One-off' },
+      { value: 'regular', label: 'Regular order' },
+    ],
+  },
+  {
+    key: 'frequency',
+    label: 'How often?',
+    short: 'How often',
+    showIf: (a) => a.order === 'regular',
+    options: [
+      { value: 'weekly', label: 'Every week' },
+      { value: 'fortnightly', label: 'Every 2 weeks' },
+      { value: 'monthly', label: 'Every month' },
+      { value: 'quarterly', label: 'Every few months' },
+      { value: 'not_sure', label: 'Not sure yet' },
+    ],
+  },
+];
+
 export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQuestion[]>> = {
   'Weed control': WEED_QUESTIONS,
   Spraying: WEED_QUESTIONS,
   'Hedge cutting': HEDGE_QUESTIONS,
+  'Hay, straw & haylage': HAY_QUESTIONS,
   'Paddock topping': [
     {
       key: 'last_cut',
@@ -315,13 +416,13 @@ export function quantityFor(service: string | null): QuantityQuestion | null {
   );
 }
 
-/** Choice questions still asked, given the answers so far. */
+/** Answered questions (choices and counts) still asked, given the answers so far. */
 export function visibleChoices(
   service: string | null,
   answers: Record<string, string>,
-): ChoiceQuestion[] {
+): AnsweredQuestion[] {
   return conditionsFor(service).filter(
-    (q): q is ChoiceQuestion => q.kind !== 'quantity' && (!q.showIf || q.showIf(answers)),
+    (q): q is AnsweredQuestion => q.kind !== 'quantity' && (!q.showIf || q.showIf(answers)),
   );
 }
 
@@ -369,7 +470,14 @@ export function toggleMulti(q: ChoiceQuestion, current: string | undefined, valu
 }
 
 /** A stored answer checked against the question: null when it isn't valid. */
-function validAnswer(q: ChoiceQuestion, raw: string): string | null {
+function validAnswer(q: AnsweredQuestion, raw: string): string | null {
+  if (q.kind === 'number') {
+    const typed = Number(raw.trim().replace(/,/g, ''));
+    // Round first: 0.3 of a bale is no bales, not "0" stored as an answer.
+    const n = q.integer ? Math.round(typed) : typed;
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return String(n);
+  }
   const allowed = new Set(q.options.map((o) => o.value));
   if (!q.multi) return allowed.has(raw) ? raw : null;
   const picked = raw.split(',').filter((v) => allowed.has(v));
@@ -382,10 +490,29 @@ function validAnswer(q: ChoiceQuestion, raw: string): string | null {
 }
 
 /**
+ * Whether a stored or typed value counts as an answer to the question — the
+ * same test the server applies, so a "0" in the bales box is asked about
+ * rather than sent and silently dropped.
+ */
+export function hasAnswer(q: AnsweredQuestion, raw: string | undefined): boolean {
+  return typeof raw === 'string' && validAnswer(q, raw) !== null;
+}
+
+/**
+ * Every required question still showing has a valid answer. What the portal
+ * form's auto-conversion treats as "the answers already are the job".
+ */
+export function requiredAnswered(service: string | null, answers: Record<string, string>): boolean {
+  const asked = visibleChoices(service, answers).filter((q) => q.required);
+  return asked.length > 0 && asked.every((q) => hasAnswer(q, answers[q.key]));
+}
+
+/**
  * Pull condition answers for a service out of submitted form data
- * (`condition_<key>` fields), validated against the configured options. An
- * answer to a question its earlier answers hide (a capping rail on post and
- * rail) is dropped, as it would be on screen.
+ * (`condition_<key>` fields), validated against the configured options (a
+ * count must be a positive number). An answer to a question its earlier
+ * answers hide (a capping rail on post and rail, how often for a one-off) is
+ * dropped, as it would be on screen.
  */
 export function conditionAnswers(
   service: string | null,
@@ -414,7 +541,7 @@ export function describeConditions(
 ): [string, string][] {
   const known = new Map(
     conditionsFor(service)
-      .filter((q): q is ChoiceQuestion => q.kind !== 'quantity')
+      .filter((q): q is AnsweredQuestion => q.kind !== 'quantity')
       .map((q) => [q.key, q]),
   );
   // In the order the questions were asked, not the order they were stored:
@@ -428,6 +555,10 @@ export function describeConditions(
     const q = known.get(key);
     if (!q) {
       rows.push([key.replace(/_/g, ' '), raw.replace(/_/g, ' ')]);
+      continue;
+    }
+    if (q.kind === 'number') {
+      rows.push([q.short ?? q.label, raw]);
       continue;
     }
     const labels = raw

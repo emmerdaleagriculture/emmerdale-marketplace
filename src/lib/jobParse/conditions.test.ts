@@ -3,8 +3,10 @@ import {
   conditionAnswers,
   conditionsFor,
   describeConditions,
+  hasAnswer,
   isAreaPriced,
   quantityFor,
+  requiredAnswered,
   toggleMulti,
   visibleChoices,
   type ChoiceQuestion,
@@ -69,7 +71,7 @@ describe('fencing flow', () => {
 describe('weed question', () => {
   it('is asked, and required, for both weed control and spraying', () => {
     for (const svc of ['Weed control', 'Spraying']) {
-      const q = visibleChoices(svc, {}).find((x) => x.key === 'weeds');
+      const q = visibleChoices(svc, {}).find((x) => x.key === 'weeds') as ChoiceQuestion;
       expect(q?.required).toBe(true);
       expect(q?.multi).toBe(true);
     }
@@ -159,6 +161,88 @@ describe('describeConditions', () => {
   it('keeps keys it does not know rather than hiding them', () => {
     expect(describeConditions(null, { soil_type: 'heavy_clay' })).toEqual([
       ['soil type', 'heavy clay'],
+    ]);
+  });
+});
+
+describe('hay, straw & haylage flow', () => {
+  const hay = 'Hay, straw & haylage';
+
+  it('asks what, how many, what size, delivery and whether it repeats — by the bale, not the acre', () => {
+    expect(visibleChoices(hay, {}).map((q) => q.key)).toEqual([
+      'forage',
+      'bale_count',
+      'bale_size',
+      'delivery',
+      'order',
+    ]);
+    expect(quantityFor(hay)).toBeNull();
+    expect(isAreaPriced(hay)).toBe(false);
+  });
+
+  it('asks how often only for a regular order', () => {
+    const keys = (a: Record<string, string>) => visibleChoices(hay, a).map((q) => q.key);
+    expect(keys({ order: 'regular' })).toContain('frequency');
+    expect(keys({ order: 'one_off' })).not.toContain('frequency');
+    expect(keys({})).not.toContain('frequency');
+  });
+
+  it('keeps a bale count only when it is a positive whole number', () => {
+    expect(conditionAnswers(hay, form({ condition_bale_count: '20' }))).toEqual({ bale_count: '20' });
+    expect(conditionAnswers(hay, form({ condition_bale_count: ' 1,000 ' }))).toEqual({ bale_count: '1000' });
+    expect(conditionAnswers(hay, form({ condition_bale_count: '2.6' }))).toEqual({ bale_count: '3' });
+    expect(conditionAnswers(hay, form({ condition_bale_count: '0' }))).toEqual({});
+    expect(conditionAnswers(hay, form({ condition_bale_count: '0.3' }))).toEqual({});
+    expect(conditionAnswers(hay, form({ condition_bale_count: 'twenty' }))).toEqual({});
+  });
+
+  it('counts an answer the way the server will keep it, so "0" bales is still asked about', () => {
+    const count = visibleChoices(hay, {}).find((q) => q.key === 'bale_count')!;
+    const size = visibleChoices(hay, {}).find((q) => q.key === 'bale_size')!;
+    expect(hasAnswer(count, '20')).toBe(true);
+    expect(hasAnswer(count, '0')).toBe(false);
+    expect(hasAnswer(count, undefined)).toBe(false);
+    expect(hasAnswer(size, 'round')).toBe(true);
+    expect(hasAnswer(size, 'enormous')).toBe(false);
+  });
+
+  it('is complete only when every required question has a real answer', () => {
+    const full = { forage: 'hay', bale_count: '20', bale_size: 'small', order: 'one_off' };
+    expect(requiredAnswered(hay, full)).toBe(true);
+    expect(requiredAnswered(hay, { ...full, bale_count: '0' })).toBe(false);
+    expect(requiredAnswered(hay, { delivery: 'either' })).toBe(false);
+    // A regular order's frequency is optional, so its absence does not block.
+    expect(requiredAnswered(hay, { ...full, order: 'regular' })).toBe(true);
+    // A service with no required questions is never "complete" on answers alone.
+    expect(requiredAnswered('Tractor hire (events)', {})).toBe(false);
+  });
+
+  it('drops a frequency given for a one-off', () => {
+    expect(
+      conditionAnswers(hay, form({ condition_order: 'one_off', condition_frequency: 'weekly' })),
+    ).toEqual({ order: 'one_off' });
+    expect(
+      conditionAnswers(hay, form({ condition_order: 'regular', condition_frequency: 'fortnightly' })),
+    ).toEqual({ order: 'regular', frequency: 'fortnightly' });
+  });
+
+  it('reads back as a spec a supplier can price from', () => {
+    expect(
+      describeConditions(hay, {
+        forage: 'hay,straw',
+        bale_count: '20',
+        bale_size: 'small',
+        delivery: 'delivered',
+        order: 'regular',
+        frequency: 'fortnightly',
+      }),
+    ).toEqual([
+      ['Forage', 'Hay, Straw'],
+      ['Bales', '20'],
+      ['Bale size', 'Small (conventional)'],
+      ['Delivery', 'Delivered'],
+      ['Order', 'Regular order'],
+      ['How often', 'Every 2 weeks'],
     ]);
   });
 });

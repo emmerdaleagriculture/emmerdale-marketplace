@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { START_COMPLETE_PATH } from './copy';
 import { confirmJobAction, saveContactDraftAction, type ConfirmActionState } from './actions';
 import type { ParseResult } from '@/lib/jobParse/schema';
-import { conditionsFor, isAreaPriced, quantityFor, visibleChoices } from '@/lib/jobParse/conditions';
+import { conditionsFor, hasAnswer, isAreaPriced, quantityFor, visibleChoices } from '@/lib/jobParse/conditions';
 import { CANONICAL_SERVICES } from '@/lib/jobParse/services';
 import { GATE_WIDTH_OPTIONS } from '@/lib/jobParse/access';
 import { areaDiscrepancy } from '@/lib/jobParse/geometry';
@@ -271,7 +271,7 @@ export function ConfirmStep({
             ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
           return;
         }
-        const unanswered = choices.find((q) => q.required && !conditionValues[q.key]);
+        const unanswered = choices.find((q) => q.required && !hasAnswer(q, conditionValues[q.key]));
         if (unanswered && !requiredAsked.current) {
           e.preventDefault();
           requiredAsked.current = true;
@@ -313,7 +313,7 @@ export function ConfirmStep({
       />
       {choices.map(
         (q) =>
-          conditionValues[q.key] && (
+          hasAnswer(q, conditionValues[q.key]) && (
             <input
               key={q.key}
               type="hidden"
@@ -509,7 +509,7 @@ export function ConfirmStep({
         <div className={s.serviceBlock}>
           <ServiceQuestions
             questions={questions}
-            askedFor={askedFor && !conditionValues[askedFor] ? askedFor : null}
+            askedFor={askedFor && !choices.some((q) => q.key === askedFor && hasAnswer(q, conditionValues[q.key])) ? askedFor : null}
             values={conditionValues}
             onAnswer={(key, value) => setConditionValues((prev) => ({ ...prev, [key]: value }))}
             quantity={areaValue}
@@ -522,8 +522,10 @@ export function ConfirmStep({
       {/* ── The details ──────────────────────────────────────────────── */}
       <div className={a.groupTitle}>Check the details</div>
 
-      {/* The flow's own quantity question stands in for this one. */}
-      {!quantity && (
+      {/* The flow's own quantity question stands in for this one — and work
+          not priced by the acre (hay, a hired tractor) has no ground to ask
+          about at all. An unmatched job keeps the box: it may yet be acres. */}
+      {!quantity && (currentService === null || isAreaPriced(currentService)) && (
         <div className={a.row2}>
           <label className={fieldClass('area')}>
             <span className={f.label}>How much ground?</span>
