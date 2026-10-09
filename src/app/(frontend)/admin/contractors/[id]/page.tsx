@@ -2,7 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { sendContractorWarning, setContractorStatus, setPremiumComp } from '../actions';
+import {
+  coverWholeCountry,
+  sendContractorWarning,
+  setContractorStatus,
+  setPremiumComp,
+  setServicesOnly,
+} from '../actions';
 import { warningDraft } from '@/lib/sealedQuotes/contractorWarning';
 import { formatDateTime } from '@/lib/time';
 import { AdminTable } from '../../ui';
@@ -27,10 +33,11 @@ export default async function ContractorDetailPage({
   const { data: c } = await admin.from('contractors').select('*').eq('id', id).maybeSingle();
   if (!c) notFound();
 
-  const { data: ccRows } = await admin
-    .from('contractor_counties')
-    .select('counties(name, region)')
-    .eq('contractor_id', id);
+  const [{ data: ccRows }, { count: countyTotal }, { data: serviceRows }] = await Promise.all([
+    admin.from('contractor_counties').select('counties(name, region)').eq('contractor_id', id),
+    admin.from('counties').select('id', { count: 'exact', head: true }),
+    admin.from('services').select('id, name').in('id', c.services ?? []).order('name'),
+  ]);
 
   const [{ data: sub }, { data: isPremium }] = await Promise.all([
     admin
@@ -70,6 +77,8 @@ export default async function ContractorDetailPage({
   const countyNames = (ccRows ?? [])
     .map((r) => (r.counties as { name: string } | null)?.name)
     .filter(Boolean) as string[];
+  const wholeCountry = countyTotal != null && countyNames.length >= countyTotal;
+  const serviceNames = (serviceRows ?? []).map((r) => r.name);
 
   return (
     <div>
@@ -115,7 +124,9 @@ export default async function ContractorDetailPage({
         </div>
       </div>
 
-      <div className={s.sectionLabel}>Counties covered ({countyNames.length})</div>
+      <div className={s.sectionLabel}>
+        Counties covered ({countyNames.length}){wholeCountry ? ' · the whole country' : ''}
+      </div>
       <div className={s.tags}>
         {countyNames.length ? (
           countyNames.map((n) => (
@@ -127,6 +138,56 @@ export default async function ContractorDetailPage({
           <span className={s.dValue}>None selected</span>
         )}
       </div>
+
+      {/* What they are invited to. Routing is county + distance; the service
+          is only consulted when services_only is on (20261009120000). */}
+      <div className={s.sectionLabel}>Work wanted</div>
+      <p className={s.dValue}>
+        {c.services_only ? (
+          <>
+            <b>Only the services ticked</b> — a job for anything else is not sent to them, even in their counties.
+          </>
+        ) : (
+          <>Any job in their counties within range; the service is not checked.</>
+        )}
+      </p>
+      <p className={s.dValue}>
+        Services ticked ({serviceNames.length}): {serviceNames.length ? serviceNames.join(', ') : 'none'}
+      </p>
+      <p className={s.dValue}>
+        Distance limit:{' '}
+        {c.invite_radius_miles == null
+          ? 'the default (40 miles from base)'
+          : c.invite_radius_miles >= 1000
+            ? 'none — nationwide'
+            : `${c.invite_radius_miles} miles from base`}
+      </p>
+      <div className={s.actions}>
+        <form action={setServicesOnly}>
+          <input type="hidden" name="id" value={c.id} />
+          <input type="hidden" name="services_only" value={c.services_only ? '0' : '1'} />
+          <button type="submit" className={c.services_only ? s.btnSuspend : s.btnApprove}>
+            {c.services_only ? 'Send them any job in their counties' : 'Only send jobs for the services ticked'}
+          </button>
+        </form>
+        {/* Only offered once the service filter is on: without it, this
+            would invite them to every open job in the country at once. */}
+        {!wholeCountry && c.services_only && (
+          <form action={coverWholeCountry}>
+            <input type="hidden" name="id" value={c.id} />
+            <button type="submit" className={s.btnApprove}>
+              Cover the whole country
+            </button>
+          </form>
+        )}
+      </div>
+      {!wholeCountry && (
+        <p className={s.dValue}>
+          {c.services_only
+            ? 'Covering the whole country ticks every county and removes the distance limit, and invites them at once to every open job of the services ticked.'
+            : 'To cover the whole country, switch on “only the services ticked” first: with the service not checked, every county would mean every open job in the country.'}
+        </p>
+      )}
 
       <div className={s.sectionLabel}>Premium membership</div>
       <p className={s.dValue}>
