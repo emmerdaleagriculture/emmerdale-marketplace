@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
-import { ringAreaAcres, type BoundaryPolygon, type LngLat } from '@/lib/jobParse/geometry';
+import { measuredAcres, type BoundaryPolygon, type LngLat } from '@/lib/jobParse/geometry';
 import f from '@/components/forms/forms.module.css';
 import s from './start.module.css';
 
@@ -178,7 +178,7 @@ export function BoundaryMap({
           );
         }
         setPointCount(pts.length);
-        setAcres(pts.length >= 3 ? Number(ringAreaAcres(pts).toFixed(2)) : null);
+        setAcres(measuredAcres(pts));
         emit();
       };
       redrawRef.current = redraw;
@@ -190,7 +190,7 @@ export function BoundaryMap({
           lng: stateRef.current.pinMoved ? stateRef.current.pin[1] : null,
           boundary:
             pts.length >= 3 ? { type: 'Polygon', coordinates: [[...pts, pts[0]]] } : null,
-          mappedAcres: pts.length >= 3 ? Number(ringAreaAcres(pts).toFixed(2)) : null,
+          mappedAcres: measuredAcres(pts),
         });
       };
 
@@ -239,7 +239,7 @@ export function BoundaryMap({
                 ? 'Tap the corners of the area, one by one.'
                 : acres !== null
                   ? `That measures about ${acres} acres.`
-                  : ''}
+                  : 'That outline crosses itself. Undo, and tap round the edge in order.'}
             </span>
             <button
               type="button"

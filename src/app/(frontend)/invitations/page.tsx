@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { nonContractorPath } from '@/lib/auth';
+import { jobAcres } from '@/lib/jobParse/geometry';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -104,8 +105,8 @@ export default async function InvitationsPage() {
                         {inv.distance_miles != null && ` · ${inv.distance_miles} miles`}
                       </div>
                       <div className={s.meta}>
-                        {inv.area_mapped_value
-                          ? `${inv.area_mapped_value} acres (measured)`
+                        {jobAcres(inv) !== null && inv.area_unit !== 'linear_m'
+                          ? `${jobAcres(inv)} acres${inv.area_source === 'stated' || inv.area_mapped_value == null ? '' : ' (measured)'}`
                           : inv.area_value
                             ? `${inv.area_value} ${inv.area_unit === 'linear_m' ? 'm' : inv.area_unit}`
                             : ''}

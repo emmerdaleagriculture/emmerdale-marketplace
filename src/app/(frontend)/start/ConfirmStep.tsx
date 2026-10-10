@@ -300,6 +300,9 @@ export function ConfirmStep({
           must not override a postcode corrected on this page. */}
       <input type="hidden" name="lat" value={mapState?.lat ?? ''} />
       <input type="hidden" name="lng" value={mapState?.lng ?? ''} />
+      {/* The answer to "which is right?" below — the server records that the
+          customer chose their own figure over the drawn one. */}
+      <input type="hidden" name="area_keep_stated" value={keepStated ? 'yes' : ''} />
       <input
         type="hidden"
         name="boundary"

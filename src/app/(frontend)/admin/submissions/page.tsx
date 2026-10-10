@@ -39,6 +39,7 @@ type Row = {
   area_value: number | null;
   area_unit: string | null;
   area_mapped_value: number | null;
+  area_source: string | null;
   postcode: string | null;
   urgency: string | null;
   target_date: string | null;
@@ -178,7 +179,7 @@ function starts(text: string, prefix: string) {
 }
 
 function areaLabel(r: Row): string | null {
-  if (r.area_mapped_value != null) return `${r.area_mapped_value} acres (drawn)`;
+  if (r.area_mapped_value != null && r.area_source !== 'stated') return `${r.area_mapped_value} acres (drawn)`;
   if (r.area_value == null) return null;
   return `${r.area_value} ${r.area_unit === 'linear_m' ? 'm' : (r.area_unit ?? '')}`.trim();
 }

@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { jobAcres } from '@/lib/jobParse/geometry';
 
 /**
  * Jobs out with contractors right now, by county, for the public contractor
@@ -39,6 +40,7 @@ type Row = {
   area_value: number | null;
   area_unit: string | null;
   area_mapped_value: number | null;
+  area_source: string | null;
   counties: { name: string } | null;
   services: { name: string } | null;
 };
@@ -47,7 +49,7 @@ export async function getOpenJobsByCounty(): Promise<CountyJobs[]> {
   const admin = createServiceRoleClient();
   const { data, error } = await admin
     .from('job_submissions')
-    .select('area_value, area_unit, area_mapped_value, counties(name), services(name)')
+    .select('area_value, area_unit, area_mapped_value, area_source, counties(name), services(name)')
     .in('status', OPEN)
     .is('hidden_at', null)
     .gt('expires_at', new Date().toISOString())
@@ -67,8 +69,8 @@ export async function getOpenJobsByCounty(): Promise<CountyJobs[]> {
       // exactly what this page must not print.
       service: r.services?.name ?? 'Other land work',
       size:
-        r.area_mapped_value != null
-          ? sizeLabel(r.area_mapped_value, 'acres')
+        jobAcres(r) !== null && r.area_unit !== 'linear_m'
+          ? sizeLabel(jobAcres(r), 'acres')
           : sizeLabel(r.area_value, r.area_unit),
     };
     const list = byCounty.get(county);

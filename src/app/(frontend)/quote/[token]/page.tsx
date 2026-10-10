@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { after } from 'next/server';
+import { jobAcres } from '@/lib/jobParse/geometry';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getInvitationByToken, getLiveQuote, signPhotos } from '@/lib/sealedQuotes/data';
 import { formatGBP, formatRate, vatNote } from '@/lib/sealedQuotes/money';
@@ -112,8 +113,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     ['distributed', 'quotes_receiving', 'accepted_awaiting_payment'].includes(js.status) &&
     !['declined', 'closed_awarded', 'closed_stale'].includes(invitation.status);
 
-  const acres =
-    js.area_mapped_value ?? (js.area_unit === 'acres' ? js.area_value : null);
+  const acres = jobAcres(js);
 
   const spec = {
     service: service?.name ?? null,
@@ -125,6 +125,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     areaValue: js.area_value,
     areaUnit: js.area_unit,
     areaMapped: js.area_mapped_value,
+    areaSource: js.area_source,
     urgency: js.urgency,
     targetDate: js.target_date,
     accessNotes: js.access_notes,
