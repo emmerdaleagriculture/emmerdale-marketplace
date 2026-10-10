@@ -15,7 +15,7 @@ import { CONFIRM_SUCCESS } from './copy';
 import type { Json } from '@/lib/database.types';
 import { deterministicParse, toAcres } from '@/lib/jobParse/deterministic';
 import { reconcile } from '@/lib/jobParse/reconcile';
-import { parseBoundary, ringAreaAcres } from '@/lib/jobParse/geometry';
+import { areaDiscrepancy, measuredAcres, parseBoundary } from '@/lib/jobParse/geometry';
 import { conditionAnswers, describeConditions, quantityFor } from '@/lib/jobParse/conditions';
 import { choicesFromPick, serviceFromPick, servicesMentioned } from '@/lib/jobParse/servicePick';
 import { landingFlowPath } from '@/lib/landingPaths';
@@ -655,11 +655,13 @@ export async function confirmJobAction(
 
   // Boundary (§7): validate the polygon and recompute its area server-side —
   // the client's live figure is display only. Stored even when the customer
-  // keeps their stated figure; downstream needs both.
+  // keeps their stated figure; downstream needs both. A ring that crosses
+  // itself is kept as evidence of what was drawn but measures nothing.
   const boundary = parseBoundary(formData.get('boundary'));
-  const areaMapped = boundary
-    ? Number(ringAreaAcres(boundary.coordinates[0]).toFixed(2))
-    : null;
+  const areaMapped = boundary ? measuredAcres(boundary.coordinates[0]) : null;
+  // The confirm step shows a stated figure beside a measured one that
+  // disagrees with it and asks which is right; "keep mine" arrives here.
+  const keepStated = formData.get('area_keep_stated') === 'yes';
 
   // Gate / access details — optional, and lenient: a typo'd what3words or an
   // unknown width value stores null rather than blocking the submit.
@@ -679,9 +681,17 @@ export async function confirmJobAction(
     }
   }
 
-  // Downstream must know whether it holds a stated figure or a measurement (§7).
+  // Downstream must know whether it holds a stated figure or a measurement
+  // (§7). 'stated' with a measurement on file means the customer saw both
+  // and kept their own — jobAcres() then shows contractors that one.
   const areaSource =
-    areaMapped !== null && areaValue !== null ? 'both' : areaMapped !== null ? 'mapped' : 'stated';
+    areaMapped !== null && areaValue !== null
+      ? keepStated && areaUnit === 'acres' && areaDiscrepancy(areaValue, areaMapped)
+        ? 'stated'
+        : 'both'
+      : areaMapped !== null
+        ? 'mapped'
+        : 'stated';
 
   // Condition answers (§26a.2) merge into the parse-time attributes.
   const conditions = conditionAnswers(serviceName, (n) => formData.get(n));

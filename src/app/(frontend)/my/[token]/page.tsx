@@ -219,6 +219,7 @@ export default async function ClientPortalPage({
     areaValue: js.area_value,
     areaUnit: js.area_unit,
     areaMapped: js.area_mapped_value,
+    areaSource: js.area_source,
     urgency: js.urgency,
     targetDate: js.target_date,
     accessNotes: js.access_notes,

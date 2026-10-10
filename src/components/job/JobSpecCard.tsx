@@ -15,6 +15,8 @@ export type JobSpec = {
   areaValue: number | null;
   areaUnit: string | null;
   areaMapped: number | null;
+  /** 'stated' with a measurement present = the customer kept their own figure. */
+  areaSource?: string | null;
   urgency: string | null;
   targetDate: string | null;
   accessNotes: string | null;
@@ -38,13 +40,18 @@ export const URGENCY_LABELS: Record<string, string> = {
 };
 
 function areaLabel(spec: JobSpec): string {
-  const parts: string[] = [];
-  if (spec.areaMapped !== null) parts.push(`${spec.areaMapped} acres measured from a drawn boundary`);
-  if (spec.areaValue !== null) {
-    const unit = spec.areaUnit === 'linear_m' ? 'metres' : (spec.areaUnit ?? '');
-    parts.push(`${spec.areaValue} ${unit} stated by the customer`);
+  const stated =
+    spec.areaValue !== null
+      ? `${spec.areaValue} ${spec.areaUnit === 'linear_m' ? 'metres' : (spec.areaUnit ?? '')} stated by the customer`
+      : null;
+  const mapped =
+    spec.areaMapped !== null ? `${spec.areaMapped} acres measured from a drawn boundary` : null;
+  // The customer saw both figures and kept their own: lead with it, and say
+  // the drawing is the one in doubt rather than printing two sizes as equals.
+  if (spec.areaSource === 'stated' && stated && mapped) {
+    return `${stated} · the boundary they drew measures ${spec.areaMapped} acres, which they said is wrong`;
   }
-  return parts.join(' · ') || 'Not stated';
+  return [mapped, stated].filter(Boolean).join(' · ') || 'Not stated';
 }
 
 /**

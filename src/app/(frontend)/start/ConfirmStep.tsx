@@ -76,8 +76,10 @@ export function ConfirmStep({
     trackStep('parsed');
   }, []);
   useEffect(() => {
-    if (mapState?.mappedAcres) trackStep('map_drawn');
-  }, [mapState?.mappedAcres]);
+    // Keyed on the shape, not its figure: a ring that crosses itself has
+    // no measurement but was still drawn.
+    if (mapState?.boundary) trackStep('map_drawn');
+  }, [mapState?.boundary]);
   useEffect(() => {
     if (state.ok) trackStep('sent');
     else if (state.error) trackStep('confirm_error');
@@ -300,6 +302,9 @@ export function ConfirmStep({
           must not override a postcode corrected on this page. */}
       <input type="hidden" name="lat" value={mapState?.lat ?? ''} />
       <input type="hidden" name="lng" value={mapState?.lng ?? ''} />
+      {/* The answer to "which is right?" below — the server records that the
+          customer chose their own figure over the drawn one. */}
+      <input type="hidden" name="area_keep_stated" value={keepStated ? 'yes' : ''} />
       <input
         type="hidden"
         name="boundary"

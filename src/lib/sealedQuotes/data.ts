@@ -58,7 +58,7 @@ export async function getSubmissionByClientToken(token: string) {
        contact_phone, notify_sms, sms_phone,
        visit_status, visit_due_at, visit_revised_client_pence, visit_revision_reason,
        market_opens_at, preferred_contractor_id, first_refusal, extra_work_of, extra_work_origin,
-       postcode, lat, lng, boundary, area_value, area_unit, area_mapped_value,
+       postcode, lat, lng, boundary, area_value, area_unit, area_mapped_value, area_source,
        urgency, target_date, access_notes, obstacles, gate_width, gate_w3w,
        service_attributes, photo_paths, service_verbatim,
        service:services (id, name),
