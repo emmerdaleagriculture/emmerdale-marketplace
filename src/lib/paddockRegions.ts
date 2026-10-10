@@ -2,7 +2,7 @@
  * Region-level notes about grazing ground, used on the per-county paddock
  * pages.
  *
- * Why region and not county: 88 county pages that differ only by a swapped
+ * Why region and not county: 99 county pages that differ only by a swapped
  * name are thin doorway pages, and Google treats them as such. The honest
  * differentiators we actually hold are the county's region, its neighbours and
  * its live contractor count — so the ground copy is keyed on region, where the
@@ -115,6 +115,57 @@ export const REGION_NOTES: Record<string, RegionNote> = {
  * page — write only what's actually true of the ground there.
  */
 export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
+  /* ── Northern Ireland ────────────────────────────────────────────────
+     One region row for 11 districts, so without these every Northern
+     Ireland page would share a paragraph. Split along the landscape: the
+     Fermanagh lakeland, the Sperrins and the Foyle, the Antrim plateau and
+     glens, the Lagan valley and Belfast fringe, the drier Down coast, and the
+     Mournes. Districts that genuinely share ground share a note. */
+  'Fermanagh and Omagh': {
+    ground:
+      'Lakeland and drumlin country around Lough Erne, with some of the wettest, heaviest grazing ground in the UK; the Sperrin foothills east of Omagh are thinner and more acid. Rushes return wherever drains are neglected, and low fields can stand wet from autumn to late spring.',
+  },
+  'Derry City and Strabane': {
+    ground:
+      'The Foyle and Mourne valley floors carry good, deep grazing ground; the Sperrins above Strabane and Plumbridge are peaty, acid hill land. On the lower ground the problem is wet rather than poor — drainage and poaching matter more than fertility.',
+  },
+  'Mid Ulster': {
+    ground:
+      'The Sperrins to the west, acid and peaty, falling to drumlin grazing round Cookstown and Dungannon and the flat, heavy ground on the Lough Neagh shore, which lies wet and poaches badly. Most paddocks are on the drumlins, where the slopes drain and the hollows do not.',
+  },
+  'Causeway Coast and Glens': {
+    ground:
+      'The basalt plateau behind the coast is high, wet and peaty; the Glens of Antrim run down to small, steep, well-sheltered fields; and the coastal strip round Coleraine and the lower Bann is the kindest ground in the district, lighter and earlier than inland.',
+  },
+  'Mid and East Antrim': {
+    ground:
+      'Two kinds of ground: the Antrim plateau above Ballymena and Larne, heavy, wet basalt grazing with rushes on the tops, and the lowland along the Braid and the Six Mile Water, which is good grass country on deeper soils. Rainfall climbs steeply with height.',
+  },
+  'Antrim and Newtownabbey': {
+    ground:
+      'Lough Neagh shore lowland and the Six Mile Water valley: heavy, moisture-holding clays that grow grass well but carry machinery late, with the basalt hills above Newtownabbey wetter and thinner. Small paddocks and livery yards are common on the Belfast fringe.',
+  },
+  Belfast: {
+    ground:
+      'Urban-fringe paddocks on the Castlereagh hills and the Lagan valley: small fields, heavy clay on the hills and better-drained glacial ground along the river. Access and gateways decide what machinery can get in more often than the state of the grass.',
+  },
+  'Lisburn and Castlereagh': {
+    ground:
+      'The Lagan valley is some of the best grazing ground in Northern Ireland: free-draining glacial soils that grow grass early and carry machinery well, with heavier clay on the Castlereagh hills and towards Moira. A dense concentration of liveries and private paddocks.',
+  },
+  'Ards and North Down': {
+    ground:
+      'The driest corner of Northern Ireland. Lighter soils on the Ards peninsula and the drumlins of North Down dry out early and grow grass for a long season; these are usually the first paddocks in the province that will take a harrow or roller in spring.',
+  },
+  'Armagh City, Banbridge and Craigavon': {
+    ground:
+      'Drumlin country: short, steep little hills of heavy clay with wet hollows between them, orchards on the warmer slopes round Armagh and Loughgall, and flat, peaty ground on the Lough Neagh shore that holds water. Topping and rolling follow the slopes, and the hollows are left until they dry.',
+  },
+  'Newry, Mourne and Down': {
+    ground:
+      'The Mournes are granite — thin, acid, stony ground with high rainfall — but the Lecale lowland round Downpatrick and the drumlin country towards Newry are good grazing on heavier soils. The coast dries earlier than the hills, and ground by the Mournes needs a dry spell before it will carry a tractor.',
+  },
+
   /* ── Scotland ────────────────────────────────────────────────────────
      Scotland is one region row covering 32 councils, so the region note alone
      left a third of the site's county pages sharing a single paragraph. These

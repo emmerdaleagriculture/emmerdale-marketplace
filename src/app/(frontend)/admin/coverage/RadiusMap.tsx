@@ -8,7 +8,7 @@ import c from './coverage.module.css';
 const MAPBOX_TOKEN = (process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? '').trim();
 const METRES_PER_MILE = 1609.344;
 /** The UK, Scilly to Shetland and out to Fermanagh — the opening view. */
-const GB_BOUNDS: [[number, number], [number, number]] = [
+const UK_BOUNDS: [[number, number], [number, number]] = [
   [49.8, -8.3],
   [60.9, 1.9],
 ];
@@ -98,12 +98,12 @@ export function RadiusMap({
       // page has laid it out — re-measure, then fit, or the fit uses a stale
       // (smaller) box and opens zoomed out.
       map.invalidateSize();
-      map.fitBounds(GB_BOUNDS);
+      map.fitBounds(UK_BOUNDS);
       const settled = map;
       requestAnimationFrame(() => {
         if (cancelled) return;
         settled.invalidateSize();
-        settled.fitBounds(GB_BOUNDS);
+        settled.fitBounds(UK_BOUNDS);
       });
 
       const circles = L.layerGroup().addTo(map);

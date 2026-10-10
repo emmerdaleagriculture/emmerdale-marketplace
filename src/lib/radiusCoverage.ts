@@ -37,7 +37,9 @@ type Ring = [number, number][];
 type Shape = { name: string; rings: Ring[]; bbox: [number, number, number, number] };
 type LandCell = { lat: number; lng: number; weight: number; county: string };
 
-function project(lat: number, lng: number): [number, number] {
+/** Lat/lng → the county map's SVG space. scripts/countyPathsFromOns.ts
+ *  draws new outlines with this same function, so they land on this grid. */
+export function project(lat: number, lng: number): [number, number] {
   return [TX + K * lng * DEG, TY - K * Math.log(Math.tan(Math.PI / 4 + (lat * DEG) / 2))];
 }
 

@@ -34,5 +34,32 @@ insert into district_county_map (admin_district, county_id)
   select name, id from counties where region = 'Northern Ireland'
 on conflict (admin_district) do nothing;
 
+-- Which traditional counties each district covers, shown under its name in
+-- the county picker the same way the Welsh preserved counties list their
+-- modern areas: people in Northern Ireland think in the six counties, and a
+-- contractor in Tyrone needs to know that "Mid Ulster" and "Fermanagh and
+-- Omagh" are both theirs.
+update counties set covers = 'Co. Antrim'                            where name = 'Antrim and Newtownabbey';
+update counties set covers = 'Co. Down'                              where name = 'Ards and North Down';
+update counties set covers = 'Co. Armagh & west Down'                where name = 'Armagh City, Banbridge and Craigavon';
+update counties set covers = 'The city, both sides of the Lagan'     where name = 'Belfast';
+update counties set covers = 'North Antrim & north Londonderry'      where name = 'Causeway Coast and Glens';
+update counties set covers = 'Co. Londonderry & north-west Tyrone'   where name = 'Derry City and Strabane';
+update counties set covers = 'Co. Fermanagh & west Tyrone'           where name = 'Fermanagh and Omagh';
+update counties set covers = 'South Antrim & north Down'             where name = 'Lisburn and Castlereagh';
+update counties set covers = 'Co. Antrim'                            where name = 'Mid and East Antrim';
+update counties set covers = 'East Tyrone & south Londonderry'       where name = 'Mid Ulster';
+update counties set covers = 'South Down & south Armagh'             where name = 'Newry, Mourne and Down';
+
+-- A nationwide contractor is encoded as every county plus a 1000-mile invite
+-- radius (services_only hay and straw, set up 2026-10-09). "Every county" was
+-- a snapshot of the table at the time, so a new region silently falls outside
+-- it; extend them here, as any future region must.
+insert into contractor_counties (contractor_id, county_id)
+  select c.id, co.id
+  from contractors c cross join counties co
+  where c.invite_radius_miles >= 1000 and co.region = 'Northern Ireland'
+on conflict do nothing;
+
 -- Keep the serial sequence ahead of the explicit ids.
 select setval(pg_get_serial_sequence('counties', 'id'), (select max(id) from counties));
