@@ -7,7 +7,7 @@ import c from './coverage.module.css';
 
 const MAPBOX_TOKEN = (process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? '').trim();
 const METRES_PER_MILE = 1609.344;
-/** Great Britain, Scilly to Shetland — the opening view. */
+/** The UK, Scilly to Shetland and out to Fermanagh — the opening view. */
 const GB_BOUNDS: [[number, number], [number, number]] = [
   [49.8, -8.3],
   [60.9, 1.9],
@@ -79,7 +79,7 @@ export function RadiusMap({
       }
       if (cancelled || !containerRef.current) return;
 
-      // Fractional zoom: at whole steps Great Britain either overflows the box
+      // Fractional zoom: at whole steps the UK either overflows the box
       // or sits small in a sea of Scandinavia.
       map = L.map(containerRef.current, { preferCanvas: true, zoomSnap: 0.25 });
       const tiles = L.tileLayer(
@@ -161,7 +161,7 @@ export function RadiusMap({
         </div>
         {figure && (
           <span className={c.stat}>
-            <strong>{figure.overall}%</strong> of Great Britain is within {radius} miles of a
+            <strong>{figure.overall}%</strong> of the UK is within {radius} miles of a
             contractor
             {figure.byCountry.map((b) => ` · ${b.country} ${b.pct}%`).join('')}
           </span>

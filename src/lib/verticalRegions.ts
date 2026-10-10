@@ -93,6 +93,12 @@ const HAY_REGIONS: Record<string, VerticalNote> = {
     practical:
       'Cuts are later here, so don’t judge availability by a southern calendar. Straw from the east travels well across the central belt; forage for the islands and the north-west Highlands needs more notice and the haulage priced in from the start.',
   },
+  'Northern Ireland': {
+    supply:
+      'Grassland farming on a scale found almost nowhere else in the UK: most of the farmed land is grass, and silage and haylage are made in great quantity. Properly dry hay is a settled-summer crop here, and cereal straw is scarce locally — much of it is shipped in from Scotland and the north of England.',
+    practical:
+      'Wrapped forage is the dependable local buy; ask early for dry hay and expect it to go quickly in a good year. Straw costs more here than on the mainland because of the sea crossing, so price it per delivered load rather than per bale, and say what size vehicle can reach your yard.',
+  },
   London: {
     supply:
       'Nothing is grown at scale inside the M25, but the liveries and riding schools around the green belt buy a lot of forage, and it comes in from the home counties — Kent, Surrey, Essex, Hertfordshire and Buckinghamshire all supply into London.',
@@ -361,6 +367,12 @@ const TRACTOR_REGIONS: Record<string, VerticalNote> = {
       'Farms, estates and country-house venues throughout, with plenty of well-kept working machinery behind them and an active vintage and rally scene keeping older tractors on the road.',
     practical:
       'Distances are longer here, particularly in the Highlands and islands, so the run to site is worth pricing in from the start. Give us as much notice as you can for anything off the main routes.',
+  },
+  'Northern Ireland': {
+    supply:
+      'Family livestock farms throughout, a strong vintage tractor and rally scene behind them, and a growing number of country-house and converted-barn wedding venues, particularly around the Mournes, the Lagan valley and the north coast.',
+    practical:
+      'Nowhere is far by mainland standards, so a run of an hour or so is realistic for most venues. Narrow lanes and farm gateways decide what will fit, so describe the approach, and give notice for summer weekends when the show season has tractors spoken for.',
   },
   London: {
     supply:

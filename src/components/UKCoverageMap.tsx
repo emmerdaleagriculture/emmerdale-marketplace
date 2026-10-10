@@ -2,7 +2,7 @@ import { UK_MAP_VIEWBOX } from '@/lib/ukCountyPaths';
 import { coverageMapLabel, coverageShapes } from '@/lib/coverage';
 
 /**
- * Great Britain choropleth: counties shaded by how many approved contractors
+ * UK choropleth: counties shaded by how many approved contractors
  * cover them. Pure server-rendered SVG, used inline by the admin pages; the
  * front page draws the same map through the /coverage-map.svg route instead,
  * because the path data is far too heavy to inline in a landing page.

@@ -291,7 +291,7 @@ export default async function AgriculturalContractorsPage() {
               <figure className={c.boardMapWrap}>
                 <Image
                   src="/jobs-map.svg"
-                  alt={`Map of Great Britain with the ${openJobs.length} counties that have open jobs shaded green`}
+                  alt={`Map of the UK with the ${openJobs.length} counties that have open jobs shaded green`}
                   width={730}
                   height={1357}
                   unoptimized

@@ -46,15 +46,14 @@ export function CoverageSection({
           <p className={s.coverageCopy}>
             {everywhere ? (
               <>
-                Every county in England, Wales and Scotland has an approved
-                operator on it, and the darker the county the more of them there
+                Every county in the UK has an approved operator on it, and the darker the county the more of them there
                 are. Tell us what needs doing and the job goes to the operators
                 covering your patch.
               </>
             ) : (
               <>
-                We cover England, Wales and Scotland, and the map fills in as
-                more operators join. If your county is still pale, send the job
+                We cover England, Wales, Scotland and Northern Ireland, and the
+                map fills in as more operators join. If your county is still pale, send the job
                 anyway — demand is exactly how we get an operator into a new
                 area.
               </>
@@ -83,7 +82,7 @@ export function CoverageSection({
         </div>
         <Image
           src="/coverage-map.svg"
-          alt={`Map of Great Britain shaded by contractor coverage: ${coveredCount} of ${UK_COUNTY_NAMES.length} counties covered`}
+          alt={`Map of the UK shaded by contractor coverage: ${coveredCount} of ${UK_COUNTY_NAMES.length} counties covered`}
           width={MAP_W}
           height={MAP_H}
           unoptimized

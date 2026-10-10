@@ -63,5 +63,5 @@ export function coverageBinsInUse(counts: Record<string, number>) {
 /** Alt/aria text for the whole map. */
 export function coverageMapLabel(counts: Record<string, number>, what = 'contractor coverage') {
   const covered = UK_COUNTY_NAMES.filter((n) => (counts[n] ?? 0) > 0).length;
-  return `Map of Great Britain showing ${what}: ${covered} of ${UK_COUNTY_NAMES.length} counties covered`;
+  return `Map of the UK showing ${what}: ${covered} of ${UK_COUNTY_NAMES.length} counties covered`;
 }

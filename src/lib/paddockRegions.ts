@@ -93,6 +93,12 @@ export const REGION_NOTES: Record<string, RegionNote> = {
     timing:
       'Later turnout and a tighter window for field work than further south — the summer months do most of the work, and autumn jobs are best not left late.',
   },
+  'Northern Ireland': {
+    ground:
+      'Grass country almost everywhere, on mostly heavy, moisture-retentive drumlin soils with a mild, wet climate behind them. Grazing grows well and for a long season, but the ground poaches readily in a wet winter, and rushes come back wherever drainage has been let go.',
+    timing:
+      'Wait for the ground to carry machinery before harrowing and rolling in spring — it is usually later than the calendar suggests. Topping runs well into autumn on a long growing season, and rush control is a repeat job rather than a single pass.',
+  },
 };
 
 /**
