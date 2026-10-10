@@ -103,6 +103,8 @@ describe('jobAcres', () => {
 
   it('never turns metres of fence into acres', () => {
     expect(jobAcres({ area_value: 200, area_unit: 'linear_m', area_mapped_value: null, area_source: 'stated' })).toBeNull();
+    // A fence line drawn as a thin polygon still measures something; it is not the job's size.
+    expect(jobAcres({ area_value: 200, area_unit: 'linear_m', area_mapped_value: 0.02, area_source: 'both' })).toBeNull();
   });
 });
 

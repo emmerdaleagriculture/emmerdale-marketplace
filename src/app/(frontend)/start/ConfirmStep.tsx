@@ -76,8 +76,10 @@ export function ConfirmStep({
     trackStep('parsed');
   }, []);
   useEffect(() => {
-    if (mapState?.mappedAcres) trackStep('map_drawn');
-  }, [mapState?.mappedAcres]);
+    // Keyed on the shape, not its figure: a ring that crosses itself has
+    // no measurement but was still drawn.
+    if (mapState?.boundary) trackStep('map_drawn');
+  }, [mapState?.boundary]);
   useEffect(() => {
     if (state.ok) trackStep('sent');
     else if (state.error) trackStep('confirm_error');

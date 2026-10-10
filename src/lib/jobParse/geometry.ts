@@ -97,6 +97,7 @@ export function jobAcres(job: {
   area_mapped_value: number | null;
   area_source?: string | null;
 }): number | null {
+  if (job.area_unit === 'linear_m') return null;
   const stated = job.area_unit === 'acres' ? job.area_value : null;
   if (job.area_source === 'stated') return stated ?? job.area_mapped_value;
   return job.area_mapped_value ?? stated;
