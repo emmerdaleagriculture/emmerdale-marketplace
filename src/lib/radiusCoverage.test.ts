@@ -16,8 +16,8 @@ describe('landCoverage', () => {
     expect(landCoverage([], 20, countryOf).overall).toBe(0);
   });
 
-  it('a 20 mile circle inland in Hampshire is its true share of Great Britain', () => {
-    // π·20² ≈ 1,257 sq mi of ~80,800 sq mi of land ≈ 1.6%. Winchester's circle
+  it('a 20 mile circle inland in Hampshire is its true share of the UK', () => {
+    // π·20² ≈ 1,257 sq mi of ~86,300 sq mi of land ≈ 1.5%. Winchester's circle
     // is almost all land, so the figure checks the projection and the grid
     // together: a wrong fit would put part of it in the sea or miss it.
     const res = landCoverage([{ lat: 51.0632, lng: -1.308 }], 20, countryOf);

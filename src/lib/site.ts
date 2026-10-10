@@ -57,12 +57,14 @@ export const COMPANY_ADDRESS_LINES = [
  * of them) and every one has had an indexable county page. Structured data
  * that contradicts the pages it sits on is worse than no structured data.
  *
- * Great Britain, not the UK: there are no Northern Ireland rows.
+ * The whole UK since 2026-10-10, when Northern Ireland's 11 districts joined
+ * the counties table (it read "England, Wales and Scotland" before that, and
+ * "England and Wales" before Scotland).
  */
-export const SERVICE_AREA = 'England, Wales and Scotland';
+export const SERVICE_AREA = 'England, Wales, Scotland and Northern Ireland';
 
-/** The same claim where a sentence needs it short — "across Britain". */
-export const SERVICE_AREA_SHORT = 'Britain';
+/** The same claim where a sentence needs it short — "across the UK". */
+export const SERVICE_AREA_SHORT = 'the UK';
 
 // www, matching the canonical tag, the sitemap and the apex→www redirect. It
 // was the apex until 2026-09-06; that mismatch had every JSON-LD block on the

@@ -60,7 +60,7 @@ describe('coverageShapes', () => {
 describe('coverageMapLabel', () => {
   it('counts the covered counties out of the whole map', () => {
     expect(coverageMapLabel(counts)).toBe(
-      `Map of Great Britain showing contractor coverage: 4 of ${UK_COUNTY_NAMES.length} counties covered`,
+      `Map of the UK showing contractor coverage: 4 of ${UK_COUNTY_NAMES.length} counties covered`,
     );
   });
 });

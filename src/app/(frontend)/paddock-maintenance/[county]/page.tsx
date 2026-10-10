@@ -35,7 +35,7 @@ const SITE = siteUrl();
  * still has somewhere to go (the flow captures it, and the demand is what
  * recruits contractors there), so these are indexable everywhere. The trade
  * that makes that defensible rather than doorway-spam is real per-county
- * content — live coverage, region, neighbours and ground notes — instead of 88
+ * content — live coverage, region, neighbours and ground notes — instead of 99
  * copies with the name swapped.
  */
 export const dynamicParams = false;

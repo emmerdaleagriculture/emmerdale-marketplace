@@ -130,6 +130,7 @@ const REGIONS_WITHOUT_ARTICLE = new Set([
   'London',
   'Wales',
   'Scotland',
+  'Northern Ireland',
   'Yorkshire and the Humber',
 ]);
 

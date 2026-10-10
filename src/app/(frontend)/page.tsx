@@ -325,7 +325,7 @@ export default async function LandingPage() {
 
         {/* Where we work — live coverage choropleth. Its copy is computed from
             the database rather than hardcoded, which is why it still says
-            England, Wales and Scotland where the design says England only.
+            the whole UK where the design says England only.
             That contradiction is Tom's to settle; a true claim is not narrowed
             to a false one here. */}
         <CoverageSection coverage={coverage} counties={counties} />

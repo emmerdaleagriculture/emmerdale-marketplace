@@ -1,7 +1,7 @@
 import { UK_COUNTY_PATHS } from '@/lib/ukCountyPaths';
 
 /**
- * How much of Great Britain's land lies within a radius of any contractor.
+ * How much of the UK's land lies within a radius of any contractor.
  *
  * The county outlines in ukCountyPaths are the only land geometry the app
  * carries, and they are drawn in SVG space, not lat/lng. Their generator is
@@ -10,7 +10,9 @@ import { UK_COUNTY_PATHS } from '@/lib/ukCountyPaths';
  * known county (25 land in the right one; the other two sit within half a
  * mile of the generalised coastline or on a London boundary) and against
  * contractor base postcodes (110 of 113 on land; two a few hundred metres
- * offshore, one in Northern Ireland, which the map does not include).
+ * offshore, one in Northern Ireland, which the map did not then include).
+ * Northern Ireland's outlines were added on 2026-10-10 with the same fit,
+ * and the Omagh base that was off the map falls inside Fermanagh and Omagh.
  *
  * Land is sampled on a ~2 mile lat/lng grid, weighted by cos(latitude) so a
  * Shetland cell counts for less than a Cornish one. Good to about a
@@ -35,7 +37,9 @@ type Ring = [number, number][];
 type Shape = { name: string; rings: Ring[]; bbox: [number, number, number, number] };
 type LandCell = { lat: number; lng: number; weight: number; county: string };
 
-function project(lat: number, lng: number): [number, number] {
+/** Lat/lng → the county map's SVG space. scripts/countyPathsFromOns.ts
+ *  draws new outlines with this same function, so they land on this grid. */
+export function project(lat: number, lng: number): [number, number] {
   return [TX + K * lng * DEG, TY - K * Math.log(Math.tan(Math.PI / 4 + (lat * DEG) / 2))];
 }
 
@@ -115,11 +119,11 @@ function withinMiles(
   return 2 * EARTH_RADIUS_MILES * Math.asin(Math.sqrt(a)) <= miles;
 }
 
-const COUNTRY_ORDER = ['England', 'Wales', 'Scotland'];
+const COUNTRY_ORDER = ['England', 'Wales', 'Scotland', 'Northern Ireland'];
 
 export type RadiusCoverage = {
   radius: number;
-  /** Percent of Great Britain's land within `radius` miles of a contractor. */
+  /** Percent of the UK's land within `radius` miles of a contractor. */
   overall: number;
   byCountry: { country: string; pct: number }[];
 };

@@ -96,7 +96,7 @@ async function fetchPostcodesIo(url: string): Promise<Response> {
  * Match candidate ONS names against our counties: admin_county names against
  * counties.name, admin_district names through district_county_map.
  *
- * counties (88 rows) and district_county_map (186) are fixed taxonomy, so
+ * counties (99 rows) and district_county_map (197) are fixed taxonomy, so
  * they are loaded once and matched in memory. This used to be one or two
  * database round trips per postcode lookup, on the critical path of the step
  * the customer waits on.

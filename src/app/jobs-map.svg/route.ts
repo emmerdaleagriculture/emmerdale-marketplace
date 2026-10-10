@@ -2,7 +2,7 @@ import { UK_COUNTY_PATHS, UK_MAP_VIEWBOX } from '@/lib/ukCountyPaths';
 import { getOpenJobsByCounty } from '@/lib/openJobs';
 
 /**
- * Great Britain with every county that has a job open right now picked out,
+ * The UK with every county that has a job open right now picked out,
  * for the contractor landing page. A standalone asset for the same reason as
  * /coverage-map.svg: the path data is ~110KB and must not be inlined.
  */
@@ -34,7 +34,7 @@ export async function GET() {
     })
     .join('');
 
-  const label = `Map of Great Britain: ${total} open jobs across ${counties.length} counties`;
+  const label = `Map of the UK: ${total} open jobs across ${counties.length} counties`;
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${UK_MAP_VIEWBOX}" role="img"` +
     ` aria-label="${esc(label)}">${paths}</svg>`;

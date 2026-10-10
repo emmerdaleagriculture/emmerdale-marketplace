@@ -6,7 +6,7 @@ import { Breadcrumb } from '@/components/Breadcrumb';
 import { NotesTeaser } from '@/components/notes/NotesTeaser';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
 import { COMPANY_LEGAL_NAME, siteUrl } from '@/lib/site';
-import { VERTICALS, type VerticalKey, type CountyRef } from '@/lib/verticals';
+import { VERTICALS, regionPhrase, type VerticalKey, type CountyRef } from '@/lib/verticals';
 import { verticalNote, verticalNoteHeading } from '@/lib/verticalRegions';
 import a from '@/app/(frontend)/auth.module.css';
 import s from '@/app/(frontend)/landing.module.css';
@@ -87,12 +87,12 @@ export function CountyVerticalPage({
                 <strong>
                   {coverage} {coverage === 1 ? 'contractor' : 'contractors'}
                 </strong>{' '}
-                in our network already cover {name}, in the {county.region} — send your
+                in our network already cover {name}, in {regionPhrase(county.region)} — send your
                 enquiry and it goes straight to them, and whoever’s keen gets in touch.
               </>
             ) : (
               <>
-                We’re expanding our network across the {county.region}. Send your
+                We’re expanding our network across {regionPhrase(county.region)}. Send your
                 enquiry and we’ll match you with someone as coverage in {name} grows —
                 there’s no obligation.
               </>
