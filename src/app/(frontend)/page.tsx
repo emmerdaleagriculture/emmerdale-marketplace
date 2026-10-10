@@ -23,10 +23,13 @@ import {
   COMPANY_LEGAL_NAME,
   COMPANY_NUMBER,
   HPM_URL,
+  LINKEDIN_URL,
+  ORG_ID,
   PHONE_TEL,
   SERVICE_AREA,
   siteUrl,
 } from '@/lib/site';
+import { SOCIAL_LINKS } from '@/lib/social';
 import s from '@/components/home/home.module.css';
 
 // Canonical origin for structured data — www in production.
@@ -36,7 +39,6 @@ const SITE = siteUrl();
 const LUMENIRA_URL = 'https://www.lumenira.com';
 
 /** Tom's public profile — the founder card links his name to it. */
-const LINKEDIN_URL = 'https://www.linkedin.com/in/tom-oswald-a7233619/';
 
 /**
  * Every customer CTA lands here. Cards carry their service in the query so the
@@ -62,6 +64,7 @@ export const metadata: Metadata = {
 const orgJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
+  '@id': ORG_ID,
   name: 'Emmerdale Agriculture',
   legalName: COMPANY_LEGAL_NAME,
   url: SITE,
@@ -101,7 +104,10 @@ const orgJsonLd = {
     areaServed: 'GB',
     availableLanguage: 'English',
   },
-  sameAs: [HPM_URL],
+  // sameAs is for this entity's own profiles. Hampshire Paddock Management is
+  // a brand the company runs, not another name for it.
+  sameAs: SOCIAL_LINKS.map((s) => s.href),
+  brand: { '@type': 'Brand', name: 'Hampshire Paddock Management', url: HPM_URL },
   description:
     `A managed marketplace for rural land, run by ${COMPANY_LEGAL_NAME}, the company behind Hampshire Paddock Management. Paddock, land and equestrian jobs completed by approved operators across ${SERVICE_AREA}, with several prices to compare.`,
 };
@@ -138,7 +144,7 @@ function PhotoStrip({ photos, label }: { photos: GalleryPhoto[]; label: string }
     <section className={s.gallery} aria-label={label}>
       <div className={s.container}>
         <ul className={s.galleryGrid}>
-          {photos.map((g) => (
+          {photos.map((g, i) => (
             <li key={g.src} className={s.galleryItem}>
               <DeferredImage
                 src={g.src}
@@ -147,6 +153,8 @@ function PhotoStrip({ photos, label }: { photos: GalleryPhoto[]; label: string }
                 quality={70}
                 sizes="(min-width: 1024px) 300px, 50vw"
                 rootMargin="400px"
+                eager={i === 0}
+                loading={i === 0 ? 'lazy' : undefined}
                 className={s.galleryImg}
                 style={{ objectPosition: g.pos }}
               />
@@ -195,13 +203,9 @@ export default async function LandingPage() {
     serviceType: HOME_SERVICES.map((svc) => svc.name),
     description:
       `Paddock maintenance and agricultural contracting, including topping, harrowing, rolling, overseeding, hedge cutting, fencing and land clearance, for paddock owners, equestrian yards, farms and estates across ${SERVICE_AREA}. Completed by approved operators, with several prices to compare.`,
-    url: `${SITE}${START_HREF}`,
-    provider: {
-      '@type': 'Organization',
-      name: COMPANY_LEGAL_NAME,
-      url: SITE,
-      brand: { '@type': 'Brand', name: 'Hampshire Paddock Management' },
-    },
+    // The indexable hub, not /start, which is noindex.
+    url: `${SITE}/paddock-maintenance`,
+    provider: { '@type': 'Organization', '@id': ORG_ID, name: 'Emmerdale Agriculture', url: SITE },
     areaServed: coveredCounties.map((name) => ({ '@type': 'AdministrativeArea', name })),
   };
 
@@ -303,7 +307,7 @@ export default async function LandingPage() {
 
         <Comparison />
 
-        <section id="how" className={s.how}>
+        <section id="how-it-works" className={s.how}>
           <div className={s.container}>
             <p className={s.eyebrow}>How it works</p>
             <h2 className={s.sectionH}>

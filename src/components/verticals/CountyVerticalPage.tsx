@@ -5,7 +5,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { NotesTeaser } from '@/components/notes/NotesTeaser';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
-import { COMPANY_LEGAL_NAME, siteUrl } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, ORG_ID, siteUrl } from '@/lib/site';
 import { VERTICALS, regionPhrase, type VerticalKey, type CountyRef } from '@/lib/verticals';
 import { verticalNote, verticalNoteHeading } from '@/lib/verticalRegions';
 import a from '@/app/(frontend)/auth.module.css';
@@ -45,9 +45,11 @@ export function CountyVerticalPage({
     name: v.serviceName,
     serviceType: v.serviceType,
     description: v.serviceDescription(name),
+    url: `${SITE}/${vertical}/${county.slug}`,
     areaServed: { '@type': 'AdministrativeArea', name },
     provider: {
       '@type': 'Organization',
+      '@id': ORG_ID,
       name: 'Emmerdale Agriculture',
       legalName: COMPANY_LEGAL_NAME,
       url: SITE,

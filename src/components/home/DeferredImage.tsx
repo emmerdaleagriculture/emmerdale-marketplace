@@ -11,9 +11,18 @@ import Image, { type ImageProps } from 'next/image';
  * on the server, so the section relies on its own background until the image
  * arrives.
  */
-export function DeferredImage({ rootMargin = '800px', ...props }: ImageProps & { rootMargin?: string }) {
+export function DeferredImage({
+  rootMargin = '800px',
+  eager = false,
+  ...props
+}: ImageProps & {
+  rootMargin?: string;
+  /** Render on the server too. The gate hid every gallery photo from the
+   *  crawled HTML; the first one is worth having there for image search. */
+  eager?: boolean;
+}) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(eager);
 
   useEffect(() => {
     const el = ref.current;

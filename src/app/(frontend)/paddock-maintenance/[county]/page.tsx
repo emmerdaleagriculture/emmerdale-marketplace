@@ -18,7 +18,7 @@ import {
 import { allCountyRefs, resolveCountyBySlug, regionPhrase, type CountyRef } from '@/lib/verticals';
 import { getServices, getCountyCoverage } from '@/lib/reference';
 import { paddockNote } from '@/lib/paddockRegions';
-import { COMPANY_LEGAL_NAME, siteUrl } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, ORG_ID, siteUrl } from '@/lib/site';
 import a from '../../auth.module.css';
 import s from '../../landing.module.css';
 
@@ -56,15 +56,19 @@ export async function generateMetadata({
   const resolved = await resolveCountyBySlug(county);
   if (!resolved) return {};
   const name = resolved.county.name;
-  // Kept short enough to show whole in results: the county is the part that
-  // matches the search, and a title past ~60 characters loses its tail.
-  const title = `Paddock Maintenance in ${name}`;
-  const description = `Paddock topping, harrowing, rolling, spraying, hedges and fencing in ${name}. Describe the job and local contractors send prices. Free, no obligation.`;
+  // "Agricultural contractors" leads: Search Console (2026-10-11) shows these
+  // pages ranking for "agricultural contractors <place>" far more than for
+  // "paddock maintenance <place>", and a title that named only paddocks was
+  // being skipped by the people searching for contractors. The brand suffix
+  // is what gets truncated on long county names, which is the right loss.
+  const title = `Agricultural Contractors & Paddock Maintenance in ${name}`;
+  const description = `Agricultural contractors in ${name}: topping, harrowing, spraying, hedges, fencing. Describe the job, contractors near you send prices. No obligation.`;
   return {
     title,
     description,
     alternates: { canonical: `/paddock-maintenance/${county}` },
-    openGraph: { title, description },
+    // No page-level openGraph: it would replace the layout's block and lose
+    // the site image. og:title and og:description are inherited.
   };
 }
 
@@ -126,6 +130,7 @@ export default async function PaddockCountyPage({
     areaServed: { '@type': 'AdministrativeArea', name },
     provider: {
       '@type': 'Organization',
+      '@id': ORG_ID,
       name: 'Emmerdale Agriculture',
       legalName: COMPANY_LEGAL_NAME,
       url: SITE,
@@ -147,7 +152,8 @@ export default async function PaddockCountyPage({
           />
           <div className={a.eyebrow}>Paddock &amp; field work · {name}</div>
           <h1 className={a.title}>
-            Paddock maintenance in {name} — <em>tell us what needs doing.</em>
+            Agricultural contractors and paddock maintenance in {name} —{' '}
+            <em>tell us what needs doing.</em>
           </h1>
           <p className={a.sub}>
             An overgrown paddock, a field of docks and nettles, grass that got

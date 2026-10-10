@@ -2678,6 +2678,14 @@ export type Database = {
         }
         Relationships: []
       }
+      county_service_coverage: {
+        Row: {
+          contractors: number | null
+          name: string | null
+          service_id: number | null
+        }
+        Relationships: []
+      }
       jobs_in_progress: {
         Row: {
           county: string | null

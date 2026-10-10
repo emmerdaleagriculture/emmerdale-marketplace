@@ -2,10 +2,11 @@ import Link from 'next/link';
 import { AccountLink } from './AccountLink';
 import { BrandMark } from './BrandMark';
 import { FOOTER_HOME_SERVICES } from '@/lib/home/services';
+import { servicePagePath } from '@/lib/services';
 import { COMPANY_LEGAL_NAME, COMPANY_REG_LINE, COMPANY_ADDRESS_LINES } from '@/lib/site';
 import s from './home.module.css';
 
-/** Front-page footer: dark ink, brand column plus three link columns. */
+/** Front-page footer: dark ink, brand column plus four link columns. */
 export function HomeFooter() {
   const year = new Date().getFullYear();
   return (
@@ -31,18 +32,47 @@ export function HomeFooter() {
           </div>
 
           <div>
-            <h4 className={s.footerHeading}>Services</h4>
+            {/* Real pages, not "#services" anchors: the anchor went nowhere
+                from /contact and /start, and the home page — the most-linked
+                page on the site — linked to none of its service pages. */}
+            <h3 className={s.footerHeading}>Services</h3>
             <ul className={s.footerList}>
-              {FOOTER_HOME_SERVICES.map((svc) => (
-                <li key={svc.slug}>
-                  <a href="#services">{svc.name}</a>
-                </li>
-              ))}
+              {FOOTER_HOME_SERVICES.map((svc) => {
+                const href = servicePagePath(svc.slug);
+                return (
+                  <li key={svc.slug}>
+                    {href ? <Link href={href}>{svc.name}</Link> : <Link href="/#services">{svc.name}</Link>}
+                  </li>
+                );
+              })}
+              <li>
+                <Link href="/services">All services</Link>
+              </li>
             </ul>
           </div>
 
           <div>
-            <h4 className={s.footerHeading}>Company</h4>
+            {/* The three hubs. Until 2026-10-11 nothing on the home page
+                linked to them; they were reachable only from interior pages. */}
+            <h3 className={s.footerHeading}>Looking for</h3>
+            <ul className={s.footerList}>
+              <li>
+                <Link href="/paddock-maintenance">Paddock maintenance</Link>
+              </li>
+              <li>
+                <Link href="/hay-bales">Hay, straw &amp; haylage</Link>
+              </li>
+              <li>
+                <Link href="/tractor-hire">Tractor hire for events</Link>
+              </li>
+              <li>
+                <Link href="/#how-it-works">How it works</Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className={s.footerHeading}>Company</h3>
             <ul className={s.footerList}>
               <li>
                 <Link href="/notes">Notes from the field</Link>
@@ -64,7 +94,7 @@ export function HomeFooter() {
           </div>
 
           <div>
-            <h4 className={s.footerHeading}>Legal</h4>
+            <h3 className={s.footerHeading}>Legal</h3>
             <ul className={s.footerList}>
               <li>
                 <a href="/customer-terms">Customer terms</a>

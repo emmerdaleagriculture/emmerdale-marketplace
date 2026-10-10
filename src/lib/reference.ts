@@ -33,6 +33,9 @@ export const getServices = memoize<ServiceOption[]>(async () => {
 // Memoised like the loaders above: every county page calls this twice (its
 // metadata and its body), and a build or a daily revalidation sweep walks
 // ~270 of them.
+// Excludes services_only contractors (county_coverage view, 20261011100000):
+// "covered" means someone there takes general work. The hay and tractor-hire
+// pages ask getCountyServiceCoverage for their own service instead.
 export const getCountyCoverage = memoize<Record<string, number>>(async () => {
   const supabase = createServiceRoleClient();
   // Counted in SQL (county_coverage view). This used to pull every
@@ -46,3 +49,30 @@ export const getCountyCoverage = memoize<Record<string, number>>(async () => {
   }
   return counts;
 }, REFERENCE_TTL_MS);
+
+/**
+ * Approved contractors per county who offer one service, for the hay and
+ * tractor-hire county pages' index gate and "N contractors" line. The general
+ * count had every tractor-hire page in Northern Ireland claiming the one
+ * contractor there, who sells straw. One memoised loader per service id.
+ */
+const serviceCoverageLoaders = new Map<number, () => Promise<Record<string, number>>>();
+export function getCountyServiceCoverage(serviceId: number): Promise<Record<string, number>> {
+  let loader = serviceCoverageLoaders.get(serviceId);
+  if (!loader) {
+    loader = memoize<Record<string, number>>(async () => {
+      const supabase = createServiceRoleClient();
+      const { data } = await supabase
+        .from('county_service_coverage')
+        .select('name, contractors')
+        .eq('service_id', serviceId);
+      const counts: Record<string, number> = {};
+      for (const row of data ?? []) {
+        if (row.name && row.contractors) counts[row.name] = row.contractors;
+      }
+      return counts;
+    }, REFERENCE_TTL_MS);
+    serviceCoverageLoaders.set(serviceId, loader);
+  }
+  return loader();
+}

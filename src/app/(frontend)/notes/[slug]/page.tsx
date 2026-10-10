@@ -20,7 +20,7 @@ import {
 import { createStaticClient } from '@/lib/supabase/static';
 import { formatMonth } from '../PostCard';
 import styles from './post.module.css';
-import { siteUrl } from '@/lib/site';
+import { LINKEDIN_URL, ORG_ID, siteUrl } from '@/lib/site';
 
 type Params = { slug: string };
 
@@ -53,9 +53,9 @@ export async function generateMetadata({
   const description = post.excerpt || 'Notes from the field — Emmerdale Agriculture.';
 
   return {
-    // The post title alone; the layout template appends the brand. The old
-    // " — Notes from the field" suffix pushed every title past 100 characters.
-    title: post.title,
+    // The headline alone, with no brand suffix: these are full sentences of
+    // 70–90 characters already, and the suffix only pushed the cut earlier.
+    title: { absolute: post.title },
     description,
     openGraph: {
       title: post.title,
@@ -143,7 +143,9 @@ export default async function NotePostPage({
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: post.title,
-    image: heroUrl ? [heroUrl] : undefined,
+    // Google requires an image for Article rich results; a post without a
+    // hero uses the site image, as the Open Graph card already does.
+    image: [heroUrl ?? `${site}/og-image.jpg`],
     datePublished: post.published_at ?? undefined,
     dateModified: post.updated_at ?? post.published_at ?? undefined,
     wordCount: noteWordCount(post.content_md) || undefined,
@@ -153,10 +155,11 @@ export default async function NotePostPage({
     author: {
       '@type': 'Person',
       name: 'Tom Oswald',
-      url: site,
+      url: LINKEDIN_URL,
     },
     publisher: {
       '@type': 'Organization',
+      '@id': ORG_ID,
       name: 'Emmerdale Agriculture',
       // Google requires publisher.logo for Article rich-result eligibility.
       logo: {

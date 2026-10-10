@@ -15,6 +15,9 @@ export type VerticalKey = 'hay-bales' | 'tractor-hire';
 export type CountyPageBase = VerticalKey | 'paddock-maintenance';
 
 export type VerticalConfig = {
+  /** services.id the page is about — its index gate and "N contractors" line
+   *  count only contractors who offer this (county_service_coverage). */
+  serviceId: number;
   slug: VerticalKey;
   category: 'hay' | 'tractor-hire';
   eyebrow: string;
@@ -41,12 +44,14 @@ export type VerticalConfig = {
 export const VERTICALS: Record<VerticalKey, VerticalConfig> = {
   'hay-bales': {
     slug: 'hay-bales',
+    serviceId: 16,
     category: 'hay',
     eyebrow: 'Hay · Straw · Haylage',
     crumbLabel: 'Hay, straw & haylage',
-    metaTitle: (c) => `Hay, Straw & Haylage Suppliers in ${c}`,
+    // Short enough to survive the brand suffix on long county names.
+    metaTitle: (c) => `Hay, Straw & Haylage in ${c}`,
     metaDescription: (c) =>
-      `Looking for hay, straw or haylage in ${c}? Tell us what you need and we’ll match you with a supplier near you — big bales or small, delivered or collected.`,
+      `Hay, straw or haylage in ${c}: tell us what you need and we’ll match you with a supplier near you. Any bale size, delivered or collected.`,
     h1Main: (c) => `Hay, straw & haylage in ${c} —`,
     h1Em: 'matched to a supplier near you.',
     intro: (c) =>
@@ -75,10 +80,11 @@ export const VERTICALS: Record<VerticalKey, VerticalConfig> = {
   },
   'tractor-hire': {
     slug: 'tractor-hire',
+    serviceId: 17,
     category: 'tractor-hire',
     eyebrow: 'Tractor hire · Events',
     crumbLabel: 'Tractor hire',
-    metaTitle: (c) => `Tractor Hire in ${c} for Weddings & Events`,
+    metaTitle: (c) => `Wedding & Event Tractor Hire in ${c}`,
     metaDescription: (c) =>
       `Hire a tractor and trailer in ${c} for a wedding, prom or parade, with an experienced driver. Matched to an operator near you, no obligation.`,
     h1Main: (c) => `Tractor hire in ${c} —`,
