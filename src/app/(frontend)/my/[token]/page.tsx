@@ -357,11 +357,11 @@ export default async function ClientPortalPage({
                   </>
                 )}
                 Accepting a price means agreeing to our{' '}
-                <a href="/customer-terms">
+                <Link href="/customer-terms">
                   customer terms and conditions
-                </a>{' '}
+                </Link>{' '}
                 and{' '}
-                <a href="/service-charter">service charter</a>, which
+                <Link href="/service-charter">service charter</Link>, which
                 set out what we do if anything goes wrong.
               </p>
             </>
