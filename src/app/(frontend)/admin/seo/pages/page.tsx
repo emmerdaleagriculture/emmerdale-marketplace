@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { gscQuery, isoDaysAgo, type GscRow } from '@/lib/gsc';
 import { fetchGa4PageMetrics, isGa4Configured, listGa4Properties, configuredGa4PropertyId } from '@/lib/ga4';
@@ -162,7 +163,7 @@ export default async function PagesPage() {
               ) : /insufficient.*scope|ACCESS_TOKEN_SCOPE|invalid_scope/i.test(ga4SetupErr) ? (
                 <p style={{ margin: '0.5rem 0' }}>
                   Your connection doesn’t include Analytics access —{' '}
-                  <a href="/admin/seo/auth/connect">re-connect to Google</a> and grant
+                  <Link href="/admin/seo/auth/connect">re-connect to Google</Link> and grant
                   it, then reload.
                 </p>
               ) : (

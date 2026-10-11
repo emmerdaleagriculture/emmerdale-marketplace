@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { submitEnquiryAction } from './actions';
 import { emptyFormState } from '@/lib/form';
@@ -157,7 +158,7 @@ export function EnquiryForm({
         Sending this puts your job to vetted contractors covering your county, who
         send prices to your job page. Your name, number and email go only to the
         contractor whose price you accept. See our{' '}
-        <a href="/privacy">privacy policy</a>.
+        <Link href="/privacy">privacy policy</Link>.
       </p>
 
       <div className={a.actions}>

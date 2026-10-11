@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import f from '@/components/forms/forms.module.css';
 import ac from './account.module.css';
 
@@ -115,7 +116,7 @@ export function PremiumPanel({
             )}
             <p>
               Cancel any time; you keep it to the end of the period you’ve paid for. The details
-              are in <a href="/terms">clause 12 of the contractor terms</a>.
+              are in <Link href="/terms">clause 12 of the contractor terms</Link>.
             </p>
           </div>
           <div className={ac.premiumButtons}>

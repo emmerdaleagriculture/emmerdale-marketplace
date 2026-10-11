@@ -63,6 +63,9 @@ export default function GlobalError({
             Try again
           </button>
           <p style={{ margin: '1.5rem 0 0', fontSize: '0.875rem', color: '#6b7362' }}>
+            {/* A plain anchor on purpose: this page renders when the app has
+                crashed, so a full page load is the way out, not client routing. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             Still stuck? <a href="/contact" style={{ color: '#23291f' }}>Get in touch</a> and
             we&rsquo;ll sort it out.
           </p>

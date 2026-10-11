@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -160,7 +161,7 @@ export default function PrivacyPage() {
             Customers do not see your business name until they have accepted your price. After
             that they see your business name and any messages you send. Customer details you
             receive are covered by clause 7 of the{' '}
-            <a href="/terms">contractor terms</a>.
+            <Link href="/terms">contractor terms</Link>.
           </p>
 
           <h2>Feedback and contacting us</h2>

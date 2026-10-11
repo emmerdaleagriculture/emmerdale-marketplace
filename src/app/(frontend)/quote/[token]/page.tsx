@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { after } from 'next/server';
@@ -216,7 +217,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 <strong>You&rsquo;ve got this job.</strong> The customer accepted your
                 price and has paid their deposit — their details and the next steps are
                 in{' '}
-                <a href="/won">your won jobs</a>.
+                <Link href="/won">your won jobs</Link>.
               </div>
             )}
 

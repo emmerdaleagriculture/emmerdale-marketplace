@@ -28,8 +28,8 @@ export default function TermsPage() {
             These terms cover work you take on through Emmerdale Agriculture. They are
             written in plain English on purpose. If anything is unclear, ask us before
             you price a job. They sit alongside our{' '}
-            <a href="/customer-terms">customer terms</a> and{' '}
-            <a href="/service-charter">service charter</a>, which set
+            <Link href="/customer-terms">customer terms</Link> and{' '}
+            <Link href="/service-charter">service charter</Link>, which set
             out what we promise the customer on every job you take on.
           </p>
 
