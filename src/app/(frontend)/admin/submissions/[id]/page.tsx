@@ -626,9 +626,12 @@ export default async function SubmissionDetailPage({
       )}
 
       <div className={s.sectionLabel}>What they wrote</div>
-      <p style={{ whiteSpace: 'pre-wrap', maxWidth: 640 }}>{sub.raw_text}</p>
+      {/* overflowWrap: a customer's text can arrive as one unbroken token
+          (every space encoded as a plus sign, once) and otherwise runs off the
+          screen on a phone. */}
+      <p style={{ whiteSpace: 'pre-wrap', maxWidth: 640, overflowWrap: 'anywhere' }}>{sub.raw_text}</p>
       {sub.location_raw && (
-        <p style={{ color: 'var(--ink-2)' }}>Location field: {sub.location_raw}</p>
+        <p style={{ color: 'var(--ink-2)', overflowWrap: 'anywhere' }}>Location field: {sub.location_raw}</p>
       )}
 
       <div className={s.sectionLabel}>Parse attempts</div>
