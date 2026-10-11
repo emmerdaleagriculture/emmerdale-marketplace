@@ -167,7 +167,7 @@ export function PriceList({
                   if (q.site_visit_required) {
                     return (
                       <p>
-                        You&rsquo;re booking <strong>{q.contractor_display_label}</strong> at{' '}
+                        You&rsquo;re accepting <strong>{q.contractor_display_label}</strong> at{' '}
                         <strong>{formatGBP(q.client_price_pence)}</strong>
                         {note ? ` (${note})` : ''}, subject to a site visit. You pay{' '}
                         <strong>{formatGBP(deposit)}</strong> now, and they get your details to
@@ -197,9 +197,7 @@ export function PriceList({
                   <button className={f.btnYellow} type="submit" disabled={pending}>
                     {pending
                       ? 'Setting up payment…'
-                      : q.site_visit_required
-                        ? 'Book the site visit'
-                        : 'Accept and book'}
+                      : `Pay ${formatGBP(depositSplitPence(q.client_price_pence, depositRate).deposit)} and accept`}
                   </button>
                   <button
                     type="button"
@@ -253,13 +251,15 @@ export function PriceList({
                       Arrange a site visit — no deposit
                     </a>
                     <button type="button" className={f.btnGhost} onClick={() => setConfirming(q.id)}>
-                      Book now, visit after
+                      Accept {formatGBP(q.client_price_pence)}, subject to visit
                     </button>
                   </>
                 ) : (
                   <>
                     <button type="button" className={f.btnPrimary} onClick={() => setConfirming(q.id)}>
-                      {q.site_visit_required ? 'Book a site visit' : 'Accept this price'}
+                      {q.site_visit_required
+                        ? `Accept ${formatGBP(q.client_price_pence)}, subject to visit`
+                        : 'Accept this price'}
                     </button>
                     {visitThreads[q.contractor_display_label] && (
                       <a className={f.btnGhost} href={`#visit-${visitThreads[q.contractor_display_label]}`}>
