@@ -279,11 +279,118 @@ const HAY_QUESTIONS: ConditionQuestion[] = [
   },
 ];
 
+/**
+ * Stump grinding is priced per stump, and the price per stump turns on size:
+ * a 20cm sapling stump is minutes, a metre-wide oak is most of a morning.
+ * Access decides the machine (a pedestrian grinder fits through a garden
+ * gate, a tracked one wants a field gateway), and whether the grindings
+ * stay or go is a separate cost the contractor would otherwise have to ask.
+ */
+const STUMP_QUESTIONS: ConditionQuestion[] = [
+  {
+    kind: 'number',
+    key: 'stump_count',
+    label: 'How many stumps?',
+    short: 'Stumps',
+    hint: 'A rough count is fine.',
+    integer: true,
+    required: true,
+  },
+  {
+    key: 'stump_size',
+    label: 'How wide is the biggest stump?',
+    short: 'Biggest stump',
+    hint: 'Across the top, roughly.',
+    required: true,
+    options: [
+      { value: 'under_30cm', label: 'Under 30cm (a foot)' },
+      { value: '30_60cm', label: '30–60cm' },
+      { value: 'over_60cm', label: 'Over 60cm' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'stump_access',
+    label: 'How does a machine get to them?',
+    short: 'Access',
+    required: true,
+    options: [
+      { value: 'vehicle', label: 'A vehicle can drive right up' },
+      { value: 'gate', label: 'Through a garden gate or narrow gap' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'grindings',
+    label: 'What should happen to the grindings?',
+    short: 'Grindings',
+    options: [
+      { value: 'leave', label: 'Leave them in the hole' },
+      { value: 'remove', label: 'Take them away' },
+      { value: 'either', label: 'Either' },
+    ],
+  },
+];
+
+/**
+ * Log splitting is priced on the pile: how much timber, and whether it is
+ * already cut to ring length (a splitter) or still in trunk lengths (a
+ * processor, or a saw first). A splitter runs off a tractor or its own
+ * engine, so access for one is asked.
+ */
+const LOG_QUESTIONS: ConditionQuestion[] = [
+  {
+    key: 'timber_amount',
+    label: 'Roughly how much timber is there?',
+    short: 'Timber',
+    required: true,
+    options: [
+      { value: 'trailer', label: 'A trailer load or less' },
+      { value: 'few_loads', label: 'A few trailer loads' },
+      { value: 'large', label: 'A big stack or several trees' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'timber_state',
+    label: 'What state is it in?',
+    short: 'State',
+    required: true,
+    options: [
+      { value: 'rings', label: 'Cut into rings, ready to split' },
+      { value: 'lengths', label: 'Trunk or branch lengths, not cut' },
+      { value: 'mixed', label: 'A mix' },
+    ],
+  },
+  {
+    key: 'timber_access',
+    label: 'Can a tractor or vehicle get to the pile?',
+    short: 'Access',
+    required: true,
+    options: [
+      { value: 'yes', label: 'Yes, right up to it' },
+      { value: 'near', label: 'Close, but not right up to it' },
+      { value: 'no', label: 'No, it would have to be carried' },
+    ],
+  },
+  {
+    key: 'stacking',
+    label: 'Do you want the logs stacked?',
+    short: 'Stacking',
+    options: [
+      { value: 'stack', label: 'Yes, stacked where I say' },
+      { value: 'pile', label: 'No, a pile is fine' },
+    ],
+  },
+];
+
 export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQuestion[]>> = {
   'Weed control': WEED_QUESTIONS,
   Spraying: WEED_QUESTIONS,
   'Hedge cutting': HEDGE_QUESTIONS,
   'Hay, straw & haylage': HAY_QUESTIONS,
+  'Stump grinding': STUMP_QUESTIONS,
+  'Mobile log splitting': LOG_QUESTIONS,
   'Paddock topping': [
     {
       key: 'last_cut',
@@ -447,6 +554,9 @@ const NON_AREA_PRICED: ReadonlySet<string> = new Set([
   'Excavator work',
   // Priced by the job, not the acre.
   'Tree felling & chipping',
+  // A count of stumps and a pile of timber: no field to draw.
+  'Stump grinding',
+  'Mobile log splitting',
 ]);
 
 export function isAreaPriced(service: string | null): boolean {

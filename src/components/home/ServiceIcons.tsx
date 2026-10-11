@@ -19,6 +19,8 @@ export type ServiceIconKey =
   | 'flail_collect'
   | 'lime'
   | 'tree'
+  | 'stump'
+  | 'logs'
   | 'subsoil'
   | 'scarify'
   | 'stones'
@@ -189,6 +191,27 @@ const PATHS: Record<ServiceIconKey, ReactNode> = {
       <path d="M14 30 V35" />
       <rect x="24" y="28" width="12" height="6" rx="3" />
       <circle cx="33" cy="31" r="1.5" />
+    </>
+  ),
+  // A stump with its roots, the grinder wheel coming in from the side.
+  stump: (
+    <>
+      <path d="M8 22 V32 H22 V22" />
+      <ellipse cx="15" cy="22" rx="7" ry="2.5" />
+      <path d="M8 32 L4 35 M22 32 L26 35 M12 32 V35 M18 32 V35" />
+      <circle cx="31" cy="15" r="5" />
+      <path d="M31 8 V10 M31 20 V22 M24 15 H26 M36 15 H38" />
+      <path d="M27.5 18.5 L23 23" />
+    </>
+  ),
+  // A log end split in two, and a wedge going into the next one.
+  logs: (
+    <>
+      <circle cx="13" cy="27" r="8" />
+      <path d="M13 19 L10 27 L13 35" />
+      <circle cx="30" cy="30" r="5" />
+      <circle cx="30" cy="30" r="1.5" />
+      <path d="M22 6 L30 14 L26 18 M30 14 L34 10" />
     </>
   ),
   // A subsoiler leg reaching down through the soil layers.

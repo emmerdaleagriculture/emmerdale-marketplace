@@ -149,6 +149,20 @@ export const HOME_SERVICES: HomeService[] = [
     icon: 'tree',
   },
   {
+    slug: 'stump-grinding',
+    name: 'Stump grinding',
+    label: 'stump grinding',
+    blurb: 'Tree stumps ground out below ground level, ready to mow or plant.',
+    icon: 'stump',
+  },
+  {
+    slug: 'log-splitting',
+    name: 'Mobile log splitting',
+    label: 'mobile log splitting',
+    blurb: 'A log splitter brought to your timber, rings split into firewood.',
+    icon: 'logs',
+  },
+  {
     slug: 'fixed-tooth-mulching',
     name: 'Fixed tooth mulching',
     label: 'fixed tooth mulching',

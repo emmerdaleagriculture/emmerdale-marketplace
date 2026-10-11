@@ -51,7 +51,7 @@ export const PART_C: ServiceContent[] = [
         a: 'Usually not. Stumps are normally cut close to the ground and left. Grinding or digging them out is a separate job, so ask for it if you need the ground clear.',
       },
     ],
-    related: ['fixed-tooth-mulching', 'land-clearance', 'hedge-cutting', 'excavator-work'],
+    related: ['stump-grinding', 'log-splitting', 'fixed-tooth-mulching', 'land-clearance'],
   },
   {
     card: 'fixed-tooth-mulching',
@@ -434,5 +434,111 @@ export const PART_C: ServiceContent[] = [
       },
     ],
     related: ['excavator-work', 'hedge-cutting', 'land-clearance', 'general-tractor-work'],
+  },
+  {
+    card: 'stump-grinding',
+    path: 'stump-grinding',
+    canonical: ['Stump grinding'],
+    metaTitle: 'Stump Grinding by Local Contractors',
+    metaDescription:
+      'Stump grinding for paddocks, gardens, orchards and field edges. Say how many stumps and how big, and local contractors send you a price for the job.',
+    h1: 'Stump grinding',
+    intro:
+      'For the stumps left behind after felling: a dead ash on the field edge, a row of old orchard trees, leylandii taken out of a boundary. A contractor grinds each stump down below ground level so you can mow over it, re-fence, lay a track or plant again, without digging a crater to get the roots out.',
+    involves: [
+      'A stump grinder is a wheel of carbide teeth on a small tracked or wheeled machine. It is swung across the stump in passes, chewing the wood into chips, until the stump is well below the surface. The usual depth is around 15–30cm below ground level, deeper by arrangement if something is going to be built or planted on the spot.',
+      'The big lateral roots are not dug out; they are left to rot in the ground, which they do over a few years. Grinding the root flare, the buttress roots that spread out around the base, is extra work and worth mentioning if you want a clean surface for a mower or a fence line.',
+      'The grindings, a mix of wood chip and soil, either stay in the hole or are taken away. Left in, they settle over a year or so and the hollow needs topping up with soil. Taken away and backfilled with topsoil, the spot can be seeded straight away.',
+    ],
+    when: [
+      'Any time of year. Stump grinding does not depend on the season the way felling does, and a grinder on tracks copes with wet ground better than a tractor. Very soft ground is still worth avoiding if the machine has to cross a paddock to reach the stumps.',
+      'Fresh stumps grind more easily than old, dry ones, but there is no rush: a stump cut flush and left is not doing any harm unless it is in the way or starting to sucker.',
+    ],
+    priceFactors: [
+      'The number of stumps and the width of the biggest ones; a stump over 60cm across can take longer than a dozen small ones.',
+      'Species: hardwoods such as oak, beech and elm are slower than conifers, willow and poplar.',
+      'Access. A pedestrian grinder fits through a garden gate; a bigger machine needs a vehicle-width gap and wants to drive right up.',
+      'How deep you need to go, and whether the root flare is to be ground as well.',
+      'Whether the grindings are left or taken away and the hole backfilled with soil.',
+      'Stones, old fencing wire or concrete around the base, which blunt the teeth and slow the work.',
+    ],
+    goodToKnow: [
+      'Find out what is underground before anyone starts. Water pipes, electricity cables, land drains and septic runs can all sit near a tree. Tell the contractor about anything you know of, and keep well clear of anything you are unsure of.',
+      'Willow, poplar, elm, cherry and some others throw up suckers from the roots after felling. Grinding removes the stump but not the roots, so expect some regrowth for a season or two and mow or pull it.',
+      'Do not plant a new tree straight into the grindings. Fresh wood chip takes nitrogen out of the soil as it rots. Backfill with topsoil, or plant a metre or so to one side.',
+      'A grinder throws chips some distance. Move cars, keep children, dogs and stock away, and expect windows nearby to be screened.',
+    ],
+    faqs: [
+      {
+        q: 'How deep does a stump grinder go?',
+        a: 'Usually 15–30cm below ground level, which is enough to mow over, lay turf or seed. If you want to build, lay a path or plant a tree on the spot, ask for it to go deeper and the roots around the base to be ground too.',
+      },
+      {
+        q: 'Can I grow grass over a ground-out stump?',
+        a: 'Yes. Rake out the grindings, or let them settle and top up, backfill with soil and seed as normal. Grass sown straight into the chips will be thin and yellow for a year because the rotting wood takes nitrogen from the soil.',
+      },
+      {
+        q: 'Is it better to grind a stump or dig it out?',
+        a: 'Grinding is quicker, cheaper and leaves the ground intact. Digging out with an excavator removes the whole root plate but leaves a large hole and a lot of spoil. Dig out when the ground is being excavated anyway, for example for foundations or a new drive.',
+      },
+      {
+        q: 'Will the tree grow back after grinding?',
+        a: 'The stump will not. Some species, notably willow, poplar, elm and cherry, sucker from the roots left in the ground. Mowing or pulling the suckers for a season or two usually exhausts them.',
+      },
+    ],
+    related: ['tree-felling', 'fixed-tooth-mulching', 'excavator-work', 'land-clearance'],
+  },
+  {
+    card: 'log-splitting',
+    path: 'mobile-log-splitting',
+    canonical: ['Mobile log splitting'],
+    metaTitle: 'Mobile Log Splitting Near You',
+    metaDescription:
+      'Mobile log splitting: a contractor brings a log splitter or firewood processor to your timber and turns it into logs. Describe the pile, get prices.',
+    h1: 'Mobile log splitting',
+    intro:
+      'For anyone with more timber than an axe can handle: a felled tree in rings, a stack of cordwood from a hedge job, a woodland thinning. A contractor brings a tractor- or engine-driven log splitter, or a firewood processor, to your stack and splits it into firewood logs on site. The wood never has to leave your land.',
+    involves: [
+      'A hydraulic log splitter pushes a ring against a wedge and splits it in two or four. Rings go on, logs come off, and the contractor works through the stack at a steady rate. For timber still in trunk or branch lengths, a firewood processor saws it to length and splits it in one pass; otherwise it is cut into rings with a chainsaw first, which takes time and is priced in.',
+      'Agree the log length before the day: 25cm (10 inches) suits most stoves, bigger open fires and boilers take longer logs. Say what size the logs are for so the contractor sets the machine to suit.',
+      'The split logs come off into a heap, a trailer or builder’s bags, or are stacked where you say. Stacking is slow by hand, so it costs extra, but a stack dries faster and more evenly than a heap.',
+    ],
+    when: [
+      'Split as early in the year as you can. Wood seasons far faster once it is split, and logs split in late winter or spring have a full summer to dry. Hardwood such as oak, ash and beech generally needs a year or two in a dry, airy stack to get below the 20% moisture a stove wants; softwood is quicker.',
+      'The machine needs firm access to the pile. A tractor and splitter on wet pasture will leave ruts, so a dry spell, a frosty morning or a pile by a hard track all help.',
+    ],
+    priceFactors: [
+      'How much timber there is: a trailer load, a few loads, or a season’s worth from a felling job.',
+      'Whether it is already cut into rings or still in lengths that need sawing first.',
+      'Species and shape. Elm, knotty or forked timber and big-diameter rings are slower to split than straight ash or softwood.',
+      'Access for a tractor or a towed machine, and how close it can get to the pile.',
+      'Whether the logs are stacked, bagged or left in a heap.',
+      'Travel distance, and whether the job fits in with other work nearby.',
+    ],
+    goodToKnow: [
+      'Logs need a dry, airy place to season: off the ground, stacked loosely, covered on top but open at the sides. A tarpaulin wrapped right round a stack keeps the wet in.',
+      'A cheap moisture meter tells you when logs are ready. Below 20% burns clean and hot; wet wood smoulders, tars the flue and wastes most of its heat drying itself out.',
+      'If you sell logs rather than burn them, the Ready to Burn rules apply in England: wood sold in volumes under 2 cubic metres must be certified as under 20% moisture. Wood for your own fire is not affected.',
+      'Have the pile sorted before the contractor arrives. Rotten, nail-studded or painted timber is best picked out, and a clear space beside the pile for the machine and the logs saves time you are paying for.',
+    ],
+    faqs: [
+      {
+        q: 'How long do logs take to season after splitting?',
+        a: 'Hardwood such as oak, ash and beech generally needs a year or more stacked in a dry, airy place; oak is slow and often needs two. Softwood and thinner-split logs can be ready in six months to a year. Below 20% moisture on a meter is the test.',
+      },
+      {
+        q: 'Does the timber need cutting into rings first?',
+        a: 'For a log splitter, yes. The contractor can ring it up with a chainsaw on the day, which adds time, or bring a firewood processor that saws and splits in one go. Say what state the timber is in when you describe the job.',
+      },
+      {
+        q: 'How much firewood is in a cubic metre?',
+        a: 'A loose cubic metre of split logs is roughly a third of a tonne of seasoned hardwood, and a builder’s bag holds a bit under one. A mature ash or beech can give several cubic metres of logs; a hedgerow tree much less.',
+      },
+      {
+        q: 'Can I split the wood myself?',
+        a: 'A few rings, yes, with a maul. A trailer load or more is a long, hard job by hand, and big, knotty or forked rings often will not split at all. A hydraulic splitter gets through in an hour what takes a weekend with an axe.',
+      },
+    ],
+    related: ['tree-felling', 'stump-grinding', 'trailer-work', 'hedge-cutting'],
   },
 ];

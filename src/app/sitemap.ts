@@ -25,8 +25,8 @@ const DATES = {
   verticalCounty: new Date('2026-10-11'),
   /** Contractor recruiting page: title and description trimmed. */
   contractors: new Date('2026-10-11'),
-  /** Service pages: last content pass (SEO review, 2026-09-24). */
-  services: new Date('2026-09-24'),
+  /** Service pages: stump grinding and log splitting added (2026-10-11). */
+  services: new Date('2026-10-11'),
   /** Customer terms v2.1 and the charter (insurance wording). */
   legal: new Date('2026-09-23'),
 } as const;
