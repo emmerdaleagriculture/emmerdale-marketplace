@@ -16,7 +16,7 @@ import {
 } from '@/components/paddock/PaddockSections';
 import { getServices, getCountyCoverage } from '@/lib/reference';
 import { UK_COUNTY_NAMES } from '@/lib/coverage';
-import { COMPANY_LEGAL_NAME, COMPANY_REG_PROSE, SERVICE_AREA, siteUrl } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, COMPANY_REG_PROSE, ORG_ID, SERVICE_AREA, siteUrl } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
 
@@ -37,19 +37,16 @@ const SITE = siteUrl();
 // ISR: the only data here is the service taxonomy and live county coverage.
 export const revalidate = 3600;
 
-const TITLE = 'Paddock Maintenance & Field Topping — Get a Quote';
+const TITLE = 'Paddock Maintenance & Field Topping';
 const DESCRIPTION =
-  'Overgrown paddock or field that needs putting right? Describe the job in your own words and we’ll pass it to agricultural contractors covering your area. Topping, harrowing, rolling, spraying, hedge cutting and more — free, no obligation.';
+  'Overgrown paddock or field? Describe the job and we’ll pass it to agricultural contractors near you. Topping, harrowing, spraying, hedges. Free, no obligation.';
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: '/paddock-maintenance' },
-  openGraph: {
-    title: TITLE,
-    description:
-      'Describe your paddock or field job in your own words — we’ll pass it to contractors covering your area. Free, no obligation.',
-  },
+  // No page-level openGraph: it would replace the layout's block and lose the
+  // site image. og:title and og:description are inherited from the above.
 };
 
 const faqs = [
@@ -98,6 +95,7 @@ export default async function PaddockMaintenancePage() {
     areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
     provider: {
       '@type': 'Organization',
+      '@id': ORG_ID,
       name: 'Emmerdale Agriculture',
       legalName: COMPANY_LEGAL_NAME,
       url: SITE,

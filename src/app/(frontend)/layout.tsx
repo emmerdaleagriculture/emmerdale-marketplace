@@ -20,13 +20,17 @@ const tenor = Tenor_Sans({
   adjustFontFallback: true,
 });
 
-// DM Sans = body. Metrics close to the system fallback, so `swap` is safe.
+// DM Sans = body. `swap` was meant to be safe because the metrics are close
+// to the fallback, but the enquiry form on the county pages still reflowed
+// when it arrived (CLS 0.12, Lighthouse 2026-10-11): close is not identical
+// once the text wraps. `optional` ends the swap; a slow first visit keeps the
+// fallback, as the display face already does.
 const dm = DM_Sans({
   subsets: ['latin'],
   // 800 is the front page's display weight (H1 / big numbers).
   weight: ['400', '500', '600', '700', '800'],
   variable: '--font-body',
-  display: 'swap',
+  display: 'optional',
   adjustFontFallback: true,
 });
 

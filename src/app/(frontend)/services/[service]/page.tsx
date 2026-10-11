@@ -11,7 +11,7 @@ import { jsonLd } from '@/lib/jsonld';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { SERVICE_PAGES, servicePageByPath, cardFor, servicePagePath } from '@/lib/services';
 import { HOME_SERVICES } from '@/lib/home/services';
-import { COMPANY_LEGAL_NAME, SERVICE_AREA, siteUrl } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, ORG_ID, SERVICE_AREA, siteUrl } from '@/lib/site';
 import a from '../../auth.module.css';
 import s from '../../landing.module.css';
 import t from '../services.module.css';
@@ -35,7 +35,8 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     title: page.metaTitle,
     description: page.metaDescription,
     alternates: { canonical: `/services/${page.path}` },
-    openGraph: { title: page.metaTitle, description: page.metaDescription },
+    // No page-level openGraph: it would replace the layout's block and lose
+    // the site image. og:title and og:description are inherited.
   };
 }
 
@@ -81,7 +82,7 @@ export default async function ServicePage({ params }: { params: Promise<Params> 
     description: page.intro,
     url,
     areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
-    provider: { '@type': 'Organization', name: 'Emmerdale Agriculture', legalName: COMPANY_LEGAL_NAME, url: SITE },
+    provider: { '@type': 'Organization', '@id': ORG_ID, name: 'Emmerdale Agriculture', legalName: COMPANY_LEGAL_NAME, url: SITE },
   };
 
   const related = page.related

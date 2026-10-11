@@ -6,7 +6,7 @@ import { Breadcrumb } from '@/components/Breadcrumb';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
 import { CountyLinks } from '@/components/verticals/CountyLinks';
 import { NotesTeaser } from '@/components/notes/NotesTeaser';
-import { COMPANY_LEGAL_NAME, SERVICE_AREA, siteUrl } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, ORG_ID, SERVICE_AREA, siteUrl } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
 
@@ -18,15 +18,12 @@ const SITE = siteUrl();
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Hay, Straw & Haylage Suppliers — Matched Near You',
+  title: 'Hay, Straw & Haylage Suppliers Near You',
   description:
-    `Looking for hay, straw or haylage? Tell us what you need and we’ll match you with a supplier near you across ${SERVICE_AREA} — big bales or small, delivered or collected.`,
+    'Need hay, straw or haylage? Tell us what you want and we’ll match you with a supplier near you, anywhere in the UK. Big or small bales, delivered or collected.',
   alternates: { canonical: '/hay-bales' },
-  openGraph: {
-    title: 'Hay, Straw & Haylage Suppliers — Matched Near You',
-    description:
-      'Tell us what you need and we’ll match you with a hay, straw or haylage supplier near you.',
-  },
+  // No page-level openGraph: it would replace the layout's block and lose the
+  // site image. og:title and og:description are inherited from the above.
 };
 
 const serviceJsonLd = {
@@ -39,6 +36,7 @@ const serviceJsonLd = {
   areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
   provider: {
     '@type': 'Organization',
+    '@id': ORG_ID,
     name: 'Emmerdale Agriculture',
     legalName: COMPANY_LEGAL_NAME,
     url: SITE,

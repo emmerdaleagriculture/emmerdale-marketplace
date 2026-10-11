@@ -38,19 +38,16 @@ export const revalidate = 3600;
 
 const SITE = siteUrl();
 
-const TITLE = 'Work for Agricultural Contractors — Free to Join';
+const TITLE = 'Work for Agricultural Contractors';
 const DESCRIPTION =
-  'We advertise, find the customers and handle the money. You price the jobs in the counties you cover and do the work. No joining fee, no monthly fee, and nothing taken off your invoice.';
+  'We advertise, find the customers and handle the money. You price jobs in the counties you cover and do the work. Free to join, nothing off your invoice.';
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: '/agriculturalcontractors' },
-  openGraph: {
-    title: TITLE,
-    description:
-      'The jobs come to you. We pay for the advertising and handle the payment — you price the work and do it. Free to join.',
-  },
+  // No page-level openGraph: it would replace the layout's block and lose the
+  // site image. og:title and og:description are inherited from the above.
 };
 
 /** The four things the network takes off a contractor's hands. */

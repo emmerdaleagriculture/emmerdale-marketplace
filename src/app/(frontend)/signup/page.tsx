@@ -23,7 +23,7 @@ function isCustomerSignup(next: string | null, from: string | undefined): boolea
 export const metadata: Metadata = {
   title: 'Join the network',
   description:
-    'Sign up as a contractor — paddock and land jobs matched to the counties you cover, free to join, with the customer’s payment handled and released to you when the job is done.',
+    'Sign up as a contractor: paddock and land jobs in the counties you cover, free to join, with the customer’s payment handled and released when the job is done.',
   alternates: { canonical: '/signup' },
 };
 

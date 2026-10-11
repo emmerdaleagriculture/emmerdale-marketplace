@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { allCountyRefs } from '@/lib/verticals';
-import { getCountyCoverage } from '@/lib/reference';
+import { getCountyServiceCoverage } from '@/lib/reference';
+import { VERTICALS } from '@/lib/verticals';
 import { getNotesData, countByTag } from '@/lib/notes/data';
 import { CURATED_TAGS, MIN_INDEXED_TAG_POSTS } from '@/lib/notes/tags';
 import { siteUrl } from '@/lib/site';
@@ -8,9 +9,27 @@ import { SERVICE_PAGES } from '@/lib/services';
 
 const SITE = siteUrl();
 
-// Bumped when the indexable pages get a meaningful content change, so crawlers
-// get a stable lastmod signal rather than a churning per-build timestamp.
-const LAST_UPDATED = new Date('2026-09-01');
+// lastmod per page family, bumped in the PR that changes that family's copy
+// or template. One site-wide constant used to stamp 305 URLs with the same
+// day — including pages created after it — and a crawler that catches a
+// lastmod lying once ignores the ones that tell the truth (the notes).
+// Pages with no real date are listed without one rather than given a fake.
+const DATES = {
+  /** Home: coverage copy now names the whole UK (Northern Ireland). */
+  home: new Date('2026-10-10'),
+  /** Hub titles and descriptions rewritten (SEO review). */
+  hubs: new Date('2026-10-11'),
+  /** Paddock county pages: new title/H1, Northern Ireland ground notes. */
+  paddockCounty: new Date('2026-10-11'),
+  /** Hay and tractor county pages: new titles, region phrasing fixed. */
+  verticalCounty: new Date('2026-10-11'),
+  /** Contractor recruiting page: title and description trimmed. */
+  contractors: new Date('2026-10-11'),
+  /** Service pages: last content pass (SEO review, 2026-09-24). */
+  services: new Date('2026-09-24'),
+  /** Customer terms v2.1 and the charter (insurance wording). */
+  legal: new Date('2026-09-23'),
+} as const;
 
 // Refresh daily so covered-county entries track the network as it grows.
 export const revalidate = 86400;
@@ -28,29 +47,34 @@ function latestDate(dates: (string | null)[]): Date | undefined {
 // login is noindex (no search value), so it's excluded here too. The homepage
 // uses the bare origin (no trailing slash) to match its rendered canonical.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [counties, coverage, notes] = await Promise.all([
+  const [counties, hayCoverage, tractorCoverage, notes] = await Promise.all([
     allCountyRefs(),
-    getCountyCoverage(),
+    getCountyServiceCoverage(VERTICALS['hay-bales'].serviceId),
+    getCountyServiceCoverage(VERTICALS['tractor-hire'].serviceId),
     getNotesData(),
   ]);
-  // Only list hay/tractor county pages we actually cover — matches the per-page
-  // index rule, so we never submit thin, no-coverage pages to Google.
-  const countyPages: MetadataRoute.Sitemap = counties
-    .filter((c) => (coverage[c.name] ?? 0) > 0)
-    .flatMap((c) => [
-      { url: `${SITE}/hay-bales/${c.slug}`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.6 },
-      { url: `${SITE}/tractor-hire/${c.slug}`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.5 },
-    ]);
+  // Only list hay/tractor county pages a contractor of THAT service covers —
+  // the same per-service rule as the page's own robots meta, so we never
+  // submit a page that is noindex, or a tractor-hire page whose only
+  // "coverage" is a straw supplier.
+  const countyPages: MetadataRoute.Sitemap = [
+    ...counties
+      .filter((c) => (hayCoverage[c.name] ?? 0) > 0)
+      .map((c) => ({ url: `${SITE}/hay-bales/${c.slug}`, lastModified: DATES.verticalCounty, changeFrequency: 'monthly' as const, priority: 0.6 })),
+    ...counties
+      .filter((c) => (tractorCoverage[c.name] ?? 0) > 0)
+      .map((c) => ({ url: `${SITE}/tractor-hire/${c.slug}`, lastModified: DATES.verticalCounty, changeFrequency: 'monthly' as const, priority: 0.5 })),
+  ];
 
   // Paddock county pages list every county, covered or not — see the indexing
   // note on the page itself. A job in an uncovered county still has somewhere
   // to go, and that demand is what recruits contractors into the area.
   // One page per service, plus their index (SEO review, 2026-09-24).
   const servicePages: MetadataRoute.Sitemap = [
-    { url: `${SITE}/services`, lastModified: new Date('2026-09-24'), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE}/services`, lastModified: DATES.services, changeFrequency: 'monthly', priority: 0.8 },
     ...SERVICE_PAGES.map((p) => ({
       url: `${SITE}/services/${p.path}`,
-      lastModified: new Date('2026-09-24'),
+      lastModified: DATES.services,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     })),
@@ -58,7 +82,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const paddockCountyPages: MetadataRoute.Sitemap = counties.map((c) => ({
     url: `${SITE}/paddock-maintenance/${c.slug}`,
-    lastModified: LAST_UPDATED,
+    lastModified: DATES.paddockCounty,
     changeFrequency: 'monthly',
     priority: 0.7,
   }));
@@ -67,9 +91,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // the hub pages themselves, which 404 while empty).
   const allNotes = [...(notes.featured ? [notes.featured] : []), ...notes.grid];
   const tagCounts = countByTag(allNotes);
-  // Newest publish date per tag (and overall) — a hub's lastmod is the date of
-  // the most recent post on it, which is what actually changed the page.
-  const newestOverall = latestDate(allNotes.map((n) => n.publishedAt));
+  // A post's lastmod is its publish date or its last edit, whichever is later;
+  // a hub's is the newest of the posts on it, which is what changed the page.
+  const noteDate = (n: { publishedAt: string | null; updatedAt: string | null }) =>
+    latestDate([n.publishedAt, n.updatedAt]);
+  const newestOverall = latestDate(allNotes.flatMap((n) => [n.publishedAt, n.updatedAt]));
   const notePages: MetadataRoute.Sitemap =
     allNotes.length === 0
       ? []
@@ -82,7 +108,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           },
           ...allNotes.map((n) => ({
             url: `${SITE}/notes/${n.slug}`,
-            lastModified: n.publishedAt ? new Date(n.publishedAt) : undefined,
+            lastModified: noteDate(n),
             changeFrequency: 'monthly' as const,
             priority: 0.6,
           })),
@@ -91,7 +117,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           ...CURATED_TAGS.filter((t) => (tagCounts.get(t.slug) ?? 0) >= MIN_INDEXED_TAG_POSTS).map((t) => ({
             url: `${SITE}/notes/tag/${t.slug}`,
             lastModified: latestDate(
-              allNotes.filter((n) => n.tags.includes(t.slug)).map((n) => n.publishedAt),
+              allNotes.filter((n) => n.tags.includes(t.slug)).flatMap((n) => [n.publishedAt, n.updatedAt]),
             ),
             changeFrequency: 'monthly' as const,
             priority: 0.5,
@@ -99,18 +125,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ];
 
   return [
-    { url: SITE, lastModified: LAST_UPDATED, changeFrequency: 'weekly', priority: 1 },
-    { url: `${SITE}/paddock-maintenance`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE}/hay-bales`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${SITE}/tractor-hire`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.7 },
+    { url: SITE, lastModified: DATES.home, changeFrequency: 'weekly', priority: 1 },
+    { url: `${SITE}/paddock-maintenance`, lastModified: DATES.hubs, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE}/hay-bales`, lastModified: DATES.hubs, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE}/tractor-hire`, lastModified: DATES.hubs, changeFrequency: 'monthly', priority: 0.7 },
     // The supply side: the argument page, then the form it feeds.
-    { url: `${SITE}/agriculturalcontractors`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE}/signup`, lastModified: LAST_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE}/contact`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${SITE}/privacy`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
-    { url: `${SITE}/terms`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
-    { url: `${SITE}/customer-terms`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
-    { url: `${SITE}/service-charter`, lastModified: LAST_UPDATED, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE}/agriculturalcontractors`, lastModified: DATES.contractors, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE}/signup`, lastModified: DATES.contractors, changeFrequency: 'monthly', priority: 0.9 },
+    // No honest date for these: listed without one.
+    { url: `${SITE}/contact`, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE}/privacy`, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE}/terms`, lastModified: DATES.legal, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE}/customer-terms`, lastModified: DATES.legal, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE}/service-charter`, lastModified: DATES.legal, changeFrequency: 'yearly', priority: 0.2 },
     ...servicePages,
     ...paddockCountyPages,
     ...countyPages,

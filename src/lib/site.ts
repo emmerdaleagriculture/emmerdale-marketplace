@@ -72,6 +72,20 @@ export const SERVICE_AREA_SHORT = 'the UK';
 const FALLBACK_SITE_URL = 'https://www.emmerdaleagriculture.com';
 
 /**
+ * The one identifier for the company in structured data. Every Service
+ * provider, Article publisher and the home page's Organization block carry
+ * it, so search engines read one entity, not a dozen near-duplicates with
+ * different names (the home page alone used to describe two). Built on the
+ * canonical origin, not siteUrl(): an identifier must not change per
+ * environment.
+ */
+export const ORG_ID = `${FALLBACK_SITE_URL}/#organization`;
+
+/** Tom's LinkedIn profile: the author entity on every article, and the
+ *  founder on the home page's Organization. */
+export const LINKEDIN_URL = 'https://www.linkedin.com/in/tom-oswald-a7233619/';
+
+/**
  * The site's canonical origin, without a trailing slash.
  *
  * Every canonical URL, JSON-LD `url`, sitemap entry and absolute email link is

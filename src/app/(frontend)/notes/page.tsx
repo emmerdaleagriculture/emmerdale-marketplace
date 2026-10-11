@@ -21,12 +21,8 @@ export const metadata: Metadata = {
   title: 'Notes from the field',
   description: DESCRIPTION,
   alternates: { canonical: '/notes' },
-  openGraph: {
-    title: 'Notes from the field',
-    description: DESCRIPTION,
-    type: 'website',
-    url: '/notes',
-  },
+  // No page-level openGraph: it would replace the layout's block and lose the
+  // site image. og:title and og:description are inherited from the above.
 };
 
 // ISR so newly published posts (revalidateTag('notes') from the admin editor)

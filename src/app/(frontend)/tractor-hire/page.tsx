@@ -6,7 +6,7 @@ import { Breadcrumb } from '@/components/Breadcrumb';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
 import { CountyLinks } from '@/components/verticals/CountyLinks';
 import { NotesTeaser } from '@/components/notes/NotesTeaser';
-import { COMPANY_LEGAL_NAME, SERVICE_AREA, siteUrl } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, ORG_ID, SERVICE_AREA, siteUrl } from '@/lib/site';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
 
@@ -20,13 +20,10 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: 'Tractor Hire for Weddings, Proms & Events',
   description:
-    `Hire a tractor and trailer for a wedding, prom, photoshoot or parade — matched with an experienced operator near you across ${SERVICE_AREA}. Tell us the occasion and we’ll sort it.`,
+    'Hire a tractor and trailer for a wedding, prom, photoshoot or parade, with an experienced operator near you, anywhere in the UK. Tell us the occasion.',
   alternates: { canonical: '/tractor-hire' },
-  openGraph: {
-    title: 'Tractor Hire for Weddings, Proms & Events',
-    description:
-      'Hire a tractor and trailer for a wedding, prom or event — matched with an operator near you.',
-  },
+  // No page-level openGraph: it would replace the layout's block and lose the
+  // site image. og:title and og:description are inherited from the above.
 };
 
 const serviceJsonLd = {
@@ -39,6 +36,7 @@ const serviceJsonLd = {
   areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
   provider: {
     '@type': 'Organization',
+    '@id': ORG_ID,
     name: 'Emmerdale Agriculture',
     legalName: COMPANY_LEGAL_NAME,
     url: SITE,

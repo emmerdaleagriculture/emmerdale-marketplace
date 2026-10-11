@@ -14,6 +14,8 @@ export type NoteCard = {
   title: string;
   excerpt: string | null;
   publishedAt: string | null;
+  /** Last edit — the sitemap's lastmod is the later of this and publishedAt. */
+  updatedAt: string | null;
   primaryTag: string | null;
   tags: string[];
   hero: { url: string; alt: string } | null;
@@ -51,6 +53,7 @@ function project(r: NoteRow): NoteCard {
     title: r.title,
     excerpt: r.excerpt,
     publishedAt: r.published_at,
+    updatedAt: r.updated_at ?? null,
     primaryTag: r.primary_tag,
     tags: r.tags ?? [],
     hero: url ? { url, alt: r.hero_alt || r.title } : null,

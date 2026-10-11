@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { CountyVerticalPage } from '@/components/verticals/CountyVerticalPage';
 import { allCountyRefs, resolveCountyBySlug, VERTICALS } from '@/lib/verticals';
-import { getCountyCoverage } from '@/lib/reference';
+import { getCountyServiceCoverage } from '@/lib/reference';
 
 export const dynamicParams = false;
 // Refresh daily so coverage counts (and the index/noindex decision below) stay
@@ -22,8 +22,8 @@ export async function generateMetadata({
   const { county } = await params;
   const resolved = await resolveCountyBySlug(county);
   if (!resolved) return {};
-  const coverage = (await getCountyCoverage())[resolved.county.name] ?? 0;
   const v = VERTICALS['hay-bales'];
+  const coverage = (await getCountyServiceCoverage(v.serviceId))[resolved.county.name] ?? 0;
   return {
     title: v.metaTitle(resolved.county.name),
     description: v.metaDescription(resolved.county.name),
@@ -42,7 +42,7 @@ export default async function HayBalesCountyPage({
   const { county } = await params;
   const resolved = await resolveCountyBySlug(county);
   if (!resolved) notFound();
-  const coverage = (await getCountyCoverage())[resolved.county.name] ?? 0;
+  const coverage = (await getCountyServiceCoverage(VERTICALS['hay-bales'].serviceId))[resolved.county.name] ?? 0;
   return (
     <CountyVerticalPage
       vertical="hay-bales"
