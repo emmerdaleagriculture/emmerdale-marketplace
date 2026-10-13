@@ -2890,6 +2890,7 @@ export type Database = {
         Args: {
           p_include_hidden?: boolean
           p_limit?: number
+          p_search?: string
           p_statuses?: string[]
         }
         Returns: Json
