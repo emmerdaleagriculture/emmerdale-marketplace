@@ -25,10 +25,18 @@ export const metadata: Metadata = { title: 'Submissions — Admin' };
  * and stopped before their contact details — are the funnel's leak and there
  * are more of them than jobs, so they live behind their own tab.
  *
+ * The board is the latest 200. Anything older is reached by the search box,
+ * which asks the database for the rows matching a name, email, phone,
+ * postcode, job text, contractor or job id — every status, drafts and cleared
+ * drafts included, since the point is to find one particular job.
+ *
  * Numbers come from admin_submission_board(), which aggregates in SQL.
  */
 
 const LIMIT = 200;
+
+/** Longest search term we pass on. Anything longer is a paste, not a search. */
+const SEARCH_MAX = 120;
 
 type Row = {
   id: string;
@@ -366,12 +374,17 @@ export default async function AdminSubmissionsPage({
   const sp = await searchParams;
   const view: View = VIEWS.some(([k]) => k === sp.view) ? (sp.view as View) : 'all';
 
+  // ?q=…: a search. It overrides the tabs and the dashboard filters — the
+  // result is its own list, across every status.
+  const q = typeof sp.q === 'string' ? sp.q.trim().replace(/\s+/g, ' ').slice(0, SEARCH_MAX) : '';
+  const searching = q.length > 0;
+
   // Set when arriving from a dashboard tile: show just the jobs behind it.
-  const filter = isSubmissionFilter(sp.filter) ? sp.filter : null;
+  const filter = !searching && isSubmissionFilter(sp.filter) ? sp.filter : null;
 
   // ?hidden=1 on the drafts tab: the ones cleared off the board, so they can
   // be put back. Nothing else ever asks for them.
-  const showHidden = view === 'drafts' && sp.hidden === '1';
+  const showHidden = !searching && view === 'drafts' && sp.hidden === '1';
 
   const admin = createServiceRoleClient();
   // Paged (see fetchAll): a response is 1000 rows at most, and quotes
@@ -380,7 +393,12 @@ export default async function AdminSubmissionsPage({
     page: (from: number, to: number) => PromiseLike<{ data: { submission_id: string | null }[] | null; error: { message: string } | null }>,
   ) => new Set((await fetchAll(page)).map((r) => r.submission_id));
   const [{ data, error }, pricedIds, paidIds, depositIds, quotes] = await Promise.all([
-    admin.rpc('admin_submission_board', { p_limit: LIMIT, p_include_hidden: showHidden }),
+    admin.rpc('admin_submission_board', {
+      p_limit: LIMIT,
+      // A search looks everywhere, cleared drafts included.
+      p_include_hidden: showHidden || searching,
+      ...(searching ? { p_search: q } : {}),
+    }),
     filter === 'priced'
       ? ids((from, to) => admin.from('client_quotes').select('submission_id').order('id').range(from, to))
       : new Set<string | null>(),
@@ -425,10 +443,12 @@ export default async function AdminSubmissionsPage({
   const priced = sum('priced');
   const declined = sum('declined');
 
-  // A dashboard filter overrides the tabs: it is its own list.
-  const shown = filter
-    ? rows.filter((r) => matchesFilter(r, filter, { priced: pricedIds, paid: paidIds }))
-    : rows.filter((r) => inView(r, view));
+  // A search or a dashboard filter overrides the tabs: each is its own list.
+  const shown = searching
+    ? rows
+    : filter
+      ? rows.filter((r) => matchesFilter(r, filter, { priced: pricedIds, paid: paidIds }))
+      : rows.filter((r) => inView(r, view));
 
   const tiles: [string, string | number, string][] = [
     ['Jobs', jobs.length, `${jobs.filter((r) => QUOTING.has(r.status)).length} getting quotes`],
@@ -444,7 +464,7 @@ export default async function AdminSubmissionsPage({
       <h1 className={s.h1}>Submissions</h1>
       <p className={s.sub}>
         Jobs described on the landing page, newest first
-        {rows.length >= LIMIT ? ` — latest ${LIMIT}` : ''}. Opened means the
+        {rows.length >= LIMIT ? (searching ? ` — first ${LIMIT} matches` : ` — latest ${LIMIT}`) : ''}. Opened means the
         contractor opened the job, from the email or the text; tapped means they
         tapped the link in the text (texts have no read receipts, so delivered
         is as far as they report). Tap the numbers on a row to
@@ -459,7 +479,33 @@ export default async function AdminSubmissionsPage({
         ))}
       </Tiles>
 
-      {filter ? (
+      {/* A GET form: the search lives in the URL, so a result can be shared
+          or reloaded, and it works with JavaScript off. */}
+      <form method="get" action="/admin/submissions" role="search" className={p.search}>
+        <input
+          type="search"
+          name="q"
+          defaultValue={q}
+          maxLength={SEARCH_MAX}
+          placeholder="Search by name, email, phone, postcode, job text, contractor or job id"
+          aria-label="Search submissions"
+          className={p.searchInput}
+          autoComplete="off"
+          enterKeyHint="search"
+        />
+        <button type="submit" className={p.searchButton}>Search</button>
+      </form>
+
+      {searching ? (
+        <nav className={p.chips} aria-label="Filter submissions">
+          <span className={`${p.chip} ${p.chipOn}`} aria-current="page">
+            Matching “{q}” <b>{shown.length}</b>
+          </span>
+          <Link href="/admin/submissions" className={p.chip}>
+            Show all
+          </Link>
+        </nav>
+      ) : filter ? (
         <nav className={p.chips} aria-label="Filter submissions">
           <span className={`${p.chip} ${p.chipOn}`} aria-current="page">
             {SUBMISSION_FILTERS[filter]} <b>{shown.length}</b>
@@ -503,7 +549,9 @@ export default async function AdminSubmissionsPage({
 
       {shown.length === 0 ? (
         <div className={s.empty}>
-          {filter
+          {searching
+            ? `Nothing matches “${q}”. Phone numbers match on digits alone; anything else on part of the word.`
+            : filter
             ? 'Nothing matches.'
             : view === 'drafts'
               ? showHidden
