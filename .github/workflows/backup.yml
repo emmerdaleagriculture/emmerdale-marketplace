@@ -1,0 +1,54 @@
+# .github/workflows/backup.yml
+#
+# Nightly off-site backup of the database, the storage objects and the repo
+# to Backblaze B2. All the work is in scripts/backup.sh; restore steps are in
+# docs/backups.md.
+#
+# ─── REQUIRED REPO SECRETS ───────────────────────────────────────────────
+#   BACKUP_DATABASE_URL              session-pooler Postgres URL (port 5432)
+#   BACKUP_SUPABASE_URL              https://<ref>.supabase.co
+#   BACKUP_SUPABASE_SERVICE_ROLE_KEY service role key (downloads private files)
+#   B2_KEY_ID / B2_APP_KEY           the restricted "github-backup" key
+#
+# GitHub disables scheduled workflows on a repo with no commits for 60 days.
+# The Actions tab shows a banner when that happens; one click re-enables it.
+
+name: Backup
+
+on:
+  schedule:
+    - cron: '17 2 * * *'   # 02:17 UTC nightly
+  workflow_dispatch:
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # the git bundle needs the whole history
+
+      - name: Install pg_dump 17, age, rclone
+        # The runner's own postgresql-client is a version behind the server,
+        # and pg_dump refuses to run against a newer server.
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common age rclone
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-17
+          pg_dump --version && age --version && rclone version | head -1
+
+      - name: Back up
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          SUPABASE_URL: ${{ secrets.BACKUP_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.BACKUP_SUPABASE_SERVICE_ROLE_KEY }}
+          B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
+          B2_APP_KEY: ${{ secrets.B2_APP_KEY }}
+        run: ./scripts/backup.sh
