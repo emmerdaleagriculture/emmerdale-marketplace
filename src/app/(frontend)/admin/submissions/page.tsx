@@ -372,19 +372,23 @@ export default async function AdminSubmissionsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const view: View = VIEWS.some(([k]) => k === sp.view) ? (sp.view as View) : 'all';
 
   // ?q=…: a search. It overrides the tabs and the dashboard filters — the
-  // result is its own list, across every status.
-  const q = typeof sp.q === 'string' ? sp.q.trim().replace(/\s+/g, ' ').slice(0, SEARCH_MAX) : '';
+  // result is its own list, across every status. Cut by character, not code
+  // unit, so a long paste ending in an emoji isn't left with half of one.
+  const q = typeof sp.q === 'string'
+    ? Array.from(sp.q.trim().replace(/\s+/g, ' ')).slice(0, SEARCH_MAX).join('')
+    : '';
   const searching = q.length > 0;
+
+  const view: View = !searching && VIEWS.some(([k]) => k === sp.view) ? (sp.view as View) : 'all';
 
   // Set when arriving from a dashboard tile: show just the jobs behind it.
   const filter = !searching && isSubmissionFilter(sp.filter) ? sp.filter : null;
 
   // ?hidden=1 on the drafts tab: the ones cleared off the board, so they can
   // be put back. Nothing else ever asks for them.
-  const showHidden = !searching && view === 'drafts' && sp.hidden === '1';
+  const showHidden = view === 'drafts' && sp.hidden === '1';
 
   const admin = createServiceRoleClient();
   // Paged (see fetchAll): a response is 1000 rows at most, and quotes
@@ -450,6 +454,9 @@ export default async function AdminSubmissionsPage({
       ? rows.filter((r) => matchesFilter(r, filter, { priced: pricedIds, paid: paidIds }))
       : rows.filter((r) => inView(r, view));
 
+  // A search or a dashboard filter replaces the tabs with one chip naming it.
+  const override = searching ? `Matching “${q}”` : filter ? SUBMISSION_FILTERS[filter] : null;
+
   const tiles: [string, string | number, string][] = [
     ['Jobs', jobs.length, `${jobs.filter((r) => QUOTING.has(r.status)).length} getting quotes`],
     ['Emails sent', sent, failed > 0 ? `${delivered} delivered · ${failed} failed` : `${delivered} delivered`],
@@ -464,7 +471,7 @@ export default async function AdminSubmissionsPage({
       <h1 className={s.h1}>Submissions</h1>
       <p className={s.sub}>
         Jobs described on the landing page, newest first
-        {rows.length >= LIMIT ? (searching ? ` — first ${LIMIT} matches` : ` — latest ${LIMIT}`) : ''}. Opened means the
+        {rows.length >= LIMIT ? (searching ? ` — latest ${LIMIT} matches, narrow the search for older ones` : ` — latest ${LIMIT}`) : ''}. Opened means the
         contractor opened the job, from the email or the text; tapped means they
         tapped the link in the text (texts have no read receipts, so delivered
         is as far as they report). Tap the numbers on a row to
@@ -496,19 +503,10 @@ export default async function AdminSubmissionsPage({
         <button type="submit" className={p.searchButton}>Search</button>
       </form>
 
-      {searching ? (
+      {override ? (
         <nav className={p.chips} aria-label="Filter submissions">
           <span className={`${p.chip} ${p.chipOn}`} aria-current="page">
-            Matching “{q}” <b>{shown.length}</b>
-          </span>
-          <Link href="/admin/submissions" className={p.chip}>
-            Show all
-          </Link>
-        </nav>
-      ) : filter ? (
-        <nav className={p.chips} aria-label="Filter submissions">
-          <span className={`${p.chip} ${p.chipOn}`} aria-current="page">
-            {SUBMISSION_FILTERS[filter]} <b>{shown.length}</b>
+            {override} <b>{shown.length}</b>
           </span>
           <Link href="/admin/submissions" className={p.chip}>
             Show all

@@ -9,14 +9,32 @@
 -- p_search matches, case-insensitively, anywhere in: the contact name, email
 -- and postcode left with the job; the job text; the account's email, name and
 -- phone when the customer has one; the winning contractor's business name
--- and email; the job id exactly. Phones compare digits only, so "07700 900"
--- finds "+44 7700 900123". Null means no search, exactly as before.
+-- and email; the job id exactly. Postcodes compare with their spaces removed,
+-- so "GU10 1AA" finds "GU101AA". Phones compare digits only, with a leading
+-- 44 or 0044 read as 0 on both sides, so "07700 900" finds "+44 7700 900123"
+-- and the text-alert mobile is searched too. Null means no search, as before.
 --
 -- The signature changes, so the old one is dropped first: PostgREST cannot
 -- choose between two overloads and would refuse every call.
 -- ============================================================================
 
 drop function if exists public.admin_submission_board(integer, text[], boolean);
+
+-- A phone number as bare digits in national form: "+44 (0)7700 900123",
+-- "447700900123", "0044 7700 900123" and "07700 900123" all give
+-- "07700900123": a UK number never starts with 0 after the 44, so a 0 there
+-- is the bracketed kind. Empty for null.
+create or replace function public.uk_phone_digits(p text)
+ returns text
+ language sql
+ immutable
+ parallel safe
+as $function$
+  select regexp_replace(regexp_replace(coalesce(p, ''), '\D', '', 'g'), '^(00)?440?', '0')
+$function$;
+
+revoke execute on function public.uk_phone_digits(text) from public, anon, authenticated;
+grant execute on function public.uk_phone_digits(text) to service_role;
 
 create or replace function public.admin_submission_board(p_limit integer default 200, p_statuses text[] default null::text[], p_include_hidden boolean default false, p_search text default null)
  RETURNS jsonb
@@ -55,11 +73,13 @@ AS $function$
       left join counties c     on c.id = js.county_id
       left join contractors aw on aw.id = js.awarded_contractor_id
       left join customers   cu on cu.id = js.customer_id
-      -- The search term as a pattern (its own %, _ and \ taken literally) and
-      -- as bare digits, for phone numbers written with or without spaces.
+      -- The search term as a pattern (its own %, _ and \ taken literally),
+      -- the same with spaces removed for postcodes, and as bare digits in
+      -- national form for phone numbers however they were written.
       cross join lateral (
         select '%' || replace(replace(replace(p_search, '\', '\\'), '%', '\%'), '_', '\_') || '%' as pat,
-               regexp_replace(p_search, '\D', '', 'g') as digits
+               '%' || regexp_replace(replace(replace(replace(p_search, '\', '\\'), '%', '\%'), '_', '\_'), '\s', '', 'g') || '%' as pat_nospace,
+               uk_phone_digits(p_search) as digits
       ) q
       left join lateral (
         select count(*) as invited,
@@ -122,7 +142,7 @@ AS $function$
        and (p_search is null
             or js.contact_name     ilike q.pat
             or js.contact_email    ilike q.pat
-            or js.postcode         ilike q.pat
+            or regexp_replace(js.postcode, '\s', '', 'g') ilike q.pat_nospace
             or js.raw_text         ilike q.pat
             or js.service_verbatim ilike q.pat
             or cu.email            ilike q.pat
@@ -131,8 +151,9 @@ AS $function$
             or aw.email            ilike q.pat
             or js.id::text = lower(p_search)
             or (length(q.digits) >= 3 and (
-                 regexp_replace(coalesce(js.contact_phone, ''), '\D', '', 'g') like '%' || q.digits || '%'
-              or regexp_replace(coalesce(cu.phone, ''), '\D', '', 'g') like '%' || q.digits || '%')))
+                 uk_phone_digits(js.contact_phone) like '%' || q.digits || '%'
+              or uk_phone_digits(js.sms_phone)     like '%' || q.digits || '%'
+              or uk_phone_digits(cu.phone)         like '%' || q.digits || '%')))
      order by js.created_at desc
      limit p_limit
   ) b;
