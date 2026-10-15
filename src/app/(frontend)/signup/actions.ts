@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import * as Sentry from '@sentry/nextjs';
 import { emailDeliveryError } from '@/lib/email/deliverable';
 import { redirect } from 'next/navigation';
 import { safeInternalPath } from '@/lib/auth';
@@ -22,11 +23,20 @@ const SUCCESS_MESSAGE =
 
 export async function signUpAction(_prev: FormState, formData: FormData): Promise<FormState> {
   // Bot traps: a hidden field real users never see, and a minimum time-to-fill.
-  // Pretend success so bots can't tell they were caught.
+  // Until 2026-10-15 a trapped submission was faked away with the "check your
+  // email" message. Email confirmation is off, so that mail never comes, and a
+  // real contractor caught by the trap (browser autofill can write a business's
+  // URL into a hidden "website" field) waited for it, then was told at log in
+  // that the address wasn't confirmed. Supabase already rejects any signup
+  // without a solved Turnstile, so the trap is a signal, not the gate: record
+  // it and let the signup go through, as /start does.
   const honeypot = String(formData.get('website') || '');
   const renderedAt = Number(formData.get('form_ts') || 0);
-  if (honeypot || (renderedAt > 0 && Date.now() - renderedAt < 3000)) {
-    return { ok: true, message: SUCCESS_MESSAGE };
+  const tooFast = renderedAt > 0 && Date.now() - renderedAt < 3000;
+  if (honeypot || tooFast) {
+    const why = honeypot ? 'honeypot' : 'too_fast';
+    console.warn('[signup] bot trap fired, continuing:', why);
+    Sentry.captureMessage('signup bot trap fired', { level: 'info', tags: { form: 'signup', trap: why } });
   }
 
   const parsed = SignupSchema.safeParse({

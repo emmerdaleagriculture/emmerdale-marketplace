@@ -25,7 +25,9 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
     options: { captchaToken },
   });
   if (error || !data.user) {
-    return { error: 'Incorrect email or password, or your email isn’t confirmed yet.' };
+    // Email confirmation is off for this project, so "not confirmed yet" was
+    // never the reason — it only sent people looking for a mail that doesn't exist.
+    return { error: 'Incorrect email or password.' };
   }
 
   // A ?next= destination (e.g. the job page from a notification email) wins.
