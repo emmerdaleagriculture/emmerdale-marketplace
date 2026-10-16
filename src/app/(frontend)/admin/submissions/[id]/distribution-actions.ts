@@ -236,7 +236,7 @@ export async function recordPayoutAction(
   const admin = createServiceRoleClient();
   const { data: sub } = await admin
     .from('job_submissions')
-    .select('awarded_contractor_id, status')
+    .select('awarded_contractor_id, status, contact_name, service_verbatim, service:services(name)')
     .eq('id', id)
     .maybeSingle();
   if (!sub?.awarded_contractor_id) return { error: 'This job has no contractor to pay.' };
@@ -263,9 +263,37 @@ export async function recordPayoutAction(
     p_reason: `Payout of ${formatGBP(amount)} sent ${paidOn}`,
     p_metadata: { amount_pence: amount, paid_on: paidOn },
   });
+  // The note sq_invoice_received promised: the money has gone. Recording the
+  // payout is the only moment anyone knows that, so this is where it is sent.
+  const { data: contractor } = await admin
+    .from('contractors')
+    .select('email')
+    .eq('id', sub.awarded_contractor_id)
+    .maybeSingle();
+  if (contractor?.email) {
+    const paidOnLabel = new Date(`${paidOn}T12:00:00Z`).toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      timeZone: 'Europe/London',
+    });
+    const { error: mailErr } = await admin.from('pending_emails').insert({
+      kind: 'sq_payout_sent',
+      to_email: contractor.email,
+      payload: {
+        submission_id: id,
+        contact_name: sub.contact_name,
+        service: (sub.service as { name: string } | null)?.name ?? sub.service_verbatim ?? null,
+        amount_pence: amount,
+        paid_on: paidOnLabel,
+      },
+    });
+    if (mailErr) console.error('[sq] payout-sent email not queued:', mailErr);
+  }
+
   refresh(id);
   revalidatePath('/admin/money');
-  return { ok: true, message: `Recorded ${formatGBP(amount)} paid.` };
+  return { ok: true, message: `Recorded ${formatGBP(amount)} paid — ${contractor?.email ? 'the contractor has been told' : 'no contractor email to tell'}.` };
 }
 
 /** Operator: take back a payout recorded by mistake. */

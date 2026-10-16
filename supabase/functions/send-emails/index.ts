@@ -58,7 +58,7 @@ const REPLY_DOMAIN = (Deno.env.get('SQ_INBOUND_REPLY_DOMAIN') ?? '').trim();
 const SQ_CONTRACTOR_KINDS = new Set([
   'sq_invitation', 'sq_invitation_reminder',
   'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
-  'sq_invoice_request', 'sq_invoice_received',
+  'sq_invoice_request', 'sq_invoice_received', 'sq_payout_sent',
   'sq_job_amended', 'sq_message_to_contractor',
   'sq_visit_reminder', 'sq_visit_accepted', 'sq_visit_declined',
   'sq_weekly_digest', 'sq_thread_visit_to_contractor', 'sq_job_withdrawn', 'sq_price_passed',
@@ -720,6 +720,19 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `${p.amount_pence ? `The ${gbp(p.amount_pence)} is` : 'It’s'} paid as soon as the customer’s ` +
           `funds have cleared into our account — typically 7 days or less from now. ` +
           `You’ll get a note from us when it has been sent.\n\n` +
+          `Your won jobs: ${SITE_URL}/won`,
+      };
+
+    // The payout has gone: recorded by an operator on the job once the
+    // transfer was made. This is the note sq_invoice_received promised.
+    case 'sq_payout_sent':
+      return {
+        subject: `Payment sent — ${gbp(p.amount_pence)} for the ${p.service ?? 'job'}`,
+        text:
+          `We’ve sent ${gbp(p.amount_pence)} to you${p.paid_on ? ` on ${p.paid_on}` : ''} for the ` +
+          `${p.service ? `${p.service} ` : ''}job${p.contact_name ? ` for ${p.contact_name}` : ''}. ` +
+          `It should show in your account within a working day or two, depending on your bank.\n\n` +
+          `If the amount doesn’t match your invoice, reply to this email and we’ll sort it out.\n\n` +
           `Your won jobs: ${SITE_URL}/won`,
       };
 
