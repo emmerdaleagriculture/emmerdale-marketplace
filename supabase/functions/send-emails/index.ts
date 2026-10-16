@@ -58,7 +58,7 @@ const REPLY_DOMAIN = (Deno.env.get('SQ_INBOUND_REPLY_DOMAIN') ?? '').trim();
 const SQ_CONTRACTOR_KINDS = new Set([
   'sq_invitation', 'sq_invitation_reminder',
   'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
-  'sq_invoice_request',
+  'sq_invoice_request', 'sq_invoice_received',
   'sq_job_amended', 'sq_message_to_contractor',
   'sq_visit_reminder', 'sq_visit_accepted', 'sq_visit_declined',
   'sq_weekly_digest', 'sq_thread_visit_to_contractor', 'sq_job_withdrawn', 'sq_price_passed',
@@ -704,6 +704,23 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Send us your invoice for ${gbp(p.amount_pence)} and we'll pay it. A PDF or a photo ` +
           `of a paper one is fine — upload it on the job:\n${SITE_URL}/won\n\n` +
           `Already sent it another way? Reply and tell us and we'll match it up.`,
+      };
+
+    // The invoice has landed. Says so, and says when the money comes: once
+    // the customer's funds have cleared into our account — Stripe pays out a
+    // few working days after the card goes through — so nobody is left
+    // wondering whether "received" means "paid". A replacement invoice sends
+    // this again, which is right: it confirms the one we now hold.
+    case 'sq_invoice_received':
+      return {
+        subject: `Invoice received${p.amount_pence ? ` — ${gbp(p.amount_pence)}` : ''} for the ${p.service ?? 'job'}`,
+        text:
+          `Thanks — we have your invoice${p.invoice_name ? ` (${p.invoice_name})` : ''} for the ` +
+          `${p.service ? `${p.service} ` : ''}job${p.contact_name ? ` for ${p.contact_name}` : ''}.\n\n` +
+          `${p.amount_pence ? `The ${gbp(p.amount_pence)} is` : 'It’s'} paid as soon as the customer’s ` +
+          `funds have cleared into our account — typically 7 days or less from now. ` +
+          `You’ll get a note from us when it has been sent.\n\n` +
+          `Your won jobs: ${SITE_URL}/won`,
       };
 
     case 'sq_invoice_chase':
