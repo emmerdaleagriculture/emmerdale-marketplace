@@ -5,12 +5,14 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatDate, formatDateTime, londonDay } from '@/lib/time';
 import { gateWidthLabel } from '@/lib/jobParse/access';
 import { formatGBP } from '@/lib/sealedQuotes/money';
+import { paymentReference } from '@/lib/site';
 import { getServices } from '@/lib/reference';
 import { DistributionPanel } from './DistributionPanel';
 import { ClearNoteButton } from './ClearNoteButton';
 import { DeleteJobButton } from './DeleteJobButton';
 import { ExtraWorkForm } from './ExtraWorkForm';
 import { PayoutPanel } from './PayoutPanel';
+import { BalanceTransferButton } from './BalanceTransferButton';
 import { ModerateMessage } from './ModerateMessage';
 import { CloseCustomerButton } from './CloseCustomerButton';
 import { SuspendedBanner } from '@/components/messages/MessageThread';
@@ -388,7 +390,7 @@ export default async function SubmissionDetailPage({
 
       {(payments?.length ?? 0) > 0 && (
         <>
-          <div className={s.sectionLabel}>Payments</div>
+          <div className={s.sectionLabel}>Payments · bank reference {paymentReference(id)}</div>
           <AdminTable head={['Part', 'Amount', 'Status', 'When']}>
             {payments!.map((p) => (
               <tr key={p.id}>
@@ -400,6 +402,14 @@ export default async function SubmissionDetailPage({
                     ? ` (retrying — ${p.attempts} so far)`
                     : ''}
                   {p.status === 'failed' ? ' — customer asked to pay from their job page' : ''}
+                  {p.kind === 'balance' && ['due', 'failed'].includes(p.status) && (
+                    <BalanceTransferButton
+                      submissionId={id}
+                      paymentId={p.id}
+                      amountLabel={formatGBP(p.amount_pence)}
+                      reference={paymentReference(id)}
+                    />
+                  )}
                 </td>
                 <td>
                   {p.paid_at

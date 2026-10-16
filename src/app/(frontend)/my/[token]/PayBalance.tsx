@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 import { payBalanceAction, type AcceptActionState } from './actions';
 import f from '@/components/forms/forms.module.css';
 import m from './my.module.css';
+import { BANK_ACCOUNT_NAME, BANK_ACCOUNT_NUMBER, BANK_SORT_CODE } from '@/lib/site';
 
 const EMPTY: AcceptActionState = {};
 
@@ -17,6 +18,9 @@ const EMPTY: AcceptActionState = {};
  *           needs them present). This is the ONLY place the customer can pay
  *           it themselves, so it is a button on the page they already have,
  *           minted on demand — never a link in an email that can lapse.
+ *           The bank account sits beside it with the job's payment
+ *           reference, for the customer whose card is the problem; an
+ *           operator marks the transfer on the admin page when it lands.
  *  paid   — handled by the caller; this component isn't rendered.
  */
 export function PayBalance({
@@ -24,11 +28,14 @@ export function PayBalance({
   amountLabel,
   dueLabel,
   failed,
+  reference,
 }: {
   token: string;
   amountLabel: string;
   dueLabel: string | null;
   failed: boolean;
+  /** The bank-transfer reference for this job (site.ts paymentReference). */
+  reference: string;
 }) {
   const [state, action, pending] = useActionState(payBalanceAction, EMPTY);
 
@@ -55,6 +62,19 @@ export function PayBalance({
           {pending ? 'Opening payment…' : `Pay ${amountLabel}`}
         </button>
       </form>
+      <p>Or pay by bank transfer, using the reference so we can match it to your job:</p>
+      <dl className={m.bankDetails}>
+        <dt>Account name</dt>
+        <dd>{BANK_ACCOUNT_NAME}</dd>
+        <dt>Sort code</dt>
+        <dd>{BANK_SORT_CODE}</dd>
+        <dt>Account number</dt>
+        <dd>{BANK_ACCOUNT_NUMBER}</dd>
+        <dt>Reference</dt>
+        <dd>
+          <strong>{reference}</strong>
+        </dd>
+      </dl>
       <p className={f.hint}>
         If something about the job isn&rsquo;t right, don&rsquo;t pay — reply to any email
         from us and we&rsquo;ll sort it out first.

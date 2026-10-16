@@ -36,6 +36,17 @@ type PendingEmail = {
 const SITE_URL = (Deno.env.get('SITE_URL') ?? 'https://emmerdaleagriculture.com').replace(/\/$/, '');
 // Inbound reply domain for invitation reply-parsing (§17). Unset = no reply_to
 // (replies go nowhere special) until the Resend inbound MX is verified.
+// The company bank account, for a balance the card route could not take.
+// A copy of src/lib/site.ts (this function cannot import from the app) —
+// change both together. The reference mirrors paymentReference() there.
+const BANK_ACCOUNT_NAME = 'Emmerdale Agriculture Online Ltd';
+const BANK_SORT_CODE = '04-00-06';
+const BANK_ACCOUNT_NUMBER = '65856946';
+function paymentReference(submissionId: unknown): string | null {
+  if (typeof submissionId !== 'string' || !submissionId) return null;
+  return `EA-${submissionId.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
+}
+
 const REPLY_DOMAIN = (Deno.env.get('SQ_INBOUND_REPLY_DOMAIN') ?? '').trim();
 
 // Kinds addressed to contractors within the sealed-quote funnel — the set the
@@ -751,8 +762,15 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `completed job from the card you used for the deposit, and the payment didn’t ` +
           `go through. That’s usually an expired card or a check your bank wants you to ` +
           `approve.\n\n` +
-          `You can settle it here:\n${portal}\n\n` +
-          `If something about the job isn’t right, reply to this email instead and we’ll ` +
+          `You can settle it by card here:\n${portal}\n\n` +
+          `Or by bank transfer:\n` +
+          `Account name:   ${BANK_ACCOUNT_NAME}\n` +
+          `Sort code:      ${BANK_SORT_CODE}\n` +
+          `Account number: ${BANK_ACCOUNT_NUMBER}\n` +
+          (paymentReference(p.submission_id)
+            ? `Reference:      ${paymentReference(p.submission_id)}\n`
+            : '') +
+          `\nIf something about the job isn’t right, reply to this email instead and we’ll ` +
           `sort it out before taking anything.`,
       };
 
@@ -761,7 +779,9 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `BALANCE STUCK: ${gbp(p.amount_pence)} could not be charged`,
         text:
           `The off-session charge for submission ${p.submission_id} failed its last ` +
-          `attempt and the customer has been sent a link.\n\n` +
+          `attempt and the customer has been sent a link, plus the bank details ` +
+          `(reference ${paymentReference(p.submission_id) ?? '?'}). If a transfer lands, ` +
+          `mark it on the job's Payments table so the payout can go.\n\n` +
           `Error: ${p.error ?? '(none recorded)'}\n\n` +
           `${SITE_URL}/admin/submissions/${p.submission_id}`,
       };

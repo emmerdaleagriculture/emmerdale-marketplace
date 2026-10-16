@@ -519,3 +519,36 @@ export async function moderateMessageAction(
   revalidatePath(`/admin/submissions/${submissionId}`);
   return { ok: true };
 }
+
+/**
+ * Operator: the balance arrived by bank transfer. Settles it the same way a
+ * card settlement would (job to 'paid', paid email, invoice request, payout
+ * due) with no Stripe intent on the row. Allowed while the balance is 'due'
+ * as well as 'failed' — settling a due row is what stops the worker charging
+ * the card for money that is already in the bank.
+ */
+export async function markBalanceTransferredAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const user = await assertAdmin();
+  const submissionId = String(formData.get('submission_id') ?? '');
+  const paymentId = String(formData.get('payment_id') ?? '');
+  const note = String(formData.get('note') ?? '').trim() || null;
+  if (!submissionId || !paymentId) return { error: 'Missing payment.' };
+
+  const admin = createServiceRoleClient();
+  const { data, error } = await admin.rpc('sq_mark_balance_transferred', {
+    p_payment_id: paymentId,
+    p_actor: user.id,
+    p_note: note,
+  });
+  if (error) return { error: error.message };
+  const res = data as { ok?: boolean; reason?: string } | null;
+  if (!res?.ok) {
+    return { error: res?.reason === 'not_a_balance' ? 'Only a balance can be marked this way.' : `Couldn’t mark it (${res?.reason ?? 'unknown'}).` };
+  }
+  refresh(submissionId);
+  revalidatePath('/admin/money');
+  return { ok: true };
+}
