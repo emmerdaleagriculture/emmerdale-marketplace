@@ -114,7 +114,7 @@ export default async function ClientPortalPage({
           .select('amount_pence, status, due_at')
           .eq('submission_id', js.id)
           .eq('kind', 'balance')
-          .in('status', ['due', 'failed'])
+          .in('status', ['requested', 'due', 'failed'])
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()
@@ -466,7 +466,7 @@ export default async function ClientPortalPage({
                   token={token}
                   amountLabel={formatGBP(balance.amount_pence)}
                   dueLabel={balance.due_at ? formatDate(balance.due_at) : null}
-                  failed={balance.status === 'failed'}
+                  mode={balance.status === 'due' ? 'due' : balance.status === 'failed' ? 'failed' : 'requested'}
                   reference={paymentReference(js.id)}
                 />
               )}

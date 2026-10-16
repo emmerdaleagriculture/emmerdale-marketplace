@@ -20,7 +20,9 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
  * Claiming is transactional (SELECT … FOR UPDATE SKIP LOCKED plus an immediate
  * attempts bump), so two overlapping runs can never charge the same card
  * twice. A row this run has claimed but not yet resolved is invisible to the
- * next one. And only 'due' rows are ever claimed: a retryable failure stays
+ * next one. And only 'due' rows are ever claimed — 'requested' (the default
+ * since sq_balance_auto_charge went to 0 on 2026-10-16) is the customer's to
+ * pay and never this worker's: a retryable failure stays
  * 'due'; 'failed' means this worker has given up for good and the customer's
  * own "Pay balance" button has taken over — the two never overlap.
  */
@@ -134,7 +136,17 @@ async function run(request: Request) {
         failed += 1;
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      // Stripe's message alone ("The payment failed.") says nothing about
+      // why. The type, code and decline code are what the dashboard shows
+      // and what distinguishes a bank saying no from a saved method that
+      // cannot be charged unattended — so they go on the row with it.
+      const se = err as { type?: string; code?: string; decline_code?: string; message?: string } | null;
+      const message = [
+        [se?.type, se?.code, se?.decline_code].filter(Boolean).join('/'),
+        err instanceof Error ? err.message : String(err),
+      ]
+        .filter(Boolean)
+        .join(': ');
       const isFinal = claim.attempts >= claim.max_attempts;
 
       // A declined card is this worker doing its job: recorded on the row,
@@ -146,7 +158,7 @@ async function run(request: Request) {
       // payment intent already succeeded, which is money taken from a customer
       // and not recorded against their job. That one is indistinguishable from
       // a decline here, and was being written to the row as though it were one.
-      const stripeErrorType = (err as { type?: string } | null)?.type;
+      const stripeErrorType = se?.type;
       if (stripeErrorType !== 'StripeCardError') {
         Sentry.captureException(err, {
           tags: { cron: 'balances', stage: 'charge', stripe_error: stripeErrorType ?? 'none' },

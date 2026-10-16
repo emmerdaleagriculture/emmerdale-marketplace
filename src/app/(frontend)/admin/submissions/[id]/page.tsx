@@ -402,7 +402,8 @@ export default async function SubmissionDetailPage({
                     ? ` (retrying — ${p.attempts} so far)`
                     : ''}
                   {p.status === 'failed' ? ' — customer asked to pay from their job page' : ''}
-                  {p.kind === 'balance' && ['due', 'failed'].includes(p.status) && (
+                  {p.status === 'requested' ? ' — customer to pay (card on their job page, or bank transfer)' : ''}
+                  {p.kind === 'balance' && ['requested', 'due', 'failed'].includes(p.status) && (
                     <BalanceTransferButton
                       submissionId={id}
                       paymentId={p.id}

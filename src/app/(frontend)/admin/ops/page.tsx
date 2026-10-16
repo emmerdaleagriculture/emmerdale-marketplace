@@ -104,6 +104,7 @@ const tel = (phone: string) => `tel:${phone.replace(/\s+/g, '')}`;
 const PAYMENT_WORDS: Record<string, string> = {
   pending: 'link sent',
   due: 'due',
+  requested: 'requested',
   paid: 'paid',
   expired: 'link expired',
   failed: 'failed',
@@ -165,7 +166,7 @@ function facts(j: Job, now: number): Fact[] {
       key: 'bal',
       tone: j.balance_status === 'paid' ? 'good' : j.balance_status === 'failed' ? 'warn' : undefined,
       text: `Balance${j.balance_pence != null ? ` ${formatGBP(j.balance_pence)}` : ''} ${PAYMENT_WORDS[j.balance_status] ?? j.balance_status}${
-        j.balance_status === 'due' && j.balance_due_at ? ` ${formatDate(j.balance_due_at)}` : ''
+        ['due', 'requested'].includes(j.balance_status) && j.balance_due_at ? ` ${formatDate(j.balance_due_at)}` : ''
       }`,
     });
   }

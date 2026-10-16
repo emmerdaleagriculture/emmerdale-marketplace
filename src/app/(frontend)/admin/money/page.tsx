@@ -102,6 +102,8 @@ function partLine(p: Payment | undefined, fallback: string): { text: string; sub
       return { text: amt, sub: 'refunded' };
     case 'due':
       return { text: amt, sub: p.due_at ? `due ${formatDate(p.due_at)}` : 'due' };
+    case 'requested':
+      return { text: amt, sub: `customer to pay${p.due_at ? ` by ${formatDate(p.due_at)}` : ''}` };
     case 'failed':
       return { text: amt, sub: `failed${p.attempts ? ` after ${p.attempts} tries` : ''}`, bad: true };
     case 'expired':
@@ -161,7 +163,7 @@ export default async function MoneyPage() {
 
   const taken = figures.reduce((n, f) => n + f.taken, 0);
   const paymentsTaken = funded.reduce((n, j) => n + j.payments.filter((p) => COLLECTED.has(p.status)).length, 0);
-  const dueNow = figures.filter((f) => f.balance && ['due', 'failed'].includes(f.balance.status));
+  const dueNow = figures.filter((f) => f.balance && ['requested', 'due', 'failed'].includes(f.balance.status));
   const dueNowPence = dueNow.reduce((n, f) => n + f.left, 0);
   const failed = dueNow.filter((f) => f.balance?.status === 'failed').length;
   const notYetDue = figures.filter((f) => f.left > 0 && !dueNow.includes(f));
