@@ -73,7 +73,12 @@ export function renderSms(
       if (!p.token) return null;
       const dist = p.distance_miles != null ? ` (${p.distance_miles} mi)` : '';
       const url = link(`${site}/quote/${p.token}`);
-      if (p.premium || p.first_refusal) {
+      if (p.premium) {
+        // Premium first look: an untapped text is a pass after 2 hours
+        // (migration 20261016200000), so the text says so, briefly.
+        return `Emmerdale Agriculture: yours first - ${job}${dist}. Tap within 2h or it opens to others: ${url}`;
+      }
+      if (p.first_refusal) {
         return `Emmerdale Agriculture: a new job is offered to you first - ${job}${dist}. Price it or pass: ${url}`;
       }
       if (p.direct) {

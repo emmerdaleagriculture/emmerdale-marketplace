@@ -344,8 +344,9 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           (p.premium
             ? `\nOnly premium members have it. Price it or message the customer within 24 ` +
               `hours and it stays that way until ${opens}, or until you’ve all priced or ` +
-              `passed. If no member responds in 24 hours, it goes to other contractors in ` +
-              `the area. Your price carries 5% commission, not 15%.\n\n`
+              `passed. A text left untapped for 2 hours counts as a pass, and if no member ` +
+              `responds in 24 hours it goes to other contractors in the area. Your price ` +
+              `carries 5% commission, not 15%.\n\n`
             : p.direct
             ? `\nIt’s yours alone until ${opens}. Price it or pass by then — after that it ` +
               `goes to other contractors in the area.\n\n`

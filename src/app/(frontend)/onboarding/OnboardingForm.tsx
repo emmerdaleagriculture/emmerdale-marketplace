@@ -88,7 +88,7 @@ export function OnboardingForm({
         </li>
         <li>
           <b>Premium:</b> new jobs come to you <b>before anyone else</b>, held for up to 7 days
-          if you reply within 24 hours, and we add
+          if you tap the text within 2 hours and reply within 24, and we add
           only <b>5%</b> to your price, so a £400 price shows the customer £420, not £460.
         </li>
       </ul>

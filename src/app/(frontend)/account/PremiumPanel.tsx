@@ -73,7 +73,7 @@ export function PremiumPanel({
             )}{' '}
             {pending
               ? 'Premium starts working the moment we approve your application. If we can’t approve it, we cancel your membership and refund you in full.'
-              : 'New jobs in your area come to you before anyone else — reply within 24 hours to hold them for up to 7 days — and every price you send carries 5% commission instead of 15%.'}
+              : 'New jobs in your area come to you before anyone else — tap the text within 2 hours and reply within 24 to hold them for up to 7 days — and every price you send carries 5% commission instead of 15%.'}
           </p>
           <form action="/api/stripe/portal" method="post">
             <button className={f.btnGhost} type="submit">
@@ -92,8 +92,9 @@ export function PremiumPanel({
           <div className={ac.subBody}>
             <p>
               <b>First refusal for up to 7 days.</b> New jobs in your area come to premium members
-              before anyone else. Price it or message the customer within 24 hours and it stays with
-              premium members until you’ve all priced or passed, or the week is up. If nobody
+              before anyone else. Tap the text within 2 hours, then price it or message the
+              customer within 24, and it stays with premium members until you’ve all priced or
+              passed, or the week is up. A text nobody taps in 2 hours counts as a pass; if nobody
               responds in 24 hours, it goes to everyone.
             </p>
             <p>
