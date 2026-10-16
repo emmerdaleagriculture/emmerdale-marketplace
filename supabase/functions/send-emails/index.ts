@@ -771,6 +771,31 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Your job page: ${portal}`,
       };
 
+    // The balance, asked for rather than taken (sq_balance_auto_charge = 0):
+    // the customer pays by card on the job page, present for any bank
+    // check, or by transfer with the job's reference. This replaces
+    // sq_balance_due, which promised a charge that banks kept refusing.
+    case 'sq_balance_request':
+      return {
+        subject: `Balance to pay — ${gbp(p.amount_pence)}`,
+        text:
+          `Hi ${first},\n\nThanks for confirming the work is done.\n\n` +
+          `Job total:     ${gbp(p.total_pence)}${vatSuffix(p.price_basis)}\n` +
+          `Deposit paid:  ${gbp(p.deposit_pence)}\n` +
+          `Balance:       ${gbp(p.amount_pence)}\n\n` +
+          `The balance is due within ${p.terms_days ?? 7} days. Pay by card on your job page:\n` +
+          `${portal}\n\n` +
+          `Or by bank transfer:\n` +
+          `Account name:   ${BANK_ACCOUNT_NAME}\n` +
+          `Sort code:      ${BANK_SORT_CODE}\n` +
+          `Account number: ${BANK_ACCOUNT_NUMBER}\n` +
+          (paymentReference(p.submission_id)
+            ? `Reference:      ${paymentReference(p.submission_id)}\n`
+            : '') +
+          `\nIf something about the job isn’t right, reply to this email before paying and we’ll ` +
+          `sort it out first.`,
+      };
+
     case 'sq_balance_paid':
       return {
         subject: `Paid in full — thank you`,

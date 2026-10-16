@@ -200,9 +200,10 @@ export async function acceptQuoteAction(
  * Carries the payment row id in the session metadata so the webhook settles
  * the SAME row the worker gave up on, never a second one.
  *
- * Only a 'failed' balance — one the worker has stopped trying to charge. A
- * 'due' row may be charged by the worker at any moment, and letting the
- * customer pay it too is how one balance gets taken twice.
+ * Only a 'requested' balance (the customer's to pay) or a 'failed' one (the
+ * worker has stopped trying). A 'due' row may be charged by the worker at any
+ * moment, and letting the customer pay it too is how one balance gets taken
+ * twice.
  */
 export async function payBalanceAction(
   _prev: AcceptActionState,
@@ -225,7 +226,7 @@ export async function payBalanceAction(
     .select('id, amount_pence, stripe_customer_id')
     .eq('submission_id', js.id)
     .eq('kind', 'balance')
-    .eq('status', 'failed')
+    .in('status', ['requested', 'failed'])
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
