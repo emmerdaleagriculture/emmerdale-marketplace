@@ -215,7 +215,7 @@ export async function uploadInvoiceAction(
   const admin = createServiceRoleClient();
   const { data: js } = await admin
     .from('job_submissions')
-    .select('id, status, awarded_contractor_id, contact_name')
+    .select('id, status, awarded_contractor_id, contact_name, accepted_client_quote_id, service_verbatim, service:services(name)')
     .eq('id', submissionId)
     .maybeSingle();
   if (!js) return { error: 'We couldn’t find that job.' };
@@ -255,9 +255,38 @@ export async function uploadInvoiceAction(
 
   const { data: contractor } = await admin
     .from('contractors')
-    .select('business_name')
+    .select('business_name, email')
     .eq('id', user.id)
     .maybeSingle();
+
+  // Tell them we have it, and when it is paid: once the customer's funds have
+  // cleared into our account, not the moment their card goes through. The
+  // amount is the contractor's own price on the accepted quote — the figure
+  // they expect to see, so a wrong one is caught here and not at payout.
+  const { data: accepted } = js.accepted_client_quote_id
+    ? await admin
+        .from('client_quotes')
+        .select('cq:contractor_quotes(contractor_price_pence)')
+        .eq('id', js.accepted_client_quote_id)
+        .maybeSingle()
+    : { data: null };
+  const owedPence =
+    (accepted?.cq as { contractor_price_pence: number } | null)?.contractor_price_pence ?? null;
+  if (contractor?.email) {
+    const { error: mailErr } = await admin.from('pending_emails').insert({
+      kind: 'sq_invoice_received',
+      to_email: contractor.email,
+      payload: {
+        submission_id: submissionId,
+        contact_name: js.contact_name,
+        service: (js.service as { name: string } | null)?.name ?? js.service_verbatim ?? null,
+        amount_pence: owedPence,
+        invoice_name: file.name.slice(0, 200),
+      },
+    });
+    if (mailErr) console.error('[sq] invoice-received email not queued:', mailErr);
+  }
+
   await notifyAdmins(
     `Invoice to pay: ${contractor?.business_name ?? 'a contractor'}`,
     [
@@ -269,7 +298,11 @@ export async function uploadInvoiceAction(
   );
 
   revalidatePath('/won');
-  return { ok: true, message: 'Invoice received — thanks. It’s paid once the customer’s balance has cleared.' };
+  return {
+    ok: true,
+    message:
+      'Invoice received — thanks. It’s paid once the customer’s funds have cleared into our account, typically 7 days or less.',
+  };
 }
 
 /**
