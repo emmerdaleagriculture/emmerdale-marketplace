@@ -26,6 +26,7 @@ import { WithdrawJob } from './WithdrawJob';
 import { getQuotePasses } from '@/lib/sealedQuotes/passes';
 import { PayBalance } from './PayBalance';
 import { formatDate, formatDateTime } from '@/lib/time';
+import { paymentReference } from '@/lib/site';
 import { OpenToMarket } from './OpenToMarket';
 import { TextAlerts } from './TextAlerts';
 import { ukMobile } from '@/lib/sms/ukMobile';
@@ -466,6 +467,7 @@ export default async function ClientPortalPage({
                   amountLabel={formatGBP(balance.amount_pence)}
                   dueLabel={balance.due_at ? formatDate(balance.due_at) : null}
                   failed={balance.status === 'failed'}
+                  reference={paymentReference(js.id)}
                 />
               )}
               {rated ? (

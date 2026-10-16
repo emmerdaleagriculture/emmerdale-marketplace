@@ -109,3 +109,24 @@ export function siteUrl(): string {
   }
   return raw;
 }
+
+// The company bank account, for customers who settle a balance by transfer
+// rather than card. Shown only where the card route has already failed (the
+// balance-action-needed email and the Pay panel on the job page), with the
+// job's payment reference, so a transfer can be matched to its job. The
+// send-emails edge function cannot import this file and carries its own copy
+// of the three values — change both together.
+export const BANK_ACCOUNT_NAME = 'Emmerdale Agriculture Online Ltd';
+export const BANK_SORT_CODE = '04-00-06';
+export const BANK_ACCOUNT_NUMBER = '65856946';
+
+/**
+ * The reference a customer puts on a bank transfer: "EA-" plus the first
+ * eight characters of the job id, upper-cased. Short enough for any bank's
+ * reference field, unique enough to find the job from a statement line, and
+ * derivable from the id alone so the email, the job page and the admin page
+ * cannot disagree.
+ */
+export function paymentReference(submissionId: string): string {
+  return `EA-${submissionId.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
+}

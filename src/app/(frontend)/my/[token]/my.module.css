@@ -219,3 +219,20 @@
   padding: 1px 8px;
   vertical-align: middle;
 }
+
+/* Bank details under the Pay balance button: a two-column list that
+   reads as a block the customer can copy from, not a table. */
+.bankDetails {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+  margin: 8px 0 12px;
+  font-size: 15px;
+}
+.bankDetails dt {
+  color: var(--muted, #5b6b5e);
+}
+.bankDetails dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
