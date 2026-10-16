@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.5 — 3 October 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.6 — 16 October 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -226,9 +226,11 @@ export default function TermsPage() {
             reach of your base, goes to premium members before anyone else. It is held
             for up to <strong>7 days</strong>, or until every premium member it was sent
             to has priced or passed, whichever comes first; then it goes to other
-            contractors as usual. If no premium member has priced it or messaged the
-            customer within <strong>24 hours</strong>, it goes to other contractors
-            then. Where another contractor already has first refusal in an
+            contractors as usual. Where we text you the job and the text is delivered,
+            not opening it within <strong>2 hours</strong> counts as passing for the
+            purpose of the hold (you can still price it). If no premium member has
+            priced it or messaged the customer within <strong>24 hours</strong>, it
+            goes to other contractors then. Where another contractor already has first refusal in an
             area by separate agreement, that comes first and premium follows it. Repeat
             jobs a customer has asked a named contractor for are not included. The
             customer can accept any price at any time, including during the window.
