@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
 import { cleanSignupSource, SIGNUP_SOURCE_KEYS } from '@/lib/signupSource';
+import { captchaErrorMessage } from '@/lib/captchaError';
 
 const SignupSchema = z.object({
   email: z.string().email('Enter a valid email address.'),
@@ -94,32 +95,7 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
 
   if (signUpErr) {
     const msg = signUpErr.message;
-    // GoTrue wraps the Cloudflare siteverify reason in the message. The reason
-    // tells us which layer failed, so map each to distinct, accurate guidance
-    // (and log the raw reason for diagnosis).
-    if (/captcha/i.test(msg)) {
-      console.error('[signup] captcha rejected by Supabase:', msg);
-      if (/no captcha_token found/i.test(msg)) {
-        // The browser submitted without a token — the widget hadn't finished.
-        return { error: 'The security check didn’t finish. Wait for it to complete, then submit again.' };
-      }
-      if (/timeout-or-duplicate/i.test(msg)) {
-        // Token expired (>5 min) or was already used — a fresh one is minted now.
-        return { error: 'The security check timed out. It has refreshed — please submit again.' };
-      }
-      if (/invalid-input-response/i.test(msg)) {
-        // Token was well-formed but Cloudflare rejected it. Almost always a
-        // config mismatch (the Supabase secret and the site key belong to
-        // different Turnstile widgets), which the user can't fix — so don't
-        // tell them to just retry.
-        return {
-          error:
-            'The security check could not be verified. This is a configuration issue on our end — please contact us so we can fix it.',
-        };
-      }
-      return { error: 'The security check failed. Please try again.' };
-    }
-    return { error: msg };
+    return { error: captchaErrorMessage(msg, 'signup') ?? msg };
   }
   // Supabase obfuscates re-signups (returns a user with no identities). Treat as
   // "email already in use" rather than leaking which addresses are registered.

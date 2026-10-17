@@ -6,6 +6,7 @@ import { postLoginPath, safeInternalPath, type LoginSide } from '@/lib/auth';
 import { forgetJustSentJob, justSentJob } from '@/lib/jobCookie';
 import { claimJobForUser } from '@/lib/customers/claim';
 import type { FormState } from '@/lib/form';
+import { captchaErrorMessage } from '@/lib/captchaError';
 
 export async function loginAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const email = String(formData.get('email') || '').trim();
@@ -25,6 +26,10 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
     options: { captchaToken },
   });
   if (error || !data.user) {
+    // A rejected captcha used to read as a wrong password too (six logins
+    // in a row on 2026-10-16, each retyped and each refused). Say which.
+    const captcha = error ? captchaErrorMessage(error.message, 'login') : null;
+    if (captcha) return { error: captcha };
     // Email confirmation is off for this project, so "not confirmed yet" was
     // never the reason — it only sent people looking for a mail that doesn't exist.
     return { error: 'Incorrect email or password.' };

@@ -5,6 +5,13 @@ import { createClient } from '@/lib/supabase/server';
  * Auth callback — exchanges the code from an email confirmation or password
  * recovery link for a session, then redirects on. Used as emailRedirectTo.
  */
+// Without this Next serves HEAD with the GET handler, and a mail client's
+// pre-fetch would spend the code before the person's own click (the token
+// hash flow lost two reset links that way on 2026-10-17; see /auth/confirm).
+export function HEAD() {
+  return new Response(null, { status: 200 });
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
