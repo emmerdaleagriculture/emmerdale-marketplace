@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getUser } from '@/lib/auth';
+import { cookies } from 'next/headers';
+import { getUser, isAdminEmail } from '@/lib/auth';
 import { appLandingPath, roleIntent } from '@/lib/app/landing';
+import { isAppRequest } from '@/lib/appMode.server';
+import { PUSH_ASKED_COOKIE } from '@/lib/app/pushCookie';
 
 /**
  * Where every app sign-in ends up: the native sheets, the email code and
@@ -13,5 +16,11 @@ export async function GET(request: Request) {
   const user = await getUser();
   if (!user) return NextResponse.redirect(`${origin}/app`);
   const to = await appLandingPath(user.id, user.email, roleIntent(searchParams.get('role')));
+  // Once per device, after the role is settled and before the tabs: the
+  // notifications explainer (task 7). Admins and the website are spared.
+  const asked = (await cookies()).get(PUSH_ASKED_COOKIE)?.value === '1';
+  if (!asked && !to.startsWith('/app/role') && !isAdminEmail(user.email) && (await isAppRequest())) {
+    return NextResponse.redirect(`${origin}/app/notify?next=${encodeURIComponent(to)}`);
+  }
   return NextResponse.redirect(`${origin}${to}`);
 }

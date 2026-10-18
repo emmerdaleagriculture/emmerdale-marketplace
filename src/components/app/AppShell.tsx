@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useViewer, type ViewerRole } from '@/components/useViewer';
 import { APP_COOKIE, isAppStandalonePath, isAppUserAgent } from '@/lib/appMode';
 import { activeTab, isTabRoot, tabsFor, type BadgeKey, type Tab } from './tabs';
+import { listenForPushTaps, registerPush } from '@/lib/app/push';
 import { BackChevron, TabIconSvg } from './AppIcons';
 import s from './AppShell.module.css';
 
@@ -93,6 +94,14 @@ export function AppShell() {
       } catch {}
     }
   }, [app, viewer]);
+
+  // Every app open: refresh this device's token (only if permission was
+  // already given — the asking is the notify screen's) and listen for taps.
+  useEffect(() => {
+    if (!app || !viewer.signedIn) return;
+    listenForPushTaps();
+    registerPush({ ask: false }).catch(() => {});
+  }, [app, viewer.signedIn]);
 
   const tabs = tabsFor(role);
   const standalone = isAppStandalonePath(pathname);

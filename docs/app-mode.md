@@ -114,3 +114,38 @@ match; that case is handled after the phone step (task 5).
 | SMS OTP expiry | 300 s (set 2026-10-18; was 60) |
 | SMS rate limits | `sms_max_frequency` 5 s (the app enforces 30 s itself); sent/hour 30 — raise before launch |
 | `.env` | nothing new; the website never sends the code |
+
+## Push notifications (task 7)
+
+- **Devices:** `device_tokens` (user, platform, token, app version, last
+  seen, revoked). The app registers on every open through
+  `POST /api/app/device-token` (`src/lib/app/push.ts`, called from
+  `AppShell`), and revokes on log out (`LogoutButton`) or when the Account
+  switch is turned off.
+- **Queue:** `pending_push`, filled by the `pending_emails_queue_push`
+  trigger for these email kinds, only when the recipient has a live device:
+  contractors `sq_invitation`, `sq_award_won`, `sq_message_to_contractor`,
+  `sq_payout_sent`, `application_approved`; customers `sq_first_quote`,
+  `sq_new_quotes`, `sq_message_to_client`, `sq_completion_confirm`,
+  `sq_quotes_nudge_1/2` (the day-3 and day-6 follow-ups). Off switch:
+  `app_config.sq_push_enabled = 0`.
+- **Sending:** `supabase/functions/send-emails/push.ts`, after the texts,
+  through FCM HTTP v1 with the service account in the Supabase secret
+  `FIREBASE_SERVICE_ACCOUNT` (the JSON file's contents as one string).
+  Titles and bodies follow the PRD table (`renderPush`). Quiet hours
+  08:00–20:59 UK for anything not urgent; urgent = messages, a job won, and
+  premium / first-refusal invitations. Dead tokens (FCM `UNREGISTERED`) are
+  revoked automatically.
+- **Taps:** the message's `data.url` is `/t/<code>`, the same short link a
+  text uses; `sms_link_hit` now looks in both tables. The frame does not
+  need to handle the tap: `listenForPushTaps` navigates to the URL. A
+  premium invitation opened from a push sets `job_invitations.opened_at`
+  on the price page, which is what the two-hour untapped rule checks.
+- **Asking:** `/app/notify` once per device (cookie `ea_push_asked`), reached
+  from `/app/continue` after the role and phone steps; "Turn on" calls the
+  system prompt, "Not now" goes to the tabs. Account has the switch.
+
+Deploy order: app (this PR) → `supabase functions deploy send-emails` →
+set `FIREBASE_SERVICE_ACCOUNT` with `supabase secrets set`. Migration
+`20261018150000` is already applied; without the secret the drain reports
+`configured: false` and rows wait.

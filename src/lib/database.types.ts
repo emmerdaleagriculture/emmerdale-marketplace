@@ -797,6 +797,39 @@ export type Database = {
         }
         Relationships: []
       }
+      device_tokens: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          id: string
+          last_seen_at: string
+          platform: string
+          revoked_at: string | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          platform: string
+          revoked_at?: string | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          revoked_at?: string | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       district_county_map: {
         Row: {
           admin_district: string
@@ -2297,6 +2330,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pending_push: {
+        Row: {
+          attempts: number
+          body: string | null
+          clicked_at: string | null
+          clicks: number
+          created_at: string
+          detail: string | null
+          email_id: string | null
+          id: string
+          kind: string
+          link: string | null
+          link_code: string | null
+          payload: Json
+          sent_at: string | null
+          status: string
+          title: string | null
+          to_email: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          body?: string | null
+          clicked_at?: string | null
+          clicks?: number
+          created_at?: string
+          detail?: string | null
+          email_id?: string | null
+          id?: string
+          kind: string
+          link?: string | null
+          link_code?: string | null
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+          title?: string | null
+          to_email: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          body?: string | null
+          clicked_at?: string | null
+          clicks?: number
+          created_at?: string
+          detail?: string | null
+          email_id?: string | null
+          id?: string
+          kind?: string
+          link?: string | null
+          link_code?: string | null
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+          title?: string | null
+          to_email?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       phone_verifications: {
         Row: {

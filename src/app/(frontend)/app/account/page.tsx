@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { CONTACT_EMAIL } from '@/lib/site';
+import { LogoutButton, PushToggleRow } from '@/components/app/PushControls';
 import ui from '../app-ui.module.css';
 
 export const metadata: Metadata = { title: 'Account', robots: { index: false, follow: false } };
@@ -79,6 +80,15 @@ export default async function AppAccountPage() {
         </Link>
       </div>
 
+      <div className={ui.kicker}>Settings</div>
+      <div className={ui.rows}>
+        <PushToggleRow />
+        <Link href="/my#details" className={ui.row}>
+          Text updates
+          <span className={ui.rowValue}>Per job ›</span>
+        </Link>
+      </div>
+
       <div className={ui.kicker}>Help</div>
       <div className={ui.rows}>
         <a href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Help with the app')}`} className={ui.row}>
@@ -105,11 +115,9 @@ export default async function AppAccountPage() {
         )}
       </div>
 
-      <form action="/auth/signout" method="post" style={{ marginTop: 24 }}>
-        <button type="submit" className={`${ui.btn} ${ui.btnGhost}`}>
-          Log out
-        </button>
-      </form>
+      <div style={{ marginTop: 24 }}>
+        <LogoutButton className={`${ui.btn} ${ui.btnGhost}`} />
+      </div>
       <p className={ui.note} style={{ textAlign: 'center' }}>
         {user.email}
       </p>
