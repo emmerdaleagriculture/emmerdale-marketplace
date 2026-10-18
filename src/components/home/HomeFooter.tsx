@@ -10,7 +10,7 @@ import s from './home.module.css';
 export function HomeFooter() {
   const year = new Date().getFullYear();
   return (
-    <footer className={s.footer}>
+    <footer className={s.footer} data-app-hide>
       <div className={s.container}>
         <div className={s.footerGrid}>
           <div>

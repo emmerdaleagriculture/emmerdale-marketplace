@@ -55,7 +55,7 @@ export function HomeHeader() {
   const close = () => setOpen(false);
 
   return (
-    <header className={`${s.nav} ${scrolled ? s.navScrolled : ''}`}>
+    <header className={`${s.nav} ${scrolled ? s.navScrolled : ''}`} data-app-hide>
       <div className={`${s.container} ${s.navInner}`}>
         <Link href="/" className={s.brand} aria-label="Emmerdale Agriculture home">
           <BrandMark className={s.brandMark} />

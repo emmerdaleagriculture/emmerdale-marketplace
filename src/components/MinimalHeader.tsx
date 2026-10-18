@@ -10,7 +10,7 @@ import { SocialLinks } from '@/components/SocialLinks';
  */
 export function MinimalHeader() {
   return (
-    <header className={`${h.header} ${h.solid}`}>
+    <header className={`${h.header} ${h.solid}`} data-app-hide>
       <div className={h.inner}>
         <Link href="/" className={h.brand}>
           Emmerdale Agriculture

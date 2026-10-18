@@ -18,7 +18,7 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className={styles.footer}>
+    <footer className={styles.footer} data-app-hide>
       <div className={styles.inner}>
         <div className={styles.cols}>
           <div className={styles.brandCol}>

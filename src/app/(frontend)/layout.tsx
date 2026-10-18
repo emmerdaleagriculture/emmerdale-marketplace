@@ -1,10 +1,12 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Tenor_Sans, DM_Sans, Inter } from 'next/font/google';
 import './globals.css';
 import { COMPANY_LEGAL_NAME, SITE_NAME, SITE_STRAPLINE, siteUrl } from '@/lib/site';
 import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
 import { Analytics } from '@/components/Analytics';
 import { FirstTouchCapture } from '@/components/FirstTouch';
+import { AppShell } from '@/components/app/AppShell';
+import { APP_COOKIE, APP_UA_TOKEN } from '@/lib/appMode';
 
 const GA_ID = 'G-869MBRK9FD';
 const META_PIXEL_ID = '1714644666891790';
@@ -81,11 +83,43 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * `viewport-fit=cover` lets the page extend under an iPhone's notch and home
+ * indicator so the app's own safe-area padding (globals.css, html[data-app])
+ * can take over. On the website it changes nothing visible: a normal browser
+ * tab already keeps its content inside the safe area.
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
+/**
+ * Runs before anything in <body> paints. The root layout is static, so it
+ * cannot ask the server whether this is the app; the user agent is right
+ * there in the browser, and marking <html> from it means the website header
+ * and footer never flash into view in the frame. The cookie is the desktop
+ * preview switch (src/lib/appMode.ts). Kept tiny and dependency-free on
+ * purpose: it is inlined into every page.
+ */
+const APP_MODE_SCRIPT = `(function(){try{var ua=navigator.userAgent||'';if(ua.indexOf('${APP_UA_TOKEN}')>-1||/(^|; )${APP_COOKIE}=1(;|$)/.test(document.cookie)){document.documentElement.setAttribute('data-app','1');document.documentElement.setAttribute('data-platform',/iPhone|iPad|iPod/i.test(ua)?'ios':/Android/i.test(ua)?'android':'web');}}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" className={`${tenor.variable} ${dm.variable} ${inter.variable}`}>
+    <html
+      lang="en-GB"
+      className={`${tenor.variable} ${dm.variable} ${inter.variable}`}
+      // The app-mode script below stamps attributes on <html> before React
+      // hydrates; without this React reports the difference on every page.
+      suppressHydrationWarning
+    >
       <body>
+        <script dangerouslySetInnerHTML={{ __html: APP_MODE_SCRIPT }} />
         {children}
+        {/* The app's bottom tab bar and back bar. Renders nothing on the
+            website: it waits for html[data-app]. */}
+        <AppShell />
         {/* Every page, every visitor — signed in or not, contractor or
             customer. It hides itself on /admin, where the only readers are
             the people it reports to. */}

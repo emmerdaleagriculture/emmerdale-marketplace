@@ -13,6 +13,7 @@ import { ContactUsButton } from '@/components/ContactUsButton';
 import f from '@/components/forms/forms.module.css';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import a from '../auth.module.css';
+import { CUSTOMER_STATUS_LABEL } from '@/lib/customers/statusLabels';
 
 export const metadata: Metadata = { title: 'Your jobs', robots: { index: false, follow: false } };
 export const dynamic = 'force-dynamic';
@@ -23,23 +24,7 @@ const LIVE = new Set([
   'awarded', 'contacted', 'scheduled', 'in_progress', 'completed_by_contractor',
 ]);
 
-const STATUS_LABEL: Record<string, string> = {
-  confirmed: 'Just sent',
-  distributed: 'Out to contractors',
-  quotes_receiving: 'Prices coming in',
-  accepted_awaiting_payment: 'Waiting for your deposit',
-  awarded: 'Booked',
-  contacted: 'Contractor in touch',
-  scheduled: 'Scheduled',
-  in_progress: 'In progress',
-  completed_by_contractor: 'Awaiting your confirmation',
-  completed: 'Done',
-  paid: 'Done — paid in full',
-  no_matches: 'No contractors covered it',
-  no_quotes: 'Nobody priced it',
-  expired: 'Expired',
-  cancelled: 'Cancelled',
-};
+const STATUS_LABEL = CUSTOMER_STATUS_LABEL;
 
 /**
  * The customer's account: every job they've had, and the two things they'd
