@@ -23,6 +23,9 @@
  */
 import { readFileSync } from 'node:fs';
 import { randomBytes, randomUUID } from 'node:crypto';
+
+/** The site's own token shape (lib/sealedQuotes/tokens.ts): 48 hex characters. */
+const token = () => randomBytes(24).toString('hex');
 import ws from 'ws';
 import { createClient } from '@supabase/supabase-js';
 
@@ -41,7 +44,11 @@ const admin = createClient(env('NEXT_PUBLIC_SUPABASE_URL'), env('SUPABASE_SERVIC
 const CUSTOMER = 'demo-customer@emmerdaleagriculture.com';
 const CONTRACTOR = 'demo-contractor@emmerdaleagriculture.com';
 const OPERATORS = ['demo-operator-b@emmerdaleagriculture.com', 'demo-operator-c@emmerdaleagriculture.com'];
+// Set DEMO_ACCOUNT_PASSWORD to choose or rotate it; otherwise a fresh one is
+// made for new accounts and existing accounts keep the one they have.
 const PASSWORD = process.env.DEMO_ACCOUNT_PASSWORD || `Review-${randomBytes(6).toString('base64url')}`;
+const ROTATE = Boolean(process.env.DEMO_ACCOUNT_PASSWORD);
+let created = false;
 const HAMPSHIRE = 4;
 const TOPPING = 1;
 const HARROWING = 5;
@@ -50,9 +57,12 @@ async function upsertUser(email: string, phone: string, name: string) {
   const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
   const existing = list.users.find((u) => u.email?.toLowerCase() === email);
   if (existing) {
-    await admin.auth.admin.updateUserById(existing.id, { password: PASSWORD, phone, phone_confirm: true, user_metadata: { full_name: name } });
+    await admin.auth.admin.updateUserById(existing.id, {
+      ...(ROTATE ? { password: PASSWORD } : {}), phone, phone_confirm: true, user_metadata: { full_name: name },
+    });
     return existing.id;
   }
+  created = true;
   const { data, error } = await admin.auth.admin.createUser({
     email, password: PASSWORD, email_confirm: true, phone, phone_confirm: true, user_metadata: { full_name: name },
   });
@@ -86,9 +96,13 @@ async function main() {
   // No counties: nothing real is ever matched to them.
   await admin.from('contractor_counties').delete().in('contractor_id', [contractorId, ...operatorIds]);
 
-  // Start the demo jobs afresh each run.
+  // Start the demo jobs afresh each run. Through the admin delete, which
+  // clears the quotes and invitations that otherwise block a plain delete.
   const { data: old } = await admin.from('job_submissions').select('id').eq('customer_id', customerId);
-  if (old?.length) await admin.from('job_submissions').delete().in('id', old.map((j) => j.id));
+  for (const j of old ?? []) {
+    const { error } = await admin.rpc('admin_delete_submission', { p_submission_id: j.id });
+    if (error) throw new Error(`could not remove old demo job ${j.id}: ${error.message}`);
+  }
 
   const common = {
     customer_id: customerId, contact_name: 'Sam Reviewer', contact_email: CUSTOMER, contact_phone: '+447700900001',
@@ -99,15 +113,15 @@ async function main() {
   const job1 = randomUUID();
   const job2 = randomUUID();
   const { error: jErr } = await admin.from('job_submissions').insert([
-    { ...common, id: job1, status: 'quotes_receiving', raw_text: 'Paddock topping, about 4 acres, gate is 10ft, access from the lane.', service_id: TOPPING, service_verbatim: 'Paddock topping', client_token: randomUUID().replace(/-/g, ''), created_at: iso(30), distributed_at: iso(29), expires_at: iso(-24 * 5) },
-    { ...common, id: job2, status: 'awarded', raw_text: 'Harrowing two paddocks after the winter, 3 acres in all.', service_id: HARROWING, service_verbatim: 'Harrowing', area_value: 3, client_token: randomUUID().replace(/-/g, ''), created_at: iso(24 * 9), distributed_at: iso(24 * 9), awarded_at: iso(24 * 6), awarded_contractor_id: contractorId, expires_at: iso(-24 * 5) },
+    { ...common, id: job1, status: 'quotes_receiving', raw_text: 'Paddock topping, about 4 acres, gate is 10ft, access from the lane.', service_id: TOPPING, service_verbatim: 'Paddock topping', client_token: token(), created_at: iso(30), distributed_at: iso(29), expires_at: iso(-24 * 5) },
+    { ...common, id: job2, status: 'awarded', raw_text: 'Harrowing two paddocks after the winter, 3 acres in all.', service_id: HARROWING, service_verbatim: 'Harrowing', area_value: 3, client_token: token(), created_at: iso(24 * 9), distributed_at: iso(24 * 9), awarded_at: iso(24 * 6), awarded_contractor_id: contractorId, expires_at: iso(-24 * 5) },
   ]);
   if (jErr) throw new Error(`job_submissions: ${jErr.message}`);
 
   // Invitations: the demo contractor on both, the operators on the open one.
   const inv = async (submission: string, contractor: string, status: string, label: string) => {
     const { data, error } = await admin.from('job_invitations').insert({
-      submission_id: submission, contractor_id: contractor, token: randomUUID().replace(/-/g, ''), status, display_label: label, distance_miles: 6, sent_at: iso(29), opened_at: status === 'sent' ? null : iso(28),
+      submission_id: submission, contractor_id: contractor, token: token(), status, display_label: label, distance_miles: 6, sent_at: iso(29), opened_at: status === 'sent' ? null : iso(28),
     }).select('id').single();
     if (error) throw new Error(`job_invitations: ${error.message}`);
     return data.id as string;
@@ -136,7 +150,7 @@ async function main() {
   console.log(`Demo accounts ready.
   customer    ${CUSTOMER}
   contractor  ${CONTRACTOR}
-  password    ${PASSWORD}
+  password    ${ROTATE || created ? PASSWORD : '(unchanged — set DEMO_ACCOUNT_PASSWORD to rotate)'}
   phones      +447700900001 / +447700900002 (already confirmed; no code needed)
 Sign in on the app's email screen with "Have a password? Log in with it".`);
 }

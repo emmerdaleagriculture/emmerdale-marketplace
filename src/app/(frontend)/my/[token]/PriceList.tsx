@@ -1,6 +1,9 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { isNativeApp } from '@/lib/app/isApp';
+import { openInAppBrowser } from '@/lib/app/browser';
 import { acceptQuoteAction, type AcceptActionState } from './actions';
 import { passPriceAction } from './passPrice';
 import { depositSplitPence, formatGBP, formatRate, formatUnitPrice, vatNote } from '@/lib/sealedQuotes/money';
@@ -82,14 +85,33 @@ export function PriceList({
   const [mode, setMode] = useState<SortMode>('recommended');
   const [confirming, setConfirming] = useState<string | null>(null);
   const [passing, setPassing] = useState<string | null>(null);
+  const router = useRouter();
+  const [native, setNative] = useState(false);
+  useEffect(() => setNative(isNativeApp()), []);
+  // In the app the action hands Checkout's URL back; it opens in the
+  // system's in-app browser (Apple Pay and Google Pay work there), and when
+  // that closes the page refreshes to show where things stand.
+  useEffect(() => {
+    if (!state.url) return;
+    openInAppBrowser(state.url).then((how) => {
+      if (how === 'closed') router.refresh();
+    });
+  }, [state.url, router]);
 
   const sorted = sortClientQuotes(quotes, mode, { ratingWeight });
   const live = sorted.filter((q) => !passes[q.id]);
   const passed = sorted.filter((q) => passes[q.id]);
+  const lowest = live.length > 1 ? Math.min(...live.map((q) => q.client_price_pence)) : null;
 
   return (
     <div>
       {state.error && <p className={f.error}>{state.error}</p>}
+      {state.url && (
+        <p className={m.fixLine}>
+          Finish paying in the window that opened. When you&rsquo;re done, this page updates itself —
+          or <button type="button" className={f.linkButton} onClick={() => router.refresh()}>refresh it</button>.
+        </p>
+      )}
       {passState.error && <p className={f.error}>{passState.error}</p>}
 
       <div className={f.chips} style={{ marginBottom: 14 }}>
@@ -117,7 +139,11 @@ export function PriceList({
           <div key={q.id} className={m.quoteCard}>
             <div className={m.quoteHead}>
               <span className={m.quoteLabel}>
+                <span className={m.quoteAvatar} aria-hidden="true" data-app-only>
+                  {q.contractor_display_label.replace(/^(Operator|Contractor)\s+/i, '').slice(0, 1)}
+                </span>
                 {q.contractor_display_label}
+                {lowest === q.client_price_pence && <span className={m.bestPrice}>Best price</span>}
                 {q.premium && (
                   <span className={m.premiumTag} title="A premium member of the Emmerdale Agriculture network">
                     ★ Premium member
@@ -155,6 +181,7 @@ export function PriceList({
               <form action={action} className={m.acceptConfirm}>
                 <input type="hidden" name="token" value={token} />
                 <input type="hidden" name="client_quote_id" value={q.id} />
+                {native && <input type="hidden" name="in_app" value="1" />}
                 {(() => {
                   const { deposit, balance } = depositSplitPence(
                     q.client_price_pence,

@@ -16,6 +16,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.121.0",
     "@capacitor-firebase/messaging": "^8.5.2",
+    "@capacitor/browser": "^8.0.5",
+    "@capacitor/camera": "^8.2.6",
     "@capacitor/core": "^8.5.3",
     "@capacitor/geolocation": "^8.2.4",
     "@capgo/capacitor-social-login": "^8.7.3",

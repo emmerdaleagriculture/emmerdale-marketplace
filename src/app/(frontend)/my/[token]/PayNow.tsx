@@ -1,6 +1,9 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { isNativeApp } from '@/lib/app/isApp';
+import { openInAppBrowser } from '@/lib/app/browser';
 import { acceptQuoteAction, type AcceptActionState } from './actions';
 import f from '@/components/forms/forms.module.css';
 import m from './my.module.css';
@@ -24,6 +27,15 @@ export function PayNow({
   amountLabel: string;
 }) {
   const [state, action, pending] = useActionState(acceptQuoteAction, EMPTY);
+  const router = useRouter();
+  const [native, setNative] = useState(false);
+  useEffect(() => setNative(isNativeApp()), []);
+  useEffect(() => {
+    if (!state.url) return;
+    openInAppBrowser(state.url).then((how) => {
+      if (how === 'closed') router.refresh();
+    });
+  }, [state.url, router]);
 
   return (
     <div className={m.payPanel}>
@@ -36,6 +48,7 @@ export function PayNow({
       <form action={action}>
         <input type="hidden" name="token" value={token} />
         <input type="hidden" name="client_quote_id" value={quoteId} />
+        {native && <input type="hidden" name="in_app" value="1" />}
         <button className={f.btnYellow} type="submit" disabled={pending}>
           {pending ? 'Opening payment…' : 'Pay now'}
         </button>

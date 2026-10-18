@@ -15,6 +15,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { JobSpecCard } from '@/components/job/JobSpecCard';
 import { StatusTimeline } from './StatusTimeline';
 import { PriceList, type ClientQuoteView } from './PriceList';
+import { PriceRange } from './PriceRange';
 import { ConfirmDone } from './ConfirmDone';
 import { InlineRating } from './InlineRating';
 import { EditJobForm } from './EditJobForm';
@@ -318,6 +319,7 @@ export default async function ClientPortalPage({
                 Nothing is booked until you accept {isExtra ? 'it' : 'one'} and pay the deposit
                 {isExtra ? '.' : ' — and you can have any of them out to look at the site first, without paying anything.'}
               </p>
+              <PriceRange prices={(quotes as ClientQuoteView[]).filter((q) => !passMap[q.id]).map((q) => q.client_price_pence)} />
               <PriceList
                 token={token}
                 quotes={quotes as ClientQuoteView[]}

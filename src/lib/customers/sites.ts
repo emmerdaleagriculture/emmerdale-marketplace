@@ -16,6 +16,7 @@ export type Site = {
   acres: number | null;
   lat: number | null;
   lng: number | null;
+  countyId: number | null;
 };
 
 export type LandLookup = {
@@ -32,10 +33,14 @@ export type LandLookup = {
 export async function listSites(customerId: string): Promise<Site[]> {
   const { data } = await createServiceRoleClient()
     .from('customer_sites')
-    .select('id, label, postcode, acres, lat, lng')
+    .select('id, label, postcode, acres, lat, lng, county_id')
     .eq('customer_id', customerId)
     .order('created_at');
-  return (data ?? []).map((s) => ({ ...s, acres: s.acres == null ? null : Number(s.acres) }));
+  return (data ?? []).map(({ county_id, ...s }) => ({
+    ...s,
+    countyId: county_id,
+    acres: s.acres == null ? null : Number(s.acres),
+  }));
 }
 
 export async function addSite(

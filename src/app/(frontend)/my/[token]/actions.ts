@@ -19,7 +19,8 @@ import { ukMobile } from '@/lib/sms/ukMobile';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
-export type AcceptActionState = FormState;
+/** `url` only in the app: Checkout to open in the in-app browser. */
+export type AcceptActionState = FormState & { url?: string };
 
 /**
  * Accept a price (§27): create the Stripe Checkout session FIRST (a failed
@@ -45,6 +46,14 @@ export async function acceptQuoteAction(
   const token = String(formData.get('token') ?? '');
   const quoteId = String(formData.get('client_quote_id') ?? '');
   if (!isTokenFormat(token) || !quoteId) return { error: 'Something went wrong — refresh and try again.' };
+  // The app opens Checkout in the system's in-app browser (Apple Pay and
+  // Google Pay work there and not in the WebView), so it wants the URL back
+  // rather than a redirect it cannot intercept.
+  const inApp = formData.get('in_app') === '1';
+  const go = (url: string): AcceptActionState => {
+    if (inApp) return { ok: true, url };
+    redirect(url);
+  };
 
   const admin = createServiceRoleClient();
   const { data: js } = await admin
@@ -74,7 +83,7 @@ export async function acceptQuoteAction(
     if (pay?.stripe_checkout_session_id) {
       const stripe = getStripe();
       const session = await stripe.checkout.sessions.retrieve(pay.stripe_checkout_session_id);
-      if (session.url) redirect(session.url);
+      if (session.url) return go(session.url);
     }
     // No live link (expired but sweep hasn't voided yet): void it now so a
     // fresh acceptance can proceed.
@@ -188,7 +197,7 @@ export async function acceptQuoteAction(
     return { error: 'Something went wrong — nothing was booked and no money was taken. Please try again.' };
   }
 
-  redirect(session.url ?? `${SITE()}/my/${token}`);
+  return go(session.url ?? `${SITE()}/my/${token}`);
 }
 
 /**
