@@ -77,6 +77,7 @@ export async function nativeSignIn(provider: NativeProvider): Promise<NativeSign
     let idToken: string | null = null;
     let nonce: string | undefined;
     let name: string | null = null;
+    let appleCode: string | null = null;
 
     if (provider === 'apple') {
       const raw = crypto.randomUUID();
@@ -89,6 +90,10 @@ export async function nativeSignIn(provider: NativeProvider): Promise<NativeSign
       nonce = raw;
       const p = res.result.profile;
       name = [p?.givenName, p?.familyName].filter(Boolean).join(' ') || null;
+      // The authorization code, for the refresh token that account deletion
+      // needs to revoke (lib/apple/tokens.ts). Without "proper token
+      // exchange" the plugin hands it back in accessToken.token.
+      appleCode = res.result.authorizationCode ?? res.result.accessToken?.token ?? null;
     } else {
       const res = await SocialLogin.login({
         provider: 'google',
@@ -108,6 +113,15 @@ export async function nativeSignIn(provider: NativeProvider): Promise<NativeSign
     const { data, error } = await supabase.auth.signInWithIdToken({ provider, token: idToken, nonce });
     if (error || !data.user) {
       return { ok: false, cancelled: false, message: error?.message ?? 'Sign-in failed.' };
+    }
+
+    if (appleCode) {
+      fetch('/api/app/apple-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ code: appleCode }),
+      }).catch(() => {});
     }
 
     // Apple only hands the name over on the very first sign-in; keep it so

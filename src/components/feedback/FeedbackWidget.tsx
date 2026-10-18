@@ -50,7 +50,15 @@ export function FeedbackWidget() {
   const [renderedAt, setRenderedAt] = useState(0);
   const box = useRef<HTMLTextAreaElement>(null);
   const [appStandalone, setAppStandalone] = useState(false);
-  useEffect(() => setAppStandalone(isApp() && isAppStandalonePath(pathname)), [pathname]);
+  // Also off any app screen with its own fixed bottom button (.appFooterCta):
+  // the two would sit on top of each other.
+  useEffect(() => {
+    if (!isApp()) return setAppStandalone(false);
+    const check = () => setAppStandalone(isAppStandalonePath(pathname) || !!document.querySelector('.appFooterCta'));
+    check();
+    const t = setTimeout(check, 400);
+    return () => clearTimeout(t);
+  }, [pathname]);
 
   // Set on open, not on mount: the bot trap measures how long the form was
   // in front of a human, and a tab left open for an hour is not a signal.

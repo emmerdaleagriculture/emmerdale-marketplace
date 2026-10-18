@@ -376,6 +376,10 @@ export default async function AccountPage({
           <div data-app-only style={{ margin: '24px 0' }}>
             <div className={ui.rows}>
               <PushToggleRow />
+              <Link href="/app/account/delete" className={`${ui.row} ${ui.rowDanger}`}>
+                Delete my account
+                <span className={ui.rowValue}>›</span>
+              </Link>
             </div>
             <div style={{ marginTop: 12 }}>
               <LogoutButton className={`${ui.btn} ${ui.btnGhost}`} />

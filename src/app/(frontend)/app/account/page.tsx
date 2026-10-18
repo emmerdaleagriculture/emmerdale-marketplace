@@ -115,6 +115,14 @@ export default async function AppAccountPage() {
         )}
       </div>
 
+      <div className={ui.kicker}>Your data</div>
+      <div className={ui.rows}>
+        <Link href="/app/account/delete" className={`${ui.row} ${ui.rowDanger}`}>
+          Delete my account
+          <span className={ui.rowValue}>›</span>
+        </Link>
+      </div>
+
       <div style={{ marginTop: 24 }}>
         <LogoutButton className={`${ui.btn} ${ui.btnGhost}`} />
       </div>

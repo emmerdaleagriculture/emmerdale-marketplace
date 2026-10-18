@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { postLoginPath } from '@/lib/auth';
+import { APPLE_SERVICES_ID, storeAppleRefreshToken } from '@/lib/apple/tokens';
 
 /**
  * Auth callback — exchanges the code from an email confirmation or password
@@ -26,6 +27,13 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // Sign in with Apple on the web: Supabase did the code exchange and
+      // hands the refresh token back once, here. Kept so the account can be
+      // deleted properly later (Apple requires the token to be revoked).
+      const rt = data.session?.provider_refresh_token;
+      if (rt && data.user && data.user.app_metadata?.provider === 'apple') {
+        await storeAppleRefreshToken(data.user.id, rt, APPLE_SERVICES_ID || 'web');
+      }
       const to =
         nextParam ?? (data.user ? await postLoginPath(data.user.id, data.user.email) : '/account');
       return NextResponse.redirect(`${origin}${to}`);
