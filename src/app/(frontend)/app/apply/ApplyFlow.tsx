@@ -35,6 +35,14 @@ export function ApplyFlow({ services, contactName }: { services: ServiceOption[]
   const [bankOpen, setBankOpen] = useState(false);
   const [bank, setBank] = useState({ account_name: '', sort_code: '', account_number: '' });
   const [agreed, setAgreed] = useState(false);
+  const [stepError, setStepError] = useState('');
+  // The postcode the last successful lookup placed, so a radius change can
+  // reuse its position instead of geocoding again.
+  const [placedFor, setPlacedFor] = useState('');
+  useEffect(() => {
+    if (looked.ok && looked.lat != null) setPlacedFor(postcode.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [looked]);
   const formRef = useRef<HTMLFormElement>(null);
   const lookupForm = useRef<HTMLFormElement>(null);
   const insuranceInput = useRef<HTMLInputElement>(null);
@@ -93,6 +101,14 @@ export function ApplyFlow({ services, contactName }: { services: ServiceOption[]
       <form ref={lookupForm} action={lookup} hidden>
         <input type="hidden" name="base_postcode" value={postcode} readOnly />
         <input type="hidden" name="radius" value={radius} readOnly />
+        {looked.ok && looked.lat != null && (
+          <>
+            <input type="hidden" name="placed" value={placedFor} readOnly />
+            <input type="hidden" name="lat" value={looked.lat} readOnly />
+            <input type="hidden" name="lng" value={looked.lng ?? ''} readOnly />
+            <input type="hidden" name="county" value={looked.county ?? ''} readOnly />
+          </>
+        )}
       </form>
 
       <form ref={formRef} action={submit}>
@@ -119,6 +135,7 @@ export function ApplyFlow({ services, contactName }: { services: ServiceOption[]
           <label className={s.label} htmlFor="pc">Base postcode</label>
           <input id="pc" className={s.input} value={postcode} onChange={(e) => setPostcode(e.target.value)} onBlur={() => postcode && lookupForm.current?.requestSubmit()} autoComplete="postal-code" autoCapitalize="characters" placeholder="SO41 8AB" />
           {looked.error && <p className={f.error}>{looked.error}</p>}
+          {stepError && <p className={f.error}>{stepError}</p>}
           {!nationwide && (
             <>
               <label className={s.label} htmlFor="radius">Travel radius · <span className={s.radiusVal}>{radius} miles</span></label>
@@ -221,7 +238,11 @@ export function ApplyFlow({ services, contactName }: { services: ServiceOption[]
                     return;
                   }
                 }
-                if (step === 'coverage' && !postcode.trim()) return;
+                if (step === 'coverage' && !postcode.trim()) {
+                  setStepError('Enter your base postcode — we need it even for nationwide suppliers, for your records and payouts.');
+                  return;
+                }
+                setStepError('');
                 setStep(STEPS[idx + 1]);
               }}
               disabled={looking}

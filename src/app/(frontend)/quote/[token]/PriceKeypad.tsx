@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { formatGBP } from '@/lib/sealedQuotes/money';
+import { computeClientPricePence, formatGBP } from '@/lib/sealedQuotes/money';
 import ui from '@/app/(frontend)/app/app-ui.module.css';
 import s from './keypad.module.css';
 
 export const MIN_JOB_PENCE = 15000;
 
-/** The customer's figure for a contractor price: the database's client_price_pence, in pounds-and-pence. */
+/** The customer's figure for a contractor price: computeClientPricePence, the TS twin of SQL client_price_pence. */
 export function customerPaysPence(contractorPence: number, rate: number): number {
-  return Math.ceil((contractorPence * (1 + rate)) / 500) * 500;
+  return computeClientPricePence(contractorPence, rate);
 }
 
 /**
@@ -37,7 +37,8 @@ export function PriceKeypad({
   const tooLow = pounds > 0 && pence < MIN_JOB_PENCE;
   const customer = pence ? customerPaysPence(pence, rate) : 0;
   const fee = customer - pence;
-  const withPremium = pence && !premium ? customerPaysPence(pence, premiumRate) : null;
+  // Only a pitch when premium would actually lower the customer's figure.
+  const withPremium = pence && !premium && premiumRate < rate ? customerPaysPence(pence, premiumRate) : null;
 
   const tap = (d: string) => {
     const next = d === '⌫' ? digits.slice(0, -1) : (digits + d).replace(/^0+(?=\d)/, '').slice(0, 6);

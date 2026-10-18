@@ -5,6 +5,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { nonContractorPath } from '@/lib/auth';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { formatDate } from '@/lib/time';
+import { siteUrl } from '@/lib/site';
 import ui from '../app-ui.module.css';
 
 export const metadata: Metadata = { title: 'Earnings', robots: { index: false, follow: false } };
@@ -33,7 +34,7 @@ export default async function EarningsPage() {
       .select('id, service, status, postcode, contractor_price_pence, awarded_at, contractor_invoice_at, paid_out_on, paid_out_pence')
       .order('awarded_at', { ascending: false })
       .limit(30),
-    admin.from('sq_payout_ready').select('submission_id, owed_pence, collected_pence, total_pence, contractor_invoice_at, status').eq('contractor_id', user.id),
+    admin.from('sq_payout_ready').select('submission_id, owed_pence, collected_pence, total_pence, contractor_invoice_at, status, payout_before_balance').eq('contractor_id', user.id),
     admin.rpc('contractor_is_premium', { p_contractor_id: user.id }),
     admin.from('contractor_bank_details').select('account_number').eq('contractor_id', user.id).maybeSingle(),
   ]);
@@ -46,8 +47,12 @@ export default async function EarningsPage() {
   const gross = new Map((quotes ?? []).map((q) => [q.submission_id, q.client_price_pence]));
 
   const paidOutIds = new Set((won ?? []).filter((j) => j.paid_out_on).map((j) => j.id));
-  const owed = (ready ?? []).filter((r) => !paidOutIds.has(r.submission_id));
-  const releasable = owed.filter((r) => r.contractor_invoice_at && (r.collected_pence ?? 0) >= (r.total_pence ?? 0));
+  // One row per job: the view joins every quote the contractor sent, so a
+  // revised price would otherwise count twice.
+  const owed = [...new Map((ready ?? []).filter((r) => !paidOutIds.has(r.submission_id)).map((r) => [r.submission_id, r])).values()];
+  // Ready as the admin money screen reads it: invoice in, and the balance
+  // collected unless this contractor is paid before the balance.
+  const releasable = owed.filter((r) => r.contractor_invoice_at && (r.payout_before_balance || (r.collected_pence ?? 0) >= (r.total_pence ?? 0)));
   const nextPayout = releasable.reduce((n, r) => n + (r.owed_pence ?? 0), 0);
   const held = owed.reduce((n, r) => n + (r.owed_pence ?? 0), 0) - nextPayout;
 
@@ -108,7 +113,7 @@ export default async function EarningsPage() {
           </li>
         </ul>
         <p className={ui.note}>
-          {premium ? 'Manage your membership on the website, in your account.' : 'Premium is bought on the website: sign in at emmerdaleagriculture.com/account.'}
+          {premium ? 'Manage your membership on the website, in your account.' : `Premium is bought on the website: sign in at ${siteUrl().replace(/^https?:\/\//, '')}/account.`}
         </p>
       </div>
     </main>

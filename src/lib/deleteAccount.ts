@@ -49,6 +49,15 @@ async function closeContractor(contractorId: string): Promise<'removed' | 'scrub
   const admin = createServiceRoleClient();
   await cancelPremium(contractorId);
 
+  // The person's documents and bank account go whichever path follows.
+  const { data: docs } = await admin.from('contractors').select('insurance_path, certificate_paths').eq('id', contractorId).maybeSingle();
+  const paths = [docs?.insurance_path, ...(docs?.certificate_paths ?? [])].filter((p): p is string => !!p);
+  if (paths.length) {
+    const { error } = await admin.storage.from('contractor-documents').remove(paths);
+    if (error) console.error('[delete] documents not removed:', error.message);
+  }
+  await admin.from('contractor_bank_details').delete().eq('contractor_id', contractorId);
+
   if (!(await contractorHasHistory(contractorId))) {
     const { error } = await admin.from('contractors').delete().eq('id', contractorId);
     if (error) throw new Error(`contractor row: ${error.message}`);
@@ -66,6 +75,8 @@ async function closeContractor(contractorId: string): Promise<'removed' | 'scrub
       notify_new_jobs: false,
       notify_sms: false,
       phone_verified_at: null,
+      insurance_path: null,
+      certificate_paths: [],
     })
     .eq('id', contractorId);
   if (error) throw new Error(`contractor scrub: ${error.message}`);

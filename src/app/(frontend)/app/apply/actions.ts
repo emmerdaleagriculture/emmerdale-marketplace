@@ -28,6 +28,12 @@ export async function baseLookupAction(_prev: LookupState, formData: FormData): 
   const postcode = String(formData.get('base_postcode') || '').trim();
   const miles = Math.min(200, Math.max(5, Number(formData.get('radius')) || 25));
   if (!postcode) return { error: 'Enter your base postcode.' };
+  // A radius change on a postcode already placed needs no second geocode.
+  const knownLat = Number(formData.get('lat'));
+  const knownLng = Number(formData.get('lng'));
+  if (String(formData.get('placed') || '') === postcode && Number.isFinite(knownLat) && Number.isFinite(knownLng) && knownLat !== 0) {
+    return { ok: true, lat: knownLat, lng: knownLng, county: String(formData.get('county') || '') || undefined, counties: countiesWithinMiles(knownLat, knownLng, miles) };
+  }
   const geo = await resolveCounty(postcode);
   if (geo.lat == null || geo.lng == null) return { error: 'That postcode didn’t resolve. Check it and try again.' };
   return { ok: true, lat: geo.lat, lng: geo.lng, county: geo.county_name, counties: countiesWithinMiles(geo.lat, geo.lng, miles) };
@@ -89,6 +95,18 @@ export async function submitApplicationAction(_prev: FormState, formData: FormDa
   if (!(insuranceFile instanceof File) || insuranceFile.size === 0) {
     return { error: 'We need a photo or PDF of your public liability insurance certificate.' };
   }
+  if (!DOC_TYPES[insuranceFile.type]) {
+    return { error: 'The insurance certificate needs to be a JPEG, PNG or WebP photo, or a PDF.' };
+  }
+  if (insuranceFile.size > DOC_MAX) {
+    return { error: 'That insurance file is over 8MB. A photo from the camera, or a smaller PDF, will do.' };
+  }
+  // One application per account: an existing contractor (approved,
+  // suspended or rejected) edits coverage and details from their account,
+  // not by applying again.
+  if ((await createServiceRoleClient().from('contractors').select('id').eq('id', user.id).maybeSingle()).data) {
+    return { error: 'You already have a contractor account. Change your details from your dashboard.' };
+  }
 
   const geo = await resolveCounty(d.base_postcode);
   const nationwide = d.nationwide === 'on';
@@ -122,7 +140,7 @@ export async function submitApplicationAction(_prev: FormState, formData: FormDa
     conduct_accepted_at: new Date().toISOString(),
     signup_source: cleanSignupSource({ ...(user.user_metadata?.signup_source ?? {}), landing: 'app' }),
   });
-  if (profErr && !profErr.message.includes('duplicate')) {
+  if (profErr) {
     return { error: `Could not save your application: ${profErr.message}` };
   }
 
@@ -154,7 +172,7 @@ export async function submitApplicationAction(_prev: FormState, formData: FormDa
     `New contractor application (app): ${d.business_name}`,
     `A contractor applied through the app and is awaiting approval.\n\n` +
       `Business:  ${d.business_name}\nContact:   ${d.contact_name}\nEmail:     ${user.email ?? '—'}\n` +
-      `Phone:     ${verifiedPhone || '—'} (verified by text)\nPostcode:  ${d.base_postcode}\n` +
+      `Phone:     ${verifiedPhone ? `${verifiedPhone} (verified by text)` : '—'}\nPostcode:  ${d.base_postcode}\n` +
       `Covers:    ${nationwide ? 'nationwide, for their services only' : `${d.radius} miles (${countyIds.length} counties)`}\n` +
       `Insurance: ${insurancePath ? 'uploaded' : 'MISSING'} · Certificates: ${certPaths.filter(Boolean).length} · Bank details: on file\n` +
       `Code of Conduct ${CONDUCT_VERSION} agreed.\n\nReview and approve: ${siteUrl}/admin/contractors`,

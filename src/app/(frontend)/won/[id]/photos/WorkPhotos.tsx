@@ -48,7 +48,48 @@ export function WorkPhotos({ submissionId, photos, done }: { submissionId: strin
     }
   }
 
-  const Grid = ({ list, which, locked }: { list: WorkPhoto[]; which: 'before' | 'after'; locked: boolean }) => (
+  return (
+    <>
+      <form ref={formRef} action={upload} hidden>
+        <input type="hidden" name="submission_id" value={submissionId} />
+        <input type="hidden" name="phase" value={phase} />
+        <input ref={fileRef} type="file" name="photo" />
+      </form>
+      <input ref={pickRef} type="file" accept="image/*" capture="environment" hidden onChange={async (e) => { const [file] = await filesToPhotos(e.target.files); if (file) setPending(file); e.target.value = ''; }} />
+
+      {upState.error && <p className={f.error}>{upState.error}</p>}
+
+      <div className={s.head}>
+        <h2 className={s.h2}>Before</h2>
+        <span className={`${s.pill} ${before.length ? s.pillOk : s.pillReq}`}>{before.length ? `${before.length} added` : 'Required'}</span>
+      </div>
+      <Grid list={before} which="before" locked={false} done={done} uploading={uploading} phase={phase} add={add} />
+
+      <div className={s.head}>
+        <h2 className={s.h2}>After</h2>
+        <span className={`${s.pill} ${after.length ? s.pillOk : ''}`}>{after.length ? `${after.length} added` : before.length ? 'When you finish' : 'After the before photos'}</span>
+      </div>
+      <Grid list={after} which="after" locked={before.length === 0} done={done} uploading={uploading} phase={phase} add={add} />
+
+      {!done && (
+        <form action={markDone}>
+          <input type="hidden" name="submission_id" value={submissionId} />
+          {doneState.error && <p className={f.error}>{doneState.error}</p>}
+          <div className="appFooterCta">
+            <button type="submit" className={`${ui.btn} ${ui.btnYellow}`} disabled={marking || before.length === 0 || after.length === 0}>
+              {marking ? 'Sending…' : 'Mark job complete'}
+            </button>
+          </div>
+        </form>
+      )}
+      {done && <p className={ui.note}>Marked complete. The customer has been asked to check the photos and sign off; you&rsquo;re paid once they do and their balance clears.</p>}
+    </>
+  );
+}
+
+/** One of the two photo grids. Module level, so a state change does not remount the images. */
+function Grid({ list, which, locked, done, uploading, phase, add }: { list: WorkPhoto[]; which: 'before' | 'after'; locked: boolean; done: boolean; uploading: boolean; phase: 'before' | 'after'; add: (w: 'before' | 'after') => void }) {
+  return (
     <div className={s.grid}>
       {list.map((p) => (
         <div key={p.id} className={s.shot}>
@@ -69,43 +110,5 @@ export function WorkPhotos({ submissionId, photos, done }: { submissionId: strin
         </button>
       )}
     </div>
-  );
-
-  return (
-    <>
-      <form ref={formRef} action={upload} hidden>
-        <input type="hidden" name="submission_id" value={submissionId} />
-        <input type="hidden" name="phase" value={phase} />
-        <input ref={fileRef} type="file" name="photo" />
-      </form>
-      <input ref={pickRef} type="file" accept="image/*" capture="environment" hidden onChange={async (e) => { const [file] = await filesToPhotos(e.target.files); if (file) setPending(file); e.target.value = ''; }} />
-
-      {upState.error && <p className={f.error}>{upState.error}</p>}
-
-      <div className={s.head}>
-        <h2 className={s.h2}>Before</h2>
-        <span className={`${s.pill} ${before.length ? s.pillOk : s.pillReq}`}>{before.length ? `${before.length} added` : 'Required'}</span>
-      </div>
-      <Grid list={before} which="before" locked={false} />
-
-      <div className={s.head}>
-        <h2 className={s.h2}>After</h2>
-        <span className={`${s.pill} ${after.length ? s.pillOk : ''}`}>{after.length ? `${after.length} added` : before.length ? 'When you finish' : 'After the before photos'}</span>
-      </div>
-      <Grid list={after} which="after" locked={before.length === 0} />
-
-      {!done && (
-        <form action={markDone}>
-          <input type="hidden" name="submission_id" value={submissionId} />
-          {doneState.error && <p className={f.error}>{doneState.error}</p>}
-          <div className="appFooterCta">
-            <button type="submit" className={`${ui.btn} ${ui.btnYellow}`} disabled={marking || before.length === 0 || after.length === 0}>
-              {marking ? 'Sending…' : 'Mark job complete'}
-            </button>
-          </div>
-        </form>
-      )}
-      {done && <p className={ui.note}>Marked complete. The customer has been asked to check the photos and sign off; you&rsquo;re paid once they do and their balance clears.</p>}
-    </>
   );
 }

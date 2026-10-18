@@ -118,16 +118,21 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   const acres = jobAcres(js);
 
   // What this contractor's price would carry (PRD task 9's keypad): the
-  // job's stored rate, or premium's where that is lower — the same choice
-  // submit_contractor_quote makes when the price lands.
-  const [rateRes, premRes, premRateRes] = await Promise.all([
-    admin.rpc('sq_job_markup_rate', { p_submission_id: js.id }),
+  // job's stored rate, or premium's where that is lower — the choice
+  // submit_contractor_quote makes when the price lands. Read, never
+  // assigned: sq_job_markup_rate stamps a split-test arm on first use, and
+  // a page view must not do that, so a job with no stamp yet shows the
+  // standard rate and the keypad says so.
+  const [stampRes, premRes, premRateRes, stdRateRes] = await Promise.all([
+    admin.from('job_submissions').select('markup_rate').eq('id', js.id).maybeSingle(),
     admin.rpc('contractor_is_premium', { p_contractor_id: invitation.contractor_id }),
     admin.rpc('app_config_num', { p_key: 'sq_premium_markup_rate', p_default: 0.05 }),
+    admin.rpc('app_config_num', { p_key: 'sq_markup_rate', p_default: 0.15 }),
   ]);
   const premiumRate = Number(premRateRes.data ?? 0.05);
   const isPremium = Boolean(premRes.data);
-  const jobRate = Number(rateRes.data ?? 0.15);
+  const stamped = stampRes.data?.markup_rate;
+  const jobRate = stamped != null ? Number(stamped) : Number(stdRateRes.data ?? 0.15);
   const effectiveRate = isPremium ? Math.min(jobRate, premiumRate) : jobRate;
 
   const spec = {

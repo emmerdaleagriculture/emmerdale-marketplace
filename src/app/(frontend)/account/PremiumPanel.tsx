@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { siteUrl } from '@/lib/site';
 import f from '@/components/forms/forms.module.css';
 import ac from './account.module.css';
 
@@ -124,7 +125,7 @@ export function PremiumPanel({
           {/* Store rules: no selling inside the app, or Apple and Google take
               their cut. The benefits show; joining happens on the website. */}
           <p className={ac.subBody} data-app-only>
-            Premium is bought on the website: sign in at emmerdaleagriculture.com/account.
+            Premium is bought on the website: sign in at {siteUrl().replace(/^https?:\/\//, '')}/account.
           </p>
           <div className={ac.premiumButtons} data-app-hide>
             <form action="/api/stripe/checkout" method="post">

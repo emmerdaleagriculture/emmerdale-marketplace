@@ -66,7 +66,12 @@ export async function removeWorkPhotoAction(formData: FormData): Promise<void> {
   const admin = createServiceRoleClient();
   const { data: row } = await admin.from('job_work_photos').select('submission_id, path').eq('id', id).eq('contractor_id', user.id).maybeSingle();
   if (!row) return;
+  // Once the job is marked complete the photos are what the customer signs
+  // off against, so they stay.
+  const { data: js } = await admin.from('job_submissions').select('status').eq('id', row.submission_id).maybeSingle();
+  if (!js || !['awarded', 'contacted', 'scheduled', 'in_progress'].includes(js.status)) return;
+  const { error } = await admin.from('job_work_photos').delete().eq('id', id);
+  if (error) return;
   await admin.storage.from('job-photos').remove([row.path]);
-  await admin.from('job_work_photos').delete().eq('id', id);
   revalidatePath(`/won/${row.submission_id}/photos`);
 }

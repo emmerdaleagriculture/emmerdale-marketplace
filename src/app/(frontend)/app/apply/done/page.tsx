@@ -14,7 +14,8 @@ export default async function ApplyDonePage() {
   if (!user) redirect('/app');
   const { data: c } = await createServiceRoleClient().from('contractors').select('status, business_name').eq('id', user.id).maybeSingle();
   if (!c) redirect('/app/apply');
-  if (c.status === 'approved') redirect('/invitations');
+  // Approved, suspended or anything else: the dashboard says what is true.
+  if (c.status !== 'pending') redirect('/invitations');
   return (
     <main className={ui.screen}>
       <div style={{ display: 'grid', placeItems: 'center', padding: '40px 0 16px' }}>
