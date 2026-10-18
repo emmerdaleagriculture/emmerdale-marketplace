@@ -80,3 +80,37 @@ account with the same verified email automatically (manual linking is off),
 so an existing contractor signing in with Google on their usual address
 lands in their own account. Apple's "Hide My Email" relay addresses do not
 match; that case is handled after the phone step (task 5).
+
+## The phone step (task 5)
+
+- `/app/phone`: +44 by default, UK mobiles only (`lib/sms/ukMobile`), saved
+  as E.164. `supabase.auth.updateUser({ phone })` sends the code,
+  `verifyOtp({ type: 'phone_change' })` confirms it. On success the number
+  is written to `customers.phone` / `contractors.phone` with
+  `phone_verified_at` (migration `20261018120000`). Nothing downstream
+  changes: texts and the masking rules read the same columns as before.
+- Resend after 30 s; five wrong codes lock the number for ten minutes
+  (`phone_verifications`, service role only).
+- **The gate** is in `lib/supabase/middleware.ts`: an app request from a
+  signed-in user whose JWT has no `phone` claim is redirected to
+  `/app/phone?next=…`, except on the welcome/sign-in/role/phone screens and
+  the auth routes. Admins are exempt. The claim only appears once Supabase
+  has confirmed the number, so existing accounts are asked the first time
+  they open the app.
+- `/app/phone/match`: if the verified number is already verified on another
+  account (Apple "Hide My Email"), the person is asked whether that account
+  is theirs; "yes" emails a code to that account's address, signs them in
+  there, and removes the empty duplicate. "No" keeps the new account.
+- A contractor who verified in the app sees the number read-only in
+  `/onboarding`; changing the number on `/my` or `/account` clears
+  `phone_verified_at`.
+
+### Supabase settings for the phone step (with Nav's Twilio Verify SID)
+
+| Setting | Value |
+|---|---|
+| Auth → Providers → Phone | enabled; provider **Twilio Verify**; Verify service SID + account SID/auth token |
+| Phone confirmations | on (`sms_autoconfirm` false — already so) |
+| SMS OTP expiry | 300 s (set 2026-10-18; was 60) |
+| SMS rate limits | `sms_max_frequency` 5 s (the app enforces 30 s itself); sent/hour 30 — raise before launch |
+| `.env` | nothing new; the website never sends the code |

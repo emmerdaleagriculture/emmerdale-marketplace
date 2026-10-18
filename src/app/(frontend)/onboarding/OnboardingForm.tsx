@@ -12,9 +12,12 @@ import o from './onboarding.module.css';
 export function OnboardingForm({
   counties,
   services,
+  verifiedPhone = null,
 }: {
   counties: CountyOption[];
   services: ServiceOption[];
+  /** A number already verified by text in the app: shown, not asked for again. */
+  verifiedPhone?: string | null;
 }) {
   const [state, action, pending] = useActionState(completeOnboardingAction, emptyFormState);
   const [membership, setMembership] = useState<'free' | 'monthly' | 'annual'>('free');
@@ -35,7 +38,14 @@ export function OnboardingForm({
         </label>
         <label className={f.field}>
           <span className={f.label}>Phone</span>
-          <input className={f.input} type="tel" name="phone" required autoComplete="tel" />
+          {verifiedPhone ? (
+            <>
+              <input className={f.input} type="tel" name="phone" value={verifiedPhone} readOnly />
+              <span className={f.hint}>Verified by text. Change it later from your account.</span>
+            </>
+          ) : (
+            <input className={f.input} type="tel" name="phone" required autoComplete="tel" />
+          )}
         </label>
         <label className={f.field}>
           <span className={f.label}>Base postcode</span>

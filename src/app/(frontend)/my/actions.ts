@@ -383,7 +383,12 @@ export async function updateDetailsAction(_prev: FormState, formData: FormData):
   // arrive here, and a strict pattern would reject real numbers to no benefit.
   const phone = String(formData.get('phone') ?? '').trim().slice(0, 40) || null;
 
-  const { error } = await createServiceRoleClient().from('customers').upsert(
+  const admin = createServiceRoleClient();
+  // A number verified by text in the app stays marked as such only while it
+  // is the number on the row.
+  const { data: before } = await admin.from('customers').select('phone, phone_verified_at').eq('id', user.id).maybeSingle();
+  const keepVerified = before?.phone_verified_at && before.phone === phone;
+  const { error } = await admin.from('customers').upsert(
     {
       id: user.id,
       // NOT NULL, and the row may genuinely not exist yet: signing up without
@@ -391,6 +396,7 @@ export async function updateDetailsAction(_prev: FormState, formData: FormData):
       email: user.email ?? '',
       contact_name: name,
       phone,
+      phone_verified_at: keepVerified ? before!.phone_verified_at : null,
     },
     { onConflict: 'id' },
   );

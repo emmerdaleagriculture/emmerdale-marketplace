@@ -28,7 +28,7 @@ export default async function AppAccountPage() {
 
   const admin = createServiceRoleClient();
   const [customer, contractor] = await Promise.all([
-    admin.from('customers').select('contact_name, phone').eq('id', user.id).maybeSingle(),
+    admin.from('customers').select('contact_name, phone, phone_verified_at').eq('id', user.id).maybeSingle(),
     admin.from('contractors').select('id').eq('id', user.id).maybeSingle(),
   ]);
   if (!customer.data) redirect(contractor.data ? '/account' : '/app');
@@ -48,7 +48,20 @@ export default async function AppAccountPage() {
           </span>
           <div style={{ minWidth: 0 }}>
             <div className={ui.cardTitle}>{name ?? user.email}</div>
-            {customer.data.phone && <div className={ui.cardSub}>{customer.data.phone}</div>}
+            {customer.data.phone && (
+              <div className={ui.cardSub}>
+                {customer.data.phone}
+                {customer.data.phone_verified_at ? (
+                  <span className={ui.chip} style={{ marginTop: 0, marginLeft: 8 }}>
+                    ✓ Verified
+                  </span>
+                ) : (
+                  <Link href="/app/phone?next=/app/account" className={ui.sectionLink} style={{ marginLeft: 8 }}>
+                    Verify
+                  </Link>
+                )}
+              </div>
+            )}
             <div className={ui.cardSub}>{PROVIDER_LABEL[provider] ?? `Signed in with ${provider}`}</div>
           </div>
         </div>

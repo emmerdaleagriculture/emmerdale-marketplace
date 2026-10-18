@@ -45,7 +45,11 @@ export default async function OnboardingPage() {
             counties come to you to price. You can change any of this later in your
             account.
           </p>
-          <OnboardingForm counties={counties} services={services} />
+          <OnboardingForm
+            counties={counties}
+            services={services}
+            verifiedPhone={user.phone && user.phone_confirmed_at ? `+${user.phone.replace(/^\+/, '')}` : null}
+          />
         </div>
       </main>
       <SiteFooter />

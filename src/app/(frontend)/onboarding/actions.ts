@@ -50,11 +50,16 @@ export async function completeOnboardingAction(
 
   // Create the pending contractor profile as the signed-in user
   // (RLS: contractors_insert_self requires id = auth.uid()).
+  // A number verified by text in the app wins over whatever is in the form:
+  // the form shows it read-only, but a form is only a form.
+  const verifiedPhone =
+    user.phone && user.phone_confirmed_at ? `+${user.phone.replace(/^\+/, '')}` : null;
   const { error: profErr } = await supabase.from('contractors').insert({
     id: user.id,
     business_name: d.business_name,
     contact_name: d.contact_name,
-    phone: d.phone,
+    phone: verifiedPhone ?? d.phone,
+    phone_verified_at: verifiedPhone ? user.phone_confirmed_at : null,
     email: user.email ?? '',
     base_postcode: d.base_postcode,
     services: d.service_ids,
