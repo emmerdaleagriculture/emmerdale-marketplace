@@ -112,6 +112,11 @@ html[data-app] body {
 html[data-app] [data-app-hide] {
   display: none !important;
 }
+/* The reverse: a block the website never shows (the contractor dashboard's
+   log-out and push rows, which the hidden header used to provide). */
+html:not([data-app]) [data-app-only] {
+  display: none !important;
+}
 /* Room for the fixed tab bar / back bar, set by AppShell only on the pages
    that show them. */
 html[data-app][data-app-tabs] body {

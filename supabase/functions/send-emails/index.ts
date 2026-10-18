@@ -18,6 +18,7 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { drainSms } from './sms.ts';
+import { drainPush } from './push.ts';
 import { withReference } from './reline.ts';
 
 const MAX_ATTEMPTS = 5;
@@ -1514,8 +1515,17 @@ Deno.serve(async (req) => {
     sms = { error: String(err).slice(0, 300) };
   }
 
+  // Pushes after the texts, for the same reason.
+  let push: Record<string, unknown>;
+  try {
+    push = await drainPush(supabase, SITE_URL, sqAllowlist, SQ_CONTRACTOR_KINDS);
+  } catch (err) {
+    console.error('[send-emails] push drain failed:', err);
+    push = { error: String(err).slice(0, 300) };
+  }
+
   return new Response(
-    JSON.stringify({ processed: (pending ?? []).length, sent, retried, failed, sms }),
+    JSON.stringify({ processed: (pending ?? []).length, sent, retried, failed, sms, push }),
     { headers: { 'Content-Type': 'application/json' } },
   );
 });

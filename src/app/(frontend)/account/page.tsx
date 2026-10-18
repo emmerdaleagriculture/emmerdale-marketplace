@@ -16,6 +16,8 @@ import { timeAgo, timeLeft } from '@/lib/time';
 import a from '../auth.module.css';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import ac from './account.module.css';
+import { LogoutButton, PushToggleRow } from '@/components/app/PushControls';
+import ui from '../app/app-ui.module.css';
 
 export const metadata: Metadata = {
   title: 'Your dashboard',
@@ -369,6 +371,16 @@ export default async function AccountPage({
             selectedCounties={selectedCounties}
             services={services}
           />
+
+          {/* App only: the site header carried log-out, and it is hidden there. */}
+          <div data-app-only style={{ margin: '24px 0' }}>
+            <div className={ui.rows}>
+              <PushToggleRow />
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <LogoutButton className={`${ui.btn} ${ui.btnGhost}`} />
+            </div>
+          </div>
 
           <ContactUsButton
             subject={`Contractor enquiry — ${contractor.business_name}`}
