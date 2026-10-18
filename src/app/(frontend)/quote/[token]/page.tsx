@@ -16,6 +16,7 @@ import type { BoundaryPolygon } from '@/lib/jobParse/geometry';
 import { PricePosition } from './PricePosition';
 import { QuoteForm } from './QuoteForm';
 import { DeclineForm } from './DeclineForm';
+import { InviteActions } from './InviteActions';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { MessageThread } from '@/components/messages/MessageThread';
 import { getModeratedUntil, getThreadMessages, getThreadState } from '@/lib/sealedQuotes/messages';
@@ -115,6 +116,19 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     !['declined', 'closed_awarded', 'closed_stale'].includes(invitation.status);
 
   const acres = jobAcres(js);
+
+  // What this contractor's price would carry (PRD task 9's keypad): the
+  // job's stored rate, or premium's where that is lower — the same choice
+  // submit_contractor_quote makes when the price lands.
+  const [rateRes, premRes, premRateRes] = await Promise.all([
+    admin.rpc('sq_job_markup_rate', { p_submission_id: js.id }),
+    admin.rpc('contractor_is_premium', { p_contractor_id: invitation.contractor_id }),
+    admin.rpc('app_config_num', { p_key: 'sq_premium_markup_rate', p_default: 0.05 }),
+  ]);
+  const premiumRate = Number(premRateRes.data ?? 0.05);
+  const isPremium = Boolean(premRes.data);
+  const jobRate = Number(rateRes.data ?? 0.15);
+  const effectiveRate = isPremium ? Math.min(jobRate, premiumRate) : jobRate;
 
   const spec = {
     service: service?.name ?? null,
@@ -345,15 +359,25 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 />
               )}
 
+              <div id="price" />
               <QuoteForm
                 token={token}
+                markupRate={effectiveRate}
+                premium={isPremium}
+                premiumRate={premiumRate}
+                summary={[service?.name ?? 'Land work', acres != null ? `${acres} acres` : null, spec.location ?? county ?? null].filter(Boolean).join(' · ')}
                 areaPriced={Boolean(service?.area_priced && acres)}
                 acres={acres}
                 revising={Boolean(live)}
                 defaultValidUntil={js.expires_at ? js.expires_at.slice(0, 10) : null}
               />
 
-              {!live && <DeclineForm token={token} />}
+              {!live && (
+                <div id="pass">
+                  <DeclineForm token={token} />
+                </div>
+              )}
+              {jobOpen && <InviteActions canPass={!live} />}
             </>
           )}
 

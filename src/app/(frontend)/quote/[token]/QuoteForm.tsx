@@ -1,7 +1,9 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { submitQuoteAction, type QuoteActionState } from './actions';
+import { MIN_JOB_PENCE, PriceKeypad } from './PriceKeypad';
+import { isApp } from '@/lib/app/isApp';
 import f from '@/components/forms/forms.module.css';
 import a from '@/app/(frontend)/auth.module.css';
 import q from './quote.module.css';
@@ -14,15 +16,31 @@ export function QuoteForm({
   acres,
   revising,
   defaultValidUntil,
+  markupRate = 0.15,
+  premium = false,
+  premiumRate = 0.05,
+  summary = '',
 }: {
   token: string;
   areaPriced: boolean;
   acres: number | null;
   revising: boolean;
   defaultValidUntil: string | null;
+  /** The commission this contractor's price on this job would carry (the job's stored rate, or premium's). */
+  markupRate?: number;
+  premium?: boolean;
+  premiumRate?: number;
+  /** "Paddock topping · 4 acres · Lymington", over the keypad. */
+  summary?: string;
 }) {
   const [state, action, pending] = useActionState(submitQuoteAction, EMPTY);
   const [quoteType, setQuoteType] = useState<'total' | 'rate' | 'unit'>('total');
+  // In the app a total price is keyed on a keypad (PRD task 9); the
+  // keypad's figure lands in the same `price` field the website posts.
+  const [app, setApp] = useState(false);
+  useEffect(() => setApp(isApp()), []);
+  const [keyed, setKeyed] = useState('');
+  const keypadLow = app && quoteType === 'total' && keyed !== '' && Number(keyed) * 100 < MIN_JOB_PENCE;
 
   if (state.closed) {
     return <div className={q.closedPanel}>{state.message}</div>;
@@ -130,17 +148,24 @@ export function QuoteForm({
           </label>
         </>
       ) : quoteType === 'total' ? (
-        <label className={f.field}>
-          <span className={f.label}>Total price (£)</span>
-          <input
-            className={f.input}
-            type="text"
-            name="price"
-            inputMode="decimal"
-            placeholder="e.g. 450"
-            required
-          />
-        </label>
+        app ? (
+          <>
+            <PriceKeypad rate={markupRate} premium={premium} premiumRate={premiumRate} summary={summary} onChange={setKeyed} />
+            <input type="hidden" name="price" value={keyed} />
+          </>
+        ) : (
+          <label className={f.field}>
+            <span className={f.label}>Total price (£)</span>
+            <input
+              className={f.input}
+              type="text"
+              name="price"
+              inputMode="decimal"
+              placeholder="e.g. 450"
+              required
+            />
+          </label>
+        )
       ) : (
         <div className={a.row2}>
           <label className={f.field}>
@@ -217,7 +242,7 @@ export function QuoteForm({
       </label>
 
       <div className={a.actions}>
-        <button className={f.btnYellow} type="submit" disabled={pending}>
+        <button className={f.btnYellow} type="submit" disabled={pending || keypadLow || (app && quoteType === 'total' && !keyed)}>
           {pending ? 'Sending…' : revising ? 'Send new price' : 'Send my price'}
         </button>
       </div>

@@ -364,6 +364,33 @@ export type Database = {
           },
         ]
       }
+      contractor_bank_details: {
+        Row: {
+          account_name: string
+          account_number: string
+          contractor_id: string
+          created_at: string
+          sort_code: string
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          contractor_id: string
+          created_at?: string
+          sort_code: string
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          contractor_id?: string
+          created_at?: string
+          sort_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contractor_counties: {
         Row: {
           contractor_id: string
@@ -679,6 +706,10 @@ export type Database = {
           payout_before_balance: boolean
           phone: string
           phone_verified_at: string | null
+          insurance_path: string | null
+          certificate_paths: string[]
+          conduct_version: string | null
+          conduct_accepted_at: string | null
           rating_avg: number | null
           rating_count: number
           services: number[]
@@ -705,6 +736,10 @@ export type Database = {
           payout_before_balance?: boolean
           phone: string
           phone_verified_at?: string | null
+          insurance_path?: string | null
+          certificate_paths?: string[]
+          conduct_version?: string | null
+          conduct_accepted_at?: string | null
           rating_avg?: number | null
           rating_count?: number
           services?: number[]
@@ -731,6 +766,10 @@ export type Database = {
           payout_before_balance?: boolean
           phone?: string
           phone_verified_at?: string | null
+          insurance_path?: string | null
+          certificate_paths?: string[]
+          conduct_version?: string | null
+          conduct_accepted_at?: string | null
           rating_avg?: number | null
           rating_count?: number
           services?: number[]
@@ -2016,6 +2055,33 @@ export type Database = {
           },
         ]
       }
+      job_work_photos: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          id: string
+          path: string
+          phase: string
+          submission_id: string
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          id?: string
+          path: string
+          phase: string
+          submission_id: string
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          id?: string
+          path?: string
+          phase?: string
+          submission_id?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           bidding_opens_at: string
@@ -3238,6 +3304,10 @@ export type Database = {
       sealed_quote_tick: { Args: never; Returns: undefined }
       send_chase_emails: { Args: never; Returns: Json }
       service_label_from_text: { Args: { p_text: string }; Returns: string }
+      sq_start_job: {
+        Args: { p_submission_id: string; p_contractor_id: string }
+        Returns: Json
+      }
       sms_link_hit: {
         Args: { p_code: string; p_count?: boolean }
         Returns: string

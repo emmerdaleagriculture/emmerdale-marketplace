@@ -37,7 +37,7 @@ export const CONTRACTOR_TABS: Tab[] = [
   { key: 'jobs', label: 'Jobs', href: '/invitations', icon: 'board', badge: 'invites', also: ['/jobs', '/quote'] },
   { key: 'diary', label: 'Diary', href: '/won', icon: 'diary' },
   { key: 'messages', label: 'Messages', href: '/messages', icon: 'messages', badge: 'messages' },
-  { key: 'earnings', label: 'Earnings', href: '/account', icon: 'earnings', also: ['/onboarding'] },
+  { key: 'earnings', label: 'Earnings', href: '/app/earnings', icon: 'earnings', also: ['/account', '/onboarding'] },
 ];
 
 /**

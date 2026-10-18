@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { nonContractorPath } from '@/lib/auth';
@@ -12,6 +13,8 @@ import { MarkDoneButton } from './MarkDoneButton';
 import { VisitPanel } from './VisitPanel';
 import { InvoiceUpload } from './InvoiceUpload';
 import { ProposeWorkForm } from './ProposeWorkForm';
+import { startJobAction } from './actions';
+import ui from '@/app/(frontend)/app/app-ui.module.css';
 import a from '../auth.module.css';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import s from './won.module.css';
@@ -245,10 +248,44 @@ export default async function WonJobsPage() {
                   {job.status === 'awarded' && job.id && (
                     <FirstContactButton submissionId={job.id} />
                   )}
+                  {/* The app's diary row (PRD task 9): Directions, and Start
+                      job → the before-and-after photos, which is where the
+                      job is marked complete. The website keeps its button. */}
+                  {job.id && ['awarded', 'contacted', 'scheduled', 'in_progress', 'completed_by_contractor'].includes(job.status ?? '') && (
+                    <div data-app-only style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                      {job.postcode && (
+                        <a
+                          className={`${ui.btn} ${ui.btnGhost}`}
+                          style={{ flex: '0 0 44%', height: 48 }}
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.postcode)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Directions
+                        </a>
+                      )}
+                      {job.status === 'in_progress' || job.status === 'completed_by_contractor' ? (
+                        <Link href={`/won/${job.id}/photos`} className={`${ui.btn} ${ui.btnPrimary}`} style={{ flex: 1, height: 48 }}>
+                          {job.status === 'in_progress' ? 'Photos & complete' : 'Photos'}
+                        </Link>
+                      ) : (
+                        <form action={startJobAction} style={{ flex: 1, display: 'contents' }}>
+                          <input type="hidden" name="submission_id" value={job.id} />
+                          <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} style={{ flex: 1, height: 48 }}>
+                            ▶ Start job
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  )}
                   {['awarded', 'contacted', 'scheduled', 'in_progress'].includes(
                     job.status ?? '',
                   ) &&
-                    job.id && <MarkDoneButton submissionId={job.id} />}
+                    job.id && (
+                      <div data-app-hide>
+                        <MarkDoneButton submissionId={job.id} />
+                      </div>
+                    )}
                   {/* Extras go through us (terms clause 5) — and this is
                       "through us": a job of its own, held for them, that the
                       customer accepts or ignores. Every booked state

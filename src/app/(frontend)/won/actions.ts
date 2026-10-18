@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import type { FormState } from '@/lib/form';
@@ -381,4 +382,25 @@ export async function reviseVisitPriceAction(_prev: FormState, formData: FormDat
   }
   revalidatePath('/won');
   return { ok: true, message: 'Sent — the customer will accept the new price or decline it. We’ll email you either way.' };
+}
+
+/**
+ * "Start job" in the app (PRD task 9): the booked job moves to in_progress
+ * and the before-and-after photo screen opens. awarded / contacted /
+ * scheduled only; anything else is reported, not forced.
+ */
+export async function startJobAction(formData: FormData): Promise<void> {
+  const submissionId = String(formData.get('submission_id') || '');
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || !submissionId) return;
+  const { data, error } = await createServiceRoleClient().rpc('sq_start_job', {
+    p_submission_id: submissionId,
+    p_contractor_id: user.id,
+  });
+  if (error) console.error('[won] sq_start_job failed:', error.message);
+  else if (!(data as { ok: boolean })?.ok) console.warn('[won] sq_start_job refused:', data);
+  redirect(`/won/${submissionId}/photos`);
 }

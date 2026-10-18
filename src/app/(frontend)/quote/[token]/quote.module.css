@@ -128,3 +128,27 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* App mode (PRD task 9): the two answers at the foot of the invitation. */
+.inviteActions {
+  display: flex;
+  gap: 10px;
+}
+.passBtn,
+.priceBtn {
+  flex: 1;
+  height: 52px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 16px;
+}
+.passBtn {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  color: var(--jd-green-deep);
+  flex: 0 0 36%;
+}
+.priceBtn {
+  background: var(--jd-green-deep);
+  color: var(--white);
+}

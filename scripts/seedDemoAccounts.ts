@@ -137,10 +137,12 @@ async function main() {
       submission_id: submission, contractor_id: contractor, invitation_id: invitation, quote_type: 'total', contractor_price_pence: pence, price_basis: 'no_vat', valid_until: iso(-24 * 14), source: 'form', confirmed_by_contractor: true,
     }).select('id').single();
     if (error) throw new Error(`contractor_quotes: ${error.message}`);
-    const { error: clErr } = await admin.from('client_quotes').insert({
+    const { data: cl, error: clErr } = await admin.from('client_quotes').insert({
       submission_id: submission, contractor_quote_id: cq.id, contractor_id: contractor, client_price_pence: Math.round(pence * 1.15), markup_rate: 0.15, contractor_display_label: label, contractor_rating_count: 0, valid_until: iso(-24 * 14), status, price_basis: 'no_vat', contractor_note: 'Can do this within the week, weather allowing.',
-    });
+    }).select('id').single();
     if (clErr) throw new Error(`client_quotes: ${clErr.message}`);
+    // The booked job points at the price the customer took, as a real award does.
+    if (status === 'accepted') await admin.from('job_submissions').update({ accepted_client_quote_id: cl.id }).eq('id', submission);
   };
   await price(job1, invA, contractorId, 'Operator A', 32000, 'active');
   await price(job1, invB, operatorIds[0], 'Operator B', 36000, 'active');

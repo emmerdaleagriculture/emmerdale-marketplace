@@ -16,6 +16,7 @@ import { JobSpecCard } from '@/components/job/JobSpecCard';
 import { StatusTimeline } from './StatusTimeline';
 import { PriceList, type ClientQuoteView } from './PriceList';
 import { PriceRange } from './PriceRange';
+import { getWorkPhotos } from '@/lib/sealedQuotes/workPhotos';
 import { ConfirmDone } from './ConfirmDone';
 import { InlineRating } from './InlineRating';
 import { EditJobForm } from './EditJobForm';
@@ -75,6 +76,7 @@ export default async function ClientPortalPage({
   // validity filter: an award outlives its quote's valid-until date.
   const admin = createServiceRoleClient();
   const done = ['completed', 'paid'].includes(js.status);
+  const workPhotos = ['in_progress', 'completed_by_contractor', 'completed', 'paid', 'disputed'].includes(js.status) ? await getWorkPhotos(js.id) : [];
   const needQuotes = ['quotes_receiving', 'accepted_awaiting_payment'].includes(js.status);
   // A repeat offered to the customer's previous contractor first
   // (market_opens_at is set only while that offer stands). They chose them by
@@ -520,6 +522,24 @@ export default async function ClientPortalPage({
               ))}
               .
             </p>
+          )}
+
+          {/* ── The work, before and after (PRD task 9) ─────────────── */}
+          {workPhotos.length > 0 && (
+            <>
+              <div className={a.groupTitle} style={{ marginTop: 28 }}>
+                Before and after
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                {workPhotos.map((p) => (
+                  <figure key={p.id} style={{ margin: 0 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.url} alt={`${p.phase} photo`} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 12 }} />
+                    <figcaption style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 4, textTransform: 'capitalize' }}>{p.phase}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            </>
           )}
 
           {/* ── Messages ───────────────────────────────────────────── */}

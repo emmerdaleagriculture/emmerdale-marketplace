@@ -223,3 +223,36 @@ set `FIREBASE_SERVICE_ACCOUNT` with `supabase secrets set`. Migration
   (`@capacitor/browser`), where Apple Pay and Google Pay work; when the
   sheet closes the page refreshes. `success_url` is the normal job URL.
 - Home's "Get prices" card and service tiles lead into the flow.
+
+## Contractor screens (task 9)
+
+- **Apply** `/app/apply` (the website's `/onboarding` sends app visitors
+  here): trading name, your name, services; base postcode and a travel
+  radius drawn on a map (Leaflet), the counties it reaches shown and saved
+  as `contractor_counties`, or "nationwide for my services only"
+  (`services_only`, radius 1000); then the checks — insurance certificate
+  (camera photo or PDF, into the private `contractor-documents` bucket),
+  optional certificates, bank details (`contractor_bank_details`, service
+  role only), Code of Conduct version (`contractors.conduct_version` /
+  `conduct_accepted_at`); then "We're checking your details". Migration
+  `20261018210000`. The admin email names what was attached.
+- **Invitation** `/quote/[token]` in app mode: fixed Pass / Price this job
+  buttons that scroll to the existing forms. **Price keypad** (`PriceKeypad`)
+  replaces the total-price box in the app: the customer's figure at the
+  job's stored rate (or premium's), the fee, what the contractor receives;
+  under £150 is refused in the keypad. The rate comes from
+  `sq_job_markup_rate` + `contractor_is_premium`, as the quote RPC decides it.
+- **Diary** `/won` in app mode: Directions and **Start job**
+  (`sq_start_job`: awarded/contacted/scheduled → in_progress) on each booked
+  job, leading to `/won/[id]/photos`: before photos required, after photos
+  unlock once there is a before (`job_work_photos`, in `job-photos` under
+  `<submission>/work/`), and "Mark job complete" (the existing sign-off)
+  once both are in. The customer sees the photos on their job page from
+  in-progress on.
+- **Earnings** `/app/earnings` (the Earnings tab): ready-to-pay-out total
+  from `sq_payout_ready` (invoice in and balance collected), held amount,
+  recent won jobs with what the customer paid, the fee and the net, and the
+  premium card with status and benefits only.
+- **Premium in the app**: the dashboard's Stripe buttons and billing link
+  are hidden in app mode; the benefits and status show with "bought on the
+  website".
