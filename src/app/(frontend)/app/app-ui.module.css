@@ -1,0 +1,312 @@
+/* Shared pieces for the app's own screens (/app/*): the prototype's cards,
+   rows, chips and buttons, in the site's tokens. Only ever shown in app
+   mode, but written so they also read fine in a browser tab. */
+
+.screen {
+  min-height: 100dvh;
+  padding: 8px 16px 32px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0 14px;
+}
+.greeting {
+  font-size: 15px;
+  color: var(--ink-3);
+}
+.who {
+  font-family: var(--font-display-stack);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--jd-green-deep);
+  overflow-wrap: anywhere;
+}
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--jd-green-deep);
+  color: var(--jd-yellow);
+  font-family: var(--font-display-stack);
+  font-size: 20px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.title {
+  font-family: var(--font-display-stack);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--jd-green-deep);
+  margin: 10px 0 16px;
+}
+
+/* The big photo card with one yellow button. */
+.ctaCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 190px;
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 18px;
+  color: #fff;
+  isolation: isolate;
+}
+.ctaImg {
+  object-fit: cover;
+  object-position: center 40%;
+  z-index: -2;
+}
+.ctaCard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(8, 16, 6, 0.08), rgba(8, 16, 6, 0.82));
+}
+.ctaTitle {
+  font-family: var(--font-display-stack);
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 1.1;
+}
+.ctaSub {
+  font-size: 14px;
+  opacity: 0.92;
+  margin-top: 4px;
+}
+.ctaGo {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  background: var(--jd-yellow);
+  color: var(--jd-green-deep);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 16px;
+  border-radius: 999px;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 26px 0 10px;
+}
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.sectionLink {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jd-green);
+}
+.kicker {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 24px 0 8px;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+}
+.card {
+  background: var(--white);
+  border: 1px solid #e6e9e1;
+  border-radius: 20px;
+  padding: 14px 16px;
+  color: inherit;
+}
+.cardRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+.cardTitle {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--ink);
+}
+.cardSub {
+  font-size: 13.5px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.chevron {
+  color: var(--ink-3);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--jd-green-pale);
+  color: var(--jd-green-dark);
+  margin-top: 8px;
+}
+.chipYellow {
+  background: #fff6b8;
+  color: #6b5a00;
+}
+.chipGrey {
+  background: #eef0ea;
+  color: var(--ink-2);
+}
+
+/* A grid of service tiles. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.tile {
+  background: var(--white);
+  border: 1px solid #e6e9e1;
+  border-radius: 16px;
+  padding: 16px 8px 14px;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  text-align: center;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.tile svg {
+  color: var(--jd-green);
+}
+
+/* Rows in a rounded group, like a settings list. */
+.rows {
+  background: var(--white);
+  border: 1px solid #e6e9e1;
+  border-radius: 20px;
+  overflow: hidden;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef0ea;
+  font-size: 15px;
+  text-align: left;
+  color: var(--ink);
+  background: var(--white);
+}
+.row:last-child {
+  border-bottom: 0;
+}
+.rowIcon {
+  color: var(--jd-green);
+  display: grid;
+  flex: none;
+}
+.rowValue {
+  margin-left: auto;
+  color: var(--ink-3);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: right;
+}
+.rowDanger {
+  color: var(--error);
+}
+
+/* The buttons. */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: transform 0.12s, opacity 0.2s;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.btnPrimary {
+  background: var(--jd-green-deep);
+  color: var(--white);
+}
+.btnYellow {
+  background: var(--jd-yellow);
+  color: var(--jd-green-deep);
+}
+.btnGhost {
+  background: var(--white);
+  color: var(--jd-green-deep);
+  border: 1px solid var(--rule);
+}
+.btnText {
+  width: auto;
+  height: auto;
+  padding: 10px;
+  margin: 0 auto;
+  font-size: 15px;
+  color: var(--jd-green-deep);
+}
+
+.promises {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+}
+.promise {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 8px;
+  background: var(--jd-green-pale);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.promise strong {
+  color: var(--ink);
+}
+.tick {
+  color: var(--jd-green-dark);
+  font-weight: 700;
+}
+.note {
+  font-size: 13px;
+  color: var(--ink-3);
+  line-height: 1.5;
+  margin-top: 10px;
+}

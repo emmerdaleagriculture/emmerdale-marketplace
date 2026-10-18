@@ -11,7 +11,10 @@ import { SiteNav } from './SiteNav';
  */
 export function SiteHeader({ variant = 'solid' }: { variant?: 'overlay' | 'solid' }) {
   return (
-    <header className={`${styles.header} ${variant === 'overlay' ? styles.overlay : styles.solid}`}>
+    <header
+      className={`${styles.header} ${variant === 'overlay' ? styles.overlay : styles.solid}`}
+      data-app-hide
+    >
       <div className={styles.inner}>
         <Link href="/" className={styles.brand}>
           Emmerdale Agriculture

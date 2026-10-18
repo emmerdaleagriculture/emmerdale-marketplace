@@ -70,6 +70,7 @@ export function Breadcrumb({
       <nav
         className={tone === 'light' ? `${styles.crumb} ${styles.light}` : styles.crumb}
         aria-label="Breadcrumb"
+        data-app-hide
       >
         {trail.map((c, i) => {
           const isLast = i === lastIndex;

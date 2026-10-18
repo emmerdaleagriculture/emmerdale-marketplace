@@ -209,3 +209,18 @@
   font-size: 20px;
   line-height: 1.25;
 }
+
+/* App mode (src/lib/appMode.ts): the page is the whole screen, so the
+   website's generous margins become a phone's gutters, and the display
+   heading sits at the prototype's size. */
+:global(html[data-app]) .main {
+  padding: 8px 16px 32px;
+}
+:global(html[data-app]) .title {
+  font-size: 30px;
+}
+:global(html[data-app]) .card {
+  border-radius: 20px;
+  padding: 18px 16px;
+  background: var(--white);
+}

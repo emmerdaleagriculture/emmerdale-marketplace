@@ -137,3 +137,8 @@
     bottom: 12px;
   }
 }
+
+/* In the app the tab bar owns the bottom edge; the widget sits above it. */
+:global(html[data-app][data-app-tabs]) .root {
+  bottom: calc(var(--app-tabbar-h) + env(safe-area-inset-bottom, 0px) + 12px);
+}
