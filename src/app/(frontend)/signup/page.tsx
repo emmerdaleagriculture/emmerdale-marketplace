@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SignupForm } from './SignupForm';
+import { SignInButtons } from '@/components/app/SignInButtons';
 import { getUser, safeInternalPath } from '@/lib/auth';
 import a from '../auth.module.css';
 
@@ -134,6 +135,15 @@ export default async function SignupPage({
             </>
           )}
 
+          {/* Google and Apple (PRD task 3). A contractor lands in onboarding
+              as the password form does; a customer goes back to their job. */}
+          <div style={{ marginBottom: 18 }}>
+            <SignInButtons
+              next={next ?? (isCustomerSignup(next, params.from) ? '/my' : '/onboarding')}
+              compact
+              dividerText="or with an email and password"
+            />
+          </div>
           <SignupForm next={next ?? undefined} from={params.from} />
         </div>
       </main>

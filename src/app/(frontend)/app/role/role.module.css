@@ -1,0 +1,67 @@
+.progress {
+  height: 3px;
+  background: var(--jd-green-pale);
+  border-radius: 2px;
+  margin: 6px 0 18px;
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  width: 25%;
+  background: var(--jd-green);
+  border-radius: 2px;
+}
+.lede {
+  font-size: 15px;
+  color: var(--ink-2);
+  margin: -6px 0 18px;
+}
+.options {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 110px;
+}
+.option {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  border: 1.5px solid var(--rule);
+  border-radius: 20px;
+  padding: 16px;
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.option b {
+  display: block;
+  font-size: 16.5px;
+  color: var(--ink);
+}
+.blurb {
+  display: block;
+  font-size: 13.5px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.optionOn {
+  border-color: var(--jd-green);
+  background: #f6faf3;
+  box-shadow: inset 0 0 0 1px var(--jd-green);
+}
+.option:focus-within {
+  outline: 2px solid var(--jd-yellow);
+  outline-offset: 2px;
+}
+.img {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  overflow: hidden;
+  flex: none;
+}
+.imgEl {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+}

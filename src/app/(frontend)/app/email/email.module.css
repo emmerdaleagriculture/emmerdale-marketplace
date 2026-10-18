@@ -1,0 +1,65 @@
+.form {
+  padding-bottom: 110px;
+}
+.lede {
+  font-size: 15px;
+  color: var(--ink-2);
+  margin: -6px 0 20px;
+  line-height: 1.5;
+}
+.change {
+  color: var(--jd-green);
+  font-weight: 600;
+  font-size: 15px;
+}
+.muted {
+  color: var(--ink-3);
+  font-size: 14px;
+}
+.resend {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+/* One real input, drawn as six boxes. The input sits over the boxes,
+   transparent, so taps and the keyboard's suggestion both land on it. */
+.otpWrap {
+  position: relative;
+  display: block;
+  margin: 8px 0 14px;
+}
+.otpInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  font-size: 24px;
+  letter-spacing: 2em;
+}
+.otpBoxes {
+  display: flex;
+  gap: 8px;
+}
+.otpBox {
+  flex: 1;
+  height: 58px;
+  border: 1.5px solid var(--rule);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 600;
+  background: var(--white);
+  transition: border-color 0.2s, background 0.2s;
+}
+.otpFilled {
+  border-color: var(--jd-green);
+  background: var(--jd-green-pale);
+}
+.otpInput:focus + .otpBoxes .otpBox:not(.otpFilled):first-of-type,
+.otpInput:focus + .otpBoxes .otpFilled + .otpBox:not(.otpFilled) {
+  border-color: var(--jd-green);
+}

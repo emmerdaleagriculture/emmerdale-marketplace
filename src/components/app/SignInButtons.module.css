@@ -1,0 +1,52 @@
+.wrap {
+  display: grid;
+  gap: 10px;
+}
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: transform 0.12s, opacity 0.2s;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.apple {
+  background: #000;
+  color: #fff;
+}
+.google {
+  background: #fff;
+  color: #1f1f1f;
+  border: 1px solid #c9ccc4;
+}
+.compact {
+  height: 46px;
+  font-size: 15px;
+  border-radius: 10px;
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-3);
+  font-size: 13px;
+  margin: 4px 0 6px;
+}
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
