@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { Turnstile, turnstileEnabled } from '@/components/forms/Turnstile';
 import { EmailField } from '@/components/forms/EmailField';
 import { sendEmailCodeAction, verifyEmailCodeAction, type EmailCodeState } from './actions';
@@ -47,6 +48,12 @@ export function EmailCodeForm({ role }: { role: string | null }) {
         {sent.error && <p className={f.error}>{sent.error}</p>}
         <EmailField name="email" required defaultValue={email ?? ''} />
         <Turnstile resetOn={sent} onToken={setCaptchaToken} />
+        <p className={s.muted}>
+          Have a password from the website?{' '}
+          <Link href="/login?next=/app/continue" className={s.change}>
+            Log in with it
+          </Link>
+        </p>
         <div className="appFooterCta">
           <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} disabled={sending || captchaPending}>
             {sending ? 'Sending…' : 'Email me a code'}

@@ -149,3 +149,41 @@ Deploy order: app (this PR) → `supabase functions deploy send-emails` →
 set `FIREBASE_SERVICE_ACCOUNT` with `supabase secrets set`. Migration
 `20261018150000` is already applied; without the secret the drain reports
 `configured: false` and rows wait.
+
+## App links, account deletion, reviewer accounts (task 10)
+
+- **App links.** `/.well-known/apple-app-site-association` and
+  `/.well-known/assetlinks.json` are route handlers (rewrites in
+  `next.config.mjs`) so the team id and the Android fingerprint come from
+  the environment: `APPLE_TEAM_ID` (defaults to G3UHKZ4LQ2), `APPLE_BUNDLE_ID`,
+  `ANDROID_CERT_SHA256` (Play App Signing's SHA-256, comma-separated if
+  several; until set, Android treats the links as web links). The bare
+  domain 308-redirects to www, and Apple refuses a redirected file, so the
+  app's Associated Domains entry must be `applinks:www.emmerdaleagriculture.com`
+  (and `webcredentials:`). Paths covered: `/app*`, `/t/*`, `/my/*`,
+  `/quote/*`, `/messages*`, `/invitations*`, `/won*`, `/jobs*`, `/account*`,
+  `/start*`, `/login*`.
+- **Delete my account.** `/app/account/delete`, linked from both Account
+  screens in app mode. `lib/deleteAccount.ts`: Apple token revoked where
+  held, devices revoked, premium cancelled, then — contractor without
+  history: row removed; with history: row scrubbed (name, phone, email,
+  counties; status suspended; live prices closed) and kept as a tombstone
+  for the six-year records; customer: `closeCustomer` (open jobs withdrawn,
+  details scrubbed from every job, photos removed, login deleted). The
+  screen says what stays. Migration `20261018170000` dropped the
+  `contractors.id → auth.users` cascade to make the tombstone possible; the
+  admin delete tool now removes the row itself.
+- **Apple token revocation.** Needs `APPLE_TEAM_ID`, `APPLE_KEY_ID`,
+  `APPLE_PRIVATE_KEY` (.p8 contents), `APPLE_SERVICES_ID`. The refresh token
+  is captured at sign-in: on the web from `/auth/callback`
+  (`provider_refresh_token`), natively by exchanging the sheet's
+  authorization code at `/api/app/apple-token` with the bundle id as client.
+  Stored in `apple_tokens` (service role only).
+- **Reviewer accounts.** `npx tsx scripts/seedDemoAccounts.ts` creates or
+  refreshes `demo-customer@` and `demo-contractor@emmerdaleagriculture.com`
+  (password printed; `DEMO_ACCOUNT_PASSWORD` to set it), both with a
+  confirmed phone so the gate lets them in, two demo jobs (one with three
+  prices, one booked) and two extra "Operator" contractors. Demo contractors
+  cover no counties; demo jobs are `hidden_at`, so they are out of the admin
+  board, metrics and coverage. Reviewers sign in with "Have a password from
+  the website? Log in with it" on the email screen.

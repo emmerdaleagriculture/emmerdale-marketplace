@@ -32,6 +32,30 @@ export type Database = {
         }
         Relationships: []
       }
+      apple_tokens: {
+        Row: {
+          client_id: string
+          created_at: string
+          refresh_token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          refresh_token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          refresh_token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_quote_passes: {
         Row: {
           client_quote_id: string

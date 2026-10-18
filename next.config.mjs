@@ -37,6 +37,16 @@ const nextConfig = {
     ],
   },
 
+  // The app-link files (PRD task 10) are route handlers, so the team id and
+  // the Android fingerprint can come from the environment; Apple's must be
+  // served at this exact path with no extension.
+  async rewrites() {
+    return [
+      { source: '/.well-known/apple-app-site-association', destination: '/api/well-known/aasa' },
+      { source: '/.well-known/assetlinks.json', destination: '/api/well-known/assetlinks' },
+    ];
+  },
+
   async redirects() {
     return [
       // The two imported notes shipped with slugs hard-truncated at 80 chars,

@@ -114,12 +114,13 @@ export async function deleteContractor(formData: FormData) {
   // If Stripe refuses, this throws and nothing is deleted.
   await refundUnapprovedPremium(id);
 
+  // Since 20261018170000 the contractors row no longer cascades from the
+  // auth user (a contractor with history keeps a tombstone row when they
+  // delete their own login), so both are removed here, row first.
+  const { error: rowErr } = await admin.from('contractors').delete().eq('id', id);
+  if (rowErr) throw new Error(rowErr.message);
   const { error: authErr } = await admin.auth.admin.deleteUser(id);
-  if (authErr) {
-    console.error('[admin] auth user delete failed, removing contractor row only:', authErr.message);
-    const { error: rowErr } = await admin.from('contractors').delete().eq('id', id);
-    if (rowErr) throw new Error(rowErr.message);
-  }
+  if (authErr) console.error('[admin] auth user delete failed after removing the contractor row:', authErr.message);
 
   revalidatePath('/admin/contractors');
   redirect('/admin/contractors');
