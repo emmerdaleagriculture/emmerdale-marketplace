@@ -201,3 +201,25 @@ set `FIREBASE_SERVICE_ACCOUNT` with `supabase secrets set`. Migration
   after the phone step for a customer with no site (`/app/continue`, cookie
   `ea_site_asked` when skipped); Account lists sites and adds more; Home
   shows the first one on the "Get prices" card.
+
+## Customer screens (task 8)
+
+- **New job** `/app/new-job`: four screens — what (the home page's service
+  tiles), the land (saved site or postcode; acres stepper or the service's
+  own quantity question; access; timing; the service's condition questions
+  from `lib/jobParse/conditions`, fencing types and all; notes), photos
+  (Camera plugin in the frame, file input elsewhere, then
+  `photoDownscale`), check and send. Send calls the website's own intake:
+  `parseJobAction` (draft, with `landing_path: /app/new-job`, `handoff:
+  app`, first-touch UTMs) then `confirmJobAction` (structured fields plus
+  the account's name, email and verified phone), then claims the job to
+  the account and opens `/my/<token>?sent=1`. A required question left
+  blank sends the person back once, as on the website.
+- **Compare prices** `/my/[token]` in app mode: a range bar, avatar
+  letters, a "Best price" chip, the prototype's card and button styling.
+  Operators stay lettered until booking, as before.
+- **Deposit**: in the frame the accept action returns Checkout's URL
+  (`in_app=1`) and it opens in the system in-app browser
+  (`@capacitor/browser`), where Apple Pay and Google Pay work; when the
+  sheet closes the page refreshes. `success_url` is the normal job URL.
+- Home's "Get prices" card and service tiles lead into the flow.

@@ -236,3 +236,105 @@
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
+
+/* ── App mode (PRD task 8): the prototype's compare-prices look ─────────── */
+.range {
+  background: var(--white);
+  border: 1px solid #e6e9e1;
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+.rangeKicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.rangeFigures {
+  font-family: var(--font-display-stack);
+  font-size: 28px;
+  color: var(--jd-green-deep);
+  margin: 4px 0 12px;
+}
+.rangeBar {
+  position: relative;
+  height: 6px;
+  margin: 0 8px;
+  border-radius: 3px;
+  background: var(--jd-green-pale);
+}
+.rangeDot {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 3px solid var(--jd-green);
+  transform: translate(-50%, -50%);
+}
+.rangeEnds {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 10px;
+}
+.quoteAvatar {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--jd-green-deep);
+  color: var(--jd-yellow);
+  font-family: var(--font-display-stack);
+  font-size: 18px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+.bestPrice {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--jd-green-pale);
+  color: var(--jd-green-dark);
+  font-family: var(--font-body-stack);
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+:global(html[data-app]) .quoteCard {
+  border-radius: 20px;
+  border-color: #e6e9e1;
+}
+:global(html[data-app]) .quoteLabel {
+  font-family: var(--font-body-stack);
+  font-weight: 600;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+:global(html[data-app]) .quotePrice {
+  font-family: var(--font-display-stack);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--jd-green-deep);
+}
+:global(html[data-app]) .acceptButtons > * {
+  flex: 1 1 45%;
+  justify-content: center;
+  text-align: center;
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 15px;
+}
+:global(html[data-app]) .acceptButtons :global(button[class*='btnPrimary']) {
+  background: var(--jd-green-deep);
+}

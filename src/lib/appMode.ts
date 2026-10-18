@@ -60,6 +60,7 @@ export function isAppStandalonePath(pathname: string): boolean {
     pathname.startsWith('/app/email') ||
     pathname.startsWith('/app/notify') ||
     pathname.startsWith('/app/location') ||
+    pathname.startsWith('/app/new-job') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
     pathname.startsWith('/reset-password') ||

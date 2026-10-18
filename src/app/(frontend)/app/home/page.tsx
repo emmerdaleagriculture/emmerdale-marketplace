@@ -73,7 +73,7 @@ export default async function AppHomePage() {
         </Link>
       </header>
 
-      <Link href="/start?src=app" className={ui.ctaCard}>
+      <Link href="/app/new-job" className={ui.ctaCard}>
         <Image
           src="/john-deere-6130r-kuhn.jpg"
           alt=""
@@ -149,7 +149,7 @@ export default async function AppHomePage() {
       </div>
       <div className={ui.tiles}>
         {POPULAR_SERVICES.map((svc) => (
-          <Link key={svc.name} href="/start?src=app" className={ui.tile}>
+          <Link key={svc.name} href={`/app/new-job?service=${svc.slug}`} className={ui.tile}>
             <ServiceTileIcon name={svc.icon} />
             {svc.name}
           </Link>

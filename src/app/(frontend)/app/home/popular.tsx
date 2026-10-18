@@ -5,13 +5,13 @@
  */
 export type TileIcon = 'topping' | 'mowing' | 'harrowing' | 'rolling' | 'muck' | 'seed';
 
-export const POPULAR_SERVICES: { name: string; icon: TileIcon }[] = [
-  { name: 'Paddock topping', icon: 'topping' },
-  { name: 'Finish mowing', icon: 'mowing' },
-  { name: 'Harrowing', icon: 'harrowing' },
-  { name: 'Rolling', icon: 'rolling' },
-  { name: 'Muck sweeping', icon: 'muck' },
-  { name: 'Overseeding', icon: 'seed' },
+export const POPULAR_SERVICES: { name: string; slug: string; icon: TileIcon }[] = [
+  { name: 'Paddock topping', slug: 'topping', icon: 'topping' },
+  { name: 'Finish mowing', slug: 'mowing', icon: 'mowing' },
+  { name: 'Harrowing', slug: 'harrowing', icon: 'harrowing' },
+  { name: 'Rolling', slug: 'rolling', icon: 'rolling' },
+  { name: 'Muck sweeping', slug: 'muck-sweeping', icon: 'muck' },
+  { name: 'Overseeding', slug: 'overseeding', icon: 'seed' },
 ];
 
 const P: Record<TileIcon, string> = {
