@@ -9,7 +9,7 @@ import { APP_HEADER } from '@/lib/appMode';
  * phone screens themselves, and the auth plumbing. Everything else in the
  * app bounces to /app/phone (PRD task 5).
  */
-const PHONE_GATE_EXEMPT = /^\/(app(\/(sign-in|role|phone|email|continue|notify)(\/.*)?)?|auth(\/.*)?|login|signup|reset-password(\/.*)?|api\/.*)$/;
+const PHONE_GATE_EXEMPT = /^\/(app(\/(sign-in|role|phone|email|continue|notify|location)(\/.*)?)?|auth(\/.*)?|login|signup|reset-password(\/.*)?|api\/.*)$/;
 
 function toPhoneStep(request: NextRequest) {
   const url = request.nextUrl.clone();

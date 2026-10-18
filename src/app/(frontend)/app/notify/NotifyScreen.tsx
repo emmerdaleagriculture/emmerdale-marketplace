@@ -2,15 +2,11 @@
 
 import { useState } from 'react';
 import { registerPush } from '@/lib/app/push';
-import { PUSH_ASKED_COOKIE } from '@/lib/app/pushCookie';
+import { PUSH_ASKED_COOKIE, rememberAsked } from '@/lib/app/onboardingCookies';
 import ui from '../app-ui.module.css';
 import s from './notify.module.css';
 
-function markAsked() {
-  try {
-    document.cookie = `${PUSH_ASKED_COOKIE}=1; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
-  } catch {}
-}
+const markAsked = () => rememberAsked(PUSH_ASKED_COOKIE);
 
 export function NotifyScreen({ next, side }: { next: string; side: 'customer' | 'contractor' }) {
   const [busy, setBusy] = useState(false);

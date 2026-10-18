@@ -8,6 +8,7 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
 import { NO_OBLIGATION, PROMISES } from '@/lib/home/proposition';
 import { CUSTOMER_LIVE_STATUSES, CUSTOMER_STATUS_LABEL, greeting } from '@/lib/customers/statusLabels';
 import { ServiceTileIcon, POPULAR_SERVICES } from './popular';
+import { listSites } from '@/lib/customers/sites';
 import ui from '../app-ui.module.css';
 
 export const metadata: Metadata = { title: 'Home', robots: { index: false, follow: false } };
@@ -56,6 +57,7 @@ export default async function AppHomePage() {
     prices.set(q.submission_id, [...(prices.get(q.submission_id) ?? []), q.client_price_pence]);
   }
 
+  const [site] = await listSites(user.id);
   const firstName = (customer.data.contact_name ?? '').trim().split(/\s+/)[0] || null;
   const initial = (firstName ?? user.email ?? '?').slice(0, 1).toUpperCase();
 
@@ -80,6 +82,15 @@ export default async function AppHomePage() {
           sizes="(max-width: 600px) 100vw, 560px"
           className={ui.ctaImg}
         />
+        {site && (
+          <span className={ui.ctaChip}>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 21s-7-7.2-7-12a7 7 0 0 1 14 0c0 4.8-7 12-7 12Z" />
+              <circle cx="12" cy="9" r="2.5" />
+            </svg>
+            {site.label} · {site.postcode.split(' ')[0]}
+          </span>
+        )}
         <div className={ui.ctaTitle}>Get prices for a job</div>
         <div className={ui.ctaSub}>Takes about a minute. {NO_OBLIGATION.replace(/ — .*$/, '.')}</div>
         <span className={ui.ctaGo}>

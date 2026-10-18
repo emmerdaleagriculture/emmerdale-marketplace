@@ -17,6 +17,7 @@
     "@anthropic-ai/sdk": "^0.121.0",
     "@capacitor-firebase/messaging": "^8.5.2",
     "@capacitor/core": "^8.5.3",
+    "@capacitor/geolocation": "^8.2.4",
     "@capgo/capacitor-social-login": "^8.7.3",
     "@sentry/nextjs": "^10.75.0",
     "@supabase/ssr": "^0.12.0",
