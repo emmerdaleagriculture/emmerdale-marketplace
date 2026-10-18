@@ -243,6 +243,14 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# The app's "Continue with email" sends a six-digit code, not a link (PRD
+# task 4), so the magic-link template prints {{ .Token }}. The hosted project
+# was set to match on 2026-10-18 through the management API (see
+# docs/app-mode.md); this keeps a local stack in step.
+[auth.email.template.magic_link]
+subject = "Your Emmerdale Agriculture sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

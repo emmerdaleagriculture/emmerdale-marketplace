@@ -4,6 +4,8 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { submitFeedbackAction } from './actions';
 import { useViewer } from '@/components/useViewer';
+import { isApp } from '@/lib/app/isApp';
+import { isAppStandalonePath } from '@/lib/appMode';
 import type { FormState } from '@/lib/form';
 import s from './feedback.module.css';
 
@@ -47,6 +49,8 @@ export function FeedbackWidget() {
   const [state, act, pending] = useActionState(submitFeedbackAction, EMPTY);
   const [renderedAt, setRenderedAt] = useState(0);
   const box = useRef<HTMLTextAreaElement>(null);
+  const [appStandalone, setAppStandalone] = useState(false);
+  useEffect(() => setAppStandalone(isApp() && isAppStandalonePath(pathname)), [pathname]);
 
   // Set on open, not on mount: the bot trap measures how long the form was
   // in front of a human, and a tab left open for an hour is not a signal.
@@ -72,6 +76,9 @@ export function FeedbackWidget() {
   }, []);
 
   if (pathname.startsWith('/admin')) return null;
+  // Nor over the app's welcome, sign-in and role screens, whose one button
+  // sits exactly where this does.
+  if (appStandalone) return null;
 
   return (
     <div className={s.root}>

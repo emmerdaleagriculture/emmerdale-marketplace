@@ -1,48 +1,38 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
-import { getUser, postLoginPath } from '@/lib/auth';
-import {
-  HEADLINE,
-  KICKER,
-  NO_OBLIGATION,
-  OPERATOR_CTA,
-  OPERATOR_QUESTION,
-  PROMISES,
-  STANDFIRST,
-} from '@/lib/home/proposition';
+import { getUser } from '@/lib/auth';
+import { appLandingPath, roleIntent } from '@/lib/app/landing';
+import { HEADLINE, KICKER, STANDFIRST } from '@/lib/home/proposition';
+import { WelcomeActions } from './WelcomeActions';
 import s from './app.module.css';
 
 /**
- * Entry screen for the wrapped mobile app. The Capacitor shell boots straight
- * here instead of at `/` — installing the app is necessarily a *second* visit
- * (someone found the site first), so the long-form homepage has nothing left
- * to sell. This keeps the homepage's proposition and puts the one thing people
- * open the app to do — get prices for a job — under a single full-width
- * button, with contractor signup as a footnote.
+ * The app's welcome screen (PRD task 2). The Capacitor shell boots here.
+ * A hero photo, the home page's proposition (from lib/home/proposition, the
+ * one source for that wording), then the sign-in buttons: Apple and Google
+ * through the native sheets, or an emailed code. "Run a contracting
+ * business? Apply to join" switches the copy to the contractor's and
+ * preselects that role for after sign-in.
  *
- * All customer-facing wording comes from `@/lib/home/proposition`, the same
- * module the homepage hero renders from. An earlier version copied its lines
- * by hand and drifted ("we'll pass it to contractors", "Prices upfront")
- * after the homepage changed. Do not add hard-coded proposition copy here.
- *
- * Signed-in visitors never see this screen: postLoginPath() — the same routing
- * /login already uses — sends a contractor to their dashboard (/account) and a
- * customer to their jobs (/my), identical to logging in on the website.
- *
- * Deliberately not indexed (and disallowed in robots.ts, as /start is): this
- * route exists for the app shell, not for search. Organic traffic still lands
- * on `/`.
+ * Signed-in visitors never see it: they go straight to their tabs
+ * (lib/app/landing.ts). Not indexed, and disallowed in robots.ts: this
+ * route exists for the app, not for search.
  */
 export const metadata: Metadata = {
   title: 'Emmerdale Agriculture',
   robots: { index: false, follow: false },
 };
 
-export default async function AppHomePage() {
+export default async function AppWelcomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ role?: string }>;
+}) {
+  const sp = await searchParams;
+  const intent = roleIntent(sp.role);
   const user = await getUser();
-  if (user) redirect(await postLoginPath(user.id, user.email));
+  if (user) redirect(await appLandingPath(user.id, user.email, intent));
 
   return (
     <div className={s.screen}>
@@ -59,9 +49,6 @@ export default async function AppHomePage() {
         <div className={s.heroScrim} />
         <div className={s.heroTop}>
           <span className={s.brand}>Emmerdale Agriculture</span>
-          <Link href="/login?next=/app" className={s.loginLink}>
-            Log in
-          </Link>
         </div>
         <div className={s.heroCopy}>
           <p className={s.eyebrow}>{KICKER}</p>
@@ -74,34 +61,7 @@ export default async function AppHomePage() {
         </div>
       </section>
 
-      <main className={s.body}>
-        <Link href="/start?src=app" className={s.cta}>
-          Get prices <span aria-hidden="true">›</span>
-        </Link>
-        <p className={s.ctaSub}>{NO_OBLIGATION}</p>
-
-        <ul className={s.promises}>
-          {PROMISES.map(([title, body]) => (
-            <li key={title} className={s.promise}>
-              <span aria-hidden="true" className={s.tick}>
-                ✓
-              </span>
-              <span>
-                <strong>{title}</strong> {body}
-              </span>
-            </li>
-          ))}
-        </ul>
-
-        <div className={s.spacer} />
-
-        <div className={s.secondary}>
-          <p className={s.secondaryQ}>{OPERATOR_QUESTION}</p>
-          <Link href="/signup" className={s.secondaryLink}>
-            {OPERATOR_CTA} <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-      </main>
+      <WelcomeActions initialIntent={intent} />
     </div>
   );
 }

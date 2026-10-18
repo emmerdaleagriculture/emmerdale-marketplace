@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { LoginForm } from './LoginForm';
+import { SignInButtons } from '@/components/app/SignInButtons';
 import { getUser, postLoginPath, safeInternalPath } from '@/lib/auth';
 import a from '../auth.module.css';
 import f from '@/components/forms/forms.module.css';
@@ -42,6 +43,12 @@ export default async function LoginPage({
               That link has expired or has already been used. Log in below, or ask for a new one.
             </p>
           )}
+          {/* Google and Apple (PRD task 3). The same account as the password
+              login: an existing address is linked, not duplicated. With no
+              ?next=, the callback routes by role as the form does. */}
+          <div style={{ marginBottom: 18 }}>
+            <SignInButtons next={next ?? ''} compact dividerText="or with your password" />
+          </div>
           <LoginForm next={next ?? undefined} />
         </div>
       </main>
