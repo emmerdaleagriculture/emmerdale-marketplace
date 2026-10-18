@@ -43,6 +43,11 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   // that would strip distances from every future invitation.
   const geo = await resolveCounty(d.base_postcode);
 
+  // A number verified by text in the app stays marked as such only while it
+  // is the number on the row.
+  const { data: before } = await supabase.from('contractors').select('phone, phone_verified_at').eq('id', user.id).maybeSingle();
+  const phoneChanged = before != null && before.phone !== d.phone;
+
   // Update own profile (RLS: contractors_update_own; status is trigger-guarded).
   const { error: upErr } = await supabase
     .from('contractors')
@@ -50,6 +55,7 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
       business_name: d.business_name,
       contact_name: d.contact_name,
       phone: d.phone,
+      ...(phoneChanged ? { phone_verified_at: null } : {}),
       base_postcode: d.base_postcode,
       services: d.service_ids,
       ...(geo.lat != null && geo.lng != null ? { base_lat: geo.lat, base_lng: geo.lng } : {}),

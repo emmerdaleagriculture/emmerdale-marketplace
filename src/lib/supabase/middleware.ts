@@ -1,6 +1,22 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { isAdminEmail } from '@/lib/adminEmails';
+import { APP_HEADER } from '@/lib/appMode';
+
+/**
+ * Pages the app may show to a signed-in person who has not verified a
+ * mobile number yet: the welcome and sign-in screens, the role screen, the
+ * phone screens themselves, and the auth plumbing. Everything else in the
+ * app bounces to /app/phone (PRD task 5).
+ */
+const PHONE_GATE_EXEMPT = /^\/(app(\/(sign-in|role|phone|email|continue)(\/.*)?)?|auth(\/.*)?|login|signup|reset-password(\/.*)?|api\/.*)$/;
+
+function toPhoneStep(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  url.pathname = '/app/phone';
+  url.search = `?next=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`;
+  return NextResponse.redirect(url);
+}
 
 /** Signed out, or signed in as someone who is not an admin: to the login page. */
 function toLogin(request: NextRequest) {
@@ -72,6 +88,21 @@ export async function updateSession(request: NextRequest) {
     url.pathname = '/account';
     url.search = '';
     return NextResponse.redirect(url);
+  }
+
+  // The app's phone gate. The JWT's `phone` claim is set only once Supabase
+  // has confirmed the number (phone confirmations on), so a signed-in app
+  // user without it has not done the phone step — including people who had
+  // an account before the app. Admins are let through: the admin area is
+  // theirs to run from a phone too. Website requests never see this.
+  if (
+    request.headers.get(APP_HEADER) === '1' &&
+    data?.claims &&
+    !data.claims.phone &&
+    !isAdminEmail(data.claims.email as string | undefined) &&
+    !PHONE_GATE_EXEMPT.test(request.nextUrl.pathname)
+  ) {
+    return toPhoneStep(request);
   }
 
   return supabaseResponse;

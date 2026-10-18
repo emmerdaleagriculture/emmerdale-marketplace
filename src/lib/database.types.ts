@@ -654,6 +654,7 @@ export type Database = {
           notify_sms: boolean
           payout_before_balance: boolean
           phone: string
+          phone_verified_at: string | null
           rating_avg: number | null
           rating_count: number
           services: number[]
@@ -679,6 +680,7 @@ export type Database = {
           notify_sms?: boolean
           payout_before_balance?: boolean
           phone: string
+          phone_verified_at?: string | null
           rating_avg?: number | null
           rating_count?: number
           services?: number[]
@@ -704,6 +706,7 @@ export type Database = {
           notify_sms?: boolean
           payout_before_balance?: boolean
           phone?: string
+          phone_verified_at?: string | null
           rating_avg?: number | null
           rating_count?: number
           services?: number[]
@@ -774,6 +777,7 @@ export type Database = {
           email: string
           id: string
           phone: string | null
+          phone_verified_at: string | null
         }
         Insert: {
           contact_name?: string | null
@@ -781,6 +785,7 @@ export type Database = {
           email: string
           id: string
           phone?: string | null
+          phone_verified_at?: string | null
         }
         Update: {
           contact_name?: string | null
@@ -788,6 +793,7 @@ export type Database = {
           email?: string
           id?: string
           phone?: string | null
+          phone_verified_at?: string | null
         }
         Relationships: []
       }
@@ -2291,6 +2297,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      phone_verifications: {
+        Row: {
+          failures: number
+          last_sent_at: string | null
+          locked_until: string | null
+          match_user_id: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          failures?: number
+          last_sent_at?: string | null
+          locked_until?: string | null
+          match_user_id?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          failures?: number
+          last_sent_at?: string | null
+          locked_until?: string | null
+          match_user_id?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
       }
       platform_flags: {
         Row: {

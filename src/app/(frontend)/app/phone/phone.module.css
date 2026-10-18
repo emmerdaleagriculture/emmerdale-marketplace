@@ -1,0 +1,141 @@
+.progress {
+  height: 3px;
+  background: var(--jd-green-pale);
+  border-radius: 2px;
+  margin: 6px 0 18px;
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--jd-green);
+  border-radius: 2px;
+}
+.lede {
+  font-size: 15px;
+  color: var(--ink-2);
+  margin: -6px 0 20px;
+  line-height: 1.5;
+}
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink-2);
+  margin-bottom: 8px;
+}
+.row {
+  display: flex;
+  gap: 8px;
+}
+.prefix {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 56px;
+  padding: 0 14px;
+  border: 1.5px solid var(--rule);
+  border-radius: 14px;
+  background: var(--white);
+  font-size: 17px;
+  font-weight: 500;
+}
+.input {
+  flex: 1;
+  height: 56px;
+  padding: 0 16px;
+  border: 1.5px solid var(--rule);
+  border-radius: 14px;
+  background: var(--white);
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  min-width: 0;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--jd-green);
+}
+.points {
+  list-style: none;
+  padding: 0;
+  margin: 22px 0 0;
+  display: grid;
+  gap: 16px;
+}
+.point {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+.pointIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--jd-green-pale);
+  color: var(--jd-green);
+  display: grid;
+  place-items: center;
+}
+.point b {
+  display: block;
+  font-size: 15.5px;
+  color: var(--ink);
+}
+.point span {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+.change {
+  color: var(--jd-green);
+  font-weight: 600;
+  font-size: 15px;
+}
+.muted {
+  color: var(--ink-3);
+  font-size: 14px;
+}
+.resend {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.otpWrap {
+  position: relative;
+  display: block;
+  margin: 8px 0 14px;
+}
+.otpInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  font-size: 24px;
+}
+.otpBoxes {
+  display: flex;
+  gap: 8px;
+}
+.otpBox {
+  flex: 1;
+  height: 58px;
+  border: 1.5px solid var(--rule);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 600;
+  background: var(--white);
+}
+.otpFilled {
+  border-color: var(--jd-green);
+  background: var(--jd-green-pale);
+}
+.form {
+  padding-bottom: 110px;
+}
