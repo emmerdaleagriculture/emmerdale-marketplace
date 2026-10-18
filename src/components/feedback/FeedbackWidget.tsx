@@ -4,7 +4,6 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { submitFeedbackAction } from './actions';
 import { useViewer } from '@/components/useViewer';
-import { isApp } from '@/lib/app/isApp';
 import { isAppStandalonePath } from '@/lib/appMode';
 import type { FormState } from '@/lib/form';
 import s from './feedback.module.css';
@@ -53,7 +52,7 @@ export function FeedbackWidget() {
   // Also off any app screen with its own fixed bottom button (.appFooterCta):
   // the two would sit on top of each other.
   useEffect(() => {
-    if (!isApp()) return setAppStandalone(false);
+    if (document.documentElement.dataset.app !== '1') return setAppStandalone(false);
     const check = () => setAppStandalone(isAppStandalonePath(pathname) || !!document.querySelector('.appFooterCta'));
     check();
     const t = setTimeout(check, 400);

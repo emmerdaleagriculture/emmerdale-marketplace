@@ -12,7 +12,7 @@ import s from './app.module.css';
  * toggle so the buttons update at once; the choice rides along to the role
  * screen as ?role= on the continue URL.
  */
-export function WelcomeActions({ initialIntent }: { initialIntent: RoleIntent }) {
+export function WelcomeActions({ initialIntent, appleFirst }: { initialIntent: RoleIntent; appleFirst: boolean }) {
   const [contractor, setContractor] = useState(initialIntent === 'contractor');
   const role = contractor ? 'contractor' : null;
   const next = role ? `/app/continue?role=${role}` : '/app/continue';
@@ -25,7 +25,7 @@ export function WelcomeActions({ initialIntent }: { initialIntent: RoleIntent })
           Sign in or apply with the account you&rsquo;ll run your business from.
         </p>
       )}
-      <SignInButtons next={next} />
+      <SignInButtons next={next} appleFirst={appleFirst} />
       <div className={s.or}>or</div>
       <Link href={emailHref} className={s.emailBtn}>
         <MailMark /> Continue with email

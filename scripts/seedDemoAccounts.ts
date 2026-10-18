@@ -23,13 +23,13 @@
  */
 import { readFileSync } from 'node:fs';
 import { randomBytes, randomUUID } from 'node:crypto';
-
-/** The site's own token shape (lib/sealedQuotes/tokens.ts): 48 hex characters. */
-const token = () => randomBytes(24).toString('hex');
 import ws from 'ws';
 import { createClient } from '@supabase/supabase-js';
 
 (globalThis as { WebSocket?: unknown }).WebSocket ??= ws;
+
+/** The site's own token shape (lib/sealedQuotes/tokens.ts): 48 hex characters. */
+const token = () => randomBytes(24).toString('hex');
 
 function env(name: string): string {
   if (process.env[name]) return process.env[name]!;
@@ -54,8 +54,16 @@ const TOPPING = 1;
 const HARROWING = 5;
 
 async function upsertUser(email: string, phone: string, name: string) {
-  const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
-  const existing = list.users.find((u) => u.email?.toLowerCase() === email);
+  // Found through the profile rows first (no page cap), then the user list.
+  const { data: byRow } = await admin.from(email.includes('customer') ? 'customers' : 'contractors').select('id').eq('email', email).maybeSingle();
+  let existing: { id: string } | null = byRow ? { id: byRow.id } : null;
+  if (!existing) {
+    for (let page = 1; page <= 20 && !existing; page++) {
+      const { data: list } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+      existing = list.users.find((u) => u.email?.toLowerCase() === email) ?? null;
+      if (list.users.length < 1000) break;
+    }
+  }
   if (existing) {
     await admin.auth.admin.updateUserById(existing.id, {
       ...(ROTATE ? { password: PASSWORD } : {}), phone, phone_confirm: true, user_metadata: { full_name: name },
@@ -137,10 +145,12 @@ async function main() {
       submission_id: submission, contractor_id: contractor, invitation_id: invitation, quote_type: 'total', contractor_price_pence: pence, price_basis: 'no_vat', valid_until: iso(-24 * 14), source: 'form', confirmed_by_contractor: true,
     }).select('id').single();
     if (error) throw new Error(`contractor_quotes: ${error.message}`);
-    const { error: clErr } = await admin.from('client_quotes').insert({
+    const { data: cl, error: clErr } = await admin.from('client_quotes').insert({
       submission_id: submission, contractor_quote_id: cq.id, contractor_id: contractor, client_price_pence: Math.round(pence * 1.15), markup_rate: 0.15, contractor_display_label: label, contractor_rating_count: 0, valid_until: iso(-24 * 14), status, price_basis: 'no_vat', contractor_note: 'Can do this within the week, weather allowing.',
-    });
+    }).select('id').single();
     if (clErr) throw new Error(`client_quotes: ${clErr.message}`);
+    // The booked job points at the price the customer took, as a real award does.
+    if (status === 'accepted') await admin.from('job_submissions').update({ accepted_client_quote_id: cl.id }).eq('id', submission);
   };
   await price(job1, invA, contractorId, 'Operator A', 32000, 'active');
   await price(job1, invB, operatorIds[0], 'Operator B', 36000, 'active');

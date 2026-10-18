@@ -259,3 +259,12 @@
   color: var(--jd-green);
   font-weight: 600;
 }
+.deletedNote {
+  margin: 14px 16px 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--jd-green-pale);
+  color: var(--jd-green-deep);
+  font-size: 14px;
+  text-align: center;
+}

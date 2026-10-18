@@ -6,6 +6,7 @@ import { OnboardingForm } from './OnboardingForm';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/auth';
 import { getCounties, getServices } from '@/lib/reference';
+import { isAppRequest } from '@/lib/appMode.server';
 import a from '../auth.module.css';
 
 export const metadata: Metadata = {
@@ -29,6 +30,9 @@ export default async function OnboardingPage() {
     .maybeSingle();
   if (contractor) redirect('/account');
   if (isAdminEmail(user.email)) redirect('/admin');
+  // The app asks the same things over four screens, with the checks the
+  // website never asked for (PRD task 9).
+  if (await isAppRequest()) redirect('/app/apply');
 
   const [counties, services] = await Promise.all([getCounties(), getServices()]);
 

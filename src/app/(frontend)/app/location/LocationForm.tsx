@@ -74,8 +74,11 @@ export function LocationForm({
     }
   }
 
-  const result = looked.ok ? looked.lookup : undefined;
+  // The result belongs to the postcode it was looked up for: retype it and
+  // the card goes until it is checked again.
+  const result = looked.ok && looked.typed && looked.typed.trim().toUpperCase() === postcode.trim().toUpperCase() ? looked.lookup : undefined;
   const covered = (result?.operators ?? 0) > 0;
+  const unknown = result != null && result.operators == null;
 
   return (
     <div className={s.form}>
@@ -128,25 +131,36 @@ export function LocationForm({
         <form action={save}>
           {next && <input type="hidden" name="next" value={next} />}
           <input type="hidden" name="postcode" value={result.postcode} />
+          <input type="hidden" name="county_id" value={result.countyId ?? ''} />
+          <input type="hidden" name="lat" value={result.lat ?? ''} />
+          <input type="hidden" name="lng" value={result.lng ?? ''} />
+          <input type="hidden" name="first" value={first ? '1' : '0'} />
           <div className={s.map} aria-hidden="true">
-            <MapSketch pins={Math.min(result.operators, 6)} />
+            <MapSketch pins={Math.min(result.operators ?? 0, 6)} />
           </div>
-          <div className={`${s.result} ${covered ? '' : s.resultNone}`}>
+          <div className={`${s.result} ${covered || unknown ? '' : s.resultNone}`}>
             <span className={s.resultIcon} aria-hidden="true">
-              {covered ? '✓' : '!'}
+              {covered ? '✓' : unknown ? '?' : '!'}
             </span>
             <div>
               <b>
                 {covered
                   ? `Good news: ${result.operators} approved operator${result.operators === 1 ? '' : 's'} cover you`
-                  : 'Not covered yet'}
+                  : unknown
+                    ? 'We’ll check coverage when you send a job'
+                    : 'Not covered yet'}
               </b>
               <span>
                 {[result.town ? `Near ${result.town}` : null, result.outcode, result.county].filter(Boolean).join(' · ')}
-                {covered ? ' · usually priced within 24 hours' : ' · we’re recruiting here and will tell you when someone joins'}
+                {covered
+                  ? ' · usually priced within 24 hours'
+                  : unknown
+                    ? ' · this postcode sits on a county line, so the count needs the job itself'
+                    : ' · we’re recruiting here and will tell you when someone joins'}
               </span>
             </div>
           </div>
+          {!result.full && <p className={f.error}>Add the rest of the postcode (like SO41 8AB) to save this field.</p>}
           <div className={s.row2}>
             <div>
               <label className={s.label} htmlFor="label">
@@ -164,17 +178,20 @@ export function LocationForm({
           <p className={s.hint}>Rough is fine. The job flow measures it properly when you book.</p>
           {saved.error && <p className={f.error}>{saved.error}</p>}
           <div className="appFooterCta">
-            <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} disabled={saving}>
+            <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} disabled={saving || !result.full}>
               {saving ? 'Saving…' : 'Continue'}
             </button>
+            <a href={skipHref} className={`${ui.btn} ${ui.btnText}`} onClick={() => first && rememberAsked(SITE_ASKED_COOKIE)} style={{ marginTop: 6 }}>
+              {first ? 'Skip for now' : 'Cancel'}
+            </a>
           </div>
         </form>
       )}
 
-      {!result && first && (
+      {!result && (
         <div className="appFooterCta">
-          <a href={skipHref} className={`${ui.btn} ${ui.btnText}`} onClick={() => rememberAsked(SITE_ASKED_COOKIE)}>
-            Skip for now
+          <a href={skipHref} className={`${ui.btn} ${ui.btnText}`} onClick={() => first && rememberAsked(SITE_ASKED_COOKIE)}>
+            {first ? 'Skip for now' : 'Cancel'}
           </a>
         </div>
       )}

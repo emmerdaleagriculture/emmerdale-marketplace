@@ -6,6 +6,10 @@
 export const RESEND_AFTER_S = 30;
 export const MAX_FAILURES = 5;
 export const LOCKOUT_MINUTES = 10;
+/** Texts one person may ask for in a day, whatever the numbers. */
+export const MAX_SENDS_PER_DAY = 8;
+/** How long a text's code is good for (Supabase sms_otp_exp, set to 300 s). */
+export const SMS_CODE_TTL_S = 300;
 
 export type PhoneVerification = {
   phone: string | null;
@@ -14,7 +18,16 @@ export type PhoneVerification = {
   locked_until: string | null;
   verified_at: string | null;
   match_user_id: string | null;
+  sends_today?: number;
+  sends_day?: string | null;
 };
+
+/** Minutes left on a lockout from its ISO end, or 0. */
+export function minutesLeft(until: string | null | undefined, now = Date.now()): number {
+  if (!until) return 0;
+  const left = new Date(until).getTime() - now;
+  return left > 0 ? Math.ceil(left / 60000) : 0;
+}
 
 /** Minutes left on a lockout, or 0. */
 export function lockedMinutes(v: PhoneVerification | null, now = Date.now()): number {

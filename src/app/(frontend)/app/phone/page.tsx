@@ -31,7 +31,7 @@ export default async function AppPhonePage({
   // a customer's is for the contractor they book.
   const admin = createServiceRoleClient();
   const { data: contractor } = await admin.from('contractors').select('id').eq('id', user.id).maybeSingle();
-  const side = contractor || intent === 'contractor' ? 'contractor' : 'customer';
+  const side = contractor || intent === 'contractor' || next?.startsWith('/onboarding') || next?.startsWith('/app/apply') ? 'contractor' : 'customer';
 
   return (
     <main className={ui.screen}>

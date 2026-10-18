@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { parseJobAction, confirmJobAction } from '@/app/(frontend)/start/actions';
+import { parseJobAction, confirmJobAction, recordLandingView } from '@/app/(frontend)/start/actions';
 import { claimJustSentJobAction } from './actions';
 import { ServiceQuestions } from '@/app/(frontend)/start/ServiceQuestions';
-import { isAreaPriced, quantityFor, visibleChoices } from '@/lib/jobParse/conditions';
-import { serviceFromPick } from '@/lib/jobParse/servicePick';
+import { hasAnswer, isAreaPriced, quantityFor, visibleChoices } from '@/lib/jobParse/conditions';
+import { choicesFromPick, serviceFromPick } from '@/lib/jobParse/servicePick';
 import { readFirstTouch } from '@/lib/firstTouch';
 import { filesToPhotos, pickPhoto } from '@/lib/app/photos';
 import { isNativeApp } from '@/lib/app/isApp';
@@ -69,15 +69,25 @@ export function NewJobFlow({
   const router = useRouter();
   const [step, setStep] = useState<Step>(presetService ? 'details' : 'service');
   const [slug, setSlug] = useState<string | null>(presetService);
+  // A merged card ("Land & ditch clearance") stands for more than one
+  // service; the customer picks which, as /start offers.
+  const [chosenService, setChosenService] = useState<string | null>(null);
   const [siteId, setSiteId] = useState<string | null>(sites[0]?.id ?? null);
   const [postcode, setPostcode] = useState('');
-  const [acres, setAcres] = useState<number>(sites[0]?.acres ?? 2);
+  const [acresText, setAcresText] = useState<string>(String(sites[0]?.acres ?? 2));
+  const acres = Number(acresText) || 0;
+  const setAcres = (n: number) => setAcresText(String(Math.round(n * 100) / 100));
   const [quantity, setQuantity] = useState('');
+  // The draft from the first successful parse: a refused confirm retries the
+  // confirm, not the parse (no second draft, no second rate-limit hit).
+  const [draftId, setDraftId] = useState<string | null>(null);
   const [access, setAccess] = useState<string>('');
   const [when, setWhen] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [photos, setPhotos] = useState<File[]>([]);
+  // Two named slots, field then gate: removing one must not relabel the other.
+  const [photos, setPhotos] = useState<(File | null)[]>([null, null]);
+  const photoList = photos.filter((p): p is File => !!p);
   const [name, setName] = useState(contact.name);
   const [captchaToken, setCaptchaToken] = useState('');
   const [sending, setSending] = useState(false);
@@ -88,15 +98,30 @@ export function NewJobFlow({
   const [askedOnce, setAskedOnce] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const serviceName = useMemo(() => (slug ? serviceFromPick(slug) : null), [slug]);
+  const serviceChoices = useMemo(() => (slug && !serviceFromPick(slug) ? choicesFromPick(slug) : []), [slug]);
+  const serviceName = useMemo(
+    () => (slug ? serviceFromPick(slug) ?? (chosenService && serviceChoices.includes(chosenService as never) ? chosenService : null) : null),
+    [slug, chosenService, serviceChoices],
+  );
   const card = services.find((c) => c.slug === slug) ?? null;
   const areaPriced = isAreaPriced(serviceName);
   const quantityQ = quantityFor(serviceName);
   const questions = visibleChoices(serviceName, answers);
   const site = sites.find((x) => x.id === siteId) ?? null;
   const where = site?.postcode ?? postcode;
-  const previews = useMemo(() => photos.map((p) => URL.createObjectURL(p)), [photos]);
-  useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
+  const previews = useMemo(() => photos.map((p) => (p ? URL.createObjectURL(p) : null)), [photos]);
+  useEffect(() => () => previews.forEach((u) => u && URL.revokeObjectURL(u)), [previews]);
+  // Arriving counts as a landing view, so the sources report has a denominator.
+  useEffect(() => {
+    const touch = readFirstTouch();
+    void recordLandingView({ path: '/app/new-job', handoff: 'app', ...(touch ?? {}) });
+  }, []);
+  // A different service means a different set of required questions.
+  useEffect(() => {
+    setAskedOnce(false);
+    setAskedFor(null);
+    setDraftId(null);
+  }, [slug, chosenService]);
 
   const idx = STEPS.indexOf(step);
   const back = () => {
@@ -104,10 +129,13 @@ export function NewJobFlow({
     else setStep(STEPS[idx - 1]);
   };
 
-  async function addPhoto() {
+  const [slot, setSlot] = useState(0);
+  const putPhoto = (i: number, file: File | null) => setPhotos((p) => p.map((x, j) => (j === i ? file : x)));
+  async function addPhoto(i: number) {
+    setSlot(i);
     if (isNativeApp()) {
       const file = await pickPhoto();
-      if (file) setPhotos((p) => [...p, file].slice(0, 2));
+      if (file) putPhoto(i, file);
     } else {
       fileRef.current?.click();
     }
@@ -115,13 +143,17 @@ export function NewJobFlow({
 
   async function send() {
     if (!card || !where) return setError('Choose a service and tell us where the land is.');
-    const missing = questions.find((q) => q.required && !answers[q.key]);
+    const missing = questions.find((q) => q.required && !hasAnswer(q, answers[q.key]));
     if (missing && !askedOnce) {
       setAskedOnce(true);
       setAskedFor(missing.key);
       setStep('details');
       return;
     }
+    // What the confirm step would refuse, said here, before any draft exists.
+    if (areaPriced && !(acres > 0)) return setError('Tell us roughly how big the land is.');
+    if (!areaPriced && quantityQ && quantity && !/^\d+(\.\d+)?$/.test(quantity.trim())) return setError(`${quantityQ.label} needs to be a number.`);
+    if (!site && !/^[A-Za-z]{1,2}\d[A-Za-z\d]?\s?\d[A-Za-z]{2}$/.test(where.trim())) return setError('Enter the full postcode, like SO41 8AB.');
     setSending(true);
     setError('');
     try {
@@ -144,19 +176,32 @@ export function NewJobFlow({
       }
       for (const [k, v] of Object.entries(touch ?? {})) if (v) fd.set(k, String(v));
       if (captchaToken) fd.set('cf-turnstile-response', captchaToken);
-      photos.forEach((p, i) => fd.set(i === 0 ? 'photo_field' : 'photo_access', p, p.name));
-      const parsed = await parseJobAction({}, fd);
-      if (!parsed.ok || !parsed.result) throw new Error(parsed.error || 'Could not start the job.');
+      if (photos[0]) fd.set('photo_field', photos[0], photos[0].name);
+      if (photos[1]) fd.set('photo_access', photos[1], photos[1].name);
+      let r: { submission_id: string; county_name: string | null; county_choice_reason: string | null; county_candidates: { id: number; name: string }[] };
+      if (draftId) {
+        r = { submission_id: draftId, county_name: site?.county ?? null, county_choice_reason: null, county_candidates: [] };
+      } else {
+        const parsed = await parseJobAction({}, fd);
+        if (!parsed.ok || !parsed.result) throw new Error(parsed.error || 'Could not start the job.');
+        r = parsed.result;
+        setDraftId(r.submission_id);
+      }
+      // A typed postcode nobody could place would make a job that matches
+      // nobody; the website asks for a county in that case, so stop here.
+      if (!r.county_name && !site?.countyId && r.county_choice_reason === 'unplaced') {
+        setDraftId(null);
+        throw new Error('We couldn’t place that postcode. Check it, or add the field in Account first.');
+      }
 
       // Step 2: confirm, with the structured answers and the contact details
       // the account already holds.
-      const r = parsed.result;
       const cd = new FormData();
       cd.set('submission_id', r.submission_id);
       cd.set('contact_name', name.trim());
       cd.set('contact_phone', contact.phone);
       cd.set('contact_email', contact.email);
-      cd.set('contact_preference', 'either');
+      cd.set('contact_preference', contact.phone ? 'either' : 'email');
       cd.set('service_choice', serviceName ?? card.name);
       cd.set('service_confirmed', 'yes');
       if (areaPriced) {
@@ -177,13 +222,15 @@ export function NewJobFlow({
       }
       if (when) cd.set('urgency', when);
       if (access) cd.set('gate_width', access);
-      if (notes.trim()) cd.set('access_notes', notes.trim());
-      for (const [k, v] of Object.entries(answers)) if (v) cd.set(k, v);
+      // The notes are already in the description (raw_text); access_notes is
+      // the contractor spec's "Access" line and is not where they belong.
+      // Condition answers go under the names the confirm step reads.
+      for (const [k, v] of Object.entries(answers)) if (v) cd.set(`condition_${k}`, v);
       const confirmed = await confirmJobAction({}, cd);
       if (!confirmed.ok) throw new Error(confirmed.error || 'Could not send the job.');
 
       const { token } = await claimJustSentJobAction(r.submission_id);
-      window.location.assign(token ? `/my/${token}?sent=1` : '/my');
+      window.location.assign(token ? `/my/${token}` : '/my');
     } catch (err) {
       setError((err as Error).message || 'Something went wrong. Please try again.');
       setSending(false);
@@ -254,16 +301,26 @@ export function NewJobFlow({
               <input className={s.input} value={postcode} onChange={(e) => setPostcode(e.target.value)} placeholder="Postcode" autoComplete="postal-code" autoCapitalize="characters" />
             </>
           )}
+          {serviceChoices.length > 0 && (
+            <>
+              <p className={s.q}>Which kind of work?</p>
+              <div className={s.chips}>
+                {serviceChoices.map((name) => (
+                  <button key={name} type="button" className={`${s.chip} ${chosenService === name ? s.chipOn : ''}`} onClick={() => setChosenService(name)}>{name}</button>
+                ))}
+              </div>
+            </>
+          )}
           {areaPriced ? (
             <>
               <p className={s.q}>Roughly how big?</p>
               <div className={s.stepper}>
-                <button type="button" className={s.stepBtn} onClick={() => setAcres((a) => Math.max(0.25, Math.round((a - (a > 2 ? 1 : 0.25)) * 100) / 100))} aria-label="Smaller">−</button>
+                <button type="button" className={s.stepBtn} onClick={() => setAcres(Math.max(0.25, acres - (acres > 2 ? 1 : 0.25)))} aria-label="Smaller">−</button>
                 <div className={s.stepVal}>
-                  <input inputMode="decimal" value={acres} onChange={(e) => setAcres(Math.max(0, Number(e.target.value.replace(/[^\d.]/g, '')) || 0))} aria-label="Acres" />
+                  <input inputMode="decimal" value={acresText} onChange={(e) => setAcresText(e.target.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1'))} aria-label="Acres" />
                   acres
                 </div>
-                <button type="button" className={s.stepBtn} onClick={() => setAcres((a) => Math.round((a + (a >= 2 ? 1 : 0.25)) * 100) / 100)} aria-label="Larger">+</button>
+                <button type="button" className={s.stepBtn} onClick={() => setAcres(acres + (acres >= 2 ? 1 : 0.25))} aria-label="Larger">+</button>
               </div>
               <p className={s.hint}>Not sure? A football pitch is about 1.75 acres.</p>
             </>
@@ -303,7 +360,7 @@ export function NewJobFlow({
           </p>
           <textarea className={s.textarea} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Horses moved out on the 25th…" maxLength={1000} />
           <div className="appFooterCta">
-            <button type="button" className={`${ui.btn} ${ui.btnPrimary}`} disabled={!where} onClick={() => setStep('photos')}>
+            <button type="button" className={`${ui.btn} ${ui.btnPrimary}`} disabled={!where || (serviceChoices.length > 0 && !chosenService)} onClick={() => setStep('photos')}>
               Continue
             </button>
           </div>
@@ -319,11 +376,11 @@ export function NewJobFlow({
               photos[i] ? (
                 <div key={i} className={s.photo}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={previews[i]} alt="" />
-                  <button type="button" className={s.photoRemove} onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))} aria-label="Remove photo">×</button>
+                  <img src={previews[i] ?? ''} alt="" />
+                  <button type="button" className={s.photoRemove} onClick={() => putPhoto(i, null)} aria-label="Remove photo">×</button>
                 </div>
               ) : (
-                <button key={i} type="button" className={s.photo} onClick={addPhoto}>
+                <button key={i} type="button" className={s.photo} onClick={() => addPhoto(i)}>
                   <span>
                     <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
@@ -336,10 +393,10 @@ export function NewJobFlow({
               ),
             )}
           </div>
-          <input ref={fileRef} type="file" accept="image/*" capture="environment" multiple hidden onChange={async (e) => { const files = await filesToPhotos(e.target.files); setPhotos((p) => [...p, ...files].slice(0, 2)); e.target.value = ''; }} />
+          <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={async (e) => { const [file] = await filesToPhotos(e.target.files); if (file) putPhoto(slot, file); e.target.value = ''; }} />
           <div className="appFooterCta">
             <button type="button" className={`${ui.btn} ${ui.btnPrimary}`} onClick={() => setStep('review')}>
-              {photos.length ? 'Continue' : 'Skip photos'}
+              {photoList.length ? 'Continue' : 'Skip photos'}
             </button>
           </div>
         </>
@@ -351,7 +408,7 @@ export function NewJobFlow({
           <div className={s.rows}>
             <div className={s.row}>
               <span className={s.rowIcon}>{TILE_ICON[slug ?? ''] ? <ServiceTileIcon name={TILE_ICON[slug!]} /> : '•'}</span>
-              {card?.name}
+              {serviceName ?? card?.name}
               <span className={s.rowVal}>{areaPriced ? `${acres} acres` : quantity || ''}</span>
             </div>
             <div className={s.row}>
@@ -367,7 +424,7 @@ export function NewJobFlow({
             <div className={s.row}>
               <span className={s.rowIcon}>📷</span>
               Photos
-              <span className={s.rowVal}>{photos.length}</span>
+              <span className={s.rowVal}>{photoList.length}</span>
             </div>
           </div>
           {!contact.name && (

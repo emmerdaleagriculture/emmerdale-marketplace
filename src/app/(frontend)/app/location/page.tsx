@@ -26,7 +26,7 @@ export default async function AppLocationPage({
   const sites = await listSites(user.id);
   return (
     <main className={ui.screen}>
-      <LocationForm next={next} first={sites.length === 0} skipHref={next ?? '/app/continue'} />
+      <LocationForm next={next} first={sites.length === 0} skipHref={sites.length === 0 ? (next ?? '/app/continue') : '/app/account'} />
     </main>
   );
 }

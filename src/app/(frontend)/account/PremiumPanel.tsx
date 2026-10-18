@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { siteUrl } from '@/lib/site';
 import f from '@/components/forms/forms.module.css';
 import ac from './account.module.css';
 
@@ -75,11 +76,12 @@ export function PremiumPanel({
               ? 'Premium starts working the moment we approve your application. If we can’t approve it, we cancel your membership and refund you in full.'
               : 'New jobs in your area come to you before anyone else — tap the text within 2 hours and reply within 24 to hold them for up to 7 days — and every price you send carries 5% commission instead of 15%.'}
           </p>
-          <form action="/api/stripe/portal" method="post">
+          <form action="/api/stripe/portal" method="post" data-app-hide>
             <button className={f.btnGhost} type="submit">
               Manage billing
             </button>
           </form>
+          <p className={ac.subBody} data-app-only>Billing is managed on the website.</p>
         </>
       ) : comped ? (
         <p className={ac.subBody}>
@@ -120,7 +122,12 @@ export function PremiumPanel({
               are in <Link href="/terms">clause 12 of the contractor terms</Link>.
             </p>
           </div>
-          <div className={ac.premiumButtons}>
+          {/* Store rules: no selling inside the app, or Apple and Google take
+              their cut. The benefits show; joining happens on the website. */}
+          <p className={ac.subBody} data-app-only>
+            Premium is bought on the website: sign in at {siteUrl().replace(/^https?:\/\//, '')}/account.
+          </p>
+          <div className={ac.premiumButtons} data-app-hide>
             <form action="/api/stripe/checkout" method="post">
               <input type="hidden" name="plan" value="monthly" />
               <button className={f.btnPrimary} type="submit">

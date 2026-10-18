@@ -35,7 +35,7 @@ export function PayNow({
     openInAppBrowser(state.url).then((how) => {
       if (how === 'closed') router.refresh();
     });
-  }, [state.url, router]);
+  }, [state, router]);
 
   return (
     <div className={m.payPanel}>

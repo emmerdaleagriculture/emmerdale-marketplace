@@ -51,6 +51,13 @@ export default async function AppAccountPage() {
           </span>
           <div style={{ minWidth: 0 }}>
             <div className={ui.cardTitle}>{name ?? user.email}</div>
+            {!customer.data.phone && (
+              <div className={ui.cardSub}>
+                <Link href="/app/phone?next=/app/account" className={ui.sectionLink}>
+                  Add a mobile number
+                </Link>
+              </div>
+            )}
             {customer.data.phone && (
               <div className={ui.cardSub}>
                 {customer.data.phone}

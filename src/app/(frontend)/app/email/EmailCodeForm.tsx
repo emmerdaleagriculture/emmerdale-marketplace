@@ -26,18 +26,31 @@ export function EmailCodeForm({ role }: { role: string | null }) {
   const [changing, setChanging] = useState(false);
   const codeRef = useRef<HTMLInputElement>(null);
 
-  const email = sent.ok ? sent.email : undefined;
+  // Once a code has gone, the address and send time are kept here: a
+  // refused resend must not throw the person back to an empty email box
+  // with a valid code sitting in their inbox.
+  const [email, setEmail] = useState<string | undefined>(undefined);
+  const [sentAt, setSentAt] = useState<number>(0);
+  useEffect(() => {
+    if (sent.ok && sent.email) {
+      setEmail(sent.email);
+      setSentAt(sent.sentAt ?? Date.now());
+      setChanging(false);
+    }
+  }, [sent]);
   const onCode = !!email && !changing;
 
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
   useEffect(() => {
     if (!onCode) return;
     setCode('');
     codeRef.current?.focus();
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [onCode, sent.sentAt]);
+  }, [onCode, sentAt]);
 
-  const secondsLeft = Math.max(0, RESEND_AFTER_S - Math.floor((now - (sent.sentAt ?? 0)) / 1000));
+  const secondsLeft = Math.max(0, RESEND_AFTER_S - Math.floor((now - sentAt) / 1000));
   const captchaPending = turnstileEnabled && !captchaToken;
 
   if (!onCode) {
@@ -99,6 +112,7 @@ export function EmailCodeForm({ role }: { role: string | null }) {
           </span>
         </label>
         {verified.error && <p className={f.error}>{verified.error}</p>}
+        {sent.error && <p className={f.error}>{sent.error}</p>}
         <div className="appFooterCta">
           <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} disabled={verifying || code.length < 6}>
             {verifying ? 'Checking…' : 'Continue'}

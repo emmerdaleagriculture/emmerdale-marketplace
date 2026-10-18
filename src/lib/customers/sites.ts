@@ -22,20 +22,26 @@ export type Site = {
 export type LandLookup = {
   postcode: string;
   outcode: string;
+  /** Whether a full postcode was given; only a full one can be saved as a site. */
+  full: boolean;
   town: string | null;
   countyId: number | null;
   county: string | null;
   lat: number | null;
   lng: number | null;
-  operators: number;
+  /** Approved operators in the county; null when the county could not be settled (never "none"). */
+  operators: number | null;
+  /** What went wrong, when the lookup service rather than the postcode was the problem. */
+  error?: string;
 };
 
 export async function listSites(customerId: string): Promise<Site[]> {
-  const { data } = await createServiceRoleClient()
+  const { data, error } = await createServiceRoleClient()
     .from('customer_sites')
     .select('id, label, postcode, acres, lat, lng, county_id')
     .eq('customer_id', customerId)
     .order('created_at');
+  if (error) console.error('[sites] list failed:', error.message);
   return (data ?? []).map(({ county_id, ...s }) => ({
     ...s,
     countyId: county_id,
@@ -73,17 +79,24 @@ export async function lookupLand(raw: string): Promise<LandLookup | null> {
   const query = norm.full ?? norm.outcode;
   if (!query) return null;
   const res = await resolveCounty(query);
-  if (!res.ok && res.lat == null) return null;
+  if (!res.ok && res.lat == null) {
+    // The service failing is not the customer's postcode being wrong.
+    if (res.error && /reach|service|timed out|unavailable/i.test(res.error)) {
+      return { postcode: query, outcode: norm.outcode ?? '', full: !!norm.full, town: null, countyId: null, county: null, lat: null, lng: null, operators: null, error: res.error };
+    }
+    return null;
+  }
   const coverage = await getCountyCoverage();
   return {
     postcode: norm.full ?? norm.outcode!,
     outcode: norm.outcode ?? res.outcode ?? '',
+    full: !!norm.full,
     town: res.town ?? null,
     countyId: res.county_id ?? null,
     county: res.county_name ?? null,
     lat: res.lat ?? null,
     lng: res.lng ?? null,
-    operators: res.county_name ? coverage[res.county_name] ?? 0 : 0,
+    operators: res.county_name ? coverage[res.county_name] ?? 0 : null,
   };
 }
 

@@ -46,7 +46,7 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   // A number verified by text in the app stays marked as such only while it
   // is the number on the row.
   const { data: before } = await supabase.from('contractors').select('phone, phone_verified_at').eq('id', user.id).maybeSingle();
-  const phoneChanged = before != null && before.phone !== d.phone;
+  const phoneChanged = before?.phone !== d.phone;
 
   // Update own profile (RLS: contractors_update_own; status is trigger-guarded).
   const { error: upErr } = await supabase

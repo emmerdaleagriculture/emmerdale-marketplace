@@ -15,12 +15,12 @@ export {
   maskEmail,
   type PhoneVerification,
 } from './phoneRules';
-import { LOCKOUT_MINUTES, MAX_FAILURES, maskEmail, type PhoneVerification } from './phoneRules';
+import { LOCKOUT_MINUTES, MAX_FAILURES, MAX_SENDS_PER_DAY, maskEmail, type PhoneVerification } from './phoneRules';
 
 export async function getVerification(userId: string): Promise<PhoneVerification | null> {
   const { data } = await createServiceRoleClient()
     .from('phone_verifications')
-    .select('phone, last_sent_at, failures, locked_until, verified_at, match_user_id')
+    .select('phone, last_sent_at, failures, locked_until, verified_at, match_user_id, sends_today, sends_day')
     .eq('user_id', userId)
     .maybeSingle();
   return data ?? null;
@@ -37,16 +37,26 @@ export async function setVerification(userId: string, patch: Partial<PhoneVerifi
  * A wrong code: one more failure, and the fifth locks the number for ten
  * minutes. Returns what to tell the person.
  */
-export async function recordFailure(userId: string, v: PhoneVerification | null): Promise<string> {
+export async function recordFailure(
+  userId: string,
+  v: PhoneVerification | null,
+): Promise<{ message: string; lockedUntil: string | null }> {
   const failures = (v?.failures ?? 0) + 1;
   if (failures >= MAX_FAILURES) {
     const until = new Date(Date.now() + LOCKOUT_MINUTES * 60000).toISOString();
     await setVerification(userId, { failures: 0, locked_until: until });
-    return `That's ${MAX_FAILURES} wrong codes. For safety, try again in ${LOCKOUT_MINUTES} minutes.`;
+    return { message: `That's ${MAX_FAILURES} wrong codes. For safety, try again in ${LOCKOUT_MINUTES} minutes.`, lockedUntil: until };
   }
   await setVerification(userId, { failures });
   const left = MAX_FAILURES - failures;
-  return `That code is not right. ${left} ${left === 1 ? 'try' : 'tries'} left before a ${LOCKOUT_MINUTES}-minute wait.`;
+  return { message: `That code is not right. ${left} ${left === 1 ? 'try' : 'tries'} left before a ${LOCKOUT_MINUTES}-minute wait.`, lockedUntil: null };
+}
+
+/** Today's send count after one more, and whether that is over the cap. */
+export function nextSendCount(v: PhoneVerification | null, now = new Date()): { sends_today: number; sends_day: string; capped: boolean } {
+  const day = now.toISOString().slice(0, 10);
+  const sends_today = (v?.sends_day === day ? v?.sends_today ?? 0 : 0) + 1;
+  return { sends_today, sends_day: day, capped: sends_today > MAX_SENDS_PER_DAY };
 }
 
 /**

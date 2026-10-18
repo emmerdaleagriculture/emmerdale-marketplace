@@ -79,12 +79,8 @@ export function renderPush(kind: string, p: Record<string, unknown>, site: strin
       const where = place ? ` near ${place}` : '';
       const sz = size(p);
       if (p.premium) {
-        const opens = londonTime(p.market_opens_at);
-        return {
-          title: `First refusal: ${service}${where}`,
-          body: opens ? `You see this before anyone else until ${opens}.` : 'You see this before anyone else. Tap within 2 hours.',
-          url,
-        };
+        // The text says the same: an untapped offer is a pass after 2 hours.
+        return { title: `First refusal: ${service}${where}`, body: 'Yours before anyone else. Tap within 2 hours or it opens to others.', url };
       }
       if (p.first_refusal) {
         return { title: `Offered to you first: ${service}${where}`, body: 'Price it or pass before it goes to the market.', url };
@@ -223,8 +219,11 @@ async function accessToken(sa: ServiceAccount): Promise<string> {
 
 /** FCM's way of saying the token is dead and should be forgotten. */
 function tokenIsDead(status: number, res: Record<string, any>): boolean {
-  const code = res?.error?.details?.find((d: any) => d?.errorCode)?.errorCode ?? res?.error?.status;
-  return status === 404 || code === 'UNREGISTERED' || code === 'NOT_FOUND' ||
+  // UNREGISTERED is the documented "this token is gone" answer. A bare 404
+  // can be a wrong project id or a disabled API, which must not revoke
+  // every device it touches.
+  const code = res?.error?.details?.find((d: any) => d?.errorCode)?.errorCode;
+  return code === 'UNREGISTERED' ||
     (status === 400 && /registration token|not a valid FCM/i.test(String(res?.error?.message ?? '')));
 }
 
@@ -232,7 +231,7 @@ export async function drainPush(
   supabase: Supabase,
   site: string,
   allowlist: string[],
-  contractorKinds: Set<string>,
+  _contractorKinds: Set<string>,
 ): Promise<Record<string, unknown>> {
   const raw = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
   if (!raw) return { configured: false };
@@ -244,18 +243,28 @@ export async function drainPush(
     return { error: `FIREBASE_SERVICE_ACCOUNT unreadable: ${String(err).slice(0, 100)}` };
   }
 
-  const { data, error } = await supabase
+  const now = new Date();
+  const daytime = londonHour(now) >= FIRST_HOUR && londonHour(now) <= LAST_HOUR;
+
+  // At night only the urgent kinds are fetched at all: held rows left in
+  // the batch would fill it and starve a message behind them.
+  let query = supabase
     .from('pending_push')
     .select('id, kind, user_id, to_email, payload, attempts, created_at')
     .eq('status', 'pending')
     .order('created_at')
     .limit(BATCH);
+  if (!daytime) {
+    query = query.or(
+      'kind.in.(sq_message_to_client,sq_message_to_contractor,sq_award_won),' +
+      'and(kind.eq.sq_invitation,payload->>premium.eq.true),' +
+      'and(kind.eq.sq_invitation,payload->>first_refusal.eq.true)',
+    );
+  }
+  const { data, error } = await query;
   if (error) return { error: error.message };
   const rows = (data ?? []) as PendingPush[];
   if (rows.length === 0) return { processed: 0 };
-
-  const now = new Date();
-  const daytime = londonHour(now) >= FIRST_HOUR && londonHour(now) <= LAST_HOUR;
   const finish = (id: string, fields: Record<string, unknown>) =>
     supabase.from('pending_push').update(fields).eq('id', id);
 
@@ -266,8 +275,10 @@ export async function drainPush(
     const p = m.payload ?? {};
     if (!daytime && !isUrgent(m.kind, p)) { held++; continue; }
 
+    // Test mode holds every push — customer kinds too, by the job's email,
+    // as the text channel does.
     const skipReason =
-      contractorKinds.has(m.kind) && allowlist.length > 0 && !allowlist.includes(m.to_email.toLowerCase())
+      allowlist.length > 0 && !allowlist.includes(m.to_email.toLowerCase())
         ? 'test mode: not on the allowlist'
       : now.getTime() - new Date(m.created_at).getTime() > MAX_AGE_MS ? 'too old to send'
       : null;
@@ -299,8 +310,9 @@ export async function drainPush(
     for (const d of devices as { id: string; token: string }[]) {
       let status = 0;
       let res: Record<string, any> = {};
+      let refreshed = false;
       try {
-        const resp = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
+        const sendOnce = async () => fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -308,11 +320,19 @@ export async function drainPush(
               token: d.token,
               notification: { title: r.title, body: r.body },
               data: { url: tapUrl, kind: m.kind },
-              android: { priority: 'high', notification: { channel_id: 'default', click_action: 'OPEN_URL' } },
+              android: { priority: 'high', notification: { channel_id: 'default' } },
               apns: { payload: { aps: { sound: 'default', 'mutable-content': 1 } } },
             },
           }),
         });
+        let resp = await sendOnce();
+        if (resp.status === 401 && !refreshed) {
+          // The cached Google token has lapsed: mint another and try once more.
+          refreshed = true;
+          cachedToken = null;
+          bearer = await accessToken(sa);
+          resp = await sendOnce();
+        }
         status = resp.status;
         try { res = await resp.json(); } catch { /* no body */ }
       } catch (err) {
@@ -327,7 +347,6 @@ export async function drainPush(
         lastDetail = 'device token no longer valid';
       } else {
         lastDetail = `HTTP ${status}: ${String(res?.error?.message ?? '').slice(0, 200)}`;
-        if (status === 401) { bearer = null; cachedToken = null; }
         if (status >= 500 || status === 429 || status === 401) retryable = true;
       }
     }

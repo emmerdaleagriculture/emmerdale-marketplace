@@ -14,7 +14,13 @@ const PHONE_GATE_EXEMPT = /^\/(app(\/(sign-in|role|phone|email|continue|notify|l
 function toPhoneStep(request: NextRequest) {
   const url = request.nextUrl.clone();
   url.pathname = '/app/phone';
-  url.search = `?next=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`;
+  // The page they were going to, without Next's RSC marker or the app-mode
+  // toggle, which would otherwise be replayed as a full navigation later.
+  const back = new URLSearchParams(request.nextUrl.search);
+  back.delete('_rsc');
+  back.delete('app');
+  const q = back.toString();
+  url.search = `?next=${encodeURIComponent(request.nextUrl.pathname + (q ? `?${q}` : ''))}`;
   return NextResponse.redirect(url);
 }
 

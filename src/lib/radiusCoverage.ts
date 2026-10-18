@@ -168,3 +168,25 @@ export function landCoverage(
     })),
   };
 }
+
+/**
+ * The counties a contractor based at (lat, lng) reaches within `miles`: every
+ * county with land inside the circle. For the app's apply screen, which asks
+ * for a travel radius rather than a county list (PRD task 9); the counties
+ * are what the matching actually uses.
+ */
+export function countiesWithinMiles(lat: number, lng: number, miles: number): string[] {
+  const latPad = miles / 69;
+  const lngPad = latPad / Math.max(Math.cos(lat * DEG), 0.1);
+  const out = new Set<string>();
+  for (const cell of landCells()) {
+    if (
+      Math.abs(cell.lat - lat) <= latPad &&
+      Math.abs(cell.lng - lng) <= lngPad &&
+      withinMiles(cell.lat, cell.lng, lat, lng, miles)
+    ) {
+      out.add(cell.county);
+    }
+  }
+  return [...out].sort();
+}

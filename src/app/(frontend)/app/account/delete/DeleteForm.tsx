@@ -15,7 +15,7 @@ export function DeleteForm({ side, keeps }: { side: 'customer' | 'contractor' | 
         <p style={{ fontSize: 15, lineHeight: 1.5, color: 'var(--ink-2)' }}>
           <strong style={{ color: 'var(--ink)' }}>What goes:</strong> your login (including Apple or Google
           sign-in), your name, phone number and email, your device from our notifications, and
-          {side !== 'contractor' ? ' any job still out for prices, which is withdrawn' : ' your place on the network'}.
+          {side === 'customer' ? ' any job still out for prices, which is withdrawn' : side === 'contractor' ? ' your place on the network' : ' any job still out for prices (withdrawn) and your place on the network'}.
         </p>
         {keeps ? (
           <p style={{ fontSize: 15, lineHeight: 1.5, color: 'var(--ink-2)', marginTop: 10 }}>

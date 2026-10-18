@@ -1,5 +1,7 @@
 'use server';
 
+import { contractorHasHistory } from '@/lib/deleteAccount';
+
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
@@ -98,14 +100,7 @@ export async function deleteContractor(formData: FormData) {
 
   const admin = createServiceRoleClient();
 
-  const head = { count: 'exact', head: true } as const;
-  const history = await Promise.all([
-    admin.from('contractor_quotes').select('id', head).eq('contractor_id', id),
-    admin.from('client_quotes').select('id', head).eq('contractor_id', id),
-    admin.from('contractor_ratings').select('id', head).eq('contractor_id', id),
-    admin.from('job_submissions').select('id', head).eq('awarded_contractor_id', id),
-  ]).then((rs) => rs.map((r) => r.count ?? 0));
-  if (history.some((n) => n > 0)) {
+  if (await contractorHasHistory(id)) {
     redirect(`/admin/contractors/${id}?blocked=history`);
   }
 
@@ -120,7 +115,7 @@ export async function deleteContractor(formData: FormData) {
   const { error: rowErr } = await admin.from('contractors').delete().eq('id', id);
   if (rowErr) throw new Error(rowErr.message);
   const { error: authErr } = await admin.auth.admin.deleteUser(id);
-  if (authErr) console.error('[admin] auth user delete failed after removing the contractor row:', authErr.message);
+  if (authErr) throw new Error(`The contractor row is gone but their login could not be removed: ${authErr.message}`);
 
   revalidatePath('/admin/contractors');
   redirect('/admin/contractors');

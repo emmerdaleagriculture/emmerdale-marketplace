@@ -78,11 +78,12 @@ export function AppShell() {
   useEffect(() => {
     if (viewer.signedIn) {
       setRole(viewer.role);
+      if (!app) return;
       try {
         localStorage.setItem(ROLE_KEY, viewer.role);
       } catch {}
     }
-  }, [viewer]);
+  }, [viewer, app]);
   useEffect(() => {
     if (!app) return;
     // useViewer starts as signed-out before its lookup; only a confirmed
@@ -106,7 +107,9 @@ export function AppShell() {
   const tabs = tabsFor(role);
   const standalone = isAppStandalonePath(pathname);
   const showTabs = app && !standalone && tabs !== null;
-  const showBack = app && !standalone && !(tabs && isTabRoot(tabs, pathname));
+  // No back bar until the role is known: a bar that flashes on a tab page
+  // and off again is worse than none for a moment.
+  const showBack = app && !standalone && tabs !== null && !isTabRoot(tabs, pathname);
 
   // Tell the stylesheet to make room (globals.css, html[data-app-tabs]).
   useEffect(() => {
@@ -144,10 +147,9 @@ export function AppShell() {
     if (!showBack) return;
     const read = () => setTitle(document.title.replace(SITE_TITLE_SUFFIX, '').trim());
     read();
-    const el = document.querySelector('title');
-    if (!el) return;
+    // Watch <head>, not the <title> node: Next may replace the node.
     const mo = new MutationObserver(read);
-    mo.observe(el, { childList: true, characterData: true, subtree: true });
+    mo.observe(document.head, { childList: true, characterData: true, subtree: true });
     return () => mo.disconnect();
   }, [showBack, pathname]);
 

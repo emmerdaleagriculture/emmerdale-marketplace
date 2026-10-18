@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import { getUser } from '@/lib/auth';
 import { appLandingPath, roleIntent } from '@/lib/app/landing';
+import { appPlatform } from '@/lib/appMode.server';
 import { HEADLINE, KICKER, STANDFIRST } from '@/lib/home/proposition';
 import { WelcomeActions } from './WelcomeActions';
 import s from './app.module.css';
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 export default async function AppWelcomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ role?: string }>;
+  searchParams: Promise<{ role?: string; account?: string }>;
 }) {
   const sp = await searchParams;
   const intent = roleIntent(sp.role);
@@ -61,7 +62,12 @@ export default async function AppWelcomePage({
         </div>
       </section>
 
-      <WelcomeActions initialIntent={intent} />
+      {sp.account === 'deleted' && (
+        <p className={s.deletedNote} role="status">
+          Your account has been deleted. Thanks for using Emmerdale Agriculture.
+        </p>
+      )}
+      <WelcomeActions initialIntent={intent} appleFirst={(await appPlatform()) === 'ios'} />
     </div>
   );
 }
