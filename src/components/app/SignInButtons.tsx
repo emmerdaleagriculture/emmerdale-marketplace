@@ -24,6 +24,7 @@ export function SignInButtons({
   next,
   compact = false,
   dividerText,
+  appleFirst: appleFirstProp,
 }: {
   /** Same-site path to continue to once signed in; '' lets /auth/callback route by role. */
   next: string;
@@ -31,12 +32,23 @@ export function SignInButtons({
   compact?: boolean;
   /** "or" line under the buttons, where a form follows. */
   dividerText?: string;
+  /** Decided by the server from the user agent, so the first paint is already in the right order. */
+  appleFirst?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<NativeProvider | null>(null);
   const [error, setError] = useState('');
-  const [appleFirst, setAppleFirst] = useState(false);
-  useEffect(() => setAppleFirst(appPlatform() === 'ios'), []);
+  const [appleFirst, setAppleFirst] = useState(appleFirstProp ?? false);
+  // In the frame, only the sheets that are configured: Google refuses OAuth
+  // inside a WebView, so a button that would fall through to it is hidden.
+  const [hidden, setHidden] = useState<NativeProvider[]>([]);
+  useEffect(() => {
+    if (appleFirstProp == null) setAppleFirst(appPlatform() === 'ios');
+    if (isNativeApp()) {
+      const have = nativeProvidersAvailable();
+      setHidden((['apple', 'google'] as NativeProvider[]).filter((p) => !have.includes(p)));
+    }
+  }, [appleFirstProp]);
 
   async function go(provider: NativeProvider) {
     setError('');
@@ -105,9 +117,12 @@ export function SignInButtons({
     </button>
   );
 
+  const buttons = (appleFirst ? [apple, google] : [google, apple]).filter(
+    (b) => !hidden.includes(b.key as NativeProvider),
+  );
   return (
     <div className={s.wrap}>
-      {appleFirst ? [apple, google] : [google, apple]}
+      {buttons}
       {error && <p className={f.error}>{error}</p>}
       {dividerText && (
         <div className={s.divider}>

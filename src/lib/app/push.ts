@@ -52,8 +52,28 @@ async function send(body: Record<string, unknown>): Promise<boolean> {
  * permission already granted is used — which is what every app open does,
  * so last_seen_at and a rotated token stay current.
  */
+/** This device's own switch. Permission is per device, so the choice is too. */
+const OFF_KEY = 'ea_push_off';
+export function pushTurnedOff(): boolean {
+  try {
+    return localStorage.getItem(OFF_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+function rememberOff(off: boolean) {
+  try {
+    if (off) localStorage.setItem(OFF_KEY, '1');
+    else localStorage.removeItem(OFF_KEY);
+  } catch {}
+}
+
 export async function registerPush({ ask }: { ask: boolean }): Promise<PushPermission> {
   if (!isNativeApp()) return 'unavailable';
+  // Turned off on this device: the silent re-register on app open stays
+  // silent. Asking (the switch, the explainer) turns it back on.
+  if (!ask && pushTurnedOff()) return 'prompt';
+  if (ask) rememberOff(false);
   try {
     const fm = await plugin();
     let { receive } = await fm.checkPermissions();
@@ -74,8 +94,9 @@ export async function registerPush({ ask }: { ask: boolean }): Promise<PushPermi
 }
 
 /** Forget this device: on sign-out, or when the person turns pushes off. */
-export async function revokePush(): Promise<void> {
+export async function revokePush({ remember = false }: { remember?: boolean } = {}): Promise<void> {
   if (!isNativeApp()) return;
+  if (remember) rememberOff(true);
   try {
     const fm = await plugin();
     const { token } = await fm.getToken().catch(() => ({ token: '' }));
@@ -96,7 +117,6 @@ let listening = false;
  */
 export async function listenForPushTaps(): Promise<void> {
   if (!isNativeApp() || listening) return;
-  listening = true;
   try {
     const fm = await plugin();
     await fm.addListener('notificationActionPerformed', (event) => {
@@ -110,6 +130,8 @@ export async function listenForPushTaps(): Promise<void> {
     await fm.addListener('tokenReceived', () => {
       registerPush({ ask: false }).catch(() => {});
     });
+    // Only now: a failed attach (bridge not ready yet) is tried again later.
+    listening = true;
   } catch (err) {
     console.error('[push] listener failed:', err);
   }

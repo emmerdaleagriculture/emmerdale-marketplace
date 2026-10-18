@@ -91,17 +91,23 @@ export function PriceList({
   // In the app the action hands Checkout's URL back; it opens in the
   // system's in-app browser (Apple Pay and Google Pay work there), and when
   // that closes the page refreshes to show where things stand.
+  // Keyed on the action's result object, not the URL string: a retry hands
+  // back the same Checkout URL and must open the sheet again.
   useEffect(() => {
     if (!state.url) return;
     openInAppBrowser(state.url).then((how) => {
       if (how === 'closed') router.refresh();
     });
-  }, [state.url, router]);
+  }, [state, router]);
 
   const sorted = sortClientQuotes(quotes, mode, { ratingWeight });
   const live = sorted.filter((q) => !passes[q.id]);
   const passed = sorted.filter((q) => passes[q.id]);
-  const lowest = live.length > 1 ? Math.min(...live.map((q) => q.client_price_pence)) : null;
+  // "Best price": the one lowest fixed price, when there is exactly one. A
+  // rate's headline figure is an estimate, so rates stay out of it.
+  const fixed = live.filter((q) => q.client_rate_value_pence == null);
+  const lowestFixed = fixed.length > 1 ? Math.min(...fixed.map((q) => q.client_price_pence)) : null;
+  const lowest = lowestFixed != null && fixed.filter((q) => q.client_price_pence === lowestFixed).length === 1 ? lowestFixed : null;
 
   return (
     <div>
@@ -143,7 +149,9 @@ export function PriceList({
                   {q.contractor_display_label.replace(/^(Operator|Contractor)\s+/i, '').slice(0, 1)}
                 </span>
                 {q.contractor_display_label}
-                {lowest === q.client_price_pence && <span className={m.bestPrice}>Best price</span>}
+                {lowest === q.client_price_pence && q.client_rate_value_pence == null && (
+                  <span className={m.bestPrice} data-app-only>Best price</span>
+                )}
                 {q.premium && (
                   <span className={m.premiumTag} title="A premium member of the Emmerdale Agriculture network">
                     ★ Premium member

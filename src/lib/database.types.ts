@@ -2527,6 +2527,8 @@ export type Database = {
           locked_until: string | null
           match_user_id: string | null
           phone: string | null
+          sends_day: string | null
+          sends_today: number
           updated_at: string
           user_id: string
           verified_at: string | null
@@ -2537,6 +2539,8 @@ export type Database = {
           locked_until?: string | null
           match_user_id?: string | null
           phone?: string | null
+          sends_day?: string | null
+          sends_today?: number
           updated_at?: string
           user_id: string
           verified_at?: string | null
@@ -2547,6 +2551,8 @@ export type Database = {
           locked_until?: string | null
           match_user_id?: string | null
           phone?: string | null
+          sends_day?: string | null
+          sends_today?: number
           updated_at?: string
           user_id?: string
           verified_at?: string | null

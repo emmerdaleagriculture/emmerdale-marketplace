@@ -31,6 +31,10 @@ export async function sendEmailCodeAction(_prev: EmailCodeState, formData: FormD
   if (error) {
     const captcha = captchaErrorMessage(error.message, 'login');
     if (captcha) return { error: captcha };
+    if (/security purposes|after \d+ seconds/i.test(error.message)) {
+      const secs = error.message.match(/(\d+) seconds/)?.[1];
+      return { error: `A code was sent a moment ago. Wait ${secs ? `${secs} seconds` : 'a minute'} and try again, or check your inbox.` };
+    }
     if (/rate limit|too many/i.test(error.message)) {
       return { error: 'Too many codes requested. Wait a minute and try again.' };
     }
@@ -45,14 +49,12 @@ export async function verifyEmailCodeAction(_prev: EmailCodeState, formData: For
   const email = String(formData.get('email') || '').trim().toLowerCase();
   const token = String(formData.get('token') || '').replace(/\D/g, '');
   if (!email) return { error: 'Start again with your email address.' };
-  if (token.length < 6) return { ok: true, email, error: 'Enter the 6-digit code from the email.' };
+  if (token.length < 6) return { error: 'Enter the 6-digit code from the email.' };
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
   if (error || !data.session) {
     return {
-      ok: true,
-      email,
       error: /expired/i.test(error?.message ?? '')
         ? 'That code has expired. Ask for a new one.'
         : 'That code is not right. Check the email and try again.',

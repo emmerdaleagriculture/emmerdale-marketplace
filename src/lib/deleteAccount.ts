@@ -2,7 +2,7 @@ import type { User } from '@supabase/supabase-js';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { closeCustomer } from '@/lib/closeCustomer';
 import { revokeAppleTokens } from '@/lib/apple/tokens';
-import { getStripe, stripeConfigured } from '@/lib/stripe';
+import { getStripe, refundUnapprovedPremium, stripeConfigured } from '@/lib/stripe';
 
 /**
  * "Delete my account", done by the person themselves (PRD task 10).
@@ -29,9 +29,18 @@ export async function contractorHasHistory(contractorId: string): Promise<boolea
   return counts.some((r) => (r.count ?? 0) > 0);
 }
 
-async function cancelPremium(contractorId: string): Promise<void> {
+async function cancelPremium(contractorId: string, pending: boolean): Promise<void> {
   if (!stripeConfigured()) return;
   const admin = createServiceRoleClient();
+  // Never approved: the money goes back, as the admin reject path does.
+  if (pending) {
+    try {
+      await refundUnapprovedPremium(contractorId);
+    } catch (err) {
+      console.error('[delete] unapproved premium not refunded:', err);
+    }
+    return;
+  }
   const { data: sub } = await admin
     .from('subscriptions')
     .select('stripe_subscription_id, status')
@@ -45,9 +54,9 @@ async function cancelPremium(contractorId: string): Promise<void> {
   }
 }
 
-async function closeContractor(contractorId: string): Promise<'removed' | 'scrubbed'> {
+async function closeContractor(contractorId: string, status: string): Promise<'removed' | 'scrubbed'> {
   const admin = createServiceRoleClient();
-  await cancelPremium(contractorId);
+  await cancelPremium(contractorId, status === 'pending');
 
   // The person's documents and bank account go whichever path follows.
   const { data: docs } = await admin.from('contractors').select('insurance_path, certificate_paths').eq('id', contractorId).maybeSingle();
@@ -77,6 +86,10 @@ async function closeContractor(contractorId: string): Promise<'removed' | 'scrub
       phone_verified_at: null,
       insurance_path: null,
       certificate_paths: [],
+      // The base is a home address for a sole trader; the records don't need it.
+      base_postcode: '',
+      base_lat: null,
+      base_lng: null,
     })
     .eq('id', contractorId);
   if (error) throw new Error(`contractor scrub: ${error.message}`);
@@ -90,23 +103,33 @@ async function closeContractor(contractorId: string): Promise<'removed' | 'scrub
 export async function deleteOwnAccount(user: User): Promise<{ ok: true } | { error: string }> {
   const admin = createServiceRoleClient();
   try {
-    // Apple first: once the login is gone there is no user to revoke for.
+    // Apple first, and a refusal stops everything: once the login is gone
+    // the token cascades away and can never be revoked.
     const apple = await revokeAppleTokens(user.id);
-    if (!apple.revoked) console.error('[delete] Apple token not revoked for', user.id);
+    if (!apple.revoked) {
+      console.error('[delete] Apple token not revoked for', user.id);
+      return { error: 'We couldn’t disconnect your Apple sign-in just now, so nothing has been deleted. Please try again in a few minutes.' };
+    }
 
-    await admin.from('device_tokens').update({ revoked_at: new Date().toISOString() }).eq('user_id', user.id).is('revoked_at', null);
-
-    const { data: contractor } = await admin.from('contractors').select('id').eq('id', user.id).maybeSingle();
-    if (contractor) await closeContractor(user.id);
+    const { data: contractor } = await admin.from('contractors').select('id, status').eq('id', user.id).maybeSingle();
+    if (contractor) await closeContractor(user.id, contractor.status);
 
     // The customer side withdraws open jobs, scrubs their details from every
-    // job and deletes the login. Someone with no customer side still needs
-    // the login gone.
+    // job and deletes the login — by email, so every address they used on
+    // a job is covered, not only the login's.
     const { data: customer } = await admin.from('customers').select('id').eq('id', user.id).maybeSingle();
-    if (customer && user.email) {
-      const res = await closeCustomer(user.email);
-      if ('error' in res) return res;
+    if (customer) {
+      const { data: jobs } = await admin.from('job_submissions').select('contact_email').eq('customer_id', user.id);
+      const emails = new Set<string>();
+      if (user.email) emails.add(user.email.toLowerCase());
+      for (const j of jobs ?? []) if (j.contact_email) emails.add(j.contact_email.toLowerCase());
+      for (const email of emails) {
+        const res = await closeCustomer(email);
+        if ('error' in res) return res;
+      }
     }
+
+    await admin.from('device_tokens').update({ revoked_at: new Date().toISOString() }).eq('user_id', user.id).is('revoked_at', null);
     // closeCustomer deletes the logins it finds on the jobs; a customer with
     // no job yet, or a contractor, still has theirs. Gone already is fine.
     const { error } = await admin.auth.admin.deleteUser(user.id);
@@ -114,6 +137,6 @@ export async function deleteOwnAccount(user: User): Promise<{ ok: true } | { err
     return { ok: true };
   } catch (err) {
     console.error('[delete] account deletion failed:', err);
-    return { error: 'That didn’t go through — nothing has been changed that you can’t still use. Please try again or contact us.' };
+    return { error: 'That didn’t go through. Your login still works; please try again or contact us and we’ll finish it by hand.' };
   }
 }

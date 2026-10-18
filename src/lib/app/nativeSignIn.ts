@@ -60,6 +60,11 @@ function plugin() {
     });
     return SocialLogin;
   });
+  // A failed initialise (plugin not ready, bad client id) must not be
+  // remembered for the life of the WebView: the next tap tries again.
+  initialised.catch(() => {
+    initialised = null;
+  });
   return initialised;
 }
 
@@ -116,12 +121,17 @@ export async function nativeSignIn(provider: NativeProvider): Promise<NativeSign
     }
 
     if (appleCode) {
-      fetch('/api/app/apple-token', {
+      // Awaited: the caller navigates straight after, and a navigation
+      // cancels an in-flight request — losing the single-use code and the
+      // refresh token that account deletion needs.
+      await fetch('/api/app/apple-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
+        keepalive: true,
         body: JSON.stringify({ code: appleCode }),
-      }).catch(() => {});
+        signal: AbortSignal.timeout(8000),
+      }).catch((err) => console.error('[app] apple token exchange not sent:', err));
     }
 
     // Apple only hands the name over on the very first sign-in; keep it so

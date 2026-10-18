@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SignupForm } from './SignupForm';
 import { SignInButtons } from '@/components/app/SignInButtons';
+import { appPlatform } from '@/lib/appMode.server';
 import { getUser, safeInternalPath } from '@/lib/auth';
 import a from '../auth.module.css';
 
@@ -142,6 +143,7 @@ export default async function SignupPage({
               next={next ?? (isCustomerSignup(next, params.from) ? '/my' : '/onboarding')}
               compact
               dividerText="or with an email and password"
+              appleFirst={(await appPlatform()) === 'ios'}
             />
           </div>
           <SignupForm next={next ?? undefined} from={params.from} />

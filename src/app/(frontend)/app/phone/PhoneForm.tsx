@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { sendPhoneCodeAction, verifyPhoneCodeAction, type PhoneState } from './actions';
-import { RESEND_AFTER_S } from '@/lib/app/phoneRules';
+import { minutesLeft, RESEND_AFTER_S } from '@/lib/app/phoneRules';
 import f from '@/components/forms/forms.module.css';
 import ui from '../app-ui.module.css';
 import s from './phone.module.css';
@@ -32,14 +32,23 @@ export function PhoneForm({
 
   const phone = sent.ok ? sent.phone : undefined;
   const onCode = !!phone && !changing;
-  const lockedFor = verified.lockedFor ?? sent.lockedFor ?? 0;
+  // The lockout is an end time, counted down here; the server's minutes are
+  // only ever a snapshot.
+  const lockedUntil = verified.lockedUntil ?? sent.lockedUntil ?? null;
+  const lockedFor = minutesLeft(lockedUntil, now);
 
+  // A fresh send (new number or resend) brings the code step back.
+  useEffect(() => {
+    if (sent.ok && sent.sentAt) setChanging(false);
+  }, [sent.ok, sent.sentAt]);
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
   useEffect(() => {
     if (!onCode) return;
     setCode('');
     codeRef.current?.focus();
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
   }, [onCode, sent.sentAt]);
 
   const secondsLeft = Math.max(0, RESEND_AFTER_S - Math.floor((now - (sent.sentAt ?? 0)) / 1000));
@@ -52,6 +61,7 @@ export function PhoneForm({
 
   if (!onCode) {
     return (
+      <>
       <form action={send} className={s.form}>
         {hidden}
         <div className={s.progress}>
@@ -108,12 +118,20 @@ export function PhoneForm({
             </div>
           </li>
         </ul>
+        <p className={s.muted} style={{ marginTop: 18 }}>
+          Not you, or the wrong account?{' '}
+          <button type="submit" form="phone-signout" className={s.change}>
+            Sign out
+          </button>
+        </p>
         <div className="appFooterCta">
           <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} disabled={sending || lockedFor > 0}>
             {sending ? 'Sending…' : 'Text me a code'}
           </button>
         </div>
       </form>
+      <form id="phone-signout" action="/auth/signout" method="post" hidden />
+    </>
     );
   }
 
@@ -157,6 +175,7 @@ export function PhoneForm({
           </span>
         </label>
         {verified.error && <p className={f.error}>{verified.error}</p>}
+        {sent.error && <p className={f.error}>{sent.error}</p>}
         <div className="appFooterCta">
           <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} disabled={verifying || code.length < 6 || lockedFor > 0}>
             {verifying ? 'Checking…' : 'Continue'}

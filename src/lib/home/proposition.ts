@@ -39,6 +39,8 @@ export const TICKER: readonly string[] = ['Several prices to choose from', 'Vett
 
 export const START_NOTE = 'Takes about a minute. No account needed.';
 export const NO_OBLIGATION = 'Free and no obligation — you’re not booking anything yet.';
+/** The same promise in four words, for a card with no room for the rest. */
+export const NO_OBLIGATION_SHORT = 'Free and no obligation.';
 
 export const OPERATOR_QUESTION = 'Run an agricultural contracting business?';
 export const OPERATOR_CTA = 'Apply to join';

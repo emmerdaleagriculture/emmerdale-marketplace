@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { LoginForm } from './LoginForm';
 import { SignInButtons } from '@/components/app/SignInButtons';
+import { appPlatform } from '@/lib/appMode.server';
 import { getUser, postLoginPath, safeInternalPath } from '@/lib/auth';
 import a from '../auth.module.css';
 import f from '@/components/forms/forms.module.css';
@@ -47,7 +48,7 @@ export default async function LoginPage({
               login: an existing address is linked, not duplicated. With no
               ?next=, the callback routes by role as the form does. */}
           <div style={{ marginBottom: 18 }}>
-            <SignInButtons next={next ?? ''} compact dividerText="or with your password" />
+            <SignInButtons next={next ?? ''} compact dividerText="or with your password" appleFirst={(await appPlatform()) === 'ios'} />
           </div>
           <LoginForm next={next ?? undefined} />
         </div>

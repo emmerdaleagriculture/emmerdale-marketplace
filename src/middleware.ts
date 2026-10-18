@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 import { APP_COOKIE, APP_HEADER, isAppUserAgent } from '@/lib/appMode';
 
@@ -14,19 +14,16 @@ export async function middleware(request: NextRequest) {
     toggle === '1' ||
     (cookieOn && toggle !== '0');
 
-  let req = request;
   if (app) {
     try {
       request.headers.set(APP_HEADER, '1');
     } catch {
-      // Immutable headers on this runtime: carry the flag on a copy instead.
-      const headers = new Headers(request.headers);
-      headers.set(APP_HEADER, '1');
-      req = new NextRequest(request, { headers });
+      // Immutable headers on this runtime: the server side falls back to
+      // the user agent (isAppRequest), so nothing is lost.
     }
   }
 
-  const response = await updateSession(req);
+  const response = await updateSession(request);
 
   if (toggle === '1' || toggle === '0') {
     response.cookies.set(APP_COOKIE, toggle, {

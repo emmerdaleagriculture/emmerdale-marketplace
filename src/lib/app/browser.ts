@@ -14,13 +14,19 @@ export async function openInAppBrowser(url: string): Promise<'closed' | 'navigat
   const { Browser } = await import('@capacitor/browser');
   await new Promise<void>((resolve) => {
     let done = false;
+    let handle: { remove: () => Promise<void> } | null = null;
     const finish = () => {
-      if (!done) {
-        done = true;
-        resolve();
-      }
+      if (done) return;
+      done = true;
+      handle?.remove().catch(() => {});
+      resolve();
     };
-    Browser.addListener('browserFinished', finish).catch(() => {});
+    Browser.addListener('browserFinished', finish)
+      .then((h) => {
+        handle = h;
+        if (done) h.remove().catch(() => {});
+      })
+      .catch(() => {});
     Browser.open({ url, presentationStyle: 'popover' }).catch(() => finish());
   });
   return 'closed';

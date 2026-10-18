@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { listSites, lookupLand } from '@/lib/customers/sites';
+import { listSites } from '@/lib/customers/sites';
+import { getCounties, getCountyCoverage } from '@/lib/reference';
 import { HOME_SERVICES } from '@/lib/home/services';
 import { NewJobFlow, type FlowSite } from './NewJobFlow';
 
@@ -33,13 +34,13 @@ export default async function AppNewJobPage({
   ]);
   if (!customer) redirect('/app/role');
 
-  // Coverage for each site, for the "goes to N operators" line.
-  const flowSites: FlowSite[] = await Promise.all(
-    sites.map(async (s) => {
-      const land = await lookupLand(s.postcode).catch(() => null);
-      return { id: s.id, label: s.label, postcode: s.postcode, acres: s.acres, lat: s.lat, lng: s.lng, countyId: s.countyId ?? land?.countyId ?? null, operators: land?.operators ?? null, county: land?.county ?? null };
-    }),
-  );
+  // Coverage for each site from its stored county: no geocoding on the way in.
+  const [counties, coverage] = await Promise.all([getCounties(), getCountyCoverage()]);
+  const countyName = new Map(counties.map((c) => [c.id, c.name]));
+  const flowSites: FlowSite[] = sites.map((s) => {
+    const county = s.countyId != null ? countyName.get(s.countyId) ?? null : null;
+    return { id: s.id, label: s.label, postcode: s.postcode, acres: s.acres, lat: s.lat, lng: s.lng, countyId: s.countyId, operators: county ? coverage[county] ?? 0 : null, county };
+  });
 
   const preset = HOME_SERVICES.some((c) => c.slug === sp.service) ? sp.service! : null;
 

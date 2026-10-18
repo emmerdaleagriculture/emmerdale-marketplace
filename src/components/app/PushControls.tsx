@@ -35,7 +35,7 @@ export function PushToggleRow() {
     setBusy(true);
     try {
       if (on) {
-        await revokePush();
+        await revokePush({ remember: true });
         setOn(false);
       } else {
         const p = await registerPush({ ask: true });

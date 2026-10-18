@@ -5,7 +5,8 @@ import { redirect } from 'next/navigation';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatGBP } from '@/lib/sealedQuotes/money';
-import { NO_OBLIGATION, PROMISES } from '@/lib/home/proposition';
+import { NO_OBLIGATION_SHORT, PROMISES } from '@/lib/home/proposition';
+import { jobAcres } from '@/lib/jobParse/geometry';
 import { CUSTOMER_LIVE_STATUSES, CUSTOMER_STATUS_LABEL, greeting } from '@/lib/customers/statusLabels';
 import { ServiceTileIcon, POPULAR_SERVICES } from './popular';
 import { listSites } from '@/lib/customers/sites';
@@ -38,7 +39,7 @@ export default async function AppHomePage() {
 
   const { data: jobs } = await admin
     .from('job_submissions')
-    .select('id, status, client_token, service_verbatim, postcode, area_value, area_unit, service:services(name)')
+    .select('id, status, client_token, service_verbatim, postcode, area_value, area_unit, area_mapped_value, area_source, boundary, service:services(name)')
     .eq('customer_id', user.id)
     .not('status', 'in', '(draft,abandoned)')
     .order('created_at', { ascending: false })
@@ -92,7 +93,7 @@ export default async function AppHomePage() {
           </span>
         )}
         <div className={ui.ctaTitle}>Get prices for a job</div>
-        <div className={ui.ctaSub}>Takes about a minute. {NO_OBLIGATION.replace(/ — .*$/, '.')}</div>
+        <div className={ui.ctaSub}>Takes about a minute. {NO_OBLIGATION_SHORT}</div>
         <span className={ui.ctaGo}>
           Start <span aria-hidden="true">›</span>
         </span>
@@ -110,8 +111,9 @@ export default async function AppHomePage() {
             {(jobs ?? []).map((j) => {
               const ps = prices.get(j.id) ?? [];
               const live = CUSTOMER_LIVE_STATUSES.has(j.status);
-              const size =
-                j.area_value != null ? `${j.area_value} ${j.area_unit ?? 'acres'}` : null;
+              // The one display rule for a job's size (lib/jobParse/geometry).
+              const acres = jobAcres(j);
+              const size = acres != null ? `${acres} acres` : j.area_value != null && j.area_unit === 'linear_m' ? `${j.area_value} m` : null;
               return (
                 <Link key={j.id} href={`/my/${j.client_token}`} className={ui.card}>
                   <div className={ui.cardRow}>

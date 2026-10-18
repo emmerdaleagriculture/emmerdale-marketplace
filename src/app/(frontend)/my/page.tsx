@@ -13,16 +13,13 @@ import { ContactUsButton } from '@/components/ContactUsButton';
 import f from '@/components/forms/forms.module.css';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import a from '../auth.module.css';
-import { CUSTOMER_STATUS_LABEL } from '@/lib/customers/statusLabels';
+import { CUSTOMER_LIVE_STATUSES, CUSTOMER_STATUS_LABEL } from '@/lib/customers/statusLabels';
 
 export const metadata: Metadata = { title: 'Your jobs', robots: { index: false, follow: false } };
 export const dynamic = 'force-dynamic';
 
 const DONE = new Set(['completed', 'paid']);
-const LIVE = new Set([
-  'confirmed', 'distributed', 'quotes_receiving', 'accepted_awaiting_payment',
-  'awarded', 'contacted', 'scheduled', 'in_progress', 'completed_by_contractor',
-]);
+const LIVE = CUSTOMER_LIVE_STATUSES;
 
 const STATUS_LABEL = CUSTOMER_STATUS_LABEL;
 

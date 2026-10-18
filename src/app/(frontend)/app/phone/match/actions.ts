@@ -1,20 +1,14 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { getUser, safeInternalPath } from '@/lib/auth';
+import { getUser } from '@/lib/auth';
+import { afterPhoneStep as onward } from '@/lib/app/phoneFlow';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { captchaErrorMessage } from '@/lib/captchaError';
 import { getVerification, isEmptyAccount, recordVerifiedPhone, setVerification } from '@/lib/app/phone';
 import type { FormState } from '@/lib/form';
 
 export type MatchState = FormState & { step?: 'code'; email?: string };
-
-function onward(formData: FormData): string {
-  const next = safeInternalPath(String(formData.get('next') || ''));
-  if (next && !next.startsWith('/app/phone')) return next;
-  const role = String(formData.get('role') || '');
-  return role === 'contractor' || role === 'customer' ? `/app/continue?role=${role}` : '/app/continue';
-}
 
 /** "No, keep this account": forget the match and carry on as the new account. */
 export async function declineMatchAction(_prev: MatchState, formData: FormData): Promise<MatchState> {

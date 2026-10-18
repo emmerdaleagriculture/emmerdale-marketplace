@@ -40,7 +40,7 @@ describe('appVersionFromUserAgent', () => {
 
 describe('isAppStandalonePath', () => {
   it('keeps the tab bar off the welcome, sign-in and job-flow screens', () => {
-    for (const p of ['/app', '/app/role', '/app/phone', '/login', '/start/complete', '/admin/jobs']) {
+    for (const p of ['/app', '/app/role', '/app/phone', '/app/notify', '/app/location', '/app/new-job', '/app/apply', '/login', '/start/complete', '/admin/jobs']) {
       expect(isAppStandalonePath(p)).toBe(true);
     }
     for (const p of ['/app/home', '/my', '/my/abc', '/invitations', '/messages', '/account']) {

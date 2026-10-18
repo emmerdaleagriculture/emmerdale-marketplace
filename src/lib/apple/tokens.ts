@@ -1,4 +1,4 @@
-import { createSign, createPrivateKey, sign as cryptoSign } from 'node:crypto';
+import { createPrivateKey, sign as cryptoSign } from 'node:crypto';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 
 /**
@@ -36,7 +36,6 @@ export function appleClientSecret(clientId: string): string {
   const key = createPrivateKey(PRIVATE_KEY);
   // JWTs carry the raw r||s signature, not DER.
   const sig = cryptoSign('sha256', Buffer.from(`${header}.${claims}`), { key, dsaEncoding: 'ieee-p1363' });
-  void createSign;
   return `${header}.${claims}.${b64url(sig)}`;
 }
 

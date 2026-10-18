@@ -23,13 +23,13 @@
  */
 import { readFileSync } from 'node:fs';
 import { randomBytes, randomUUID } from 'node:crypto';
-
-/** The site's own token shape (lib/sealedQuotes/tokens.ts): 48 hex characters. */
-const token = () => randomBytes(24).toString('hex');
 import ws from 'ws';
 import { createClient } from '@supabase/supabase-js';
 
 (globalThis as { WebSocket?: unknown }).WebSocket ??= ws;
+
+/** The site's own token shape (lib/sealedQuotes/tokens.ts): 48 hex characters. */
+const token = () => randomBytes(24).toString('hex');
 
 function env(name: string): string {
   if (process.env[name]) return process.env[name]!;
@@ -54,8 +54,16 @@ const TOPPING = 1;
 const HARROWING = 5;
 
 async function upsertUser(email: string, phone: string, name: string) {
-  const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
-  const existing = list.users.find((u) => u.email?.toLowerCase() === email);
+  // Found through the profile rows first (no page cap), then the user list.
+  const { data: byRow } = await admin.from(email.includes('customer') ? 'customers' : 'contractors').select('id').eq('email', email).maybeSingle();
+  let existing: { id: string } | null = byRow ? { id: byRow.id } : null;
+  if (!existing) {
+    for (let page = 1; page <= 20 && !existing; page++) {
+      const { data: list } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+      existing = list.users.find((u) => u.email?.toLowerCase() === email) ?? null;
+      if (list.users.length < 1000) break;
+    }
+  }
   if (existing) {
     await admin.auth.admin.updateUserById(existing.id, {
       ...(ROTATE ? { password: PASSWORD } : {}), phone, phone_confirm: true, user_metadata: { full_name: name },

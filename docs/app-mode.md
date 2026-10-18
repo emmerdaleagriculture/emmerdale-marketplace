@@ -256,3 +256,15 @@ set `FIREBASE_SERVICE_ACCOUNT` with `supabase secrets set`. Migration
 - **Premium in the app**: the dashboard's Stripe buttons and billing link
   are hidden in app mode; the benefits and status show with "bought on the
   website".
+
+## Native permission strings the frame needs
+
+The plugins the site calls need their usage descriptions in the native
+projects, or iOS terminates the app at the first prompt:
+
+| Plugin | iOS `Info.plist` | Android manifest |
+|---|---|---|
+| `@capacitor/geolocation` | `NSLocationWhenInUseUsageDescription` | `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` |
+| `@capacitor/camera` | `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`, `NSPhotoLibraryAddUsageDescription` | `READ_MEDIA_IMAGES` (API 33+) / `READ_EXTERNAL_STORAGE` |
+| `@capacitor-firebase/messaging` | Push capability + APNs key in Firebase | notification channel id `default` |
+| `@capgo/capacitor-social-login` | Sign in with Apple capability; Google URL scheme | Google web client id |

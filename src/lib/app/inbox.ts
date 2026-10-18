@@ -68,6 +68,7 @@ export async function getInbox(userId: string, side: 'customer' | 'contractor'):
   // Newest first already, so the first row seen for a thread is its last line.
   const threads = new Map<string, InboxThread>();
   const businessIds = new Set<string>();
+  const labels = new Map<string, string>();
   for (const m of rows) {
     // The other side's held or refused messages are not theirs to see.
     if (m.sender !== me && m.moderation != null && m.moderation !== 'approved') continue;
@@ -78,6 +79,7 @@ export async function getInbox(userId: string, side: 'customer' | 'contractor'):
     if (!t) {
       const booked = js.awarded_contractor_id === inv.contractor_id;
       if (side === 'customer' && booked) businessIds.add(inv.contractor_id);
+      if (inv.display_label) labels.set(m.invitation_id, inv.display_label);
       t = {
         invitationId: m.invitation_id,
         href:
@@ -108,9 +110,12 @@ export async function getInbox(userId: string, side: 'customer' | 'contractor'):
       .in('id', [...businessIds]);
     const names = new Map((cs ?? []).map((c) => [c.id, c.business_name]));
     for (const t of threads.values()) {
-      const n = names.get(t.name);
-      if (n) t.name = n;
+      t.name = names.get(t.name) || t.name;
     }
+  }
+  // A booked thread whose business name did not come back keeps its letter.
+  for (const t of threads.values()) {
+    if (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(t.name)) t.name = labels.get(t.invitationId) ?? 'Your contractor';
   }
 
   return [...threads.values()];

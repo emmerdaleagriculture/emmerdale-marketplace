@@ -6,7 +6,7 @@ const site = 'https://www.emmerdaleagriculture.com';
 Deno.test('an invitation push says where and by when, and taps to the price page', () => {
   const r = renderPush('sq_invitation', { token: 'abc', service: 'Paddock topping', postcode_district: 'SO41', distance_miles: 6, area_value: 4, area_unit: 'acres' }, site)!;
   assertEquals(r.title, 'New job 6 miles away');
-  assertEquals(r.body.startsWith('Paddock topping · 4 acres near SO41.'), true);
+  assertEquals(r.body, 'Paddock topping · 4 acres near SO41.');
   assertEquals(r.url, `${site}/quote/abc`);
 });
 
