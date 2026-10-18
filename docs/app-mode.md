@@ -187,3 +187,17 @@ set `FIREBASE_SERVICE_ACCOUNT` with `supabase secrets set`. Migration
   cover no counties; demo jobs are `hidden_at`, so they are out of the admin
   board, metrics and coverage. Reviewers sign in with "Have a password from
   the website? Log in with it" on the email screen.
+
+## Where's your land (task 6)
+
+- `/app/location`: "Use my current location" (`@capacitor/geolocation` in
+  the frame, browser geolocation elsewhere) or a postcode. The position is
+  turned into the nearest postcode (postcodes.io), the postcode into a
+  county (`lib/postcodes`), and the county into the number of approved
+  operators the county pages already publish (`getCountyCoverage`). Zero
+  says "Not covered yet"; nothing is claimed beyond that count.
+- Saved to `customer_sites` (migration `20261018190000`: label, postcode,
+  county, lat/lng, acres), the customer's own rows under RLS. Asked once
+  after the phone step for a customer with no site (`/app/continue`, cookie
+  `ea_site_asked` when skipped); Account lists sites and adds more; Home
+  shows the first one on the "Get prices" card.

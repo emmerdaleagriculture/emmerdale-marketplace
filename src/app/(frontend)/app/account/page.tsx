@@ -5,6 +5,7 @@ import { getUser, isAdminEmail } from '@/lib/auth';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { CONTACT_EMAIL } from '@/lib/site';
 import { LogoutButton, PushToggleRow } from '@/components/app/PushControls';
+import { listSites } from '@/lib/customers/sites';
 import ui from '../app-ui.module.css';
 
 export const metadata: Metadata = { title: 'Account', robots: { index: false, follow: false } };
@@ -34,6 +35,7 @@ export default async function AppAccountPage() {
   ]);
   if (!customer.data) redirect(contractor.data ? '/account' : '/app');
 
+  const sites = await listSites(user.id);
   const name = customer.data.contact_name?.trim() || null;
   const initial = (name ?? user.email ?? '?').slice(0, 1).toUpperCase();
   const provider = (user.app_metadata?.provider as string | undefined) ?? 'email';
@@ -66,6 +68,32 @@ export default async function AppAccountPage() {
             <div className={ui.cardSub}>{PROVIDER_LABEL[provider] ?? `Signed in with ${provider}`}</div>
           </div>
         </div>
+      </div>
+
+      <div className={ui.kicker}>Your land</div>
+      <div className={ui.rows}>
+        {sites.map((site) => (
+          <div key={site.id} className={ui.row}>
+            <span className={ui.rowIcon} aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 21s-7-7.2-7-12a7 7 0 0 1 14 0c0 4.8-7 12-7 12Z" />
+                <circle cx="12" cy="9" r="2.5" />
+              </svg>
+            </span>
+            {site.label}
+            <span className={ui.rowValue}>
+              {[site.postcode.split(' ')[0], site.acres != null ? `${site.acres} acres` : null].filter(Boolean).join(' · ')}
+            </span>
+          </div>
+        ))}
+        <Link href="/app/location?next=/app/account" className={ui.row}>
+          <span className={ui.rowIcon} aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </span>
+          {sites.length ? 'Add another field or paddock' : 'Add your field or paddock'}
+        </Link>
       </div>
 
       <div className={ui.kicker}>Your jobs</div>

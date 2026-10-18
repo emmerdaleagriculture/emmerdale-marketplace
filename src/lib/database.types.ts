@@ -794,6 +794,45 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_sites: {
+        Row: {
+          acres: number | null
+          county_id: number | null
+          created_at: string
+          customer_id: string
+          id: string
+          label: string
+          lat: number | null
+          lng: number | null
+          postcode: string
+          updated_at: string
+        }
+        Insert: {
+          acres?: number | null
+          county_id?: number | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          label?: string
+          lat?: number | null
+          lng?: number | null
+          postcode: string
+          updated_at?: string
+        }
+        Update: {
+          acres?: number | null
+          county_id?: number | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          label?: string
+          lat?: number | null
+          lng?: number | null
+          postcode?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           contact_name: string | null
