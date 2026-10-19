@@ -5,12 +5,13 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { ContactUsButton } from '@/components/ContactUsButton';
-import { PremiumPanel } from '../PremiumPanel';
+import { MembershipView } from './MembershipView';
 import { membershipOf } from '@/lib/membership';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import a from '../../auth.module.css';
 import ac from '../account.module.css';
+import s from './membership.module.css';
 
 export const metadata: Metadata = {
   title: 'Your membership',
@@ -22,9 +23,10 @@ const MEMBERSHIP_PATH = '/account/membership';
 /**
  * Membership on its own page. The header's membership link used to drop a
  * contractor part-way down the dashboard, between their jobs and their
- * settings; "manage my membership" deserves a page of its own. Same panel
- * as the dashboard (join, move between tiers, Stripe billing portal), with
- * Stripe sent back here afterwards rather than to the dashboard.
+ * settings; "manage my membership" deserves a page of its own. The same
+ * offer as the dashboard panel (join, move between tiers, Stripe billing
+ * portal) laid out as a pricing page (MembershipView), with Stripe sent
+ * back here afterwards rather than to the dashboard.
  *
  * The flags the dashboard passes — pending (membership waits for approval)
  * and suspended (joining restores the account) — are worked out the same
@@ -92,7 +94,7 @@ export default async function MembershipPage({
           )}
 
           {(status !== 'suspended' || canRejoin) && (
-            <PremiumPanel
+            <MembershipView
               sub={sub ?? null}
               compedUntil={contractor.premium_comped_until ?? null}
               openCompedUntil={contractor.open_comped_until ?? null}
@@ -103,7 +105,7 @@ export default async function MembershipPage({
             />
           )}
 
-          <p className={ac.subBody}>
+          <p className={s.back}>
             <Link href="/account">← Back to your dashboard</Link>
           </p>
 
