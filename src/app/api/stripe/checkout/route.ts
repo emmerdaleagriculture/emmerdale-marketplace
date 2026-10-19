@@ -3,6 +3,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import {
   changeMembershipTier,
   isMembershipTier,
+  membershipReturnPath,
   premiumCheckoutUrl,
   PREMIUM_PLANS,
   type MembershipTier,
@@ -31,8 +32,10 @@ export async function POST(request: Request) {
   const plan: PremiumPlan = planField in PREMIUM_PLANS ? (planField as PremiumPlan) : 'monthly';
   const tierField = form?.get('tier');
   const tier: MembershipTier = isMembershipTier(tierField) ? tierField : 'premium';
+  // Back to the page the button was on: the dashboard or /account/membership.
+  const back = membershipReturnPath(form?.get('return'));
   if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.redirect(`${SITE()}/account?sub=unconfigured#premium`, { status: 303 });
+    return NextResponse.redirect(`${SITE()}${back}?sub=unconfigured#premium`, { status: 303 });
   }
 
   const admin = createServiceRoleClient();
@@ -48,19 +51,19 @@ export async function POST(request: Request) {
     try {
       const changed = await changeMembershipTier(user.id, tier, plan);
       if (changed) {
-        return NextResponse.redirect(`${SITE()}/account?sub=changed#premium`, { status: 303 });
+        return NextResponse.redirect(`${SITE()}${back}?sub=changed#premium`, { status: 303 });
       }
     } catch (err) {
       console.error('[stripe] membership change failed:', err);
-      return NextResponse.redirect(`${SITE()}/account?sub=unconfigured#premium`, { status: 303 });
+      return NextResponse.redirect(`${SITE()}${back}?sub=unconfigured#premium`, { status: 303 });
     }
   }
 
   try {
-    const url = await premiumCheckoutUrl(user.id, plan, '/account', tier);
+    const url = await premiumCheckoutUrl(user.id, plan, back, tier);
     return NextResponse.redirect(url, { status: 303 });
   } catch (err) {
     console.error('[stripe] premium checkout failed:', err);
-    return NextResponse.redirect(`${SITE()}/account?sub=unconfigured#premium`, { status: 303 });
+    return NextResponse.redirect(`${SITE()}${back}?sub=unconfigured#premium`, { status: 303 });
   }
 }

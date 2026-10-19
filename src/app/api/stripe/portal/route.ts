@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
-import { getStripe } from '@/lib/stripe';
+import { getStripe, membershipReturnPath } from '@/lib/stripe';
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -8,12 +8,17 @@ const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
  * POST /api/stripe/portal — open the Stripe customer portal for self-service
  * management (update card, cancel). Redirects to the portal.
  */
-export async function POST() {
+export async function POST(request: Request) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.redirect(`${SITE()}/login`, { status: 303 });
+
+  // Back to the page the button was on: the dashboard or /account/membership.
+  // The checkout route redirects here with a 307, which carries the form.
+  const form = await request.formData().catch(() => null);
+  const back = membershipReturnPath(form?.get('return'));
 
   const admin = createServiceRoleClient();
   const { data: sub } = await admin
@@ -23,11 +28,11 @@ export async function POST() {
     .maybeSingle();
 
   if (!sub?.stripe_customer_id) {
-    return NextResponse.redirect(`${SITE()}/account`, { status: 303 });
+    return NextResponse.redirect(`${SITE()}${back}`, { status: 303 });
   }
 
   const stripe = getStripe();
-  const params = { customer: sub.stripe_customer_id, return_url: `${SITE()}/account#premium` };
+  const params = { customer: sub.stripe_customer_id, return_url: `${SITE()}${back}#premium` };
   let session;
   try {
     session = await stripe.billingPortal.sessions.create(params);

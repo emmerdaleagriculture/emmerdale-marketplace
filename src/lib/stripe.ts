@@ -223,6 +223,16 @@ export async function premiumCheckoutUrl(
 }
 
 /**
+ * Where a membership button sends the contractor back to afterwards. The
+ * form says which page it was on; anything else — a forged value, a
+ * missing field — is the dashboard, so a redirect can never leave the site.
+ */
+export const MEMBERSHIP_RETURN_PATHS = ['/account', '/account/membership'] as const;
+export function membershipReturnPath(value: unknown): (typeof MEMBERSHIP_RETURN_PATHS)[number] {
+  return MEMBERSHIP_RETURN_PATHS.find((p) => p === value) ?? '/account';
+}
+
+/**
  * Move a live membership to another tier or plan: the price on the Stripe
  * subscription is swapped, prorated from today, and the row re-read. Used
  * for premium → Open (and back) from the dashboard, so a member never holds
