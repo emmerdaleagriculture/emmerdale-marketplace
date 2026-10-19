@@ -185,10 +185,9 @@ export async function syncSubscription(sub: Stripe.Subscription) {
 export async function premiumCheckoutUrl(
   contractorId: string,
   plan: PremiumPlan,
-  returnPath = '/account',
+  returnPath: MembershipReturnPath = '/account',
   tier: MembershipTier = 'premium',
 ): Promise<string> {
-  const site = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const admin = createServiceRoleClient();
   const [{ data: contractor }, { data: sub }] = await Promise.all([
     admin.from('contractors').select('email, business_name').eq('id', contractorId).maybeSingle(),
@@ -215,11 +214,33 @@ export async function premiumCheckoutUrl(
     customer: customerId,
     line_items: [{ price: await membershipPriceId(stripe, tier, plan), quantity: 1 }],
     subscription_data: { metadata: { contractor_id: contractorId, plan, tier } },
-    success_url: `${site}${returnPath}?sub=success#premium`,
-    cancel_url: `${site}${returnPath}?sub=cancelled#premium`,
+    success_url: membershipReturnUrl(returnPath, 'success'),
+    cancel_url: membershipReturnUrl(returnPath, 'cancelled'),
     allow_promotion_codes: true,
   });
   return session.url!;
+}
+
+/**
+ * Where a membership button sends the contractor back to afterwards. The
+ * form says which page it was on; anything else — a forged value, a
+ * missing field — is the dashboard, so a redirect can never leave the site.
+ */
+export const MEMBERSHIP_RETURN_PATHS = ['/account', '/account/membership'] as const;
+export type MembershipReturnPath = (typeof MEMBERSHIP_RETURN_PATHS)[number];
+export function membershipReturnPath(value: unknown): MembershipReturnPath {
+  return MEMBERSHIP_RETURN_PATHS.find((p) => p === value) ?? '/account';
+}
+
+/**
+ * The URL to send them back to, with what happened in ?sub=. On the
+ * dashboard the membership panel is part-way down, so the fragment scrolls
+ * to it; the membership page is the panel, and has no #premium.
+ */
+export function membershipReturnUrl(back: MembershipReturnPath, notice?: string): string {
+  const site = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const query = notice ? `?sub=${notice}` : '';
+  return `${site}${back}${query}${back === '/account' ? '#premium' : ''}`;
 }
 
 /**

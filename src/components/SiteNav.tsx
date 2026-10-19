@@ -171,13 +171,13 @@ function Icon({ name }: { name: IconName }) {
 
 function membershipItem(membership: Membership): Item {
   if (membership === 'open') {
-    return { href: '/account#premium', label: 'Open membership', icon: 'star', hint: 'Your plan', tag: 'Open' };
+    return { href: '/account/membership', label: 'Open membership', icon: 'star', hint: 'Your plan', tag: 'Open' };
   }
   if (membership === 'premium') {
-    return { href: '/account#premium', label: 'Premium membership', icon: 'star', hint: 'Your plan', tag: 'Premium' };
+    return { href: '/account/membership', label: 'Premium membership', icon: 'star', hint: 'Your plan', tag: 'Premium' };
   }
   return {
-    href: '/account#premium',
+    href: '/account/membership',
     label: 'Upgrade now',
     icon: 'star',
     hint: 'First refusal on new jobs and 5% commission, from £20 a month',
@@ -278,7 +278,7 @@ export function SiteNav() {
         ],
       });
       // Where they stand with us, and the way up if they are on the free
-      // plan. The membership panel lives on the dashboard.
+      // plan. Its own page: join, change tier, billing.
       groups.push({ label: 'Membership', items: [membershipItem(viewer.membership)], membership: true });
     }
     const customerItems: Item[] = [];
