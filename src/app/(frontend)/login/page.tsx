@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { LoginForm } from './LoginForm';
 import { SignInButtons } from '@/components/app/SignInButtons';
+import { signInProvidersConfigured } from '@/lib/app/signInProviders';
 import { appPlatform } from '@/lib/appMode.server';
 import { getUser, postLoginPath, safeInternalPath } from '@/lib/auth';
 import a from '../auth.module.css';
@@ -47,9 +48,11 @@ export default async function LoginPage({
           {/* Google and Apple (PRD task 3). The same account as the password
               login: an existing address is linked, not duplicated. With no
               ?next=, the callback routes by role as the form does. */}
-          <div style={{ marginBottom: 18 }}>
-            <SignInButtons next={next ?? ''} compact dividerText="or with your password" appleFirst={(await appPlatform()) === 'ios'} />
-          </div>
+          {signInProvidersConfigured().length > 0 && (
+            <div style={{ marginBottom: 18 }}>
+              <SignInButtons next={next ?? ''} compact dividerText="or with your password" appleFirst={(await appPlatform()) === 'ios'} />
+            </div>
+          )}
           <LoginForm next={next ?? undefined} />
         </div>
       </main>

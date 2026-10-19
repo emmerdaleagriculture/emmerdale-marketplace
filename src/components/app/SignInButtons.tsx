@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { appPlatform, isNativeApp } from '@/lib/app/isApp';
 import { nativeProvidersAvailable, nativeSignIn, type NativeProvider } from '@/lib/app/nativeSignIn';
+import { signInProvidersConfigured } from '@/lib/app/signInProviders';
 import f from '@/components/forms/forms.module.css';
 import s from './SignInButtons.module.css';
 
@@ -19,6 +20,11 @@ import s from './SignInButtons.module.css';
  *
  * Apple first on an iPhone, Google first on Android; on the web, Google
  * first. Both land on `next` ('/app/continue?role=…' in the app).
+ *
+ * Only a configured provider is offered (lib/app/signInProviders.ts): with
+ * neither client ID set this renders nothing at all, divider included, so
+ * the pages can keep their markup. Callers that put their own chrome around
+ * the buttons check signInProvidersConfigured() themselves.
  */
 export function SignInButtons({
   next,
@@ -117,9 +123,11 @@ export function SignInButtons({
     </button>
   );
 
+  const configured = signInProvidersConfigured();
   const buttons = (appleFirst ? [apple, google] : [google, apple]).filter(
-    (b) => !hidden.includes(b.key as NativeProvider),
+    (b) => configured.includes(b.key as NativeProvider) && !hidden.includes(b.key as NativeProvider),
   );
+  if (configured.length === 0) return null;
   return (
     <div className={s.wrap}>
       {buttons}

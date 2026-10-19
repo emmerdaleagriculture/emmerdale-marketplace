@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SignupForm } from './SignupForm';
 import { SignInButtons } from '@/components/app/SignInButtons';
+import { signInProvidersConfigured } from '@/lib/app/signInProviders';
 import { appPlatform } from '@/lib/appMode.server';
 import { getUser, safeInternalPath } from '@/lib/auth';
 import a from '../auth.module.css';
@@ -138,14 +139,16 @@ export default async function SignupPage({
 
           {/* Google and Apple (PRD task 3). A contractor lands in onboarding
               as the password form does; a customer goes back to their job. */}
-          <div style={{ marginBottom: 18 }}>
-            <SignInButtons
-              next={next ?? (isCustomerSignup(next, params.from) ? '/my' : '/onboarding')}
-              compact
-              dividerText="or with an email and password"
-              appleFirst={(await appPlatform()) === 'ios'}
-            />
-          </div>
+          {signInProvidersConfigured().length > 0 && (
+            <div style={{ marginBottom: 18 }}>
+              <SignInButtons
+                next={next ?? (isCustomerSignup(next, params.from) ? '/my' : '/onboarding')}
+                compact
+                dividerText="or with an email and password"
+                appleFirst={(await appPlatform()) === 'ios'}
+              />
+            </div>
+          )}
           <SignupForm next={next ?? undefined} from={params.from} />
         </div>
       </main>
