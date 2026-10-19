@@ -29,6 +29,27 @@ const config: CapacitorConfig = {
     cleartext: false,
   },
 
+  // Tells the website it is running inside the app ("app mode": no website
+  // header or footer, tab bar, native sign-in, camera and location). The
+  // site reads this in src/lib/appMode.ts. Keep the version in step with
+  // MARKETING_VERSION in scripts/release-ios.sh and versionName on Android.
+  appendUserAgent: 'EmmerdaleApp/1.0.0',
+
+  plugins: {
+    // Native Apple and Google sign-in sheets used by the website's
+    // src/lib/app/nativeSignIn.ts. Facebook and Twitter are left out so
+    // their SDKs are not bundled.
+    SocialLogin: {
+      providers: {
+        google: true,
+        apple: true,
+        facebook: false,
+        twitter: false,
+      },
+      logLevel: 1,
+    },
+  },
+
   ios: {
     // Lets the WebView content sit under the status bar / home indicator
     // safe areas the way a native iOS app is expected to, rather than

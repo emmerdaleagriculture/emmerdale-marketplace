@@ -19,6 +19,25 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- App links: texts, pushes and payment returns on the website open the app.
+                 Verified against https://www.emmerdaleagriculture.com/.well-known/assetlinks.json
+                 once the Play app-signing SHA-256 is added there. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.emmerdaleagriculture.com" />
+                <data android:pathPrefix="/app" />
+                <data android:pathPrefix="/t/" />
+                <data android:pathPrefix="/my/" />
+                <data android:pathPrefix="/quote/" />
+                <data android:pathPrefix="/messages" />
+                <data android:pathPrefix="/invitations" />
+                <data android:pathPrefix="/won" />
+                <data android:pathPrefix="/jobs" />
+                <data android:pathPrefix="/account" />
+            </intent-filter>
         </activity>
 
         <provider

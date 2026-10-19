@@ -22,6 +22,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
@@ -29,7 +31,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose photos to attach to your job or show completed work.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Use your location, only when you choose Use my location, to help fill in the job postcode.</string>
+	<string>Used only when you tap Use my location, to find approved operators who cover your land.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
