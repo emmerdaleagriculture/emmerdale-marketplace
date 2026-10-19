@@ -17,7 +17,11 @@ import { useEffect, useState } from 'react';
  * lookup is shared between header and footer: one request per page load.
  */
 export type ViewerRole = 'contractor' | 'customer' | 'both' | 'account';
-export type Viewer = { signedIn: false } | { signedIn: true; role: ViewerRole };
+/** A contractor's paid tier, or null when they are on the free plan. */
+export type Membership = 'premium' | 'open' | null;
+export type Viewer =
+  | { signedIn: false }
+  | { signedIn: true; role: ViewerRole; membership: Membership };
 
 const SIGNED_OUT: Viewer = { signedIn: false };
 
@@ -37,9 +41,14 @@ function loadViewer(): Promise<Viewer> {
       const supabase = createClient();
       const { data } = await supabase.auth.getUser();
       if (!data.user) return SIGNED_OUT;
-      const [contractor, customer] = await Promise.all([
-        supabase.from('contractors').select('id').eq('id', data.user.id).maybeSingle(),
+      const [contractor, customer, sub] = await Promise.all([
+        supabase
+          .from('contractors')
+          .select('id, premium_comped_until, open_comped_until')
+          .eq('id', data.user.id)
+          .maybeSingle(),
         supabase.from('customers').select('id').eq('id', data.user.id).maybeSingle(),
+        supabase.from('subscriptions').select('status, tier').eq('contractor_id', data.user.id).maybeSingle(),
       ]);
       const role: ViewerRole =
         contractor.data && customer.data
@@ -49,7 +58,20 @@ function loadViewer(): Promise<Viewer> {
             : customer.data
               ? 'customer'
               : 'account';
-      return { signedIn: true, role } as Viewer;
+      // The same reading as the dashboard badge: a live Stripe subscription
+      // (past_due still counts — the card is being retried) or a comped
+      // period that has not run out.
+      const now = Date.now();
+      const comped = (until: string | null | undefined) => Boolean(until && new Date(until).getTime() > now);
+      const subLive = sub.data?.status === 'active' || sub.data?.status === 'past_due';
+      const membership: Membership = !contractor.data
+        ? null
+        : (subLive && sub.data?.tier === 'open') || comped(contractor.data.open_comped_until)
+          ? 'open'
+          : subLive || comped(contractor.data.premium_comped_until)
+            ? 'premium'
+            : null;
+      return { signedIn: true, role, membership } as Viewer;
     })
     .catch(() => {
       pending = null;

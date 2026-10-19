@@ -20,7 +20,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px 24px;
+  gap: 12px 20px;
   flex-wrap: wrap;
 }
 .brand {
@@ -29,24 +29,20 @@
   letter-spacing: 0.03em;
   color: var(--white);
 }
-.nav {
+.bar {
   display: flex;
   align-items: center;
-  gap: 22px;
-  font-size: 13px;
+  margin-left: auto;
+  font-size: 12.5px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.nav a {
+.bar a {
   color: var(--white);
   opacity: 0.9;
 }
-.nav a:hover {
+.bar a:hover {
   opacity: 1;
-}
-/* Links then icons, together at the right; the brand keeps the left. */
-.nav {
-  margin-left: auto;
 }
 .social {
   color: var(--white);
@@ -75,34 +71,51 @@
 .cta:hover {
   background: var(--jd-yellow-dark);
 }
-.nav form {
-  display: contents;
-}
 
 /*
- * Which page you are on. The bar gave no answer to that at all — every link
- * looked identical from every page. Yellow because it is the one accent that
- * reads on both the solid green bar and the transparent overlay over a photo.
- * Inset shadow rather than border-bottom so nothing shifts by a pixel when a
- * link becomes current.
+ * The membership link, the one thing on the bar. The upgrade is a yellow pill
+ * — the join button's colour, in the join button's place — so it is the first
+ * thing a free-plan contractor's eye lands on. A member sees their plan name
+ * quietly in white.
  */
-.nav a.on {
-  opacity: 1;
-  font-weight: 600;
-  padding-bottom: 4px;
-  box-shadow: inset 0 -2px 0 var(--jd-yellow);
+.upgradeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--jd-yellow);
+  color: var(--jd-green-deep) !important;
+  font-weight: 700;
+  opacity: 1 !important;
+  box-shadow: 0 6px 16px -8px rgba(255, 222, 0, 0.7);
+  transition: background 0.15s ease, transform 0.15s ease;
 }
-/* In the menu the rows already have a rule under them, so a left marker is
-   the one that reads. */
-.mobileMenu a.on {
+.upgradeLink:hover {
+  background: var(--jd-yellow-dark);
+  transform: translateY(-1px);
+}
+.planLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   font-weight: 600;
-  box-shadow: inset 2px 0 0 var(--jd-yellow);
-  padding-left: 10px;
+}
+.planLink span {
+  color: var(--jd-yellow);
 }
 
-/* Burger — only ever visible once .nav has been put away. */
+/* The burger and the menu share an anchor so the popover hangs off it. */
+.menuAnchor {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
 .navToggle {
-  display: none;
+  display: block;
   background: none;
   border: 0;
   padding: 6px;
@@ -110,66 +123,203 @@
   color: var(--white);
   cursor: pointer;
   line-height: 0;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+.navToggle:hover,
+.navToggle[aria-expanded='true'] {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /*
- * Its own background and its own stacking. In the solid header this is the
- * same green it already sat on; over a transparent overlay header — the notes
- * hero — it is the difference between a menu and white-on-photograph.
+ * The menu. Its own background and its own stacking: in the solid header this
+ * is the same green it already sat on; over a transparent overlay header — the
+ * notes hero — it is the difference between a menu and white-on-photograph.
+ * On desktop it is a popover under the burger; on a phone, a sheet across the
+ * full width of the bar (the rules at the end of the file).
+ *
+ * Rows sit in labelled groups (Your work · Membership · Explore) on a slightly
+ * lighter panel than the bar, each with an icon and a chevron, so the list
+ * reads as a place rather than a column of words. The membership row is the
+ * one offer among the pages, and when it is an upgrade it gets the yellow
+ * card treatment the join button already has.
  */
-.mobileMenu {
+.menu {
   display: none;
-  position: relative;
-  z-index: 1;
-  background: var(--jd-green-deep);
-  margin: 0 -16px -12px;
-  padding-left: 16px;
-  padding-right: 16px;
-  flex-basis: 100%;
+  z-index: 30;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  padding: 8px 0 4px;
+  gap: 18px;
+  padding: 14px 12px 16px;
+  background: linear-gradient(180deg, #1d3f12 0%, var(--jd-green-deep) 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 32px -16px rgba(0, 0, 0, 0.5);
+  text-transform: none;
+  letter-spacing: 0;
   font-size: 15px;
-  letter-spacing: 0.02em;
 }
-.mobileMenu a,
-.mobileMenu button {
+.menuGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.menuLabel {
+  padding: 0 10px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+.menuRow,
+.menuUpgrade {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 10px;
+  border-radius: 10px;
+  color: var(--white);
+  font-weight: 500;
+  transition: background 0.15s ease;
+}
+.menuRow:hover,
+.menuRow:focus-visible {
+  background: rgba(255, 255, 255, 0.07);
+}
+.menuRow:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+.menuIcon {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.72);
+}
+.menuText {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.menuTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.menuHint {
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.62);
+}
+.menuTag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--jd-yellow);
+  color: var(--jd-green-deep);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.menuChevron {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.35);
+}
+/* Where you are: a yellow marker and a lift, the colour the bar uses. */
+.menuRow.on {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 3px 0 0 var(--jd-yellow);
+  font-weight: 600;
+}
+.menuRow.on .menuIcon {
+  color: var(--jd-yellow);
+}
+
+/* The upgrade card. Yellow on green, like the join button, but a full row:
+   star, headline, what you get, and the arrow in. */
+.menuUpgrade {
+  margin-top: 2px;
+  padding: 12px 12px;
+  background: linear-gradient(135deg, var(--jd-yellow) 0%, #ffe84d 100%);
+  color: var(--jd-green-deep);
+  box-shadow: 0 8px 20px -10px rgba(255, 222, 0, 0.6);
+}
+.menuUpgrade:hover,
+.menuUpgrade:focus-visible {
+  background: linear-gradient(135deg, var(--jd-yellow-dark) 0%, var(--jd-yellow) 100%);
+}
+.menuUpgrade .menuIcon {
+  color: var(--jd-green-deep);
+  fill: var(--jd-green-deep);
+}
+.menuUpgrade .menuTitle {
+  font-size: 16px;
+  font-weight: 700;
+}
+.menuUpgrade .menuHint {
+  color: rgba(23, 51, 13, 0.8);
+}
+.menuUpgrade .menuChevron {
+  color: var(--jd-green-deep);
+}
+
+/* Log out, or join: the last thing, on its own, with a rule above. */
+.menuFoot {
+  padding: 12px 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.menuFoot form {
+  width: 100%;
+}
+.menuFoot .linkButton {
   display: block;
   width: 100%;
-  padding: 11px 2px;
-  color: var(--white);
+  padding: 8px 0;
   text-align: left;
-  font-size: 15px;
+  font-size: 14px;
   letter-spacing: 0.02em;
   text-transform: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-}
-.mobileMenu form {
-  width: 100%;
-}
-.mobileMenu button {
+  color: rgba(255, 255, 255, 0.75);
   background: none;
-  border-width: 0 0 1px 0;
+  border: 0;
   cursor: pointer;
 }
-.mobileMenu a:last-child,
-.mobileMenu form:last-child button {
-  border-bottom: 0;
+.menuFoot .linkButton:hover {
+  color: var(--white);
 }
 /* The join CTA keeps its button shape rather than becoming another row. */
-.mobileMenu .cta {
-  width: auto;
-  margin-top: 10px;
-  padding: 11px 18px;
-  border-bottom: 0;
+.menuFoot .cta {
+  display: block;
+  width: 100%;
   text-align: center;
+  padding: 12px 18px;
+  border-radius: 10px;
+}
+
+/* Open: a popover hanging off the burger's right edge. */
+.menu:not([hidden]) {
+  display: flex;
+}
+@media (min-width: 821px) {
+  .menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: -6px;
+    width: 340px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.2);
+  }
+  /* Membership is out on the bar at this width. */
+  .menuMembership {
+    display: none;
+  }
 }
 
 /*
- * A signed-in contractor carries seven links. They stopped fitting long before
- * 620px — the row simply overflowed the viewport and took "Log out" with it —
- * so the switch to a menu happens while there is still room to make it.
+ * A phone. The membership link comes off the bar and into the menu, which
+ * becomes a sheet the full width of the header.
  */
 @media (max-width: 820px) {
   .inner {
@@ -179,17 +329,22 @@
   .brand {
     font-size: 16px;
   }
-  .nav {
+  .bar {
     display: none;
   }
-  /* With the links put away, the icons take over the right-hand side. */
+  /* The icons take over the right-hand side, the burger after them. */
   .social {
     margin-left: auto;
   }
-  .navToggle {
-    display: block;
+  .menuAnchor {
+    display: contents;
   }
-  .mobileMenu:not([hidden]) {
-    display: flex;
+  .menu {
+    position: relative;
+    /* Bleed to both edges: the negative margins pull it left, and the width
+       has to grow by the same again or the right edge stops short. */
+    flex-basis: calc(100% + 32px);
+    max-width: none;
+    margin: 4px -16px -12px;
   }
 }
