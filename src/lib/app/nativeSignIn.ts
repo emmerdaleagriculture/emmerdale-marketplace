@@ -1,4 +1,5 @@
 import { appPlatform, isNativeApp } from '@/lib/app/isApp';
+import { appleServicesId, googleIosClientId, googleWebClientId } from '@/lib/app/signInProviders';
 
 /**
  * Apple and Google sign-in through the native sheets, inside the app only
@@ -6,11 +7,8 @@ import { appPlatform, isNativeApp } from '@/lib/app/isApp';
  * it and hands the ID token to Supabase. Nothing here runs on the website:
  * the buttons use supabase.auth.signInWithOAuth there (SignInButtons.tsx).
  *
- * Client IDs are public identifiers, so they ship as NEXT_PUBLIC_* values:
- *   NEXT_PUBLIC_APPLE_SERVICES_ID      the Services ID (also the Supabase
- *                                      Apple provider's client id)
- *   NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID   the Web client (Android and Supabase)
- *   NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID   the iOS client
+ * Client IDs come from lib/app/signInProviders.ts (NEXT_PUBLIC_* values);
+ * a provider without one is never offered, on the website or in the app.
  *
  * Nonce, for Apple: Apple is handed the SHA-256 of a random value and puts
  * that hash in the ID token; Supabase is handed the random value itself and
@@ -25,15 +23,14 @@ export type NativeSignInResult =
   | { ok: true; name: string | null }
   | { ok: false; cancelled: boolean; message: string };
 
-const APPLE_ID = (process.env.NEXT_PUBLIC_APPLE_SERVICES_ID ?? '').trim();
-const GOOGLE_WEB = (process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '').trim();
-const GOOGLE_IOS = (process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '').trim();
-
 /** Which native sheets can be offered on this device. */
 export function nativeProvidersAvailable(): NativeProvider[] {
   if (!isNativeApp()) return [];
   const out: NativeProvider[] = [];
   const platform = appPlatform();
+  const APPLE_ID = appleServicesId();
+  const GOOGLE_WEB = googleWebClientId();
+  const GOOGLE_IOS = googleIosClientId();
   // Sign in with Apple is iOS-native; on Android the plugin would fall back
   // to a web flow that needs a redirect server, so Android gets the OAuth
   // flow through Supabase instead (SignInButtons handles that).
@@ -52,6 +49,9 @@ let initialised: Promise<typeof import('@capgo/capacitor-social-login')['SocialL
 
 function plugin() {
   initialised ??= import('@capgo/capacitor-social-login').then(async ({ SocialLogin }) => {
+    const APPLE_ID = appleServicesId();
+    const GOOGLE_WEB = googleWebClientId();
+    const GOOGLE_IOS = googleIosClientId();
     await SocialLogin.initialize({
       ...(APPLE_ID ? { apple: { clientId: APPLE_ID } } : {}),
       ...(GOOGLE_WEB

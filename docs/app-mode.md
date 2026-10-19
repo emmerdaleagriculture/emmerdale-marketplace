@@ -75,6 +75,8 @@ major.
 | Auth → URL configuration | `https://www.emmerdaleagriculture.com/auth/callback` is already covered by the `/**` allow-list entry |
 | Vercel env (public) | `NEXT_PUBLIC_APPLE_SERVICES_ID`, `NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID` |
 
+The buttons are the switch: "Continue with Apple" renders only once `NEXT_PUBLIC_APPLE_SERVICES_ID` is set, "Continue with Google" only once `NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID` is (`src/lib/app/signInProviders.ts`), on the website and in the app. Enable the Supabase provider before setting the ID, or the button leads to "Unsupported provider: provider is not enabled". Redeploy after setting either: `NEXT_PUBLIC_*` values are baked in at build time.
+
 Account linking: Supabase links a Google or Apple identity to an existing
 account with the same verified email automatically (manual linking is off),
 so an existing contractor signing in with Google on their usual address

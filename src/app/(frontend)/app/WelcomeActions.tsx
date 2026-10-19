@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { SignInButtons } from '@/components/app/SignInButtons';
+import { signInProvidersConfigured } from '@/lib/app/signInProviders';
 import { OPERATOR_CTA, OPERATOR_QUESTION } from '@/lib/home/proposition';
 import type { RoleIntent } from '@/lib/app/landing';
 import s from './app.module.css';
@@ -17,6 +18,8 @@ export function WelcomeActions({ initialIntent, appleFirst }: { initialIntent: R
   const role = contractor ? 'contractor' : null;
   const next = role ? `/app/continue?role=${role}` : '/app/continue';
   const emailHref = role ? `/app/email?role=${role}` : '/app/email';
+  // No Apple or Google until their client IDs are set: email is the only way in.
+  const social = signInProvidersConfigured().length > 0;
 
   return (
     <div className={s.actions}>
@@ -25,8 +28,12 @@ export function WelcomeActions({ initialIntent, appleFirst }: { initialIntent: R
           Sign in or apply with the account you&rsquo;ll run your business from.
         </p>
       )}
-      <SignInButtons next={next} appleFirst={appleFirst} />
-      <div className={s.or}>or</div>
+      {social && (
+        <>
+          <SignInButtons next={next} appleFirst={appleFirst} />
+          <div className={s.or}>or</div>
+        </>
+      )}
       <Link href={emailHref} className={s.emailBtn}>
         <MailMark /> Continue with email
       </Link>
