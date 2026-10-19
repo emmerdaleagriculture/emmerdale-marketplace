@@ -106,7 +106,7 @@ export default async function AccountPage({
       .limit(500),
     supabase
       .from('subscriptions')
-      .select('status, plan, current_period_end, cancel_at_period_end')
+      .select('status, plan, tier, current_period_end, cancel_at_period_end')
       .eq('contractor_id', user.id)
       .maybeSingle(),
   ]);
@@ -208,9 +208,14 @@ export default async function AccountPage({
   ];
 
   const status = contractor.status;
+  const subLive = subQ.data?.status === 'active' || subQ.data?.status === 'past_due';
+  const openComped = Boolean(
+    contractor.open_comped_until && new Date(contractor.open_comped_until) > new Date(),
+  );
+  const isOpen = (subLive && subQ.data?.tier === 'open') || openComped;
   const isPremium =
-    subQ.data?.status === 'active' ||
-    subQ.data?.status === 'past_due' ||
+    subLive ||
+    openComped ||
     Boolean(contractor.premium_comped_until && new Date(contractor.premium_comped_until) > new Date());
   const serviceCount = (contractor.services ?? []).length;
 
@@ -224,7 +229,9 @@ export default async function AccountPage({
           <h1 className={a.title}>{contractor.business_name}</h1>
           <div className={ac.statusRow}>
             <span className={`${ac.badge} ${ac[status] ?? ''}`}>{STATUS_LABELS[status] ?? status}</span>
-            {isPremium && <span className={`${ac.badge} ${ac.premiumBadge}`}>★ Premium</span>}
+            {isPremium && (
+              <span className={`${ac.badge} ${ac.premiumBadge}`}>{isOpen ? '◆ Open' : '★ Premium'}</span>
+            )}
             {(contractor.rating_count ?? 0) > 0 && contractor.rating_avg != null && (
               <span>
                 ★ {Number(contractor.rating_avg).toFixed(1)} · {contractor.rating_count} rating
@@ -250,6 +257,7 @@ export default async function AccountPage({
             <PremiumPanel
               sub={subQ.data ?? null}
               compedUntil={contractor.premium_comped_until ?? null}
+              openCompedUntil={contractor.open_comped_until ?? null}
               notice={subNotice}
               pending
             />
@@ -271,6 +279,7 @@ export default async function AccountPage({
             <PremiumPanel
               sub={subQ.data ?? null}
               compedUntil={contractor.premium_comped_until ?? null}
+              openCompedUntil={contractor.open_comped_until ?? null}
               notice={subNotice}
               suspended
             />
@@ -354,6 +363,7 @@ export default async function AccountPage({
               <PremiumPanel
                 sub={subQ.data ?? null}
                 compedUntil={contractor.premium_comped_until ?? null}
+              openCompedUntil={contractor.open_comped_until ?? null}
                 notice={subNotice}
               />
             </>

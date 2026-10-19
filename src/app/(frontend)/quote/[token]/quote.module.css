@@ -152,3 +152,38 @@
   background: var(--jd-green-deep);
   color: var(--white);
 }
+
+/* ── Open membership: the customer's details (20261019120000) ─────────── */
+.contactPanel {
+  padding: 14px 16px;
+  border: 1px solid #d9b800;
+  border-radius: 8px;
+  background: #fff8d6;
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+.contactHead {
+  margin-bottom: 12px;
+}
+.contactGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px 16px;
+}
+.contactLabel {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 2px;
+}
+.contactLink {
+  text-decoration: underline;
+  color: var(--jd-green-deep);
+  word-break: break-all;
+}
+.contactNote {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--ink-2);
+}

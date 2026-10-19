@@ -131,11 +131,17 @@ export async function setPremiumComp(formData: FormData) {
 
   const id = String(formData.get('id') || '');
   const months = Number(formData.get('months') || 0);
+  // 'open' comps the Open tier (20261019120000): premium plus the customer's
+  // details on every invitation. Anything else is a premium comp.
+  const tier = formData.get('tier') === 'open' ? 'open' : 'premium';
   if (!id || !Number.isFinite(months) || months < 0 || months > 36) return;
 
   const until = months > 0 ? new Date(Date.now() + months * 30.44 * 24 * 60 * 60 * 1000).toISOString() : null;
   const admin = createServiceRoleClient();
-  const { error } = await admin.from('contractors').update({ premium_comped_until: until }).eq('id', id);
+  const { error } = await admin
+    .from('contractors')
+    .update(tier === 'open' ? { open_comped_until: until } : { premium_comped_until: until })
+    .eq('id', id);
   if (error) throw new Error(error.message);
   if (until) await admin.rpc('invite_contractor_to_open_jobs', { p_contractor_id: id });
 

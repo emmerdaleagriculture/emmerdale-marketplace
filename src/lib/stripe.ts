@@ -16,24 +16,57 @@ export function stripeConfigured(): boolean {
 }
 
 /**
- * Premium membership. The prices live in Stripe under these lookup keys and
- * are created on first use, so there is nothing to set up by hand and no
- * price id to keep in an env var. Changing an amount means a new lookup key:
- * a Stripe price is immutable, and existing subscribers stay on the old one.
+ * Memberships. The prices live in Stripe under these lookup keys and are
+ * created on first use, so there is nothing to set up by hand and no price
+ * id to keep in an env var. Changing an amount means a new lookup key: a
+ * Stripe price is immutable, and existing subscribers stay on the old one.
+ *
+ * Two tiers, one product each. Premium (£20/£199): first refusal and 5%.
+ * Open (£49/£399): the same, plus the customer's contact details on every
+ * invitation, to deal with them directly. A contractor holds one
+ * subscription; switching tier swaps the price on it (changeMembershipTier).
  */
-export const PREMIUM_PLANS = {
-  monthly: { lookupKey: 'premium_monthly_2000', amountPence: 2000, interval: 'month' },
-  annual: { lookupKey: 'premium_annual_19900', amountPence: 19900, interval: 'year' },
+export const MEMBERSHIP_PLANS = {
+  premium: {
+    product: 'Premium membership',
+    monthly: { lookupKey: 'premium_monthly_2000', amountPence: 2000, interval: 'month' },
+    annual: { lookupKey: 'premium_annual_19900', amountPence: 19900, interval: 'year' },
+  },
+  open: {
+    product: 'Open membership',
+    monthly: { lookupKey: 'open_monthly_4900', amountPence: 4900, interval: 'month' },
+    annual: { lookupKey: 'open_annual_39900', amountPence: 39900, interval: 'year' },
+  },
 } as const;
-export type PremiumPlan = keyof typeof PREMIUM_PLANS;
+export type MembershipTier = keyof typeof MEMBERSHIP_PLANS;
+export type PremiumPlan = 'monthly' | 'annual';
+/** The premium tier's plans, for callers that predate tiers. */
+export const PREMIUM_PLANS = {
+  monthly: MEMBERSHIP_PLANS.premium.monthly,
+  annual: MEMBERSHIP_PLANS.premium.annual,
+} as const;
 
-export async function premiumPriceId(stripe: Stripe, plan: PremiumPlan): Promise<string> {
-  const keys = Object.values(PREMIUM_PLANS).map((p) => p.lookupKey);
+export function isMembershipTier(s: unknown): s is MembershipTier {
+  return s === 'premium' || s === 'open';
+}
+
+/** The tier a Stripe price belongs to, by its lookup key; premium when unsure. */
+export function tierOfLookupKey(key: string | null | undefined): MembershipTier {
+  return key?.startsWith('open_') ? 'open' : 'premium';
+}
+
+export async function membershipPriceId(
+  stripe: Stripe,
+  tier: MembershipTier,
+  plan: PremiumPlan,
+): Promise<string> {
+  const plans = MEMBERSHIP_PLANS[tier];
+  const keys = [plans.monthly.lookupKey, plans.annual.lookupKey];
   const { data } = await stripe.prices.list({ lookup_keys: keys, active: true, limit: 10 });
-  const want = PREMIUM_PLANS[plan];
+  const want = plans[plan];
   const found = data.find((p) => p.lookup_key === want.lookupKey);
   if (found) return found.id;
-  // Both plans under one product, so Stripe reports them as one thing.
+  // Both plans of a tier under one product, so Stripe reports them as one thing.
   const sibling = data[0];
   const product = sibling
     ? typeof sibling.product === 'string'
@@ -45,9 +78,13 @@ export async function premiumPriceId(stripe: Stripe, plan: PremiumPlan): Promise
     unit_amount: want.amountPence,
     recurring: { interval: want.interval },
     lookup_key: want.lookupKey,
-    ...(product ? { product } : { product_data: { name: 'Premium membership' } }),
+    ...(product ? { product } : { product_data: { name: plans.product } }),
   });
   return price.id;
+}
+
+export async function premiumPriceId(stripe: Stripe, plan: PremiumPlan): Promise<string> {
+  return membershipPriceId(stripe, 'premium', plan);
 }
 
 /** Map a Stripe subscription status to our subscriptions.status enum. */
@@ -89,12 +126,18 @@ export async function syncSubscription(sub: Stripe.Subscription) {
 
   const interval = sub.items?.data?.[0]?.price?.recurring?.interval;
   const status = mapStatus(sub.status);
+  // The lookup key is the truth about which tier they are paying for; the
+  // metadata written at Checkout is the fallback for a price made by hand.
+  const tier = tierOfLookupKey(
+    sub.items?.data?.[0]?.price?.lookup_key ?? (sub.metadata?.tier as string | undefined),
+  );
 
   const { error } = await admin
     .from('subscriptions')
     .update({
       stripe_subscription_id: sub.id,
       status,
+      tier,
       plan: interval === 'year' ? 'annual' : interval === 'month' ? 'monthly' : null,
       cancel_at_period_end: Boolean(sub.cancel_at_period_end),
       // Start and end of a membership, for the admin figures. A renewal is
@@ -123,22 +166,27 @@ export async function syncSubscription(sub: Stripe.Subscription) {
       .eq('id', existing.contractor_id)
       .maybeSingle();
     await notifyAdmins(
-      `New premium member: ${ct?.business_name ?? existing.contractor_id}`,
+      `New ${tier} member: ${ct?.business_name ?? existing.contractor_id}`,
       `${ct?.business_name ?? 'A contractor'} has started a ${interval === 'year' ? 'yearly' : 'monthly'} ` +
-        `premium membership.\n\n${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/admin/contractors/${existing.contractor_id}`,
+        `${tier} membership.` +
+        (tier === 'open'
+          ? ' As an Open member they see customer contact details on every job they are invited to.'
+          : '') +
+        `\n\n${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/admin/contractors/${existing.contractor_id}`,
     );
   }
 }
 
 /**
- * A Checkout session for a premium plan, for this contractor. Reuses (or
- * creates) their Stripe customer. Shared by the dashboard button and the
+ * A Checkout session for a membership plan, for this contractor. Reuses (or
+ * creates) their Stripe customer. Shared by the dashboard buttons and the
  * choice at the end of onboarding.
  */
 export async function premiumCheckoutUrl(
   contractorId: string,
   plan: PremiumPlan,
   returnPath = '/account',
+  tier: MembershipTier = 'premium',
 ): Promise<string> {
   const site = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const admin = createServiceRoleClient();
@@ -165,13 +213,62 @@ export async function premiumCheckoutUrl(
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
-    line_items: [{ price: await premiumPriceId(stripe, plan), quantity: 1 }],
-    subscription_data: { metadata: { contractor_id: contractorId, plan } },
+    line_items: [{ price: await membershipPriceId(stripe, tier, plan), quantity: 1 }],
+    subscription_data: { metadata: { contractor_id: contractorId, plan, tier } },
     success_url: `${site}${returnPath}?sub=success#premium`,
     cancel_url: `${site}${returnPath}?sub=cancelled#premium`,
     allow_promotion_codes: true,
   });
   return session.url!;
+}
+
+/**
+ * Move a live membership to another tier or plan: the price on the Stripe
+ * subscription is swapped, prorated from today, and the row re-read. Used
+ * for premium → Open (and back) from the dashboard, so a member never holds
+ * two subscriptions. Returns false when there is nothing live to change —
+ * the caller then starts a Checkout instead.
+ */
+export async function changeMembershipTier(
+  contractorId: string,
+  tier: MembershipTier,
+  plan: PremiumPlan,
+): Promise<boolean> {
+  const admin = createServiceRoleClient();
+  const { data: row } = await admin
+    .from('subscriptions')
+    .select('stripe_customer_id, stripe_subscription_id, status')
+    .eq('contractor_id', contractorId)
+    .maybeSingle();
+  if (!row?.stripe_customer_id || (row.status !== 'active' && row.status !== 'past_due')) return false;
+
+  const stripe = getStripe();
+  // By customer rather than the stored id, as refundUnapprovedPremium does:
+  // the live one is what gets changed, whatever the row last recorded.
+  const subs = await stripe.subscriptions.list({ customer: row.stripe_customer_id, status: 'all', limit: 10 });
+  const live = subs.data.find((s) => ['active', 'trialing', 'past_due', 'unpaid'].includes(s.status));
+  if (!live) return false;
+  const item = live.items.data[0];
+  if (!item) return false;
+  const priceId = await membershipPriceId(stripe, tier, plan);
+  if (item.price.id === priceId) return true; // already on it
+  const updated = await stripe.subscriptions.update(live.id, {
+    items: [{ id: item.id, price: priceId }],
+    proration_behavior: 'create_prorations',
+    cancel_at_period_end: false,
+    metadata: { ...live.metadata, tier, plan },
+  });
+  await syncSubscription(updated);
+  const { data: ct } = await admin.from('contractors').select('business_name').eq('id', contractorId).maybeSingle();
+  await notifyAdmins(
+    `Membership changed to ${tier}: ${ct?.business_name ?? contractorId}`,
+    `${ct?.business_name ?? 'A contractor'} moved their membership to ${tier} (${plan}).` +
+      (tier === 'open'
+        ? ' As an Open member they now see customer contact details on every job they are invited to.'
+        : ' They no longer see customer contact details before a job is booked.') +
+      `\n\n${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/admin/contractors/${contractorId}`,
+  );
+  return true;
 }
 
 /**

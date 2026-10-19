@@ -88,6 +88,13 @@ export function renderPush(kind: string, p: Record<string, unknown>, site: strin
       if (p.direct) {
         return { title: `A previous customer wants you again`, body: `${service}${where}. Price it or pass.`, url };
       }
+      if (p.open_member) {
+        return {
+          title: p.distance_miles != null ? `New job ${p.distance_miles} miles away` : 'New job',
+          body: `${service}${sz ? ` · ${sz}` : ''}${where}. The customer’s details are on the page.`,
+          url,
+        };
+      }
       return {
         title: p.distance_miles != null ? `New job ${p.distance_miles} miles away` : 'New job to price',
         body: `${service}${sz ? ` · ${sz}` : ''}${where}.${by ? ` Price it by ${by}.` : ''}`,

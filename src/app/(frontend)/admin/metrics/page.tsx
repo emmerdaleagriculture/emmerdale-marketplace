@@ -77,6 +77,10 @@ type PremiumSummary = {
   paid: number;
   monthly: number;
   annual: number;
+  /** Paying Open members (20261019120000), a subset of `paid`. */
+  open: number;
+  open_comped: number;
+  reveals_30d: { reveals: number; jobs: number; members: number };
   past_due: number;
   cancelling: number;
   comped: number;
@@ -91,11 +95,13 @@ type PremiumSummary = {
     id: string;
     name: string;
     kind: 'monthly' | 'annual' | 'comped' | null;
+    tier: 'premium' | 'open' | null;
     status: string;
     since: string | null;
     until: string | null;
     cancelling: boolean;
     offered_30d: number;
+    revealed_30d: number;
     priced_30d: number;
     won_30d: number;
   }[];
@@ -518,12 +524,22 @@ export default async function AdminDashboard() {
       {/* ── Premium membership ───────────────────────────────────────── */}
       {pm && (
         <>
-          <div className={s.sectionLabel}>Premium membership</div>
+          <div className={s.sectionLabel}>Membership</div>
           <Tiles>
             <Tile
               value={n(pm.paid + pm.comped)}
               label="Members"
               hint={`${n(pm.monthly)} monthly · ${n(pm.annual)} yearly${pm.comped ? ` · ${n(pm.comped)} comped` : ''}`}
+            />
+            <Tile
+              value={n((pm.open ?? 0) + (pm.open_comped ?? 0))}
+              label="Open members"
+              hint={`${n(pm.open ?? 0)} paying${pm.open_comped ? ` · ${n(pm.open_comped)} comped` : ''} · see customer details on every job`}
+            />
+            <Tile
+              value={n(pm.reveals_30d?.reveals ?? 0)}
+              label="Customer details shown, 30 days"
+              hint={`${n(pm.reveals_30d?.jobs ?? 0)} jobs · ${n(pm.reveals_30d?.members ?? 0)} Open members`}
             />
             <Tile value={gbp(pm.mrr_pence)} label="Monthly recurring" hint="Yearly plans spread over 12 months" />
             <Tile
@@ -556,13 +572,14 @@ export default async function AdminDashboard() {
             </p>
           )}
           {pm.members.length > 0 ? (
-            <AdminTable head={['Member', 'Plan', 'Since', 'Renews / ends', 'Offered first, 30d', 'Priced, 30d', 'Won, 30d']}>
+            <AdminTable head={['Member', 'Plan', 'Since', 'Renews / ends', 'Offered first, 30d', 'Details seen, 30d', 'Priced, 30d', 'Won, 30d']}>
               {pm.members.map((m) => (
                 <tr key={m.id}>
                   <td>
                     <Link href={`/admin/contractors/${m.id}`}>{m.name}</Link>
                   </td>
                   <td>
+                    {m.tier === 'open' ? 'Open · ' : ''}
                     {m.kind === 'annual' ? 'Yearly' : m.kind === 'comped' ? 'Comped' : 'Monthly'}
                     {m.status === 'past_due' ? ' · payment failed' : ''}
                   </td>
@@ -572,13 +589,14 @@ export default async function AdminDashboard() {
                     {m.cancelling ? ' (cancelling)' : ''}
                   </td>
                   <td>{n(m.offered_30d)}</td>
+                  <td>{m.tier === 'open' ? n(m.revealed_30d ?? 0) : '—'}</td>
                   <td>{n(m.priced_30d)}</td>
                   <td>{n(m.won_30d)}</td>
                 </tr>
               ))}
             </AdminTable>
           ) : (
-            <p className={s.sub}>No premium members yet.</p>
+            <p className={s.sub}>No members yet.</p>
           )}
         </>
       )}

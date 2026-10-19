@@ -15,7 +15,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
   const [invitationsQ, emailsQ, contractorQuotesQ, clientQuotesQ, textsQ] = await Promise.all([
     admin
       .from('job_invitations')
-      .select('id, status, decline_reason, distance_miles, sent_at, opened_at, contractor_id, contractor:contractors(business_name, email)')
+      .select('id, status, decline_reason, distance_miles, sent_at, opened_at, contact_revealed_at, contractor_id, contractor:contractors(business_name, email)')
       .eq('submission_id', id)
       .order('sent_at', { ascending: true }),
     admin
@@ -103,9 +103,12 @@ export async function loadOutreach(id: string): Promise<Outreach> {
   );
   const outcome = (inv: Inv) => {
     const q = latestQuote.get(inv.id);
-    if (q) return `Priced ${formatGBP(q.contractor_price_pence)}${q.quote_type === 'rate' ? ' (rate)' : ''}`;
-    if (passed(inv)) return `Passed${inv.decline_reason ? ` — ${inv.decline_reason.replace(/_/g, ' ')}` : ''}`;
-    return inv.opened_at ? 'Opened, no response yet' : 'Not opened';
+    // An Open member was shown the customer's details (20261019120000): the
+    // likeliest "response" is a phone call we never see, so say so.
+    const saw = inv.contact_revealed_at ? ' · saw customer details (Open)' : '';
+    if (q) return `Priced ${formatGBP(q.contractor_price_pence)}${q.quote_type === 'rate' ? ' (rate)' : ''}${saw}`;
+    if (passed(inv)) return `Passed${inv.decline_reason ? ` — ${inv.decline_reason.replace(/_/g, ' ')}` : ''}${saw}`;
+    return inv.opened_at ? `Opened, no response yet${saw}` : 'Not opened';
   };
   const invLine = (inv: Inv, when: string | null): OutreachLine => ({
     key: inv.id,

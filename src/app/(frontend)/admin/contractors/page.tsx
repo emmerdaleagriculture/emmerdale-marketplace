@@ -48,7 +48,9 @@ function Row({ c }: { c: ContractorRow }) {
     <tr>
       <td>
         <Link href={`/admin/contractors/${c.id}`}>{c.business_name}</Link>
-        {c.premium && <b style={{ fontSize: 12, marginLeft: 6, color: '#8a6d00' }}>★ Premium</b>}
+        {c.premium && (
+          <b style={{ fontSize: 12, marginLeft: 6, color: '#8a6d00' }}>{c.open ? '◆ Open' : '★ Premium'}</b>
+        )}
         {sourceLabel(c.signup_source) && (
           <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{sourceLabel(c.signup_source)}</div>
         )}
@@ -135,6 +137,7 @@ type ContractorRow = {
   invited: number;
   opened: number;
   premium: boolean;
+  open: boolean;
   servicesOnly: boolean;
 };
 
@@ -151,9 +154,9 @@ export default async function AdminContractorsPage() {
     admin.from('admin_contractor_outreach').select('contractor_id, counties, invited, opened, services_only').limit(10000),
     admin.rpc('admin_premium_summary').then((r) => r, () => ({ data: null })),
   ]);
-  const premiumIds = new Set(
-    ((premiumSummary as { members?: { id: string }[] } | null)?.members ?? []).map((m) => m.id),
-  );
+  const members = (premiumSummary as { members?: { id: string; tier?: string }[] } | null)?.members ?? [];
+  const premiumIds = new Set(members.map((m) => m.id));
+  const openIds = new Set(members.filter((m) => m.tier === 'open').map((m) => m.id));
 
   const byId = new Map((outreach ?? []).map((o) => [o.contractor_id, o]));
   const contractors = (data ?? []).map((c) => {
@@ -164,6 +167,7 @@ export default async function AdminContractorsPage() {
       invited: o?.invited ?? 0,
       opened: o?.opened ?? 0,
       premium: premiumIds.has(c.id),
+      open: openIds.has(c.id),
       servicesOnly: o?.services_only ?? false,
     };
   }) as ContractorRow[];

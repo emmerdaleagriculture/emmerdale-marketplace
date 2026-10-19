@@ -337,7 +337,9 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           // the customer's postcode is not always the job's location) would
           // otherwise read "Where: —, Devon".
           `Where:     ${[p.postcode_district, p.county].filter(Boolean).join(', ') || 'see notes'}` +
-          ` — the full address comes if you win the job\n` +
+          (p.open_member
+            ? ` — the customer’s name, number and address are on the job page\n`
+            : ` — the full address comes if you win the job\n`) +
           `When:      ${p.urgency ?? 'not stated'}${p.target_date ? ` (by ${p.target_date})` : ''}\n` +
           (p.gate_width ? `Access:    ${p.gate_width} gate\n` : '') +
           (p.access_notes ? `Notes:     ${p.access_notes}\n` : '') +
@@ -354,6 +356,12 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             : `\nFirst come, first served: the customer sees prices as they arrive and can ` +
               `accept at any moment. ${deadline} — but the sooner you price, ` +
               `the better your chances.\n\n`) +
+          // Open members: the details are on the page, so say so before the
+          // link — the point of the membership is to pick up the phone.
+          (p.open_member
+            ? `As an Open member you have the customer’s contact details on the job page, so ` +
+              `you can get in touch and agree the work with them directly.\n\n`
+            : '') +
           `Price it: ${SITE_URL}/quote/${p.token}\n\n` +
           `Photos, a satellite view of the drawn boundary and the full spec are on that page.\n\n` +
           // The spec above is enough to know it is not for you. Until now that

@@ -39,14 +39,23 @@ export default async function ContractorDetailPage({
     admin.from('services').select('id, name').in('id', c.services ?? []).order('name'),
   ]);
 
-  const [{ data: sub }, { data: isPremium }] = await Promise.all([
+  const [{ data: sub }, { data: isPremium }, { data: tierRes }, { count: revealCount }] = await Promise.all([
     admin
       .from('subscriptions')
-      .select('status, plan, current_period_end, cancel_at_period_end, stripe_customer_id')
+      .select('status, plan, tier, current_period_end, cancel_at_period_end, stripe_customer_id')
       .eq('contractor_id', id)
       .maybeSingle(),
     admin.rpc('contractor_is_premium', { p_contractor_id: id }),
+    admin.rpc('contractor_tier', { p_contractor_id: id }),
+    // Jobs whose customer details this contractor has been shown as an Open
+    // member — the answer to "who has my number?".
+    admin
+      .from('job_invitations')
+      .select('id', { count: 'exact', head: true })
+      .eq('contractor_id', id)
+      .not('contact_revealed_at', 'is', null),
   ]);
+  const tier = tierRes === 'open' ? 'open' : isPremium ? 'premium' : null;
   // Warnings sent before, and the job a "Warn" link on a submission came from.
   const [{ data: warningRows }, { data: warnJob }] = await Promise.all([
     admin
@@ -72,6 +81,9 @@ export default async function ContractorDetailPage({
   const compedUntil = c.premium_comped_until && new Date(c.premium_comped_until) > new Date()
     ? c.premium_comped_until
     : null;
+  const openCompedUntil = c.open_comped_until && new Date(c.open_comped_until) > new Date()
+    ? c.open_comped_until
+    : null;
   const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB');
 
   const countyNames = (ccRows ?? [])
@@ -87,7 +99,11 @@ export default async function ContractorDetailPage({
       </Link>
       <h1 className={s.h1}>
         {c.business_name}
-        {isPremium && <span style={{ color: '#8a6d00', fontSize: '0.6em', marginLeft: 10 }}>★ Premium</span>}
+        {tier && (
+          <span style={{ color: '#8a6d00', fontSize: '0.6em', marginLeft: 10 }}>
+            {tier === 'open' ? '◆ Open' : '★ Premium'}
+          </span>
+        )}
       </h1>
       <p className={s.sub}>
         <StatusPill status={c.status} />
@@ -189,11 +205,11 @@ export default async function ContractorDetailPage({
         </p>
       )}
 
-      <div className={s.sectionLabel}>Premium membership</div>
+      <div className={s.sectionLabel}>Membership</div>
       <p className={s.dValue}>
-        {isPremium ? <b>Premium</b> : 'Not premium'}
+        {tier === 'open' ? <b>Open</b> : tier === 'premium' ? <b>Premium</b> : 'Not a member'}
         {sub && sub.status !== 'none'
-          ? ` · Stripe: ${sub.status}${sub.plan ? `, ${sub.plan}` : ''}` +
+          ? ` · Stripe: ${sub.status}${sub.tier ? `, ${sub.tier}` : ''}${sub.plan ? `, ${sub.plan}` : ''}` +
             (sub.current_period_end
               ? sub.cancel_at_period_end
                 ? `, ends ${day(sub.current_period_end)}`
@@ -202,16 +218,22 @@ export default async function ContractorDetailPage({
           : ''}
         {compedUntil
           ? new Date(compedUntil).getFullYear() >= 2099
-            ? ' · comped, no end date'
-            : ` · comped until ${day(compedUntil)}`
+            ? ' · premium comped, no end date'
+            : ` · premium comped until ${day(compedUntil)}`
           : ''}
+        {openCompedUntil
+          ? new Date(openCompedUntil).getFullYear() >= 2099
+            ? ' · Open comped, no end date'
+            : ` · Open comped until ${day(openCompedUntil)}`
+          : ''}
+        {revealCount ? ` · shown customer details on ${revealCount} job${revealCount === 1 ? '' : 's'}` : ''}
       </p>
       <div className={s.actions}>
         <form action={setPremiumComp}>
           <input type="hidden" name="id" value={c.id} />
           <input type="hidden" name="months" value="12" />
           <button type="submit" className={s.btnApprove}>
-            {compedUntil ? 'Extend comp to 12 months from today' : 'Comp premium for 12 months'}
+            {compedUntil ? 'Extend premium comp to 12 months from today' : 'Comp premium for 12 months'}
           </button>
         </form>
         {compedUntil && (
@@ -219,7 +241,25 @@ export default async function ContractorDetailPage({
             <input type="hidden" name="id" value={c.id} />
             <input type="hidden" name="months" value="0" />
             <button type="submit" className={s.btnSuspend}>
-              Remove comp
+              Remove premium comp
+            </button>
+          </form>
+        )}
+        <form action={setPremiumComp}>
+          <input type="hidden" name="id" value={c.id} />
+          <input type="hidden" name="tier" value="open" />
+          <input type="hidden" name="months" value="12" />
+          <button type="submit" className={s.btnApprove}>
+            {openCompedUntil ? 'Extend Open comp to 12 months from today' : 'Comp Open for 12 months'}
+          </button>
+        </form>
+        {openCompedUntil && (
+          <form action={setPremiumComp}>
+            <input type="hidden" name="id" value={c.id} />
+            <input type="hidden" name="tier" value="open" />
+            <input type="hidden" name="months" value="0" />
+            <button type="submit" className={s.btnSuspend}>
+              Remove Open comp
             </button>
           </form>
         )}
