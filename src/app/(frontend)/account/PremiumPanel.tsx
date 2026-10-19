@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { siteUrl } from '@/lib/site';
+import { membershipDay, priceLabel } from '@/lib/membership';
 import f from '@/components/forms/forms.module.css';
 import ac from './account.module.css';
 
@@ -11,12 +12,10 @@ type Sub = {
   cancel_at_period_end: boolean;
 } | null;
 
-const day = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London' });
-
+const day = membershipDay;
 const PRICE: Record<'premium' | 'open', Record<'monthly' | 'annual', string>> = {
-  premium: { monthly: '£20 a month', annual: '£199 a year' },
-  open: { monthly: '£49 a month', annual: '£399 a year' },
+  premium: { monthly: priceLabel('premium', 'monthly'), annual: priceLabel('premium', 'annual') },
+  open: { monthly: priceLabel('open', 'monthly'), annual: priceLabel('open', 'annual') },
 };
 
 /**
@@ -111,7 +110,7 @@ export function PremiumPanel({
             </form>
             {tier === 'premium' && !pending && (
               <form action="/api/stripe/checkout" method="post">
-                {back}
+              {back}
                 <input type="hidden" name="tier" value="open" />
                 <input type="hidden" name="plan" value={plan} />
                 <button className={f.btnYellow} type="submit">
@@ -202,7 +201,7 @@ export function PremiumPanel({
           </p>
           <div className={ac.premiumButtons} data-app-hide>
             <form action="/api/stripe/checkout" method="post">
-                {back}
+              {back}
               <input type="hidden" name="tier" value="premium" />
               <input type="hidden" name="plan" value="monthly" />
               <button className={f.btnPrimary} type="submit">
@@ -210,7 +209,7 @@ export function PremiumPanel({
               </button>
             </form>
             <form action="/api/stripe/checkout" method="post">
-                {back}
+              {back}
               <input type="hidden" name="tier" value="premium" />
               <input type="hidden" name="plan" value="annual" />
               <button className={f.btnPrimary} type="submit">
@@ -220,7 +219,7 @@ export function PremiumPanel({
           </div>
           <div className={ac.premiumButtons} data-app-hide style={{ marginTop: 10 }}>
             <form action="/api/stripe/checkout" method="post">
-                {back}
+              {back}
               <input type="hidden" name="tier" value="open" />
               <input type="hidden" name="plan" value="monthly" />
               <button className={f.btnYellow} type="submit">
@@ -228,7 +227,7 @@ export function PremiumPanel({
               </button>
             </form>
             <form action="/api/stripe/checkout" method="post">
-                {back}
+              {back}
               <input type="hidden" name="tier" value="open" />
               <input type="hidden" name="plan" value="annual" />
               <button className={f.btnYellow} type="submit">

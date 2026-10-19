@@ -1,5 +1,16 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { siteUrl } from '@/lib/site';
+import {
+  annualSaving as saving,
+  membershipDay as day,
+  MEMBERSHIP_NAMES as NAME,
+  MEMBERSHIP_PRICES as PRICE,
+  priceLabel as label,
+  type Membership,
+  type MembershipPlan as Plan,
+  type MembershipTier as Tier,
+} from '@/lib/membership';
 import f from '@/components/forms/forms.module.css';
 import s from './membership.module.css';
 
@@ -11,22 +22,7 @@ type Sub = {
   cancel_at_period_end: boolean;
 } | null;
 
-type Tier = 'premium' | 'open';
-type Plan = 'monthly' | 'annual';
-
-const PRICE: Record<Tier, { monthly: number; annual: number }> = {
-  premium: { monthly: 20, annual: 199 },
-  open: { monthly: 49, annual: 399 },
-};
-const NAME: Record<Tier, string> = { premium: 'Premium', open: 'Open' };
-
-const day = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London' });
-
 const gbp = (n: number) => `£${n}`;
-const label = (tier: Tier, plan: Plan) =>
-  plan === 'monthly' ? `${gbp(PRICE[tier].monthly)} a month` : `${gbp(PRICE[tier].annual)} a year`;
-const saving = (tier: Tier) => PRICE[tier].monthly * 12 - PRICE[tier].annual;
 
 function Tick() {
   return (
@@ -46,7 +42,7 @@ const OPEN_BENEFITS = [
   <><b>Agree the work directly</b> with nothing added on top — or send a price through us at 5% as usual.</>,
 ];
 
-function Benefits({ items, plus }: { items: React.ReactNode[]; plus?: string }) {
+function Benefits({ items, plus }: { items: ReactNode[]; plus?: string }) {
   return (
     <ul className={s.benefits}>
       {plus && <li className={s.plus}>{plus}</li>}
@@ -74,7 +70,7 @@ function Pay({
   plan?: Plan;
   returnPath: string;
   className: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <form action={`/api/stripe/${action}`} method="post">
@@ -98,14 +94,18 @@ function Pay({
  * The pitch and the sums are the dashboard panel's; only the shape is new.
  */
 export function MembershipView({
+  membership,
   sub,
   compedUntil,
   openCompedUntil,
   notice,
   pending,
   suspended,
+  canChange,
   returnPath,
 }: {
+  /** The tier they have, as the dashboard badge reads it (membershipOf). */
+  membership: Membership;
   sub: Sub;
   compedUntil: string | null;
   openCompedUntil: string | null;
@@ -114,15 +114,20 @@ export function MembershipView({
   pending: boolean;
   /** Suspended after approval and vetted: joining restores the account. */
   suspended: boolean;
+  /** Approved: may move between tiers. Pending and suspended may only bill. */
+  canChange: boolean;
   returnPath: string;
 }) {
   const active = sub?.status === 'active' || sub?.status === 'past_due';
-  const openComped = Boolean(openCompedUntil && new Date(openCompedUntil) > new Date());
-  const comped = Boolean(compedUntil && new Date(compedUntil) > new Date());
-  const tier: Tier = (active && sub?.tier === 'open') || openComped ? 'open' : 'premium';
+  // What they have (an Open comp outranks a paid premium) and what Stripe
+  // bills them for can differ; the header says the first, the price line
+  // and the buttons go by the second.
+  const member = membership !== null;
+  const tier: Tier = membership ?? 'premium';
+  const billed: Tier | null = active ? (sub?.tier === 'open' ? 'open' : 'premium') : null;
   const plan: Plan = sub?.plan === 'annual' ? 'annual' : 'monthly';
-  const member = active || openComped || comped;
-  const until = openComped ? openCompedUntil : comped ? compedUntil : null;
+  const openComped = Boolean(openCompedUntil && new Date(openCompedUntil) > new Date());
+  const until = openComped ? openCompedUntil : compedUntil;
   const forever = until ? new Date(until).getFullYear() >= 2099 : false;
 
   const noticeBox =
@@ -144,14 +149,15 @@ export function MembershipView({
 
   // ── A member ──────────────────────────────────────────────────────────
   if (member) {
-    const meta = active ? (
+    const meta = billed ? (
       sub?.status === 'past_due' ? (
         <><b>Last payment failed</b> — Stripe will try again. Update your card below to keep it.</>
       ) : sub?.cancel_at_period_end && sub.current_period_end ? (
         <>Ends <b>{day(sub.current_period_end)}</b> and won’t renew.</>
       ) : (
         <>
-          <b>{label(tier, plan)}</b>
+          <b>{label(billed, plan)}</b>
+          {billed !== tier ? <> for {NAME[billed]}</> : null}
           {sub?.current_period_end ? <> · renews {day(sub.current_period_end)}</> : null}
         </>
       )
@@ -187,7 +193,7 @@ export function MembershipView({
                   <Pay action="portal" returnPath={returnPath} className={f.btnGhost}>
                     Manage billing
                   </Pay>
-                  {tier === 'open' && !pending && (
+                  {billed === 'open' && canChange && (
                     <Pay action="checkout" tier="premium" plan={plan} returnPath={returnPath} className={f.btnGhost}>
                       Move to Premium — {label('premium', plan)}
                     </Pay>
@@ -201,7 +207,7 @@ export function MembershipView({
           </div>
         </section>
 
-        {active && tier === 'premium' && !pending && (
+        {billed === 'premium' && !openComped && canChange && (
           <section className={s.offer} aria-label="Move to Open">
             <div>
               <h2 className={s.offerTitle}>◆ Open — the customer’s details on every job</h2>

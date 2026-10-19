@@ -45,23 +45,29 @@ export default async function MembershipPage({
   } = await supabase.auth.getUser();
   if (!user) redirect(`/login?next=${MEMBERSHIP_PATH}`);
 
-  const { data: contractor } = await supabase
-    .from('contractors')
-    .select('id, business_name, status, vetted_at, premium_comped_until, open_comped_until')
-    .eq('id', user.id)
-    .maybeSingle();
+  const [{ data: contractor }, { data: sub }] = await Promise.all([
+    supabase
+      .from('contractors')
+      .select('id, business_name, status, vetted_at, premium_comped_until, open_comped_until')
+      .eq('id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('subscriptions')
+      .select('status, plan, tier, current_period_end, cancel_at_period_end')
+      .eq('contractor_id', user.id)
+      .maybeSingle(),
+  ]);
   if (!contractor && isAdminEmail(user.email)) redirect('/admin');
   if (!contractor) redirect(await nonContractorPath(user.id));
-
-  const { data: sub } = await supabase
-    .from('subscriptions')
-    .select('status, plan, tier, current_period_end, cancel_at_period_end')
-    .eq('contractor_id', user.id)
-    .maybeSingle();
 
   const membership = membershipOf(sub, contractor);
   const status = contractor.status;
   const canRejoin = status === 'suspended' && Boolean(contractor.vetted_at) && membership === null;
+  // A member suspended while paying still sees their plan — this is the
+  // page with the billing button, and they must be able to stop the charges.
+  // A suspended contractor with no membership and no vetting only gets the
+  // banner: joining would not restore them.
+  const showPlan = status !== 'suspended' || canRejoin || membership !== null;
 
   return (
     <div className={a.wrap}>
@@ -93,14 +99,16 @@ export default async function MembershipPage({
             </div>
           )}
 
-          {(status !== 'suspended' || canRejoin) && (
+          {showPlan && (
             <MembershipView
+              membership={membership}
               sub={sub ?? null}
               compedUntil={contractor.premium_comped_until ?? null}
               openCompedUntil={contractor.open_comped_until ?? null}
               notice={subNotice}
               pending={status === 'pending'}
               suspended={canRejoin}
+              canChange={status === 'approved'}
               returnPath={MEMBERSHIP_PATH}
             />
           )}
