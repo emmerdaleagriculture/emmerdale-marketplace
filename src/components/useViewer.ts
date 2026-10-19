@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { membershipOf, type Membership } from '@/lib/membership';
 
 /**
  * Who is looking at this page, resolved in the browser so pages wearing the
@@ -17,7 +18,10 @@ import { useEffect, useState } from 'react';
  * lookup is shared between header and footer: one request per page load.
  */
 export type ViewerRole = 'contractor' | 'customer' | 'both' | 'account';
-export type Viewer = { signedIn: false } | { signedIn: true; role: ViewerRole };
+export type { Membership };
+export type Viewer =
+  | { signedIn: false }
+  | { signedIn: true; role: ViewerRole; membership: Membership };
 
 const SIGNED_OUT: Viewer = { signedIn: false };
 
@@ -37,8 +41,15 @@ function loadViewer(): Promise<Viewer> {
       const supabase = createClient();
       const { data } = await supabase.auth.getUser();
       if (!data.user) return SIGNED_OUT;
+      // The subscription rides along on the contractor row (one-to-one over
+      // its primary key), so a customer or admin pays for no extra request
+      // and a contractor for no extra round trip. Both rows are RLS-own.
       const [contractor, customer] = await Promise.all([
-        supabase.from('contractors').select('id').eq('id', data.user.id).maybeSingle(),
+        supabase
+          .from('contractors')
+          .select('id, premium_comped_until, open_comped_until, subscriptions(status, tier)')
+          .eq('id', data.user.id)
+          .maybeSingle(),
         supabase.from('customers').select('id').eq('id', data.user.id).maybeSingle(),
       ]);
       const role: ViewerRole =
@@ -49,7 +60,11 @@ function loadViewer(): Promise<Viewer> {
             : customer.data
               ? 'customer'
               : 'account';
-      return { signedIn: true, role } as Viewer;
+      const sub = contractor.data?.subscriptions;
+      const membership: Membership = contractor.data
+        ? membershipOf(Array.isArray(sub) ? sub[0] : sub, contractor.data)
+        : null;
+      return { signedIn: true, role, membership } as Viewer;
     })
     .catch(() => {
       pending = null;

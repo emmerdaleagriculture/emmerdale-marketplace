@@ -6,6 +6,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
 import { EmailBanner } from './EmailBanner';
 import { PremiumPanel } from './PremiumPanel';
+import { membershipOf } from '@/lib/membership';
 import { contractorEmailHealth } from '@/lib/contractors/emailConfirm';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { createClient } from '@/lib/supabase/server';
@@ -208,15 +209,10 @@ export default async function AccountPage({
   ];
 
   const status = contractor.status;
-  const subLive = subQ.data?.status === 'active' || subQ.data?.status === 'past_due';
-  const openComped = Boolean(
-    contractor.open_comped_until && new Date(contractor.open_comped_until) > new Date(),
-  );
-  const isOpen = (subLive && subQ.data?.tier === 'open') || openComped;
-  const isPremium =
-    subLive ||
-    openComped ||
-    Boolean(contractor.premium_comped_until && new Date(contractor.premium_comped_until) > new Date());
+  // One reading of the tier, shared with the header (membershipOf).
+  const membership = membershipOf(subQ.data, contractor);
+  const isOpen = membership === 'open';
+  const isPremium = membership !== null;
   const serviceCount = (contractor.services ?? []).length;
 
   return (
