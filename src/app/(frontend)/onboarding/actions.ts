@@ -8,7 +8,7 @@ import { getCounties } from '@/lib/reference';
 import { resolveCounty } from '@/lib/postcodes';
 import type { FormState } from '@/lib/form';
 import { cleanSignupSource } from '@/lib/signupSource';
-import { premiumCheckoutUrl, type PremiumPlan } from '@/lib/stripe';
+import { premiumCheckoutUrl, type MembershipTier, type PremiumPlan } from '@/lib/stripe';
 
 const OnboardingSchema = z.object({
   business_name: z.string().trim().min(1, 'Business name is required.'),
@@ -17,7 +17,7 @@ const OnboardingSchema = z.object({
   base_postcode: z.string().trim().min(3, 'Base postcode is required.'),
   county_ids: z.array(z.coerce.number().int()).min(1, 'Select at least one county.'),
   service_ids: z.array(z.coerce.number().int()).min(1, 'Pick at least one service.'),
-  membership: z.enum(['free', 'monthly', 'annual']).catch('free'),
+  membership: z.enum(['free', 'monthly', 'annual', 'open_monthly', 'open_annual']).catch('free'),
 });
 
 export async function completeOnboardingAction(
@@ -84,6 +84,11 @@ export async function completeOnboardingAction(
     );
   if (ccErr) return { error: `Could not save your counties: ${ccErr.message}` };
 
+  // 'open_monthly' is the Open tier on the monthly plan; the premium values
+  // predate tiers and carry no prefix.
+  const membershipTier: MembershipTier = d.membership.startsWith('open_') ? 'open' : 'premium';
+  const membershipPlan: PremiumPlan = d.membership.endsWith('annual') ? 'annual' : 'monthly';
+
   // Tell the admins a new application is waiting. Best-effort — never blocks
   // or fails onboarding.
   const counties = await getCounties();
@@ -101,7 +106,7 @@ export async function completeOnboardingAction(
       `Phone:     ${d.phone}\n` +
       `Postcode:  ${d.base_postcode}\n` +
       `Counties:  ${countyNames || d.county_ids.length}\n` +
-      `Plan:      ${d.membership === 'free' ? 'Free' : `Premium (${d.membership}) — sent to Stripe to pay; refunded automatically if rejected`}\n\n` +
+      `Plan:      ${d.membership === 'free' ? 'Free' : `${membershipTier === 'open' ? 'Open' : 'Premium'} (${membershipPlan}) — sent to Stripe to pay; refunded automatically if rejected`}\n\n` +
       `Review and approve: ${siteUrl}/admin/contractors`,
   );
 
@@ -111,7 +116,7 @@ export async function completeOnboardingAction(
   if (d.membership !== 'free' && process.env.STRIPE_SECRET_KEY) {
     let url: string | null = null;
     try {
-      url = await premiumCheckoutUrl(user.id, d.membership as PremiumPlan);
+      url = await premiumCheckoutUrl(user.id, membershipPlan, '/account', membershipTier);
     } catch (err) {
       console.error('[onboarding] premium checkout failed:', err);
     }

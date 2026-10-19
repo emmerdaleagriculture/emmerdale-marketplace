@@ -15,6 +15,7 @@ import { BoundaryPreview } from '@/components/job/BoundaryPreview';
 import type { BoundaryPolygon } from '@/lib/jobParse/geometry';
 import { PricePosition } from './PricePosition';
 import { QuoteForm } from './QuoteForm';
+import { CustomerContact, type RevealedContact } from './CustomerContact';
 import { DeclineForm } from './DeclineForm';
 import { InviteActions } from './InviteActions';
 import { ContactUsButton } from '@/components/ContactUsButton';
@@ -131,6 +132,18 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   ]);
   const premiumRate = Number(premRateRes.data ?? 0.05);
   const isPremium = Boolean(premRes.data);
+
+  // An Open member sees the customer's details on every live invitation
+  // (20261019120000). The RPC decides who and when — not Open, passed, or
+  // the job moved on, and it answers with nothing — and records the first
+  // look. Read only on a live job, so a closed page never writes.
+  let revealed: RevealedContact | null = null;
+  if (jobOpen && isPremium) {
+    const { data: rev, error: revErr } = await admin.rpc('sq_reveal_contact', { p_token: token });
+    if (revErr) console.error('[sq] reveal contact failed:', revErr.message);
+    const r = rev as ({ ok: boolean } & RevealedContact) | null;
+    if (r?.ok) revealed = r;
+  }
   const stamped = stampRes.data?.markup_rate;
   const jobRate = stamped != null ? Number(stamped) : Number(stdRateRes.data ?? 0.15);
   const effectiveRate = isPremium ? Math.min(jobRate, premiumRate) : jobRate;
@@ -179,7 +192,10 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
           <h1 className={a.title}>{service?.name ?? 'Land work'}</h1>
           <p className={a.sub}>
             {spec.location ? `${spec.location}, ` : ''}
-            {county ?? ''} · full address comes if you win the job or agree a site visit
+            {county ?? ''} ·{' '}
+            {revealed
+              ? 'the customer’s details are below'
+              : 'full address comes if you win the job or agree a site visit'}
           </p>
           {/* The thread sits below the pricing form, which is a long scroll on a
               phone — so say it is there, and how much is waiting, up top. */}
@@ -251,6 +267,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
           {jobOpen && (
             <>
+              {revealed && <CustomerContact contact={revealed} />}
               {premiumFirst ? (
                 <div className={q.pricedPanel}>
                   <strong>Premium first look.</strong> Only premium members have this job.
@@ -401,7 +418,11 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 suspended={suspended}
                 intro={
                   threadState === 'pre_award'
-                    ? `Ask about access, ground or timing, or suggest a site visit if you need to see it before pricing. The customer sees you as ${
+                    ? revealed
+                      ? `Ask about access, ground or timing. The customer sees you as ${
+                          invitation.display_label ?? 'a lettered contractor'
+                        } here until they accept a price — you have their details above if you would rather ring.`
+                      : `Ask about access, ground or timing, or suggest a site visit if you need to see it before pricing. The customer sees you as ${
                         invitation.display_label ?? 'a lettered contractor'
                       }, not by name, so leave out phone numbers, emails and amounts — your details go to them when they accept your price or a visit.`
                     : threadState === 'post_award'

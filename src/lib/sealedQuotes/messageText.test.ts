@@ -136,4 +136,16 @@ describe('the 5 Oct 2026 messages (West Sussex land services)', () => {
       expect(messageProblem(t, 'contractor', 'pre_award'), t).toBeNull();
     }
   });
+
+  it('lets an Open member say anything but the empty or over-long (20261019120000)', () => {
+    const open = (t: string, sender: 'client' | 'contractor' = 'contractor') =>
+      messageRefusal(t, sender, 'pre_award', false, [], true);
+    expect(open('Ring me on 07123 456 789')).toBeNull();
+    expect(open('email me at a@b.com')).toBeNull();
+    expect(open('I can do it for £400 cash')).toBeNull();
+    expect(open('   ')?.text).toMatch(/write a message/i);
+    expect(open('a'.repeat(2001))?.text).toMatch(/too long/);
+    // Only the contractor side: the customer still cannot see who they are.
+    expect(open('Ring me on 07123 456 789', 'client')?.flag).toBe('phone');
+  });
 });

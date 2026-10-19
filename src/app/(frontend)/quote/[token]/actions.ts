@@ -232,7 +232,14 @@ export async function sendContractorMessageAction(
   const photos = readMessagePhotos(formData);
   if ('error' in photos) return { error: photos.error, body };
   const recent = state === 'pre_award' ? await getRecentOwnBodies(invitation.id, 'contractor') : [];
-  const refusal = messageRefusal(body, 'contractor', state, photos.files.length > 0, recent);
+  // An Open member has the customer's details on the page already; the
+  // contact rules would only make them ring instead of write.
+  const { data: openMember } = await createServiceRoleClient().rpc('contractor_is_open', {
+    p_contractor_id: invitation.contractor_id,
+  });
+  const refusal = messageRefusal(
+    body, 'contractor', state, photos.files.length > 0, recent, openMember === true,
+  );
   if (refusal) {
     // Paying some other way is emailed to admin as well as recorded; a
     // phone number before award is recorded against the standing only.

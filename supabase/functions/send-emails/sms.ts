@@ -81,6 +81,9 @@ export function renderSms(
       if (p.first_refusal) {
         return `Emmerdale Agriculture: a new job is offered to you first - ${job}${dist}. Price it or pass: ${url}`;
       }
+      if (p.open_member) {
+        return `Emmerdale Agriculture: new job - ${job}${dist}. Customer's details are on the page: ${url}`;
+      }
       if (p.direct) {
         return `Emmerdale Agriculture: a previous customer wants you again - ${job}. Price it or pass: ${url}`;
       }

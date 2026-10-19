@@ -28,14 +28,14 @@ export default async function EarningsPage() {
   if (!me) redirect(await nonContractorPath(user.id));
 
   const admin = createServiceRoleClient();
-  const [{ data: won }, { data: ready }, { data: premium }, { data: bank }] = await Promise.all([
+  const [{ data: won }, { data: ready }, { data: tier }, { data: bank }] = await Promise.all([
     supabase
       .from('my_sq_won_jobs')
       .select('id, service, status, postcode, contractor_price_pence, awarded_at, contractor_invoice_at, paid_out_on, paid_out_pence')
       .order('awarded_at', { ascending: false })
       .limit(30),
     admin.from('sq_payout_ready').select('submission_id, owed_pence, collected_pence, total_pence, contractor_invoice_at, status, payout_before_balance').eq('contractor_id', user.id),
-    admin.rpc('contractor_is_premium', { p_contractor_id: user.id }),
+    admin.rpc('contractor_tier', { p_contractor_id: user.id }),
     admin.from('contractor_bank_details').select('account_number').eq('contractor_id', user.id).maybeSingle(),
   ]);
 
@@ -101,7 +101,9 @@ export default async function EarningsPage() {
       )}
 
       <div className={ui.card} style={{ marginTop: 22, background: '#fff8d6', border: '1px solid #f2e39a' }}>
-        <div className={ui.cardTitle} style={{ color: '#6b5a00' }}>✦ Emmerdale Premium{premium ? ' · you’re a member' : ''}</div>
+        <div className={ui.cardTitle} style={{ color: '#6b5a00' }}>
+          ✦ Emmerdale {tier === 'open' ? 'Open' : 'Premium'}{tier ? ' · you’re a member' : ''}
+        </div>
         <ul className={ui.promises} style={{ marginTop: 10 }}>
           <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
             <span className={ui.tick} aria-hidden="true">✓</span>
@@ -111,9 +113,13 @@ export default async function EarningsPage() {
             <span className={ui.tick} aria-hidden="true">✓</span>
             <span><strong>5% commission, not 15%.</strong> Customers see your price plus less on top.</span>
           </li>
+          <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
+            <span className={ui.tick} aria-hidden="true">✓</span>
+            <span><strong>Open: the customer’s details on every job.</strong> Ring them and agree the work directly.</span>
+          </li>
         </ul>
         <p className={ui.note}>
-          {premium ? 'Manage your membership on the website, in your account.' : `Premium is bought on the website: sign in at ${siteUrl().replace(/^https?:\/\//, '')}/account.`}
+          {tier ? 'Manage your membership on the website, in your account.' : `Membership is bought on the website: sign in at ${siteUrl().replace(/^https?:\/\//, '')}/account.`}
         </p>
       </div>
     </main>

@@ -689,6 +689,7 @@ export type Database = {
       contractors: {
         Row: {
           premium_comped_until: string | null
+          open_comped_until: string | null
           premium_reinstated_at: string | null
           services_only: boolean
           invite_radius_miles: number | null
@@ -719,6 +720,7 @@ export type Database = {
         }
         Insert: {
           premium_comped_until?: string | null
+          open_comped_until?: string | null
           premium_reinstated_at?: string | null
           services_only?: boolean
           invite_radius_miles?: number | null
@@ -749,6 +751,7 @@ export type Database = {
         }
         Update: {
           premium_comped_until?: string | null
+          open_comped_until?: string | null
           premium_reinstated_at?: string | null
           services_only?: boolean
           invite_radius_miles?: number | null
@@ -1200,6 +1203,7 @@ export type Database = {
       job_invitations: {
         Row: {
           premium_offer: boolean
+          contact_revealed_at: string | null
           contractor_id: string
           decline_reason: string | null
           display_label: string | null
@@ -1213,6 +1217,7 @@ export type Database = {
         }
         Insert: {
           premium_offer?: boolean
+          contact_revealed_at?: string | null
           contractor_id: string
           decline_reason?: string | null
           display_label?: string | null
@@ -1226,6 +1231,7 @@ export type Database = {
         }
         Update: {
           premium_offer?: boolean
+          contact_revealed_at?: string | null
           contractor_id?: string
           decline_reason?: string | null
           display_label?: string | null
@@ -2782,6 +2788,7 @@ export type Database = {
           started_at: string | null
           cancel_at_period_end: boolean
           plan: string | null
+          tier: string
           contractor_id: string
           current_period_end: string | null
           status: string
@@ -2794,6 +2801,7 @@ export type Database = {
           started_at?: string | null
           cancel_at_period_end?: boolean
           plan?: string | null
+          tier?: string
           contractor_id: string
           current_period_end?: string | null
           status?: string
@@ -2806,6 +2814,7 @@ export type Database = {
           started_at?: string | null
           cancel_at_period_end?: boolean
           plan?: string | null
+          tier?: string
           contractor_id?: string
           current_period_end?: string | null
           status?: string
@@ -3117,6 +3126,18 @@ export type Database = {
       contractor_is_premium: {
         Args: { p_contractor_id: string }
         Returns: boolean
+      }
+      contractor_is_open: {
+        Args: { p_contractor_id: string }
+        Returns: boolean
+      }
+      contractor_tier: {
+        Args: { p_contractor_id: string }
+        Returns: string | null
+      }
+      sq_reveal_contact: {
+        Args: { p_token: string }
+        Returns: Json
       }
       admin_add_extra_work: {
         Args: {

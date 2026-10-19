@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.6 — 16 October 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.7 — 19 October 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -186,6 +186,13 @@ export default function TermsPage() {
             is not about the fee — off-platform work has no insurance cover from us, no
             record, and no protection for either of you.
           </p>
+          <p>
+            This clause does not apply to an Open member (clause 12) for a job they were
+            invited to while a member: Open exists so that you can deal with the customer
+            directly. Clause 7 still does, and so does the last sentence above — work you
+            agree directly is between you and the customer, and nothing in clauses 4 to 6
+            applies to it.
+          </p>
 
           <h2>9. Ratings</h2>
           <p>
@@ -211,15 +218,18 @@ export default function TermsPage() {
             Questions: <a href="mailto:tom@emmerdaleagriculture.com">tom@emmerdaleagriculture.com</a>.
           </p>
 
-          <h2>12. Premium membership</h2>
+          <h2>12. Premium and Open membership</h2>
           <p>
-            Premium membership is optional and costs <strong>£20 a month</strong> or{' '}
-            <strong>£199 a year</strong>, paid by card through Stripe. It renews
+            Membership is optional. Premium costs <strong>£20 a month</strong> or{' '}
+            <strong>£199 a year</strong>; Open costs <strong>£49 a month</strong> or{' '}
+            <strong>£399 a year</strong>, paid by card through Stripe. It renews
             automatically until you cancel. You can cancel at any time from your
             dashboard; membership then runs to the end of the period you have paid for,
-            and we do not refund part-periods. You can join when you apply: premium then
+            and we do not refund part-periods. You can join when you apply: membership then
             starts working once we approve you, and if we do not approve your application
-            we cancel the membership and refund what you paid in full.
+            we cancel the membership and refund what you paid in full. You can move between
+            Premium and Open from your dashboard; the difference is worked out from the day
+            you move.
           </p>
           <p>
             <strong>First refusal.</strong> A new job in a county you cover, and within
@@ -242,9 +252,25 @@ export default function TermsPage() {
             simply sees a lower total. The rate is fixed when you send the price.
           </p>
           <p>
-            Premium does not guarantee any volume of work (clause 10). If your payment
+            <strong>Open: the customer&rsquo;s details.</strong> Open includes everything in
+            Premium. In addition, every job you are invited to while an Open member shows you
+            the customer&rsquo;s name, phone number, email address and postcode as soon as you
+            open it, before any price is sent. You may contact the customer and agree the work
+            and its price with them directly; clause 8 does not apply to that job, and we add
+            nothing to what you agree. Work agreed directly is a contract between you and the
+            customer alone: we are not party to it, take no deposit or payment for it, and our
+            insurance cover, guarantee and payment protection do not apply. You may instead send
+            a price through us as usual, at the Premium rate. Clause 7 applies to every detail
+            you are shown: use them only for that job, do not pass them on, and delete them
+            when it is done. We record which jobs&rsquo; details each member has seen, and may
+            end an Open membership, without refund of the current period, if the details are
+            misused. The details stop showing once the customer has accepted another price or
+            you have passed on the job.
+          </p>
+          <p>
+            Membership does not guarantee any volume of work (clause 10). If your payment
             fails, Stripe will retry; membership lapses if it cannot be collected. We may
-            change the price or what premium includes with 30 days&rsquo; notice, and you
+            change the price or what membership includes with 30 days&rsquo; notice, and you
             can cancel before the change takes effect.
           </p>
 

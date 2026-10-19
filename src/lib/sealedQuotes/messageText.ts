@@ -106,12 +106,19 @@ export function messageRefusal(
    * message is checked with them as well as alone.
    */
   recent: string[] = [],
+  /**
+   * An Open member (contractor side only): they already have the customer's
+   * details and may deal with them directly, so nothing about contact,
+   * money or paying elsewhere applies. Length and emptiness still do.
+   */
+  open = false,
 ): MessageRefusal | null {
   const t = body.trim();
   if (!t) return hasPhotos ? null : { text: 'Write a message or add a photo first.', flag: null };
   if (t.length > MESSAGE_MAX) {
     return { text: `That message is too long — keep it under ${MESSAGE_MAX} characters.`, flag: null };
   }
+  if (open && sender === 'contractor') return null;
   if (OFF_PLATFORM.test(t)) {
     return {
       flag: 'off_platform',

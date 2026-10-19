@@ -42,7 +42,7 @@ export default function PrivacyPage() {
           <Breadcrumb tone="light" items={[{ label: 'Privacy policy' }]} />
           <h1>Privacy policy</h1>
           <p className={l.updated}>
-            <strong>Version 2.0 — 25 September 2026</strong>
+            <strong>Version 2.1 — 19 October 2026</strong>
           </p>
 
           <h2>Who we are</h2>
@@ -108,6 +108,15 @@ export default function PrivacyPage() {
             They do <strong>not</strong> see your name, email address or phone number. Please
             leave those out of the description and photographs — anything you write there is
             shown to them as you wrote it.
+          </p>
+          <p>
+            <strong>Open members are the exception.</strong> Contractors who pay for our Open
+            membership have agreed to our terms on handling customer details, and when we
+            invite one of them to your job they see your name, phone number, email address
+            and full postcode as soon as they open it, so they can contact you directly about
+            the work. We record which Open members have seen your details, and they must use
+            them only for your job and delete them afterwards. Your customer terms (clause
+            2.6) say what applies if you agree work with one of them directly.
           </p>
           <p>
             <strong>When you accept a price and pay the deposit</strong>, the contractor doing

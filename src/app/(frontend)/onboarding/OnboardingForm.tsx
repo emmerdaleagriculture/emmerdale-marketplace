@@ -20,7 +20,7 @@ export function OnboardingForm({
   verifiedPhone?: string | null;
 }) {
   const [state, action, pending] = useActionState(completeOnboardingAction, emptyFormState);
-  const [membership, setMembership] = useState<'free' | 'monthly' | 'annual'>('free');
+  const [membership, setMembership] = useState<(typeof PLANS)[number]['value']>('free');
 
   return (
     <form action={action}>
@@ -101,10 +101,15 @@ export function OnboardingForm({
           if you tap the text within 2 hours and reply within 24, and we add
           only <b>5%</b> to your price, so a £400 price shows the customer £420, not £460.
         </li>
+        <li>
+          <b>Open:</b> everything in Premium, and the <b>customer&rsquo;s name, phone number and
+          email on every job</b> you&rsquo;re invited to, straight away. Ring them and agree the
+          work directly, with nothing added on top — or price it through us at 5% as usual.
+        </li>
       </ul>
       {membership !== 'free' && (
         <p className={f.hint}>
-          You’ll pay securely with Stripe next. Premium starts working the moment we approve you,
+          You’ll pay securely with Stripe next. Membership starts working the moment we approve you,
           usually within a few hours. If we can’t approve your application, we cancel it and refund
           you in full. Cancel any time after that; see{' '}
           <a href="/terms" target="_blank" style={{ textDecoration: 'underline' }}>clause 12 of the contractor terms</a>.
@@ -117,7 +122,7 @@ export function OnboardingForm({
             ? 'Saving…'
             : membership === 'free'
               ? 'Finish and submit application'
-              : `Submit and pay ${membership === 'annual' ? '£199' : '£20'}`}
+              : `Submit and pay ${PLANS.find((p) => p.value === membership)?.pay ?? ''}`}
         </button>
       </div>
     </form>
@@ -125,7 +130,9 @@ export function OnboardingForm({
 }
 
 const PLANS = [
-  { value: 'free', name: 'Free', price: '£0', note: '15% added to your prices' },
-  { value: 'monthly', name: 'Premium', price: '£20 a month', note: 'First refusal · 5%' },
-  { value: 'annual', name: 'Premium yearly', price: '£199 a year', note: 'Same as monthly · save £41' },
+  { value: 'free', name: 'Free', price: '£0', note: '15% added to your prices', pay: '' },
+  { value: 'monthly', name: 'Premium', price: '£20 a month', note: 'First refusal · 5%', pay: '£20' },
+  { value: 'annual', name: 'Premium yearly', price: '£199 a year', note: 'Same as monthly · save £41', pay: '£199' },
+  { value: 'open_monthly', name: 'Open', price: '£49 a month', note: 'Customer details on every job', pay: '£49' },
+  { value: 'open_annual', name: 'Open yearly', price: '£399 a year', note: 'Same as monthly · save £189', pay: '£399' },
 ] as const;
