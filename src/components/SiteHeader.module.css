@@ -73,9 +73,9 @@
 }
 
 /*
- * The membership link, the one thing on the bar. The upgrade is a yellow pill
- * — the join button's colour, in the join button's place — so it is the first
- * thing a free-plan contractor's eye lands on. A member sees their plan name
+ * The one thing on the bar: the offer. "Upgrade now" for a free-plan
+ * contractor and "Join the network" for a visitor share the yellow pill, so
+ * it is the first thing the eye lands on. A member sees their plan name
  * quietly in white.
  */
 .upgradeLink {
@@ -301,7 +301,9 @@
 .menu:not([hidden]) {
   display: flex;
 }
-@media (min-width: 821px) {
+/* 820.02 rather than 821: a zoomed window can be 820.4px wide, and a whole
+   pixel's gap between the two queries would leave it with neither layout. */
+@media (min-width: 820.02px) {
   .menu {
     position: absolute;
     top: calc(100% + 12px);
@@ -311,8 +313,9 @@
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.2);
   }
-  /* Membership is out on the bar at this width. */
-  .menuMembership {
+  /* Membership and the join button are out on the bar at this width. */
+  .menuMembership,
+  .menuJoin {
     display: none;
   }
 }

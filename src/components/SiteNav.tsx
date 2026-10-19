@@ -227,22 +227,28 @@ export function SiteNav() {
   // A menu left open across a navigation covers the page you asked for.
   useEffect(() => setOpen(false), [pathname]);
 
-  // On desktop the menu is a popover: a click anywhere else, or Escape,
-  // puts it away. The ref wraps the burger and the panel together so a click
-  // on either is "inside".
+  // A click anywhere else, or Escape, puts the menu away. The ref wraps the
+  // burger and the panel together so a click on either is "inside". It is a
+  // click, not a pointerdown: on a phone the sheet is taller than the screen,
+  // and the touch that starts a scroll must not close it. Escape hands focus
+  // back to the burger, so a keyboard user's next Tab carries on from there
+  // rather than from the top of the page.
   const anchor = useRef<HTMLDivElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: PointerEvent) => {
+    const onClick = (e: MouseEvent) => {
       if (anchor.current && !anchor.current.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      toggle.current?.focus();
     };
-    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('click', onClick);
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
@@ -291,16 +297,22 @@ export function SiteNav() {
     </form>
   );
 
-  // The bar's one link (desktop only): where a contractor stands with us.
+  // The bar's one link (desktop only): the offer. For a contractor, where
+  // they stand with us and the way up; for a visitor, the way in — a laptop
+  // arriving from an ad must not find a bar with nothing to click.
   const membership = groups.find((g) => g.membership)?.items[0];
-  const bar = membership && (
-    <NavLink
-      href={membership.href}
-      className={membership.upgrade ? styles.upgradeLink : styles.planLink}
-    >
-      <span aria-hidden="true">★ </span>
-      {membership.label}
-    </NavLink>
+  const bar = !viewer.signedIn ? (
+    <Link href="/signup" className={styles.upgradeLink}>Join the network</Link>
+  ) : (
+    membership && (
+      <NavLink
+        href={membership.href}
+        className={membership.upgrade ? styles.upgradeLink : styles.planLink}
+      >
+        <span aria-hidden="true">★ </span>
+        {membership.label}
+      </NavLink>
+    )
   );
 
   // The menu: the same links with room to breathe.
@@ -345,7 +357,9 @@ export function SiteNav() {
           ))}
         </div>
       ))}
-      <div className={styles.menuFoot}>
+      {/* Join sits on the bar at desktop widths, so the foot only repeats it
+          on a phone, where the bar is put away. */}
+      <div className={viewer.signedIn ? styles.menuFoot : `${styles.menuFoot} ${styles.menuJoin}`}>
         {!viewer.signedIn ? (
           <Link href="/signup" className={styles.cta} onClick={close}>Join the network</Link>
         ) : (
@@ -357,7 +371,7 @@ export function SiteNav() {
 
   return (
     <>
-      {/* Nothing for a visitor or a customer: an empty landmark is noise. */}
+      {/* Nothing for a customer or an admin: an empty landmark is noise. */}
       {bar && <nav className={styles.bar} aria-label="Membership">{bar}</nav>}
 
       {/* Instagram and TikTok, beside the burger at every width. */}
@@ -365,6 +379,7 @@ export function SiteNav() {
 
       <div className={styles.menuAnchor} ref={anchor}>
         <button
+          ref={toggle}
           type="button"
           className={styles.navToggle}
           aria-label={open ? 'Close menu' : 'Open menu'}
