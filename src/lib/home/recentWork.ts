@@ -1,6 +1,5 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createStaticClient } from '@/lib/supabase/static';
 import { memoize } from '@/lib/memo';
-import { jobAcres } from '@/lib/jobParse/geometry';
 
 /**
  * Booked work, with what it actually cost — every job from its award on.
@@ -24,33 +23,47 @@ export type RecentWorkRow = {
   source: 'emmerdale' | 'hpm';
   /** The county, or null on a seeded row. */
   county: string | null;
-  /** The job's size, rounded: "2 acres", "200 m", "under an acre". Null when unknown. */
+  /** The job's size as a band: "3–10 acres", "100–300 m". Null when unknown. */
   size: string | null;
 };
 
+const HECTARE_IN_ACRES = 2.471;
+const SQ_M_IN_ACRES = 1 / 4046.86;
+
 /**
- * The size as the card prints it. Rounded on purpose: "about 7.5 acres" is a
- * comparison, "7.53 acres" is a measurement of someone's field. A length is
- * what a per-metre job is sized by (hedges, fencing), so it shows as metres.
+ * The size as the card prints it: a band, not a figure. The jobs-in-progress
+ * strip on the same page publishes county, a size to one decimal and a date
+ * for live jobs; a figure here would let the two be matched row for row and
+ * put a price and a rating against a dated, holding-sized job. A band plus
+ * a county matches loosely enough to name nothing, and still tells a visitor
+ * whether a job is like theirs. Acres only for work priced by area — a hedge
+ * mapped round a paddock is not a two-acre hedge; a length prints regardless.
  */
-export function sizeLabel(job: {
+export function sizeBand(job: {
   area_value: number | null;
   area_unit: string | null;
   area_mapped_value: number | null;
-  area_source: string | null;
-  /** False for work not priced by area (a hedge): no acreage then. */
   area_priced: boolean;
 }): string | null {
-  if (job.area_unit === 'linear_m' && job.area_value) {
-    const m = job.area_value >= 100 ? Math.round(job.area_value / 50) * 50 : Math.round(job.area_value / 10) * 10;
-    return m > 0 ? `${m} m` : null;
+  if (job.area_unit === 'linear_m') {
+    const m = job.area_value;
+    if (m == null || !(m > 0)) return null;
+    return m < 100 ? 'under 100 m' : m < 300 ? '100–300 m' : m < 1000 ? '300–1,000 m' : 'over 1,000 m';
   }
   if (!job.area_priced) return null;
-  const acres = jobAcres(job);
-  if (acres == null || acres <= 0) return null;
-  if (acres < 0.75) return 'under an acre';
-  const rounded = acres < 10 ? Math.round(acres * 2) / 2 : Math.round(acres);
-  return `${rounded === 1 ? '1 acre' : `${rounded} acres`}`;
+  const stated =
+    job.area_value == null
+      ? null
+      : job.area_unit === 'acres'
+        ? job.area_value
+        : job.area_unit === 'hectares'
+          ? job.area_value * HECTARE_IN_ACRES
+          : job.area_unit === 'sq_m'
+            ? job.area_value * SQ_M_IN_ACRES
+            : null;
+  const acres = job.area_mapped_value ?? stated;
+  if (acres == null || !(acres > 0)) return null;
+  return acres < 1 ? 'under an acre' : acres < 3 ? '1–3 acres' : acres < 10 ? '3–10 acres' : acres < 30 ? '10–30 acres' : 'over 30 acres';
 }
 
 /**
@@ -64,31 +77,17 @@ export const MIN_RECENT_WORK = 4;
 const LIMIT = 8;
 
 /**
- * Anon key: the view grants SELECT to `anon` and reads its RLS-protected
- * sources as its owner. Cookie-less, so the homepage stays ISR-cacheable.
- *
- * Untyped on purpose — `recent_work` is absent from `database.types.ts` until
- * the migration is applied and `supabase gen types` re-run. Swap for
- * `createStaticClient()` and drop the cast once that happens.
- */
-function viewClient(): SupabaseClient {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
-}
-
-/**
  * Short, like the jobs-in-progress strip: an award calls revalidatePath('/'),
  * and a memo that outlived it would rebuild the page from a stale read.
  */
 const LIVE_TTL_MS = 60_000;
 
 export const getRecentWork = memoize<RecentWorkRow[]>(async () => {
-  const { data, error } = await viewClient()
+  // Anon key: the view grants SELECT to `anon` and reads its RLS-protected
+  // sources as its owner. Cookie-less, so the homepage stays ISR-cacheable.
+  const { data, error } = await createStaticClient()
     .from('recent_work')
-    .select('service_name, amount_pence, stars, source, county, area_value, area_unit, area_mapped_value, area_source, area_priced')
+    .select('service_name, amount_pence, stars, source, county, area_value, area_unit, area_mapped_value, area_priced')
     .order('ord', { ascending: true })
     .limit(LIMIT);
 
@@ -99,35 +98,19 @@ export const getRecentWork = memoize<RecentWorkRow[]>(async () => {
     return [];
   }
 
-  const rows = (data ?? []) as {
-    service_name: unknown;
-    amount_pence: unknown;
-    stars: unknown;
-    source: unknown;
-    county: unknown;
-    area_value: unknown;
-    area_unit: unknown;
-    area_mapped_value: unknown;
-    area_source: unknown;
-    area_priced: unknown;
-  }[];
-  const num = (v: unknown) => (typeof v === 'number' ? v : typeof v === 'string' && v !== '' && !Number.isNaN(Number(v)) ? Number(v) : null);
-  const str = (v: unknown) => (typeof v === 'string' ? v : null);
-
-  return rows.flatMap((r) =>
-    typeof r.service_name === 'string' && typeof r.amount_pence === 'number'
+  return (data ?? []).flatMap((r) =>
+    r.service_name && r.amount_pence != null
       ? [
           {
             service_name: r.service_name,
             amount_pence: r.amount_pence,
-            stars: typeof r.stars === 'number' ? r.stars : null,
+            stars: r.stars,
             source: r.source === 'hpm' ? ('hpm' as const) : ('emmerdale' as const),
-            county: str(r.county),
-            size: sizeLabel({
-              area_value: num(r.area_value),
-              area_unit: str(r.area_unit),
-              area_mapped_value: num(r.area_mapped_value),
-              area_source: str(r.area_source),
+            county: r.county,
+            size: sizeBand({
+              area_value: r.area_value,
+              area_unit: r.area_unit,
+              area_mapped_value: r.area_mapped_value,
               area_priced: r.area_priced !== false,
             }),
           },

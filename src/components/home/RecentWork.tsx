@@ -33,8 +33,9 @@ export async function RecentWork() {
           Work booked through us
         </h2>
         <p className={s.workSub}>
-          Real jobs, the price agreed, and where and how big. Stars are the
-          customer&rsquo;s own rating once the work was done. Every job prices
+          Real jobs and the price agreed, with the county and rough size where
+          we have them. Stars are the customer&rsquo;s own rating once the work
+          was done. Every job prices
           differently — access, ground and scale move the number more than the
           service does — so treat these as what past work came to, not a quote
           for yours.
