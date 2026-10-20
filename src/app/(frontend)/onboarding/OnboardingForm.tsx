@@ -23,7 +23,12 @@ export function OnboardingForm({
 }) {
   const [state, action, pending] = useActionState(completeOnboardingAction, emptyFormState);
   const [membership, setMembership] = useState<Choice>('free');
-  const tier = TIER_OF[membership];
+  const tier = tierOf(membership);
+  /** Clicking a card picks its monthly plan — unless it is already the pick,
+   *  when a click on the blurb must not undo a yearly choice. */
+  const select = (first: Choice) => () => {
+    if (tierOf(first) !== tier) setMembership(first);
+  };
 
   /** One radio in a card's foot. */
   const pick = (value: Choice, children: ReactNode) => (
@@ -98,19 +103,24 @@ export function OnboardingForm({
           foot instead of a Stripe button. The whole card selects its tier. */}
       <div role="radiogroup" aria-label="Membership">
         <TierGrid>
-          <TierCard tier="free" current={tier === 'free'} tag={tier === 'free' ? 'Your pick' : undefined} onSelect={() => setMembership('free')}>
+          <TierCard tier="free" current={tier === 'free'} tag={tier === 'free' ? 'Your pick' : undefined} onSelect={select('free')}>
             {pick('free', 'Start free')}
           </TierCard>
-          <TierCard tier="premium" current={tier === 'premium'} tag={tier === 'premium' ? 'Your pick' : undefined} onSelect={() => setMembership('monthly')}>
+          <TierCard tier="premium" current={tier === 'premium'} tag={tier === 'premium' ? 'Your pick' : undefined} onSelect={select('monthly')}>
             {pick('monthly', `£${MEMBERSHIP_PRICES.premium.monthly} a month`)}
             {pick('annual', <>£{MEMBERSHIP_PRICES.premium.annual} a year — <b>save £{annualSaving('premium')}</b></>)}
           </TierCard>
-          <TierCard tier="open" current={tier === 'open'} tag={tier === 'open' ? 'Your pick' : undefined} onSelect={() => setMembership('open_monthly')}>
+          <TierCard tier="open" current={tier === 'open'} tag={tier === 'open' ? 'Your pick' : undefined} onSelect={select('open_monthly')}>
             {pick('open_monthly', `£${MEMBERSHIP_PRICES.open.monthly} a month`)}
             {pick('open_annual', <>£{MEMBERSHIP_PRICES.open.annual} a year — <b>save £{annualSaving('open')}</b></>)}
           </TierCard>
         </TierGrid>
       </div>
+      <p className={f.hint} style={{ marginTop: -20, marginBottom: 16 }}>
+        First refusal works like this: a new job near you comes to members by text first. Tap it
+        within 2 hours and reply within 24, and the job stays with members for up to 7 days; miss
+        either and it goes to everyone.
+      </p>
       {membership !== 'free' && (
         <p className={f.hint}>
           You’ll pay securely with Stripe next. Membership starts working the moment we approve you,
@@ -126,26 +136,18 @@ export function OnboardingForm({
             ? 'Saving…'
             : membership === 'free'
               ? 'Finish and submit application'
-              : `Submit and pay £${PAY[membership]}`}
+              : `Submit and pay £${MEMBERSHIP_PRICES[tier === 'open' ? 'open' : 'premium'][planOf(membership)]}`}
         </button>
       </div>
     </form>
   );
 }
 
-/** The form's value: the action reads tier and plan out of it (actions.ts). */
+/**
+ * The form's value, read the same way actions.ts reads it: the open_ prefix
+ * is the tier, the annual suffix the plan, and free is free.
+ */
 type Choice = 'free' | 'monthly' | 'annual' | 'open_monthly' | 'open_annual';
-const TIER_OF: Record<Choice, 'free' | 'premium' | 'open'> = {
-  free: 'free',
-  monthly: 'premium',
-  annual: 'premium',
-  open_monthly: 'open',
-  open_annual: 'open',
-};
-const PAY: Record<Choice, number> = {
-  free: 0,
-  monthly: MEMBERSHIP_PRICES.premium.monthly,
-  annual: MEMBERSHIP_PRICES.premium.annual,
-  open_monthly: MEMBERSHIP_PRICES.open.monthly,
-  open_annual: MEMBERSHIP_PRICES.open.annual,
-};
+const tierOf = (c: Choice): 'free' | 'premium' | 'open' =>
+  c === 'free' ? 'free' : c.startsWith('open_') ? 'open' : 'premium';
+const planOf = (c: Choice): 'monthly' | 'annual' => (c.endsWith('annual') ? 'annual' : 'monthly');
