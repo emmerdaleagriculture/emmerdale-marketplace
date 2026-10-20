@@ -1,25 +1,11 @@
 import Image from 'next/image';
 
 /**
- * The EA mark: the E and A with the field rows running through them, cut
- * from the logo (public/images/brand). White, for the green and ink bars it
- * sits in; the colour versions are beside it for anything on a light ground.
- * `size` is the height; the width follows the artwork's 511×250.
+ * The logo — the EA mark over EMMERDALE AGRICULTURE — in white, for the green
+ * and ink bars it sits in (public/images/brand; the colour versions are
+ * beside it for anything on a light ground). `width` is the intrinsic size
+ * in px; the bars set the height in CSS.
  */
-export function BrandMark({ size = 34, className }: { size?: number; className?: string }) {
-  return (
-    <Image
-      src="/images/brand/ea-mark-white.png"
-      alt=""
-      width={Math.round((size * 511) / 250)}
-      height={size}
-      className={className}
-      priority
-    />
-  );
-}
-
-/** The full logo — mark over EMMERDALE AGRICULTURE — in white. `width` in px. */
 export function BrandLockup({
   width = 200,
   className,

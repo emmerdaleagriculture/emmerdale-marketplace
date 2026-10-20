@@ -29,7 +29,10 @@
 .inner {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 18px 24px;
+  /* The same 68px as the front page's bar, with the same logo in it. */
+  min-height: 68px;
+  box-sizing: border-box;
+  padding: 8px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -39,20 +42,17 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   /* Everything after the brand packs to the right, whether or not the bar
      has a link in it: without this, a signed-in visitor with no membership
      link (an applicant, an admin) had the burger centred. */
   margin-right: auto;
-  font-family: var(--font-display-stack);
-  font-size: 18px;
-  letter-spacing: 0.03em;
   color: var(--white);
 }
-.brandMark {
-  flex: 0 0 auto;
+/* The full logo, the size the front page shows it. */
+.brandLockup {
+  display: block;
   width: auto;
-  height: 28px;
+  height: 52px;
 }
 .bar {
   display: flex;
@@ -360,13 +360,8 @@
     padding: 12px 16px;
     gap: 0 12px;
   }
-  .brand {
-    font-size: 16px;
-    gap: 8px;
-    white-space: nowrap;
-  }
-  .brandMark {
-    height: 24px;
+  .brandLockup {
+    height: 44px;
   }
   .bar {
     display: none;
@@ -385,16 +380,5 @@
     flex-basis: calc(100% + 32px);
     max-width: none;
     margin: 4px -16px -12px;
-  }
-}
-
-/* A narrow phone: the mark alone. With the name as well, the burger wrapped
-   onto a second line under the bar, where the menu sheet hid it. */
-@media (max-width: 480px) {
-  .brand span {
-    display: none;
-  }
-  .brandMark {
-    height: 28px;
   }
 }
