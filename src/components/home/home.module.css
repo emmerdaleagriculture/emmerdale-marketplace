@@ -1,9 +1,16 @@
 /* Front page — the "managed marketplace" design.
    DM Sans (bold) headings over Inter body, brand green + a single yellow
    accent per viewport, mown-paddock stripe motif on the intro and operator
-   band. Interior pages keep the HPM look; nothing here leaks out of .page. */
+   band. Interior pages keep the HPM look; nothing here leaks out of .page.
 
-.page {
+   The tokens sit on the header and footer as well as the page: /start,
+   /contact, the completion page and the 404 wear this header without the
+   page wrapper, and without the tokens its container had no gutter (the
+   logo clipped at the left edge, the burger flush right on a phone). */
+
+.page,
+.nav,
+.footer {
   --bg: #fbfaf6;
   --surface: #ffffff;
   --text: #1a2b1e;
@@ -34,7 +41,8 @@
     rgba(255, 255, 255, 0) 4px,
     rgba(255, 255, 255, 0) 26px
   );
-
+}
+.page {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
