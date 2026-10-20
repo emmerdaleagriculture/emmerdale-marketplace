@@ -7,7 +7,12 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  margin: 0;
+  /* Vertical only. The header that places this sets its horizontal
+     margin (margin-left: auto pushes it to the right on a phone), and a
+     `margin: 0` here at the same specificity won or lost on stylesheet
+     order — it won in one build and the icons sat in the middle of the bar. */
+  margin-top: 0;
+  margin-bottom: 0;
   padding: 0;
   list-style: none;
 }
