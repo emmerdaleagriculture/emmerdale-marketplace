@@ -1198,6 +1198,17 @@
   margin-right: 18px;
 }
 
+/* The sunset banner under the ticker: full width, the image's own ratio. */
+.banner {
+  background: #17330d;
+  line-height: 0;
+}
+.bannerImg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 /* Hero. */
 .hero {
   background: var(--bg);
