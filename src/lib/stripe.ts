@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
+import { revalidateDirectory } from '@/lib/directory';
 
 /** Stripe client — throws if the key isn't set (paid tier not configured yet). */
 export function getStripe(): Stripe {
@@ -175,6 +176,8 @@ export async function syncSubscription(sub: Stripe.Subscription) {
         `\n\n${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/admin/contractors/${existing.contractor_id}`,
     );
   }
+  // An Open membership starting or ending is a listing appearing or going.
+  revalidateDirectory();
 }
 
 /**

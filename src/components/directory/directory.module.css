@@ -116,3 +116,75 @@
   margin: 28px auto 0;
   line-height: 1.55;
 }
+
+/* ── The directory page ──────────────────────────────────────────────── */
+.covers {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.covers b {
+  color: var(--ink-3);
+  font-weight: 600;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.chip {
+  border: 1px solid var(--rule);
+  background: var(--white);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chip:hover {
+  border-color: var(--jd-green);
+}
+.chipOn {
+  background: var(--jd-green);
+  border-color: var(--jd-green);
+  color: #fff;
+}
+.count {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.empty {
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--cream);
+  padding: 24px 26px;
+  margin: 0 0 28px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.intro a,
+.empty a,
+.fine a {
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.cta {
+  margin: 28px 0 0;
+  padding: 20px 22px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--cream);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.cta a {
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

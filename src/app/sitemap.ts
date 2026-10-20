@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { allCountyRefs } from '@/lib/verticals';
-import { getCountyServiceCoverage } from '@/lib/reference';
+import { getCountyServiceCoverage, getCountyDirectory } from '@/lib/reference';
 import { VERTICALS } from '@/lib/verticals';
 import { getNotesData, countByTag } from '@/lib/notes/data';
 import { CURATED_TAGS, MIN_INDEXED_TAG_POSTS } from '@/lib/notes/tags';
@@ -29,6 +29,8 @@ const DATES = {
   services: new Date('2026-10-11'),
   /** Customer terms v2.1 and the charter (insurance wording). */
   legal: new Date('2026-09-23'),
+  /** The directory of Open members taking direct enquiries. */
+  directory: new Date('2026-10-21'),
 } as const;
 
 // Refresh daily so covered-county entries track the network as it grows.
@@ -47,12 +49,15 @@ function latestDate(dates: (string | null)[]): Date | undefined {
 // login is noindex (no search value), so it's excluded here too. The homepage
 // uses the bare origin (no trailing slash) to match its rendered canonical.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [counties, hayCoverage, tractorCoverage, notes] = await Promise.all([
+  const [counties, hayCoverage, tractorCoverage, notes, directory] = await Promise.all([
     allCountyRefs(),
     getCountyServiceCoverage(VERTICALS['hay-bales'].serviceId),
     getCountyServiceCoverage(VERTICALS['tractor-hire'].serviceId),
     getNotesData(),
+    getCountyDirectory(),
   ]);
+  // The directory is noindex while nobody is listed, so it is not submitted then either.
+  const directoryListed = Object.values(directory).some((entries) => entries.length > 0);
   // Only list hay/tractor county pages a contractor of THAT service covers —
   // the same per-service rule as the page's own robots meta, so we never
   // submit a page that is noindex, or a tractor-hire page whose only
@@ -72,6 +77,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // One page per service, plus their index (SEO review, 2026-09-24).
   const servicePages: MetadataRoute.Sitemap = [
     { url: `${SITE}/services`, lastModified: DATES.services, changeFrequency: 'monthly', priority: 0.8 },
+    ...(directoryListed
+      ? [{ url: `${SITE}/contractors`, lastModified: DATES.directory, changeFrequency: 'weekly' as const, priority: 0.7 }]
+      : []),
     ...SERVICE_PAGES.map((p) => ({
       url: `${SITE}/services/${p.path}`,
       lastModified: DATES.services,

@@ -139,8 +139,9 @@ export function AccountForm({
           <div className={ac.sectionBody}>
             <input type="hidden" name="directory_section" value="1" />
             <p className={f.hint}>
-              As an Open member you’re named on our public pages for each county you cover,
-              with a link to your website and a button customers use to write to you directly.
+              As an Open member you’re named in Find a contractor and on our public pages for
+              each county you cover, with a link to your website and a button customers use to
+              write to you directly.
               {!contractor.vetted_at && ' The listing goes live once we’ve vetted your account.'}
             </p>
             <label className={f.checkRow} style={{ marginTop: 12 }}>

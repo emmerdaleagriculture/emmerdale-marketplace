@@ -54,6 +54,7 @@ type IconName =
   | 'star'
   | 'myjobs'
   | 'quote'
+  | 'directory'
   | 'account';
 
 type Item = {
@@ -87,6 +88,14 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M4 20c0-7 4-12 12-14-1 8-5 12-12 14Z" />
       <path d="M4 20c3-4 6-7 9-9" />
+    </>
+  ),
+  directory: (
+    <>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <circle cx="9.5" cy="10" r="2" />
+      <path d="M6.5 16c.5-1.7 1.6-2.5 3-2.5s2.5.8 3 2.5" />
+      <path d="M14.5 9.5h3M14.5 13h3" />
     </>
   ),
   notes: (
@@ -187,6 +196,7 @@ function membershipItem(membership: Membership): Item {
 
 const EXPLORE: Item[] = [
   { href: '/paddock-maintenance', label: 'Paddock maintenance', icon: 'paddock' },
+  { href: '/contractors', label: 'Find a contractor', icon: 'directory' },
   { href: '/notes', label: 'Notes', icon: 'notes' },
 ];
 

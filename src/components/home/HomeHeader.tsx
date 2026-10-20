@@ -13,6 +13,7 @@ import s from './home.module.css';
 // only, and "#services" from /contact scrolls to nothing.
 const LINKS = [
   { href: '/services', label: 'Services' },
+  { href: '/contractors', label: 'Find a contractor' },
   { href: '/notes', label: 'Notes' },
 ];
 

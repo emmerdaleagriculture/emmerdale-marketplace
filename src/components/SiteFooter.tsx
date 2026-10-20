@@ -47,6 +47,7 @@ export function SiteFooter() {
             <Link href="/paddock-maintenance">Paddock maintenance</Link>
             <Link href="/hay-bales">Hay, straw &amp; haylage</Link>
             <Link href="/tractor-hire">Tractor hire</Link>
+            <Link href="/contractors">Find a contractor</Link>
           </nav>
 
           <nav className={styles.linkCol} aria-label="Company">
