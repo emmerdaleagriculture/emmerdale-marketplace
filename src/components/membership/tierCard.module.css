@@ -14,13 +14,18 @@
   margin: 0 0 36px;
 }
 .tier {
+  /* The band bleeds over these, so they live in one place. */
+  --tier-pad-y: 24px;
+  --tier-pad-x: 20px;
+  --tier-bw: 1px;
+  --tier-radius: 14px;
   position: relative;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--rule);
-  border-radius: 14px;
+  border: var(--tier-bw) solid var(--rule);
+  border-radius: var(--tier-radius);
   background: #fff;
-  padding: 24px 20px 20px;
+  padding: var(--tier-pad-y) var(--tier-pad-x) 20px;
 }
 .tierFeatured {
   border-color: var(--jd-green);
@@ -48,14 +53,41 @@
   text-transform: uppercase;
 }
 .tagCurrent {
-  background: var(--jd-green-dark);
+  background: #fff;
+  color: var(--jd-green-dark);
+  box-shadow: 0 0 0 1px var(--jd-green-dark);
+}
+/* The header band: the card's name on a colour, one shade a tier, bled
+   to the card's edges over its padding. The radius is the card's less
+   its border, so the band fills the corners. */
+.tierHead {
+  margin: calc(-1 * var(--tier-pad-y)) calc(-1 * var(--tier-pad-x)) 18px;
+  padding: 16px var(--tier-pad-x) 14px;
+  border-radius: calc(var(--tier-radius) - var(--tier-bw)) calc(var(--tier-radius) - var(--tier-bw)) 0 0;
   color: #fff;
 }
+/* Free stands back: a light band with dark text under the two greens. */
+.headFree {
+  background: var(--grey-pale);
+  color: var(--ink);
+}
+.headPremium {
+  background: var(--jd-green-light);
+}
+.headOpen {
+  background: var(--jd-green);
+}
 .tierName {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-display-stack);
   font-size: 24px;
-  color: var(--jd-green-deep);
-  margin: 0 0 4px;
+  font-weight: 400;
+  margin: 0;
+}
+.glyph {
+  color: var(--jd-yellow);
 }
 .tierBlurb {
   color: var(--ink-3);
@@ -158,13 +190,64 @@
   font-weight: 600;
 }
 
+/*
+ * Stacked on a phone the cards sit on the white page with nothing beside
+ * them, and a hairline in pale grey round a white box reads as text with
+ * a border. Cream fill, a firmer edge and a shadow make each one a thing.
+ */
 @media (max-width: 720px) {
   .tiers {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 22px;
   }
   .tier {
-    padding-left: 18px;
-    padding-right: 18px;
+    --tier-pad-y: 26px;
+    --tier-pad-x: 18px;
+    --tier-bw: 2px;
+    border-color: var(--rule-strong);
+    background: var(--cream);
+    box-shadow: 0 14px 32px -20px rgba(23, 51, 13, 0.4);
+  }
+  .tierFeatured {
+    border-color: var(--jd-green);
+    background: #fff;
+    box-shadow: 0 0 0 1px var(--jd-green), 0 14px 32px -20px rgba(23, 51, 13, 0.5);
+  }
+  .tierCurrent {
+    border-color: var(--jd-green-dark);
+    background: var(--jd-green-pale);
+  }
+  .benefits {
+    border-top-color: var(--rule-strong);
+  }
+  .tierHead {
+    padding-top: 18px;
+    padding-bottom: 16px;
+  }
+}
+
+/*
+ * A page that centres everything on a phone (the membership page) puts
+ * this on a wrapper round the grid; the card's rows that flex or sit
+ * absolutely need more than text-align to follow.
+ */
+@media (max-width: 720px) {
+  .centred .tierTag {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .centred .price,
+  .centred .tierName {
+    justify-content: center;
+  }
+  /* A wrapped line fills the row and leaves the tick at the far edge, so
+     the tick goes inline, at the head of the centred text. */
+  .centred .benefit {
+    display: block;
+  }
+  .centred .tick {
+    display: inline-block;
+    vertical-align: -3px;
+    margin: 0 4px 0 0;
   }
 }

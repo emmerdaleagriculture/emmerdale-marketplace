@@ -14,10 +14,13 @@ export function ContactUsButton({
   subject,
   body,
   note = 'Questions, problems or anything else — a real person reads these.',
+  className,
 }: {
   subject: string;
   body?: string;
   note?: string;
+  /** A page's own layout class on the row (the membership page centres it). */
+  className?: string;
 }) {
   const params = new URLSearchParams({ subject });
   if (body) params.set('body', body);
@@ -25,7 +28,7 @@ export function ContactUsButton({
   const href = `mailto:${CONTACT_EMAIL}?${params.toString().replace(/\+/g, '%20')}`;
 
   return (
-    <aside className={s.wrap} aria-label="Contact us">
+    <aside className={className ? `${s.wrap} ${className}` : s.wrap} aria-label="Contact us">
       <a className={s.button} href={href}>
         Contact us
       </a>

@@ -23,6 +23,10 @@
   --cream: #fafaf5;
   --white: #ffffff;
   --rule: #d8dcd2;
+  /* A firmer edge where a hairline reads as text with a border, and the
+     pale grey of a band or a gridline. */
+  --rule-strong: #c5ccbc;
+  --grey-pale: #e4e7df;
   --error: #c63b1f;
 
   /* Typography (next/font sets --font-display / --font-body at the html root) */
