@@ -255,9 +255,14 @@ set `FIREBASE_SERVICE_ACCOUNT` with `supabase secrets set`. Migration
   from `sq_payout_ready` (invoice in and balance collected), held amount,
   recent won jobs with what the customer paid, the fee and the net, and the
   premium card with status and benefits only.
-- **Premium in the app**: the dashboard's Stripe buttons and billing link
-  are hidden in app mode; the benefits and status show with "bought on the
-  website".
+- **Membership in the app** (Apple 3.1.1: outside the US an app may not
+  sell a membership, or point people anywhere else to buy one, except
+  through Apple's own payments). The app shows status and benefits only —
+  no price, no join, change or billing button, and no "on the website"
+  pointer. `/app/earnings` has the card; the dashboard's `MembershipCard`
+  takes `app` and renders a plain card; `/account/membership` (the pricing
+  page) redirects to `/app/earnings` from the app. Membership is bought and
+  managed on the website.
 
 ## Native permission strings the frame needs
 

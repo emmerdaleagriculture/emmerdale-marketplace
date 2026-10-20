@@ -37,10 +37,18 @@
   flex-wrap: wrap;
 }
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-display-stack);
   font-size: 18px;
   letter-spacing: 0.03em;
   color: var(--white);
+}
+.brandMark {
+  flex: 0 0 auto;
+  width: auto;
+  height: 28px;
 }
 .bar {
   display: flex;
@@ -331,6 +339,12 @@
   .menuJoin {
     display: none;
   }
+  /* The icons go after the burger on a laptop: the menu is the thing the
+     bar is for, so it sits next to the membership link, and the social
+     links trail it at the edge. A phone keeps them before the burger. */
+  .social {
+    order: 1;
+  }
 }
 
 /*
@@ -344,6 +358,10 @@
   }
   .brand {
     font-size: 16px;
+    gap: 8px;
+  }
+  .brandMark {
+    height: 24px;
   }
   .bar {
     display: none;

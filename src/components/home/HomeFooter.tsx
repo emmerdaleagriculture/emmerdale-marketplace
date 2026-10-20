@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { AccountLink } from './AccountLink';
-import { BrandMark } from './BrandMark';
+import { BrandLockup } from './BrandMark';
 import { FOOTER_HOME_SERVICES } from '@/lib/home/services';
 import { servicePagePath } from '@/lib/services';
 import { COMPANY_LEGAL_NAME, COMPANY_REG_LINE, COMPANY_ADDRESS_LINES } from '@/lib/site';
@@ -15,8 +15,7 @@ export function HomeFooter() {
         <div className={s.footerGrid}>
           <div>
             <Link href="/" className={`${s.brand} ${s.brandFooter}`} aria-label="Emmerdale Agriculture home">
-              <BrandMark className={s.brandMark} />
-              <span className={s.brandWordmark}>Emmerdale Agriculture</span>
+              <BrandLockup width={200} className={s.brandLockup} />
             </Link>
             <p className={s.footerTag}>A managed marketplace for rural land.</p>
             <address className={s.footerAddress}>

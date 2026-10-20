@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrandMark } from '@/components/home/BrandMark';
 import h from '@/components/SiteHeader.module.css';
 import { SocialLinks } from '@/components/SocialLinks';
 
@@ -13,7 +14,8 @@ export function MinimalHeader() {
     <header className={`${h.header} ${h.solid}`} data-app-hide>
       <div className={h.inner}>
         <Link href="/" className={h.brand}>
-          Emmerdale Agriculture
+          <BrandMark size={28} className={h.brandMark} />
+          <span>Emmerdale Agriculture</span>
         </Link>
         <SocialLinks className={h.social} />
       </div>
