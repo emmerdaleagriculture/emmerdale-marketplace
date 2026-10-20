@@ -70,7 +70,7 @@ export function ServiceQuestions({
               {q.hint && <span className={f.hint}>{q.hint}</span>}
               {askedFor === q.key && (
                 <p className={s.discrepancy} role="alert" style={{ margin: '4px 0' }}>
-                  The contractor needs this to price your job —{' '}
+                  The contractor needs this to price your job:{' '}
                   {q.kind === 'number' ? (
                     <>a rough figure is fine.</>
                   ) : (

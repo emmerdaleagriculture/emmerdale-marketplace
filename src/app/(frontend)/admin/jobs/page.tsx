@@ -6,7 +6,7 @@ import s from '../admin.module.css';
 import { AdminTable, StatusPill } from '../ui';
 import f from '@/components/forms/forms.module.css';
 
-export const metadata: Metadata = { title: 'Jobs — Admin' };
+export const metadata: Metadata = { title: 'Jobs · Admin' };
 
 export default async function AdminJobsPage() {
   const admin = createServiceRoleClient();

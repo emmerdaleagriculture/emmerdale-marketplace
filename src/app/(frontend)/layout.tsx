@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   // through siteUrl() — which refuses a localhost value in a production build.
   metadataBase: new URL(siteUrl()),
   title: {
-    default: `${SITE_NAME} — ${SITE_STRAPLINE}`,
+    default: `${SITE_NAME} · ${SITE_STRAPLINE}`,
     template: `%s | ${SITE_NAME}`,
   },
   description:

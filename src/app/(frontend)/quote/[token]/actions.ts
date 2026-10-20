@@ -91,7 +91,7 @@ export async function submitQuoteAction(
     // pays a deposit against it — a rate alone is not something to accept.
     rateValuePence = poundsInputToPence(d.rate_value ?? '');
     if (rateValuePence === null) return { error: 'Enter your price per unit, e.g. 12.' };
-    if (!d.unit_label) return { error: 'Say what one unit is — a bale, a day, a load.' };
+    if (!d.unit_label) return { error: 'Say what one unit is: a bale, a day, a load.' };
     const qty = Number(d.unit_quantity);
     if (!Number.isFinite(qty) || qty <= 0) {
       return { error: 'Enter how many, e.g. 20.' };
@@ -131,7 +131,7 @@ export async function submitQuoteAction(
   });
   if (error) {
     console.error('[sq] submit_contractor_quote failed:', error);
-    return { error: 'Something went wrong sending your price — please try again.' };
+    return { error: 'Something went wrong sending your price. Please try again.' };
   }
   const res = data as { ok: boolean; reason?: string };
   if (!res.ok) {
@@ -140,12 +140,12 @@ export async function submitQuoteAction(
         return {
           closed: true,
           message:
-            'This one’s been taken — the customer accepted another price before yours came in. It happens with first-come jobs; nothing else is needed from you.',
+            'This one’s been taken. The customer accepted another price before yours came in. It happens with first-come jobs; nothing else is needed from you.',
         };
       case 'unit_needs_quantity':
         return { error: 'A per-unit price needs the unit and how many.' };
       case 'rate_needs_area':
-        return { error: 'This job has no usable acreage for a per-acre rate — give a total price instead.' };
+        return { error: 'This job has no usable acreage for a per-acre rate. Give a total price instead.' };
       case 'declined':
         return { error: 'You’ve passed on this job. If that’s changed, get in touch and we’ll re-open it.' };
       case 'suspended':
@@ -153,7 +153,7 @@ export async function submitQuoteAction(
       case 'not_found':
         return { error: 'This link is not valid.' };
       default:
-        return { error: 'That didn’t go through — please check the form and try again.' };
+        return { error: 'That didn’t go through. Please check the form and try again.' };
     }
   }
   return { ok: true, message: 'Price sent. You can revise it any time until the job is taken.' };
@@ -174,16 +174,16 @@ export async function declineInvitationAction(
   });
   if (error) {
     console.error('[sq] decline_invitation failed:', error);
-    return { error: 'That didn’t go through — please try again.' };
+    return { error: 'That didn’t go through. Please try again.' };
   }
   const res = data as { ok: boolean; reason?: string };
   if (!res.ok) {
     if (res.reason === 'already_priced') {
-      return { error: 'You’ve already priced this job — a decline would withdraw it, which needs a word with us first.' };
+      return { error: 'You’ve already priced this job. A decline would withdraw it, which needs a word with us first.' };
     }
     return { error: 'This job has already closed.' };
   }
-  return { ok: true, message: 'Noted — thanks for the quick answer. It helps us send you the right jobs.' };
+  return { ok: true, message: 'Noted, thanks for the quick answer. It helps us send you the right jobs.' };
 }
 
 /**
@@ -202,7 +202,7 @@ export async function undoDeclineAction(
   const { data, error } = await admin.rpc('undo_decline_invitation', { p_token: token });
   if (error) {
     console.error('[sq] undo_decline_invitation failed:', error);
-    return { error: 'That didn’t go through — please try again.' };
+    return { error: 'That didn’t go through. Please try again.' };
   }
   const res = data as { ok: boolean; reason?: string };
   if (!res.ok) return { error: 'This job has already closed, so there is nothing to reopen.' };
@@ -278,7 +278,7 @@ export async function sendContractorMessageAction(
   const submissionId = invitation.submission?.id;
   if (!submissionId) return { error: postRefusal(undefined), body };
   const photoPaths = await uploadMessagePhotos(submissionId, photos.files);
-  if (!photoPaths) return { error: 'The photos didn’t upload — please try again.', body };
+  if (!photoPaths) return { error: 'The photos didn’t upload. Please try again.', body };
 
   const { data, error } = await createServiceRoleClient().rpc('sq_post_message', {
     p_invitation_id: invitation.id,

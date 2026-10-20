@@ -32,7 +32,7 @@ export function NotifyScreen({ next, side }: { next: string; side: 'customer' | 
           ['Job done', 'When the work is marked complete, so you can sign it off.'],
         ]
       : [
-          ['New jobs', 'Jobs near you, the moment they come in — first refusal included.'],
+          ['New jobs', 'Jobs near you, the moment they come in, first refusal included.'],
           ['Booked', 'When a customer accepts your price.'],
           ['Messages and payouts', 'When a customer writes, and when you have been paid.'],
         ];

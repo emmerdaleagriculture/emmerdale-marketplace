@@ -106,7 +106,7 @@ export async function completeOnboardingAction(
       `Phone:     ${d.phone}\n` +
       `Postcode:  ${d.base_postcode}\n` +
       `Counties:  ${countyNames || d.county_ids.length}\n` +
-      `Plan:      ${d.membership === 'free' ? 'Free' : `${membershipTier === 'open' ? 'Open' : 'Premium'} (${membershipPlan}) — sent to Stripe to pay; refunded automatically if rejected`}\n\n` +
+      `Plan:      ${d.membership === 'free' ? 'Free' : `${membershipTier === 'open' ? 'Open' : 'Premium'} (${membershipPlan}), sent to Stripe to pay; refunded automatically if rejected`}\n\n` +
       `Review and approve: ${siteUrl}/admin/contractors`,
   );
 

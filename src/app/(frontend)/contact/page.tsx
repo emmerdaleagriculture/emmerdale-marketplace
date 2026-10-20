@@ -17,7 +17,7 @@ import a from '../auth.module.css';
 export const metadata: Metadata = {
   title: 'Contact us',
   description:
-    'Get in touch with Emmerdale Agriculture — email us about a job, an invoice or anything that has gone wrong.',
+    'Get in touch with Emmerdale Agriculture: email us about a job, an invoice or anything that has gone wrong.',
   alternates: { canonical: '/contact' },
 };
 
@@ -52,7 +52,7 @@ export default function ContactPage() {
             <p className={a.altLink}>
               Contractors: for anything about an invitation, a price you&rsquo;ve
               given or an invoice, email us here or reply to any email we&rsquo;ve
-              sent you — replies reach the same place.
+              sent you. Replies reach the same place.
             </p>
           </div>
 
@@ -73,7 +73,7 @@ export default function ContactPage() {
           <div className={a.card} style={{ marginTop: 20 }}>
             <h2 className={a.cardTitle}>Want work quoted?</h2>
             <p>
-              Don&rsquo;t email it — <Link href="/start">describe the job</Link> and
+              Don&rsquo;t email it: <Link href="/start">describe the job</Link> and
               it goes straight out to contractors covering your area, with prices
               back to you rather than a conversation first.
             </p>

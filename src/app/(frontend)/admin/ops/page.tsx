@@ -7,7 +7,7 @@ import { OPS_THRESHOLDS_MS, type OpsState } from '@/lib/sealedQuotes/opsThreshol
 import s from '../admin.module.css';
 import o from './ops.module.css';
 
-export const metadata: Metadata = { title: 'Ops — Admin' };
+export const metadata: Metadata = { title: 'Ops · Admin' };
 export const dynamic = 'force-dynamic';
 
 /**
@@ -69,18 +69,18 @@ const OPEN_STATES = LANES.flatMap((l) => l.states);
 
 /** Label, the normal next step, and what to do once past the threshold. */
 const STATE: Record<OpsState, [label: string, next: string, late: string]> = {
-  confirmed: ['Confirmed', 'Sending to contractors', 'Not sent after 15 min — distribute it from the job page'],
-  distributed: ['With contractors', 'Waiting for the first price', 'No prices after 48h — chase contractors'],
+  confirmed: ['Confirmed', 'Sending to contractors', 'Not sent after 15 min: distribute it from the job page'],
+  distributed: ['With contractors', 'Waiting for the first price', 'No prices after 48h: chase contractors'],
   quotes_receiving: ['Prices in', 'Customer is choosing', ''],
-  accepted_awaiting_payment: ['Accepted', 'Waiting for the deposit', 'Deposit unpaid after 12h — nudge the customer'],
+  accepted_awaiting_payment: ['Accepted', 'Waiting for the deposit', 'Deposit unpaid after 12h: nudge the customer'],
   awarded: ['Awarded', 'Contractor contacting the customer', ''],
   contacted: ['Contacted', 'Contractor and customer in touch', ''],
-  scheduled: ['Scheduled', 'Booked in', 'Past its date and not started — check in'],
+  scheduled: ['Scheduled', 'Booked in', 'Past its date and not started: check in'],
   in_progress: ['On site', 'Work under way', ''],
-  completed_by_contractor: ['Marked done', 'Customer to confirm completion', 'Unconfirmed for 3 days — nudge the customer'],
-  disputed: ['Disputed', 'Resolve the dispute', 'Dispute open over 4h — resolve it'],
-  variation_pending: ['Variation', 'Customer to approve the variation', 'Variation waiting over 4h — chase it'],
-  variation_declined: ['Variation declined', 'Decide the next step', 'Declined over 4h ago — decide the next step'],
+  completed_by_contractor: ['Marked done', 'Customer to confirm completion', 'Unconfirmed for 3 days: nudge the customer'],
+  disputed: ['Disputed', 'Resolve the dispute', 'Dispute open over 4h: resolve it'],
+  variation_pending: ['Variation', 'Customer to approve the variation', 'Variation waiting over 4h: chase it'],
+  variation_declined: ['Variation declined', 'Decide the next step', 'Declined over 4h ago: decide the next step'],
 };
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -239,7 +239,7 @@ export default async function OpsPage() {
 
       {testMode && (
         <div className={o.testBanner}>
-          TEST MODE — invitations restricted to the allowlist. Real contractors
+          TEST MODE: invitations restricted to the allowlist. Real contractors
           receive nothing. Clear <code>sq_test_contractor_allowlist</code> in
           app_config to go live.
         </div>
@@ -252,7 +252,7 @@ export default async function OpsPage() {
           </strong>{' '}
           Anyone can call {exposed.length === 1 ? 'it' : 'them'} without signing in:{' '}
           <code>{exposed.join(', ')}</code>. Revoke with{' '}
-          <code>revoke execute on function … from anon, authenticated</code> — this
+          <code>revoke execute on function … from anon, authenticated</code>. This
           happens by itself when a function is created outside our migrations.
         </div>
       )}
@@ -279,7 +279,7 @@ export default async function OpsPage() {
       </nav>
 
       {jobs.length === 0 && !error && (
-        <div className={s.empty} style={{ marginTop: 24 }}>Nothing open — the board is clear.</div>
+        <div className={s.empty} style={{ marginTop: 24 }}>Nothing open. The board is clear.</div>
       )}
 
       {lanes

@@ -44,7 +44,7 @@ export default function StartPage() {
           <h1 className={`${a.title} ${s.title}`}>Tell us what needs doing</h1>
           <p className={`${a.sub} ${s.sub}`}>
             In your own words. We&rsquo;ll get prices from several vetted
-            contractors near you — side by side, so you can compare.
+            contractors near you, side by side, so you can compare.
           </p>
           {/* The homepage's trust chips, for an arrival who never saw the
               homepage. Two short lines on a phone; the form field's own hint

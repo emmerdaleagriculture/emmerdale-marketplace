@@ -7,7 +7,7 @@ import s from '../admin.module.css';
 import { AdminTable, StatusPill } from '../ui';
 import { cleanSignupSource } from '@/lib/signupSource';
 
-export const metadata: Metadata = { title: 'Contractors — Admin' };
+export const metadata: Metadata = { title: 'Contractors · Admin' };
 
 /** Both tables on this page are the same table, split by status. */
 const COLUMNS = ['Business', 'Contact', 'Email', 'Base', 'Counties', 'Invited', 'Status', 'Actions'];
@@ -71,7 +71,7 @@ function Row({ c }: { c: ContractorRow }) {
           c.counties >= MANY_COUNTIES && (
             <>
               {' '}
-              <span className={`${s.pill} ${s.pillSuspended}`} title="Covers most of the map — worth a word">
+              <span className={`${s.pill} ${s.pillSuspended}`} title="Covers most of the map, worth a word">
                 blanket
               </span>
             </>

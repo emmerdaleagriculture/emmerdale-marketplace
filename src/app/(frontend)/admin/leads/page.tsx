@@ -8,7 +8,7 @@ import { formatDateTime } from '@/lib/time';
 import s from '../admin.module.css';
 import { AdminTable, StatusPill } from '../ui';
 
-export const metadata: Metadata = { title: 'Leads — Admin' };
+export const metadata: Metadata = { title: 'Leads · Admin' };
 
 type LeadRow = {
   id: string;

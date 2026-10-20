@@ -89,9 +89,9 @@ export function StartJobForm() {
           minLength={3}
           maxLength={MAX_JOB}
           rows={4}
-          placeholder="e.g. Two paddocks about 3 acres each, grass is well over knee height and full of docks — needs topping before winter"
+          placeholder="e.g. Two paddocks about 3 acres each, grass is well over knee height and full of docks, needs topping before winter"
         />
-        <span className={f.hint}>Your own words are fine — no need for the technical term.</span>
+        <span className={f.hint}>Your own words are fine. No need for the technical term.</span>
       </label>
 
       <label className={f.field}>

@@ -45,7 +45,7 @@ export async function acceptQuoteAction(
 ): Promise<AcceptActionState> {
   const token = String(formData.get('token') ?? '');
   const quoteId = String(formData.get('client_quote_id') ?? '');
-  if (!isTokenFormat(token) || !quoteId) return { error: 'Something went wrong — refresh and try again.' };
+  if (!isTokenFormat(token) || !quoteId) return { error: 'Something went wrong. Refresh and try again.' };
   // The app opens Checkout in the system's in-app browser (Apple Pay and
   // Google Pay work there and not in the WebView), so it wants the URL back
   // rather than a redirect it cannot intercept.
@@ -120,7 +120,7 @@ export async function acceptQuoteAction(
     | null;
   if (planError || !plan?.ok) {
     console.error('[sq] sq_payment_plan failed:', planError, planRow);
-    return { error: 'Something went wrong — nothing was booked. Please try again.' };
+    return { error: 'Something went wrong. Nothing was booked. Please try again.' };
   }
   const takingDeposit = plan.balance_pence > 0;
 
@@ -131,7 +131,7 @@ export async function acceptQuoteAction(
     console.error('[sq] Stripe not configured:', err);
     return {
       error:
-        'Payments aren’t available just now — nothing was booked. Please try again shortly.',
+        'Payments aren’t available just now. Nothing was booked. Please try again shortly.',
     };
   }
   const session = await stripe.checkout.sessions.create({
@@ -143,8 +143,8 @@ export async function acceptQuoteAction(
           unit_amount: plan.deposit_pence,
           product_data: {
             name: takingDeposit
-              ? `Deposit — ${serviceName} (${quote.contractor_display_label})`
-              : `${serviceName} — ${quote.contractor_display_label}`,
+              ? `Deposit: ${serviceName} (${quote.contractor_display_label})`
+              : `${serviceName}: ${quote.contractor_display_label}`,
             description: takingDeposit
               ? `${formatGBP(plan.deposit_pence)} now of ${formatGBP(plan.total_pence)}. ` +
                 `The remaining ${formatGBP(plan.balance_pence)} is charged to this card when ` +
@@ -184,17 +184,17 @@ export async function acceptQuoteAction(
     } catch { /* already expired/paid — the webhook path handles it */ }
     const reason = (data as { reason?: string } | null)?.reason;
     if (reason === 'conflict') {
-      return { error: 'This job already has an acceptance in progress — refresh to see where things stand.' };
+      return { error: 'This job already has an acceptance in progress. Refresh to see where things stand.' };
     }
     if (reason === 'amount_mismatch') {
       // The split moved under them between reading the plan and committing.
-      return { error: 'The payment terms have just changed — refresh and accept again.' };
+      return { error: 'The payment terms have just changed. Refresh and accept again.' };
     }
     if (reason === 'quote_unavailable') {
-      return { error: `That price is no longer available — it may have lapsed. The list below is current.` };
+      return { error: `That price is no longer available. It may have lapsed. The list below is current.` };
     }
     console.error('[sq] begin_acceptance failed:', error, data);
-    return { error: 'Something went wrong — nothing was booked and no money was taken. Please try again.' };
+    return { error: 'Something went wrong. Nothing was booked and no money was taken. Please try again.' };
   }
 
   return go(session.url ?? `${SITE()}/my/${token}`);
@@ -240,7 +240,7 @@ export async function payBalanceAction(
     .limit(1)
     .maybeSingle();
   if (!bal) {
-    return { error: 'There\u2019s no balance waiting to be paid by hand on this job — we\u2019re still collecting it from your card.' };
+    return { error: 'There\u2019s no balance waiting to be paid by hand on this job. We\u2019re still collecting it from your card.' };
   }
 
   let stripe;
@@ -248,7 +248,7 @@ export async function payBalanceAction(
     stripe = getStripe();
   } catch (err) {
     console.error('[sq] Stripe not configured:', err);
-    return { error: 'Payments aren\u2019t available just now — please try again shortly.' };
+    return { error: 'Payments aren\u2019t available just now. Please try again shortly.' };
   }
   const serviceName = (js.service as { name: string } | null)?.name ?? 'Land work';
   const session = await stripe.checkout.sessions.create({
@@ -258,7 +258,7 @@ export async function payBalanceAction(
         price_data: {
           currency: 'gbp',
           unit_amount: bal.amount_pence,
-          product_data: { name: `Balance — ${serviceName}` },
+          product_data: { name: `Balance: ${serviceName}` },
         },
         quantity: 1,
       },
@@ -298,15 +298,15 @@ export async function submitRatingAction(
   });
   if (error) {
     console.error('[sq] submit_client_rating failed:', error);
-    return { error: 'That didn’t go through — please try again.' };
+    return { error: 'That didn’t go through. Please try again.' };
   }
   const res = data as { ok: boolean; reason?: string };
   if (!res.ok) {
-    if (res.reason === 'already_rated') return { ok: true, message: 'You’ve already rated this job — thank you.' };
+    if (res.reason === 'already_rated') return { ok: true, message: 'You’ve already rated this job. Thank you.' };
     if (res.reason === 'not_completed') return { error: 'You can rate once the work is done.' };
     return { error: 'This link is no longer valid.' };
   }
-  return { ok: true, message: 'Thank you — your rating helps the next customer choose.' };
+  return { ok: true, message: 'Thank you. Your rating helps the next customer choose.' };
 }
 
 /**
@@ -336,13 +336,13 @@ export async function confirmCompletionAction(
   });
   if (error) {
     console.error('[sq] confirm_completion_by_client failed:', error);
-    return { error: 'That didn\u2019t go through — please try again.' };
+    return { error: 'That didn\u2019t go through. Please try again.' };
   }
   const res = data as { ok: boolean; reason?: string };
-  if (!res.ok) return { error: 'This job has moved on — refresh to see where it is.' };
+  if (!res.ok) return { error: 'This job has moved on. Refresh to see where it is.' };
 
   revalidatePath(`/my/${token}`);
-  return { ok: true, message: 'Confirmed — thank you. Your contractor will be paid.' };
+  return { ok: true, message: 'Confirmed. Thank you. Your contractor will be paid.' };
 }
 
 /**
@@ -372,13 +372,13 @@ export async function cancelJobAction(_prev: FormState, formData: FormData): Pro
   if (!['awarded', 'contacted', 'scheduled'].includes(js.status)) {
     return {
       error:
-        'This job has moved on — once work has started we settle it with you directly. Reply to any email from us and we\u2019ll sort it.',
+        'This job has moved on. Once work has started we settle it with you directly. Reply to any email from us and we\u2019ll sort it.',
     };
   }
 
   const quote = await cancellationQuote(js.id);
   if (!quote) {
-    return { error: 'We couldn\u2019t find the payment for this job — please contact us and we\u2019ll cancel it by hand.' };
+    return { error: 'We couldn\u2019t find the payment for this job. Please contact us and we\u2019ll cancel it by hand.' };
   }
   const { fee, refund, paymentIntentId } = quote;
 
@@ -414,7 +414,7 @@ export async function cancelJobAction(_prev: FormState, formData: FormData): Pro
     };
   }
   const res = data as { ok: boolean };
-  if (!res.ok) return { error: 'This job has moved on — refresh to see where it is.' };
+  if (!res.ok) return { error: 'This job has moved on. Refresh to see where it is.' };
 
   revalidatePath(`/my/${token}`);
   return {
@@ -450,7 +450,7 @@ export async function openToMarketAction(_prev: FormState, formData: FormData): 
   });
   if (error) {
     console.error('[sq] open_submission_to_market failed:', error);
-    return { error: 'That didn’t go through — please try again.' };
+    return { error: 'That didn’t go through. Please try again.' };
   }
   const res = data as { ok: boolean; reason?: string; invited?: number };
   if (!res.ok) {
@@ -458,7 +458,7 @@ export async function openToMarketAction(_prev: FormState, formData: FormData): 
       error:
         res.reason === 'not_direct'
           ? 'This job is already with every contractor who covers your area.'
-          : 'This job has moved on — refresh to see where it is.',
+          : 'This job has moved on. Refresh to see where it is.',
     };
   }
 
@@ -467,8 +467,8 @@ export async function openToMarketAction(_prev: FormState, formData: FormData): 
   return {
     ok: true,
     message: n
-      ? `Sent to ${n} more contractor${n === 1 ? '' : 's'} — their prices will appear here as they come in.`
-      : 'Done — but no other contractors cover your area just now. We’ll keep it open.',
+      ? `Sent to ${n} more contractor${n === 1 ? '' : 's'}. Their prices will appear here as they come in.`
+      : 'Done, but no other contractors cover your area just now. We’ll keep it open.',
   };
 }
 
@@ -520,7 +520,7 @@ export async function sendClientMessageAction(
   const submissionId = inv.submission_id;
   if (!submissionId) return { error: postRefusal(undefined), body };
   const photoPaths = await uploadMessagePhotos(submissionId, photos.files);
-  if (!photoPaths) return { error: 'The photos didn’t upload — please try again.', body };
+  if (!photoPaths) return { error: 'The photos didn’t upload. Please try again.', body };
 
   const { data, error } = await createServiceRoleClient().rpc('sq_post_message', {
     p_invitation_id: inv.id,
@@ -561,10 +561,10 @@ export async function acceptRevisedPriceAction(_prev: FormState, formData: FormD
   const { data, error } = await createServiceRoleClient().rpc('sq_visit_accept', { p_submission_id: js.id });
   if (error || !(data as { ok: boolean } | null)?.ok) {
     if (error) console.error('[sq] sq_visit_accept failed:', error.message);
-    return { error: 'This has already been decided — refresh to see where the job is.' };
+    return { error: 'This has already been decided. Refresh to see where the job is.' };
   }
   revalidatePath(`/my/${token}`);
-  return { ok: true, message: 'Accepted — the job goes ahead at the new price.' };
+  return { ok: true, message: 'Accepted. The job goes ahead at the new price.' };
 }
 
 /**
@@ -578,7 +578,7 @@ export async function declineRevisedPriceAction(_prev: FormState, formData: Form
   const js = await getSubmissionByClientToken(token);
   if (!js) return { error: 'This link is no longer valid.' };
   if (js.status !== 'variation_pending' || js.visit_status !== 'revised') {
-    return { error: 'This has already been decided — refresh to see where the job is.' };
+    return { error: 'This has already been decided. Refresh to see where the job is.' };
   }
 
   const admin = createServiceRoleClient();
@@ -592,7 +592,7 @@ export async function declineRevisedPriceAction(_prev: FormState, formData: Form
     .limit(1)
     .maybeSingle();
   if (!deposit?.stripe_payment_intent_id) {
-    return { error: 'We couldn’t find your deposit payment — please contact us and we’ll refund it by hand.' };
+    return { error: 'We couldn’t find your deposit payment. Please contact us and we’ll refund it by hand.' };
   }
 
   try {
@@ -659,7 +659,7 @@ export async function setTextAlertsAction(_prev: FormState, formData: FormData):
   let phone: string | null = null;
   if (on) {
     phone = ukMobile(String(formData.get('phone') ?? ''));
-    if (!phone) return { error: 'That doesn’t look like a UK mobile number — it should start 07.' };
+    if (!phone) return { error: 'That doesn’t look like a UK mobile number. It should start 07.' };
   }
 
   const { data, error } = await createServiceRoleClient()
@@ -670,7 +670,7 @@ export async function setTextAlertsAction(_prev: FormState, formData: FormData):
     .select('id');
   if (error) {
     console.error('[sq] setTextAlerts failed:', error);
-    return { error: 'That didn’t save — please try again.' };
+    return { error: 'That didn’t save. Please try again.' };
   }
   if (!data?.length) return { error: 'This link is no longer valid.' };
 

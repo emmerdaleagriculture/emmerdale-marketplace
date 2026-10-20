@@ -50,8 +50,8 @@ export async function withdrawJobAction(_prev: FormState, formData: FormData): P
     return {
       error:
         res?.reason === 'not_open'
-          ? 'This job has moved on — once it is booked, cancel it from the booking instead.'
-          : 'That didn’t work — please try again, or reply to any email from us.',
+          ? 'This job has moved on. Once it is booked, cancel it from the booking instead.'
+          : 'That didn’t work. Please try again, or reply to any email from us.',
     };
   }
   revalidatePath(`/my/${token}`);

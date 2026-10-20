@@ -5,7 +5,7 @@ import { fetchAll } from '@/lib/supabase/fetchAll';
 import s from '../../admin.module.css';
 import { AdminTable, Tile, Tiles, ago } from '../../ui';
 
-export const metadata: Metadata = { title: 'Messages — Admin' };
+export const metadata: Metadata = { title: 'Messages · Admin' };
 export const dynamic = 'force-dynamic';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -135,7 +135,7 @@ export default async function MessagesReportPage() {
       <p className={s.sub}>
         Messages between customers and contractors on the job pages. A conversation is one
         customer and one contractor on one job; answered means both have written in it.
-        {msgsQ.error ? ' Could not read messages — figures below are empty.' : ''}
+        {msgsQ.error ? ' Could not read messages. Figures below are empty.' : ''}
       </p>
 
       <Tiles>

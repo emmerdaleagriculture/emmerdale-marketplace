@@ -14,7 +14,7 @@ import styles from './notes.module.css';
 import { siteUrl } from '@/lib/site';
 
 const DESCRIPTION =
-  'Practical advice on paddocks, weeds, kit, and seasonal jobs — written from the seat of a tractor.';
+  'Practical advice on paddocks, weeds, kit, and seasonal jobs, written from the seat of a tractor.';
 
 export const metadata: Metadata = {
   // Bare title — the layout template appends " | Emmerdale Agriculture".
@@ -89,7 +89,7 @@ export default async function NotesIndexPage() {
             Things <em>worth knowing</em>
           </h1>
           <p className={styles.heroSub}>
-            Practical advice on paddocks, weeds, kit, and seasonal jobs —
+            Practical advice on paddocks, weeds, kit, and seasonal jobs,
             written from the seat of a tractor.
           </p>
         </div>
@@ -148,7 +148,7 @@ export default async function NotesIndexPage() {
             <li key={p.id}>
               <Link href={`/notes/${p.slug}`}>{p.title}</Link>
               {p.publishedAt && (
-                <span className={styles.archiveDate}> — {formatMonth(p.publishedAt)}</span>
+                <span className={styles.archiveDate}> · {formatMonth(p.publishedAt)}</span>
               )}
             </li>
           ))}

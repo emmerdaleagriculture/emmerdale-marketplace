@@ -114,7 +114,7 @@ export function PriceList({
       {state.error && <p className={f.error}>{state.error}</p>}
       {state.url && (
         <p className={m.fixLine}>
-          Finish paying in the window that opened. When you&rsquo;re done, this page updates itself —
+          Finish paying in the window that opened. When you&rsquo;re done, this page updates itself,
           or <button type="button" className={f.linkButton} onClick={() => router.refresh()}>refresh it</button>.
         </p>
       )}
@@ -283,7 +283,7 @@ export function PriceList({
                       className={f.btnPrimary}
                       href={`#visit-${visitThreads[q.contractor_display_label]}`}
                     >
-                      Arrange a site visit — no deposit
+                      Arrange a site visit (no deposit)
                     </a>
                     <button type="button" className={f.btnGhost} onClick={() => setConfirming(q.id)}>
                       Accept {formatGBP(q.client_price_pence)}, subject to visit
@@ -323,7 +323,7 @@ export function PriceList({
               <input type="hidden" name="token" value={token} />
               <input type="hidden" name="client_quote_id" value={q.id} />
               <input type="hidden" name="op" value="undo" />
-              <span>Passed — {(PASS_LABEL[passes[q.id]] ?? 'no reason given').toLowerCase()}</span>
+              <span>Passed: {(PASS_LABEL[passes[q.id]] ?? 'no reason given').toLowerCase()}</span>
               <button type="submit" className={f.linkButton} disabled={passPending}>
                 Undo
               </button>

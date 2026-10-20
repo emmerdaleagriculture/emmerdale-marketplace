@@ -138,7 +138,7 @@ export default async function ResumeDraftPage({ params }: { params: Promise<{ id
           <p className={a.sub}>
             Nothing has gone out to contractors yet. Check it over and send it, and
             contractors who cover{' '}
-            {county?.name ? county.name : 'your area'} will price it — their prices
+            {county?.name ? county.name : 'your area'} will price it. Their prices
             appear on one page as they come in. It costs nothing to ask and you are
             not obliged to accept any of them.
           </p>

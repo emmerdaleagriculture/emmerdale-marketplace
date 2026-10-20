@@ -23,7 +23,7 @@ const EnquirySchema = z.object({
   details: z.string().trim().max(800).default(''),
 });
 
-const SUCCESS_MESSAGE = 'Thanks — we’ve got your enquiry and will be in touch shortly.';
+const SUCCESS_MESSAGE = 'Thanks, we’ve got your enquiry and will be in touch shortly.';
 
 /**
  * Capture a customer enquiry for a new marketplace vertical (hay, tractor hire)
@@ -108,7 +108,7 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
     .select('id')
     .single();
   if (error || !lead) {
-    return { error: 'Something went wrong saving your enquiry — please try again or call us.' };
+    return { error: 'Something went wrong saving your enquiry. Please try again or call us.' };
   }
 
   // Straight to the contractors who cover the county. Fire-and-log, like
@@ -129,14 +129,14 @@ export async function submitEnquiryAction(_prev: FormState, formData: FormData):
       `Phone:     ${d.phone}\n` +
       `Email:     ${d.email}\n` +
       `Postcode:  ${d.postcode}\n` +
-      `County:    ${geo.county_name ?? '(not resolved — check the postcode)'}\n` +
+      `County:    ${geo.county_name ?? '(not resolved, check the postcode)'}\n` +
       `Wants:     ${words}\n` +
       (detailsText ? detailsText.split('\n').map((l) => `           ${l}\n`).join('') : '') +
       `\n` +
       (converted
         ? `ALREADY SENT to contractors covering ${geo.county_name}: ${siteUrl}/admin/submissions/${converted}\n` +
           `Withdraw it there if it shouldn't have gone out.\n\n`
-        : `NOT sent automatically — it is waiting for you: ${siteUrl}/admin/leads\n\n`) +
+        : `NOT sent automatically. It is waiting for you: ${siteUrl}/admin/leads\n\n`) +
       `Review in the leads queue: ${siteUrl}/admin/leads`,
   );
 

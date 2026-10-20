@@ -67,7 +67,7 @@ export function PricePosition({
       <p className={q.posNote}>
         {position === null
           ? 'Every price on this job is the same.'
-          : 'Relative only — no other contractor’s price is shown, and yours is never shown to them.'}
+          : 'Relative only: no other contractor’s price is shown, and yours is never shown to them.'}
       </p>
     </div>
   );

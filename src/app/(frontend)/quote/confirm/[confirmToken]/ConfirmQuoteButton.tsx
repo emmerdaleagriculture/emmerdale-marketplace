@@ -27,11 +27,11 @@ export function ConfirmQuoteButton({
       <input type="hidden" name="confirm_token" value={confirmToken} />
       <div className={a.actions}>
         <button className={f.btnYellow} type="submit" disabled={pending}>
-          {pending ? 'Confirming…' : `Yes — ${amountLabel} is my price`}
+          {pending ? 'Confirming…' : `Yes, ${amountLabel} is my price`}
         </button>
       </div>
       <p className={f.hint}>
-        Wrong figure? Use the pricing link from your invitation email instead — a
+        Wrong figure? Use the pricing link from your invitation email instead. A
         new price there replaces this one.
       </p>
     </form>

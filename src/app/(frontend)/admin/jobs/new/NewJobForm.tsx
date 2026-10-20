@@ -49,12 +49,12 @@ export function NewJobForm({
       {state.error && <p className={f.error}>{state.error}</p>}
       {leadId && <input type="hidden" name="lead_id" value={leadId} />}
 
-      <div className={a.groupTitle}>Customer (private — only shown to contractors who open the job)</div>
+      <div className={a.groupTitle}>Customer (private, only shown to contractors who open the job)</div>
       <div className={a.row2}>
         <label className={f.field}>
           <span className={f.label}>Customer full name</span>
           <input className={f.input} name="customer_name" required defaultValue={v?.customer_name ?? defaults.customer_name} />
-          <span className={f.hint}>Private — surname is never shown publicly.</span>
+          <span className={f.hint}>Private: surname is never shown publicly.</span>
         </label>
         <label className={f.field}>
           <span className={f.label}>First name (shown publicly)</span>
@@ -83,7 +83,7 @@ export function NewJobForm({
       <div className={a.groupTitle}>Job</div>
       <label className={f.field}>
         <span className={f.label}>Title</span>
-        <input className={f.input} name="title" required placeholder="e.g. Paddock topping — 6 acres" defaultValue={v?.title ?? defaults.title} />
+        <input className={f.input} name="title" required placeholder="e.g. Paddock topping, 6 acres" defaultValue={v?.title ?? defaults.title} />
       </label>
       <label className={f.field}>
         <span className={f.label}>Description</span>
@@ -134,7 +134,7 @@ export function NewJobForm({
           <span className={f.label}>Paid head-start (hours)</span>
           <input className={f.input} name="exclusive_hours" type="number" min="0" max="72" defaultValue={v?.exclusive_hours ?? '0'} />
           <span className={f.hint}>
-            Leave at 0 while the paid tier is shelved — a head start hides the job
+            Leave at 0 while the paid tier is shelved: a head start hides the job
             from the whole network until it opens, and there are no paid members
             to see it early.
           </span>

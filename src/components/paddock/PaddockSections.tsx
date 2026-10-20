@@ -27,7 +27,7 @@ export const PADDOCK_STEPS = [
   {
     n: 1,
     title: 'Describe the job',
-    body: 'In your own words — long grass, an overgrown paddock, a field that needs putting right. A photo of the field and the gateway helps, but isn’t required.',
+    body: 'In your own words: long grass, an overgrown paddock, a field that needs putting right. A photo of the field and the gateway helps, but isn’t required.',
   },
   {
     n: 2,
@@ -111,7 +111,7 @@ export function CredSection({ children }: { children?: ReactNode }) {
           {children ?? (
             <>
               Emmerdale Agriculture is the network behind{' '}
-              <a href={HPM_URL}>Hampshire Paddock Management</a> — a contracting
+              <a href={HPM_URL}>Hampshire Paddock Management</a>, a contracting
               firm that tops, harrows, rolls and sprays paddocks for a living. We
               know what a field needs from a description and a photo, which is
               why you don’t have to.

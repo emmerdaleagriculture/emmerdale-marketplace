@@ -54,7 +54,7 @@ export function CoverageSection({
               <>
                 We cover England, Wales, Scotland and Northern Ireland, and the
                 map fills in as more operators join. If your county is still pale, send the job
-                anyway — demand is exactly how we get an operator into a new
+                anyway: demand is exactly how we get an operator into a new
                 area.
               </>
             )}

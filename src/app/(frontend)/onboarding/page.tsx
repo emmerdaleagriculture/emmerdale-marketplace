@@ -45,7 +45,7 @@ export default async function OnboardingPage() {
           <h1 className={a.title}>Tell us about your business</h1>
           <p className={a.sub}>
             This is the last step. We’ll review your application and email you
-            when you’re approved, usually within a few hours — then jobs in your
+            when you’re approved, usually within a few hours. Then jobs in your
             counties come to you to price. You can change any of this later in your
             account.
           </p>

@@ -113,7 +113,7 @@ export function Comparison() {
         <p className={s.lede}>
           Most people with a few acres have done this the hard way at least
           once. The difference isn&rsquo;t that we know contractors you
-          don&rsquo;t — it&rsquo;s what sits behind the job once you&rsquo;ve
+          don&rsquo;t: it&rsquo;s what sits behind the job once you&rsquo;ve
           picked one.
         </p>
 

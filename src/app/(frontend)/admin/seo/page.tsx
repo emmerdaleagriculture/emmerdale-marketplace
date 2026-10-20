@@ -5,7 +5,7 @@ import { seoGuard } from './guard';
 import styles from './seo.module.css';
 
 export const metadata: Metadata = {
-  title: 'Search Console — Admin',
+  title: 'Search Console · Admin',
   robots: { index: false, follow: false },
 };
 
@@ -123,7 +123,7 @@ export default async function SeoOverviewPage({
           {accessibleSites && accessibleSites.length > 0 ? (
             <>
               <p>
-                The connected account can access these properties — set{' '}
+                The connected account can access these properties. Set{' '}
                 <code>GSC_SITE_URL</code> to exactly one of them (then redeploy):
               </p>
               <ul style={{ margin: '0.5rem 0 1rem 1.25rem', lineHeight: 1.8 }}>
@@ -144,7 +144,7 @@ export default async function SeoOverviewPage({
             </p>
           ) : null}
           <p>
-            If the error mentions <code>invalid_grant</code> the refresh token has expired —{' '}
+            If the error mentions <code>invalid_grant</code> the refresh token has expired:{' '}
             <Link href="/admin/seo/auth/connect">re-connect</Link>.
           </p>
         </section>

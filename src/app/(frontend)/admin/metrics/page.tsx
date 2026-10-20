@@ -11,7 +11,7 @@ import {
   type LandingView, type ParseEvent, type SourceSub,
 } from '@/lib/jobSources';
 
-export const metadata: Metadata = { title: 'Dashboard — Admin' };
+export const metadata: Metadata = { title: 'Dashboard · Admin' };
 export const dynamic = 'force-dynamic';
 
 /**
@@ -398,7 +398,7 @@ export default async function AdminDashboard() {
       <PieCard title="What needs a person, by kind" slices={attentionSlices} centre="items" empty="Nothing needs attention." />
 
       {/* ── Funnel ────────────────────────────────────────────────────── */}
-      <div className={s.sectionLabel}>Funnel — last 30 days</div>
+      <div className={s.sectionLabel}>Funnel, last 30 days</div>
       <div className={s.funnel}>
         {steps.map((st, i) => {
           const v = fu[st.key] || 0;
@@ -417,14 +417,14 @@ export default async function AdminDashboard() {
       </div>
       <Tiles>
         <Tile value={n(fu.confirmed_all)} label="Jobs sent, all time" />
-        <Tile value={n(fu.paid_all)} label="Jobs booked, all time" hint={`deposit paid — ${pct(fu.paid_all, fu.confirmed_all)} of jobs sent`} />
+        <Tile value={n(fu.paid_all)} label="Jobs booked, all time" hint={`deposit paid · ${pct(fu.paid_all, fu.confirmed_all)} of jobs sent`} />
         <Tile value={n(fu.completed_all)} label="Jobs completed, all time" />
         <Tile value={n(d.unplaced_jobs)} label="Jobs with no county" hint="Could not be routed" />
       </Tiles>
       <PieCard title="Jobs sent in the last 30 days, where they stand" slices={funnelSlices} centre="jobs sent" empty="No jobs sent in the last 30 days." />
 
       {/* ── Sources ───────────────────────────────────────────────────── */}
-      <div className={s.sectionLabel}>Where jobs came from — all time</div>
+      <div className={s.sectionLabel}>Where jobs came from, all time</div>
       <PieCard title="Jobs sent, by where the customer came from" slices={sourceSlices} centre="jobs sent" empty="No jobs sent yet." />
       <Fold summary={`By channel, in a table (${channelRows.length} channels)`}>
         <AdminTable head={['Channel', 'Jobs', '30d', 'Traced by IP']}>
@@ -561,13 +561,13 @@ export default async function AdminDashboard() {
           {pm.awaiting_approval > 0 && (
             <p className={s.sub}>
               {n(pm.awaiting_approval)} paid at sign-up and {pm.awaiting_approval === 1 ? 'is' : 'are'} waiting for
-              approval. <Link href="/admin/contractors">Review applications</Link> — rejecting one refunds them
+              approval. <Link href="/admin/contractors">Review applications</Link>. Rejecting one refunds them
               automatically.
             </p>
           )}
           {pm.past_due > 0 && (
             <p className={s.sub}>
-              {n(pm.past_due)} member{pm.past_due === 1 ? '' : 's'} with a failed payment — Stripe is retrying;
+              {n(pm.past_due)} member{pm.past_due === 1 ? '' : 's'} with a failed payment. Stripe is retrying;
               they keep premium for 3 days past the period end.
             </p>
           )}
@@ -617,14 +617,14 @@ export default async function AdminDashboard() {
         return (
           <>
             <div className={s.sectionLabel}>
-              Commission split test{mt.enabled ? '' : ' — paused'}
+              Commission split test{mt.enabled ? '' : ' (paused)'}
               {mt.since ? ` · since ${new Date(mt.since).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}
             </div>
             <p className={s.sub}>
               Each job is put in an arm when its first price is published, and every price on it carries that rate.
               Extra work and repeats inherit the parent job&rsquo;s arm. Jobs priced before the test stay at 10% and are not counted.
               {pv != null
-                ? ` On booking rate, the chance the arms are really the same is ${pv < 0.001 ? 'under 0.1%' : `${Math.round(pv * 100)}%`}${pv < 0.05 ? ' — a difference you can act on' : ' — not enough to call yet'}.`
+                ? ` On booking rate, the chance the arms are really the same is ${pv < 0.001 ? 'under 0.1%' : `${Math.round(pv * 100)}%`}${pv < 0.05 ? ', a difference you can act on' : ', not enough to call yet'}.`
                 : ' A reading on booking rate needs at least five priced jobs in each arm.'}
               {Object.keys(mt.passes_30d ?? {}).length > 0 && (
                 <>
@@ -640,8 +640,8 @@ export default async function AdminDashboard() {
             <AdminTable head={['', ...arms.map((x) => `${Math.round(x.rate * 100)}% commission`)]}>
               {row('Jobs in the arm', (x) => n(x.jobs))}
               {row('Priced', (x) => `${n(x.priced)} (${n(x.prices)} prices)`)}
-              {row('Passed on', (x) => (x.prices ? `${n(x.passes)} of ${n(x.prices)} prices — ${n(x.passes_price)} as too expensive` : '0'))}
-              {row('Booked', (x) => (x.priced ? `${n(x.booked)} — ${rate(x)} of priced` : '0'))}
+              {row('Passed on', (x) => (x.prices ? `${n(x.passes)} of ${n(x.prices)} prices (${n(x.passes_price)} as too expensive)` : '0'))}
+              {row('Booked', (x) => (x.priced ? `${n(x.booked)} (${rate(x)} of priced)` : '0'))}
               {row('Completed', (x) => n(x.completed))}
               {row('Cancelled / lapsed', (x) => `${n(x.cancelled)} / ${n(x.lapsed)}`)}
               {row('Average booked price (customer)', (x) => gbp(x.avg_client_pence))}
@@ -656,7 +656,7 @@ export default async function AdminDashboard() {
       {/* ── Passed prices ────────────────────────────────────────────── */}
       {ps && (
         <>
-          <div className={s.sectionLabel}>Passed prices — last 30 days</div>
+          <div className={s.sectionLabel}>Passed prices, last 30 days</div>
           <p className={s.sub}>
             A customer passing on a price says why, in a word; the contractor is told the category and can send a
             revised price, which comes back to the customer as new. Passes close nothing and never count against a
@@ -669,7 +669,7 @@ export default async function AdminDashboard() {
               hint={`${n(ps.passes)} of ${n(ps.prices)} prices, on ${n(ps.jobs_with_pass)} jobs · ${n(ps.undone)} taken back`}
             />
             <Tile
-              value={nz(ps.passes) ? `${n(ps.revised)} — ${pct(nz(ps.revised), nz(ps.passes))}` : '—'}
+              value={nz(ps.passes) ? `${n(ps.revised)} · ${pct(nz(ps.revised), nz(ps.passes))}` : '—'}
               label="Followed by a revised price"
               hint={`${n(ps.revised_booked)} of those revisions were booked`}
             />
@@ -710,7 +710,7 @@ export default async function AdminDashboard() {
           )}
           {ps.contractors.length > 0 && (
             <>
-              <div className={s.sectionLabel}>Passed on most — two or more passes in 30 days</div>
+              <div className={s.sectionLabel}>Passed on most: two or more passes in 30 days</div>
               <AdminTable head={['Contractor', 'Passes', 'As too expensive', 'Prices sent', 'Pass rate']}>
                 {ps.contractors.map((c) => (
                   <tr key={c.id}>
@@ -733,7 +733,7 @@ export default async function AdminDashboard() {
       {pr && (
         <>
           <div className={s.sectionLabel}>
-            Priority Access — shadow run · <Link href="/admin/priority">full picture</Link>
+            Priority Access (shadow run) · <Link href="/admin/priority">full picture</Link>
           </div>
           <Tiles>
             <Tile
@@ -784,7 +784,7 @@ export default async function AdminDashboard() {
       <PieCard title="Invitations sent in the last 30 days, by outcome" slices={responseSlices} centre="invitations" empty="No invitations in the last 30 days." />
 
       {/* ── Trend ─────────────────────────────────────────────────────── */}
-      <div className={s.sectionLabel}>Jobs per week — last 12 weeks</div>
+      <div className={s.sectionLabel}>Jobs per week, last 12 weeks</div>
       <div className={s.weeks}>
         {d.weekly.map((w) => {
           const date = new Date(w.week);
@@ -863,7 +863,7 @@ export default async function AdminDashboard() {
       {/* ── Legacy ────────────────────────────────────────────────────── */}
       <div className={s.sectionLabel}>The old board</div>
       <div className={s.empty}>
-        {n(d.legacy.board_jobs_open)} open of {n(d.legacy.board_jobs_total)} ever posted. Being retired —{' '}
+        {n(d.legacy.board_jobs_open)} open of {n(d.legacy.board_jobs_total)} ever posted. Being retired:{' '}
         <Link href="/admin/jobs">see them</Link>.
       </div>
       <PieCard title="The old board, open against closed" slices={legacySlices} centre="posted" />

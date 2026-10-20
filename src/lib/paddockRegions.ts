@@ -29,7 +29,7 @@ const DEFAULT_NOTE: RegionNote = {
 export const REGION_NOTES: Record<string, RegionNote> = {
   'South East': {
     ground:
-      'Much of the South East sits on chalk — the Downs give light, free-draining paddocks that can burn off in a dry summer — while the Weald and the river valleys hold heavier clay that stays wet well into spring. Ragwort and docks take hold quickly on the thinner, lighter ground.',
+      'Much of the South East sits on chalk (the Downs give light, free-draining paddocks that can burn off in a dry summer), while the Weald and the river valleys hold heavier clay that stays wet well into spring. Ragwort and docks take hold quickly on the thinner, lighter ground.',
     timing:
       'Light chalk ground dries early, so harrowing and rolling can start sooner here than in most of the country. Topping runs through summer, and the heavier Wealden clay is best left until it has dried out properly to avoid rutting the field.',
   },
@@ -37,23 +37,23 @@ export const REGION_NOTES: Record<string, RegionNote> = {
     ground:
       'A long, wet growing season and a lot of heavy ground. Grass keeps growing later here than almost anywhere in England, and the clay soils of Somerset, Dorset and Devon poach badly around gateways and rings in a wet winter. Rushes are a common sign that drainage needs attention.',
     timing:
-      'The grass gets away from you quickly — paddocks often need topping more than once through the season. Wait for the ground to dry before harrowing or rolling, and be realistic about machinery access on soft clay.',
+      'The grass gets away from you quickly. Paddocks often need topping more than once through the season. Wait for the ground to dry before harrowing or rolling, and be realistic about machinery access on soft clay.',
   },
   London: {
     ground:
       'Green-belt and urban-fringe paddocks: usually small, often tightly grazed, and frequently on heavier London clay that holds water through the winter. Overgrazing and poaching are the common problems rather than runaway grass.',
     timing:
-      'Access is usually the limiting factor rather than the season — narrow lanes, gateways and yard entrances decide what machinery can get in. Worth mentioning access when you describe the job.',
+      'Access is usually the limiting factor rather than the season: narrow lanes, gateways and yard entrances decide what machinery can get in. Worth mentioning access when you describe the job.',
   },
   'East of England': {
     ground:
-      'The driest part of the country. Light, sandy and silty soils over much of the region, with fen peat in the low ground — grazing can go brown and stop growing in a dry summer, and thin swards let weeds in.',
+      'The driest part of the country. Light, sandy and silty soils over much of the region, with fen peat in the low ground. Grazing can go brown and stop growing in a dry summer, and thin swards let weeds in.',
     timing:
       'Ground dries early and travels well, so spring harrowing and rolling are straightforward. Topping is often a lighter job here than in the west, but weed spraying matters more on open, thin swards.',
   },
   'East Midlands': {
     ground:
-      'Mostly mixed arable country with pockets of permanent grass. Heavy clay is common, with lighter land over the limestone — so paddocks in the same county can behave very differently a few miles apart.',
+      'Mostly mixed arable country with pockets of permanent grass. Heavy clay is common, with lighter land over the limestone, so paddocks in the same county can behave very differently a few miles apart.',
     timing:
       'A fairly standard season: harrow and roll in spring once the clay has dried, top through the summer, and cut hedges from late summer onwards.',
   },
@@ -67,7 +67,7 @@ export const REGION_NOTES: Record<string, RegionNote> = {
     ground:
       'High rainfall and a lot of heavy, wet ground. Poaching around gateways, rushes in the low spots and compacted ground are the usual issues, and drainage does more good here than almost anything else.',
     timing:
-      'A shorter working window than the south — the ground takes longer to dry in spring and gets wet again earlier in autumn. Getting topping and any ground work done in good conditions matters more than the exact date.',
+      'A shorter working window than the south: the ground takes longer to dry in spring and gets wet again earlier in autumn. Getting topping and any ground work done in good conditions matters more than the exact date.',
   },
   'North East': {
     ground:
@@ -91,13 +91,13 @@ export const REGION_NOTES: Record<string, RegionNote> = {
     ground:
       'A shorter growing season and a later spring. Ground runs from good lowland grazing in the east to wet, acidic upland ground carrying rushes further north and west.',
     timing:
-      'Later turnout and a tighter window for field work than further south — the summer months do most of the work, and autumn jobs are best not left late.',
+      'Later turnout and a tighter window for field work than further south. The summer months do most of the work, and autumn jobs are best not left late.',
   },
   'Northern Ireland': {
     ground:
       'Grass country almost everywhere, on mostly heavy, moisture-retentive drumlin soils with a mild, wet climate behind them. Grazing grows well and for a long season, but the ground poaches readily in a wet winter, and rushes come back wherever drainage has been let go.',
     timing:
-      'Wait for the ground to carry machinery before harrowing and rolling in spring — it is usually later than the calendar suggests. Topping runs well into autumn on a long growing season, and rush control is a repeat job rather than a single pass.',
+      'Wait for the ground to carry machinery before harrowing and rolling in spring. It is usually later than the calendar suggests. Topping runs well into autumn on a long growing season, and rush control is a repeat job rather than a single pass.',
   },
 };
 
@@ -127,7 +127,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   'Derry City and Strabane': {
     ground:
-      'The Foyle and Mourne valley floors carry good, deep grazing ground; the Sperrins above Strabane and Plumbridge are peaty, acid hill land. On the lower ground the problem is wet rather than poor — drainage and poaching matter more than fertility.',
+      'The Foyle and Mourne valley floors carry good, deep grazing ground; the Sperrins above Strabane and Plumbridge are peaty, acid hill land. On the lower ground the problem is wet rather than poor: drainage and poaching matter more than fertility.',
   },
   'Mid Ulster': {
     ground:
@@ -163,7 +163,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   'Newry, Mourne and Down': {
     ground:
-      'The Mournes are granite — thin, acid, stony ground with high rainfall — but the Lecale lowland round Downpatrick and the drumlin country towards Newry are good grazing on heavier soils. The coast dries earlier than the hills, and ground by the Mournes needs a dry spell before it will carry a tractor.',
+      'The Mournes are granite (thin, acid, stony ground with high rainfall), but the Lecale lowland round Downpatrick and the drumlin country towards Newry are good grazing on heavier soils. The coast dries earlier than the hills, and ground by the Mournes needs a dry spell before it will carry a tractor.',
   },
 
   /* ── Scotland ────────────────────────────────────────────────────────
@@ -177,7 +177,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
     ground:
       'Scotland’s main arable county, with good, workable ground along the coast and up the Don and Deveron, rising to thin, exposed hill grazing inland. Ground is kind by Scottish standards but the season is short.',
     timing:
-      'Everything runs later here than in England — spring work waits for the ground to warm, and autumn overseeding needs to be in by early September to establish before the cold.',
+      'Everything runs later here than in England: spring work waits for the ground to warm, and autumn overseeding needs to be in by early September to establish before the cold.',
   },
   Moray: {
     ground:
@@ -187,7 +187,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Angus: {
     ground:
-      'Rich, workable Strathmore ground running between the Sidlaw Hills and the Angus glens — some of the best land in Scotland — with genuinely upland grazing at the head of the glens.',
+      'Rich, workable Strathmore ground running between the Sidlaw Hills and the Angus glens, some of the best land in Scotland, with genuinely upland grazing at the head of the glens.',
   },
   'Perth and Kinross': {
     ground:
@@ -201,7 +201,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Stirling: {
     ground:
-      'Carse of Stirling clay on the flat — heavy, fertile and slow to dry — with the Trossachs and the Campsies rising sharply behind into thin, wet hill grazing.',
+      'Carse of Stirling clay on the flat (heavy, fertile and slow to dry), with the Trossachs and the Campsies rising sharply behind into thin, wet hill grazing.',
   },
   'Scottish Borders': {
     ground:
@@ -211,7 +211,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   'Dumfries and Galloway': {
     ground:
-      'Mild, wet and very grassy — a long growing season by Scottish standards and a lot of heavy ground that poaches badly in winter. Rushes are the usual sign that drainage has been let go.',
+      'Mild, wet and very grassy: a long growing season by Scottish standards and a lot of heavy ground that poaches badly in winter. Rushes are the usual sign that drainage has been let go.',
     timing:
       'Grass grows for longer here than almost anywhere else in Scotland, so paddocks often want more than one cut. Wait for the ground to carry before harrowing or rolling.',
   },
@@ -229,13 +229,13 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Highland: {
     ground:
-      'Vast, thin, acid and wet — genuinely upland and coastal ground with very high rainfall in the west and a short growing season everywhere. Bracken and rush encroachment are the common problems on ground that has been left.',
+      'Vast, thin, acid and wet: genuinely upland and coastal ground with very high rainfall in the west and a short growing season everywhere. Bracken and rush encroachment are the common problems on ground that has been left.',
     timing:
       'The tightest season on the network at both ends, and long distances between holdings. Book early, and expect a contractor to want to group work into one visit.',
   },
   'Argyll and Bute': {
     ground:
-      'Sea-lochs, islands and steep ground with very high rainfall. Grazing is thin and largely rough, and access — including ferry crossings — often decides what is practical before ground conditions do.',
+      'Sea-lochs, islands and steep ground with very high rainfall. Grazing is thin and largely rough, and access (including ferry crossings) often decides what is practical before ground conditions do.',
     timing:
       'Say up front if the land is on an island. It changes the whole shape of a job, and the contractors who can take it on.',
   },
@@ -243,11 +243,11 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
     ground:
       'Machair and peat: light, shell-sand grazing along the Atlantic coast and deep, wet blanket peat inland. Exposure and salt wind matter as much as soil type.',
     timing:
-      'Island logistics dominate. Give as much notice as you can — machinery availability, not the season, is usually the limiting factor.',
+      'Island logistics dominate. Give as much notice as you can: machinery availability, not the season, is usually the limiting factor.',
   },
   'Orkney Islands': {
     ground:
-      'Fertile, well-farmed ground by northern standards, but relentlessly exposed — wind, not cold, sets the limits on what grows and when.',
+      'Fertile, well-farmed ground by northern standards, but relentlessly exposed: wind, not cold, sets the limits on what grows and when.',
     timing:
       'A short, wind-shaped season and a small pool of local machinery. Book well ahead.',
   },
@@ -259,13 +259,13 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   'East Lothian': {
     ground:
-      'The driest, sunniest arable ground in Scotland — light, free-draining coastal land that works early and burns off in a dry summer.',
+      'The driest, sunniest arable ground in Scotland: light, free-draining coastal land that works early and burns off in a dry summer.',
     timing:
       'Ground works earlier here than anywhere else in Scotland. Spring harrowing and rolling can start well before the rest of the country.',
   },
   Midlothian: {
     ground:
-      'Good lowland ground on the coastal plain giving way to the Pentlands and Moorfoots — kind where it is low, thin and wet where it climbs.',
+      'Good lowland ground on the coastal plain giving way to the Pentlands and Moorfoots: kind where it is low, thin and wet where it climbs.',
   },
   'West Lothian': {
     ground:
@@ -273,17 +273,17 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   'South Lanarkshire': {
     ground:
-      'Clyde valley farmland in the north giving way to extensive, wet upland grazing across the southern moors — one of the bigger contrasts of any Scottish council.',
+      'Clyde valley farmland in the north giving way to extensive, wet upland grazing across the southern moors, one of the bigger contrasts of any Scottish council.',
   },
   'North Lanarkshire': {
     ground:
       'Urban-fringe and green-belt grazing on heavy, often wet ground, in small parcels between the towns.',
     timing:
-      'Access and field size are usually the deciding factors here rather than ground conditions — describe the gateway and the route in.',
+      'Access and field size are usually the deciding factors here rather than ground conditions: describe the gateway and the route in.',
   },
   Falkirk: {
     ground:
-      'Carse clay along the Forth — heavy, fertile and slow to dry — with urban-fringe paddocks between the towns.',
+      'Carse clay along the Forth (heavy, fertile and slow to dry), with urban-fringe paddocks between the towns.',
   },
   Clackmannanshire: {
     ground:
@@ -295,11 +295,11 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   'East Renfrewshire': {
     ground:
-      'Green-belt grazing on heavy, wet ground climbing towards the Fenwick moors — small fields, high rainfall, and a lot of horses for the acreage.',
+      'Green-belt grazing on heavy, wet ground climbing towards the Fenwick moors: small fields, high rainfall, and a lot of horses for the acreage.',
   },
   'East Dunbartonshire': {
     ground:
-      'Green-belt paddocks on heavy Kelvin valley ground with the Campsie Fells behind — wet in winter, small parcels, tight access.',
+      'Green-belt paddocks on heavy Kelvin valley ground with the Campsie Fells behind: wet in winter, small parcels, tight access.',
   },
   'West Dunbartonshire': {
     ground:
@@ -311,19 +311,19 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   'Glasgow City': {
     ground:
-      'Urban-fringe and green-belt grazing on the edges of the city — heavy, wet ground in small parcels, generally carrying a lot of horses for the acreage.',
+      'Urban-fringe and green-belt grazing on the edges of the city: heavy, wet ground in small parcels, generally carrying a lot of horses for the acreage.',
     timing:
       'Overgrazing, poaching and access are the usual problems rather than anything seasonal. Describe the route in and the gateway width when you send the job through.',
   },
   'City of Edinburgh': {
     ground:
-      'Green-belt paddocks around the city edge and out towards the Pentlands — mostly kind lowland ground, in small parcels with restricted access.',
+      'Green-belt paddocks around the city edge and out towards the Pentlands: mostly kind lowland ground, in small parcels with restricted access.',
     timing:
       'Field size and access decide which machinery can come. Say what the approach looks like and the contractor will tell you what fits.',
   },
   'Dundee City': {
     ground:
-      'A small urban authority with green-belt grazing on the Sidlaw slopes above the city — sloping, mostly kind ground in small parcels.',
+      'A small urban authority with green-belt grazing on the Sidlaw slopes above the city: sloping, mostly kind ground in small parcels.',
   },
   'Aberdeen City': {
     ground:
@@ -333,7 +333,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   /* ── South East ──────────────────────────────────────────────────── */
   Buckinghamshire: {
     ground:
-      'Chalk on the Chilterns in the south, heavier clay across the Vale of Aylesbury to the north. The two behave quite differently in a wet winter — the chalk paddocks drain away, the Vale ground sits wet and poaches around gateways.',
+      'Chalk on the Chilterns in the south, heavier clay across the Vale of Aylesbury to the north. The two behave quite differently in a wet winter: the chalk paddocks drain away, the Vale ground sits wet and poaches around gateways.',
   },
   'Isle of Wight': {
     ground:
@@ -344,18 +344,18 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   /* ── South West ──────────────────────────────────────────────────── */
   Bristol: {
     ground:
-      'Urban-fringe grazing on the edges of the city and out towards the Avon valley — small paddocks, heavy ground, and a lot of horses in a small area. Access for machinery is usually the limiting factor rather than the work itself.',
+      'Urban-fringe grazing on the edges of the city and out towards the Avon valley: small paddocks, heavy ground, and a lot of horses in a small area. Access for machinery is usually the limiting factor rather than the work itself.',
     timing:
-      'Small, tight paddocks suit compact machinery. Say what the gateway and the approach look like when you describe the job — that decides who can get in more often than the acreage does.',
+      'Small, tight paddocks suit compact machinery. Say what the gateway and the approach look like when you describe the job. That decides who can get in more often than the acreage does.',
   },
   /* ── East of England ─────────────────────────────────────────────── */
   Bedfordshire: {
     ground:
-      'Heavy Oxford clay across much of the county with lighter greensand running through the middle. The clay holds wet and poaches, the greensand burns off fast in a dry summer — often on the same holding.',
+      'Heavy Oxford clay across much of the county with lighter greensand running through the middle. The clay holds wet and poaches, the greensand burns off fast in a dry summer, often on the same holding.',
   },
   Hertfordshire: {
     ground:
-      'Chalk under boulder clay, so paddocks drain unevenly — free-draining in places, sitting wet in others. A great deal of small-paddock horse keeping close to the London fringe.',
+      'Chalk under boulder clay, so paddocks drain unevenly: free-draining in places, sitting wet in others. A great deal of small-paddock horse keeping close to the London fringe.',
     timing:
       'Small paddocks and restricted access are the norm here rather than the exception, so machinery size matters. Harrowing and rolling suit the spring once the clay caps have broken down.',
   },
@@ -364,7 +364,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
     ground:
       'Two counties in one: limestone and gritstone grazing in the Peak, where the ground is thin, stony and exposed, and heavier lowland clay in the south towards the Trent. Rushes and poaching are common on the upland fringes.',
     timing:
-      'Upland paddocks run a shorter season — later to start in spring, earlier to stop in autumn — so the window for topping and reseeding is tighter than in the south of the county.',
+      'Upland paddocks run a shorter season (later to start in spring, earlier to stop in autumn), so the window for topping and reseeding is tighter than in the south of the county.',
   },
   Nottinghamshire: {
     ground:
@@ -372,7 +372,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Northamptonshire: {
     ground:
-      'Heavy ironstone and clay across most of the county — good grass-growing ground that holds wet, poaches around gateways and rewards attention to drainage.',
+      'Heavy ironstone and clay across most of the county: good grass-growing ground that holds wet, poaches around gateways and rewards attention to drainage.',
   },
   Rutland: {
     ground:
@@ -385,7 +385,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Warwickshire: {
     ground:
-      'Predominantly heavy Midlands clay — strong grass-growing ground that sits wet through the winter and poaches badly around gateways and field shelters.',
+      'Predominantly heavy Midlands clay: strong grass-growing ground that sits wet through the winter and poaches badly around gateways and field shelters.',
   },
   Worcestershire: {
     ground:
@@ -393,27 +393,27 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   'West Midlands': {
     ground:
-      'Urban-fringe grazing between the towns — green-belt paddocks, small acreages and a lot of horses. Ground is mostly heavy Midlands clay and much of it has seen hard use.',
+      'Urban-fringe grazing between the towns: green-belt paddocks, small acreages and a lot of horses. Ground is mostly heavy Midlands clay and much of it has seen hard use.',
     timing:
       'Access is usually the constraint here rather than ground conditions. Describe the gateway and the route in, and the contractor will tell you what will fit.',
   },
   /* ── North West ──────────────────────────────────────────────────── */
   'Greater Manchester': {
     ground:
-      'Green-belt and moorland-fringe grazing around the conurbation — heavy, wet ground with a high water table in the mosslands and thinner peaty ground as you climb towards the Pennines.',
+      'Green-belt and moorland-fringe grazing around the conurbation: heavy, wet ground with a high water table in the mosslands and thinner peaty ground as you climb towards the Pennines.',
     timing:
       'Wet ground and a short dry window mean timing matters more than elsewhere. Get harrowing and rolling done when the ground carries, not by the calendar.',
   },
   Merseyside: {
     ground:
-      'Flat, sandy coastal ground in the north and heavier mossland inland — free-draining where the sand runs, wet and peaty where it doesn’t, sometimes within the same field.',
+      'Flat, sandy coastal ground in the north and heavier mossland inland: free-draining where the sand runs, wet and peaty where it doesn’t, sometimes within the same field.',
   },
   /* ── North East ──────────────────────────────────────────────────── */
   'County Durham': {
     ground:
       'Pennine dale grazing in the west, better lowland ground towards the coastal plain in the east. The upland end is thin, wet and exposed; the lowland end grows a proper crop of grass.',
     timing:
-      'A shorter season than the south — spring work starts later and autumn overseeding needs to be in earlier to establish before the cold.',
+      'A shorter season than the south: spring work starts later and autumn overseeding needs to be in earlier to establish before the cold.',
   },
   'Tyne and Wear': {
     ground:
@@ -432,14 +432,14 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   'West Yorkshire': {
     ground:
-      'Pennine-fringe grazing — thin, acid, often wet ground on the higher land, heavier valley clay below. Rushes are a common sign that drainage wants attention.',
+      'Pennine-fringe grazing: thin, acid, often wet ground on the higher land, heavier valley clay below. Rushes are a common sign that drainage wants attention.',
     timing:
       'Higher ground runs a noticeably shorter season. Topping and overseeding windows are tighter than in the Vale, so booking early matters.',
   },
   /* ── London ──────────────────────────────────────────────────────── */
   'Greater London': {
     ground:
-      'Green-belt and urban-fringe paddocks around the edges of the city — London clay for the most part, heavy and slow to dry, in small parcels carrying a lot of horses.',
+      'Green-belt and urban-fringe paddocks around the edges of the city: London clay for the most part, heavy and slow to dry, in small parcels carrying a lot of horses.',
     timing:
       'Overgrazing and poaching are the usual problems rather than anything the weather does. Access decides which machinery can come, so describe the route in and the gateway width.',
   },
@@ -450,9 +450,9 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Dyfed: {
     ground:
-      'High rainfall on largely heavy ground — strong grass growth and a long season, with poaching around gateways and rings a near-constant winter problem. Rush infestation is the classic sign of failed drainage here.',
+      'High rainfall on largely heavy ground: strong grass growth and a long season, with poaching around gateways and rings a near-constant winter problem. Rush infestation is the classic sign of failed drainage here.',
     timing:
-      'Grass gets away quickly, so more than one topping a season is normal. Wait for the ground to carry before harrowing or rolling — soft ground and machinery is how ruts start.',
+      'Grass gets away quickly, so more than one topping a season is normal. Wait for the ground to carry before harrowing or rolling. Soft ground and machinery is how ruts start.',
   },
   Gwent: {
     ground:
@@ -460,13 +460,13 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Gwynedd: {
     ground:
-      'Genuinely upland country — thin, acid, stony ground with very high rainfall, and a short growing season. Access for machinery is often the deciding factor rather than the state of the grass.',
+      'Genuinely upland country: thin, acid, stony ground with very high rainfall, and a short growing season. Access for machinery is often the deciding factor rather than the state of the grass.',
     timing:
       'A tight season at both ends. Get autumn work in early, and expect the ground to be carrying machinery for fewer weeks of the year than it would further east.',
   },
   Powys: {
     ground:
-      'Wales’s largest county and mostly upland — thin acid soils, high rainfall and long distances between holdings. Rush and bracken encroachment on neglected grazing is the common problem.',
+      'Wales’s largest county and mostly upland: thin acid soils, high rainfall and long distances between holdings. Rush and bracken encroachment on neglected grazing is the common problem.',
     timing:
       'Distances matter here as much as conditions: contractors travel further, so grouping work into one visit is usually worth doing.',
   },
@@ -476,7 +476,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   'South Glamorgan': {
     ground:
-      'The Vale of Glamorgan is some of the best grazing ground in Wales — kinder soils, lower rainfall and a longer season than the valleys immediately north of it.',
+      'The Vale of Glamorgan is some of the best grazing ground in Wales: kinder soils, lower rainfall and a longer season than the valleys immediately north of it.',
   },
   'West Glamorgan': {
     ground:
@@ -489,7 +489,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Surrey: {
     ground:
-      'Heavy London clay across the north of the county, and dry, sandy heathland over the greensand in the south-west — two opposite problems within a few miles. The clay holds wet well into spring and poaches badly; the sandy ground burns off early and grows a thin, weed-prone sward.',
+      'Heavy London clay across the north of the county, and dry, sandy heathland over the greensand in the south-west: two opposite problems within a few miles. The clay holds wet well into spring and poaches badly; the sandy ground burns off early and grows a thin, weed-prone sward.',
   },
   Kent: {
     ground:
@@ -501,7 +501,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   'East Sussex': {
     ground:
-      'Mostly High Weald clay — heavy, wet through the winter and slow to dry — with chalk downland running east towards Eastbourne. Rushes and poached gateways are common on the Wealden ground, and drainage often does more good than anything else.',
+      'Mostly High Weald clay (heavy, wet through the winter and slow to dry), with chalk downland running east towards Eastbourne. Rushes and poached gateways are common on the Wealden ground, and drainage often does more good than anything else.',
   },
   Berkshire: {
     ground:
@@ -509,7 +509,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Oxfordshire: {
     ground:
-      'Cotswold limestone brash in the west — thin, stony and free-draining — giving way to the heavy clay vales and Thames gravels further east. The brash dries out quickly in a hot summer, while the clay vale paddocks hold wet.',
+      'Cotswold limestone brash in the west (thin, stony and free-draining), giving way to the heavy clay vales and Thames gravels further east. The brash dries out quickly in a hot summer, while the clay vale paddocks hold wet.',
   },
   Cornwall: {
     ground:
@@ -529,7 +529,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Wiltshire: {
     ground:
-      'Chalk over most of the county — Salisbury Plain and the Marlborough Downs — with heavier clay vales to the north-west. Chalk paddocks drain freely and can be worked early, but go thin and hungry in a dry summer.',
+      'Chalk over most of the county (Salisbury Plain and the Marlborough Downs), with heavier clay vales to the north-west. Chalk paddocks drain freely and can be worked early, but go thin and hungry in a dry summer.',
   },
   Gloucestershire: {
     ground:
@@ -537,7 +537,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Norfolk: {
     ground:
-      'The driest county in the country, and light with it — sandy Breckland in the west, silt and peat in the marshland, and boulder clay to the south. Thin, sandy swards stop growing in a dry summer and let weeds in.',
+      'The driest county in the country, and light with it: sandy Breckland in the west, silt and peat in the marshland, and boulder clay to the south. Thin, sandy swards stop growing in a dry summer and let weeds in.',
   },
   Suffolk: {
     ground:
@@ -549,7 +549,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Cambridgeshire: {
     ground:
-      'Black fen peat in the north — level, fertile and prone to sitting wet — with chalk to the south-east and clay between. Fen ground travels poorly when wet and needs care with heavy machinery.',
+      'Black fen peat in the north (level, fertile and prone to sitting wet), with chalk to the south-east and clay between. Fen ground travels poorly when wet and needs care with heavy machinery.',
   },
   Lincolnshire: {
     ground:
@@ -565,7 +565,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Cheshire: {
     ground:
-      'Heavy boulder clay across the plain — good grass-growing country that poaches badly in a wet winter — with lighter sandy pockets. Grass gets away quickly in a mild summer, so paddocks often need topping more than once.',
+      'Heavy boulder clay across the plain (good grass-growing country that poaches badly in a wet winter), with lighter sandy pockets. Grass gets away quickly in a mild summer, so paddocks often need topping more than once.',
   },
   Shropshire: {
     ground:
@@ -581,7 +581,7 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   },
   Northumberland: {
     ground:
-      'Exposed and mostly late — acidic upland ground carrying rushes inland, lighter sandy land towards the coast. Spring growth starts several weeks behind the southern counties, and the autumn window closes early.',
+      'Exposed and mostly late: acidic upland ground carrying rushes inland, lighter sandy land towards the coast. Spring growth starts several weeks behind the southern counties, and the autumn window closes early.',
   },
   Leicestershire: {
     ground:

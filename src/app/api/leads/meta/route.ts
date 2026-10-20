@@ -138,7 +138,7 @@ export async function POST(request: Request) {
         .from('leads')
         .insert({
           source: 'facebook',
-          full_name: mapped?.full_name ?? '(Facebook lead — fetch failed, see details)',
+          full_name: mapped?.full_name ?? '(Facebook lead: fetch failed, see details)',
           phone: mapped?.phone ?? null,
           email: mapped?.email ?? null,
           postcode: mapped?.postcode ?? null,

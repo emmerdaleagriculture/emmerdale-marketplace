@@ -27,7 +27,7 @@ export type VerticalNote = {
 
 const HAY_DEFAULT: VerticalNote = {
   supply:
-    'Forage supply changes a good deal from farm to farm — some ground makes good meadow hay in a dry year, some is only ever reliable for haylage, and straw depends on how much cereal is grown nearby.',
+    'Forage supply changes a good deal from farm to farm: some ground makes good meadow hay in a dry year, some is only ever reliable for haylage, and straw depends on how much cereal is grown nearby.',
   practical:
     'Tell us the forage type, the bale size you can handle and whether you need it delivered or can collect, and we’ll put the enquiry in front of producers who have it.',
 };
@@ -35,19 +35,19 @@ const HAY_DEFAULT: VerticalNote = {
 const HAY_REGIONS: Record<string, VerticalNote> = {
   'South East': {
     supply:
-      'The South East makes a lot of horse hay. It has the mixed farming to produce it — chalk downland and light land that dries early enough for a clean crop — and the biggest concentration of liveries and private paddocks in the country to buy it. Barley and wheat straw come off the same arable ground from harvest onwards.',
+      'The South East makes a lot of horse hay. It has the mixed farming to produce it (chalk downland and light land that dries early enough for a clean crop) and the biggest concentration of liveries and private paddocks in the country to buy it. Barley and wheat straw come off the same arable ground from harvest onwards.',
     practical:
       'Small conventional bales are easier to find here than in most regions, which matters if you’re hand-carrying into a stable rather than tipping big bales with a loader. Demand is heavy from late summer, so buying a winter’s worth early usually beats buying it in February.',
   },
   'South West': {
     supply:
-      'This is wetter, grassier country, and it shows in what’s available: haylage and silage are the reliable crops, and good dry hay is a genuinely weather-dependent harvest — plentiful after a settled June, scarce after a wet one. Straw travels in from the eastern arable counties rather than being grown at scale here.',
+      'This is wetter, grassier country, and it shows in what’s available: haylage and silage are the reliable crops, and good dry hay is a genuinely weather-dependent harvest: plentiful after a settled June, scarce after a wet one. Straw travels in from the eastern arable counties rather than being grown at scale here.',
     practical:
       'If you’re set on dry hay, ask early and be flexible on cut and bale size. Haylage suits harder-keeping horses and is usually the better-value local option, and because straw is largely imported into the region, delivery distance is a real part of what it costs.',
   },
   'East of England': {
     supply:
-      'The arable heartland. Barley and wheat straw are abundant here in a way they aren’t anywhere else in the country, and they come mostly in big square bales straight off the combine trail. Grass hay is the scarcer crop — there’s simply less permanent pasture competing with cereals for the acreage.',
+      'The arable heartland. Barley and wheat straw are abundant here in a way they aren’t anywhere else in the country, and they come mostly in big square bales straight off the combine trail. Grass hay is the scarcer crop: there’s simply less permanent pasture competing with cereals for the acreage.',
     practical:
       'If you want straw, this is the easiest region in Britain to buy it, and buying at harvest is materially cheaper than buying out of a shed in spring. For hay you may be looking at meadow hay off headlands and set-aside grass, so agree the type before you commit to a load.',
   },
@@ -55,11 +55,11 @@ const HAY_REGIONS: Record<string, VerticalNote> = {
     supply:
       'Mixed country: heavy arable across the Lincolnshire and Nottinghamshire ground gives good straw supply, while the grazing land in the west and around the Wolds makes meadow hay and haylage. Both are usually available without going far.',
     practical:
-      'Being mixed-farming country, most producers here can quote for hay and straw together, which is worth asking about — one delivery beats two. Big square bales dominate, so check your access and how you’ll handle them before ordering.',
+      'Being mixed-farming country, most producers here can quote for hay and straw together, which is worth asking about, since one delivery beats two. Big square bales dominate, so check your access and how you’ll handle them before ordering.',
   },
   'West Midlands': {
     supply:
-      'Grassland farming with arable alongside it — Herefordshire, Shropshire and Worcestershire all carry a lot of stock, so hay and haylage are made properly and in quantity, with straw available from the cereal ground further east.',
+      'Grassland farming with arable alongside it: Herefordshire, Shropshire and Worcestershire all carry a lot of stock, so hay and haylage are made properly and in quantity, with straw available from the cereal ground further east.',
     practical:
       'A good region for buying small quantities: the mix of smaller livestock farms means more producers who’ll sell a trailer-load rather than only a full lorry. Say what you can handle and we’ll match accordingly.',
   },
@@ -67,13 +67,13 @@ const HAY_REGIONS: Record<string, VerticalNote> = {
     supply:
       'High rainfall and a lot of upland grazing make this haylage country. Cumbria and the Lancashire fell edges get a shorter, less certain hay-making window than the south, so wrapped forage is what most producers make and most buyers use.',
     practical:
-      'Haylage is the sensible default here rather than a compromise — it’s made to suit the weather. If you specifically need dry hay, expect it to have travelled, and order well ahead of winter rather than into it.',
+      'Haylage is the sensible default here rather than a compromise, because it’s made to suit the weather. If you specifically need dry hay, expect it to have travelled, and order well ahead of winter rather than into it.',
   },
   'North East': {
     supply:
       'Upland and coastal-plain farming side by side. The hill ground carries stock and makes haylage; the better arable land along the coast and down towards the Tees produces cereal straw. The season starts later and finishes earlier than it does in the south.',
     practical:
-      'The narrower window means forage is worth committing to early — supply is real but it isn’t endless, and a late buyer in a wet year is competing with everyone else. Straw from the coastal ground travels inland easily.',
+      'The narrower window means forage is worth committing to early: supply is real but it isn’t endless, and a late buyer in a wet year is competing with everyone else. Straw from the coastal ground travels inland easily.',
   },
   'Yorkshire and the Humber': {
     supply:
@@ -85,23 +85,23 @@ const HAY_REGIONS: Record<string, VerticalNote> = {
     supply:
       'Livestock country with the rainfall to match. Grass grows well and haylage is made in quantity; dry hay is harder to guarantee, particularly in the west and the uplands, and the best of it usually comes off the drier eastern edge and the coastal lowlands.',
     practical:
-      'Haylage is the dependable local buy. If you need dry hay, ask early and don’t be surprised if it comes from over the border — and factor the run into what you pay, because in this terrain distance costs more than the mileage suggests.',
+      'Haylage is the dependable local buy. If you need dry hay, ask early and don’t be surprised if it comes from over the border, and factor the run into what you pay, because in this terrain distance costs more than the mileage suggests.',
   },
   Scotland: {
     supply:
-      'A later, shorter season than anywhere further south, which pushes most forage towards silage and haylage. The eastern arable belt — Aberdeenshire, Angus, the Lothians and the Borders — is where the cereal straw comes from, and there’s a good deal of it.',
+      'A later, shorter season than anywhere further south, which pushes most forage towards silage and haylage. The eastern arable belt (Aberdeenshire, Angus, the Lothians and the Borders) is where the cereal straw comes from, and there’s a good deal of it.',
     practical:
       'Cuts are later here, so don’t judge availability by a southern calendar. Straw from the east travels well across the central belt; forage for the islands and the north-west Highlands needs more notice and the haulage priced in from the start.',
   },
   'Northern Ireland': {
     supply:
-      'Grassland farming on a scale found almost nowhere else in the UK: most of the farmed land is grass, and silage and haylage are made in great quantity. Properly dry hay is a settled-summer crop here, and cereal straw is scarce locally — much of it is shipped in from Scotland and the north of England.',
+      'Grassland farming on a scale found almost nowhere else in the UK: most of the farmed land is grass, and silage and haylage are made in great quantity. Properly dry hay is a settled-summer crop here, and cereal straw is scarce locally, and much of it is shipped in from Scotland and the north of England.',
     practical:
       'Wrapped forage is the dependable local buy; ask early for dry hay and expect it to go quickly in a good year. Straw costs more here than on the mainland because of the sea crossing, so price it per delivered load rather than per bale, and say what size vehicle can reach your yard.',
   },
   London: {
     supply:
-      'Nothing is grown at scale inside the M25, but the liveries and riding schools around the green belt buy a lot of forage, and it comes in from the home counties — Kent, Surrey, Essex, Hertfordshire and Buckinghamshire all supply into London.',
+      'Nothing is grown at scale inside the M25, but the liveries and riding schools around the green belt buy a lot of forage, and it comes in from the home counties: Kent, Surrey, Essex, Hertfordshire and Buckinghamshire all supply into London.',
     practical:
       'This is a delivery question more than a growing one. Access is usually the binding constraint: say what size vehicle can actually reach your yard, and whether you need small bales rather than big ones, and we’ll match a supplier who can get to you.',
   },
@@ -115,11 +115,11 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
      central belt, and the hills and islands. */
   Aberdeenshire: {
     supply:
-      'Scotland’s main cereal county and the source of a great deal of its straw — barley especially, in quantity from harvest onwards. Grass forage is made later here than in the south and mostly wrapped rather than dried.',
+      'Scotland’s main cereal county and the source of a great deal of its straw, barley especially, in quantity from harvest onwards. Grass forage is made later here than in the south and mostly wrapped rather than dried.',
   },
   'Aberdeen City': {
     supply:
-      'Straw and forage come in from the Aberdeenshire arable ground immediately around the city, so supply is good and the run is short — it is a delivery-access question more than a sourcing one.',
+      'Straw and forage come in from the Aberdeenshire arable ground immediately around the city, so supply is good and the run is short. It is a delivery-access question more than a sourcing one.',
   },
   Moray: {
     supply:
@@ -127,7 +127,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   Angus: {
     supply:
-      'Strathmore is serious arable ground — seed potatoes, cereals and soft fruit — so straw is plentiful, and the glens behind carry the stock that makes the haylage.',
+      'Strathmore is serious arable ground (seed potatoes, cereals and soft fruit), so straw is plentiful, and the glens behind carry the stock that makes the haylage.',
   },
   'Dundee City': {
     supply:
@@ -139,7 +139,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   Fife: {
     supply:
-      'Mixed arable and grazing on kind ground with a drier coastal climate — one of the more reliable places in Scotland for both straw and decent dry hay.',
+      'Mixed arable and grazing on kind ground with a drier coastal climate, one of the more reliable places in Scotland for both straw and decent dry hay.',
   },
   Stirling: {
     supply:
@@ -147,7 +147,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   Clackmannanshire: {
     supply:
-      'Small county, but sat between the Forth carse arable and the Ochil grazing — both straw and haylage are a short run away.',
+      'Small county, but sat between the Forth carse arable and the Ochil grazing, so both straw and haylage are a short run away.',
   },
   'East Lothian': {
     supply:
@@ -163,13 +163,13 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   'City of Edinburgh': {
     supply:
-      'Nothing is grown at scale within the city, but the East Lothian arable belt and the Pentland grazing are immediately outside it — supply is genuinely local by Scottish standards.',
+      'Nothing is grown at scale within the city, but the East Lothian arable belt and the Pentland grazing are immediately outside it, so supply is genuinely local by Scottish standards.',
     practical:
       'This is an access question. Say what size vehicle can reach the yard and whether you need small bales rather than big ones.',
   },
   'Scottish Borders': {
     supply:
-      'Stock-rearing country with real arable along the Tweed — so hay and haylage off the valley and hill grazing, and cereal straw from the lower ground, often from the same farms.',
+      'Stock-rearing country with real arable along the Tweed, so hay and haylage off the valley and hill grazing, and cereal straw from the lower ground, often from the same farms.',
   },
   'Dumfries and Galloway': {
     supply:
@@ -181,7 +181,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   'East Ayrshire': {
     supply:
-      'Wet, heavy grazing ground rising to moorland — strong grass growth and wrapped forage in quantity, with straw brought in from the east.',
+      'Wet, heavy grazing ground rising to moorland: strong grass growth and wrapped forage in quantity, with straw brought in from the east.',
   },
   'North Ayrshire': {
     supply:
@@ -193,7 +193,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   'North Lanarkshire': {
     supply:
-      'Green-belt grazing between the towns rather than production at scale — most forage comes in from the surrounding Lanarkshire and Stirlingshire farms.',
+      'Green-belt grazing between the towns rather than production at scale, so most forage comes in from the surrounding Lanarkshire and Stirlingshire farms.',
   },
   Falkirk: {
     supply:
@@ -215,7 +215,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   'East Dunbartonshire': {
     supply:
-      'Kelvin valley grazing with the Campsies behind — wrapped forage locally, straw from the Forth valley arable.',
+      'Kelvin valley grazing with the Campsies behind: wrapped forage locally, straw from the Forth valley arable.',
   },
   'West Dunbartonshire': {
     supply:
@@ -223,7 +223,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   Inverclyde: {
     supply:
-      'Very high rainfall on steep ground, so little is made locally — forage generally travels in from Renfrewshire and Ayrshire.',
+      'Very high rainfall on steep ground, so little is made locally, so forage generally travels in from Renfrewshire and Ayrshire.',
   },
   'Argyll and Bute': {
     supply:
@@ -239,7 +239,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   'Orkney Islands': {
     supply:
-      'Well-farmed and productive for its latitude — grass forage is made in quantity, though wind and a short season push it towards wrapping. Straw comes over from the mainland.',
+      'Well-farmed and productive for its latitude: grass forage is made in quantity, though wind and a short season push it towards wrapping. Straw comes over from the mainland.',
     practical:
       'Local forage is genuinely available; straw is the thing that needs planning. Give as much notice as you can.',
   },
@@ -247,16 +247,16 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
     supply:
       'A very short season on thin, exposed ground. What forage is made is croft-scale and usually wrapped; most bought-in forage and all straw arrives by boat.',
     practical:
-      'Plan a long way ahead and price the haulage in from the start — it is the dominant cost this far north.',
+      'Plan a long way ahead and price the haulage in from the start. It is the dominant cost this far north.',
   },
 
   Hampshire: {
     supply:
-      'Chalk downland that dries early and a very large horse population in the same place — Hampshire both makes good meadow hay and consumes an enormous amount of it. Straw comes off the arable ground across the north and east of the county.',
+      'Chalk downland that dries early and a very large horse population in the same place: Hampshire both makes good meadow hay and consumes an enormous amount of it. Straw comes off the arable ground across the north and east of the county.',
   },
   Norfolk: {
     supply:
-      'About as arable as Britain gets. Barley and wheat straw are plentiful and cheap at harvest, and much of the country’s traded straw starts here. Grass hay is the harder ask — pasture competes with cereals for every acre.',
+      'About as arable as Britain gets. Barley and wheat straw are plentiful and cheap at harvest, and much of the country’s traded straw starts here. Grass hay is the harder ask, because pasture competes with cereals for every acre.',
   },
   Suffolk: {
     supply:
@@ -264,7 +264,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   Lincolnshire: {
     supply:
-      'A huge arable county — straw is abundant and usually in big square bales off the combine trail. Hay comes off the Wolds grazing and the fen-edge grassland rather than the arable heart of it.',
+      'A huge arable county: straw is abundant and usually in big square bales off the combine trail. Hay comes off the Wolds grazing and the fen-edge grassland rather than the arable heart of it.',
   },
   Cumbria: {
     supply:
@@ -272,7 +272,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   Devon: {
     supply:
-      'Grass grows for a long season here and there’s plenty of it, but it’s wet country — haylage and silage are what most farms make. Dry hay happens, and it’s worth having, but it isn’t something to count on in a poor June.',
+      'Grass grows for a long season here and there’s plenty of it, but it’s wet country, so haylage and silage are what most farms make. Dry hay happens, and it’s worth having, but it isn’t something to count on in a poor June.',
   },
   Cornwall: {
     supply:
@@ -284,7 +284,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   'North Yorkshire': {
     supply:
-      'The largest county in England and farmed very differently across it — Dales stock farms making hay and haylage at one end, Vale of York and Wolds arable producing straw at the other.',
+      'The largest county in England and farmed very differently across it: Dales stock farms making hay and haylage at one end, Vale of York and Wolds arable producing straw at the other.',
   },
   Powys: {
     supply:
@@ -292,7 +292,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   Highland: {
     supply:
-      'A very short season and a lot of ground between farms. Forage is made late, mostly wrapped, and haulage is a genuine part of any quote — worth ordering with more notice than you would further south.',
+      'A very short season and a lot of ground between farms. Forage is made late, mostly wrapped, and haulage is a genuine part of any quote. Worth ordering with more notice than you would further south.',
     practical:
       'Distances here are the main constraint, not availability. Give us the postcode early and we’ll find someone who can realistically reach you rather than someone who looks close on a map.',
   },
@@ -302,7 +302,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
 
 const TRACTOR_DEFAULT: VerticalNote = {
   supply:
-    'Most areas have farms and contractors with a tractor worth turning out for an event — a tidy modern machine, a restored vintage one, or a tractor and trailer set up to carry people safely.',
+    'Most areas have farms and contractors with a tractor worth turning out for an event: a tidy modern machine, a restored vintage one, or a tractor and trailer set up to carry people safely.',
   practical:
     'The details that decide whether a booking works are the date, the distance between where the tractor is kept and where it’s needed, and how much road is involved. Tell us those three and we can tell you quickly whether it’s straightforward.',
 };
@@ -310,13 +310,13 @@ const TRACTOR_DEFAULT: VerticalNote = {
 const TRACTOR_REGIONS: Record<string, VerticalNote> = {
   'South East': {
     supply:
-      'Barn and farm weddings are common right across the South East, and a lot of working farms here have diversified into events — which means tractors that are already used to turning out smartly and operators who’ve done it before.',
+      'Barn and farm weddings are common right across the South East, and a lot of working farms here have diversified into events, which means tractors that are already used to turning out smartly and operators who’ve done it before.',
     practical:
-      'The constraint here is usually traffic and road distance rather than finding a machine. A tractor is slow on the road, so a venue within a few miles of where it’s kept is much easier to arrange — and cheaper — than one across a county.',
+      'The constraint here is usually traffic and road distance rather than finding a machine. A tractor is slow on the road, so a venue within a few miles of where it’s kept is much easier to arrange (and cheaper) than one across a county.',
   },
   'South West': {
     supply:
-      'Wedding-barn country, and vintage tractors are genuinely well represented — the region has a strong rally and restoration scene, so a period Fordson or Massey for photographs is a realistic ask rather than a long shot.',
+      'Wedding-barn country, and vintage tractors are genuinely well represented. The region has a strong rally and restoration scene, so a period Fordson or Massey for photographs is a realistic ask rather than a long shot.',
     practical:
       'Lanes are narrow and often steep, which matters more than mileage. If the venue is down a single-track lane, say so early: it changes which machine and trailer combination will actually get there.',
   },
@@ -328,7 +328,7 @@ const TRACTOR_REGIONS: Record<string, VerticalNote> = {
   },
   'East Midlands': {
     supply:
-      'Mixed farming across the region, with both modern machinery and a strong vintage scene — the county shows and ploughing matches keep a lot of older tractors in working order.',
+      'Mixed farming across the region, with both modern machinery and a strong vintage scene: the county shows and ploughing matches keep a lot of older tractors in working order.',
     practical:
       'Most of the region is within easy reach of a suitable machine. Give us the venue postcode and the date and we’ll work outwards from there.',
   },
@@ -336,7 +336,7 @@ const TRACTOR_REGIONS: Record<string, VerticalNote> = {
     supply:
       'Herefordshire, Shropshire and Worcestershire are full of farms that host weddings and events, so tractors here are often already part of the offer rather than something that has to be brought in.',
     practical:
-      'If the venue is itself a farm, it’s worth asking whether they have a machine on site before hiring one in — and if they don’t, a neighbouring farm is usually a short run away.',
+      'If the venue is itself a farm, it’s worth asking whether they have a machine on site before hiring one in, and if they don’t, a neighbouring farm is usually a short run away.',
   },
   'North West': {
     supply:
@@ -360,7 +360,7 @@ const TRACTOR_REGIONS: Record<string, VerticalNote> = {
     supply:
       'Livestock farms throughout, many with restored tractors, and a growing number of rural wedding venues in converted farm buildings.',
     practical:
-      'Terrain is the deciding factor. Narrow lanes, gradients and gateways matter more than distance on a map — describe the approach to the venue and we’ll match something that will make it comfortably.',
+      'Terrain is the deciding factor. Narrow lanes, gradients and gateways matter more than distance on a map, so describe the approach to the venue and we’ll match something that will make it comfortably.',
   },
   Scotland: {
     supply:
@@ -376,7 +376,7 @@ const TRACTOR_REGIONS: Record<string, VerticalNote> = {
   },
   London: {
     supply:
-      'Tractors come in from the surrounding counties rather than being kept in London itself — Essex, Kent, Surrey, Hertfordshire and Buckinghamshire are all within a workable run of most London venues.',
+      'Tractors come in from the surrounding counties rather than being kept in London itself: Essex, Kent, Surrey, Hertfordshire and Buckinghamshire are all within a workable run of most London venues.',
     practical:
       'Access and road restrictions decide this one, not availability. Tell us the venue, and whether the tractor needs to travel under its own power or can come in on a low-loader, and we’ll work out what’s realistic.',
   },
@@ -390,7 +390,7 @@ const TRACTOR_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   'Aberdeen City': {
     supply:
-      'Machines come in from the Aberdeenshire farms immediately around the city — a short run to most venues.',
+      'Machines come in from the Aberdeenshire farms immediately around the city, a short run to most venues.',
   },
   Moray: {
     supply:
@@ -414,7 +414,7 @@ const TRACTOR_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   Stirling: {
     supply:
-      'Castle and country-house venues with working farms on the carse below them — good availability and short runs to most sites.',
+      'Castle and country-house venues with working farms on the carse below them: good availability and short runs to most sites.',
   },
   Clackmannanshire: {
     supply:
@@ -422,7 +422,7 @@ const TRACTOR_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   'East Lothian': {
     supply:
-      'Big arable farms, country-house and castle venues, and easy road links — one of the more straightforward places in Scotland to arrange a tractor.',
+      'Big arable farms, country-house and castle venues, and easy road links: one of the more straightforward places in Scotland to arrange a tractor.',
   },
   Midlothian: {
     supply:
@@ -436,7 +436,7 @@ const TRACTOR_COUNTIES: Record<string, Partial<VerticalNote>> = {
     supply:
       'Machines travel in from East and Midlothian rather than the city itself, both of which are close.',
     practical:
-      'City-centre venues are the hard part, not availability — road restrictions and access decide it. Tell us the venue and whether the tractor can come in on a low-loader.',
+      'City-centre venues are the hard part, not availability: road restrictions and access decide it. Tell us the venue and whether the tractor can come in on a low-loader.',
   },
   'Scottish Borders': {
     supply:
@@ -446,11 +446,11 @@ const TRACTOR_COUNTIES: Record<string, Partial<VerticalNote>> = {
     supply:
       'Dairy and stock farms across a wide, sparsely populated county, with country-house venues among them and plenty of working machinery.',
     practical:
-      'It is a big county — a machine kept near the venue is worth a lot more than a cheaper one at the other end of it.',
+      'It is a big county, so a machine kept near the venue is worth a lot more than a cheaper one at the other end of it.',
   },
   'South Ayrshire': {
     supply:
-      'Castle and country-house venues on the coast with farms immediately behind them — generally short, easy runs.',
+      'Castle and country-house venues on the coast with farms immediately behind them, so generally short, easy runs.',
   },
   'East Ayrshire': {
     supply:
@@ -458,7 +458,7 @@ const TRACTOR_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   'North Ayrshire': {
     supply:
-      'Coastal farms and estates, plus the islands — which change the question entirely if that is where the venue is.',
+      'Coastal farms and estates, plus the islands, which change the question entirely if that is where the venue is.',
     practical:
       'Flag an island venue at the outset: the ferry, not the tractor, is what needs booking first.',
   },
@@ -472,7 +472,7 @@ const TRACTOR_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   Falkirk: {
     supply:
-      'Carse farms with excellent road links in every direction — a practical base for reaching venues across the central belt.',
+      'Carse farms with excellent road links in every direction: a practical base for reaching venues across the central belt.',
   },
   'Glasgow City': {
     supply:
@@ -490,7 +490,7 @@ const TRACTOR_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   'East Dunbartonshire': {
     supply:
-      'Kelvin valley farms with the Campsies behind — rural venues within a short run, and Glasgow’s within reach.',
+      'Kelvin valley farms with the Campsies behind: rural venues within a short run, and Glasgow’s within reach.',
   },
   'West Dunbartonshire': {
     supply:
@@ -498,12 +498,12 @@ const TRACTOR_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   Inverclyde: {
     supply:
-      'Steep ground and a small farming base, so machines usually travel in from Renfrewshire — a short run, but worth arranging early.',
+      'Steep ground and a small farming base, so machines usually travel in from Renfrewshire, a short run, but worth arranging early.',
   },
 
   Cornwall: {
     practical:
-      'Long county, narrow lanes, and a lot of venues near the coast. A machine kept locally is worth a great deal more than a cheaper one two hours up the A30 — the road time is the cost here.',
+      'Long county, narrow lanes, and a lot of venues near the coast. A machine kept locally is worth a great deal more than a cheaper one two hours up the A30. The road time is the cost here.',
   },
   Devon: {
     practical:
@@ -519,17 +519,17 @@ const TRACTOR_COUNTIES: Record<string, Partial<VerticalNote>> = {
     supply:
       'Farms and estates scattered along the sea-lochs and across the islands, with castle and country-house venues among them. What is available depends heavily on which side of the water you are on.',
     practical:
-      'Say up front if the venue is on an island — a ferry crossing changes which machines can realistically get there, and needs booking well ahead.',
+      'Say up front if the venue is on an island: a ferry crossing changes which machines can realistically get there, and needs booking well ahead.',
   },
   'Na h-Eileanan Siar': {
     supply:
-      'Island crofting country. Working tractors are everywhere, but everything has to already be on the island — bringing one over is rarely practical.',
+      'Island crofting country. Working tractors are everywhere, but everything has to already be on the island, since bringing one over is rarely practical.',
     practical:
       'Book local and book early. Ferry timetables, not availability, are usually what decides whether a date works.',
   },
   'Orkney Islands': {
     supply:
-      'Well-farmed islands with plenty of working machinery and a strong agricultural show tradition behind it — a good place to find a tidy tractor for an event.',
+      'Well-farmed islands with plenty of working machinery and a strong agricultural show tradition behind it: a good place to find a tidy tractor for an event.',
     practical:
       'Everything is island-based, so the pool is finite. Give as much notice as you can, particularly for summer dates.',
   },
@@ -541,7 +541,7 @@ const TRACTOR_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   'Isle of Wight': {
     supply:
-      'Everything has to already be on the island — bringing a tractor over on the ferry is possible but rarely worth it. The good news is that the island has plenty of working farms and a keen vintage scene of its own.',
+      'Everything has to already be on the island. Bringing a tractor over on the ferry is possible but rarely worth it. The good news is that the island has plenty of working farms and a keen vintage scene of its own.',
     practical:
       'Book island-based machines and book early, particularly for summer dates. Ferry logistics make a late replacement much harder than it would be on the mainland.',
   },

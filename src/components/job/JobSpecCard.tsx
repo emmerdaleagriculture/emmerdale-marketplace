@@ -75,7 +75,7 @@ export function JobSpecCard({ spec }: { spec: JobSpec }) {
     [
       'Where',
       [spec.location, spec.county].filter(Boolean).join(', ') +
-        (spec.distanceMiles != null ? ` — about ${spec.distanceMiles} miles from your base` : ''),
+        (spec.distanceMiles != null ? `, about ${spec.distanceMiles} miles from your base` : ''),
     ],
     [
       'When',

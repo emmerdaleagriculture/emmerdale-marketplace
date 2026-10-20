@@ -12,7 +12,7 @@ import { SUBMISSION_FILTERS, isSubmissionFilter, matchesFilter } from '@/lib/sub
 import { OutreachModal } from './OutreachModal';
 import { DraftToolbar } from './DraftToolbar';
 
-export const metadata: Metadata = { title: 'Submissions — Admin' };
+export const metadata: Metadata = { title: 'Submissions · Admin' };
 
 /**
  * Every job described on /start, newest first, with what happened to it:
@@ -112,7 +112,7 @@ type Tone = 'open' | 'good' | 'bad' | 'muted' | 'draft';
 const STATUS: Record<string, [string, Tone]> = {
   draft: ['Draft', 'draft'],
   abandoned: ['Abandoned draft', 'muted'],
-  confirmed: ['Confirmed — sending', 'open'],
+  confirmed: ['Confirmed, sending', 'open'],
   distributed: ['With contractors', 'open'],
   quotes_receiving: ['Quotes in', 'open'],
   accepted_awaiting_payment: ['Awaiting deposit', 'open'],
@@ -306,7 +306,7 @@ function SubmissionRow({
                 href={`/admin/submissions/${r.id}#messages`}
                 className={p.messages}
                 title={messagesSplit}
-                aria-label={`${messages} message${messages === 1 ? '' : 's'} sent — ${messagesSplit}`}
+                aria-label={`${messages} message${messages === 1 ? '' : 's'} sent: ${messagesSplit}`}
               >
                 <b>{messages}</b> message{messages === 1 ? '' : 's'} sent
               </Link>
@@ -321,7 +321,7 @@ function SubmissionRow({
 
       <div className={p.rowWhen}>
         <span title={formatDateTime(r.created_at)}>{timeAgo(r.created_at)}</span>
-        <Link href={`/admin/submissions/${r.id}`} className={p.more} aria-label={`Details — ${title}`}>
+        <Link href={`/admin/submissions/${r.id}`} className={p.more} aria-label={`Details: ${title}`}>
           Details →
         </Link>
       </div>
@@ -471,7 +471,7 @@ export default async function AdminSubmissionsPage({
       <h1 className={s.h1}>Submissions</h1>
       <p className={s.sub}>
         Jobs described on the landing page, newest first
-        {rows.length >= LIMIT ? (searching ? ` — latest ${LIMIT} matches, narrow the search for older ones` : ` — latest ${LIMIT}`) : ''}. Opened means the
+        {rows.length >= LIMIT ? (searching ? ` (latest ${LIMIT} matches, narrow the search for older ones)` : ` (latest ${LIMIT})`) : ''}. Opened means the
         contractor opened the job, from the email or the text; tapped means they
         tapped the link in the text (texts have no read receipts, so delivered
         is as far as they report). Tap the numbers on a row to
@@ -538,7 +538,7 @@ export default async function AdminSubmissionsPage({
             hiddenCount != null &&
             hiddenCount > 0 && (
               <Link href="/admin/submissions?view=drafts&hidden=1">
-                {hiddenCount} cleared — show {hiddenCount === 1 ? 'it' : 'them'}
+                {hiddenCount} cleared, show {hiddenCount === 1 ? 'it' : 'them'}
               </Link>
             )
           )}

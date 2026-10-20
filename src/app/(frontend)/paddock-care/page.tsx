@@ -48,7 +48,7 @@ const REASONS: { h: string; body: string }[] = [
   },
   {
     h: 'Enough to price without a visit',
-    body: 'On a small site the access is the job. Every job comes with the acreage — often drawn on a map by the customer — the postcode district, gate width, access notes and photos, so you can price it from the yard.',
+    body: 'On a small site the access is the job. Every job comes with the acreage (often drawn on a map by the customer), the postcode district, gate width, access notes and photos, so you can price it from the yard.',
   },
   {
     h: 'Your price, minimum charge and all',
@@ -87,7 +87,7 @@ const STEPS: { n: number; title: string; body: string }[] = [
 const faqs = [
   {
     q: 'What does it cost to join?',
-    a: 'Nothing. Registration is free, quoting is free, there is no monthly fee, and nothing is deducted from your invoice. You keep the price you quote — our margin is added on top and paid by the customer.',
+    a: 'Nothing. Registration is free, quoting is free, there is no monthly fee, and nothing is deducted from your invoice. You keep the price you quote: our margin is added on top and paid by the customer.',
   },
   {
     q: 'Is it worth it for jobs this small?',
@@ -95,11 +95,11 @@ const faqs = [
   },
   {
     q: 'How and when do I get paid?',
-    a: 'The customer pays a deposit to book the job, and the balance falls due once the work is done and they have confirmed it — or automatically three working days after you mark it complete, if they neither confirm nor raise a problem. You are paid your full quoted price once that balance has cleared and we have your invoice. You never invoice the customer yourself.',
+    a: 'The customer pays a deposit to book the job, and the balance falls due once the work is done and they have confirmed it, or automatically three working days after you mark it complete, if they neither confirm nor raise a problem. You are paid your full quoted price once that balance has cleared and we have your invoice. You never invoice the customer yourself.',
   },
   {
     q: 'Do I need my own insurance and certificates?',
-    a: 'Work done through us is covered by our own public liability policy, so you do not need to hold cover of your own to take jobs from us. We do not ask to see spraying, chainsaw or machinery certificates either — what you are qualified and ticketed to operate is your responsibility as an independent business, not something we sit in judgement on.',
+    a: 'Work done through us is covered by our own public liability policy, so you do not need to hold cover of your own to take jobs from us. We do not ask to see spraying, chainsaw or machinery certificates either. What you are qualified and ticketed to operate is your responsibility as an independent business, not something we sit in judgement on.',
   },
   {
     q: 'Is there a check before I start getting work?',
@@ -107,7 +107,7 @@ const faqs = [
   },
   {
     q: 'How much work will I get?',
-    a: 'It depends on your county and the time of year — topping in high summer and hedge cutting after the nesting season are the busy stretches. We would rather tell you straight than promise a number we cannot stand behind.',
+    a: 'It depends on your county and the time of year: topping in high summer and hedge cutting after the nesting season are the busy stretches. We would rather tell you straight than promise a number we cannot stand behind.',
   },
 ];
 
@@ -191,7 +191,7 @@ export default function PaddockCarePage() {
 
       <CredSection>
         Emmerdale Agriculture is run by the people behind{' '}
-        <a href={HPM_URL}>Hampshire Paddock Management</a> — a contracting firm that tops,
+        <a href={HPM_URL}>Hampshire Paddock Management</a>, a contracting firm that tops,
         harrows, rolls and sprays paddocks for a living. We know what a small job is worth,
         and what a wasted trip to look at one costs.
       </CredSection>

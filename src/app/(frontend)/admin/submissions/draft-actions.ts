@@ -42,7 +42,7 @@ export async function hideDraftsAction(_prev: FormState, formData: FormData): Pr
   });
   if (error) {
     console.error('[admin] admin_hide_drafts failed:', error);
-    return { error: 'Could not clear those — try again.' };
+    return { error: 'Could not clear those. Try again.' };
   }
 
   const { hidden, refused } = data as { hidden: number; refused: number };
@@ -52,7 +52,7 @@ export async function hideDraftsAction(_prev: FormState, formData: FormData): Pr
     message:
       `${hidden} draft${hidden === 1 ? '' : 's'} cleared.` +
       // Only happens if a live job's id was posted, which the UI never does.
-      (refused > 0 ? ` ${refused} left alone — not drafts.` : ''),
+      (refused > 0 ? ` ${refused} left alone, not drafts.` : ''),
   };
 }
 
@@ -65,7 +65,7 @@ export async function restoreDraftsAction(_prev: FormState, formData: FormData):
   const { data, error } = await admin.rpc('admin_unhide_drafts', { p_ids: chosen });
   if (error) {
     console.error('[admin] admin_unhide_drafts failed:', error);
-    return { error: 'Could not put those back — try again.' };
+    return { error: 'Could not put those back. Try again.' };
   }
   const { restored } = data as { restored: number };
   refresh();

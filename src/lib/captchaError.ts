@@ -15,14 +15,14 @@ export function captchaErrorMessage(message: string, form: string): string | nul
   }
   if (/timeout-or-duplicate/i.test(message)) {
     // Token expired (>5 min) or was already used — a fresh one is minted now.
-    return 'The security check timed out. It has refreshed — please submit again.';
+    return 'The security check timed out. It has refreshed. Please submit again.';
   }
   if (/invalid-input-response/i.test(message)) {
     // Token was well-formed but Cloudflare rejected it. Almost always a
     // config mismatch (the Supabase secret and the site key belong to
     // different Turnstile widgets), which the user can't fix — so don't
     // tell them to just retry.
-    return 'The security check could not be verified. This is a configuration issue on our end — please contact us so we can fix it.';
+    return 'The security check could not be verified. This is a configuration issue on our end. Please contact us so we can fix it.';
   }
   return 'The security check failed. Please try again.';
 }

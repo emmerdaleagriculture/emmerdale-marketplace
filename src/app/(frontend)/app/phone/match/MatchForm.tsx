@@ -83,7 +83,7 @@ export function MatchForm({
         {sent.error && <p className={f.error}>{sent.error}</p>}
         <Turnstile resetOn={sent} onToken={setCaptchaToken} />
         <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} disabled={sending || captchaPending}>
-          {sending ? 'Sending…' : `Yes — email a code to ${emailMasked}`}
+          {sending ? 'Sending…' : `Yes, email a code to ${emailMasked}`}
         </button>
       </form>
       <form action={decline} style={{ marginTop: 12 }}>

@@ -42,7 +42,7 @@ export default function PrivacyPage() {
           <Breadcrumb tone="light" items={[{ label: 'Privacy policy' }]} />
           <h1>Privacy policy</h1>
           <p className={l.updated}>
-            <strong>Version 2.1 — 19 October 2026</strong>
+            <strong>Version 2.1, 19 October 2026</strong>
           </p>
 
           <h2>Who we are</h2>
@@ -106,7 +106,7 @@ export default function PrivacyPage() {
           </ul>
           <p>
             They do <strong>not</strong> see your name, email address or phone number. Please
-            leave those out of the description and photographs — anything you write there is
+            leave those out of the description and photographs: anything you write there is
             shown to them as you wrote it.
           </p>
           <p>
@@ -135,7 +135,7 @@ export default function PrivacyPage() {
           <h2>If you enquire through an advert</h2>
           <p>
             If you fill in an enquiry form on Facebook or Instagram, Meta sends us the details
-            you entered — typically your name, phone number, email address, postcode and what
+            you entered, typically your name, phone number, email address, postcode and what
             you need. We contact you about it. We only put it forward to contractors as a job
             once you have agreed to that, and we record when you did.
           </p>
@@ -223,37 +223,37 @@ export default function PrivacyPage() {
           </p>
           <ul>
             <li>
-              <strong>Supabase</strong> — our database, logins and file storage (hosted in
+              <strong>Supabase</strong>: our database, logins and file storage (hosted in
               Frankfurt).
             </li>
             <li>
-              <strong>Vercel</strong> — hosts the website (servers in Frankfurt).
+              <strong>Vercel</strong>: hosts the website (servers in Frankfurt).
             </li>
             <li>
-              <strong>Resend</strong> — sends our emails and receives replies to them.
+              <strong>Resend</strong>: sends our emails and receives replies to them.
             </li>
             <li>
-              <strong>Stripe</strong> — card payments.
+              <strong>Stripe</strong>: card payments.
             </li>
             <li>
-              <strong>Mapbox</strong> — the maps and satellite images, loaded by your browser.
+              <strong>Mapbox</strong>: the maps and satellite images, loaded by your browser.
             </li>
             <li>
-              <strong>Postcodes.io</strong> — turns postcodes and locations into areas.
+              <strong>Postcodes.io</strong>: turns postcodes and locations into areas.
             </li>
             <li>
-              <strong>Cloudflare</strong> — the Turnstile bot check.
+              <strong>Cloudflare</strong>: the Turnstile bot check.
             </li>
             <li>
-              <strong>Sentry</strong> — error monitoring (EU region).
+              <strong>Sentry</strong>: error monitoring (EU region).
             </li>
             <li>
-              <strong>Anthropic</strong> — reads the text of a contractor&rsquo;s emailed reply
+              <strong>Anthropic</strong>: reads the text of a contractor&rsquo;s emailed reply
               to a job, to pick out a price or a decline. Customer job descriptions are not sent
               to it.
             </li>
             <li>
-              <strong>Google</strong> and <strong>Meta</strong> — analytics and advertising, as
+              <strong>Google</strong> and <strong>Meta</strong>: analytics and advertising, as
               described under cookies, and Meta for enquiries made through its adverts.
             </li>
           </ul>
@@ -297,8 +297,8 @@ export default function PrivacyPage() {
               long and claims can be brought for that long.
             </li>
             <li>
-              <strong>Jobs that did not go ahead</strong> — unfinished, cancelled before
-              booking, or not priced: up to two years, then deleted.
+              <strong>Jobs that did not go ahead</strong> (unfinished, cancelled before
+              booking, or not priced): up to two years, then deleted.
             </li>
             <li>
               <strong>Visit and security records</strong> (IP addresses): up to 12 months. Our
@@ -315,7 +315,7 @@ export default function PrivacyPage() {
             You can ask for a copy of your data, and ask us to correct it, delete it, restrict
             how we use it, or give it to you in a portable form. You can object to anything we
             do on the basis of our legitimate interests, and withdraw consent at any time. Some
-            records we must keep — financial records, for example — even if you ask us to delete
+            records we must keep (financial records, for example) even if you ask us to delete
             them; if so we will tell you.
           </p>
           <p>

@@ -44,7 +44,7 @@ export function OutreachModal({ id, counts, title }: { id: string; counts: Outre
         type="button"
         className={p.mini}
         onClick={() => open('emailed')}
-        aria-label={`${title} — ${counts.invited} invited, ${counts.opened} opened, ${counts.priced} priced. Show who.`}
+        aria-label={`${title}: ${counts.invited} invited, ${counts.opened} opened, ${counts.priced} priced. Show who.`}
       >
         <span className={p.bar} aria-hidden="true">
           <span className={p.barResponded} style={{ width: `${pct(responded, counts.invited)}%` }} />
@@ -65,7 +65,7 @@ export function OutreachModal({ id, counts, title }: { id: string; counts: Outre
       <dialog
         ref={dialog}
         className={p.modal}
-        aria-label={`${title} — outreach`}
+        aria-label={`${title} · outreach`}
         // A click on the backdrop lands on the dialog itself; inside, on its content.
         onClick={(e) => e.target === dialog.current && dialog.current.close()}
       >

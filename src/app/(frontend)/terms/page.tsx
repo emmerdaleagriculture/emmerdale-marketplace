@@ -10,7 +10,7 @@ import l from '../legal.module.css';
 export const metadata: Metadata = {
   title: 'Contractor terms',
   description:
-    'Contractor terms for the Emmerdale Agriculture network — how jobs reach you, how you price them, and how and when you are paid.',
+    'Contractor terms for the Emmerdale Agriculture network: how jobs reach you, how you price them, and how and when you are paid.',
   alternates: { canonical: '/terms' },
 };
 
@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.8 — 21 October 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.8, 21 October 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -55,7 +55,7 @@ export default function TermsPage() {
             Work you carry out for us is covered by our own public liability insurance,
             so <strong>you are not required to hold cover of your own</strong> in order
             to take jobs through us. That cover applies only to work booked through us
-            — see clause 8 on working off-platform.
+            (see clause 8 on working off-platform).
           </p>
           <p>
             We do not ask to see spraying, chainsaw or machinery certificates. What you
@@ -65,8 +65,8 @@ export default function TermsPage() {
               you must not take on work you are not competent and lawfully entitled to
               carry out
             </strong>
-            . Where the law requires a certificate for the work — spraying in
-            particular — holding it remains your obligation, not ours to verify.
+            . Where the law requires a certificate for the work (spraying in
+            particular), holding it remains your obligation, not ours to verify.
           </p>
           <p>
             We may suspend or remove an account where work falls short or where conduct
@@ -76,8 +76,8 @@ export default function TermsPage() {
           <h2>3. Being invited, and pricing</h2>
           <p>
             Jobs are sent to approved contractors covering the county. Each invitation
-            includes what the customer told us: the work, the acreage — often measured
-            from a boundary they drew on a map — the postcode district, access notes,
+            includes what the customer told us: the work, the acreage (often measured
+            from a boundary they drew on a map), the postcode district, access notes,
             gate width and photographs. The full address and contact details come only
             if the job becomes yours.
           </p>
@@ -90,24 +90,24 @@ export default function TermsPage() {
             <strong>Messages.</strong> You can message the customer from the job page,
             before and after you price. Until the job is yours the customer knows you
             only by a letter (&ldquo;Contractor B&rdquo;), so a message must not contain a
-            phone number, email address or website — the page will not send one that
+            phone number, email address or website. The page will not send one that
             does. Once the job is yours you can share contact details to arrange the
             work. <strong>Never put your price, or any charge, in a message</strong>, before
             or after the job is yours: the customer&rsquo;s price includes our margin, and
             a change of price or extra work goes through us (clause 5). Messages are kept
-            with the job, and we can read them — to help if something goes wrong, and to
+            with the job, and we can read them, to help if something goes wrong, and to
             make sure these terms are kept.
           </p>
 
           <h2>4. What you are paid</h2>
           <p>
             You keep the price you quote. Our margin is added on top and is paid by the
-            customer — it is not deducted from you. The customer sees a single price
+            customer. It is not deducted from you. The customer sees a single price
             that includes both.
           </p>
           <p>
             The customer pays a deposit to book the job, and the balance falls due when
-            the work is done and they confirm it — or automatically{' '}
+            the work is done and they confirm it, or automatically{' '}
             <strong>three working days</strong> after you mark it complete, if they
             neither confirm nor raise a problem. The balance is payable by them within{' '}
             <strong>seven days</strong> of that point.
@@ -115,7 +115,7 @@ export default function TermsPage() {
           <p>
             You are paid your full quoted price once that balance has cleared and we have
             your invoice. If the customer&rsquo;s balance fails and cannot be recovered,
-            we will tell you and agree what happens next — we will not simply leave it
+            we will tell you and agree what happens next: we will not simply leave it
             outstanding.
           </p>
           <p>
@@ -183,13 +183,13 @@ export default function TermsPage() {
           <p>
             Do not solicit a customer introduced through us for work outside the platform,
             and do not accept work from them off-platform for six months after a job. It
-            is not about the fee — off-platform work has no insurance cover from us, no
+            is not about the fee: off-platform work has no insurance cover from us, no
             record, and no protection for either of you.
           </p>
           <p>
             This clause does not apply to an Open member (clause 12) for a job they were
             invited to while a member: Open exists so that you can deal with the customer
-            directly. Clause 7 still does, and so does the last sentence above — work you
+            directly. Clause 7 still does, and so does the last sentence above: work you
             agree directly is between you and the customer, and nothing in clauses 4 to 6
             applies to it.
           </p>
@@ -286,7 +286,7 @@ export default function TermsPage() {
             Until now, jobs were posted to a board, every covering contractor could open
             the customer&rsquo;s details, and you agreed a price and invoiced the customer
             directly. That board is being withdrawn. Any job you took through it is
-            settled with the customer as before — these terms apply to work invited and
+            settled with the customer as before. These terms apply to work invited and
             priced through the new route. If you are mid-job and unsure which applies,{' '}
             <Link href="/account">ask us</Link>.
           </p>

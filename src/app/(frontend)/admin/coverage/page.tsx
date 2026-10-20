@@ -9,7 +9,7 @@ import { RadiusMap, type MapContractor } from './RadiusMap';
 import s from '../admin.module.css';
 import c from './coverage.module.css';
 
-export const metadata: Metadata = { title: 'Coverage — Admin' };
+export const metadata: Metadata = { title: 'Coverage · Admin' };
 
 /** 20 is the question asked; 62 is the furthest a contractor will travel. */
 const RADII = [10, 20, 30, 62];
@@ -178,7 +178,7 @@ export default async function AdminCoveragePage({
 
       {view === 'reach' && missing.length > 0 && (
         <div className={c.missing}>
-          Not on the map — no location for their base postcode:
+          Not on the map (no location for their base postcode):
           <ul>
             {missing.map((m) => (
               <li key={m.id}>

@@ -46,7 +46,7 @@ export default async function StartCompletePage() {
             <div className={a.card} style={{ marginTop: 20 }}>
               <h2 className={a.cardTitle}>Finish setting up your account</h2>
               <p>
-                Add a password and this job is saved to it — that&rsquo;s how you
+                Add a password and this job is saved to it. That&rsquo;s how you
                 watch the prices come in, and how you order the same work again
                 next year without describing it twice.
               </p>
@@ -58,7 +58,7 @@ export default async function StartCompletePage() {
               <p className={a.altLink}>
                 Already have one? <Link href="/login">Log in</Link> and we&rsquo;ll
                 attach this job to it. Or carry on without an account:{' '}
-                <Link href={`/my/${token}`}>see your job</Link> — we&rsquo;ve emailed
+                <Link href={`/my/${token}`}>see your job</Link>. We&rsquo;ve emailed
                 you the link either way.
               </p>
             </div>

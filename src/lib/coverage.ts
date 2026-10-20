@@ -44,8 +44,8 @@ export function coverageShapes(
       fill: coverageFill(n),
       /** Admin only — public pages must not reveal per-county contractor numbers. */
       title: showCounts
-        ? `${name} — ${n === 0 ? unit.none : `${n} ${n === 1 ? unit.one : unit.many}`}`
-        : `${name} — ${n === 0 ? 'not covered yet' : 'covered'}`,
+        ? `${name}: ${n === 0 ? unit.none : `${n} ${n === 1 ? unit.one : unit.many}`}`
+        : `${name}: ${n === 0 ? 'not covered yet' : 'covered'}`,
     };
   });
 }

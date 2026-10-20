@@ -92,7 +92,7 @@ export async function loadSentryIssues(limit = 25): Promise<SentryIssues> {
     if (!res.ok) {
       const detail =
         res.status === 401
-          ? 'the token was rejected — it may have been revoked'
+          ? 'the token was rejected (it may have been revoked)'
           : res.status === 403
             ? // The expected outcome for a build token, and worth naming the
               // scope exactly, because the obvious guess is wrong. Listing
@@ -104,7 +104,7 @@ export async function loadSentryIssues(limit = 25): Promise<SentryIssues> {
               // different problem from 401 with a different fix. Organization
               // tokens have fixed scopes, so the fix is always a new token of
               // another kind, not an edit to this one.
-              'the token is valid but cannot read events — listing issues ' +
+              'the token is valid but cannot read events: listing issues ' +
               'needs the event:read scope, which an organization token does ' +
               'not have and cannot be given. Issue an internal-integration ' +
               'or personal token with Issue & Event: Read and set it as ' +

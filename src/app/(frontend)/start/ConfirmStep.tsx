@@ -366,7 +366,7 @@ export function ConfirmStep({
           form rather than from the email. It is also the honest reason to
           fill it in early — the job is not lost if they run out of time. */}
       <p className={f.hint}>
-        Your details stay with us — a contractor only gets them if you accept their
+        Your details stay with us. A contractor only gets them if you accept their
         price. If you don&rsquo;t finish now, we&rsquo;ll email you a link to pick up
         where you left off.
       </p>
@@ -484,7 +484,7 @@ export function ConfirmStep({
                     {name}
                   </option>
                 ))}
-                <option value="other">None of these — I&rsquo;ll describe it</option>
+                <option value="other">None of these (I&rsquo;ll describe it)</option>
               </select>
             </label>
           )}
@@ -629,7 +629,7 @@ export function ConfirmStep({
           </select>
           <span className={f.hint}>
             {result.county_choice_reason === 'border'
-              ? 'That postcode sits on a county border — tell us which side your land is on.'
+              ? 'That postcode sits on a county border. Tell us which side your land is on.'
               : 'We couldn’t place that from what you gave us, so pick the county your land is in.'}
           </span>
         </label>
@@ -711,7 +711,7 @@ export function ConfirmStep({
           defaultValue={result.gate_w3w ?? ''}
         />
         <span className={f.hint}>
-          The three words for the entrance itself — from the what3words app.
+          The three words for the entrance itself, from the what3words app.
         </span>
       </label>
 

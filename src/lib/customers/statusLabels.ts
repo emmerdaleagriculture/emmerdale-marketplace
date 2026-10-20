@@ -13,7 +13,7 @@ export const CUSTOMER_STATUS_LABEL: Record<string, string> = {
   in_progress: 'In progress',
   completed_by_contractor: 'Awaiting your confirmation',
   completed: 'Done',
-  paid: 'Done — paid in full',
+  paid: 'Done, paid in full',
   no_matches: 'No contractors covered it',
   no_quotes: 'Nobody priced it',
   expired: 'Expired',

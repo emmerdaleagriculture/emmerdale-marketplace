@@ -44,7 +44,7 @@ export function PayBalance({
     return (
       <p>
         The balance of <strong>{amountLabel}</strong> is due{dueLabel ? ` by ${dueLabel}` : ''}.
-        We&rsquo;ll take it from the card you paid your deposit with — nothing to do.
+        We&rsquo;ll take it from the card you paid your deposit with. Nothing to do.
       </p>
     );
   }
@@ -54,7 +54,7 @@ export function PayBalance({
       {mode === 'failed' ? (
         <p>
           We couldn&rsquo;t take the balance of <strong>{amountLabel}</strong> from the card
-          you used for the deposit — usually an expired card, or a check your bank wants
+          you used for the deposit, usually an expired card, or a check your bank wants
           you to approve. You can settle it here{dueLabel ? `; it's due by ${dueLabel}` : ''}.
         </p>
       ) : (
@@ -84,7 +84,7 @@ export function PayBalance({
         </dd>
       </dl>
       <p className={f.hint}>
-        If something about the job isn&rsquo;t right, don&rsquo;t pay — reply to any email
+        If something about the job isn&rsquo;t right, don&rsquo;t pay. Reply to any email
         from us and we&rsquo;ll sort it out first.
       </p>
     </div>

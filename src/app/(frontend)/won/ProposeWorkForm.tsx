@@ -73,7 +73,7 @@ export function ProposeWorkForm({
         <span className={f.hint}>
           {customer !== null && pence !== null
             ? `You keep ${formatGBP(pence)}. The customer sees ${formatGBP(customer)} and pays a deposit on that to book it.`
-            : 'You keep this in full — our margin goes on top for the customer.'}
+            : 'You keep this in full. Our margin goes on top for the customer.'}
         </span>
       </label>
       <label className={f.field}>
@@ -93,7 +93,7 @@ export function ProposeWorkForm({
           maxLength={200}
           placeholder="Could do this the same day while the kit's on site."
         />
-        <span className={f.hint}>No prices or charges in here — the figure above is the price.</span>
+        <span className={f.hint}>No prices or charges in here. The figure above is the price.</span>
       </label>
       <div style={{ display: 'flex', gap: 8 }}>
         <button type="submit" className={f.btnPrimary} disabled={pending}>

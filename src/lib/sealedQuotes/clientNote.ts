@@ -84,7 +84,7 @@ export const OFF_PLATFORM = new RegExp(
 );
 
 export const OFF_PLATFORM_REFUSAL =
-  'Please leave payment arrangements out — every job is paid through us, deposit and balance, and nothing is paid to the contractor directly.';
+  'Please leave payment arrangements out. Every job is paid through us, deposit and balance, and nothing is paid to the contractor directly.';
 
 /** What people put between the digits of a phone number. */
 const PHONE_SEPARATOR = /[\s().\-–—]+/;
@@ -141,19 +141,19 @@ export function clientNoteProblem(note: string): string | null {
   const t = note.trim();
   if (!t) return null;
   if (t.length > CLIENT_NOTE_MAX) {
-    return `That note is a bit long — keep it under ${CLIENT_NOTE_MAX} characters.`;
+    return `That note is a bit long. Keep it under ${CLIENT_NOTE_MAX} characters.`;
   }
   if (LINK.test(t) || DOMAIN.test(t) || EMAIL.test(t)) {
-    return 'Please take the link or email address out — the customer deals with us until they accept a price.';
+    return 'Please take the link or email address out. The customer deals with us until they accept a price.';
   }
   if (hasPhoneNumber(t)) {
-    return 'Please take the phone number out — we pass your details on once the customer accepts your price.';
+    return 'Please take the phone number out. We pass your details on once the customer accepts your price.';
   }
   // Before MONEY: "400 quid cash" should be told about the cash, which is
   // the part admin gets flagged about.
   if (OFF_PLATFORM.test(t)) return OFF_PLATFORM_REFUSAL;
   if (MONEY.test(t)) {
-    return 'Please leave amounts out of the note — the customer sees our price, not yours, so a figure here will confuse them. Put it in the price box instead.';
+    return 'Please leave amounts out of the note. The customer sees our price, not yours, so a figure here will confuse them. Put it in the price box instead.';
   }
   return null;
 }

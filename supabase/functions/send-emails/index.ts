@@ -177,7 +177,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `A new job has been posted in one of your counties.\n\n` +
           `${title}\n${where}\n\n` +
-          `Open it to see the full details and the customer's contact — the ` +
+          `Open it to see the full details and the customer's contact. The ` +
           `customer chooses who they hire, so it pays to get in touch early.\n\n${signIn}`,
       };
     case 'exclusive_new':
@@ -195,7 +195,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `A new lead has arrived in the approval queue.\n\n` +
           `Name: ${p.full_name ?? '?'}\n` +
           (p.job_hint ? `Wants: ${p.job_hint}\n` : '') +
-          `\nReview it at ${SITE_URL}/admin/leads — publish it as a job or dismiss it.`,
+          `\nReview it at ${SITE_URL}/admin/leads: publish it as a job or dismiss it.`,
       };
     case 'booked_flag':
       return {
@@ -245,12 +245,12 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         : null;
       const premium = p.billed_premium === true;
       return {
-        subject: 'A message to a customer was held — and the proper way to swap details',
+        subject: 'A message to a customer was held, and the proper way to swap details',
         text:
           `Hello${p.business_name ? ` ${p.business_name}` : ''},\n\n` +
           `A message you sent to a customer today included ${what}. Until a job is booked, ` +
           `messages between you and the customer go through the site, and we don't pass on ` +
-          `contact details either way — it's clause 8 of the contractor terms. The message ` +
+          `contact details either way: it's clause 8 of the contractor terms. The message ` +
           `wasn't delivered, and ${heldUntil ? `until ${heldUntil}` : 'for the next 30 days'} your ` +
           `messages to customers will be checked by us before they're passed on, so replies may ` +
           `take a few hours to arrive.\n\n` +
@@ -259,7 +259,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `If you'd rather ring customers and agree the work directly, that's exactly what Open ` +
           `membership is for: the customer's name, phone and email on every job you're invited ` +
           `to, the moment it arrives, and you can agree the work with them directly with ` +
-          `nothing added on top — or send a price through us at 5% as usual. ` +
+          `nothing added on top, or send a price through us at 5% as usual. ` +
           (premium
             ? `You're on Premium now, so it's a move up to £49 a month or £399 a year, prorated ` +
               `against what you've already paid.`
@@ -273,10 +273,10 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
 
     case 'application_approved':
       return {
-        subject: `You’re approved — welcome to the network`,
+        subject: `You’re approved: welcome to the network`,
         text:
           `Your application has been approved. You’ll now be emailed when a job is ` +
-          `posted in one of your counties — and any jobs already open there are on ` +
+          `posted in one of your counties, and any jobs already open there are on ` +
           `their way to you now.\n\n` +
           `Sign in to see your jobs: ${SITE_URL}/invitations`,
       };
@@ -298,7 +298,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       const what = p.service ? String(p.service) : 'your job';
       const near = p.postcode ? ` at ${p.postcode}` : '';
       return {
-        subject: `Your ${what} enquiry — shall we finish it off?`,
+        subject: `Your ${what} enquiry: shall we finish it off?`,
         text:
           `Hi ${first},\n\n` +
           `It's Tom here from Emmerdale Agriculture.\n\n` +
@@ -310,8 +310,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `them on one page. There's no charge for asking, and no obligation to ` +
           `accept any of them.\n\n` +
           `If you'd rather talk it through, call me on ${PHONE_DISPLAY}.\n\n` +
-          `And if you've changed your mind or sorted it elsewhere, just ignore this ` +
-          `— it's the only reminder we'll send.\n\n` +
+          `And if you've changed your mind or sorted it elsewhere, just ignore this. ` +
+          `It's the only reminder we'll send.\n\n` +
           `All the best,\nTom Oswald\nEmmerdale Agriculture\n${PHONE_DISPLAY}`,
       };
     }
@@ -359,7 +359,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           (p.open_first
             ? `A job in your area needs pricing. As an Open member you see it before ` +
-              `anyone else — Premium members in ${p.open_first_hours ?? 2} hours, everyone ` +
+              `anyone else: Premium members in ${p.open_first_hours ?? 2} hours, everyone ` +
               `else after that.\n\n`
             : p.premium
             ? `A job in your area needs pricing. As a premium member you see it before ` +
@@ -374,7 +374,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
                 : '') +
               `\n\n`
             : p.late_join
-              ? `A job in your area is still open for pricing — it went out before you joined ` +
+              ? `A job in your area is still open for pricing. It went out before you joined ` +
                 `this county, so you’re seeing it now.\n\n`
               : `A job in your area needs pricing.\n\n`) +
           `In their words: “${p.description ?? '—'}”\n\n` +
@@ -404,15 +404,15 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           // otherwise read "Where: —, Devon".
           `Where:     ${[p.postcode_district, p.county].filter(Boolean).join(', ') || 'see notes'}` +
           (p.open_member
-            ? ` — the customer’s name, number and address are on the job page\n`
-            : ` — the full address comes if you win the job\n`) +
+            ? ` (the customer’s name, number and address are on the job page)\n`
+            : ` (the full address comes if you win the job)\n`) +
           `When:      ${p.urgency ?? 'not stated'}${p.target_date ? ` (by ${p.target_date})` : ''}\n` +
           (p.gate_width ? `Access:    ${p.gate_width} gate\n` : '') +
           (p.access_notes ? `Notes:     ${p.access_notes}\n` : '') +
           (p.obstacles ? `Obstacles: ${p.obstacles}\n` : '') +
           (p.open_first
             ? `\nOnly Open members have it for the next ${p.open_first_hours ?? 2} hours, ` +
-              `then Premium members join — sooner if every Open member has priced or passed. ` +
+              `then Premium members join, sooner if every Open member has priced or passed. ` +
               `Price it or message the customer ${replyBy} and it stays with members ` +
               `until ${opens}, or until you’ve all priced or passed. A text left untapped for ` +
               `2 hours counts as a pass, and if no member ${replied} it goes to ` +
@@ -424,10 +424,10 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
               `${replied} it goes to other contractors in the area. Your price ` +
               `carries 5% commission, not 15%.\n\n`
             : p.direct
-            ? `\nIt’s yours alone until ${opens}. Price it or pass by then — after that it ` +
+            ? `\nIt’s yours alone until ${opens}. Price it or pass by then. After that it ` +
               `goes to other contractors in the area.\n\n`
             : `\nFirst come, first served: the customer sees prices as they arrive and can ` +
-              `accept at any moment. ${deadline} — but the sooner you price, ` +
+              `accept at any moment. ${deadline}, but the sooner you price, ` +
               `the better your chances.\n\n`) +
           // Open members: the details are on the page, so say so before the
           // link — the point of the membership is to pick up the phone.
@@ -479,7 +479,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     }
     case 'sq_award_won':
       return {
-        subject: `You’ve got the job — ${p.service ?? 'land work'}`,
+        subject: `You’ve got the job: ${p.service ?? 'land work'}`,
         text:
           `The customer accepted your price and has paid their deposit. You’re paid ` +
           `your full price once the job is done, they’ve confirmed it, the balance has ` +
@@ -497,7 +497,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `Job taken: ${p.service ?? 'land work'}, ${p.postcode_district ?? ''}`,
         text:
-          `The customer went with another price on this one — with first-come jobs, ` +
+          `The customer went with another price on this one. With first-come jobs, ` +
           `that happens. Thanks for pricing it; we’ll send you the next job in your area.`,
       };
     case 'sq_quote_confirm':
@@ -519,13 +519,13 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Hi ${first},\n\n` +
           (p.direct_contractor
             ? `We’ve asked ${p.direct_contractor} to price your job first, as you asked. If ` +
-              `they can’t within 48 hours we’ll send it to other contractors in your area — ` +
-              `you won’t need to do anything. Their price will appear on your job page:\n${portal}\n\n`
+              `they can’t within 48 hours we’ll send it to other contractors in your area. ` +
+              `You won’t need to do anything. Their price will appear on your job page:\n${portal}\n\n`
             : (p.direct_unavailable
                 ? `The contractor who did this job last time isn’t taking work through us at ` +
                   `the moment, so we’ve sent it to every contractor who covers your area.\n\n`
                 : '') +
-              `This is your job page — prices from contractors will appear ` +
+              `This is your job page. Prices from contractors will appear ` +
               `there as they come in:\n${portal}\n\n`) +
           `Keep this email; the link is your key to the page.`,
       };
@@ -542,7 +542,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           (n > 0
             ? `we’ve sent it to ${n} other contractor${n === 1 ? '' : 's'} who cover your area. ` +
               `Their prices will appear on your job page as they come in:\n${portal}\n\n`
-            : `we’ve opened it to other contractors — though none cover your area just now. ` +
+            : `we’ve opened it to other contractors, though none cover your area just now. ` +
               `We’ll keep it open, and your job page shows where it stands:\n${portal}\n\n`) +
           `Nothing is booked until you accept a price.`,
       };
@@ -561,25 +561,25 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       const name = p.contractor_name ? String(p.contractor_name) : null;
       const opening =
         extra && p.extra_work_origin === 'contractor'
-          ? `${name ?? 'Your contractor'} has suggested some extra work on your job — ` +
-            `${extra} — and priced it at ${price}. It's entirely up to you: nothing ` +
+          ? `${name ?? 'Your contractor'} has suggested some extra work on your job (` +
+            `${extra}) and priced it at ${price}. It's entirely up to you: nothing ` +
             `happens unless you accept it.`
           : extra
-            ? `${name ?? 'Your contractor'} has priced the extra work you asked for — ` +
-              `${extra} — at ${price}.`
+            ? `${name ?? 'Your contractor'} has priced the extra work you asked for (` +
+              `${extra}) at ${price}.`
             : `A contractor (${p.contractor_label ?? 'Contractor A'}) has priced your ` +
               `${p.service ? `${p.service} ` : ''}job at ${price}.`;
       return {
         subject: extra
-          ? `${p.extra_work_origin === 'contractor' ? 'Extra work suggested' : 'Your extra work is priced'} — ${gbp(p.client_price_pence)}`
+          ? `${p.extra_work_origin === 'contractor' ? 'Extra work suggested' : 'Your extra work is priced'}: ${gbp(p.client_price_pence)}`
           : p.sole_offer
-            ? `Your price is in — ${gbp(p.client_price_pence)}`
-            : `Your first price is in — ${gbp(p.client_price_pence)}`,
+            ? `Your price is in: ${gbp(p.client_price_pence)}`
+            : `Your first price is in: ${gbp(p.client_price_pence)}`,
         text:
           `Hi ${first},\n\n${opening}\n\n` +
           (p.sole_offer
             ? `See it and accept here:\n${portal}\n\n`
-            : `More may follow — see them all and choose here:\n${portal}\n\n`) +
+            : `More may follow. See them all and choose here:\n${portal}\n\n`) +
           `Nothing is booked until you accept a price and pay the deposit.`,
       };
     }
@@ -598,8 +598,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       const bal = Number(p.balance_pence ?? 0);
       return {
         subject: bal > 0
-          ? `Confirm your booking — ${gbp(p.amount_pence)} deposit`
-          : `Complete your booking — ${gbp(p.amount_pence)}`,
+          ? `Confirm your booking: ${gbp(p.amount_pence)} deposit`
+          : `Complete your booking: ${gbp(p.amount_pence)}`,
         text:
           `Hi ${first},\n\nYou’ve accepted a price of ${gbp(p.total_pence ?? p.amount_pence)}` +
           `${vatSuffix(p.price_basis)} from ` +
@@ -615,15 +615,15 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     }
     case 'sq_payment_expired':
       return {
-        subject: `That payment link expired — nothing was booked`,
+        subject: `That payment link expired, nothing was booked`,
         text:
           `Hi ${first},\n\nThe payment link for ${p.contractor_label ?? 'your chosen contractor'} ` +
           `ran out before payment went through, so nothing was booked and no money was taken.\n\n` +
-          `Your prices are still here — accept again whenever you’re ready:\n${portal}`,
+          `Your prices are still here. Accept again whenever you’re ready:\n${portal}`,
       };
     case 'sq_award_client':
       return {
-        subject: `Booked — ${p.contractor_business_name ?? 'your contractor'} has your job`,
+        subject: `Booked: ${p.contractor_business_name ?? 'your contractor'} has your job`,
         text:
           `Hi ${first},\n\nAll confirmed: ${p.contractor_business_name ?? 'your contractor'} has ` +
           `your job and your deposit is paid. The rest is due once the work is done and ` +
@@ -654,7 +654,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `Hi ${first},\n\nWe don’t currently have contractors covering ${p.county ?? 'your area'} ` +
           `for this kind of work, so we can’t take your job forward right now. We’re ` +
-          `sorry — coverage is growing, and we’ll let you know if that changes.`,
+          `sorry. Coverage is growing, and we’ll let you know if that changes.`,
       };
     case 'sq_no_quotes_yet':
       if (p.submission_id) {
@@ -670,14 +670,14 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `Hi ${first},\n\nJust so you know where things stand: your ${p.service ? `${p.service} ` : ''}job ` +
           `is with contractors in ${p.county ?? 'your area'}, but none has priced it yet. ` +
-          `That’s usually about their diaries, not your job — prices can arrive at any ` +
+          `That’s usually about their diaries, not your job. Prices can arrive at any ` +
           `time over the next few days.\n\nYour job page: ${portal}`,
       };
     case 'sq_no_quotes_closed':
       return {
         subject: `About your ${p.service ? `${p.service} ` : ''}job`,
         text:
-          `Hi ${first},\n\nWe’re sorry — we don’t have contractors in ${p.county ?? 'your area'} ` +
+          `Hi ${first},\n\nWe’re sorry: we don’t have contractors in ${p.county ?? 'your area'} ` +
           `who can carry out ${p.service ? `this ${p.service} work` : 'this work'} at the ` +
           `moment, so after 7 days without a price your job has now closed.\n\n` +
           `We’re adding contractors every day, so please check back for future work: ` +
@@ -694,7 +694,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     case 'sq_quotes_nudge_1': {
       const pctD3 = p.deposit_pct ?? 15;
       return {
-        subject: `Your Emmerdale Agriculture prices are ready — here’s what happens next`,
+        subject: `Your Emmerdale Agriculture prices are ready: here’s what happens next`,
         text:
           `Hi ${first},\n\n` +
           `It’s Tom here from Emmerdale Agriculture.\n\n` +
@@ -706,14 +706,14 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `and every job carries our own £5m public liability cover.\n` +
           `• They take before-and-after photos of the work, so you can see exactly what’s ` +
           `been done.\n` +
-          `• We don’t release payment to the operator until you’ve confirmed you’re happy — ` +
-          `your payment sits with us until then, not with them.\n\n` +
+          `• We don’t release payment to the operator until you’ve confirmed you’re happy. ` +
+          `Your payment sits with us until then, not with them.\n\n` +
           `If you’re ready to go ahead, open your job page and hit “Accept this price” on the ` +
           `one you’d like:\n${portal}\n\n` +
           `You only pay a ${pctD3}% deposit to book the job in and we’ll agree the date with ` +
-          `you — the rest is due once it’s done and you’re satisfied.\n\n` +
+          `you. The rest is due once it’s done and you’re satisfied.\n\n` +
           `If you’d like a hand comparing them or just want to talk it through, give me a ` +
-          `call on ${PHONE_DISPLAY} — happy to help you pick the right option.\n\n` +
+          `call on ${PHONE_DISPLAY}, happy to help you pick the right option.\n\n` +
           `All the best,\nTom Oswald\nEmmerdale Agriculture\n${PHONE_DISPLAY}`,
       };
     }
@@ -726,7 +726,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Just checking in on the price${Number(p.quote_count ?? 1) === 1 ? '' : 's'} you got ` +
           `for ${p.service ?? 'your job'}. All our operators are vetted and every job is covered ` +
           `by our own insurance, and ` +
-          `they take before and after photos so you can see the work — we only release payment ` +
+          `they take before and after photos so you can see the work. We only release payment ` +
           `once you’re happy with the job.\n\n` +
           `Ready to go ahead? Open your job page and hit “Accept this price” on the one you ` +
           `want:\n${portal}\n\n` +
@@ -761,15 +761,15 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // an ambush, not a policy.
     case 'sq_completion_confirm_chase':
       return {
-        subject: `Still need a yes on your job — one more working day`,
+        subject: `Still need a yes on your job: one more working day`,
         text:
           `Hi ${first},\n\n${p.contractor_business_name ?? 'Your contractor'} marked your ` +
           `job as finished a couple of days ago, and we haven't heard from you.\n\n` +
-          `If you're happy with the work, confirm it here — that settles the balance and ` +
+          `If you're happy with the work, confirm it here. That settles the balance and ` +
           `their payment goes out:\n` +
           `${portal}\n\n` +
-          `If we don't hear anything, the job confirms itself after three working days ` +
-          `— so if something isn't right, tell us now. Reply to this email and we'll ` +
+          `If we don't hear anything, the job confirms itself after three working days, ` +
+          `so if something isn't right, tell us now. Reply to this email and we'll ` +
           `sort it out.`,
       };
 
@@ -780,12 +780,12 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // straight away, not after the chase clock. Same upload, same page.
     case 'sq_invoice_request':
       return {
-        subject: `Paid in full — send your invoice for the ${p.service ?? 'job'}`,
+        subject: `Paid in full: send your invoice for the ${p.service ?? 'job'}`,
         text:
           `${p.contact_name ?? 'The customer'} has paid in full for the ` +
           `${p.service ? `${p.service} ` : ''}job${p.postcode_district ? ` in ${p.postcode_district}` : ''}.\n\n` +
           `Send us your invoice for ${gbp(p.amount_pence)} and we'll pay it. A PDF or a photo ` +
-          `of a paper one is fine — upload it on the job:\n${SITE_URL}/won\n\n` +
+          `of a paper one is fine. Upload it on the job:\n${SITE_URL}/won\n\n` +
           `Already sent it another way? Reply and tell us and we'll match it up.`,
       };
 
@@ -796,12 +796,12 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // this again, which is right: it confirms the one we now hold.
     case 'sq_invoice_received':
       return {
-        subject: `Invoice received${p.amount_pence ? ` — ${gbp(p.amount_pence)}` : ''} for the ${p.service ?? 'job'}`,
+        subject: `Invoice received${p.amount_pence ? ` (${gbp(p.amount_pence)})` : ''} for the ${p.service ?? 'job'}`,
         text:
-          `Thanks — we have your invoice${p.invoice_name ? ` (${p.invoice_name})` : ''} for the ` +
+          `Thanks, we have your invoice${p.invoice_name ? ` (${p.invoice_name})` : ''} for the ` +
           `${p.service ? `${p.service} ` : ''}job${p.contact_name ? ` for ${p.contact_name}` : ''}.\n\n` +
           `${p.amount_pence ? `The ${gbp(p.amount_pence)} is` : 'It’s'} paid as soon as the customer’s ` +
-          `funds have cleared into our account — typically 7 days or less from now. ` +
+          `funds have cleared into our account, typically 7 days or less from now. ` +
           `You’ll get a note from us when it has been sent.\n\n` +
           `Your won jobs: ${SITE_URL}/won`,
       };
@@ -810,7 +810,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // transfer was made. This is the note sq_invoice_received promised.
     case 'sq_payout_sent':
       return {
-        subject: `Payment sent — ${gbp(p.amount_pence)} for the ${p.service ?? 'job'}`,
+        subject: `Payment sent: ${gbp(p.amount_pence)} for the ${p.service ?? 'job'}`,
         text:
           `We’ve sent ${gbp(p.amount_pence)} to you${p.paid_on ? ` on ${p.paid_on}` : ''} for the ` +
           `${p.service ? `${p.service} ` : ''}job${p.contact_name ? ` for ${p.contact_name}` : ''}. ` +
@@ -821,18 +821,18 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
 
     case 'sq_invoice_chase':
       return {
-        subject: `We owe you for the ${p.service ?? 'job'} — send your invoice`,
+        subject: `We owe you for the ${p.service ?? 'job'}: send your invoice`,
         text:
           `Your ${p.service ? `${p.service} ` : ''}job${p.postcode_district ? ` in ${p.postcode_district}` : ''}` +
           `${p.contact_name ? ` for ${p.contact_name}` : ''} is finished and confirmed.\n\n` +
           `We just need your invoice before we can pay it. A PDF or a photo of a paper ` +
-          `one is fine — upload it on the job:\n${SITE_URL}/won\n\n` +
+          `one is fine. Upload it on the job:\n${SITE_URL}/won\n\n` +
           `Already sent it another way? Reply and tell us and we'll match it up.`,
       };
 
     case 'sq_completion_confirmed':
       return {
-        subject: `Job confirmed complete — payment on its way`,
+        subject: `Job confirmed complete: payment on its way`,
         text:
           `${p.contact_name ?? 'The customer'} has confirmed the work is done. We’re ` +
           `collecting the balance from them now; your payment follows once it has cleared ` +
@@ -842,7 +842,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // ── The balance (terms 7.2) ──────────────────────────────────────────────
     case 'sq_balance_due':
       return {
-        subject: `Balance due — ${gbp(p.amount_pence)}`,
+        subject: `Balance due: ${gbp(p.amount_pence)}`,
         text:
           `Hi ${first},\n\nThanks for confirming the work is done.\n\n` +
           // The total carries the qualifier; deposit and balance are shares of it.
@@ -860,7 +860,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // sq_balance_due, which promised a charge that banks kept refusing.
     case 'sq_balance_request':
       return {
-        subject: `Balance to pay — ${gbp(p.amount_pence)}`,
+        subject: `Balance to pay: ${gbp(p.amount_pence)}`,
         text:
           `Hi ${first},\n\nThanks for confirming the work is done.\n\n` +
           `Job total:     ${gbp(p.total_pence)}${vatSuffix(p.price_basis)}\n` +
@@ -881,7 +881,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
 
     case 'sq_balance_paid':
       return {
-        subject: `Paid in full — thank you`,
+        subject: `Paid in full, thank you`,
         text:
           `Hi ${first},\n\nThe balance of ${gbp(p.amount_pence)}${vatSuffix(p.price_basis)} ` +
           `has gone through and the ` +
@@ -893,7 +893,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // says why, and gives them the link rather than an instruction to call.
     case 'sq_balance_action_needed':
       return {
-        subject: `We couldn’t take your balance — ${gbp(p.amount_pence)}`,
+        subject: `We couldn’t take your balance: ${gbp(p.amount_pence)}`,
         text:
           `Hi ${first},\n\nWe tried to take the ${gbp(p.amount_pence)}` +
           `${vatSuffix(p.price_basis)} balance on your ` +
@@ -955,7 +955,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         const n = Number(m.unread ?? 1);
         const snippet = String(m.snippet ?? '').replace(/\s+/g, ' ').trim();
         return (
-          `• ${what} — ${m.from ?? 'The customer'} sent ${n === 1 ? 'a message' : `${n} messages`}:\n` +
+          `• ${what}: ${m.from ?? 'The customer'} sent ${n === 1 ? 'a message' : `${n} messages`}:\n` +
           `  “${snippet}${snippet.length >= 120 ? '…' : ''}”\n` +
           `  Reply: ${SITE_URL}/quote/${m.token}#messages`
         );
@@ -964,7 +964,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         const what = `${w.service ?? 'Job'} for ${w.customer ?? 'the customer'} (${w.postcode_district ?? ''})`;
         const next =
           w.next === 'visit'
-            ? `confirm or revise the price after your site visit${w.due_at ? ` — it stands as quoted on ${day(w.due_at)}` : ''}`
+            ? `confirm or revise the price after your site visit${w.due_at ? ` (it stands as quoted on ${day(w.due_at)})` : ''}`
             : w.next === 'invoice'
               ? 'send us your invoice so we can pay you'
               : 'mark it done when the work is finished';
@@ -979,7 +979,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         const prices = Number(j.prices_so_far ?? 0);
         const competition = prices === 0 ? 'no prices yet' : prices === 1 ? '1 price in' : `${prices} prices in`;
         return (
-          `${i + 1}. ${j.service ?? 'Land work'} — ${[j.postcode_district, j.county].filter(Boolean).join(', ')}${acres}${dist}\n` +
+          `${i + 1}. ${j.service ?? 'Land work'}: ${[j.postcode_district, j.county].filter(Boolean).join(', ')}${acres}${dist}\n` +
           `   ${competition}${closes ? ` · closes ${closes}` : ''}\n` +
           `   ${SITE_URL}/quote/${j.token}`
         );
@@ -1019,7 +1019,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // ── Booking with a site visit (20260930160000) ──────────────────
     case 'sq_visit_revised':
       return {
-        subject: `New price after the site visit — ${gbp(p.new_pence)}`,
+        subject: `New price after the site visit: ${gbp(p.new_pence)}`,
         text:
           `Hi ${first},\n\n` +
           `${p.contractor_business_name ?? 'Your contractor'} has been to look at the job and ` +
@@ -1059,7 +1059,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `${p.contact_name ?? 'The customer'} accepted your revised price`,
         text:
           `${p.contact_name ?? 'The customer'} has accepted your revised price of ` +
-          `${gbp(p.contractor_pence)}. The job is back on — arrange the work with them.\n\n` +
+          `${gbp(p.contractor_pence)}. The job is back on. Arrange the work with them.\n\n` +
           `${SITE_URL}/won`,
       };
 
@@ -1074,11 +1074,11 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
 
     case 'sq_job_cancelled_contractor':
       return {
-        subject: `Job cancelled — ${p.contact_name ?? 'the customer'}`,
+        subject: `Job cancelled: ${p.contact_name ?? 'the customer'}`,
         text:
           `${p.contact_name ?? 'The customer'} has cancelled the job you were booked ` +
           `for, before work started. You don't need to do anything, and nothing is ` +
-          `owed by you.\n\nIf you'd already set aside a date, let us know — we'll ` +
+          `owed by you.\n\nIf you'd already set aside a date, let us know. We'll ` +
           `look at what else is going out in your area.\n\n${SITE_URL}/won`,
       };
 
@@ -1101,7 +1101,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `Hello${p.business_name ? ` ${p.business_name}` : ''},\n\n` +
           `A customer has written to you through your listing on our ${p.county ?? 'county'} ` +
-          `page. This has come to you alone — nobody else has it, and it is not a job to ` +
+          `page. This has come to you alone: nobody else has it, and it is not a job to ` +
           `price through us. Reply to this email or call them, and agree the work between you.\n\n` +
           `Name:      ${p.customer_name ?? '—'}\n` +
           `Phone:     ${p.customer_phone ?? '—'}\n` +
@@ -1123,21 +1123,21 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `this out properly and faster. Part of that has been rebuilding how the ` +
           `site works, and it changes things for you in three ways.\n\n` +
           `1. Jobs arrive with far more detail.\n` +
-          `Location, acreage — often measured from a boundary the customer drew on a ` +
-          `map — access notes, gate width, what3words for the gateway, and photos. ` +
+          `Location, acreage (often measured from a boundary the customer drew on a ` +
+          `map), access notes, gate width, what3words for the gateway, and photos. ` +
           `Enough to price it without a site visit or a phone call.\n\n` +
           `2. You price it only if you want it.\n` +
           `Each job comes with a link. Open it, send a price, or pass. No obligation ` +
-          `and no cost to you — you keep the price you quote, and our margin sits on ` +
+          `and no cost to you: you keep the price you quote, and our margin sits on ` +
           `top and is paid by the customer.\n\n` +
           `3. We handle the money.\n` +
           `The customer pays us a deposit to book the job and the balance when it's ` +
-          `done and they've confirmed it — and if they don't respond, the job confirms ` +
+          `done and they've confirmed it, and if they don't respond, the job confirms ` +
           `itself after three working days. You're paid your full price once that ` +
           `balance has cleared. You never chase the customer for money.\n\n` +
           `We're starting in Dorset and Oxfordshire before opening it up nationally, ` +
           `and we have advertising running, so we expect a fair volume of work.\n\n` +
-          `You don't need to do anything — your account and the counties you cover ` +
+          `You don't need to do anything: your account and the counties you cover ` +
           `are as they were. The next job in your area will just arrive.\n\n` +
           `Any questions, reply to this email or write to tom@emmerdaleagriculture.com.\n\n` +
           `Tom\nEmmerdale Agriculture`,
@@ -1155,15 +1155,15 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     case 'sq_job_cancelled_admin':
       return {
         subject: Number(p.refund_pence) > 0
-          ? `Cancelled after payment — refund of ${gbp(p.refund_pence)} sent`
-          : `Cancelled — deposit of ${gbp(p.fee_pence)} retained`,
+          ? `Cancelled after payment: refund of ${gbp(p.refund_pence)} sent`
+          : `Cancelled: deposit of ${gbp(p.fee_pence)} retained`,
         text:
           `A customer cancelled a booked job on their job page (terms 9.1).\n\n` +
           `Retained (the deposit): ${gbp(p.fee_pence)}\n` +
           `Refunded to them:       ${gbp(p.refund_pence)}\n\n` +
           (Number(p.refund_pence) > 0
-            ? `The Stripe refund was requested automatically — check it cleared, and `
-            : `Nothing to refund and no balance will be taken — check `) +
+            ? `The Stripe refund was requested automatically. Check it cleared, and `
+            : `Nothing to refund and no balance will be taken. Check `) +
           `that the contractor has been stood down.\n` +
           `${SITE_URL}/admin/submissions/${p.submission_id}`,
       };
@@ -1208,7 +1208,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           return {
             subject: `Site visit called off: ${when}`,
             text:
-              `The customer has called off the site visit on ${when} — please don’t go. You can ` +
+              `The customer has called off the site visit on ${when}. Please don’t go. You can ` +
               `suggest another time on the job page.\n\n${link}`,
           };
         default: // 'off': the job moved on
@@ -1216,8 +1216,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             subject: `Site visit off: ${job}`,
             text:
               (p.reason === 'booked_elsewhere'
-                ? `The customer has booked another contractor, so the site visit on ${when} is off — please don’t go.`
-                : `The job has closed, so the site visit on ${when} is off — please don’t go.`) +
+                ? `The customer has booked another contractor, so the site visit on ${when} is off. Please don’t go.`
+                : `The job has closed, so the site visit on ${when} is off. Please don’t go.`) +
               `\n\nThanks for making the time.`,
           };
       }
@@ -1283,7 +1283,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `The customer has withdrawn their ${p.service ?? 'land work'} job` +
           `${p.postcode_district ? ` in ${p.postcode_district}` : ''}, so it won’t be going ahead through us. ` +
-          `Nothing else is needed from you — thanks for pricing it.\n\n` +
+          `Nothing else is needed from you. Thanks for pricing it.\n\n` +
           `We’ll be in touch when the next job in your area comes up.`,
       };
 
@@ -1295,10 +1295,10 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `The customer passed on your price: ${p.service ?? 'land work'}${p.postcode_district ? `, ${p.postcode_district}` : ''}`,
         text:
           `The customer has passed on your price for their ${p.service ?? 'land work'} job` +
-          `${p.postcode_district ? ` in ${p.postcode_district}` : ''} — ${PASS_REASON[String(p.reason)] ?? PASS_REASON.other}.\n\n` +
+          `${p.postcode_district ? ` in ${p.postcode_district}` : ''}: ${PASS_REASON[String(p.reason)] ?? PASS_REASON.other}.\n\n` +
           `The job is still open. If you can do it for less, or want to add a word about what’s ` +
           `included, send a revised price and they’ll see it as new:\n${SITE_URL}/quote/${p.token}\n\n` +
-          `If not, nothing else is needed — thanks for pricing it.`,
+          `If not, nothing else is needed. Thanks for pricing it.`,
       };
 
     case 'sq_message_to_contractor':
@@ -1334,8 +1334,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         const n = Number(t.count ?? 1);
         const when = day(t.since);
         return (
-          `${t.from ?? 'A contractor'} — ${n === 1 ? 'a message' : `${n} messages`}` +
-          `${when ? `, since ${when}` : ''}:\n\n${t.body ?? ''}`
+          `${t.from ?? 'A contractor'} (${n === 1 ? 'a message' : `${n} messages`}` +
+          `${when ? `, since ${when}` : ''}):\n\n${t.body ?? ''}`
         );
       });
       return {
@@ -1345,7 +1345,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `You have unread ${threads.length === 1 && Number(one?.count ?? 1) === 1 ? 'message' : 'messages'} ` +
           `about your ${p.service ?? 'job'}. They may need your answer before they can price or plan the work.\n\n` +
-          blocks.join('\n\n———\n\n') +
+          blocks.join('\n\n* * *\n\n') +
           `\n\nReply on your job page (replies to this email don’t reach them):\n` +
           `${SITE_URL}/my/${p.client_token}\n\n` +
           `If you no longer need the work, you can withdraw the job from the same page ` +
@@ -1355,7 +1355,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
 
     case 'sq_award_admin':
       return {
-        subject: `Job won: ${p.service ?? 'land work'}${p.county ? `, ${p.county}` : ''} — ${gbp(p.client_price_pence)}`,
+        subject: `Job won: ${p.service ?? 'land work'}${p.county ? `, ${p.county}` : ''} (${gbp(p.client_price_pence)})`,
         text:
           `A customer accepted a price and paid their deposit. The job is awarded.\n\n` +
           `Service:    ${p.service ?? '—'}\n` +
@@ -1399,7 +1399,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
               `still stands. We have not ` +
               `withdrawn it and the customer can still accept it. If the correction ` +
               `makes no difference to what you would charge, there is nothing to do.\n\n`
-            : `Your price still stands — we have not withdrawn it. If the correction ` +
+            : `Your price still stands. We have not withdrawn it. If the correction ` +
               `makes no difference to what you would charge, there is nothing to do.\n\n`) +
           `If it does change your price, send a new one and that is what the ` +
           `customer sees:\n${SITE_URL}/quote/${p.token}\n`,
@@ -1512,7 +1512,7 @@ Deno.serve(async (req) => {
       SQ_CONTRACTOR_KINDS.has(e.kind) &&
       !sqAllowlist.includes(to.toLowerCase())
     ) {
-      subject = `[TEST — was: ${to}] ${subject}`;
+      subject = `[TEST, was: ${to}] ${subject}`;
       to = sqAllowlist[0];
     }
 
@@ -1537,7 +1537,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('pending_emails')
         .update({ status: 'failed', delivery_status: 'bounced',
-                  delivery_detail: 'not sent — address is marked undeliverable',
+                  delivery_detail: 'not sent: address is marked undeliverable',
                   delivery_at: new Date().toISOString() })
         .eq('id', e.id);
       failed++;

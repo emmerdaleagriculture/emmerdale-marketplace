@@ -77,7 +77,7 @@ type ResendEvent = {
 function describe(event: ResendEvent): string {
   const b = event.data?.bounce;
   const parts = [b?.type, b?.subType, b?.message ?? event.data?.reason].filter(Boolean);
-  return parts.join(' — ').slice(0, 500) || (event.type ?? 'no detail');
+  return parts.join(', ').slice(0, 500) || (event.type ?? 'no detail');
 }
 
 /** Postgres unique_violation, surfaced by PostgREST as the error code. */

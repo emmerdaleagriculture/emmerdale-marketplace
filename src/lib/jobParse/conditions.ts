@@ -170,7 +170,7 @@ const HEDGE_QUESTIONS: ConditionQuestion[] = [
     key: 'quantity',
     label: 'How many metres of hedge?',
     unit: 'linear_m',
-    hint: 'The length of the hedge, measured once even if both sides need cutting. A rough figure is fine — pace it out if you can.',
+    hint: 'The length of the hedge, measured once even if both sides need cutting. A rough figure is fine. Pace it out if you can.',
   },
   {
     key: 'hedge_height',
@@ -455,7 +455,7 @@ export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQues
       key: 'quantity',
       label: 'How many metres?',
       unit: 'linear_m',
-      hint: 'The total length of fence. A rough figure is fine — pace it out if you can.',
+      hint: 'The total length of fence. A rough figure is fine. Pace it out if you can.',
     },
     {
       key: 'posts',

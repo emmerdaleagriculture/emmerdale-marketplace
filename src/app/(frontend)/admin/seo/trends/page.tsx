@@ -5,7 +5,7 @@ import { TimeSeriesChart } from '../TimeSeriesChart';
 import styles from '../seo.module.css';
 
 export const metadata: Metadata = {
-  title: 'Trends — Admin',
+  title: 'Trends · Admin',
   robots: { index: false, follow: false },
 };
 

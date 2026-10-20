@@ -68,7 +68,7 @@ function FreeCard({ state, forever = false }: { state: 'free' | 'billed' | 'comp
   return (
     <TierCard tier="free" current={mine} tag={mine ? 'Your plan' : undefined}>
       {mine ? (
-        <ActionCurrent>Your plan — free</ActionCurrent>
+        <ActionCurrent>Your plan: free</ActionCurrent>
       ) : state === 'billed' ? (
         <ActionNote>To go back to the free plan, use <b>Manage billing or cancel</b> above.</ActionNote>
       ) : forever ? (
@@ -109,7 +109,7 @@ function PaidCard({ tier, state, returnPath }: { tier: Tier; state: TierState; r
     const swap: Plan = state.plan === 'monthly' ? 'annual' : 'monthly';
     buttons = (
       <>
-        <ActionCurrent>Your plan — {label(tier, state.plan)}</ActionCurrent>
+        <ActionCurrent>Your plan: {label(tier, state.plan)}</ActionCurrent>
         <Pay action="checkout" tier={tier} plan={swap} returnPath={returnPath} className={f.btnGhost}>
           Switch to {label(tier, swap)}
           {swap === 'annual' ? `, save ${gbp(saving(tier))}` : ''}
@@ -124,10 +124,10 @@ function PaidCard({ tier, state, returnPath }: { tier: Tier; state: TierState; r
     buttons = (
       <>
         <Pay action="checkout" tier={tier} plan={lead} returnPath={returnPath} className={primary}>
-          {verb} — {label(tier, lead)}
+          {verb}, {label(tier, lead)}
         </Pay>
         <Pay action="checkout" tier={tier} plan={alt} returnPath={returnPath} className={f.btnGhost}>
-          {verb} — {label(tier, alt)}
+          {verb}, {label(tier, alt)}
         </Pay>
       </>
     );
@@ -197,12 +197,12 @@ export function MembershipView({
   const noticeBox =
     notice === 'success' ? (
       <p className={s.notice}>
-        <b>Thanks — you’re in.</b> It can take a minute for Stripe to confirm; refresh if this page
+        <b>Thanks, you’re in.</b> It can take a minute for Stripe to confirm; refresh if this page
         still shows the join buttons{suspended ? ' or says your account is suspended' : ''}.
       </p>
     ) : notice === 'changed' ? (
       <p className={s.notice}>
-        <b>Done — your membership has changed.</b> The difference is worked out from today and shows
+        <b>Done. Your membership has changed.</b> The difference is worked out from today and shows
         on your next invoice.
       </p>
     ) : notice === 'cancelled' ? (
@@ -215,7 +215,7 @@ export function MembershipView({
   if (member) {
     const meta = billed ? (
       sub?.status === 'past_due' ? (
-        <><b>Last payment failed</b> — Stripe will try again. Update your card below to keep it.</>
+        <><b>Last payment failed.</b> Stripe will try again. Update your card below to keep it.</>
       ) : sub?.cancel_at_period_end && sub.current_period_end ? (
         <>Ends <b>{day(sub.current_period_end)}</b> and won’t renew.</>
       ) : (

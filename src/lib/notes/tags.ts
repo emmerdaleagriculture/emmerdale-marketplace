@@ -28,77 +28,77 @@ export const CURATED_TAGS: TagDef[] = [
     label: 'Topping',
     metaTitle: 'Paddock topping notes',
     description:
-      'Notes on topping and mowing paddocks — when to cut, what kit does the job, and how to keep grass in shape.',
+      'Notes on topping and mowing paddocks: when to cut, what kit does the job, and how to keep grass in shape.',
   },
   {
     slug: 'weeds',
     label: 'Weeds',
     metaTitle: 'Weed control notes',
     description:
-      'Dealing with ragwort, docks, thistles and buttercups in paddocks — spraying, timing, and what actually works.',
+      'Dealing with ragwort, docks, thistles and buttercups in paddocks: spraying, timing, and what actually works.',
   },
   {
     slug: 'drainage',
     label: 'Drainage',
     metaTitle: 'Paddock drainage notes',
     description:
-      'Fixing waterlogged paddocks and fields — mole ploughing, drainage problems, and keeping ground usable through winter.',
+      'Fixing waterlogged paddocks and fields: mole ploughing, drainage problems, and keeping ground usable through winter.',
   },
   {
     slug: 'ground-care',
     label: 'Ground care',
     metaTitle: 'Paddock ground care notes',
     description:
-      'Harrowing, rolling, overseeding, fertiliser and soil health — practical notes on keeping paddock ground in good order.',
+      'Harrowing, rolling, overseeding, fertiliser and soil health: practical notes on keeping paddock ground in good order.',
   },
   {
     slug: 'equipment',
     label: 'Equipment',
     metaTitle: 'Paddock machinery & equipment notes',
     description:
-      'The machinery behind the work — compact tractors, flail mowers, collectors and attachments, reviewed from real jobs.',
+      'The machinery behind the work: compact tractors, flail mowers, collectors and attachments, reviewed from real jobs.',
   },
   {
     slug: 'hedges',
     label: 'Hedges',
     metaTitle: 'Hedge cutting & care notes',
     description:
-      'Hedge cutting, trimming and hedge health — when to cut, what the law allows, and spotting problems early.',
+      'Hedge cutting, trimming and hedge health: when to cut, what the law allows, and spotting problems early.',
   },
   {
     slug: 'clearance',
     label: 'Clearance',
     metaTitle: 'Land clearance & wood chipping notes',
     description:
-      'Clearing overgrown paddocks and neglected grazing — scrub, brambles and self-seeded trees, what the machinery can take, and turning land back into usable pasture.',
+      'Clearing overgrown paddocks and neglected grazing: scrub, brambles and self-seeded trees, what the machinery can take, and turning land back into usable pasture.',
   },
   {
     slug: 'hay',
     label: 'Hay',
     metaTitle: 'Hay, straw & haylage notes',
     description:
-      'Making, buying and storing hay, straw and haylage — bale types, cut timing, and what good forage looks like.',
+      'Making, buying and storing hay, straw and haylage: bale types, cut timing, and what good forage looks like.',
   },
   {
     slug: 'tractor-hire',
     label: 'Tractor hire',
     metaTitle: 'Tractor & operator hire notes',
     description:
-      'Hiring a tractor and operator — what jobs suit hired kit, what it costs, and how to get the most from a day’s hire.',
+      'Hiring a tractor and operator: what jobs suit hired kit, what it costs, and how to get the most from a day’s hire.',
   },
   {
     slug: 'seasonal',
     label: 'Seasonal',
     metaTitle: 'Seasonal paddock care notes',
     description:
-      'What paddocks need through the year — winter grass heights, autumn overseeding, and season-by-season jobs.',
+      'What paddocks need through the year: winter grass heights, autumn overseeding, and season-by-season jobs.',
   },
   {
     slug: 'advice',
     label: 'Advice',
     metaTitle: 'Paddock care advice',
     description:
-      'General paddock care advice — spotting problems early, choosing the right treatment, and knowing when to call someone in.',
+      'General paddock care advice: spotting problems early, choosing the right treatment, and knowing when to call someone in.',
   },
 ];
 
@@ -147,7 +147,7 @@ export function ctaForTag(slug: string | null | undefined): NoteCta {
     label: 'Post your job →',
     title: 'Contractors who cover',
     titleEm: 'your area',
-    sub: 'Describe the job in your own words — we sort the details and pass it to contractors who can actually do it.',
+    sub: 'Describe the job in your own words. We sort the details and pass it to contractors who can actually do it.',
   };
 }
 
@@ -170,14 +170,14 @@ const PADDOCK_LINK: ServiceLink = {
   href: '/paddock-maintenance',
   label: 'Paddock maintenance & field work',
   blurb:
-    'Topping, harrowing, rolling, spraying, hedge cutting and clearance — describe the field and we pass it to contractors covering your area.',
+    'Topping, harrowing, rolling, spraying, hedge cutting and clearance: describe the field and we pass it to contractors covering your area.',
 };
 
 const HAY_LINK: ServiceLink = {
   href: '/hay-bales',
   label: 'Hay, straw & haylage',
   blurb:
-    'Big bales or small, delivered or collected — matched to a producer near you.',
+    'Big bales or small, delivered or collected, matched to a producer near you.',
 };
 
 const TRACTOR_LINK: ServiceLink = {

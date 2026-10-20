@@ -78,7 +78,7 @@ export function PublishLeadForm({
           <input className={f.input} name="postcode" defaultValue={v.postcode} />
           <span className={f.hint}>
             Contractors see the district only. Clear it if the job is somewhere
-            other than this address — they will see the county alone.
+            other than this address. They will see the county alone.
           </span>
         </label>
         <label className={f.field}>
@@ -108,7 +108,7 @@ export function PublishLeadForm({
           ))}
         </select>
         <span className={f.hint}>
-          One only — this is what decides which contractors are invited to price it.
+          One only: this is what decides which contractors are invited to price it.
         </span>
       </label>
 

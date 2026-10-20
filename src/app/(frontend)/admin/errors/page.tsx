@@ -6,7 +6,7 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles, ago } from '../ui';
 
-export const metadata: Metadata = { title: 'Errors — Admin' };
+export const metadata: Metadata = { title: 'Errors · Admin' };
 export const dynamic = 'force-dynamic';
 
 /**
@@ -32,7 +32,7 @@ export default async function ErrorsPage() {
     <div>
       <h1 className={s.h1}>Errors</h1>
       <p className={s.sub}>
-        What threw, from Sentry, and what didn&rsquo;t, from our own tables — the last{' '}
+        What threw, from Sentry, and what didn&rsquo;t, from our own tables: the last{' '}
         {db.days} days. A handled refusal is not a crash, but it is still someone who
         did not get what they came for.{' '}
         <Link href="/admin/reporting/journey?path=/start">The funnel is next door.</Link>
@@ -50,7 +50,7 @@ export default async function ErrorsPage() {
         <div className={s.empty}>
           <strong>Sentry is capturing errors, but this page cannot read them back.</strong>
           <br />
-          Reporting works — the app sends to Sentry from the server, the browser and
+          Reporting works: the app sends to Sentry from the server, the browser and
           the edge. Listing issues here needs <code>SENTRY_READ_TOKEN</code> set in
           Vercel: a separate token from the one the build uses, because listing
           issues needs the <code>event:read</code> scope and an organization token
@@ -63,13 +63,13 @@ export default async function ErrorsPage() {
         </div>
       ) : !sentry.ok ? (
         <div className={s.empty}>
-          Could not read Sentry: {sentry.error}. The app is still reporting to it — this
+          Could not read Sentry: {sentry.error}. The app is still reporting to it. This
           is the read path only.
         </div>
       ) : sentry.issues.length === 0 ? (
         <div className={s.empty}>
           No unresolved issues in the last 14 days. This one does mean nothing has
-          happened — the token is working.
+          happened: the token is working.
         </div>
       ) : (
         <AdminTable head={['Error', 'Where', 'Events', 'People', 'Last']}>
@@ -102,7 +102,7 @@ export default async function ErrorsPage() {
               <td>{r.action === 'parse' ? 'Step 1' : 'Step 2'}</td>
               <td style={{ color: r.outcome === 'fallback' ? '#8a6d1f' : '#a02a2a' }}>
                 <code>{r.reason}</code>
-                {r.outcome === 'fallback' && ' — let through'}
+                {r.outcome === 'fallback' && ' · let through'}
               </td>
               <td>{r.count}</td>
               <td>{ago(r.last)}</td>

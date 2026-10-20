@@ -134,7 +134,7 @@ export default async function ServicePage({ params }: { params: Promise<Params> 
           {prices.length > 0 && (
             <p className={t.prose}>
               <strong>Booked through us:</strong> {prices.map(formatGBP).join(', ')}. Real jobs and
-              what they came to — every field is different, so treat these as what past work
+              what they came to. Every field is different, so treat these as what past work
               cost, not a price for yours.
             </p>
           )}
@@ -157,7 +157,7 @@ export default async function ServicePage({ params }: { params: Promise<Params> 
             <ul className={t.prose}>
               {related.map((r) => (
                 <li key={r.href}>
-                  <Link href={r.href}>{r.name}</Link> — {r.blurb}
+                  <Link href={r.href}>{r.name}</Link>: {r.blurb}
                 </li>
               ))}
             </ul>

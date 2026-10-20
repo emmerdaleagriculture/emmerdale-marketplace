@@ -22,7 +22,7 @@ export const PREMIUM_BENEFITS: ReactNode[] = [
 export const OPEN_BENEFITS: ReactNode[] = [
   <><b>First look ahead of Premium.</b> New jobs reach Open members up to 2 hours before Premium members in the same area.</>,
   <><b>The customer’s name, phone and email</b> on every job you’re invited to, the moment it arrives.</>,
-  <><b>Agree the work directly</b> with nothing added on top — or send a price through us at 5% as usual.</>,
+  <><b>Agree the work directly</b> with nothing added on top, or send a price through us at 5% as usual.</>,
   <><b>A listing in Find a contractor</b> and on our county pages, with a link to your website and customers’ enquiries sent straight to you.</>,
   <><b>Market data for your area:</b> jobs month by month, what each kind of work goes for, and your win rate against the field.</>,
 ];
@@ -126,7 +126,7 @@ export function TierCard({
         <p className={s.priceAlt}>and nothing a year either</p>
       ) : (
         <p className={s.priceAlt}>
-          or {gbp(price!.annual)} a year — <b>save {gbp(annualSaving(tier))}</b>
+          or {gbp(price!.annual)} a year, <b>save {gbp(annualSaving(tier))}</b>
         </p>
       )}
       {tier === 'open' ? (

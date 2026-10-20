@@ -24,9 +24,9 @@ function statusLine(v: ThreadVisit, me: MessageSender, otherName: string): strin
   const mine = v.proposedBy === me;
   switch (v.status) {
     case 'proposed':
-      return mine ? `Suggested by you — waiting for ${otherName}` : `Suggested by ${otherName}`;
+      return mine ? `Suggested by you, waiting for ${otherName}` : `Suggested by ${otherName}`;
     case 'accepted':
-      return v.past ? 'Visit took place' : 'Agreed — see you then';
+      return v.past ? 'Visit took place' : 'Agreed, see you then';
     case 'held':
       return 'Visit took place';
     case 'declined':
@@ -35,7 +35,7 @@ function statusLine(v: ThreadVisit, me: MessageSender, otherName: string): strin
       return 'Withdrawn';
     case 'cancelled':
       return v.cancelledBy === 'system'
-        ? 'Called off — the job has moved on'
+        ? 'Called off: the job has moved on'
         : v.cancelledBy === me
           ? 'Called off by you'
           : `Called off by ${otherName}`;

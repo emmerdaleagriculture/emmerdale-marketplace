@@ -29,7 +29,7 @@ export async function GET() {
   const paths = Object.entries(UK_COUNTY_PATHS)
     .map(([name, d]) => {
       const n = counts.get(name) ?? 0;
-      const title = `${name} — ${n === 0 ? 'no open jobs' : `${n} open job${n === 1 ? '' : 's'}`}`;
+      const title = `${name}: ${n === 0 ? 'no open jobs' : `${n} open job${n === 1 ? '' : 's'}`}`;
       return `<path d="${d}" fill="${fill(n)}" stroke="#fff" stroke-width="1"><title>${esc(title)}</title></path>`;
     })
     .join('');

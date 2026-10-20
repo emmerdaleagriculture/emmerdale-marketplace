@@ -60,7 +60,7 @@ export default async function PostJobPage() {
           ) : (
             <>
               <p className={a.sub}>
-                Got work you can’t take on — or a job of your own that needs
+                Got work you can’t take on, or a job of your own that needs
                 doing? Post it here. We review every job before it goes out, then
                 contractors covering the county are notified and get in touch
                 directly with the contact you name.

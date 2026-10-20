@@ -114,7 +114,7 @@ export async function submitDirectoryEnquiryAction(_prev: FormState, formData: F
     .select('id')
     .single();
   if (error || !lead) {
-    return { error: 'Something went wrong sending your enquiry — please try again or call us.' };
+    return { error: 'Something went wrong sending your enquiry. Please try again or call us.' };
   }
 
   await admin.from('pending_emails').insert({

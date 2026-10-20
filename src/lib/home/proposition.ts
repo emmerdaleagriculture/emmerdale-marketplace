@@ -21,7 +21,7 @@ export const HEADLINE = 'Get prices from agricultural contractors near you.';
 export const STANDFIRST = {
   before: 'Tell us what needs doing. Vetted operators covering your patch price the job, ',
   emphasis: 'you see them side by side',
-  after: ', and you book the one you want — with the work insured by us. No phone calls out of the blue.',
+  after: ', and you book the one you want, with the work insured by us. No phone calls out of the blue.',
 } as const;
 
 /** The hero's three promises, each the answer to a real hesitation. */
@@ -38,7 +38,7 @@ export const PROMISES: readonly (readonly [string, string])[] = [
 export const TICKER: readonly string[] = ['Several prices to choose from', 'Vetted & insured operators'];
 
 export const START_NOTE = 'Takes about a minute. No account needed.';
-export const NO_OBLIGATION = 'Free and no obligation — you’re not booking anything yet.';
+export const NO_OBLIGATION = 'Free and no obligation: you’re not booking anything yet.';
 /** The same promise in four words, for a card with no room for the rest. */
 export const NO_OBLIGATION_SHORT = 'Free and no obligation.';
 

@@ -99,7 +99,7 @@ export async function submitJobAction(_prev: PostJobState, formData: FormData): 
 
   if (!countyId) {
     return {
-      error: r?.error ?? 'Enter a postcode or pick a county — one of the two is needed.',
+      error: r?.error ?? 'Enter a postcode or pick a county: one of the two is needed.',
       values,
     };
   }
@@ -138,13 +138,13 @@ export async function submitJobAction(_prev: PostJobState, formData: FormData): 
     .single();
 
   if (error || !job) {
-    return { error: 'Something went wrong saving your job — please try again.', values };
+    return { error: 'Something went wrong saving your job. Please try again.', values };
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   await notifyAdmins(
     `Job awaiting review: ${d.title}`,
-    `A member has posted a job — it won’t reach the network until you approve it.\n\n` +
+    `A member has posted a job. It won’t reach the network until you approve it.\n\n` +
       `Posted by: ${contractor.business_name} (${contractor.contact_name})\n` +
       `Title:     ${d.title}\n` +
       `Contact:   ${d.contact_name} · ${d.contact_phone}\n` +
@@ -156,6 +156,6 @@ export async function submitJobAction(_prev: PostJobState, formData: FormData): 
   return {
     ok: true,
     message:
-      'Thanks — your job has been submitted. We review every job before it goes out to the network, usually within a working day.',
+      'Thanks, your job has been submitted. We review every job before it goes out to the network, usually within a working day.',
   };
 }

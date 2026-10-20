@@ -25,14 +25,14 @@ describe('sourceFromReferrer', () => {
 describe('channelOf', () => {
   it('keeps gclid first and tagged sources as they were', () => {
     expect(channelOf({ gclid: 'x', utm_source: 'fb', referrer: 'https://facebook.com' })).toBe('Google Ads');
-    expect(channelOf({ utm_source: 'fb', referrer: 'https://google.com' })).toBe('Meta — Facebook');
+    expect(channelOf({ utm_source: 'fb', referrer: 'https://google.com' })).toBe('Meta · Facebook');
   });
 
   it('lets the referrer replace an internal hand-off tag', () => {
-    expect(channelOf({ utm_source: 'site:home', referrer: 'https://m.facebook.com/' })).toBe('Facebook — untagged');
+    expect(channelOf({ utm_source: 'site:home', referrer: 'https://m.facebook.com/' })).toBe('Facebook · untagged');
     expect(channelOf({ utm_source: 'site:home', referrer: 'https://www.google.com/' })).toBe('Organic search');
-    expect(channelOf({ utm_source: 'site:home', referrer: 'https://www.emmerdaleagriculture.com/' })).toBe('Internal — home page');
-    expect(channelOf({ utm_source: 'site:home' })).toBe('Internal — home page');
+    expect(channelOf({ utm_source: 'site:home', referrer: 'https://www.emmerdaleagriculture.com/' })).toBe('Internal · home page');
+    expect(channelOf({ utm_source: 'site:home' })).toBe('Internal · home page');
   });
 
   it('uses the referrer when untagged, else unattributed', () => {
@@ -42,7 +42,7 @@ describe('channelOf', () => {
 
   it('labels the sources the browser now stores on submissions', () => {
     expect(channelOf({ utm_source: 'search' })).toBe('Organic search');
-    expect(channelOf({ utm_source: 'ref:example.org' })).toBe('Referral — example.org');
+    expect(channelOf({ utm_source: 'ref:example.org' })).toBe('Referral · example.org');
   });
 });
 
@@ -50,7 +50,7 @@ describe('leadAttribution', () => {
   it('labels a Facebook lead-ad as paid Meta', () => {
     const a = leadAttribution('facebook', {});
     expect(a).toMatchObject({ utm_source: 'fb', utm_medium: 'lead-ad' });
-    expect(channelOf(a)).toBe('Meta — Facebook');
+    expect(channelOf(a)).toBe('Meta · Facebook');
   });
 
   it('carries an enquiry form visit through, referrer included', () => {
@@ -58,7 +58,7 @@ describe('leadAttribution', () => {
       attribution: { utm_source: 'site:home', utm_medium: 'organic', referrer: 'https://m.facebook.com/' },
     });
     expect(a.referrer).toBe('https://m.facebook.com/');
-    expect(channelOf(a)).toBe('Facebook — untagged');
+    expect(channelOf(a)).toBe('Facebook · untagged');
   });
 
   it('is empty, not invented, when the lead recorded nothing', () => {

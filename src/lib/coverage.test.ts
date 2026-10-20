@@ -43,16 +43,16 @@ describe('coverageShapes', () => {
 
   it('calls any county with a contractor covered', () => {
     const by = Object.fromEntries(coverageShapes(counts).map((s) => [s.name, s.title]));
-    expect(by.Dorset).toBe('Dorset — covered');
-    expect(by.Cornwall).toBe('Cornwall — not covered yet');
+    expect(by.Dorset).toBe('Dorset: covered');
+    expect(by.Cornwall).toBe('Cornwall: not covered yet');
   });
 
   it('gives the admin the numbers, correctly pluralised', () => {
     const by = Object.fromEntries(coverageShapes(counts, true).map((s) => [s.name, s.title]));
-    expect(by.Hampshire).toBe('Hampshire — 12 contractors');
-    expect(by.Cornwall).toBe('Cornwall — no coverage yet');
+    expect(by.Hampshire).toBe('Hampshire: 12 contractors');
+    expect(by.Cornwall).toBe('Cornwall: no coverage yet');
     expect(coverageShapes({ Wiltshire: 1 }, true).find((s) => s.name === 'Wiltshire')!.title).toBe(
-      'Wiltshire — 1 contractor',
+      'Wiltshire: 1 contractor',
     );
   });
 });

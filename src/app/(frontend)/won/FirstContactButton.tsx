@@ -23,7 +23,7 @@ export function FirstContactButton({ submissionId }: { submissionId: string }) {
         {pending ? 'Logging…' : 'I’ve contacted the customer'}
       </button>
       <span className={f.hint} style={{ marginLeft: 10 }}>
-        One tap — it tells us the job&rsquo;s moving.
+        One tap. It tells us the job&rsquo;s moving.
       </span>
     </form>
   );

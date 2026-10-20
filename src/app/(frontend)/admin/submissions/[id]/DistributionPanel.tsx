@@ -111,7 +111,7 @@ export function DistributionPanel({
             style={{ maxWidth: 280 }}
             aria-label="Service"
           >
-            <option value="">{serviceId === null ? 'Unclassified — set service…' : 'Service…'}</option>
+            <option value="">{serviceId === null ? 'Unclassified: set service…' : 'Service…'}</option>
             {services.map((sv) => (
               <option key={sv.id} value={sv.id}>
                 {sv.name}

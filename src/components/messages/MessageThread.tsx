@@ -56,7 +56,7 @@ type Props = {
  * messages in Sep 2026. Contractors only — customers aren't shown it.
  */
 const MONITORED =
-  'Messages are monitored. Any attempt to take work off the platform — swapping contact details before a job is booked, or arranging to be paid directly — can lead to your messages being moderated or to being removed from the network.';
+  'Messages are monitored. Any attempt to take work off the platform (swapping contact details before a job is booked, or arranging to be paid directly) can lead to your messages being moderated or to being removed from the network.';
 
 /**
  * One customer↔contractor conversation. Rendered on the server's list of
@@ -168,7 +168,7 @@ export function SuspendedBanner({ who, admin = false }: { who: string; admin?: b
           ? `${who} is suspended. The customer and the contractor see only this banner; the messages below are kept here for the record.`
           : who === 'Your account'
           ? 'Your account has been suspended. These messages are no longer available.'
-          : `${who} has been suspended from Emmerdale Agriculture. Their messages have been removed, and they can’t be booked through us. Please don’t arrange work with them privately — it wouldn’t be covered by us.`}
+          : `${who} has been suspended from Emmerdale Agriculture. Their messages have been removed, and they can’t be booked through us. Please don’t arrange work with them privately. It wouldn’t be covered by us.`}
       </span>
     </div>
   );
@@ -193,10 +193,10 @@ function MessageBubble({ m, me, otherName }: { m: ThreadMessage; me: MessageSend
         {m.sender === me ? 'You' : otherName} · {m.when}
       </span>
       {m.moderation === 'held' && (
-        <span className={s.held}>Waiting for a moderator — not delivered yet</span>
+        <span className={s.held}>Waiting for a moderator, not delivered yet</span>
       )}
       {m.moderation === 'rejected' && (
-        <span className={s.rejected}>Not delivered — removed by a moderator</span>
+        <span className={s.rejected}>Not delivered: removed by a moderator</span>
       )}
     </div>
   );

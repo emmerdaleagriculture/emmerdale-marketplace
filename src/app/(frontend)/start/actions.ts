@@ -159,8 +159,8 @@ const ParseSchema = z.object({
     // Nothing downstream needs the length. Step 2 asks for area, postcode,
     // urgency and access whatever step 1 said, and the contractor reads
     // service_verbatim — which is this text, however short it is.
-    .min(3, 'A word or two is enough — what needs doing?')
-    .max(2000, 'That’s a bit long — please keep it under 2,000 characters.'),
+    .min(3, 'A word or two is enough: what needs doing?')
+    .max(2000, 'That’s a bit long. Please keep it under 2,000 characters.'),
   location_raw: z.string().trim().max(200).optional().or(z.literal('')),
 });
 
@@ -281,7 +281,7 @@ export async function parseJobAction(
         ip,
         'parse',
         'rate_limit',
-        'You’ve sent a few of these in a row — give it a little while and try again.',
+        'You’ve sent a few of these in a row. Give it a little while and try again.',
       )),
       values,
     };
@@ -433,7 +433,7 @@ export async function parseJobAction(
         ip,
         'parse',
         `insert_failed:${draftError?.code ?? 'unknown'}`,
-        'Something went wrong — please try again.',
+        'Something went wrong. Please try again.',
       )),
       values,
     };
@@ -520,7 +520,7 @@ export async function confirmJobAction(
 ): Promise<ConfirmActionState> {
   const ip = await clientIp();
   if (await rateLimited(ip, 'confirm', CONFIRM_LIMIT_PER_HOUR)) {
-    return refuse(ip, 'confirm', 'rate_limit', 'Too many attempts — give it a little while and try again.');
+    return refuse(ip, 'confirm', 'rate_limit', 'Too many attempts. Give it a little while and try again.');
   }
 
   const parsed = ConfirmSchema.safeParse({
@@ -564,7 +564,7 @@ export async function confirmJobAction(
     .eq('id', d.submission_id)
     .maybeSingle();
   if (!draft) {
-    return refuse(ip, 'confirm', 'draft_missing', 'We couldn’t find your submission — please start again.');
+    return refuse(ip, 'confirm', 'draft_missing', 'We couldn’t find your submission. Please start again.');
   }
   // Double submit (back button, double tap) — already done, don't error.
   if (draft.status === 'confirmed') return { ok: true, message: CONFIRM_SUCCESS };
@@ -573,7 +573,7 @@ export async function confirmJobAction(
       ip,
       'confirm',
       `draft_status:${draft.status}`,
-      'This submission has expired — please start again.',
+      'This submission has expired. Please start again.',
     );
   }
 
@@ -745,7 +745,7 @@ export async function confirmJobAction(
       ip,
       'confirm',
       `update_failed:${error.code ?? 'unknown'}`,
-      'Something went wrong saving your details — please try again.',
+      'Something went wrong saving your details. Please try again.',
     );
   }
 
@@ -777,9 +777,9 @@ export async function confirmJobAction(
   await notifyAdmins(
     serviceName
       ? `New job submission: ${serviceName}`
-      : 'New job submission: UNMATCHED — review taxonomy',
+      : 'New job submission: UNMATCHED (review taxonomy)',
     `A customer has described a job on the ads landing page.\n\n` +
-      `Service:    ${serviceName ?? `(unmatched — their words: “${serviceVerbatim ?? '—'}”)`}\n` +
+      `Service:    ${serviceName ?? `(unmatched, their words: “${serviceVerbatim ?? '—'}”)`}\n` +
       `Confirmed:  ${d.service_confirmed === 'yes' ? 'accepted our classification' : 'picked/typed their own'}\n` +
       `In their words: ${serviceVerbatim ?? '—'}\n` +
       `Area:       ${areaValue !== null ? `${areaValue} ${areaUnit}` : '—'}${areaMapped !== null ? ` (drawn boundary: ${areaMapped} acres)` : ''}\n` +

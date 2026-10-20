@@ -284,22 +284,22 @@ export default async function ClientPortalPage({
           {(js.status === 'confirmed' || js.status === 'distributed') &&
             (isExtra ? (
               <p className={a.sub}>
-                Hi {first} — we&rsquo;ve asked {directName ?? 'your contractor'} to price
+                Hi {first}, we&rsquo;ve asked {directName ?? 'your contractor'} to price
                 the extra work, and we&rsquo;ll email you when it&rsquo;s in.
               </p>
             ) : directName && js.market_opens_at ? (
               <>
                 <p className={a.sub}>
-                  Hi {first} — we&rsquo;ve asked {directName} to price your job first.
+                  Hi {first}, we&rsquo;ve asked {directName} to price your job first.
                   If they can&rsquo;t by {formatDateTime(js.market_opens_at)}, we&rsquo;ll
-                  send it to other contractors who cover {county ?? 'your area'} — or you
+                  send it to other contractors who cover {county ?? 'your area'}, or you
                   can do that now.
                 </p>
                 <OpenToMarket token={token} label="Get prices from other contractors now" />
               </>
             ) : (
               <p className={a.sub}>
-                Hi {first} — we&rsquo;re putting your job in front of contractors who
+                Hi {first}, we&rsquo;re putting your job in front of contractors who
                 cover {county ?? 'your area'}. Prices appear here as they come in, and
                 we&rsquo;ll email you when the first one arrives.
               </p>
@@ -311,15 +311,15 @@ export default async function ClientPortalPage({
               <p className={a.sub}>
                 {isExtra
                   ? js.extra_work_origin === 'contractor'
-                    ? `${directName ?? 'Your contractor'} has suggested some extra work on your job and priced it. It's entirely up to you — nothing happens unless you accept it.`
+                    ? `${directName ?? 'Your contractor'} has suggested some extra work on your job and priced it. It's entirely up to you. Nothing happens unless you accept it.`
                     : `${directName ?? 'Your contractor'} has priced the extra work you asked for.`
                   : quotes.length === 1
                   ? firstRefusalOpen
                     ? 'One price so far.'
-                    : 'One price so far — more may follow.'
+                    : 'One price so far. More may follow.'
                   : `${quotes.length} prices to choose from.`}{' '}
                 Nothing is booked until you accept {isExtra ? 'it' : 'one'} and pay the deposit
-                {isExtra ? '.' : ' — and you can have any of them out to look at the site first, without paying anything.'}
+                {isExtra ? '.' : ', and you can have any of them out to look at the site first, without paying anything.'}
               </p>
               <PriceRange prices={(quotes as ClientQuoteView[]).filter((q) => !passMap[q.id]).map((q) => q.client_price_pence)} />
               <PriceList
@@ -462,7 +462,7 @@ export default async function ClientPortalPage({
           {(js.status === 'completed' || js.status === 'paid') && (
             <div className={m.awardPanel}>
               <p>
-                All done{js.status === 'paid' ? ' and paid in full' : ''} —{' '}
+                All done{js.status === 'paid' ? ' and paid in full' : ''}:{' '}
                 {accepted?.contractor_real_name ?? 'your contractor'} did the work.
               </p>
               {balance && (
@@ -481,7 +481,7 @@ export default async function ClientPortalPage({
                 </p>
               ) : (
                 <>
-                  <p>A rating helps the next customer choose — it takes a moment.</p>
+                  <p>A rating helps the next customer choose. It takes a moment.</p>
                   <InlineRating token={token} />
                 </>
               )}
@@ -492,15 +492,15 @@ export default async function ClientPortalPage({
           {js.status === 'no_matches' && (
             <p className={a.sub}>
               We don&rsquo;t currently have contractors covering{' '}
-              {county ?? 'your area'} for this kind of work — we&rsquo;re sorry. Coverage
+              {county ?? 'your area'} for this kind of work. We&rsquo;re sorry. Coverage
               is growing, and we&rsquo;ll let you know if that changes.
             </p>
           )}
           {js.status === 'no_quotes' && (
             <p className={a.sub}>
               We put your job to contractors in {county ?? 'your area'}, but none priced
-              it within the week. That&rsquo;s usually about their diaries, not your job —
-              you&rsquo;re welcome to post it again.
+              it within the week. That&rsquo;s usually about their diaries, not your job.
+              You&rsquo;re welcome to post it again.
             </p>
           )}
           {js.status === 'expired' && (
@@ -557,7 +557,7 @@ export default async function ClientPortalPage({
                   unread={t.unread}
                   intro={
                     t.state === 'pre_award'
-                      ? `Ask ${t.name} anything about the job, or suggest a time for them to see the site. Leave out phone numbers and emails — the contractor you book gets your details when you accept their price or a visit.`
+                      ? `Ask ${t.name} anything about the job, or suggest a time for them to see the site. Leave out phone numbers and emails. The contractor you book gets your details when you accept their price or a visit.`
                       : t.state === 'post_award'
                         ? `Message ${t.name} about arranging the work. They get an email when you do.`
                         : undefined
@@ -611,8 +611,8 @@ export default async function ClientPortalPage({
           )}
 
           <ContactUsButton
-            subject={`About my job — ${service ?? 'land work'}${js.postcode ? `, ${js.postcode}` : ''} (ref ${js.id.slice(0, 8)})`}
-            body={`\n\n—\nJob page: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.emmerdaleagriculture.com'}/my/${token}`}
+            subject={`About my job: ${service ?? 'land work'}${js.postcode ? `, ${js.postcode}` : ''} (ref ${js.id.slice(0, 8)})`}
+            body={`\n\nJob page: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.emmerdaleagriculture.com'}/my/${token}`}
             note="A question about your job, a price or a payment?"
           />
         </div>

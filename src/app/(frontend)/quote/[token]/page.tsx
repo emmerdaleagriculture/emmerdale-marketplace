@@ -242,7 +242,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
           {invitation.status === 'closed_awarded' && (
             <div className={q.closedPanel}>
               This one&rsquo;s been taken. The customer accepted another price before
-              yours came in — it happens with first-come jobs. Nothing else is
+              yours came in. It happens with first-come jobs. Nothing else is
               needed from you; we&rsquo;ll be in touch when the next job in your
               area comes up.
             </div>
@@ -250,7 +250,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
           {invitation.status === 'closed_stale' && (
             <div className={q.closedPanel}>
-              This job has lapsed — the customer didn&rsquo;t take it forward. No
+              This job has lapsed. The customer didn&rsquo;t take it forward. No
               action needed.
             </div>
           )}
@@ -261,7 +261,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
             js.awarded_contractor_id === invitation.contractor_id && (
               <div className={q.pricedPanel}>
                 <strong>You&rsquo;ve got this job.</strong> The customer accepted your
-                price and has paid their deposit — their details and the next steps are
+                price and has paid their deposit. Their details and the next steps are
                 in{' '}
                 <Link href="/won">your won jobs</Link>.
               </div>
@@ -271,7 +271,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
             invitation.status === 'priced' &&
             js.awarded_contractor_id !== invitation.contractor_id && (
               <div className={q.closedPanel}>
-                This one&rsquo;s closed — the customer accepted another price before
+                This one&rsquo;s closed. The customer accepted another price before
                 yours. It happens with first-come jobs; thanks for pricing it.
               </div>
             )}
@@ -282,7 +282,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
               {openFirst ? (
                 <div className={q.pricedPanel}>
                   <strong>Open members first.</strong> Only Open members have this job until{' '}
-                  {formatDateTime(offer!.open_first_until!)}, when Premium members join — sooner
+                  {formatDateTime(offer!.open_first_until!)}, when Premium members join, sooner
                   if every Open member has priced or passed. A text left untapped for 2 hours
                   counts as a pass. It stays with members until{' '}
                   {formatDateTime(offer!.market_opens_at!)}, or until you&rsquo;ve all priced or
@@ -312,7 +312,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                       offered to you alone until {formatDateTime(offer.market_opens_at)}.
                     </>
                   )}{' '}
-                  Price it or pass by then — after that it goes to other contractors in the area.
+                  Price it or pass by then. After that it goes to other contractors in the area.
                 </div>
               ) : directToYou && offer?.market_opens_at ? (
                 // Window closed with the job still held: they priced in time
@@ -323,7 +323,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
               ) : (
                 <div className={q.warnPanel}>
                   <strong>First come, first served.</strong> The customer sees prices
-                  as they arrive and can accept at any moment — this job can be gone
+                  as they arrive and can accept at any moment. This job can be gone
                   on day one. Price it within{' '}
                   {js.expires_at ? timeLeft(js.expires_at).replace(' left', '') : '7 days'}, but the
                   sooner you price, the better your chances.
@@ -340,7 +340,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                   </strong>
                   {vatNote(live.price_basis) ? ` (${vatNote(live.price_basis)})` : ''}{' '}
                   (sent {formatDateTime(live.created_at)}, valid until {live.valid_until}).
-                  Send a new price below — the latest one is what the customer sees.
+                  Send a new price below. The latest one is what the customer sees.
                   {/* The customer passed on this price (20261002170000): the
                       category, and the way back in. Gone once a new price is
                       sent, because that one starts clean. */}
@@ -350,13 +350,13 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                       <strong>
                         The customer passed on this price on {formatDateTime(passed.createdAt)}
                         {passed.reason === 'too_expensive'
-                          ? ' — it was more than they wanted to pay.'
+                          ? ': it was more than they wanted to pay.'
                           : passed.reason === 'too_far'
-                            ? ' — they felt you were too far away.'
+                            ? ': they felt you were too far away.'
                             : passed.reason === 'visit_first'
-                              ? ' — they wanted someone to see the site before pricing.'
+                              ? ': they wanted someone to see the site before pricing.'
                               : passed.reason === 'terms'
-                                ? ' — something in the price or your note didn’t suit them.'
+                                ? ': something in the price or your note didn’t suit them.'
                                 : '.'}
                       </strong>{' '}
                       The job is still open: a revised price shows to them as new.
@@ -374,7 +374,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                         The customer corrected the details on{' '}
                         {formatDateTime(js.amended_at)}, after you priced it.
                       </strong>{' '}
-                      Check what changed above. Your price still stands — revise it only
+                      Check what changed above. Your price still stands. Revise it only
                       if the correction changes what you would charge.
                     </>
                   )}
@@ -443,10 +443,10 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                     ? revealed
                       ? `Ask about access, ground or timing. The customer sees you as ${
                           invitation.display_label ?? 'a lettered contractor'
-                        } here until they accept a price — you have their details above if you would rather ring.`
+                        } here until they accept a price. You have their details above if you would rather ring.`
                       : `Ask about access, ground or timing, or suggest a site visit if you need to see it before pricing. The customer sees you as ${
                         invitation.display_label ?? 'a lettered contractor'
-                      }, not by name, so leave out phone numbers, emails and amounts — your details go to them when they accept your price or a visit.`
+                      }, not by name, so leave out phone numbers, emails and amounts. Your details go to them when they accept your price or a visit.`
                     : threadState === 'post_award'
                       ? 'The customer reads and replies on their job page. Leave prices out: if the job has changed and the price should too, get in touch with us.'
                       : undefined
@@ -469,7 +469,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
           )}
 
           <ContactUsButton
-            subject={`About a job to price — ${service?.name ?? 'Land work'}${spec.location ? `, ${spec.location}` : ''} (ref ${js.id.slice(0, 8)})`}
+            subject={`About a job to price: ${service?.name ?? 'Land work'}${spec.location ? `, ${spec.location}` : ''} (ref ${js.id.slice(0, 8)})`}
             note="A question about this job before you price it?"
           />
         </div>

@@ -6,7 +6,7 @@ import { noteHeroUrl } from '@/lib/notes/data';
 import { NoteEditor, type EditableNote } from '../NoteEditor';
 import s from '../../admin.module.css';
 
-export const metadata: Metadata = { title: 'Edit note — Admin' };
+export const metadata: Metadata = { title: 'Edit note · Admin' };
 
 export default async function EditNotePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

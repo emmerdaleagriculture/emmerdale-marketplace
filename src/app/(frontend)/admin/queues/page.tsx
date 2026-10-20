@@ -5,7 +5,7 @@ import { timeAgo } from '@/lib/time';
 import s from '../admin.module.css';
 import { AdminTable } from '../ui';
 
-export const metadata: Metadata = { title: 'Queues — Admin' };
+export const metadata: Metadata = { title: 'Queues · Admin' };
 export const dynamic = 'force-dynamic';
 
 /**
@@ -44,7 +44,7 @@ export default async function QueuesPage() {
       <h1 className={s.h1}>Queues</h1>
       <p className={s.sub}>Things waiting on a person, oldest first.</p>
 
-      <div className={s.sectionLabel}>Unmatched — needs a service classification</div>
+      <div className={s.sectionLabel}>Unmatched: needs a service classification</div>
       {(unmatched.data ?? []).length === 0 ? (
         <div className={s.empty}>Nothing waiting.</div>
       ) : (
@@ -92,9 +92,9 @@ export default async function QueuesPage() {
       )}
 
       <div className={s.sectionLabel}>Disputes</div>
-      <div className={s.empty}>No dispute flow yet — Part 3.</div>
+      <div className={s.empty}>No dispute flow yet (Part 3).</div>
       <div className={s.sectionLabel}>Declined variations</div>
-      <div className={s.empty}>No variation flow yet — Part 3.</div>
+      <div className={s.empty}>No variation flow yet (Part 3).</div>
     </div>
   );
 }

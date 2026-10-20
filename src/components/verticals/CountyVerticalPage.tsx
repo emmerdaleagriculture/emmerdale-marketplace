@@ -90,14 +90,14 @@ export async function CountyVerticalPage({
                 <strong>
                   {coverage} {coverage === 1 ? 'contractor' : 'contractors'}
                 </strong>{' '}
-                in our network already cover {name}, in {regionPhrase(county.region)} — send your
+                in our network already cover {name}, in {regionPhrase(county.region)}. Send your
                 enquiry and it goes straight to them, and whoever’s keen gets in touch.
               </>
             ) : (
               <>
                 We’re expanding our network across {regionPhrase(county.region)}. Send your
-                enquiry and we’ll match you with someone as coverage in {name} grows —
-                there’s no obligation.
+                enquiry and we’ll match you with someone as coverage in {name} grows.
+                There’s no obligation.
               </>
             )}
           </p>

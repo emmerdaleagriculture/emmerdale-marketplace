@@ -43,7 +43,7 @@ export default function GlobalError({
         <main style={{ maxWidth: '32rem', textAlign: 'center' }}>
           <h1 style={{ fontSize: '1.5rem', margin: '0 0 0.75rem' }}>Something went wrong</h1>
           <p style={{ margin: '0 0 1.5rem', color: '#4a5142' }}>
-            Sorry — that page failed to load. We&rsquo;ve been told about it automatically, so
+            Sorry, that page failed to load. We&rsquo;ve been told about it automatically, so
             there&rsquo;s no need to report it. Trying again usually works.
           </p>
           <button

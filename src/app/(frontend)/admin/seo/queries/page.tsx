@@ -4,7 +4,7 @@ import { seoGuard } from '../guard';
 import styles from '../seo.module.css';
 
 export const metadata: Metadata = {
-  title: 'Queries — Admin',
+  title: 'Queries · Admin',
   robots: { index: false, follow: false },
 };
 
@@ -152,11 +152,11 @@ export default async function QueriesPage() {
         </div>
         <p className={styles.tableNote}>
           High-impression queries whose CTR is below the median ({pct(medianCtr)}). Each is
-          impressions you&apos;re receiving but not converting — usually a title or meta
+          impressions you&apos;re receiving but not converting, usually a title or meta
           description issue.
         </p>
         {ctrOpps.length === 0 ? (
-          <p className={styles.muted}>None — all high-impression queries are at or above median CTR.</p>
+          <p className={styles.muted}>None. All high-impression queries are at or above median CTR.</p>
         ) : (
           <table className={styles.table}>
             <thead>
@@ -253,7 +253,7 @@ export default async function QueriesPage() {
         </div>
         <p className={styles.tableNote}>
           Top {allSorted.length} queries by clicks. Google withholds rare queries for user
-          privacy — those clicks count in the totals but don&apos;t appear here regardless of
+          privacy. Those clicks count in the totals but don&apos;t appear here regardless of
           row limit.
         </p>
         <div className={styles.tableScroll}>

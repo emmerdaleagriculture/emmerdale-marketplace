@@ -150,17 +150,17 @@ export function visitRefusal(reason: string | undefined): string {
     case 'no_thread':
       return 'You can arrange a visit once the contractor has sent a price or a question.';
     case 'too_many':
-      return 'That’s a lot of suggested times today — please wait for an answer.';
+      return 'That’s a lot of suggested times today. Please wait for an answer.';
     case 'already_agreed':
-      return 'A visit is already agreed — call it off first if you need a different time.';
+      return 'A visit is already agreed. Call it off first if you need a different time.';
     case 'past':
       return 'That time has passed.';
     case 'not_open':
     case 'own_proposal':
     case 'not_yours':
-      return 'This visit has already been answered — refresh to see where it stands.';
+      return 'This visit has already been answered. Refresh to see where it stands.';
     default:
-      return 'That didn’t work — please try again.';
+      return 'That didn’t work. Please try again.';
   }
 }
 

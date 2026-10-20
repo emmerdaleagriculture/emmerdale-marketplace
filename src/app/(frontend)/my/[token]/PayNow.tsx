@@ -41,7 +41,7 @@ export function PayNow({
     <div className={m.payPanel}>
       <p>
         You&rsquo;ve accepted <strong>{label}</strong> at <strong>{amountLabel}</strong>.
-        Complete the deposit to confirm the booking — the payment link is valid for
+        Complete the deposit to confirm the booking. The payment link is valid for
         24 hours.
       </p>
       {state.error && <p className={f.error}>{state.error}</p>}
@@ -54,7 +54,7 @@ export function PayNow({
         </button>
       </form>
       <p className={f.hint}>
-        If the link runs out, nothing is booked and no money is taken — your prices
+        If the link runs out, nothing is booked and no money is taken. Your prices
         stay here to accept again.
       </p>
     </div>

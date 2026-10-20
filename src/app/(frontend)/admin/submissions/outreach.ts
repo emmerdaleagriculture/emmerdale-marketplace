@@ -107,7 +107,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
     // likeliest "response" is a phone call we never see, so say so.
     const saw = inv.contact_revealed_at ? ' · saw customer details (Open)' : '';
     if (q) return `Priced ${formatGBP(q.contractor_price_pence)}${q.quote_type === 'rate' ? ' (rate)' : ''}${saw}`;
-    if (passed(inv)) return `Passed${inv.decline_reason ? ` — ${inv.decline_reason.replace(/_/g, ' ')}` : ''}${saw}`;
+    if (passed(inv)) return `Passed${inv.decline_reason ? `: ${inv.decline_reason.replace(/_/g, ' ')}` : ''}${saw}`;
     return inv.opened_at ? `Opened, no response yet${saw}` : 'Not opened';
   };
   const invLine = (inv: Inv, when: string | null): OutreachLine => ({
@@ -129,7 +129,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
       whoId: inv?.contractor_id,
       sub: inv ? e.to_email : undefined,
       what: bad
-        ? `Failed — ${e.delivery_detail ?? e.delivery_status ?? e.status}`
+        ? `Failed: ${e.delivery_detail ?? e.delivery_status ?? e.status}`
         : e.status === 'sent'
           ? (e.delivery_status ?? 'sent')
           : e.status,
@@ -158,11 +158,11 @@ export async function loadOutreach(id: string): Promise<Outreach> {
       key: t.id,
       ...textWho(t),
       what: bad
-        ? `Failed — ${t.delivery_detail ?? t.detail ?? t.delivery_status ?? t.status}`
+        ? `Failed: ${t.delivery_detail ?? t.detail ?? t.delivery_status ?? t.status}`
         : t.status === 'sent'
           ? (t.delivery_status ?? 'sent') + (t.clicked_at ? ' · tapped' : '')
           : t.status === 'skipped'
-            ? `Not sent — ${t.detail ?? 'skipped'}`
+            ? `Not sent: ${t.detail ?? 'skipped'}`
             : t.status,
       when: t.delivery_at ?? t.sent_at ?? t.created_at,
       bad,

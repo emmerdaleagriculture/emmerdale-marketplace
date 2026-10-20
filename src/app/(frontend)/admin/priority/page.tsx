@@ -6,7 +6,7 @@ import { fetchAll } from '@/lib/supabase/fetchAll';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
 
-export const metadata: Metadata = { title: 'Priority Access — Admin' };
+export const metadata: Metadata = { title: 'Priority Access · Admin' };
 export const dynamic = 'force-dynamic';
 
 /**
@@ -180,7 +180,7 @@ export default async function PriorityPage() {
         <Tile value={watch.length} label="On watch" hint={`contact without bookings; ${contacting} contractors have messaged or visited`} warn />
       </Tiles>
 
-      <div className={s.sectionLabel}>Watch list — contact that hasn&rsquo;t become a booking</div>
+      <div className={s.sectionLabel}>Watch list: contact that hasn&rsquo;t become a booking</div>
       {watch.length === 0 ? (
         <p className={s.empty}>
           Nobody on watch. A job counts as quiet {config.sq_priority_quiet_days ?? '14'} days after its last price or message, so
@@ -236,7 +236,7 @@ export default async function PriorityPage() {
         />
       </Tiles>
 
-      <div className={s.sectionLabel}>By county — counties with a job in 90 days</div>
+      <div className={s.sectionLabel}>By county: counties with a job in 90 days</div>
       <AdminTable head={['County', 'Jobs', 'Priority', 'Responsive', 'Standard']}>
         {countyRows.map((c) => (
           <tr key={c.id}>

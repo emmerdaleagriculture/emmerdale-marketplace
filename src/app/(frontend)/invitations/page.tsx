@@ -68,12 +68,12 @@ export default async function InvitationsPage() {
           <h1 className={a.title}>Jobs to price</h1>
           <p className={a.sub}>
             First come, first served: the customer sees prices as they arrive and can
-            accept at any moment — pricing promptly matters.
+            accept at any moment. Pricing promptly matters.
           </p>
 
           {contractor.status !== 'approved' ? (
             <div className={s.gate}>
-              Your account is awaiting approval — invitations will appear here once
+              Your account is awaiting approval. Invitations will appear here once
               you&rsquo;re approved.
             </div>
           ) : (
@@ -167,7 +167,7 @@ export default async function InvitationsPage() {
             </>
           )}
 
-          <ContactUsButton subject="Contractor enquiry — jobs to price" />
+          <ContactUsButton subject="Contractor enquiry: jobs to price" />
         </div>
       </main>
       <SiteFooter />

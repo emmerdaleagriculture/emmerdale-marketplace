@@ -5,7 +5,7 @@ import { formatDateTime } from '@/lib/time';
 import s from '../admin.module.css';
 import { AdminTable } from '../ui';
 
-export const metadata: Metadata = { title: 'Notes — Admin' };
+export const metadata: Metadata = { title: 'Notes · Admin' };
 
 /** Notes (blog) manager — drafts and published posts, newest first. */
 export default async function AdminNotesPage() {
@@ -34,7 +34,7 @@ export default async function AdminNotesPage() {
       </div>
 
       {rows.length === 0 ? (
-        <div className={s.empty}>No notes yet — write the first one.</div>
+        <div className={s.empty}>No notes yet. Write the first one.</div>
       ) : (
         <AdminTable head={['Title', 'Tag', 'Status', 'Published', 'Updated']}>
           {rows.map((r) => (

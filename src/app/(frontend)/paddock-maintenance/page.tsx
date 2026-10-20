@@ -52,15 +52,15 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: 'What counts as paddock maintenance?',
-    a: 'The everyday work of keeping grassland right: topping long or seeded grass, chain harrowing to pull out dead thatch, rolling after a wet winter, spraying docks, nettles, thistles and ragwort, hedge cutting, fencing, and clearing land that’s got away from you. If you’re not sure what your field needs, describe what it looks like — the contractor will tell you.',
+    a: 'The everyday work of keeping grassland right: topping long or seeded grass, chain harrowing to pull out dead thatch, rolling after a wet winter, spraying docks, nettles, thistles and ragwort, hedge cutting, fencing, and clearing land that’s got away from you. If you’re not sure what your field needs, describe what it looks like: the contractor will tell you.',
   },
   {
     q: 'How much does it cost?',
-    a: 'It depends on the acreage, the state of the ground, access for machinery and how far the contractor travels — so the price comes from the contractor who’d do the work, not from us. Describing the job takes a minute, quotes are free and there’s no obligation to accept one.',
+    a: 'It depends on the acreage, the state of the ground, access for machinery and how far the contractor travels, so the price comes from the contractor who’d do the work, not from us. Describing the job takes a minute, quotes are free and there’s no obligation to accept one.',
   },
   {
     q: 'How quickly will someone get in touch?',
-    a: 'Your job goes out to contractors covering your county as soon as we’ve checked it. Most jobs are picked up within a day or two, though it depends on the season — topping in high summer and hedge cutting after the nesting season are the busy times.',
+    a: 'Your job goes out to contractors covering your county as soon as we’ve checked it. Most jobs are picked up within a day or two, though it depends on the season: topping in high summer and hedge cutting after the nesting season are the busy times.',
   },
   {
     q: 'How small a job will you take?',
@@ -68,11 +68,11 @@ const faqs = [
   },
   {
     q: 'Do I need to know the acreage?',
-    a: 'No. Give us a rough idea — “about two football pitches”, “a bit over an acre” — or just the postcode and a description. We work the details out and confirm them with you before anything goes to a contractor.',
+    a: 'No. Give us a rough idea (“about two football pitches”, “a bit over an acre”) or just the postcode and a description. We work the details out and confirm them with you before anything goes to a contractor.',
   },
   {
     q: 'Who actually does the work?',
-    a: `The work is done by agricultural contractors in our network, which is run by ${COMPANY_REG_PROSE} — the company behind Hampshire Paddock Management. You book and pay through us; the contractor turns up and does the work.`,
+    a: `The work is done by agricultural contractors in our network, which is run by ${COMPANY_REG_PROSE}, the company behind Hampshire Paddock Management. You book and pay through us; the contractor turns up and does the work.`,
   },
   {
     q: 'How do I pay?',
@@ -90,7 +90,7 @@ export default async function PaddockMaintenancePage() {
     name: 'Paddock maintenance & field work',
     serviceType: services.filter((svc) => svc.listed !== false).map((svc) => svc.name),
     description:
-      `Paddock maintenance and agricultural contracting for paddock owners, equestrian yards, smallholdings, farms and estates — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance, matched to contractors by county across ${SERVICE_AREA}.`,
+      `Paddock maintenance and agricultural contracting for paddock owners, equestrian yards, smallholdings, farms and estates: field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance, matched to contractors by county across ${SERVICE_AREA}.`,
     url: `${SITE}/paddock-maintenance`,
     areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
     provider: {
@@ -112,12 +112,12 @@ export default async function PaddockMaintenancePage() {
           <Breadcrumb tone="light" items={[{ label: 'Paddock maintenance' }]} />
           <div className={a.eyebrow}>Paddock &amp; field work</div>
           <h1 className={a.title}>
-            Paddock maintenance — <em>tell us what needs doing.</em>
+            Paddock maintenance: <em>tell us what needs doing.</em>
           </h1>
           <p className={a.sub}>
             An overgrown paddock, a field of docks and nettles, grass that got
             away from you over the summer. Describe it in your own words and
-            we&rsquo;ll pass it to agricultural contractors covering your area —
+            we&rsquo;ll pass it to agricultural contractors covering your area,
             free, and with no obligation to accept a quote.
           </p>
 
@@ -154,13 +154,13 @@ export default async function PaddockMaintenancePage() {
         <div className={s.sectionInner}>
           <div className={s.kicker}>Where we cover</div>
           <h2 className={s.sectionTitle}>
-            Contractors in {coveredCount} counties — <em>and growing.</em>
+            Contractors in {coveredCount} counties, <em>and growing.</em>
           </h2>
           <p className={s.sectionLede}>
             The network runs across {SERVICE_AREA}, deepest around our
             Hampshire heartland and spreading out from there. If your county is
             thin on the ground we&rsquo;ll tell you straight rather than leave
-            you waiting — and it costs nothing to ask.
+            you waiting, and it costs nothing to ask.
           </p>
         </div>
       </section>
@@ -179,7 +179,7 @@ export default async function PaddockMaintenancePage() {
           Also looking for <Link href="/hay-bales">hay, straw or haylage</Link>, or{' '}
           <Link href="/tractor-hire">a tractor for an event</Link>? And if you&rsquo;re
           a contractor rather than a customer,{' '}
-          <Link href="/signup">join the network</Link> — it&rsquo;s free.
+          <Link href="/signup">join the network</Link>. It&rsquo;s free.
         </p>
       </FaqSection>
 
@@ -192,7 +192,7 @@ export default async function PaddockMaintenancePage() {
             Written from <em>the seat of a tractor.</em>
           </>
         }
-        lede="What paddocks actually need, season by season — the same work the contractors in the network do every week."
+        lede="What paddocks actually need, season by season: the same work the contractors in the network do every week."
       />
 
       <CountyLinks
