@@ -19,10 +19,10 @@ const DATES = {
   home: new Date('2026-10-10'),
   /** Hub titles and descriptions rewritten (SEO review). */
   hubs: new Date('2026-10-11'),
-  /** Paddock county pages: new title/H1, Northern Ireland ground notes. */
-  paddockCounty: new Date('2026-10-11'),
-  /** Hay and tractor county pages: new titles, region phrasing fixed. */
-  verticalCounty: new Date('2026-10-11'),
+  /** Paddock county pages: the Open members' directory added. */
+  paddockCounty: new Date('2026-10-21'),
+  /** Hay and tractor county pages: the Open members' directory added. */
+  verticalCounty: new Date('2026-10-21'),
   /** Contractor recruiting page: title and description trimmed. */
   contractors: new Date('2026-10-11'),
   /** Service pages: stump grinding and log splitting added (2026-10-11). */

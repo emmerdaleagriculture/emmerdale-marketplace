@@ -718,6 +718,9 @@ export type Database = {
           signup_source: Json | null
           status: string
           vetted_at: string | null
+          website: string | null
+          directory_blurb: string | null
+          directory_listed: boolean
         }
         Insert: {
           premium_comped_until?: string | null
@@ -750,6 +753,9 @@ export type Database = {
           signup_source?: Json | null
           status?: string
           vetted_at?: string | null
+          website?: string | null
+          directory_blurb?: string | null
+          directory_listed?: boolean
         }
         Update: {
           premium_comped_until?: string | null
@@ -782,6 +788,9 @@ export type Database = {
           signup_source?: Json | null
           status?: string
           vetted_at?: string | null
+          website?: string | null
+          directory_blurb?: string | null
+          directory_listed?: boolean
         }
         Relationships: []
       }
@@ -2216,6 +2225,7 @@ export type Database = {
       leads: {
         Row: {
           created_at: string
+          contractor_id: string | null
           details: Json
           email: string | null
           full_name: string
@@ -2230,6 +2240,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          contractor_id?: string | null
           details?: Json
           email?: string | null
           full_name: string
@@ -2244,6 +2255,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          contractor_id?: string | null
           details?: Json
           email?: string | null
           full_name?: string
@@ -2960,6 +2972,21 @@ export type Database = {
         Row: {
           contractors: number | null
           name: string | null
+        }
+        Relationships: []
+      }
+      county_directory: {
+        Row: {
+          business_name: string | null
+          contractor_id: string | null
+          county: string | null
+          directory_blurb: string | null
+          email: string | null
+          rating_avg: number | null
+          rating_count: number | null
+          services: number[] | null
+          services_only: boolean | null
+          website: string | null
         }
         Relationships: []
       }

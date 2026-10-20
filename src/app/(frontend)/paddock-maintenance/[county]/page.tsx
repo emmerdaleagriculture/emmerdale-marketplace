@@ -7,6 +7,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { NotesTeaser } from '@/components/notes/NotesTeaser';
 import { StartJobForm } from '../StartJobForm';
+import { CountyDirectory } from '@/components/directory/CountyDirectory';
 import {
   ServicesSection,
   HowItWorksSection,
@@ -186,6 +187,8 @@ export default async function PaddockCountyPage({
           <StartJobForm />
         </div>
       </main>
+
+      <CountyDirectory county={name} />
 
       <section className={`${s.section} ${s.sectionAlt}`}>
         <div className={s.sectionInner}>

@@ -23,6 +23,7 @@ export const OPEN_BENEFITS: ReactNode[] = [
   <><b>First look ahead of Premium.</b> New jobs reach Open members up to 2 hours before Premium members in the same area.</>,
   <><b>The customer’s name, phone and email</b> on every job you’re invited to, the moment it arrives.</>,
   <><b>Agree the work directly</b> with nothing added on top — or send a price through us at 5% as usual.</>,
+  <><b>A listing on our county pages</b>, with a link to your website and customers’ enquiries sent straight to you.</>,
 ];
 export const FREE_BENEFITS: ReactNode[] = [
   <><b>Every job in your area</b> once members have had first refusal.</>,

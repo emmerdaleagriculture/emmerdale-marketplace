@@ -268,7 +268,11 @@ export default function TermsPage() {
             when it is done. We record which jobs&rsquo; details each member has seen, and may
             end an Open membership, without refund of the current period, if the details are
             misused. The details stop showing once the customer has accepted another price or
-            you have passed on the job.
+            you have passed on the job. While you are an Open member we also list your business
+            name, the services you offer and, if you give one, your website on our public pages
+            for the counties you cover, with a form customers use to write to you alone; you can
+            turn the listing off from your dashboard. What a customer sends through it is between
+            you and them in the same way.
           </p>
           <p>
             Membership does not guarantee any volume of work (clause 10). If your payment

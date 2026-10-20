@@ -21,11 +21,14 @@ export function AccountForm({
   counties,
   selectedCounties,
   services,
+  listing = false,
 }: {
   contractor: Contractor;
   counties: CountyOption[];
   selectedCounties: number[];
   services: ServiceOption[];
+  /** An Open member: show the county-page listing's fields. */
+  listing?: boolean;
 }) {
   const [state, action, pending] = useActionState(updateProfileAction, emptyFormState);
   const serviceCount = (contractor.services ?? []).length;
@@ -124,6 +127,54 @@ export function AccountForm({
           </p>
         </div>
       </details>
+
+      {listing && (
+        <details className={ac.section}>
+          <summary className={ac.sectionHead}>
+            Your listing
+            <span className={ac.sectionMeta}>
+              {!contractor.directory_listed ? 'Hidden' : contractor.vetted_at ? 'On the county pages' : 'Once vetted'}
+            </span>
+          </summary>
+          <div className={ac.sectionBody}>
+            <input type="hidden" name="directory_section" value="1" />
+            <p className={f.hint}>
+              As an Open member you’re named on our public pages for each county you cover,
+              with a link to your website and a button customers use to write to you directly.
+              {!contractor.vetted_at && ' The listing goes live once we’ve vetted your account.'}
+            </p>
+            <label className={f.checkRow} style={{ marginTop: 12 }}>
+              <input type="checkbox" name="directory_listed" defaultChecked={contractor.directory_listed} />
+              <span>List {contractor.business_name} on the county pages.</span>
+            </label>
+            <div className={a.row2} style={{ marginTop: 16 }}>
+              <label className={f.field}>
+                <span className={f.label}>Website</span>
+                <input
+                  className={f.input}
+                  name="website"
+                  type="text"
+                  inputMode="url"
+                  placeholder="www.example.co.uk"
+                  defaultValue={contractor.website ?? ''}
+                />
+                <span className={f.hint}>Optional. Shown as a link on your listing.</span>
+              </label>
+              <label className={f.field}>
+                <span className={f.label}>A line about you</span>
+                <input
+                  className={f.input}
+                  name="directory_blurb"
+                  maxLength={160}
+                  placeholder="Family-run, 20 years in the Test Valley. Topping, harrowing and hedges."
+                  defaultValue={contractor.directory_blurb ?? ''}
+                />
+                <span className={f.hint}>Up to 160 characters, under your name.</span>
+              </label>
+            </div>
+          </div>
+        </details>
+      )}
 
       <div className={ac.formFoot}>
         {state.error && <p className={f.error}>{state.error}</p>}

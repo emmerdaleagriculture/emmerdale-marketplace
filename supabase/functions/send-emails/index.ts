@@ -63,7 +63,7 @@ const SQ_CONTRACTOR_KINDS = new Set([
   'sq_job_amended', 'sq_message_to_contractor',
   'sq_visit_reminder', 'sq_visit_accepted', 'sq_visit_declined',
   'sq_weekly_digest', 'sq_thread_visit_to_contractor', 'sq_job_withdrawn', 'sq_price_passed',
-  'sq_contact_warning',
+  'sq_contact_warning', 'directory_enquiry',
 ]);
 
 /** The customer's reason for passing on a price, in the contractor's email. */
@@ -1092,6 +1092,28 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       if (typeof p.subject !== 'string' || typeof p.text !== 'string') return null;
       return { subject: p.subject, text: p.text };
 
+    // A customer writing to an Open member through their county-page
+    // listing (components/directory). Theirs alone: reply-to is the
+    // customer, and nothing about it is priced through us.
+    case 'directory_enquiry':
+      return {
+        subject: `Enquiry from your listing: ${p.customer_name ?? 'a customer'}${p.county ? `, ${p.county}` : ''}`,
+        text:
+          `Hello${p.business_name ? ` ${p.business_name}` : ''},\n\n` +
+          `A customer has written to you through your listing on our ${p.county ?? 'county'} ` +
+          `page. This has come to you alone — nobody else has it, and it is not a job to ` +
+          `price through us. Reply to this email or call them, and agree the work between you.\n\n` +
+          `Name:      ${p.customer_name ?? '—'}\n` +
+          `Phone:     ${p.customer_phone ?? '—'}\n` +
+          `Email:     ${p.customer_email ?? '—'}\n` +
+          `Postcode:  ${p.postcode ?? '—'}${p.town ? ` (${p.town})` : ''}\n\n` +
+          `In their words: “${p.details ?? '—'}”\n\n` +
+          `Work you agree directly is between you and the customer: our deposit, cover and ` +
+          `payment protection do not apply to it. You can switch the listing off, or change ` +
+          `your website and the line under your name, under Your settings on your dashboard: ` +
+          `${SITE_URL}/account#settings\n`,
+      };
+
     case 'contractor_announcement':
       return {
         subject: `Changes to how Emmerdale Agriculture sends you work`,
@@ -1502,7 +1524,9 @@ Deno.serve(async (req) => {
         ? `quotes+${e.payload.token}@${REPLY_DOMAIN}`
         : e.kind === 'admin_direct' && e.to_email !== '__admin__' && admins[0]
           ? admins[0]
-          : undefined;
+          : e.kind === 'directory_enquiry' && typeof e.payload?.reply_to === 'string'
+            ? e.payload.reply_to
+            : undefined;
 
     // An address that has already bounced for good will bounce again.
     // Sending anyway costs reputation and buries the real failures. The one
