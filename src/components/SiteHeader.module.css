@@ -29,7 +29,10 @@
 .inner {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 18px 24px;
+  /* The same 68px as the front page's bar, with the same logo in it. */
+  min-height: 68px;
+  box-sizing: border-box;
+  padding: 8px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -37,10 +40,19 @@
   flex-wrap: wrap;
 }
 .brand {
-  font-family: var(--font-display-stack);
-  font-size: 18px;
-  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  /* Everything after the brand packs to the right, whether or not the bar
+     has a link in it: without this, a signed-in visitor with no membership
+     link (an applicant, an admin) had the burger centred. */
+  margin-right: auto;
   color: var(--white);
+}
+/* The full logo, the size the front page shows it. */
+.brandLockup {
+  display: block;
+  width: auto;
+  height: 52px;
 }
 .bar {
   display: flex;
@@ -331,6 +343,12 @@
   .menuJoin {
     display: none;
   }
+  /* The icons go after the burger on a laptop: the menu is the thing the
+     bar is for, so it sits next to the membership link, and the social
+     links trail it at the edge. A phone keeps them before the burger. */
+  .social {
+    order: 1;
+  }
 }
 
 /*
@@ -342,8 +360,8 @@
     padding: 12px 16px;
     gap: 0 12px;
   }
-  .brand {
-    font-size: 16px;
+  .brandLockup {
+    height: 44px;
   }
   .bar {
     display: none;

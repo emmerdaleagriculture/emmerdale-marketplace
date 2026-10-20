@@ -11,6 +11,7 @@ import { contractorEmailHealth } from '@/lib/contractors/emailConfirm';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
+import { isAppRequest } from '@/lib/appMode.server';
 import { getCounties, getServices } from '@/lib/reference';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { timeAgo, timeLeft } from '@/lib/time';
@@ -209,6 +210,10 @@ export default async function AccountPage({
   ];
 
   const status = contractor.status;
+  // Store rules: in the app, membership is shown but never sold or pointed
+  // at (MembershipCard). The page is already dynamic, so reading the request
+  // costs nothing.
+  const app = await isAppRequest();
   // One reading of the tier, shared with the header (membershipOf).
   const membership = membershipOf(subQ.data, contractor);
   const isOpen = membership === 'open';
@@ -256,6 +261,7 @@ export default async function AccountPage({
               compedUntil={contractor.premium_comped_until ?? null}
               openCompedUntil={contractor.open_comped_until ?? null}
               notice={subNotice}
+              app={app}
               pending
             />
           )}
@@ -268,7 +274,7 @@ export default async function AccountPage({
                   (20261007200000). A member suspended while paying can still
                   manage billing below, but only we can lift the suspension;
                   an application we turned down has to talk to us. */}
-              {contractor.vetted_at && !isPremium
+              {contractor.vetted_at && !isPremium && !app
                 ? 'You can come back by taking out premium membership below — your account is restored as soon as you join.'
                 : 'Please get in touch if you think this is a mistake.'}
             </div>
@@ -283,6 +289,7 @@ export default async function AccountPage({
               compedUntil={contractor.premium_comped_until ?? null}
               openCompedUntil={contractor.open_comped_until ?? null}
               notice={subNotice}
+              app={app}
               suspended
             />
           )}
@@ -368,6 +375,7 @@ export default async function AccountPage({
                 compedUntil={contractor.premium_comped_until ?? null}
                 openCompedUntil={contractor.open_comped_until ?? null}
                 notice={subNotice}
+                app={app}
               />
             </>
           )}

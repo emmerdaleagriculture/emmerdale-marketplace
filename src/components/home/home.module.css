@@ -713,14 +713,16 @@
 .brand:hover {
   color: #fff;
 }
-.brandMark {
-  flex: 0 0 auto;
+/* The whole logo: 52px tall in the header bar, 200px wide in the footer. */
+.brandLockupNav {
+  display: block;
+  width: auto;
+  height: 52px;
 }
-.brandWordmark {
-  font-family: var(--font-body), 'DM Sans', sans-serif;
-  font-weight: 700;
-  font-size: 17px;
-  letter-spacing: -0.01em;
+.brandLockup {
+  display: block;
+  width: 200px;
+  height: auto;
 }
 .brandFooter {
   color: #fbfaf6;
@@ -859,8 +861,8 @@
     margin-left: auto;
     margin-right: 0;
   }
-  .brandWordmark {
-    font-size: 16px;
+  .brandLockupNav {
+    height: 44px;
   }
 }
 

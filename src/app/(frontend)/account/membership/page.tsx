@@ -9,6 +9,7 @@ import { MembershipView } from './MembershipView';
 import { membershipOf } from '@/lib/membership';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
+import { isAppRequest } from '@/lib/appMode.server';
 import a from '../../auth.module.css';
 import ac from '../account.module.css';
 import s from './membership.module.css';
@@ -39,6 +40,10 @@ export default async function MembershipPage({
   searchParams: Promise<{ sub?: string }>;
 }) {
   const { sub: subNotice } = await searchParams;
+  // A pricing page with Stripe buttons has no place in the app: Apple's
+  // 3.1.1 bars selling a membership there except through Apple's own
+  // payments. The Earnings tab shows the membership's status instead.
+  if (await isAppRequest()) redirect('/app/earnings');
   const supabase = await createClient();
   const {
     data: { user },

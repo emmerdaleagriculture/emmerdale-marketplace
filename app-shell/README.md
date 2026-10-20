@@ -89,8 +89,8 @@ change into both native projects.
 
 ## App icon and splash screen
 
-Already generated from the site's real brand mark (`src/app/icon.svg` in
-the main repo — pulled straight from GitHub, not invented) — see
+Already generated from the site's real brand mark (the EA mark in
+`public/images/brand/` in the main repo, not invented) — see
 `assets/` for the ready-to-submit files and `assets/README.md` for how to
 turn them into the full platform-specific icon/splash set.
 

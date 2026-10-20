@@ -15,6 +15,12 @@ import ac from './account.module.css';
  * /account/membership, where the plans, the buttons and Stripe's billing
  * portal live. It says what they have (or what they'd get) and the next
  * thing that matters: a renewal date, a failed payment, an ending plan.
+ *
+ * In the app (`app`) it is a plain card, not a link: what they have, or
+ * what members get, with no price, no "join", and no mention of the
+ * website. Apple's 3.1.1 bars an app outside the US from selling a
+ * membership, or pointing people anywhere else to buy one, except through
+ * Apple's own payments; membership is bought and managed on the website.
  */
 export function MembershipCard({
   membership,
@@ -24,6 +30,7 @@ export function MembershipCard({
   notice,
   pending = false,
   suspended = false,
+  app = false,
 }: {
   /** Tier held right now, from membershipOf: paid or on us. */
   membership: Membership;
@@ -37,6 +44,8 @@ export function MembershipCard({
   /** Account suspended: a non-member joining restores it; a member's
    *  benefits are paused, but their billing still runs. */
   suspended?: boolean;
+  /** App mode: no link, no price, no call to action (store rules). */
+  app?: boolean;
 }) {
   const member = membership !== null;
   const billed = billedTier(sub);
@@ -87,6 +96,42 @@ export function MembershipCard({
             ? 'First refusal on new jobs in your area and 5% commission instead of 15%, from £20 a month. You can join now; it starts the moment we approve you.'
             : 'First refusal on new jobs in your area and 5% commission instead of 15%, from £20 a month. Open adds the customer’s details on every job.';
 
+  if (app) {
+    // A member's status without the price or a "update your card": the
+    // renewal or end date, or a failed payment as a fact. A free contractor
+    // gets the benefits and nothing about joining, restoring or paying.
+    let appStatus: React.ReactNode = null;
+    if (member && billed && sub?.status === 'past_due') {
+      appStatus = <>Your last payment didn’t go through. Stripe will try again.</>;
+    } else if (member && billed && sub?.cancel_at_period_end && sub.current_period_end) {
+      appStatus = status;
+    } else if (member && billed && sub?.current_period_end) {
+      appStatus = <>Renews {membershipDay(sub.current_period_end)}.</>;
+    } else if (member && !billed) {
+      appStatus = status;
+    }
+    const appBenefit = member && suspended
+      ? 'Your account is suspended, so membership isn’t working just now. Please get in touch.'
+      : member
+      ? benefit
+      : 'Members get first refusal on new jobs in their area and 5% commission instead of 15%. Open adds the customer’s details on every job.';
+    return (
+      <div id="premium" className={ac.subCard}>
+        <span className={ac.subHead}>
+          <span className={ac.subTitle}>Membership</span>
+          <span className={`${ac.subPill} ${member ? ac.subActive : ac.subInactive}`}>
+            {member ? `${name} member` : 'Free plan'}
+          </span>
+        </span>
+        <span className={ac.subBody}>
+          {appStatus && <b>{appStatus}</b>}
+          {appStatus ? ' ' : ''}
+          {appBenefit}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <Link id="premium" href="/account/membership" prefetch={false} className={`${ac.subCard} ${ac.subLink}`}>
       <span className={ac.subHead}>
@@ -114,16 +159,7 @@ export function MembershipCard({
         {status ? ' ' : ''}
         {benefit}
       </span>
-      {/* Store rules: no selling inside the app. Members manage billing on
-          the website; a free contractor is told where to join. */}
-      <span className={ac.subCta} data-app-hide={member ? undefined : ''}>
-        {member ? 'Manage membership' : 'See the plans and join'} →
-      </span>
-      {!member && (
-        <span className={ac.subCta} data-app-only>
-          Membership is bought on the website →
-        </span>
-      )}
+      <span className={ac.subCta}>{member ? 'Manage membership' : 'See the plans and join'} →</span>
     </Link>
   );
 }

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrandLockup } from '@/components/home/BrandMark';
 import styles from './SiteHeader.module.css';
 import { SiteNav } from './SiteNav';
 import type { Viewer } from './useViewer';
@@ -25,8 +26,8 @@ export function SiteHeader({
   return (
     <header className={`${styles.header} ${tone}`} data-app-hide>
       <div className={styles.inner}>
-        <Link href="/" className={styles.brand}>
-          Emmerdale Agriculture
+        <Link href="/" className={styles.brand} aria-label="Emmerdale Agriculture home">
+          <BrandLockup width={105} className={styles.brandLockup} priority sizes="(max-width: 820px) 89px, 105px" />
         </Link>
         <SiteNav viewer={viewer} defaultOpen={menuOpen} />
       </div>

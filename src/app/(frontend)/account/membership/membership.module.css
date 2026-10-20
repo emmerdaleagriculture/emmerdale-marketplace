@@ -32,11 +32,13 @@
   color: #6b5200;
 }
 
-/* ── The two tiers, side by side ───────────────────────────────────────── */
+/* ── Free and the two tiers, side by side ──────────────────────────────── */
+/* Three cards in 760px is 240px each, so the padding is tighter than the
+   plan card's and the price a size down. */
 .tiers {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
   margin: 0 0 36px;
 }
 .tier {
@@ -46,7 +48,7 @@
   border: 1px solid var(--rule);
   border-radius: 14px;
   background: #fff;
-  padding: 26px 26px 24px;
+  padding: 24px 20px 20px;
 }
 .tierFeatured {
   border-color: var(--jd-green);
@@ -76,7 +78,7 @@
 }
 .tierName {
   font-family: var(--font-display-stack);
-  font-size: 26px;
+  font-size: 24px;
   color: var(--jd-green-deep);
   margin: 0 0 4px;
 }
@@ -94,7 +96,7 @@
 }
 .priceAmount {
   font-family: var(--font-display-stack);
-  font-size: 44px;
+  font-size: 38px;
   line-height: 1;
   color: var(--ink);
 }
@@ -284,7 +286,7 @@
   border-top: 1px solid var(--rule);
 }
 
-/* Both tiers again for a member, theirs marked. */
+/* All three again for a member, theirs marked. */
 .change {
   margin: 0 0 28px;
 }
@@ -313,6 +315,7 @@
 @media (max-width: 720px) {
   .tiers {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
   .steps {
     grid-template-columns: 1fr;

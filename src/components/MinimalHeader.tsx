@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrandLockup } from '@/components/home/BrandMark';
 import h from '@/components/SiteHeader.module.css';
 import { SocialLinks } from '@/components/SocialLinks';
 
@@ -12,8 +13,8 @@ export function MinimalHeader() {
   return (
     <header className={`${h.header} ${h.solid}`} data-app-hide>
       <div className={h.inner}>
-        <Link href="/" className={h.brand}>
-          Emmerdale Agriculture
+        <Link href="/" className={h.brand} aria-label="Emmerdale Agriculture home">
+          <BrandLockup width={105} className={h.brandLockup} priority sizes="(max-width: 820px) 89px, 105px" />
         </Link>
         <SocialLinks className={h.social} />
       </div>

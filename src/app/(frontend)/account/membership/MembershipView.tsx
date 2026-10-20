@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { siteUrl } from '@/lib/site';
 import {
   annualSaving as saving,
   billedTier,
@@ -75,6 +74,52 @@ function Pay({
       {plan && <input type="hidden" name="plan" value={plan} />}
       <button className={className} type="submit">{children}</button>
     </form>
+  );
+}
+
+const FREE_BENEFITS = [
+  <><b>Every job in your area</b> once members have had first refusal.</>,
+  <><b>15% commission.</b> Price a job at £400 and the customer sees £460.</>,
+  <><b>Nothing to pay</b>, no card, no commitment.</>,
+];
+
+/**
+ * The free plan as a card beside the two tiers, so the page shows what you
+ * get for nothing next to what you get for £20 and £49, rather than leaving
+ * the free contractor to work out what the tiers are being compared with.
+ *
+ *   free   → theirs: "Your plan", no button;
+ *   billed → the way back is cancelling in the billing portal, so the card
+ *            points at Manage billing rather than selling a £0 checkout;
+ *   comped → nothing to cancel: free is what is left when the comp ends.
+ */
+function FreeCard({ state, forever = false }: { state: 'free' | 'billed' | 'comped'; forever?: boolean }) {
+  const mine = state === 'free';
+  return (
+    <article className={`${s.tier} ${mine ? s.tierCurrent : ''}`} aria-labelledby="tier-free">
+      {mine && <span className={`${s.tierTag} ${s.tagCurrent}`}>Your plan</span>}
+      <h2 id="tier-free" className={s.tierName}>Free</h2>
+      <p className={s.tierBlurb}>
+        Every job in your area after members have seen it, at our standard commission.
+      </p>
+      <p className={s.price}>
+        <span className={s.priceAmount}>{gbp(0)}</span>
+        <span className={s.pricePer}>a month</span>
+      </p>
+      <p className={s.priceAlt}>and nothing a year either</p>
+      <Benefits items={FREE_BENEFITS} />
+      <div className={s.actions}>
+        {mine ? (
+          <span className={s.actionCurrent}>Your plan — free</span>
+        ) : state === 'billed' ? (
+          <p className={s.actionNote}>To go back to the free plan, use <b>Manage billing or cancel</b> above.</p>
+        ) : forever ? (
+          <p className={s.actionNote}>Your membership is on us for good, so there’s nothing to cancel.</p>
+        ) : (
+          <p className={s.actionNote}>This is what’s left when your membership on us ends. Nothing to cancel.</p>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -160,7 +205,7 @@ function TierCard({ tier, state, returnPath }: { tier: Tier; state: TierState; r
       ) : (
         <Benefits items={PREMIUM_BENEFITS} />
       )}
-      <div className={s.actions} data-app-hide>{buttons}</div>
+      <div className={s.actions}>{buttons}</div>
     </article>
   );
 }
@@ -168,10 +213,10 @@ function TierCard({ tier, state, returnPath }: { tier: Tier; state: TierState; r
 /**
  * The membership page's body. Three shapes:
  *
- *   free plan  → the lead, two tier cards side by side, how first refusal
+ *   free plan  → the lead, the free plan and the two tiers side by side, how first refusal
  *                works, the fine print;
- *   member     → their plan card (tier, price, renewal, billing), then both
- *                tiers again under "Change your plan", theirs marked, so a
+ *   member     → their plan card (tier, price, renewal, billing), then all
+ *                three again under "Change your plan", theirs marked, so a
  *                move up, down or to yearly is one button;
  *   comped     → the plan card with "on us" in place of a price, and the
  *                same change section.
@@ -282,16 +327,11 @@ export function MembershipView({
           <div className={s.planBody}>
             <Benefits items={tier === 'open' ? [...OPEN_BENEFITS, ...PREMIUM_BENEFITS.slice(0, 2)] : PREMIUM_BENEFITS.slice(0, 2)} />
             {active && (
-              <>
-                <div className={s.planActions} data-app-hide>
-                  <Pay action="portal" returnPath={returnPath} className={f.btnGhost}>
-                    Manage billing or cancel
-                  </Pay>
-                </div>
-                <p className={s.fine} data-app-only style={{ margin: '16px 0 0' }}>
-                  Billing is managed on the website.
-                </p>
-              </>
+              <div className={s.planActions}>
+                <Pay action="portal" returnPath={returnPath} className={f.btnGhost}>
+                  Manage billing or cancel
+                </Pay>
+              </div>
             )}
           </div>
         </section>
@@ -330,13 +370,11 @@ export function MembershipView({
                   )}
                 </p>
                 <div className={s.tiers}>
+                  <FreeCard state={billed ? 'billed' : 'comped'} forever={forever} />
                   {(['premium', 'open'] as const).map((t) => (
                     <TierCard key={t} tier={t} returnPath={returnPath} state={stateOf(t)} />
                   ))}
                 </div>
-                <p className={s.fine} data-app-only>
-                  Membership is changed on the website: sign in at {siteUrl().replace(/^https?:\/\//, '')}/account/membership.
-                </p>
               </>
             )}
           </section>
@@ -369,15 +407,10 @@ export function MembershipView({
       {noticeBox}
 
       <div className={s.tiers}>
+        <FreeCard state="free" />
         <TierCard tier="premium" state={{ kind: 'free' }} returnPath={returnPath} />
         <TierCard tier="open" state={{ kind: 'free' }} returnPath={returnPath} />
       </div>
-
-      {/* Store rules: no selling inside the app, or Apple and Google take
-          their cut. The benefits show; joining happens on the website. */}
-      <p className={s.fine} data-app-only>
-        Membership is bought on the website: sign in at {siteUrl().replace(/^https?:\/\//, '')}/account/membership.
-      </p>
 
       <section className={s.how} aria-labelledby="how-title">
         <h2 id="how-title" className={s.howTitle}>How first refusal works</h2>

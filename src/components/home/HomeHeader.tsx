@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AccountLink } from './AccountLink';
-import { BrandMark } from './BrandMark';
+import { BrandLockup } from './BrandMark';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SocialLinks } from '@/components/SocialLinks';
 import { useViewer, type Viewer } from '@/components/useViewer';
@@ -85,8 +85,7 @@ function CustomerHeader({
     <header className={`${s.nav} ${scrolled ? s.navScrolled : ''}`} data-app-hide>
       <div className={`${s.container} ${s.navInner}`}>
         <Link href="/" className={s.brand} aria-label="Emmerdale Agriculture home">
-          <BrandMark className={s.brandMark} />
-          <span className={s.brandWordmark}>Emmerdale Agriculture</span>
+          <BrandLockup width={105} className={s.brandLockupNav} priority sizes="(max-width: 767px) 89px, 105px" />
         </Link>
 
         <nav className={s.navLinks} aria-label="Primary">

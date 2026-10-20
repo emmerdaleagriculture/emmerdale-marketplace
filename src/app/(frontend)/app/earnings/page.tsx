@@ -5,7 +5,6 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { nonContractorPath } from '@/lib/auth';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { formatDate } from '@/lib/time';
-import { siteUrl } from '@/lib/site';
 import ui from '../app-ui.module.css';
 
 export const metadata: Metadata = { title: 'Earnings', robots: { index: false, follow: false } };
@@ -16,7 +15,10 @@ export const dynamic = 'force-dynamic';
  * recent jobs with what the customer paid, our fee and what they get. Paid
  * means we have sent it; held means the customer has yet to sign off or
  * settle, or the invoice is missing. Premium shows its status and benefits
- * only — joining is on the website (store rules).
+ * only: no price, no button, and no pointer to the website. Apple's 3.1.1
+ * bars an app outside the US from selling a membership, or sending people
+ * anywhere else to buy one, except through Apple's own payments. Membership
+ * is bought and managed on the website, and the app does not say so.
  */
 export default async function EarningsPage() {
   const supabase = await createClient();
@@ -102,8 +104,9 @@ export default async function EarningsPage() {
 
       <div className={ui.card} style={{ marginTop: 22, background: '#fff8d6', border: '1px solid #f2e39a' }}>
         <div className={ui.cardTitle} style={{ color: '#6b5a00' }}>
-          ✦ Emmerdale {tier === 'open' ? 'Open' : 'Premium'}{tier ? ' · you’re a member' : ''}
+          {tier ? `✦ Emmerdale ${tier === 'open' ? 'Open' : 'Premium'} · you’re a member` : '✦ Membership · you’re on the free plan'}
         </div>
+        {!tier && <p className={ui.cardSub} style={{ marginTop: 4 }}>What members get:</p>}
         <ul className={ui.promises} style={{ marginTop: 10 }}>
           <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
             <span className={ui.tick} aria-hidden="true">✓</span>
@@ -118,9 +121,6 @@ export default async function EarningsPage() {
             <span><strong>Open: the customer’s details on every job.</strong> Ring them and agree the work directly.</span>
           </li>
         </ul>
-        <p className={ui.note}>
-          {tier ? 'Manage your membership on the website, in your account.' : `Membership is bought on the website: sign in at ${siteUrl().replace(/^https?:\/\//, '')}/account.`}
-        </p>
       </div>
     </main>
   );

@@ -10,7 +10,7 @@ import { isContractor as contractorOf, isCustomer as customerOf, useViewer, type
 /**
  * The header's links, behind a burger at every width.
  *
- * The bar itself carries the brand, the social icons, the burger, and — on
+ * The bar itself carries the brand, the burger, the social icons, and — on
  * desktop — one link: membership. "Upgrade now" is the thing we most want a
  * free-plan contractor to see, so it stays out on the bar in yellow rather
  * than a tap away inside the menu. Below 820px there is no room for it, and
@@ -374,7 +374,8 @@ export function SiteNav({ viewer: known, defaultOpen = false }: { viewer?: Viewe
       {/* Nothing for a customer or an admin: an empty landmark is noise. */}
       {bar && <nav className={styles.bar} aria-label="Membership">{bar}</nav>}
 
-      {/* Instagram and TikTok, beside the burger at every width. */}
+      {/* Instagram and TikTok: before the burger on a phone, after it on
+          desktop (SiteHeader.module.css reorders them). */}
       <SocialLinks className={styles.social} />
 
       <div className={styles.menuAnchor} ref={anchor}>
