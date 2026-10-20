@@ -224,17 +224,20 @@ export async function premiumCheckoutUrl(
 /**
  * Where a membership button sends the contractor back to afterwards. The
  * form says which page it was on; anything else — a forged value, a
- * missing field — is the dashboard, so a redirect can never leave the site.
+ * missing field — is the membership page, so a redirect can never leave
+ * the site. The dashboard is still a return: onboarding sends new
+ * applicants back to it (its review banner is there), and Checkout sessions
+ * made before its buttons moved to /account/membership land on it too.
  */
 export const MEMBERSHIP_RETURN_PATHS = ['/account', '/account/membership'] as const;
 export type MembershipReturnPath = (typeof MEMBERSHIP_RETURN_PATHS)[number];
 export function membershipReturnPath(value: unknown): MembershipReturnPath {
-  return MEMBERSHIP_RETURN_PATHS.find((p) => p === value) ?? '/account';
+  return MEMBERSHIP_RETURN_PATHS.find((p) => p === value) ?? '/account/membership';
 }
 
 /**
  * The URL to send them back to, with what happened in ?sub=. On the
- * dashboard the membership panel is part-way down, so the fragment scrolls
+ * dashboard the membership card is part-way down, so the fragment scrolls
  * to it; the membership page is the panel, and has no #premium.
  */
 export function membershipReturnUrl(back: MembershipReturnPath, notice?: string): string {

@@ -5,8 +5,8 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
 import { EmailBanner } from './EmailBanner';
-import { PremiumPanel } from './PremiumPanel';
-import { membershipOf } from '@/lib/membership';
+import { MembershipCard } from './MembershipCard';
+import { isLiveSub, membershipOf } from '@/lib/membership';
 import { contractorEmailHealth } from '@/lib/contractors/emailConfirm';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { createClient } from '@/lib/supabase/server';
@@ -250,7 +250,8 @@ export default async function AccountPage({
             </div>
           )}
           {status === 'pending' && (
-            <PremiumPanel
+            <MembershipCard
+              membership={membership}
               sub={subQ.data ?? null}
               compedUntil={contractor.premium_comped_until ?? null}
               openCompedUntil={contractor.open_comped_until ?? null}
@@ -263,16 +264,21 @@ export default async function AccountPage({
               <div className={ac.bannerTitle}>Account suspended</div>
               Your account is currently suspended and won’t receive job
               notifications.{' '}
-              {/* Vetted and not already paying: premium brings them back
-                  (20261007200000). A member suspended while paying, or an
-                  application we turned down, has to talk to us. */}
+              {/* Vetted and not a member: premium brings them back
+                  (20261007200000). A member suspended while paying can still
+                  manage billing below, but only we can lift the suspension;
+                  an application we turned down has to talk to us. */}
               {contractor.vetted_at && !isPremium
                 ? 'You can come back by taking out premium membership below — your account is restored as soon as you join.'
                 : 'Please get in touch if you think this is a mistake.'}
             </div>
           )}
-          {status === 'suspended' && contractor.vetted_at && !isPremium && (
-            <PremiumPanel
+          {/* The card for anyone with something to do about it: a vetted
+              contractor who can rejoin, or a member Stripe is still billing.
+              A comped member has nothing to manage, so no card. */}
+          {status === 'suspended' && ((contractor.vetted_at && !isPremium) || isLiveSub(subQ.data)) && (
+            <MembershipCard
+              membership={membership}
               sub={subQ.data ?? null}
               compedUntil={contractor.premium_comped_until ?? null}
               openCompedUntil={contractor.open_comped_until ?? null}
@@ -356,10 +362,11 @@ export default async function AccountPage({
                 <Link href="/won">Won jobs</Link>
               </div>
 
-              <PremiumPanel
+              <MembershipCard
+                membership={membership}
                 sub={subQ.data ?? null}
                 compedUntil={contractor.premium_comped_until ?? null}
-              openCompedUntil={contractor.open_comped_until ?? null}
+                openCompedUntil={contractor.open_comped_until ?? null}
                 notice={subNotice}
               />
             </>

@@ -111,8 +111,9 @@ export async function completeOnboardingAction(
   );
 
   // Premium chosen: straight to Stripe. The application is already in, so
-  // backing out of Checkout lands them on the dashboard as a free applicant
-  // who can pay from there. A Stripe failure must not lose the application.
+  // backing out of Checkout lands them on the dashboard, under the
+  // "application under review" banner, as a free applicant who can pay from
+  // the membership card. A Stripe failure must not lose the application.
   if (d.membership !== 'free' && process.env.STRIPE_SECRET_KEY) {
     let url: string | null = null;
     try {

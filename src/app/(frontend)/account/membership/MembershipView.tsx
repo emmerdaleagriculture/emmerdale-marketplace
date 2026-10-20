@@ -3,24 +3,20 @@ import type { ReactNode } from 'react';
 import { siteUrl } from '@/lib/site';
 import {
   annualSaving as saving,
+  billedTier,
+  isLiveSub,
   membershipDay as day,
   MEMBERSHIP_NAMES as NAME,
   MEMBERSHIP_PRICES as PRICE,
   priceLabel as label,
+  subPlan,
   type Membership,
   type MembershipPlan as Plan,
   type MembershipTier as Tier,
+  type SubRow as Sub,
 } from '@/lib/membership';
 import f from '@/components/forms/forms.module.css';
 import s from './membership.module.css';
-
-type Sub = {
-  status: string;
-  plan: string | null;
-  tier?: string | null;
-  current_period_end: string | null;
-  cancel_at_period_end: boolean;
-} | null;
 
 const gbp = (n: number) => `£${n}`;
 
@@ -118,14 +114,14 @@ export function MembershipView({
   canChange: boolean;
   returnPath: string;
 }) {
-  const active = sub?.status === 'active' || sub?.status === 'past_due';
+  const active = isLiveSub(sub);
   // What they have (an Open comp outranks a paid premium) and what Stripe
   // bills them for can differ; the header says the first, the price line
   // and the buttons go by the second.
   const member = membership !== null;
   const tier: Tier = membership ?? 'premium';
-  const billed: Tier | null = active ? (sub?.tier === 'open' ? 'open' : 'premium') : null;
-  const plan: Plan = sub?.plan === 'annual' ? 'annual' : 'monthly';
+  const billed: Tier | null = billedTier(sub);
+  const plan: Plan = subPlan(sub);
   const openComped = Boolean(openCompedUntil && new Date(openCompedUntil) > new Date());
   const until = openComped ? openCompedUntil : compedUntil;
   const forever = until ? new Date(until).getFullYear() >= 2099 : false;
