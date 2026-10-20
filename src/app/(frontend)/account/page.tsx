@@ -6,7 +6,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
 import { EmailBanner } from './EmailBanner';
 import { MembershipCard } from './MembershipCard';
-import { isLiveSub, membershipOf } from '@/lib/membership';
+import { isLiveSub, membershipOf, MEMBERSHIP_GLYPHS, MEMBERSHIP_NAMES } from '@/lib/membership';
 import { contractorEmailHealth } from '@/lib/contractors/emailConfirm';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { createClient } from '@/lib/supabase/server';
@@ -231,7 +231,7 @@ export default async function AccountPage({
           <div className={ac.statusRow}>
             <span className={`${ac.badge} ${ac[status] ?? ''}`}>{STATUS_LABELS[status] ?? status}</span>
             {isPremium && (
-              <span className={`${ac.badge} ${ac.premiumBadge}`}>{isOpen ? '◆ Open' : '★ Premium'}</span>
+              <span className={`${ac.badge} ${ac.premiumBadge}`}>{`${MEMBERSHIP_GLYPHS[membership!]} ${MEMBERSHIP_NAMES[membership!]}`}</span>
             )}
             {(contractor.rating_count ?? 0) > 0 && contractor.rating_avg != null && (
               <span>

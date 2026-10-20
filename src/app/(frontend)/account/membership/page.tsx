@@ -6,13 +6,13 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { MembershipView } from './MembershipView';
-import { membershipOf } from '@/lib/membership';
+import { membershipOf, MEMBERSHIP_GLYPHS, MEMBERSHIP_NAMES } from '@/lib/membership';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { isAppRequest } from '@/lib/appMode.server';
 import a from '../../auth.module.css';
 import ac from '../account.module.css';
-import t from '@/components/membership/tierCard.module.css';
+import { TIER_CENTRED } from '@/components/membership/TierCard';
 import s from './membership.module.css';
 
 export const metadata: Metadata = {
@@ -79,7 +79,7 @@ export default async function MembershipPage({
     <div className={a.wrap}>
       <SiteHeader />
       <main className={a.main}>
-        <div className={`${a.wide} ${s.page} ${t.centred}`}>
+        <div className={`${a.wide} ${s.page} ${TIER_CENTRED}`}>
           <Breadcrumb
             tone="light"
             jsonLd={false}
@@ -92,7 +92,7 @@ export default async function MembershipPage({
             <span
               className={`${ac.badge} ${membership ? ac.premiumBadge : ''}`}
             >
-              {membership === 'open' ? '◆ Open' : membership === 'premium' ? '★ Premium' : 'Free plan'}
+              {membership ? `${MEMBERSHIP_GLYPHS[membership]} ${MEMBERSHIP_NAMES[membership]}` : 'Free plan'}
             </span>
             <span className={ac.email}>{user.email}</span>
           </div>
@@ -124,6 +124,7 @@ export default async function MembershipPage({
           </p>
 
           <ContactUsButton
+            className={s.contact}
             subject={`Membership — ${contractor.business_name}`}
             body={`\n\n—\n${contractor.business_name} · ${user.email ?? ''}`}
           />

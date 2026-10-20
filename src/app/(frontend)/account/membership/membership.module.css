@@ -114,6 +114,8 @@
   gap: 10px;
   font-family: var(--font-display-stack);
   font-size: 24px;
+  /* One weight for the display face, as the tier cards and a.title. */
+  font-weight: 400;
 }
 .planStar {
   color: var(--jd-yellow);
@@ -177,7 +179,7 @@
   .planHead,
   .planName,
   .planActions,
-  .page > aside {
+  .contact {
     justify-content: center;
   }
   .steps {

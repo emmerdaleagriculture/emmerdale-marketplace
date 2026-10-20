@@ -14,13 +14,18 @@
   margin: 0 0 36px;
 }
 .tier {
+  /* The band bleeds over these, so they live in one place. */
+  --tier-pad-y: 24px;
+  --tier-pad-x: 20px;
+  --tier-bw: 1px;
+  --tier-radius: 14px;
   position: relative;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--rule);
-  border-radius: 14px;
+  border: var(--tier-bw) solid var(--rule);
+  border-radius: var(--tier-radius);
   background: #fff;
-  padding: 24px 20px 20px;
+  padding: var(--tier-pad-y) var(--tier-pad-x) 20px;
 }
 .tierFeatured {
   border-color: var(--jd-green);
@@ -56,14 +61,14 @@
    to the card's edges over its padding. The radius is the card's less
    its border, so the band fills the corners. */
 .tierHead {
-  margin: -24px -20px 18px;
-  padding: 16px 20px 14px;
-  border-radius: 13px 13px 0 0;
+  margin: calc(-1 * var(--tier-pad-y)) calc(-1 * var(--tier-pad-x)) 18px;
+  padding: 16px var(--tier-pad-x) 14px;
+  border-radius: calc(var(--tier-radius) - var(--tier-bw)) calc(var(--tier-radius) - var(--tier-bw)) 0 0;
   color: #fff;
 }
 /* Free stands back: a light band with dark text under the two greens. */
 .headFree {
-  background: #e4e7df;
+  background: var(--grey-pale);
   color: var(--ink);
 }
 .headPremium {
@@ -196,9 +201,10 @@
     gap: 22px;
   }
   .tier {
-    padding: 26px 18px 20px;
-    border-width: 2px;
-    border-color: #c5ccbc;
+    --tier-pad-y: 26px;
+    --tier-pad-x: 18px;
+    --tier-bw: 2px;
+    border-color: var(--rule-strong);
     background: var(--cream);
     box-shadow: 0 14px 32px -20px rgba(23, 51, 13, 0.4);
   }
@@ -212,12 +218,11 @@
     background: var(--jd-green-pale);
   }
   .benefits {
-    border-top-color: #c5ccbc;
+    border-top-color: var(--rule-strong);
   }
   .tierHead {
-    margin: -26px -18px 18px;
-    padding: 18px 18px 16px;
-    border-radius: 12px 12px 0 0;
+    padding-top: 18px;
+    padding-bottom: 16px;
   }
 }
 

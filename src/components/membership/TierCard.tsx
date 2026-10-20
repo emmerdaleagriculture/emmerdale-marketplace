@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactNode } from 'react';
-import { annualSaving, MEMBERSHIP_NAMES, MEMBERSHIP_PRICES, type MembershipTier } from '@/lib/membership';
+import { annualSaving, MEMBERSHIP_GLYPHS, MEMBERSHIP_NAMES, MEMBERSHIP_PRICES, type MembershipTier } from '@/lib/membership';
 import s from './tierCard.module.css';
 
 /**
@@ -37,7 +37,9 @@ const BLURB: Record<CardTier, string> = {
   premium: 'Every job in your area ahead of the market, and 5% commission instead of 15%.',
   open: 'Everything in Premium, plus first look, the customer’s details, a county-page listing and market data.',
 };
-const GLYPH: Record<CardTier, string> = { free: '', premium: '★', open: '◆' };
+const GLYPH: Record<CardTier, string> = { free: '', ...MEMBERSHIP_GLYPHS };
+/** A page that centres everything on a phone puts this on a wrapper round the grid. */
+export const TIER_CENTRED = s.centred;
 /* The header band's colour, one shade a tier. */
 const HEAD: Record<CardTier, string> = { free: s.headFree, premium: s.headPremium, open: s.headOpen };
 

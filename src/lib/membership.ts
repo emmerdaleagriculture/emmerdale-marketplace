@@ -60,6 +60,8 @@ export const MEMBERSHIP_PRICES: Record<MembershipTier, Record<MembershipPlan, nu
   open: { monthly: 49, annual: 399 },
 };
 export const MEMBERSHIP_NAMES: Record<MembershipTier, string> = { premium: 'Premium', open: 'Open' };
+/** The tier's mark, wherever its name is shown: a star for Premium, a diamond for Open. */
+export const MEMBERSHIP_GLYPHS: Record<MembershipTier, string> = { premium: '★', open: '◆' };
 
 /** "£20 a month" / "£199 a year". */
 export function priceLabel(tier: MembershipTier, plan: MembershipPlan): string {

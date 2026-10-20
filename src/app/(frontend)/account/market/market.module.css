@@ -73,7 +73,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  border-top: 1px dashed #e4e7df;
+  border-top: 1px dashed var(--grey-pale);
   pointer-events: none;
 }
 .gridlabel {
@@ -115,7 +115,7 @@
   border-radius: 4px 4px 0 0;
 }
 .barEmpty {
-  background: #e4e7df;
+  background: var(--grey-pale);
 }
 .barLabel {
   position: absolute;

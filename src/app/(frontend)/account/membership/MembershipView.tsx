@@ -5,6 +5,7 @@ import {
   billedTier,
   isLiveSub,
   membershipDay as day,
+  MEMBERSHIP_GLYPHS,
   MEMBERSHIP_NAMES as NAME,
   priceLabel as label,
   subPlan,
@@ -252,7 +253,7 @@ export function MembershipView({
         <section className={s.plan} aria-labelledby="plan-name">
           <div className={s.planHead}>
             <h2 id="plan-name" className={s.planName}>
-              <span className={s.planStar} aria-hidden="true">{tier === 'open' ? '◆' : '★'}</span>
+              <span className={s.planStar} aria-hidden="true">{MEMBERSHIP_GLYPHS[tier]}</span>
               {NAME[tier]} membership
             </h2>
             <div className={s.planMeta}>{meta}</div>
