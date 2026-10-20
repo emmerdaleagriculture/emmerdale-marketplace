@@ -21,6 +21,9 @@ concurrency:
 jobs:
   release:
     if: inputs.confirm_upload && vars.MOBILE_STORE_UPLOADS_ENABLED == 'true'
+    # The environment's required reviewer approves each run before the store
+    # secrets are released to it. See app-shell/README.md.
+    environment: store-uploads
     runs-on: macos-15
     timeout-minutes: 45
     defaults:
@@ -34,11 +37,13 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: app-shell/package-lock.json
-      - run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - name: Select the newest Xcode 26 on the runner
+        run: |
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)/Contents/Developer"
+          xcodebuild -version
       - run: npm ci
       - run: npx cap sync ios
-      - run: npx cap sync android
-      - run: npm run check
+      - run: npm run check -- ios
       - name: Sign, archive and upload to TestFlight
         env:
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}

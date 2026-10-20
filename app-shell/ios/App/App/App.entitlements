@@ -9,7 +9,6 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:www.emmerdaleagriculture.com</string>
-		<string>applinks:emmerdaleagriculture.com</string>
 		<string>webcredentials:www.emmerdaleagriculture.com</string>
 	</array>
 </dict>

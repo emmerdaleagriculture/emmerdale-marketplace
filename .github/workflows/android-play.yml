@@ -21,6 +21,9 @@ concurrency:
 jobs:
   release:
     if: inputs.confirm_upload && vars.MOBILE_STORE_UPLOADS_ENABLED == 'true'
+    # The environment's required reviewer approves each run before the store
+    # secrets are released to it. See app-shell/README.md.
+    environment: store-uploads
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
@@ -43,8 +46,7 @@ jobs:
           packages: 'platform-tools'
       - run: npm ci
       - run: npx cap sync android
-      - run: npx cap sync ios
-      - run: npm run check
+      - run: npm run check -- android
       - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Build signed Android bundle
         env:

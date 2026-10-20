@@ -40,7 +40,7 @@ web assets are intentionally ignored and recreated by `cap sync`.
 
 ### iOS
 
-On a Mac with Xcode 26.3 installed:
+On a Mac with Xcode 26 installed:
 
 ```sh
 npm run open:ios
@@ -67,7 +67,7 @@ post test jobs or make payments without an approved test plan.
 
 `Mobile preview builds` runs on relevant pull requests, or manually:
 
-- iOS: selects Xcode 26.3, compiles without signing, boots an iPhone simulator,
+- iOS: selects the newest Xcode 26 on the runner, compiles without signing, boots an iPhone simulator,
   launches the app, captures a screenshot, and uploads the simulator `.app` ZIP.
 - Android: builds a debug APK and runs unit tests and Android lint.
 
@@ -83,7 +83,11 @@ No tag or push event uploads to a store. Both release workflows require:
 1. Explicit approval to upload.
 2. Repository variable `MOBILE_STORE_UPLOADS_ENABLED=true`.
 3. Manual dispatch with `confirm_upload=true`.
-4. Valid signing credentials and a store app record.
+4. The upload jobs run in the `store-uploads` GitHub environment, whose
+   required reviewer must approve each run before it starts. The store secrets
+   (Apple and Play signing and API credentials) should live in that
+   environment, not as repository secrets, so nothing else can read them.
+5. Valid signing credentials and a store app record.
 
 These gates have NOT been enabled by preparation. The Play workflow targets
 the internal track as a draft, never production. TestFlight uploading does not

@@ -22,7 +22,10 @@
 
             <!-- App links: texts, pushes and payment returns on the website open the app.
                  Verified against https://www.emmerdaleagriculture.com/.well-known/assetlinks.json
-                 once the Play app-signing SHA-256 is added there. -->
+                 once the Play app-signing SHA-256 is added there.
+                 The path list mirrors COMPONENTS in src/app/api/well-known/aasa/route.ts
+                 (the iOS apple-app-site-association), which is the source of truth:
+                 change it there first, then here. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -37,6 +40,8 @@
                 <data android:pathPrefix="/won" />
                 <data android:pathPrefix="/jobs" />
                 <data android:pathPrefix="/account" />
+                <data android:pathPrefix="/start" />
+                <data android:pathPrefix="/login" />
             </intent-filter>
         </activity>
 

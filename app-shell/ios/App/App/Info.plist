@@ -30,6 +30,8 @@
 	<string>Take photos of your land or the work needed so contractors can assess the job.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose photos to attach to your job or show completed work.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Photos you take of your land or the work are saved to your library when you choose to.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Used only when you tap Use my location, to find approved operators who cover your land.</string>
 	<key>UIApplicationSceneManifest</key>

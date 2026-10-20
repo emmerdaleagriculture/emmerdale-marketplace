@@ -55,10 +55,12 @@ new = ('\t\t\t\tCODE_SIGN_STYLE = Manual;\n'
 open(p, 'w').write(s.replace(old, new))
 PY
 
+# The app version is package.json's (see capacitor.config.ts).
+MARKETING_VERSION=$(node -p "require('./package.json').version")
 xcodebuild -project ios/App/App.xcodeproj -scheme App \
   -configuration Release -destination 'generic/platform=iOS' \
   -archivePath "$WORK/App.xcarchive" \
-  CURRENT_PROJECT_VERSION="$APP_BUILD_NUMBER" MARKETING_VERSION=1.0.0 archive
+  CURRENT_PROJECT_VERSION="$APP_BUILD_NUMBER" MARKETING_VERSION="$MARKETING_VERSION" archive
 xcodebuild -exportArchive -archivePath "$WORK/App.xcarchive" \
   -exportOptionsPlist "$WORK/ExportOptions.plist" -exportPath "$RUNNER_TEMP/ios-export"
 

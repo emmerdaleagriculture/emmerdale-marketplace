@@ -31,14 +31,13 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: app-shell/package-lock.json
-      - name: Select Xcode 26
+      - name: Select the newest Xcode 26 on the runner
         run: |
-          sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)/Contents/Developer"
           xcodebuild -version
       - run: npm ci
       - run: npx cap sync ios
-      - run: npx cap sync android
-      - run: npm run check
+      - run: npm run check -- ios
       - run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - name: Build iPhone simulator app (no Apple credentials)
         run: |
@@ -95,8 +94,7 @@ jobs:
           packages: 'platform-tools'
       - run: npm ci
       - run: npx cap sync android
-      - run: npx cap sync ios
-      - run: npm run check
+      - run: npm run check -- android
       - name: Install Android SDK 36
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Build installable Android preview and run checks

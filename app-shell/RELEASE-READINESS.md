@@ -22,7 +22,7 @@ After Apple membership approval:
 2. Create the Emmerdale Agriculture app record in App Store Connect.
 3. Obtain an Apple Distribution certificate and matching App Store provisioning
    profile, and an App Store Connect API key with appropriate upload permission.
-4. Store the following as repository Actions secrets, never in files or chat:
+4. Store the following as secrets of the `store-uploads` environment, never in files or chat:
    `APPSTORE_ISSUER_ID`, `APPSTORE_KEY_ID`, `APPSTORE_PRIVATE_KEY`,
    `IOS_CERTIFICATE_BASE64`, `IOS_CERTIFICATE_PASSWORD`,
    `IOS_PROVISIONING_PROFILE_BASE64`.
@@ -46,7 +46,7 @@ existing build number; rerun a failed workflow as a new dispatch, not with a reu
 2. Enrol in Play App Signing and securely back up the upload keystore.
    App-signing keys and upload keys are different: do not reuse the old handoff's
    claim that loss of any upload keystore permanently prevents updates.
-3. Add Actions secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+3. Add `store-uploads` environment secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
    `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`, `PLAY_SERVICE_ACCOUNT_JSON`.
 4. Grant the service account only required app/track permissions.
 5. First release may require a manual AAB upload in the Play Console before
@@ -66,7 +66,15 @@ the live website, so test submissions can contact real operators.
 - Existing customer, contractor and admin: login, session persistence, expected
   dashboard, logout, and expired-session recovery.
 - Password/magic-link/email login: establish how browser-to-app return works.
-  Universal/app links are not configured; external links may remain in the browser.
+  Universal/app links are configured but unproven: iOS has the associated
+  domain `applinks:www.emmerdaleagriculture.com` (the apex redirects, so it is
+  deliberately absent), Android has an `autoVerify` intent filter for the same
+  paths, and the website serves the AASA from
+  `src/app/api/well-known/aasa/route.ts`. Before links work end to end:
+  set `ANDROID_CERT_SHA256` so `/.well-known/assetlinks.json` carries the Play
+  app-signing fingerprint, verify the AASA actually served on www (JSON, no
+  redirect, correct team ID), and test a cold-start link on a real device for
+  each platform. Until then, external links may remain in the browser.
 - Job flow: all current services, mobile keyboard, forms, back navigation.
 - Location: permission is requested only on the user action; grant/deny and manual
   postcode fallback. Check the actual recipients/storage of coordinates.

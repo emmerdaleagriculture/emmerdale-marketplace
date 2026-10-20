@@ -17,6 +17,12 @@ entitlements = profile["Entitlements"]
 app_id = "com.emmerdaleagriculture.app"
 assert entitlements["application-identifier"].endswith("." + app_id), "Profile must match the exact app ID"
 assert not entitlements.get("get-task-allow", False), "Use a distribution profile, not a development profile"
+# Everything ios/App/App/App.entitlements asks for must be in the profile, or
+# the archive signs but App Store Connect rejects the upload.
+for entitlement in ["com.apple.developer.applesignin", "com.apple.developer.associated-domains"]:
+    assert entitlement in entitlements, (
+        f"Profile lacks {entitlement}: enable the capability on the App ID in the developer portal and regenerate the profile"
+    )
 assert "ProvisionedDevices" not in profile, "Use an App Store profile, not an Ad Hoc profile"
 assert not profile.get("ProvisionsAllDevices", False), "Enterprise profiles cannot upload to TestFlight"
 assert profile["ExpirationDate"] > datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), "Provisioning profile expired"
@@ -33,4 +39,4 @@ options = {
 with output_path.open("wb") as stream:
     plistlib.dump(options, stream)
 env_path.write_text(f"TEAM_ID={shlex.quote(team)}\nPROFILE_UUID={shlex.quote(uuid)}\n")
-print("Validated exact bundle ID, profile expiry and App Store distribution type.")
+print("Validated exact bundle ID, profile expiry, App Store distribution type and required entitlements.")

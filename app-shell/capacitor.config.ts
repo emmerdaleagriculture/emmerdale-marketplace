@@ -1,4 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+// The app's version lives in package.json alone: the Android versionName,
+// the iOS MARKETING_VERSION and the user-agent token below all read it
+// (scripts/check-config.mjs asserts they agree).
+import pkg from './package.json';
 
 const config: CapacitorConfig = {
   // Reverse-DNS app identifier. This exact string has to match what you
@@ -31,9 +35,8 @@ const config: CapacitorConfig = {
 
   // Tells the website it is running inside the app ("app mode": no website
   // header or footer, tab bar, native sign-in, camera and location). The
-  // site reads this in src/lib/appMode.ts. Keep the version in step with
-  // MARKETING_VERSION in scripts/release-ios.sh and versionName on Android.
-  appendUserAgent: 'EmmerdaleApp/1.0.0',
+  // site reads this in src/lib/appMode.ts. The version is package.json's.
+  appendUserAgent: `EmmerdaleApp/${pkg.version}`,
 
   plugins: {
     // Native Apple and Google sign-in sheets used by the website's

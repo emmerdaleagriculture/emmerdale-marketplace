@@ -16,6 +16,8 @@ class ExportOptionsTest(unittest.TestCase):
             "Entitlements": {
                 "application-identifier": "ABCDEFGHIJ.com.emmerdaleagriculture.app",
                 "get-task-allow": False,
+                "com.apple.developer.applesignin": ["Default"],
+                "com.apple.developer.associated-domains": "*",
             },
         }
 
@@ -47,6 +49,8 @@ class ExportOptionsTest(unittest.TestCase):
             {"UUID": "$(echo injected)"},
             {"Entitlements": {"application-identifier": "ABCDEFGHIJ.other.app"}},
             {"Entitlements": {"application-identifier": "ABCDEFGHIJ.com.emmerdaleagriculture.app", "get-task-allow": True}},
+            {"Entitlements": {k: v for k, v in self.profile()["Entitlements"].items() if k != "com.apple.developer.applesignin"}},
+            {"Entitlements": {k: v for k, v in self.profile()["Entitlements"].items() if k != "com.apple.developer.associated-domains"}},
         ]:
             with self.subTest(mutation=mutation):
                 result, _ = self.run_profile({**self.profile(), **mutation})

@@ -8,7 +8,8 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode = (System.getenv("APP_BUILD_NUMBER") ?: "1").toInteger()
-        versionName "1.0.0"
+        // The app version is package.json's (see capacitor.config.ts).
+        versionName = new groovy.json.JsonSlurper().parse(file("../../package.json")).version
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
