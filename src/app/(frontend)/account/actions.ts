@@ -113,6 +113,7 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
     // their county pages — the ones they cover now and the ones they just
     // dropped — to be rebuilt rather than wait a day.
     revalidateTag(COUNTY_DIRECTORY_TAG);
+    revalidatePath('/contractors');
     const ids = Array.from(new Set([...d.county_ids, ...(beforeCounties ?? []).map((r) => r.county_id!).filter(Boolean)]));
     const { data: names } = await supabase.from('counties').select('name').in('id', ids);
     for (const c of names ?? []) {

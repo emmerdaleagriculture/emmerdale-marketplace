@@ -1,17 +1,8 @@
-import { RatingStars } from '@/components/RatingStars';
+import Link from 'next/link';
 import { getCountyDirectory, getServices } from '@/lib/reference';
-import { DirectEnquiryForm } from './DirectEnquiryForm';
+import { DirectoryCard } from './DirectoryCard';
 import l from '@/app/(frontend)/landing.module.css';
 import s from './directory.module.css';
-
-/** A website as typed on the dashboard, shown as its host. */
-function siteHost(url: string): string {
-  try {
-    return new URL(url).host.replace(/^www\./, '');
-  } catch {
-    return url;
-  }
-}
 
 /**
  * The Open members covering a county, on its public page: name, rating,
@@ -19,7 +10,7 @@ function siteHost(url: string): string {
  * a button that writes to them alone. Rendered as nothing when nobody is
  * listed, so a county with no Open member reads as it did. `serviceId`
  * narrows the list to members offering that service (the hay and tractor
- * hire pages); the paddock page shows everyone.
+ * hire pages); the paddock page shows everyone who takes general work.
  */
 export async function CountyDirectory({ county, serviceId }: { county: string; serviceId?: number }) {
   const [directory, services] = await Promise.all([getCountyDirectory(), getServices()]);
@@ -31,6 +22,7 @@ export async function CountyDirectory({ county, serviceId }: { county: string; s
   );
   if (entries.length === 0) return null;
   const serviceName = new Map(services.map((sv) => [sv.id, sv.name]));
+  const names = (ids: number[]) => ids.map((id) => serviceName.get(id)).filter(Boolean) as string[];
 
   return (
     <section className={`${l.section} ${l.sectionAlt}`}>
@@ -45,36 +37,14 @@ export async function CountyDirectory({ county, serviceId }: { county: string; s
           contractor covering {county} can price it.
         </p>
         <div className={s.list}>
-          {entries.map((e) => {
-            const names = e.services.map((id) => serviceName.get(id)).filter(Boolean) as string[];
-            return (
-              <article key={e.contractorId} className={s.card} aria-label={e.businessName}>
-                <div className={s.head}>
-                  <h3 className={s.name}>{e.businessName}</h3>
-                  <RatingStars avg={e.ratingAvg} count={e.ratingCount} />
-                </div>
-                {e.blurb && <p className={s.blurb}>{e.blurb}</p>}
-                {names.length > 0 && (
-                  <p className={s.services}>
-                    {names.slice(0, 6).join(' · ')}
-                    {names.length > 6 ? ` · and ${names.length - 6} more` : ''}
-                  </p>
-                )}
-                <div className={s.links}>
-                  {e.website && (
-                    <a className={s.site} href={e.website} target="_blank" rel="noopener">
-                      {siteHost(e.website)} ↗
-                    </a>
-                  )}
-                  <DirectEnquiryForm contractorId={e.contractorId} businessName={e.businessName} county={county} />
-                </div>
-              </article>
-            );
-          })}
+          {entries.map((e) => (
+            <DirectoryCard key={e.contractorId} entry={e} serviceNames={names(e.services)} county={county} />
+          ))}
         </div>
         <p className={s.fine}>
           Work agreed directly with a contractor is between you and them: our deposit, cover and
-          payment protection apply only to jobs priced through us.
+          payment protection apply only to jobs priced through us.{' '}
+          <Link href="/contractors">See everyone taking direct enquiries →</Link>
         </p>
       </div>
     </section>

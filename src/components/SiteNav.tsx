@@ -187,6 +187,7 @@ function membershipItem(membership: Membership): Item {
 
 const EXPLORE: Item[] = [
   { href: '/paddock-maintenance', label: 'Paddock maintenance', icon: 'paddock' },
+  { href: '/contractors', label: 'Find a contractor', icon: 'account' },
   { href: '/notes', label: 'Notes', icon: 'notes' },
 ];
 

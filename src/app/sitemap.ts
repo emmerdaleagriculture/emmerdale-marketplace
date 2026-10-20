@@ -29,6 +29,8 @@ const DATES = {
   services: new Date('2026-10-11'),
   /** Customer terms v2.1 and the charter (insurance wording). */
   legal: new Date('2026-09-23'),
+  /** The directory of Open members taking direct enquiries. */
+  directory: new Date('2026-10-21'),
 } as const;
 
 // Refresh daily so covered-county entries track the network as it grows.
@@ -72,6 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // One page per service, plus their index (SEO review, 2026-09-24).
   const servicePages: MetadataRoute.Sitemap = [
     { url: `${SITE}/services`, lastModified: DATES.services, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE}/contractors`, lastModified: DATES.directory, changeFrequency: 'weekly', priority: 0.7 },
     ...SERVICE_PAGES.map((p) => ({
       url: `${SITE}/services/${p.path}`,
       lastModified: DATES.services,
