@@ -94,7 +94,7 @@ export function MembershipCard({
           ? 'Join and your account is restored straight away: first refusal on new jobs in your area and 5% commission instead of 15%, from £20 a month.'
           : pending
             ? 'First refusal on new jobs in your area and 5% commission instead of 15%, from £20 a month. You can join now; it starts the moment we approve you.'
-            : 'First refusal on new jobs in your area and 5% commission instead of 15%, from £20 a month. Open adds the customer’s details on every job.';
+            : 'First refusal on new jobs in your area and 5% commission instead of 15%, from £20 a month. Open adds first look ahead of Premium, the customer’s details on every job, a listing on our county pages and market data for your area.';
 
   if (app) {
     // A member's status without the price or a "update your card": the
@@ -114,7 +114,7 @@ export function MembershipCard({
       ? 'Your account is suspended, so membership isn’t working just now. Please get in touch.'
       : member
       ? benefit
-      : 'Members get first refusal on new jobs in their area and 5% commission instead of 15%. Open adds the customer’s details on every job.';
+      : 'Members get first refusal on new jobs in their area and 5% commission instead of 15%. Open adds first look ahead of Premium, the customer’s details on every job, a listing on our county pages and market data for their area.';
     return (
       <div id="premium" className={ac.subCard}>
         <span className={ac.subHead}>

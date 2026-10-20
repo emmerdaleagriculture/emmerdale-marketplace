@@ -35,7 +35,7 @@ export const FREE_BENEFITS: ReactNode[] = [
 const BLURB: Record<CardTier, string> = {
   free: 'Every job in your area after members have seen it, at our standard commission.',
   premium: 'Every job in your area ahead of the market, and 5% commission instead of 15%.',
-  open: 'Everything in Premium, plus the customer’s contact details on every job.',
+  open: 'Everything in Premium, plus first look, the customer’s details, a county-page listing and market data.',
 };
 const GLYPH: Record<CardTier, string> = { free: '', premium: '★ ', open: '◆ ' };
 
