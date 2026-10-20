@@ -95,7 +95,7 @@ const HAY_REGIONS: Record<string, VerticalNote> = {
   },
   'Northern Ireland': {
     supply:
-      'Grassland farming on a scale found almost nowhere else in the UK: most of the farmed land is grass, and silage and haylage are made in great quantity. Properly dry hay is a settled-summer crop here, and cereal straw is scarce locally, and much of it is shipped in from Scotland and the north of England.',
+      'Grassland farming on a scale found almost nowhere else in the UK: most of the farmed land is grass, and silage and haylage are made in great quantity. Properly dry hay is a settled-summer crop here, and cereal straw is scarce locally: much of it is shipped in from Scotland and the north of England.',
     practical:
       'Wrapped forage is the dependable local buy; ask early for dry hay and expect it to go quickly in a good year. Straw costs more here than on the mainland because of the sea crossing, so price it per delivered load rather than per bale, and say what size vehicle can reach your yard.',
   },
@@ -223,7 +223,7 @@ const HAY_COUNTIES: Record<string, Partial<VerticalNote>> = {
   },
   Inverclyde: {
     supply:
-      'Very high rainfall on steep ground, so little is made locally, so forage generally travels in from Renfrewshire and Ayrshire.',
+      'Very high rainfall on steep ground, so little is made locally. Forage generally travels in from Renfrewshire and Ayrshire.',
   },
   'Argyll and Bute': {
     supply:

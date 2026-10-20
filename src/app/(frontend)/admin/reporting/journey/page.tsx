@@ -249,7 +249,7 @@ export default async function JourneyPage({
                       <td>{r.action === 'parse' ? 'Step 1' : 'Step 2'}</td>
                       <td style={{ color: r.outcome === 'fallback' ? '#8a6d1f' : '#a02a2a' }}>
                         <code>{r.reason}</code>
-                        {r.outcome === 'fallback' && ', let through'}
+                        {r.outcome === 'fallback' && ' · let through'}
                       </td>
                       <td>{r.n}</td>
                       <td>

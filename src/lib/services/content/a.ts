@@ -136,7 +136,7 @@ export const PART_A: ServiceContent[] = [
     goodToKnow: [
       'Harrowing and rolling often go together: harrow first to level and open the sward, then roll to firm it down.',
       'If the ground is too wet, harrows smear mud and pull out grass rather than dead material. Wait until the surface is dry enough to walk on without sinking.',
-      'Keep horses off a field harrowed in summer to spread droppings until the weather has had time to dry it out, and a few weeks is common.',
+      'Keep horses off a field harrowed in summer to spread droppings until the weather has had time to dry it out (typically a few weeks).',
     ],
     faqs: [
       {

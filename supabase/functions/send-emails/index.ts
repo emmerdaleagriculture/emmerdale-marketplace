@@ -245,7 +245,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         : null;
       const premium = p.billed_premium === true;
       return {
-        subject: 'A message to a customer was held, and the proper way to swap details',
+        subject: 'A message to a customer was held. The proper way to swap details',
         text:
           `Hello${p.business_name ? ` ${p.business_name}` : ''},\n\n` +
           `A message you sent to a customer today included ${what}. Until a job is booked, ` +
@@ -615,7 +615,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     }
     case 'sq_payment_expired':
       return {
-        subject: `That payment link expired, nothing was booked`,
+        subject: `That payment link expired: nothing was booked`,
         text:
           `Hi ${first},\n\nThe payment link for ${p.contractor_label ?? 'your chosen contractor'} ` +
           `ran out before payment went through, so nothing was booked and no money was taken.\n\n` +
@@ -798,7 +798,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `Invoice received${p.amount_pence ? ` (${gbp(p.amount_pence)})` : ''} for the ${p.service ?? 'job'}`,
         text:
-          `Thanks, we have your invoice${p.invoice_name ? ` (${p.invoice_name})` : ''} for the ` +
+          `Thanks. We have your invoice${p.invoice_name ? ` (${p.invoice_name})` : ''} for the ` +
           `${p.service ? `${p.service} ` : ''}job${p.contact_name ? ` for ${p.contact_name}` : ''}.\n\n` +
           `${p.amount_pence ? `The ${gbp(p.amount_pence)} is` : 'It’s'} paid as soon as the customer’s ` +
           `funds have cleared into our account, typically 7 days or less from now. ` +
@@ -881,7 +881,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
 
     case 'sq_balance_paid':
       return {
-        subject: `Paid in full, thank you`,
+        subject: `Paid in full. Thank you`,
         text:
           `Hi ${first},\n\nThe balance of ${gbp(p.amount_pence)}${vatSuffix(p.price_basis)} ` +
           `has gone through and the ` +
