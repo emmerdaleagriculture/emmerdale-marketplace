@@ -6,7 +6,6 @@ import {
   isLiveSub,
   membershipDay as day,
   MEMBERSHIP_NAMES as NAME,
-  MEMBERSHIP_PRICES as PRICE,
   priceLabel as label,
   subPlan,
   type Membership,
@@ -14,42 +13,18 @@ import {
   type MembershipTier as Tier,
   type SubRow as Sub,
 } from '@/lib/membership';
+import {
+  ActionCurrent,
+  ActionNote,
+  Benefits,
+  gbp,
+  OPEN_BENEFITS,
+  PREMIUM_BENEFITS,
+  TierCard,
+  TierGrid,
+} from '@/components/membership/TierCard';
 import f from '@/components/forms/forms.module.css';
 import s from './membership.module.css';
-
-const gbp = (n: number) => `£${n}`;
-
-function Tick() {
-  return (
-    <svg className={s.tick} viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m4.5 10.5 3.5 3.5 7.5-8" />
-    </svg>
-  );
-}
-
-const PREMIUM_BENEFITS = [
-  <><b>First refusal on new jobs</b> in your area, for up to 7 days before anyone else sees them.</>,
-  <><b>5% commission instead of 15%.</b> Price a job at £400 and the customer sees £420, not £460.</>,
-  <><b>Cancel any time.</b> You keep it to the end of the period you’ve paid for.</>,
-];
-const OPEN_BENEFITS = [
-  <><b>The customer’s name, phone and email</b> on every job you’re invited to, the moment it arrives.</>,
-  <><b>Agree the work directly</b> with nothing added on top — or send a price through us at 5% as usual.</>,
-];
-
-function Benefits({ items, plus }: { items: ReactNode[]; plus?: string }) {
-  return (
-    <ul className={s.benefits}>
-      {plus && <li className={s.plus}>{plus}</li>}
-      {items.map((b, i) => (
-        <li key={i} className={s.benefit}>
-          <Tick />
-          <span>{b}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 /** A Stripe button: checkout or portal, with the page to come back to. */
 function Pay({
@@ -77,12 +52,6 @@ function Pay({
   );
 }
 
-const FREE_BENEFITS = [
-  <><b>Every job in your area</b> once members have had first refusal.</>,
-  <><b>15% commission.</b> Price a job at £400 and the customer sees £460.</>,
-  <><b>Nothing to pay</b>, no card, no commitment.</>,
-];
-
 /**
  * The free plan as a card beside the two tiers, so the page shows what you
  * get for nothing next to what you get for £20 and £49, rather than leaving
@@ -96,30 +65,17 @@ const FREE_BENEFITS = [
 function FreeCard({ state, forever = false }: { state: 'free' | 'billed' | 'comped'; forever?: boolean }) {
   const mine = state === 'free';
   return (
-    <article className={`${s.tier} ${mine ? s.tierCurrent : ''}`} aria-labelledby="tier-free">
-      {mine && <span className={`${s.tierTag} ${s.tagCurrent}`}>Your plan</span>}
-      <h2 id="tier-free" className={s.tierName}>Free</h2>
-      <p className={s.tierBlurb}>
-        Every job in your area after members have seen it, at our standard commission.
-      </p>
-      <p className={s.price}>
-        <span className={s.priceAmount}>{gbp(0)}</span>
-        <span className={s.pricePer}>a month</span>
-      </p>
-      <p className={s.priceAlt}>and nothing a year either</p>
-      <Benefits items={FREE_BENEFITS} />
-      <div className={s.actions}>
-        {mine ? (
-          <span className={s.actionCurrent}>Your plan — free</span>
-        ) : state === 'billed' ? (
-          <p className={s.actionNote}>To go back to the free plan, use <b>Manage billing or cancel</b> above.</p>
-        ) : forever ? (
-          <p className={s.actionNote}>Your membership is on us for good, so there’s nothing to cancel.</p>
-        ) : (
-          <p className={s.actionNote}>This is what’s left when your membership on us ends. Nothing to cancel.</p>
-        )}
-      </div>
-    </article>
+    <TierCard tier="free" current={mine} tag={mine ? 'Your plan' : undefined}>
+      {mine ? (
+        <ActionCurrent>Your plan — free</ActionCurrent>
+      ) : state === 'billed' ? (
+        <ActionNote>To go back to the free plan, use <b>Manage billing or cancel</b> above.</ActionNote>
+      ) : forever ? (
+        <ActionNote>Your membership is on us for good, so there’s nothing to cancel.</ActionNote>
+      ) : (
+        <ActionNote>This is what’s left when your membership on us ends. Nothing to cancel.</ActionNote>
+      )}
+    </TierCard>
   );
 }
 
@@ -139,21 +95,20 @@ type TierState =
   | { kind: 'comped' }
   | { kind: 'other'; plan: Plan | null; outranked: boolean };
 
-function TierCard({ tier, state, returnPath }: { tier: Tier; state: TierState; returnPath: string }) {
-  const featured = tier === 'open';
+function PaidCard({ tier, state, returnPath }: { tier: Tier; state: TierState; returnPath: string }) {
   const mine = state.kind === 'billed' || state.kind === 'comped';
-  const primary = featured ? f.btnYellow : f.btnPrimary;
+  const primary = tier === 'open' ? f.btnYellow : f.btnPrimary;
 
   let buttons: ReactNode;
   if (state.kind === 'comped') {
-    buttons = <p className={s.actionNote}>Nothing to pay while it’s on us.</p>;
+    buttons = <ActionNote>Nothing to pay while it’s on us.</ActionNote>;
   } else if (state.kind === 'other' && state.outranked) {
-    buttons = <p className={s.actionNote}>You already have all of this, and more, on us.</p>;
+    buttons = <ActionNote>You already have all of this, and more, on us.</ActionNote>;
   } else if (state.kind === 'billed') {
     const swap: Plan = state.plan === 'monthly' ? 'annual' : 'monthly';
     buttons = (
       <>
-        <span className={s.actionCurrent}>Your plan — {label(tier, state.plan)}</span>
+        <ActionCurrent>Your plan — {label(tier, state.plan)}</ActionCurrent>
         <Pay action="checkout" tier={tier} plan={swap} returnPath={returnPath} className={f.btnGhost}>
           Switch to {label(tier, swap)}
           {swap === 'annual' ? `, save ${gbp(saving(tier))}` : ''}
@@ -178,35 +133,13 @@ function TierCard({ tier, state, returnPath }: { tier: Tier; state: TierState; r
   }
 
   return (
-    <article
-      className={`${s.tier} ${mine ? s.tierCurrent : featured ? s.tierFeatured : ''}`}
-      aria-labelledby={`tier-${tier}`}
+    <TierCard
+      tier={tier}
+      current={mine}
+      tag={mine ? (state.kind === 'comped' ? 'Yours, on us' : 'Your plan') : undefined}
     >
-      {mine ? (
-        <span className={`${s.tierTag} ${s.tagCurrent}`}>{state.kind === 'comped' ? 'Yours, on us' : 'Your plan'}</span>
-      ) : featured ? (
-        <span className={s.tierTag}>Deal direct</span>
-      ) : null}
-      <h2 id={`tier-${tier}`} className={s.tierName}>{featured ? '◆' : '★'} {NAME[tier]}</h2>
-      <p className={s.tierBlurb}>
-        {featured
-          ? 'Everything in Premium, plus the customer’s contact details on every job.'
-          : 'First look at every job in your area, and 5% commission instead of 15%.'}
-      </p>
-      <p className={s.price}>
-        <span className={s.priceAmount}>{gbp(PRICE[tier].monthly)}</span>
-        <span className={s.pricePer}>a month</span>
-      </p>
-      <p className={s.priceAlt}>
-        or {gbp(PRICE[tier].annual)} a year — <b>save {gbp(saving(tier))}</b>
-      </p>
-      {featured ? (
-        <Benefits plus="Everything in Premium, plus" items={OPEN_BENEFITS} />
-      ) : (
-        <Benefits items={PREMIUM_BENEFITS} />
-      )}
-      <div className={s.actions}>{buttons}</div>
-    </article>
+      {buttons}
+    </TierCard>
   );
 }
 
@@ -325,7 +258,7 @@ export function MembershipView({
             <div className={s.planMeta}>{meta}</div>
           </div>
           <div className={s.planBody}>
-            <Benefits items={tier === 'open' ? [...OPEN_BENEFITS, ...PREMIUM_BENEFITS.slice(0, 2)] : PREMIUM_BENEFITS.slice(0, 2)} />
+            <Benefits flush items={tier === 'open' ? [...OPEN_BENEFITS, ...PREMIUM_BENEFITS.slice(0, 2)] : PREMIUM_BENEFITS.slice(0, 2)} />
             {active && (
               <div className={s.planActions}>
                 <Pay action="portal" returnPath={returnPath} className={f.btnGhost}>
@@ -369,12 +302,12 @@ export function MembershipView({
                     </>
                   )}
                 </p>
-                <div className={s.tiers}>
+                <TierGrid>
                   <FreeCard state={billed ? 'billed' : 'comped'} forever={forever} />
                   {(['premium', 'open'] as const).map((t) => (
-                    <TierCard key={t} tier={t} returnPath={returnPath} state={stateOf(t)} />
+                    <PaidCard key={t} tier={t} returnPath={returnPath} state={stateOf(t)} />
                   ))}
-                </div>
+                </TierGrid>
               </>
             )}
           </section>
@@ -406,11 +339,11 @@ export function MembershipView({
       </p>
       {noticeBox}
 
-      <div className={s.tiers}>
+      <TierGrid>
         <FreeCard state="free" />
-        <TierCard tier="premium" state={{ kind: 'free' }} returnPath={returnPath} />
-        <TierCard tier="open" state={{ kind: 'free' }} returnPath={returnPath} />
-      </div>
+        <PaidCard tier="premium" state={{ kind: 'free' }} returnPath={returnPath} />
+        <PaidCard tier="open" state={{ kind: 'free' }} returnPath={returnPath} />
+      </TierGrid>
 
       <section className={s.how} aria-labelledby="how-title">
         <h2 id="how-title" className={s.howTitle}>How first refusal works</h2>

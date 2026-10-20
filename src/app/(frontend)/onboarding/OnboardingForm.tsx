@@ -1,10 +1,12 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useState, type ReactNode } from 'react';
 import { completeOnboardingAction } from './actions';
 import { emptyFormState } from '@/lib/form';
 import { CountyPicker, type CountyOption } from '@/components/forms/CountyPicker';
 import { ServicePicker, type ServiceOption } from '@/components/forms/ServicePicker';
+import { TierCard, TierGrid } from '@/components/membership/TierCard';
+import { MEMBERSHIP_PRICES, annualSaving } from '@/lib/membership';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 import o from './onboarding.module.css';
@@ -20,7 +22,23 @@ export function OnboardingForm({
   verifiedPhone?: string | null;
 }) {
   const [state, action, pending] = useActionState(completeOnboardingAction, emptyFormState);
-  const [membership, setMembership] = useState<(typeof PLANS)[number]['value']>('free');
+  const [membership, setMembership] = useState<Choice>('free');
+  const tier = TIER_OF[membership];
+
+  /** One radio in a card's foot. */
+  const pick = (value: Choice, children: ReactNode) => (
+    <label className={membership === value ? `${o.choice} ${o.choiceOn}` : o.choice}>
+      <input
+        type="radio"
+        name="membership"
+        value={value}
+        checked={membership === value}
+        onChange={() => setMembership(value)}
+        className={o.choiceRadio}
+      />
+      <span>{children}</span>
+    </label>
+  );
 
   return (
     <form action={action}>
@@ -72,41 +90,27 @@ export function OnboardingForm({
       <CountyPicker counties={counties} />
 
       <div className={a.groupTitle}>Choose your membership</div>
-      <div className={o.plans} role="radiogroup" aria-label="Membership">
-        {PLANS.map((p) => (
-          <label
-            key={p.value}
-            className={`${o.plan} ${membership === p.value ? o.planOn : ''} ${p.value !== 'free' ? o.planPremium : ''}`}
-          >
-            <input
-              type="radio"
-              name="membership"
-              value={p.value}
-              checked={membership === p.value}
-              onChange={() => setMembership(p.value)}
-              className={o.radio}
-            />
-            <span className={o.planName}>{p.name}</span>
-            <span className={o.planPrice}>{p.price}</span>
-            <span className={o.planNote}>{p.note}</span>
-          </label>
-        ))}
+      <p className={f.hint} style={{ marginBottom: 16 }}>
+        New jobs come to members first, and their prices land cheaper. Start free if you like —
+        you can move up any time from your account.
+      </p>
+      {/* The same three cards as /account/membership, with a pick in the
+          foot instead of a Stripe button. The whole card selects its tier. */}
+      <div role="radiogroup" aria-label="Membership">
+        <TierGrid>
+          <TierCard tier="free" current={tier === 'free'} tag={tier === 'free' ? 'Your pick' : undefined} onSelect={() => setMembership('free')}>
+            {pick('free', 'Start free')}
+          </TierCard>
+          <TierCard tier="premium" current={tier === 'premium'} tag={tier === 'premium' ? 'Your pick' : undefined} onSelect={() => setMembership('monthly')}>
+            {pick('monthly', `£${MEMBERSHIP_PRICES.premium.monthly} a month`)}
+            {pick('annual', <>£{MEMBERSHIP_PRICES.premium.annual} a year — <b>save £{annualSaving('premium')}</b></>)}
+          </TierCard>
+          <TierCard tier="open" current={tier === 'open'} tag={tier === 'open' ? 'Your pick' : undefined} onSelect={() => setMembership('open_monthly')}>
+            {pick('open_monthly', `£${MEMBERSHIP_PRICES.open.monthly} a month`)}
+            {pick('open_annual', <>£{MEMBERSHIP_PRICES.open.annual} a year — <b>save £{annualSaving('open')}</b></>)}
+          </TierCard>
+        </TierGrid>
       </div>
-      <ul className={o.perks}>
-        <li>
-          <b>Free:</b> jobs in your counties, first come, first served. We add 15% to your price.
-        </li>
-        <li>
-          <b>Premium:</b> new jobs come to you <b>before anyone else</b>, held for up to 7 days
-          if you tap the text within 2 hours and reply within 24, and we add
-          only <b>5%</b> to your price, so a £400 price shows the customer £420, not £460.
-        </li>
-        <li>
-          <b>Open:</b> everything in Premium, and the <b>customer&rsquo;s name, phone number and
-          email on every job</b> you&rsquo;re invited to, straight away. Ring them and agree the
-          work directly, with nothing added on top — or price it through us at 5% as usual.
-        </li>
-      </ul>
       {membership !== 'free' && (
         <p className={f.hint}>
           You’ll pay securely with Stripe next. Membership starts working the moment we approve you,
@@ -122,17 +126,26 @@ export function OnboardingForm({
             ? 'Saving…'
             : membership === 'free'
               ? 'Finish and submit application'
-              : `Submit and pay ${PLANS.find((p) => p.value === membership)?.pay ?? ''}`}
+              : `Submit and pay £${PAY[membership]}`}
         </button>
       </div>
     </form>
   );
 }
 
-const PLANS = [
-  { value: 'free', name: 'Free', price: '£0', note: '15% added to your prices', pay: '' },
-  { value: 'monthly', name: 'Premium', price: '£20 a month', note: 'First refusal · 5%', pay: '£20' },
-  { value: 'annual', name: 'Premium yearly', price: '£199 a year', note: 'Same as monthly · save £41', pay: '£199' },
-  { value: 'open_monthly', name: 'Open', price: '£49 a month', note: 'Customer details on every job', pay: '£49' },
-  { value: 'open_annual', name: 'Open yearly', price: '£399 a year', note: 'Same as monthly · save £189', pay: '£399' },
-] as const;
+/** The form's value: the action reads tier and plan out of it (actions.ts). */
+type Choice = 'free' | 'monthly' | 'annual' | 'open_monthly' | 'open_annual';
+const TIER_OF: Record<Choice, 'free' | 'premium' | 'open'> = {
+  free: 'free',
+  monthly: 'premium',
+  annual: 'premium',
+  open_monthly: 'open',
+  open_annual: 'open',
+};
+const PAY: Record<Choice, number> = {
+  free: 0,
+  monthly: MEMBERSHIP_PRICES.premium.monthly,
+  annual: MEMBERSHIP_PRICES.premium.annual,
+  open_monthly: MEMBERSHIP_PRICES.open.monthly,
+  open_annual: MEMBERSHIP_PRICES.open.annual,
+};

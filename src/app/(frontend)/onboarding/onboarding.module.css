@@ -1,55 +1,28 @@
 /* ── Membership choice ─────────────────────────────────────────────────── */
-.plans {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
-}
-@media (max-width: 640px) {
-  .plans {
-    grid-template-columns: 1fr;
-  }
-}
-.plan {
-  position: relative;
+/* The pick at the foot of a tier card (components/membership/TierCard):
+   one radio per plan, drawn as a row you can press. */
+.choice {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 14px 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
   border: 1px solid var(--rule);
   border-radius: 6px;
   background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jd-green-deep);
   cursor: pointer;
 }
-.planPremium {
-  border-top: 4px solid var(--jd-yellow);
+.choice b {
+  color: var(--jd-green-dark);
 }
-.planOn {
+.choiceOn {
   border-color: var(--jd-green-dark);
   box-shadow: 0 0 0 1px var(--jd-green-dark);
 }
-.radio {
-  position: absolute;
-  top: 14px;
-  right: 14px;
+.choiceRadio {
+  flex: 0 0 auto;
+  margin: 0;
   accent-color: var(--jd-green-dark);
-}
-.planName {
-  font-weight: 600;
-  color: var(--jd-green-deep);
-}
-.planPrice {
-  font-family: var(--font-display-stack);
-  font-size: 20px;
-}
-.planNote {
-  font-size: 13px;
-  color: var(--ink-3);
-}
-.perks {
-  margin: 0 0 12px;
-  padding-left: 18px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--ink-2);
 }

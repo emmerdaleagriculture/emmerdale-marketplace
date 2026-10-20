@@ -1,0 +1,170 @@
+/*
+ * The membership tiers as cards: Free, Premium and Open side by side, each
+ * with its name, a line on who it is for, the price, the benefits and a
+ * slot at the foot for whatever the page does with it — Stripe buttons on
+ * the membership page, a pick on the application form.
+ *
+ * Three cards in a 760px column is 240px each, so the padding is tighter
+ * than a panel's and the price a size down.
+ */
+.tiers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 0 0 36px;
+}
+.tier {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: #fff;
+  padding: 24px 20px 20px;
+}
+.tierFeatured {
+  border-color: var(--jd-green);
+  box-shadow: 0 0 0 1px var(--jd-green), 0 18px 40px -24px rgba(23, 51, 13, 0.45);
+}
+/* The one they have, or the one they have picked. */
+.tierCurrent {
+  border-color: var(--jd-green-dark);
+  background: var(--jd-green-pale);
+}
+.tierClickable {
+  cursor: pointer;
+}
+.tierTag {
+  position: absolute;
+  top: -12px;
+  left: 24px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--jd-yellow);
+  color: var(--jd-green-deep);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.tagCurrent {
+  background: var(--jd-green-dark);
+  color: #fff;
+}
+.tierName {
+  font-family: var(--font-display-stack);
+  font-size: 24px;
+  color: var(--jd-green-deep);
+  margin: 0 0 4px;
+}
+.tierBlurb {
+  color: var(--ink-3);
+  font-size: 14px;
+  margin: 0 0 18px;
+  min-height: 2.9em;
+}
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+}
+.priceAmount {
+  font-family: var(--font-display-stack);
+  font-size: 38px;
+  line-height: 1;
+  color: var(--ink);
+}
+.pricePer {
+  color: var(--ink-3);
+  font-size: 15px;
+}
+.priceAlt {
+  margin: 6px 0 20px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.priceAlt b {
+  color: var(--jd-green-dark);
+}
+
+.benefits {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 18px 0 0;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 auto;
+}
+/* Inside a panel that has its own head: no rule above. */
+.benefitsFlush {
+  border-top: 0;
+  padding-top: 0;
+}
+.benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.benefit b {
+  color: var(--ink);
+}
+.tick {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--jd-green);
+}
+.plus {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 -2px;
+}
+
+/* The foot: buttons, a pick, or a line saying why there is neither. */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.actions form {
+  display: contents;
+}
+.actions button {
+  width: 100%;
+  justify-content: center;
+}
+.actionNote {
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-3);
+  margin: 6px 0 0;
+}
+/* The plan they're on, in the button's slot: a fact, not a button. */
+.actionCurrent {
+  display: block;
+  text-align: center;
+  padding: 11px 16px;
+  border-radius: 6px;
+  border: 1px dashed var(--jd-green-dark);
+  color: var(--jd-green-deep);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .tiers {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .tier {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
