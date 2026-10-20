@@ -157,9 +157,6 @@
   font-size: 13px;
   color: var(--ink-3);
 }
-.directoryList {
-  max-width: none;
-}
 .empty {
   border: 1px solid var(--rule);
   border-radius: 14px;

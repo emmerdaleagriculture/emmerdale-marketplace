@@ -21,8 +21,8 @@ export function DirectEnquiryForm({
 }: {
   contractorId: string;
   businessName: string;
-  /** The county page it sits on: the action checks they are listed there. */
-  county: string;
+  /** The county page it sits on, if any: the action checks they are listed there. */
+  county?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState(submitDirectoryEnquiryAction, emptyFormState);
@@ -44,7 +44,7 @@ export function DirectEnquiryForm({
         work between you.
       </p>
       <input type="hidden" name="contractor_id" value={contractorId} />
-      <input type="hidden" name="county" value={county} />
+      {county && <input type="hidden" name="county" value={county} />}
       <input type="hidden" name="form_ts" value={formTs} />
       {/* Honeypot — real users never see or fill this. */}
       <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', height: 0, overflow: 'hidden' }}>

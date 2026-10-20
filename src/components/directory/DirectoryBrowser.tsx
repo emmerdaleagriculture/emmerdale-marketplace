@@ -56,7 +56,7 @@ export function DirectoryBrowser({ members, counties }: { members: DirectoryMemb
             key={m.entry.contractorId}
             entry={m.entry}
             serviceNames={m.serviceNames}
-            county={active && m.counties.includes(active) ? active : m.counties[0]!}
+            county={active ?? undefined}
             counties={m.counties}
           />
         ))}

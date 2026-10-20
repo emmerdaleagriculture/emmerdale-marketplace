@@ -9,7 +9,8 @@ import type { FormState } from '@/lib/form';
 
 const DirectEnquirySchema = z.object({
   contractor_id: z.string().uuid(),
-  county: z.string().trim().min(1).max(80),
+  /** The county page it came from; absent on the directory's "everywhere" view. */
+  county: z.string().trim().max(80).optional(),
   name: z.string().trim().min(1, 'Your name is required.'),
   phone: z.string().trim().min(5, 'A phone number is required.'),
   email: z.string().trim().email('An email address is required.'),
@@ -38,7 +39,7 @@ export async function submitDirectoryEnquiryAction(_prev: FormState, formData: F
 
   const parsed = DirectEnquirySchema.safeParse({
     contractor_id: formData.get('contractor_id'),
-    county: formData.get('county'),
+    county: formData.get('county') || undefined,
     name: formData.get('name'),
     phone: formData.get('phone'),
     email: formData.get('email'),
@@ -54,17 +55,21 @@ export async function submitDirectoryEnquiryAction(_prev: FormState, formData: F
 
   const admin = createServiceRoleClient();
   // Only a listed Open member can be written to through a listing, and
-  // only for a county they are listed in: the view is the one definition
+  // from a county page only for that county: the view is the one definition
   // of who is listed where, so a stale page or a forged id goes nowhere.
-  const { data: contractor } = await admin
+  let listed = admin
     .from('county_directory')
     .select('contractor_id, business_name, email')
-    .eq('contractor_id', d.contractor_id)
-    .eq('county', d.county)
-    .limit(1)
-    .maybeSingle();
+    .eq('contractor_id', d.contractor_id);
+  if (d.county) listed = listed.eq('county', d.county);
+  const { data: contractor } = await listed.limit(1).maybeSingle();
   if (!contractor?.email || !contractor.business_name) {
-    return { error: 'This contractor is no longer listed here. Please send the job through the form above instead.' };
+    return {
+      error:
+        'This contractor is no longer taking direct enquiries. Describe the job at ' +
+        `${(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.emmerdaleagriculture.com').replace(/^https?:\/\//, '')}/start ` +
+        'and we’ll put it to the contractors covering your county.',
+    };
   }
 
   // One a customer sends twice, or a script sends a hundred times, reaches
@@ -95,7 +100,7 @@ export async function submitDirectoryEnquiryAction(_prev: FormState, formData: F
       details: {
         category: 'directory',
         sent_to: contractor.business_name,
-        listed_in: d.county,
+        listed_in: d.county ?? geo.county_name ?? null,
         name: d.name,
         phone: d.phone,
         email: d.email,
@@ -131,7 +136,7 @@ export async function submitDirectoryEnquiryAction(_prev: FormState, formData: F
 
   await notifyAdmins(
     `Directory enquiry for ${contractor.business_name}: ${d.name}`,
-    `A customer wrote to ${contractor.business_name} through their county-page listing. ` +
+    `A customer wrote to ${contractor.business_name} through their ${d.county ? `${d.county} page` : 'directory'} listing. ` +
       `It went to them directly; nothing to do unless it comes back.\n\n` +
       `Name:      ${d.name}\n` +
       `Phone:     ${d.phone}\n` +

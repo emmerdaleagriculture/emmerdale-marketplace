@@ -137,7 +137,7 @@ export default async function MarketDataPage() {
                   <p>
                     Open is £49 a month or £399 a year, and includes first look at every new job,
                     the customer’s contact details on every invitation, 5% commission and a listing
-                    on our county pages.
+                    in Find a contractor.
                   </p>
                   <Link href="/account/membership">See the membership tiers →</Link>
                 </div>

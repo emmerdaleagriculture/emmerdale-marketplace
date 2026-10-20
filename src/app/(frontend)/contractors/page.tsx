@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { DirectoryBrowser, type DirectoryMember } from '@/components/directory/DirectoryBrowser';
+import { DIRECT_DISCLAIMER, isNationwide } from '@/components/directory/copy';
 import { getCountyDirectory, getServices } from '@/lib/reference';
 import { jsonLd } from '@/lib/jsonld';
 import { siteUrl } from '@/lib/site';
@@ -18,8 +20,9 @@ const TITLE = 'Find a contractor to contact directly';
 const DESCRIPTION =
   'Vetted agricultural contractors across the UK who take enquiries straight from you: who they are, what they do, where they cover, and a form that goes to them alone.';
 
-/** Everyone listed, once each, with everywhere they are listed. */
-async function loadMembers(): Promise<{ members: DirectoryMember[]; counties: string[] }> {
+/** Everyone listed, once each, with everywhere they are listed. Once per
+ *  request: the metadata and the body both ask. */
+const loadMembers = cache(async (): Promise<{ members: DirectoryMember[]; counties: string[] }> => {
   const [directory, services] = await Promise.all([getCountyDirectory(), getServices()]);
   const serviceName = new Map(services.map((sv) => [sv.id, sv.name]));
   const byId = new Map<string, DirectoryMember>();
@@ -36,11 +39,11 @@ async function loadMembers(): Promise<{ members: DirectoryMember[]; counties: st
     }
   }
   const members = [...byId.values()].sort((x, y) => x.entry.businessName.localeCompare(y.entry.businessName));
-  const counties = Object.keys(directory)
-    .filter((c) => (directory[c] ?? []).length > 0)
-    .sort();
+  // The chips: counties someone with bounded coverage is listed in. A
+  // nationwide member is under every chip but makes none.
+  const counties = [...new Set(members.filter((m) => !isNationwide(m.counties)).flatMap((m) => m.counties))].sort();
   return { members, counties };
-}
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const { members } = await loadMembers();
@@ -90,9 +93,8 @@ export default async function ContractorsPage() {
           )}
 
           <p className={s.cta}>
-            Work agreed directly with a contractor is between you and them: our deposit, cover and
-            payment protection apply only to jobs priced through us. A contractor who wants to be
-            listed here takes <Link href="/agriculturalcontractors">Open membership</Link>.
+            {DIRECT_DISCLAIMER} A contractor who wants to be listed here takes{' '}
+            <Link href="/agriculturalcontractors">Open membership</Link>.
           </p>
         </div>
       </main>
@@ -114,7 +116,7 @@ export default async function ContractorsPage() {
                   '@type': 'LocalBusiness',
                   name: m.entry.businessName,
                   ...(m.entry.website ? { url: m.entry.website } : {}),
-                  areaServed: m.counties,
+                  areaServed: isNationwide(m.counties) ? 'United Kingdom' : m.counties,
                 },
               })),
             }),

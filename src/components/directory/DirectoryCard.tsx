@@ -1,5 +1,6 @@
 import { RatingStars } from '@/components/RatingStars';
 import { DirectEnquiryForm } from './DirectEnquiryForm';
+import { isNationwide } from './copy';
 import type { DirectoryEntry } from '@/lib/reference';
 import s from './directory.module.css';
 
@@ -28,8 +29,8 @@ export function DirectoryCard({
 }: {
   entry: DirectoryEntry;
   serviceNames: string[];
-  /** The county the enquiry is filed under (the action checks the listing there). */
-  county: string;
+  /** The county the enquiry is filed under, when the page is a county's. */
+  county?: string;
   /** Everywhere they are listed, shown on the directory page only. */
   counties?: string[];
 }) {
@@ -48,7 +49,7 @@ export function DirectoryCard({
       )}
       {counties && counties.length > 0 && (
         <p className={s.covers}>
-          <b>Covers</b> {counties.join(', ')}
+          <b>Covers</b> {isNationwide(counties) ? 'the whole UK' : counties.join(', ')}
         </p>
       )}
       <div className={s.links}>

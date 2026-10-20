@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getCountyDirectory, getServices } from '@/lib/reference';
 import { DirectoryCard } from './DirectoryCard';
+import { DIRECT_DISCLAIMER } from './copy';
 import l from '@/app/(frontend)/landing.module.css';
 import s from './directory.module.css';
 
@@ -42,8 +43,7 @@ export async function CountyDirectory({ county, serviceId }: { county: string; s
           ))}
         </div>
         <p className={s.fine}>
-          Work agreed directly with a contractor is between you and them: our deposit, cover and
-          payment protection apply only to jobs priced through us.{' '}
+          {DIRECT_DISCLAIMER}{' '}
           <Link href="/contractors">See everyone taking direct enquiries →</Link>
         </p>
       </div>

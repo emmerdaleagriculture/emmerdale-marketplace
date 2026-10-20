@@ -3,6 +3,7 @@
 import { contractorHasHistory } from '@/lib/deleteAccount';
 
 import { revalidatePath } from 'next/cache';
+import { revalidateDirectory } from '@/lib/directory';
 import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
@@ -75,6 +76,8 @@ export async function setContractorStatus(formData: FormData) {
     });
   }
 
+  // Approval, vetting, suspension and a comp all change who is listed.
+  revalidateDirectory();
   revalidatePath('/admin/contractors');
   revalidatePath(`/admin/contractors/${id}`);
 }
@@ -145,6 +148,8 @@ export async function setPremiumComp(formData: FormData) {
   if (error) throw new Error(error.message);
   if (until) await admin.rpc('invite_contractor_to_open_jobs', { p_contractor_id: id });
 
+  // Approval, vetting, suspension and a comp all change who is listed.
+  revalidateDirectory();
   revalidatePath(`/admin/contractors/${id}`);
 }
 
