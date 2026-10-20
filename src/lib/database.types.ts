@@ -694,6 +694,7 @@ export type Database = {
           services_only: boolean
           invite_radius_miles: number | null
           messages_moderated_until: string | null
+          contact_warned_at: string | null
           base_lat: number | null
           base_lng: number | null
           base_postcode: string
@@ -725,6 +726,7 @@ export type Database = {
           services_only?: boolean
           invite_radius_miles?: number | null
           messages_moderated_until?: string | null
+          contact_warned_at?: string | null
           base_lat?: number | null
           base_lng?: number | null
           base_postcode: string
@@ -756,6 +758,7 @@ export type Database = {
           services_only?: boolean
           invite_radius_miles?: number | null
           messages_moderated_until?: string | null
+          contact_warned_at?: string | null
           base_lat?: number | null
           base_lng?: number | null
           base_postcode?: string
