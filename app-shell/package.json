@@ -8,15 +8,32 @@
     "add:android": "cap add android",
     "open:ios": "cap open ios",
     "open:android": "cap open android",
-    "sync": "cap sync"
+    "sync": "cap sync",
+    "check": "node scripts/check-config.mjs",
+    "assets:ios": "capacitor-assets generate --ios --iconBackgroundColor '#17330d' --splashBackgroundColor '#17330d'",
+    "assets:android": "capacitor-assets generate --android --iconBackgroundColor '#17330d' --splashBackgroundColor '#17330d'"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "overrides": {
+    "tar": "7.5.22",
+    "sharp": "0.35.4",
+    "uuid": "11.1.1"
   },
   "dependencies": {
-    "@capacitor/android": "^6.1.2",
-    "@capacitor/core": "^6.1.2",
-    "@capacitor/ios": "^6.1.2"
+    "@capacitor/android": "8.5.2",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/browser": "8.0.5",
+    "@capacitor/camera": "8.2.6",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/geolocation": "8.2.4",
+    "@capacitor/ios": "8.5.2",
+    "@capgo/capacitor-social-login": "8.7.3"
   },
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^6.1.2"
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.5.2",
+    "typescript": "5.9.3"
   }
 }

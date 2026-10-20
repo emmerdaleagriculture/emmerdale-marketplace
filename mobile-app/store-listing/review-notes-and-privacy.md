@@ -1,5 +1,15 @@
 # Review notes, privacy answers, and the rejection risk
 
+> **25 September 2026: historical draft, NOT approved submission answers.**
+> The live website now includes optional device geolocation, and its analytics,
+> advertising, payment and account flows have changed since this draft.
+> Do not paste the tables or tracking claims below into either store.
+> Re-audit current behaviour, SDKs, recipients and consent first.
+> See `app-shell/RELEASE-READINESS.md` for the current release gates.
+> Camera/photo behaviour below remains a device-test requirement, not a verified
+> result. Push notifications are not a guarantee of Apple approval, and websites
+> can also support web push; the older wording below must not be used as advice.
+
 ## The one real risk: Apple guideline 4.2 ("minimum functionality")
 
 This app displays the live emmerdaleagriculture.com site inside a native

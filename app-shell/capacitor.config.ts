@@ -1,4 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+// The app's version lives in package.json alone: the Android versionName,
+// the iOS MARKETING_VERSION and the user-agent token below all read it
+// (scripts/check-config.mjs asserts they agree).
+import pkg from './package.json';
 
 const config: CapacitorConfig = {
   // Reverse-DNS app identifier. This exact string has to match what you
@@ -21,12 +25,32 @@ const config: CapacitorConfig = {
     // definition, so there's nothing left to sell — see the /app route's
     // doc comment in the main site repo for the reasoning.
     //
-    // IMPORTANT: this only resolves once /app exists in production — see
-    // ../0001-add-app-entry-screen.patch and the README's "Getting this
-    // live" section. Point this at a Vercel preview URL in the meantime to
-    // test against the branch before it's merged.
-    url: 'https://emmerdaleagriculture.com/app',
+    // Use the canonical origin to avoid leaving the WebView on the site's
+    // apex -> www redirect. Only our two website hosts may stay in-app;
+    // payment-provider and other external links must be device-tested.
+    url: 'https://www.emmerdaleagriculture.com/app',
+    allowNavigation: ['www.emmerdaleagriculture.com', 'emmerdaleagriculture.com'],
     cleartext: false,
+  },
+
+  // Tells the website it is running inside the app ("app mode": no website
+  // header or footer, tab bar, native sign-in, camera and location). The
+  // site reads this in src/lib/appMode.ts. The version is package.json's.
+  appendUserAgent: `EmmerdaleApp/${pkg.version}`,
+
+  plugins: {
+    // Native Apple and Google sign-in sheets used by the website's
+    // src/lib/app/nativeSignIn.ts. Facebook and Twitter are left out so
+    // their SDKs are not bundled.
+    SocialLogin: {
+      providers: {
+        google: true,
+        apple: true,
+        facebook: false,
+        twitter: false,
+      },
+      logLevel: 1,
+    },
   },
 
   ios: {

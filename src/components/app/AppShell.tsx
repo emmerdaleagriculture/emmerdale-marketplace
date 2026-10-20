@@ -7,6 +7,7 @@ import { useViewer, type ViewerRole } from '@/components/useViewer';
 import { APP_COOKIE, isAppStandalonePath, isAppUserAgent } from '@/lib/appMode';
 import { activeTab, isTabRoot, tabsFor, type BadgeKey, type Tab } from './tabs';
 import { listenForPushTaps, registerPush } from '@/lib/app/push';
+import { listenForAppLinks } from '@/lib/app/links';
 import { BackChevron, TabIconSvg } from './AppIcons';
 import s from './AppShell.module.css';
 
@@ -103,6 +104,12 @@ export function AppShell() {
     listenForPushTaps();
     registerPush({ ask: false }).catch(() => {});
   }, [app, viewer.signedIn]);
+  // A link that opened the app goes where it points, signed in or not: a
+  // job page from a text, a payment's return URL.
+  useEffect(() => {
+    if (!app) return;
+    listenForAppLinks();
+  }, [app]);
 
   const tabs = tabsFor(role);
   const standalone = isAppStandalonePath(pathname);
