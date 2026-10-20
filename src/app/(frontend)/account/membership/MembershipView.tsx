@@ -350,7 +350,8 @@ export function MembershipView({
         <ol className={s.steps}>
           <li className={s.step}>
             <b>A job comes in near you</b>
-            Members get the text before anyone else. Tap it within 2 hours to show you’re interested.
+            Open members get the text first, Premium members up to 2 hours later, and everyone
+            else after that. Tap it within 2 hours to show you’re interested.
           </li>
           <li className={s.step}>
             <b>Price it or message the customer</b>

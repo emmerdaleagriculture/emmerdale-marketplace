@@ -335,11 +335,21 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             timeZone: 'Europe/London',
           })
         : p.first_refusal ? 'the next 24 hours' : 'the next 48 hours';
+      // The no-reply deadline (reply_by, from the window's start): a member
+      // invited at the Open hand-off has less than the full 24 hours.
+      const replyBy = p.reply_by
+        ? `by ${new Date(String(p.reply_by)).toLocaleString('en-GB', {
+            weekday: 'long', hour: 'numeric', minute: '2-digit', timeZone: 'Europe/London',
+          })}`
+        : 'within 24 hours';
+      const replied = p.reply_by ? 'has by then' : 'responds in 24 hours';
       const lastTime = p.last_job_at
         ? new Date(String(p.last_job_at)).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'Europe/London' })
         : null;
       return {
-        subject: p.premium
+        subject: p.open_first
+          ? `Open members first: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
+          : p.premium
           ? `Premium first look: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
           : p.first_refusal
           ? `New job, offered to you first: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
@@ -347,9 +357,13 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             ? `A previous customer wants you again: ${p.service ?? 'land work'}, ${p.county ?? ''}`
             : `Job to price: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
         text:
-          (p.premium
+          (p.open_first
+            ? `A job in your area needs pricing. As an Open member you see it before ` +
+              `anyone else — Premium members in ${p.open_first_hours ?? 2} hours, everyone ` +
+              `else after that.\n\n`
+            : p.premium
             ? `A job in your area needs pricing. As a premium member you see it before ` +
-              `anyone else.\n\n`
+              `the rest of the market.\n\n`
             : p.first_refusal
             ? `A new job in your area needs pricing, and it’s offered to you before anyone else.\n\n`
             : p.direct
@@ -396,11 +410,18 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           (p.gate_width ? `Access:    ${p.gate_width} gate\n` : '') +
           (p.access_notes ? `Notes:     ${p.access_notes}\n` : '') +
           (p.obstacles ? `Obstacles: ${p.obstacles}\n` : '') +
-          (p.premium
-            ? `\nOnly premium members have it. Price it or message the customer within 24 ` +
-              `hours and it stays that way until ${opens}, or until you’ve all priced or ` +
+          (p.open_first
+            ? `\nOnly Open members have it for the next ${p.open_first_hours ?? 2} hours, ` +
+              `then Premium members join — sooner if every Open member has priced or passed. ` +
+              `Price it or message the customer ${replyBy} and it stays with members ` +
+              `until ${opens}, or until you’ve all priced or passed. A text left untapped for ` +
+              `2 hours counts as a pass, and if no member ${replied} it goes to ` +
+              `other contractors in the area. Your price carries 5% commission, not 15%.\n\n`
+            : p.premium
+            ? `\nOnly members have it. Price it or message the customer ${replyBy} ` +
+              `and it stays that way until ${opens}, or until you’ve all priced or ` +
               `passed. A text left untapped for 2 hours counts as a pass, and if no member ` +
-              `responds in 24 hours it goes to other contractors in the area. Your price ` +
+              `${replied} it goes to other contractors in the area. Your price ` +
               `carries 5% commission, not 15%.\n\n`
             : p.direct
             ? `\nIt’s yours alone until ${opens}. Price it or pass by then — after that it ` +

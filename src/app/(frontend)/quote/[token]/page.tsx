@@ -111,6 +111,17 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   const premiumFirst =
     Boolean(invitation.premium_offer && offer?.premium_window && offer?.market_opens_at) &&
     new Date(offer!.market_opens_at!) > new Date();
+  // The Open head start inside that window: Open members alone until
+  // open_first_until, when the Premium members in range join them.
+  const openFirst =
+    premiumFirst && Boolean(invitation.open_first && offer?.open_first_until) &&
+    new Date(offer!.open_first_until!) > new Date();
+  // The no-reply rule's deadline runs from the window's start (24 hours,
+  // sq_premium_reply_hours): a member invited at the Open hand-off has
+  // less than a full day, so the banner names the time.
+  const replyBy = offer?.premium_started_at
+    ? formatDateTime(new Date(new Date(offer.premium_started_at).getTime() + 24 * 3600_000).toISOString())
+    : null;
 
   const jobOpen =
     ['distributed', 'quotes_receiving', 'accepted_awaiting_payment'].includes(js.status) &&
@@ -268,14 +279,25 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
           {jobOpen && (
             <>
               {revealed && <CustomerContact contact={revealed} />}
-              {premiumFirst ? (
+              {openFirst ? (
                 <div className={q.pricedPanel}>
-                  <strong>Premium first look.</strong> Only premium members have this job.
-                  Price it or message the customer within 24 hours of it arriving and it stays
-                  that way until {formatDateTime(offer!.market_opens_at!)}, or until you&rsquo;ve
-                  all priced or passed. A text left untapped for 2 hours counts as a pass, and
-                  if no member responds in 24 hours it goes to other contractors in the area. The
-                  customer can accept a price at any time.
+                  <strong>Open members first.</strong> Only Open members have this job until{' '}
+                  {formatDateTime(offer!.open_first_until!)}, when Premium members join — sooner
+                  if every Open member has priced or passed. A text left untapped for 2 hours
+                  counts as a pass. It stays with members until{' '}
+                  {formatDateTime(offer!.market_opens_at!)}, or until you&rsquo;ve all priced or
+                  passed; if no member has priced or messaged the customer{' '}
+                  {replyBy ? `by ${replyBy}` : 'within 24 hours'} it goes to other contractors in
+                  the area. The customer can accept a price at any time.
+                </div>
+              ) : premiumFirst ? (
+                <div className={q.pricedPanel}>
+                  <strong>Premium first look.</strong> Only members have this job.
+                  Price it or message the customer {replyBy ? `by ${replyBy}` : 'within 24 hours'}{' '}
+                  and it stays that way until {formatDateTime(offer!.market_opens_at!)}, or until
+                  you&rsquo;ve all priced or passed. A text left untapped for 2 hours counts as a
+                  pass, and if no member has {replyBy ? 'by then' : 'within 24 hours'} it goes to
+                  other contractors in the area. The customer can accept a price at any time.
                 </div>
               ) : directToYou && offer?.market_opens_at && new Date(offer.market_opens_at) > new Date() ? (
                 <div className={q.pricedPanel}>

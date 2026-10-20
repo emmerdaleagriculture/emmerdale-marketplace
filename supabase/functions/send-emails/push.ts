@@ -78,9 +78,12 @@ export function renderPush(kind: string, p: Record<string, unknown>, site: strin
       const by = londonTime(p.expires_at);
       const where = place ? ` near ${place}` : '';
       const sz = size(p);
+      if (p.open_first) {
+        return { title: `Open members first: ${service}${where}`, body: `Yours before anyone else; Premium members see it in ${p.open_first_hours ?? 2} hours. Tap within 2 hours or it counts as a pass.`, url };
+      }
       if (p.premium) {
         // The text says the same: an untapped offer is a pass after 2 hours.
-        return { title: `First refusal: ${service}${where}`, body: 'Yours before anyone else. Tap within 2 hours or it opens to others.', url };
+        return { title: `First refusal: ${service}${where}`, body: 'Yours before the rest of the market. Tap within 2 hours or it opens to others.', url };
       }
       if (p.first_refusal) {
         return { title: `Offered to you first: ${service}${where}`, body: 'Price it or pass before it goes to the market.', url };
