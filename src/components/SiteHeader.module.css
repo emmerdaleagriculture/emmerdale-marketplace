@@ -40,6 +40,10 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  /* Everything after the brand packs to the right, whether or not the bar
+     has a link in it: without this, a signed-in visitor with no membership
+     link (an applicant, an admin) had the burger centred. */
+  margin-right: auto;
   font-family: var(--font-display-stack);
   font-size: 18px;
   letter-spacing: 0.03em;
@@ -359,6 +363,7 @@
   .brand {
     font-size: 16px;
     gap: 8px;
+    white-space: nowrap;
   }
   .brandMark {
     height: 24px;
@@ -380,5 +385,16 @@
     flex-basis: calc(100% + 32px);
     max-width: none;
     margin: 4px -16px -12px;
+  }
+}
+
+/* A narrow phone: the mark alone. With the name as well, the burger wrapped
+   onto a second line under the bar, where the menu sheet hid it. */
+@media (max-width: 480px) {
+  .brand span {
+    display: none;
+  }
+  .brandMark {
+    height: 28px;
   }
 }
