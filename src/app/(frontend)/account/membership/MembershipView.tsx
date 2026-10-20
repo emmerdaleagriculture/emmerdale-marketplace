@@ -79,13 +79,101 @@ function Pay({
 }
 
 /**
+ * Where a tier card stands for this contractor:
+ *   free     → not a member, both cards say "Join";
+ *   current  → the tier Stripe bills (with its plan) or the comped tier
+ *              (plan null): marked "Your plan", the other plan is a switch;
+ *   other    → the tier they could move to; a move when something is
+ *              billed, a join when the current one is on us.
+ */
+type TierState =
+  | { kind: 'free' }
+  | { kind: 'current'; plan: Plan | null }
+  | { kind: 'other'; plan: Plan | null };
+
+function TierCard({ tier, state, returnPath }: { tier: Tier; state: TierState; returnPath: string }) {
+  const featured = tier === 'open';
+  const current = state.kind === 'current';
+  const comped = current && state.plan === null;
+  const other = state.kind === 'other';
+  // Which plan to offer first on the other tier: the one they're on.
+  const lead: Plan = other && state.plan ? state.plan : 'monthly';
+  const alt: Plan = lead === 'monthly' ? 'annual' : 'monthly';
+  const per = (p: Plan) => (p === 'monthly' ? 'monthly' : 'yearly');
+  const primary = featured ? f.btnYellow : f.btnPrimary;
+
+  let buttons: ReactNode;
+  if (comped) {
+    buttons = <p className={s.actionNote}>Nothing to pay while it’s on us.</p>;
+  } else if (current) {
+    const have = state.plan as Plan;
+    const swap: Plan = have === 'monthly' ? 'annual' : 'monthly';
+    buttons = (
+      <>
+        <span className={s.actionCurrent}>Your plan — {label(tier, have)}</span>
+        <Pay action="checkout" tier={tier} plan={swap} returnPath={returnPath} className={f.btnGhost}>
+          Switch to {per(swap)} — {gbp(PRICE[tier][swap])}
+          {swap === 'annual' ? `, save ${gbp(saving(tier))}` : ''}
+        </Pay>
+      </>
+    );
+  } else {
+    const verb = other && state.plan ? `Move to ${NAME[tier]}` : 'Join';
+    buttons = (
+      <>
+        <Pay action="checkout" tier={tier} plan={lead} returnPath={returnPath} className={primary}>
+          {verb} {per(lead)} — {gbp(PRICE[tier][lead])}
+        </Pay>
+        <Pay action="checkout" tier={tier} plan={alt} returnPath={returnPath} className={f.btnGhost}>
+          {verb} {per(alt)} — {gbp(PRICE[tier][alt])}
+        </Pay>
+      </>
+    );
+  }
+
+  return (
+    <article
+      className={`${s.tier} ${current ? s.tierCurrent : featured ? s.tierFeatured : ''}`}
+      aria-labelledby={`tier-${tier}`}
+    >
+      {current ? (
+        <span className={`${s.tierTag} ${s.tagCurrent}`}>{comped ? 'Yours, on us' : 'Your plan'}</span>
+      ) : featured ? (
+        <span className={s.tierTag}>Deal direct</span>
+      ) : null}
+      <h2 id={`tier-${tier}`} className={s.tierName}>{featured ? '◆' : '★'} {NAME[tier]}</h2>
+      <p className={s.tierBlurb}>
+        {featured
+          ? 'Everything in Premium, plus the customer’s contact details on every job.'
+          : 'First look at every job in your area, and 5% commission instead of 15%.'}
+      </p>
+      <p className={s.price}>
+        <span className={s.priceAmount}>{gbp(PRICE[tier].monthly)}</span>
+        <span className={s.pricePer}>a month</span>
+      </p>
+      <p className={s.priceAlt}>
+        or {gbp(PRICE[tier].annual)} a year — <b>save {gbp(saving(tier))}</b>
+      </p>
+      {featured ? (
+        <Benefits plus="Everything in Premium, plus" items={OPEN_BENEFITS} />
+      ) : (
+        <Benefits items={PREMIUM_BENEFITS} />
+      )}
+      <div className={s.actions} data-app-hide>{buttons}</div>
+    </article>
+  );
+}
+
+/**
  * The membership page's body. Three shapes:
  *
  *   free plan  → the lead, two tier cards side by side, how first refusal
  *                works, the fine print;
- *   member     → their plan card (tier, price, renewal, billing), then the
- *                other tier as an offer;
- *   comped     → the plan card with "on us" in place of a price.
+ *   member     → their plan card (tier, price, renewal, billing), then both
+ *                tiers again under "Change your plan", theirs marked, so a
+ *                move up, down or to yearly is one button;
+ *   comped     → the plan card with "on us" in place of a price, and the
+ *                same change section.
  *
  * The pitch and the sums are the dashboard panel's; only the shape is new.
  */
@@ -187,13 +275,8 @@ export function MembershipView({
               <>
                 <div className={s.planActions} data-app-hide>
                   <Pay action="portal" returnPath={returnPath} className={f.btnGhost}>
-                    Manage billing
+                    Manage billing or cancel
                   </Pay>
-                  {billed === 'open' && canChange && (
-                    <Pay action="checkout" tier="premium" plan={plan} returnPath={returnPath} className={f.btnGhost}>
-                      Move to Premium — {label('premium', plan)}
-                    </Pay>
-                  )}
                 </div>
                 <p className={s.fine} data-app-only style={{ margin: '16px 0 0' }}>
                   Billing is managed on the website.
@@ -203,20 +286,41 @@ export function MembershipView({
           </div>
         </section>
 
-        {billed === 'premium' && !openComped && canChange && (
-          <section className={s.offer} aria-label="Move to Open">
-            <div>
-              <h2 className={s.offerTitle}>◆ Open — the customer’s details on every job</h2>
-              <p className={s.offerText}>
-                Everything in Premium, plus the customer’s name, phone number and email the moment a
-                job arrives. Ring them and agree the work directly. Moving is prorated from today.
-              </p>
+        {canChange && (
+          <section className={s.change} aria-labelledby="change-title">
+            <h2 id="change-title" className={s.changeTitle}>Change your plan</h2>
+            <p className={s.changeText}>
+              {billed ? (
+                <>
+                  Move up, move down or switch to yearly whenever you like. A change is prorated
+                  from today and shows on your next invoice; to cancel, use <b>Manage billing</b>{' '}
+                  above.
+                </>
+              ) : (
+                <>
+                  Your {NAME[tier]} membership is on us{!forever && until ? ` until ${day(until)}` : ''}, so
+                  there’s nothing to change unless you want to. Anything you take out here is billed
+                  from today.
+                </>
+              )}
+            </p>
+            <div className={s.tiers}>
+              {(['premium', 'open'] as const).map((t) => (
+                <TierCard
+                  key={t}
+                  tier={t}
+                  returnPath={returnPath}
+                  state={
+                    t === (billed ?? tier)
+                      ? { kind: 'current', plan: billed ? plan : null }
+                      : { kind: 'other', plan: billed ? plan : null }
+                  }
+                />
+              ))}
             </div>
-            <div data-app-hide>
-              <Pay action="checkout" tier="open" plan={plan} returnPath={returnPath} className={f.btnPrimary}>
-                Move to Open — {label('open', plan)}
-              </Pay>
-            </div>
+            <p className={s.fine} data-app-only>
+              Membership is changed on the website: sign in at {siteUrl().replace(/^https?:\/\//, '')}/account/membership.
+            </p>
           </section>
         )}
       </>
@@ -247,48 +351,8 @@ export function MembershipView({
       {noticeBox}
 
       <div className={s.tiers}>
-        <article className={s.tier} aria-labelledby="tier-premium">
-          <h2 id="tier-premium" className={s.tierName}>★ Premium</h2>
-          <p className={s.tierBlurb}>First look at every job in your area, and 5% commission instead of 15%.</p>
-          <p className={s.price}>
-            <span className={s.priceAmount}>{gbp(PRICE.premium.monthly)}</span>
-            <span className={s.pricePer}>a month</span>
-          </p>
-          <p className={s.priceAlt}>
-            or {gbp(PRICE.premium.annual)} a year — <b>save {gbp(saving('premium'))}</b>
-          </p>
-          <Benefits items={PREMIUM_BENEFITS} />
-          <div className={s.actions} data-app-hide>
-            <Pay action="checkout" tier="premium" plan="monthly" returnPath={returnPath} className={f.btnPrimary}>
-              Join monthly — {gbp(PRICE.premium.monthly)}
-            </Pay>
-            <Pay action="checkout" tier="premium" plan="annual" returnPath={returnPath} className={f.btnGhost}>
-              Join yearly — {gbp(PRICE.premium.annual)}
-            </Pay>
-          </div>
-        </article>
-
-        <article className={`${s.tier} ${s.tierFeatured}`} aria-labelledby="tier-open">
-          <span className={s.tierTag}>Deal direct</span>
-          <h2 id="tier-open" className={s.tierName}>◆ Open</h2>
-          <p className={s.tierBlurb}>Everything in Premium, plus the customer’s contact details on every job.</p>
-          <p className={s.price}>
-            <span className={s.priceAmount}>{gbp(PRICE.open.monthly)}</span>
-            <span className={s.pricePer}>a month</span>
-          </p>
-          <p className={s.priceAlt}>
-            or {gbp(PRICE.open.annual)} a year — <b>save {gbp(saving('open'))}</b>
-          </p>
-          <Benefits plus="Everything in Premium, plus" items={OPEN_BENEFITS} />
-          <div className={s.actions} data-app-hide>
-            <Pay action="checkout" tier="open" plan="monthly" returnPath={returnPath} className={f.btnYellow}>
-              Join monthly — {gbp(PRICE.open.monthly)}
-            </Pay>
-            <Pay action="checkout" tier="open" plan="annual" returnPath={returnPath} className={f.btnGhost}>
-              Join yearly — {gbp(PRICE.open.annual)}
-            </Pay>
-          </div>
-        </article>
+        <TierCard tier="premium" state={{ kind: 'free' }} returnPath={returnPath} />
+        <TierCard tier="open" state={{ kind: 'free' }} returnPath={returnPath} />
       </div>
 
       {/* Store rules: no selling inside the app, or Apple and Google take
