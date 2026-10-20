@@ -81,51 +81,52 @@ function Pay({
 /**
  * Where a tier card stands for this contractor:
  *   free     → not a member, both cards say "Join";
- *   current  → the tier Stripe bills (with its plan) or the comped tier
- *              (plan null): marked "Your plan", the other plan is a switch;
- *   other    → the tier they could move to; a move when something is
- *              billed, a join when the current one is on us.
+ *   billed   → the tier Stripe bills, with its plan: "Your plan", and the
+ *              other plan as a switch;
+ *   comped   → a tier they hold on us: "Yours, on us", nothing to pay;
+ *   other    → a tier they could take: a move when something is billed, a
+ *              join when nothing is. A tier below one they hold on us is
+ *              `outranked`: paying for it would change nothing, so no buttons.
  */
 type TierState =
   | { kind: 'free' }
-  | { kind: 'current'; plan: Plan | null }
-  | { kind: 'other'; plan: Plan | null };
+  | { kind: 'billed'; plan: Plan }
+  | { kind: 'comped' }
+  | { kind: 'other'; plan: Plan | null; outranked: boolean };
 
 function TierCard({ tier, state, returnPath }: { tier: Tier; state: TierState; returnPath: string }) {
   const featured = tier === 'open';
-  const current = state.kind === 'current';
-  const comped = current && state.plan === null;
-  const other = state.kind === 'other';
-  // Which plan to offer first on the other tier: the one they're on.
-  const lead: Plan = other && state.plan ? state.plan : 'monthly';
-  const alt: Plan = lead === 'monthly' ? 'annual' : 'monthly';
-  const per = (p: Plan) => (p === 'monthly' ? 'monthly' : 'yearly');
+  const mine = state.kind === 'billed' || state.kind === 'comped';
   const primary = featured ? f.btnYellow : f.btnPrimary;
 
   let buttons: ReactNode;
-  if (comped) {
+  if (state.kind === 'comped') {
     buttons = <p className={s.actionNote}>Nothing to pay while it’s on us.</p>;
-  } else if (current) {
-    const have = state.plan as Plan;
-    const swap: Plan = have === 'monthly' ? 'annual' : 'monthly';
+  } else if (state.kind === 'other' && state.outranked) {
+    buttons = <p className={s.actionNote}>You already have all of this, and more, on us.</p>;
+  } else if (state.kind === 'billed') {
+    const swap: Plan = state.plan === 'monthly' ? 'annual' : 'monthly';
     buttons = (
       <>
-        <span className={s.actionCurrent}>Your plan — {label(tier, have)}</span>
+        <span className={s.actionCurrent}>Your plan — {label(tier, state.plan)}</span>
         <Pay action="checkout" tier={tier} plan={swap} returnPath={returnPath} className={f.btnGhost}>
-          Switch to {per(swap)} — {gbp(PRICE[tier][swap])}
+          Switch to {label(tier, swap)}
           {swap === 'annual' ? `, save ${gbp(saving(tier))}` : ''}
         </Pay>
       </>
     );
   } else {
-    const verb = other && state.plan ? `Move to ${NAME[tier]}` : 'Join';
+    // Lead with the plan they're on, so a move keeps their billing rhythm.
+    const lead: Plan = state.kind === 'other' && state.plan ? state.plan : 'monthly';
+    const alt: Plan = lead === 'monthly' ? 'annual' : 'monthly';
+    const verb = state.kind === 'other' && state.plan ? `Move to ${NAME[tier]}` : 'Join';
     buttons = (
       <>
         <Pay action="checkout" tier={tier} plan={lead} returnPath={returnPath} className={primary}>
-          {verb} {per(lead)} — {gbp(PRICE[tier][lead])}
+          {verb} — {label(tier, lead)}
         </Pay>
         <Pay action="checkout" tier={tier} plan={alt} returnPath={returnPath} className={f.btnGhost}>
-          {verb} {per(alt)} — {gbp(PRICE[tier][alt])}
+          {verb} — {label(tier, alt)}
         </Pay>
       </>
     );
@@ -133,11 +134,11 @@ function TierCard({ tier, state, returnPath }: { tier: Tier; state: TierState; r
 
   return (
     <article
-      className={`${s.tier} ${current ? s.tierCurrent : featured ? s.tierFeatured : ''}`}
+      className={`${s.tier} ${mine ? s.tierCurrent : featured ? s.tierFeatured : ''}`}
       aria-labelledby={`tier-${tier}`}
     >
-      {current ? (
-        <span className={`${s.tierTag} ${s.tagCurrent}`}>{comped ? 'Yours, on us' : 'Your plan'}</span>
+      {mine ? (
+        <span className={`${s.tierTag} ${s.tagCurrent}`}>{state.kind === 'comped' ? 'Yours, on us' : 'Your plan'}</span>
       ) : featured ? (
         <span className={s.tierTag}>Deal direct</span>
       ) : null}
@@ -252,6 +253,15 @@ export function MembershipView({
       </>
     );
 
+    // Each card from both what Stripe bills and what they hold: a paid
+    // Premium under an Open comp is "Your plan" on one card and "Yours, on
+    // us" on the other, and nothing is sold that the comp already covers.
+    const stateOf = (t: Tier): TierState => {
+      if (t === billed) return { kind: 'billed', plan };
+      if (t === tier) return { kind: 'comped' };
+      return { kind: 'other', plan: billed ? plan : null, outranked: !billed && tier === 'open' };
+    };
+
     return (
       <>
         {noticeBox}
@@ -289,38 +299,46 @@ export function MembershipView({
         {canChange && (
           <section className={s.change} aria-labelledby="change-title">
             <h2 id="change-title" className={s.changeTitle}>Change your plan</h2>
-            <p className={s.changeText}>
-              {billed ? (
-                <>
-                  Move up, move down or switch to yearly whenever you like. A change is prorated
-                  from today and shows on your next invoice; to cancel, use <b>Manage billing</b>{' '}
-                  above.
-                </>
-              ) : (
-                <>
-                  Your {NAME[tier]} membership is on us{!forever && until ? ` until ${day(until)}` : ''}, so
-                  there’s nothing to change unless you want to. Anything you take out here is billed
-                  from today.
-                </>
-              )}
-            </p>
-            <div className={s.tiers}>
-              {(['premium', 'open'] as const).map((t) => (
-                <TierCard
-                  key={t}
-                  tier={t}
-                  returnPath={returnPath}
-                  state={
-                    t === (billed ?? tier)
-                      ? { kind: 'current', plan: billed ? plan : null }
-                      : { kind: 'other', plan: billed ? plan : null }
-                  }
-                />
-              ))}
-            </div>
-            <p className={s.fine} data-app-only>
-              Membership is changed on the website: sign in at {siteUrl().replace(/^https?:\/\//, '')}/account/membership.
-            </p>
+            {billed && sub?.status !== 'active' ? (
+              // A card being retried: Stripe would move the unpaid
+              // subscription and the sync would grant the new tier before any
+              // payment. Card first.
+              <p className={s.changeText}>
+                Update your card under <b>Manage billing</b> first; once the payment goes through you
+                can move between plans here.
+              </p>
+            ) : (
+              <>
+                <p className={s.changeText}>
+                  {billed && sub?.cancel_at_period_end && sub.current_period_end ? (
+                    <>
+                      Your membership ends on {day(sub.current_period_end)}. Picking any plan below
+                      restarts it from today, prorated against what you’ve already paid.
+                    </>
+                  ) : billed ? (
+                    <>
+                      Move up, move down or switch between monthly and yearly whenever you like. A
+                      change is prorated from today and shows on your next invoice; to cancel, use{' '}
+                      <b>Manage billing</b> above.
+                    </>
+                  ) : (
+                    <>
+                      Your {NAME[tier]} membership is on us{!forever && until ? ` until ${day(until)}` : ''}, so
+                      there’s nothing to change unless you want to. Anything you take out here is billed
+                      from today.
+                    </>
+                  )}
+                </p>
+                <div className={s.tiers}>
+                  {(['premium', 'open'] as const).map((t) => (
+                    <TierCard key={t} tier={t} returnPath={returnPath} state={stateOf(t)} />
+                  ))}
+                </div>
+                <p className={s.fine} data-app-only>
+                  Membership is changed on the website: sign in at {siteUrl().replace(/^https?:\/\//, '')}/account/membership.
+                </p>
+              </>
+            )}
           </section>
         )}
       </>
