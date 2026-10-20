@@ -52,6 +52,11 @@
   border-color: var(--jd-green);
   box-shadow: 0 0 0 1px var(--jd-green), 0 18px 40px -24px rgba(23, 51, 13, 0.45);
 }
+/* The tier they have, under "Change your plan". */
+.tierCurrent {
+  border-color: var(--jd-green-dark);
+  background: var(--jd-green-pale);
+}
 .tierTag {
   position: absolute;
   top: -12px;
@@ -64,6 +69,10 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+.tagCurrent {
+  background: var(--jd-green-dark);
+  color: #fff;
 }
 .tierName {
   font-family: var(--font-display-stack);
@@ -153,6 +162,17 @@
   font-size: 13px;
   color: var(--ink-3);
   margin: 6px 0 0;
+}
+/* The plan they're on, in the button's slot: a fact, not a button. */
+.actionCurrent {
+  display: block;
+  text-align: center;
+  padding: 11px 16px;
+  border-radius: 6px;
+  border: 1px dashed var(--jd-green-dark);
+  color: var(--jd-green-deep);
+  font-size: 14px;
+  font-weight: 600;
 }
 
 /* ── How first refusal works ──────────────────────────────────────────── */
@@ -263,47 +283,23 @@
   padding-top: 20px;
   border-top: 1px solid var(--rule);
 }
-.planSwitch {
-  margin: 14px 0 0;
-  font-size: 14px;
-  color: var(--ink-3);
-}
-.linkButton {
-  background: none;
-  border: 0;
-  padding: 0;
-  font: inherit;
-  color: var(--jd-green-dark);
-  text-decoration: underline;
-  cursor: pointer;
-}
 
-/* The other tier, for a member who could move. */
-.offer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  flex-wrap: wrap;
-  border-radius: 14px;
-  padding: 20px 24px;
+/* Both tiers again for a member, theirs marked. */
+.change {
   margin: 0 0 28px;
-  background: linear-gradient(135deg, #fff4a8 0%, var(--jd-yellow) 100%);
-  color: var(--jd-green-deep);
 }
-.offerTitle {
+.changeTitle {
   font-family: var(--font-display-stack);
-  font-size: 20px;
-  margin: 0 0 4px;
+  font-size: 24px;
+  color: var(--jd-green-deep);
+  margin: 0 0 6px;
 }
-.offerText {
-  margin: 0;
-  font-size: 14.5px;
-  line-height: 1.5;
-  max-width: 52ch;
-}
-.offer form {
-  flex: 0 0 auto;
+.changeText {
+  margin: 0 0 22px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 64ch;
 }
 
 .back {
@@ -324,8 +320,7 @@
   .tier,
   .how,
   .planHead,
-  .planBody,
-  .offer {
+  .planBody {
     padding-left: 18px;
     padding-right: 18px;
   }
