@@ -5,7 +5,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
 import { EmailBanner } from './EmailBanner';
-import { PremiumPanel } from './PremiumPanel';
+import { MembershipCard } from './MembershipCard';
 import { membershipOf } from '@/lib/membership';
 import { contractorEmailHealth } from '@/lib/contractors/emailConfirm';
 import { ContactUsButton } from '@/components/ContactUsButton';
@@ -250,7 +250,8 @@ export default async function AccountPage({
             </div>
           )}
           {status === 'pending' && (
-            <PremiumPanel
+            <MembershipCard
+              membership={membership}
               sub={subQ.data ?? null}
               compedUntil={contractor.premium_comped_until ?? null}
               openCompedUntil={contractor.open_comped_until ?? null}
@@ -271,13 +272,16 @@ export default async function AccountPage({
                 : 'Please get in touch if you think this is a mistake.'}
             </div>
           )}
-          {status === 'suspended' && contractor.vetted_at && !isPremium && (
-            <PremiumPanel
+          {/* The card for anyone who can do something about it: a vetted
+              contractor who can rejoin, or a member whose billing still runs. */}
+          {status === 'suspended' && ((contractor.vetted_at && !isPremium) || isPremium) && (
+            <MembershipCard
+              membership={membership}
               sub={subQ.data ?? null}
               compedUntil={contractor.premium_comped_until ?? null}
               openCompedUntil={contractor.open_comped_until ?? null}
               notice={subNotice}
-              suspended
+              suspended={!isPremium}
             />
           )}
 
@@ -356,10 +360,11 @@ export default async function AccountPage({
                 <Link href="/won">Won jobs</Link>
               </div>
 
-              <PremiumPanel
+              <MembershipCard
+                membership={membership}
                 sub={subQ.data ?? null}
                 compedUntil={contractor.premium_comped_until ?? null}
-              openCompedUntil={contractor.open_comped_until ?? null}
+                openCompedUntil={contractor.open_comped_until ?? null}
                 notice={subNotice}
               />
             </>
