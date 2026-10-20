@@ -12,6 +12,43 @@ const nextConfig = {
   // React 19 strict mode — catches accidental side-effects
   reactStrictMode: true,
 
+  /**
+   * Vercel's skew protection tags every asset URL in the HTML with the
+   * deployment (`?dpl=…`), font preloads included, but the `url()` inside the
+   * built CSS has no tag — so the browser fetched each preloaded font twice,
+   * once per URL (46KB and two requests on every first visit, measured
+   * 2026-10-20). This gives the CSS the same tag, so the preload and the
+   * stylesheet agree. NEXT_DEPLOYMENT_ID is set by Vercel's build when skew
+   * protection is on and absent otherwise, so locally this does nothing.
+   */
+  webpack(config, { dev, webpack }) {
+    const dpl = process.env.NEXT_DEPLOYMENT_ID;
+    if (!dev && dpl) {
+      const { Compilation, sources } = webpack;
+      config.plugins.push({
+        apply(compiler) {
+          compiler.hooks.thisCompilation.tap('FontDeploymentTag', (compilation) => {
+            compilation.hooks.processAssets.tap(
+              { name: 'FontDeploymentTag', stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE },
+              (assets) => {
+                for (const name of Object.keys(assets)) {
+                  if (!name.endsWith('.css')) continue;
+                  const src = assets[name].source().toString();
+                  const out = src.replace(
+                    /(\/_next\/static\/media\/[^)'"?\s]+\.(?:woff2?|ttf|otf|eot))(?=[)'"])/g,
+                    `$1?dpl=${dpl}`,
+                  );
+                  if (out !== src) compilation.updateAsset(name, new sources.RawSource(out));
+                }
+              },
+            );
+          });
+        },
+      });
+    }
+    return config;
+  },
+
   experimental: {
     serverActions: {
       // /start step 1 posts photos (client-downscaled ~0.5MB each) through a
