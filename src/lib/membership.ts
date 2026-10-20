@@ -14,12 +14,38 @@ export type Membership = 'premium' | 'open' | null;
 type SubLike = { status: string | null; tier?: string | null } | null | undefined;
 type CompLike = { premium_comped_until?: string | null; open_comped_until?: string | null };
 
+/** The subscriptions row as the account pages read it. */
+export type SubRow = {
+  status: string;
+  plan: string | null;
+  tier?: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+} | null;
+
+/** Stripe is billing them: active, or a card being retried. */
+export function isLiveSub(sub: SubLike): boolean {
+  return sub?.status === 'active' || sub?.status === 'past_due';
+}
+
+/** The tier Stripe bills for, or null when nothing is being billed. Can
+ *  differ from membershipOf: an Open comp on top of a paid premium. */
+export function billedTier(sub: SubLike): MembershipTier | null {
+  if (!isLiveSub(sub)) return null;
+  return sub?.tier === 'open' ? 'open' : 'premium';
+}
+
+/** The plan on the row; anything unknown reads as monthly. */
+export function subPlan(sub: { plan?: string | null } | null | undefined): MembershipPlan {
+  return sub?.plan === 'annual' ? 'annual' : 'monthly';
+}
+
 function inFuture(until: string | null | undefined, now: number): boolean {
   return Boolean(until && new Date(until).getTime() > now);
 }
 
 export function membershipOf(sub: SubLike, contractor: CompLike, now = Date.now()): Membership {
-  const live = sub?.status === 'active' || sub?.status === 'past_due';
+  const live = isLiveSub(sub);
   if ((live && sub?.tier === 'open') || inFuture(contractor.open_comped_until, now)) return 'open';
   if (live || inFuture(contractor.premium_comped_until, now)) return 'premium';
   return null;

@@ -1,20 +1,14 @@
 import Link from 'next/link';
 import {
+  billedTier,
   MEMBERSHIP_NAMES,
   membershipDay,
   priceLabel,
+  subPlan,
   type Membership,
-  type MembershipTier,
+  type SubRow as Sub,
 } from '@/lib/membership';
 import ac from './account.module.css';
-
-type Sub = {
-  status: string;
-  plan: string | null;
-  tier?: string | null;
-  current_period_end: string | null;
-  cancel_at_period_end: boolean;
-} | null;
 
 /**
  * Membership on the dashboard: one card, and the whole card is the link to
@@ -40,13 +34,13 @@ export function MembershipCard({
   notice?: string;
   /** Application not yet approved: paid membership waits for approval. */
   pending?: boolean;
-  /** Suspended after approval: joining restores the account. */
+  /** Account suspended: a non-member joining restores it; a member's
+   *  benefits are paused, but their billing still runs. */
   suspended?: boolean;
 }) {
   const member = membership !== null;
-  const active = sub?.status === 'active' || sub?.status === 'past_due';
-  const billed: MembershipTier | null = active ? (sub?.tier === 'open' ? 'open' : 'premium') : null;
-  const plan: 'monthly' | 'annual' = sub?.plan === 'annual' ? 'annual' : 'monthly';
+  const billed = billedTier(sub);
+  const plan = subPlan(sub);
   const name = member ? MEMBERSHIP_NAMES[membership] : null;
   const until = membership === 'open' ? openCompedUntil : compedUntil;
   const onUsUntil =
@@ -81,6 +75,8 @@ export function MembershipCard({
 
   const benefit = pending && member
     ? `${name} starts working the moment we approve your application.`
+    : suspended && member
+      ? 'Your account is suspended, so membership isn’t working just now. You can still manage your billing, or get in touch.'
     : membership === 'open'
       ? 'The customer’s details on every job you’re invited to, first refusal on new jobs in your area and 5% commission on prices sent through us.'
       : membership === 'premium'
@@ -118,7 +114,16 @@ export function MembershipCard({
         {status ? ' ' : ''}
         {benefit}
       </span>
-      <span className={ac.subCta}>{member ? 'Manage membership' : 'See the plans and join'} →</span>
+      {/* Store rules: no selling inside the app. Members manage billing on
+          the website; a free contractor is told where to join. */}
+      <span className={ac.subCta} data-app-hide={member ? undefined : ''}>
+        {member ? 'Manage membership' : 'See the plans and join'} →
+      </span>
+      {!member && (
+        <span className={ac.subCta} data-app-only>
+          Membership is bought on the website →
+        </span>
+      )}
     </Link>
   );
 }

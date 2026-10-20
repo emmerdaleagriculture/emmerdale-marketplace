@@ -317,7 +317,10 @@
 }
 .subLink:hover,
 .subLink:focus-visible {
-  border-color: var(--jd-green);
+  /* Sides only: the yellow top accent stays. */
+  border-left-color: var(--jd-green);
+  border-right-color: var(--jd-green);
+  border-bottom-color: var(--jd-green);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
 }
 .subLink .subBody {

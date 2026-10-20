@@ -225,8 +225,9 @@ export async function premiumCheckoutUrl(
  * Where a membership button sends the contractor back to afterwards. The
  * form says which page it was on; anything else — a forged value, a
  * missing field — is the membership page, so a redirect can never leave
- * the site. The dashboard stays on the list for Checkout sessions made
- * before its buttons moved to /account/membership.
+ * the site. The dashboard is still a return: onboarding sends new
+ * applicants back to it (its review banner is there), and Checkout sessions
+ * made before its buttons moved to /account/membership land on it too.
  */
 export const MEMBERSHIP_RETURN_PATHS = ['/account', '/account/membership'] as const;
 export type MembershipReturnPath = (typeof MEMBERSHIP_RETURN_PATHS)[number];
