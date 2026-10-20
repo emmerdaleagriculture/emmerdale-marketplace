@@ -64,6 +64,7 @@ export async function holdAfterContactAttempt(args: {
       .eq('id', args.contractorId);
     if (upErr) console.error('[sq] contact attempt: hold not set:', upErr.message);
   }
+  await warnContractor({ contractorId: args.contractorId, email: ct?.email, businessName: ct?.business_name, rule: args.rule });
   const who = ct?.business_name || ct?.email || 'A contractor';
   await notifyAdmins(
     `Contact-detail attempt: ${who} — messages now held`,
@@ -76,6 +77,55 @@ export async function holdAfterContactAttempt(args: {
       args.submissionId ? `Job: ${siteUrl()}/admin/submissions/${args.submissionId}#messages` : '',
     ].join('\n'),
   );
+}
+
+/** One warning per contractor per this many days, however many attempts. */
+const WARN_EVERY_DAYS = HOLD_DAYS;
+
+/**
+ * The contractor hears about it too (sq_contact_warning): what was refused
+ * and why, that their messages are now checked, and the honest way to do
+ * what they were trying to do — Open membership puts the customer's details
+ * on every invitation, so there is nothing to smuggle. An Open member never
+ * gets here (the contact rules are off for them), so the invitation is to
+ * move up, from free or from Premium.
+ *
+ * Once per WARN_EVERY_DAYS: a second attempt inside the hold is admin's to
+ * deal with, and a contractor told twice in an hour has been nagged, not
+ * informed. Never throws.
+ */
+async function warnContractor(args: {
+  contractorId: string;
+  email: string | null | undefined;
+  businessName: string | null | undefined;
+  rule: FlagRule;
+}): Promise<void> {
+  if (!args.email) return;
+  const admin = createServiceRoleClient();
+  const since = new Date(Date.now() - WARN_EVERY_DAYS * 86_400_000).toISOString();
+  const [{ count, error: cErr }, { data: tier, error: tErr }] = await Promise.all([
+    admin
+      .from('pending_emails')
+      .select('id', { count: 'exact', head: true })
+      .eq('kind', 'sq_contact_warning')
+      .eq('to_email', args.email)
+      .gte('created_at', since),
+    admin.rpc('contractor_tier', { p_contractor_id: args.contractorId }),
+  ]);
+  if (cErr) console.error('[sq] contact warning: lookup failed:', cErr.message);
+  if (tErr) console.error('[sq] contact warning: tier lookup failed:', tErr.message);
+  if ((count ?? 0) > 0 || tier === 'open') return;
+  const { error } = await admin.from('pending_emails').insert({
+    kind: 'sq_contact_warning',
+    to_email: args.email,
+    payload: {
+      business_name: args.businessName ?? null,
+      rule: args.rule,
+      hold_days: HOLD_DAYS,
+      tier: tier ?? null,
+    },
+  });
+  if (error) console.error('[sq] contact warning not queued:', error.message);
 }
 
 /**
