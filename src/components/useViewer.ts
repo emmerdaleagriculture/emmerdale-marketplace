@@ -73,9 +73,15 @@ function loadViewer(): Promise<Viewer> {
   return pending;
 }
 
-export function useViewer(): Viewer {
+/**
+ * `known` is a viewer a parent has already resolved: nothing is loaded and
+ * it is returned as is, so a header handed down to a child nav does not
+ * flash signed-out and look the user up a second time.
+ */
+export function useViewer(known?: Viewer): Viewer {
   const [viewer, setViewer] = useState<Viewer>(SIGNED_OUT);
   useEffect(() => {
+    if (known) return;
     let cancelled = false;
     loadViewer().then((v) => {
       if (!cancelled) setViewer(v);
@@ -83,6 +89,16 @@ export function useViewer(): Viewer {
     return () => {
       cancelled = true;
     };
-  }, []);
-  return viewer;
+  }, [known]);
+  return known ?? viewer;
+}
+
+/** Has a contractor profile (possibly a customer one too). */
+export function isContractor(v: Viewer): boolean {
+  return v.signedIn && (v.role === 'contractor' || v.role === 'both');
+}
+
+/** Has a customer profile (possibly a contractor one too). */
+export function isCustomer(v: Viewer): boolean {
+  return v.signedIn && (v.role === 'customer' || v.role === 'both');
 }

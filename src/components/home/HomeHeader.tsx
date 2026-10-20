@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AccountLink } from './AccountLink';
 import { BrandMark } from './BrandMark';
+import { SiteHeader } from '@/components/SiteHeader';
 import { SocialLinks } from '@/components/SocialLinks';
+import { useViewer, type Viewer } from '@/components/useViewer';
 import s from './home.module.css';
 
 // Root-relative, not bare fragments: this header is no longer front-page
@@ -31,9 +33,34 @@ export const BOOK_HREF = '/start';
  * Started as front-page-only, which left /contact — reached from the front
  * page's own footer — wearing a completely different header. Its section
  * links are root-relative so it works anywhere a customer might be.
+ *
+ * Anyone signed in who is not purely a customer — a contractor, an admin, a
+ * contractor part-way through signing up — gets the site header instead:
+ * the one with their work and membership in it. "Services, Notes, Are you a
+ * contractor?, Book online" is the customer's menu, and a contractor on the
+ * front page was being shown it with a lone "Dashboard" tacked on the end.
+ * Resolved in the browser like the account link, so the page stays static
+ * and the swap happens on hydration; the resolved viewer and the menu's open
+ * state go across with it, so nothing flashes or shuts.
  */
 export function HomeHeader() {
+  const viewer = useViewer();
   const [open, setOpen] = useState(false);
+  if (viewer.signedIn && viewer.role !== 'customer') {
+    return <SiteHeader variant="landing" viewer={viewer} menuOpen={open} />;
+  }
+  return <CustomerHeader viewer={viewer} open={open} setOpen={setOpen} />;
+}
+
+function CustomerHeader({
+  viewer,
+  open,
+  setOpen,
+}: {
+  viewer: Viewer;
+  open: boolean;
+  setOpen: (f: (v: boolean) => boolean) => void;
+}) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -47,12 +74,12 @@ export function HomeHeader() {
   useEffect(() => {
     if (!open) return;
     const mq = window.matchMedia('(min-width: 1024px)');
-    const onChange = () => mq.matches && setOpen(false);
+    const onChange = () => mq.matches && setOpen(() => false);
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
-  }, [open]);
+  }, [open, setOpen]);
 
-  const close = () => setOpen(false);
+  const close = () => setOpen(() => false);
 
   return (
     <header className={`${s.nav} ${scrolled ? s.navScrolled : ''}`} data-app-hide>
@@ -87,7 +114,7 @@ export function HomeHeader() {
           </Link>
           {/* One login for both sides. Labelling it "Contractor log in" hid it
               from the customers who now have accounts of their own. */}
-          <AccountLink className={s.navLogin} />
+          <AccountLink viewer={viewer} className={s.navLogin} />
         </div>
 
         <button
@@ -123,7 +150,7 @@ export function HomeHeader() {
         <Link href={BOOK_HREF} className={s.mobileMenuBook} onClick={close}>
           Book online
         </Link>
-        <AccountLink onClick={close} />
+        <AccountLink viewer={viewer} onClick={close} />
       </div>
     </header>
   );
