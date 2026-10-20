@@ -69,7 +69,9 @@
 .bar a:hover {
   opacity: 1;
 }
-.social {
+/* Under .inner so the header's placement outranks the component's own
+   rules whatever order the stylesheets load in. */
+.inner .social {
   color: var(--white);
 }
 .linkButton {
@@ -346,7 +348,7 @@
   /* The icons go after the burger on a laptop: the menu is the thing the
      bar is for, so it sits next to the membership link, and the social
      links trail it at the edge. A phone keeps them before the burger. */
-  .social {
+  .inner .social {
     order: 1;
   }
 }
@@ -367,7 +369,7 @@
     display: none;
   }
   /* The icons take over the right-hand side, the burger after them. */
-  .social {
+  .inner .social {
     margin-left: auto;
   }
   .menuAnchor {

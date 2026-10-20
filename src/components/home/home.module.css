@@ -762,7 +762,9 @@
   align-items: center;
   gap: 14px;
 }
-.navSocial {
+/* Under .navInner so the header's placement outranks the component's
+   own rules whatever order the stylesheets load in. */
+.navInner .navSocial {
   color: #fbfaf6;
   margin-right: 4px;
 }
@@ -865,7 +867,7 @@
     justify-content: space-between;
   }
   /* Brand left, icons and burger right. */
-  .navSocial {
+  .navInner .navSocial {
     margin-left: auto;
     margin-right: 0;
   }
