@@ -37,7 +37,9 @@ const BLURB: Record<CardTier, string> = {
   premium: 'Every job in your area ahead of the market, and 5% commission instead of 15%.',
   open: 'Everything in Premium, plus first look, the customer’s details, a county-page listing and market data.',
 };
-const GLYPH: Record<CardTier, string> = { free: '', premium: '★ ', open: '◆ ' };
+const GLYPH: Record<CardTier, string> = { free: '', premium: '★', open: '◆' };
+/* The header band's colour, one shade a tier. */
+const HEAD: Record<CardTier, string> = { free: s.headFree, premium: s.headPremium, open: s.headOpen };
 
 function Tick() {
   return (
@@ -107,7 +109,12 @@ export function TierCard({
       ) : featured ? (
         <span className={s.tierTag}>Deal direct</span>
       ) : null}
-      <h2 id={`tier-${tier}`} className={s.tierName}>{GLYPH[tier]}{name}</h2>
+      <div className={`${s.tierHead} ${HEAD[tier]}`}>
+        <h2 id={`tier-${tier}`} className={s.tierName}>
+          {GLYPH[tier] && <span className={s.glyph} aria-hidden="true">{GLYPH[tier]}</span>}
+          {name}
+        </h2>
+      </div>
       <p className={s.tierBlurb}>{BLURB[tier]}</p>
       <p className={s.price}>
         <span className={s.priceAmount}>{gbp(price?.monthly ?? 0)}</span>

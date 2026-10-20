@@ -163,9 +163,26 @@
   text-decoration: underline;
 }
 
+/* On a phone everything is centred, cards included (.centred, TierCard). */
 @media (max-width: 720px) {
+  .page {
+    text-align: center;
+  }
+  .lead,
+  .changeText {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .statusRow,
+  .planHead,
+  .planName,
+  .planActions,
+  .page > aside {
+    justify-content: center;
+  }
   .steps {
     grid-template-columns: 1fr;
+    gap: 22px;
   }
   .how,
   .planHead,

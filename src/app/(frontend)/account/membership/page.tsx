@@ -12,6 +12,7 @@ import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { isAppRequest } from '@/lib/appMode.server';
 import a from '../../auth.module.css';
 import ac from '../account.module.css';
+import t from '@/components/membership/tierCard.module.css';
 import s from './membership.module.css';
 
 export const metadata: Metadata = {
@@ -78,7 +79,7 @@ export default async function MembershipPage({
     <div className={a.wrap}>
       <SiteHeader />
       <main className={a.main}>
-        <div className={a.wide}>
+        <div className={`${a.wide} ${s.page} ${t.centred}`}>
           <Breadcrumb
             tone="light"
             jsonLd={false}
@@ -87,7 +88,7 @@ export default async function MembershipPage({
           />
           <div className={a.eyebrow}>{contractor.business_name}</div>
           <h1 className={a.title}>Your membership</h1>
-          <div className={ac.statusRow}>
+          <div className={`${ac.statusRow} ${s.statusRow}`}>
             <span
               className={`${ac.badge} ${membership ? ac.premiumBadge : ''}`}
             >
