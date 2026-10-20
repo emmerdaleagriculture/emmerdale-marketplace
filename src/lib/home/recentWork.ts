@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { memoize } from '@/lib/memo';
+import { jobAcres } from '@/lib/jobParse/geometry';
 
 /**
  * Booked work, with what it actually cost — every job from its award on.
@@ -21,7 +22,36 @@ export type RecentWorkRow = {
   /** Null on an unrated job. NEVER substitute a default — that is a fake review. */
   stars: number | null;
   source: 'emmerdale' | 'hpm';
+  /** The county, or null on a seeded row. */
+  county: string | null;
+  /** The job's size, rounded: "2 acres", "200 m", "under an acre". Null when unknown. */
+  size: string | null;
 };
+
+/**
+ * The size as the card prints it. Rounded on purpose: "about 7.5 acres" is a
+ * comparison, "7.53 acres" is a measurement of someone's field. A length is
+ * what a per-metre job is sized by (hedges, fencing), so it shows as metres.
+ */
+export function sizeLabel(job: {
+  area_value: number | null;
+  area_unit: string | null;
+  area_mapped_value: number | null;
+  area_source: string | null;
+  /** False for work not priced by area (a hedge): no acreage then. */
+  area_priced: boolean;
+}): string | null {
+  if (job.area_unit === 'linear_m' && job.area_value) {
+    const m = job.area_value >= 100 ? Math.round(job.area_value / 50) * 50 : Math.round(job.area_value / 10) * 10;
+    return m > 0 ? `${m} m` : null;
+  }
+  if (!job.area_priced) return null;
+  const acres = jobAcres(job);
+  if (acres == null || acres <= 0) return null;
+  if (acres < 0.75) return 'under an acre';
+  const rounded = acres < 10 ? Math.round(acres * 2) / 2 : Math.round(acres);
+  return `${rounded === 1 ? '1 acre' : `${rounded} acres`}`;
+}
 
 /**
  * Below this the board hides entirely. A board with two jobs on it advertises
@@ -58,7 +88,7 @@ const LIVE_TTL_MS = 60_000;
 export const getRecentWork = memoize<RecentWorkRow[]>(async () => {
   const { data, error } = await viewClient()
     .from('recent_work')
-    .select('service_name, amount_pence, stars, source')
+    .select('service_name, amount_pence, stars, source, county, area_value, area_unit, area_mapped_value, area_source, area_priced')
     .order('ord', { ascending: true })
     .limit(LIMIT);
 
@@ -74,7 +104,15 @@ export const getRecentWork = memoize<RecentWorkRow[]>(async () => {
     amount_pence: unknown;
     stars: unknown;
     source: unknown;
+    county: unknown;
+    area_value: unknown;
+    area_unit: unknown;
+    area_mapped_value: unknown;
+    area_source: unknown;
+    area_priced: unknown;
   }[];
+  const num = (v: unknown) => (typeof v === 'number' ? v : typeof v === 'string' && v !== '' && !Number.isNaN(Number(v)) ? Number(v) : null);
+  const str = (v: unknown) => (typeof v === 'string' ? v : null);
 
   return rows.flatMap((r) =>
     typeof r.service_name === 'string' && typeof r.amount_pence === 'number'
@@ -84,6 +122,14 @@ export const getRecentWork = memoize<RecentWorkRow[]>(async () => {
             amount_pence: r.amount_pence,
             stars: typeof r.stars === 'number' ? r.stars : null,
             source: r.source === 'hpm' ? ('hpm' as const) : ('emmerdale' as const),
+            county: str(r.county),
+            size: sizeLabel({
+              area_value: num(r.area_value),
+              area_unit: str(r.area_unit),
+              area_mapped_value: num(r.area_mapped_value),
+              area_source: str(r.area_source),
+              area_priced: r.area_priced !== false,
+            }),
           },
         ]
       : [],

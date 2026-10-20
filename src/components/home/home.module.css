@@ -1150,7 +1150,20 @@
   letter-spacing: -0.01em;
   color: var(--text);
 }
+/* The county and the rounded size, under the price. */
+.workMeta {
+  color: var(--text);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
 /* Absent entirely on unrated jobs — see the component. */
+.workRating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  margin-top: 2px;
+}
 .workStars {
   color: var(--green);
   font-size: 0.875rem;
@@ -1158,6 +1171,10 @@
 }
 .workStarsOff {
   opacity: 0.22;
+}
+.workStarsLabel {
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 .workSource {
   color: var(--muted);
