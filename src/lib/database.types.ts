@@ -3127,6 +3127,12 @@ export type Database = {
       recent_work: {
         Row: {
           amount_pence: number | null
+          area_mapped_value: number | null
+          area_priced: boolean | null
+          area_source: string | null
+          area_unit: string | null
+          area_value: number | null
+          county: string | null
           ord: number | null
           service_name: string | null
           source: string | null

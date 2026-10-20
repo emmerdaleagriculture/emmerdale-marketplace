@@ -65,16 +65,25 @@ export function RecentWorkBoard({
           <li key={`${r.service_name}-${r.amount_pence}-${i}`} className={s.workCard}>
             <span className={s.workService}>{r.service_name}</span>
             <span className={s.workPrice}>{formatGBP(r.amount_pence)}</span>
+            {/* Where and how big, so a visitor can tell a job like theirs
+                from one that is not: a county and a size band, never a
+                figure, a date or a postcode (migration 20261021140000). */}
+            {r.size || r.county ? (
+              <span className={s.workMeta}>{[r.size, r.county].filter(Boolean).join(' · ')}</span>
+            ) : null}
             {/* Only ever rendered on a job that carries a real rating. No
                 default, no average, no placeholder — a star on an unrated job
                 is a fake review, and that is a legal line rather than a
                 stylistic one. */}
             {r.stars !== null ? (
-              <span className={s.workStars} aria-label={`Rated ${r.stars} out of 5`}>
-                {'★'.repeat(r.stars)}
-                <span aria-hidden="true" className={s.workStarsOff}>
-                  {'★'.repeat(Math.max(0, 5 - r.stars))}
+              <span className={s.workRating}>
+                {/* The glyphs are decoration; the words beside them are what
+                    a screen reader gets. */}
+                <span className={s.workStars} aria-hidden="true">
+                  {'★'.repeat(r.stars)}
+                  <span className={s.workStarsOff}>{'★'.repeat(Math.max(0, 5 - r.stars))}</span>
                 </span>
+                <span className={s.workStarsLabel}>Rated {r.stars}/5 by the customer</span>
               </span>
             ) : null}
             {/* Tom's two businesses are at arm's length, so HPM work is
