@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AccountLink } from './AccountLink';
 import { BrandMark } from './BrandMark';
+import { SiteHeader } from '@/components/SiteHeader';
 import { SocialLinks } from '@/components/SocialLinks';
+import { useViewer } from '@/components/useViewer';
 import s from './home.module.css';
 
 // Root-relative, not bare fragments: this header is no longer front-page
@@ -31,8 +33,16 @@ export const BOOK_HREF = '/start';
  * Started as front-page-only, which left /contact — reached from the front
  * page's own footer — wearing a completely different header. Its section
  * links are root-relative so it works anywhere a customer might be.
+ *
+ * A signed-in contractor gets the site header instead: the one with their
+ * work and membership in it. "Services, Notes, Are you a contractor?, Book
+ * online" is the customer's menu, and a contractor on the front page was
+ * being shown it with a lone "Dashboard" tacked on the end. Resolved in the
+ * browser like the account link, so the page stays static and the swap
+ * happens on hydration.
  */
 export function HomeHeader() {
+  const viewer = useViewer();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -53,6 +63,10 @@ export function HomeHeader() {
   }, [open]);
 
   const close = () => setOpen(false);
+
+  if (viewer.signedIn && (viewer.role === 'contractor' || viewer.role === 'both')) {
+    return <SiteHeader />;
+  }
 
   return (
     <header className={`${s.nav} ${scrolled ? s.navScrolled : ''}`} data-app-hide>
