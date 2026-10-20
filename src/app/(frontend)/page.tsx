@@ -221,6 +221,21 @@ export default async function LandingPage() {
 
       <HomeHeader />
 
+      {/* The sunset banner, full width between the header and the yellow
+          line, which then reads as its caption. Its own ratio, so it is a
+          strip on a phone and a window on a laptop. */}
+      <div className={s.banner}>
+        <Image
+          src="/images/home-banner.jpg"
+          alt="A John Deere tractor with a Kuhn flail mower in a field at sunset, with the Emmerdale Agriculture logo"
+          width={2056}
+          height={765}
+          sizes="100vw"
+          priority
+          className={s.bannerImg}
+        />
+      </div>
+
       <div className={s.ticker} role="region" aria-label="What you get">
         <div className={s.container}>
           <ul className={s.tickerList}>
