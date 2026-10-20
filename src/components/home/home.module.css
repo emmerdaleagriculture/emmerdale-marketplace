@@ -1,16 +1,12 @@
 /* Front page — the "managed marketplace" design.
    DM Sans (bold) headings over Inter body, brand green + a single yellow
    accent per viewport, mown-paddock stripe motif on the intro and operator
-   band. Interior pages keep the HPM look; nothing here leaks out of .page.
+   band. Interior pages keep the HPM look; the tokens live on .page, and
+   the one the header and footer read — the gutter — travels with them
+   (see .nav/.footer below), since /start, /contact, the completion page
+   and the 404 wear this header without the page wrapper. */
 
-   The tokens sit on the header and footer as well as the page: /start,
-   /contact, the completion page and the 404 wear this header without the
-   page wrapper, and without the tokens its container had no gutter (the
-   logo clipped at the left edge, the burger flush right on a phone). */
-
-.page,
-.nav,
-.footer {
+.page {
   --bg: #fbfaf6;
   --surface: #ffffff;
   --text: #1a2b1e;
@@ -69,6 +65,14 @@
   outline-offset: 2px;
   border-radius: 4px;
 }
+/* On the green bars a green ring is invisible: yellow there, on every
+   page the bars appear on. */
+.nav :focus-visible,
+.footer :focus-visible {
+  outline: 2px solid #ffde00;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 /* Anchors land below the sticky nav. */
 .page [id] {
   scroll-margin-top: 88px;
@@ -78,7 +82,9 @@
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 var(--gutter);
+  /* The fallback is the token's own value: a .container mounted outside
+     .page, .nav or .footer still gets its gutter. */
+  padding: 0 var(--gutter, clamp(20px, 4vw, 40px));
 }
 
 .skip {
@@ -693,6 +699,7 @@
 
 /* ---------- NAV ---------- */
 .nav {
+  --gutter: clamp(20px, 4vw, 40px);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -827,7 +834,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 12px clamp(20px, 4vw, 40px) 20px;
+  padding: 12px var(--gutter, clamp(20px, 4vw, 40px)) 20px;
   border-top: 1px solid #e4e1d8;
   background: #fbfaf6;
 }
@@ -878,6 +885,7 @@
 
 /* ---------- FOOTER ---------- */
 .footer {
+  --gutter: clamp(20px, 4vw, 40px);
   background: #1a2b1e;
   color: #ddd8cb;
   padding: clamp(48px, 5vw, 72px) 0 32px;
@@ -968,7 +976,7 @@
   background: #fbfaf6;
   border-top: 1px solid #d3cebb;
   box-shadow: 0 -6px 20px -10px rgba(26, 43, 30, 0.2);
-  padding: 10px clamp(20px, 4vw, 40px) calc(10px + env(safe-area-inset-bottom));
+  padding: 10px var(--gutter, clamp(20px, 4vw, 40px)) calc(10px + env(safe-area-inset-bottom));
   transform: translateY(100%);
   transition: transform 0.24s ease;
 }
