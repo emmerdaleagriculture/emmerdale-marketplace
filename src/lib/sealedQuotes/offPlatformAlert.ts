@@ -2,6 +2,7 @@ import { notifyAdmins } from '@/lib/adminNotify';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { siteUrl } from '@/lib/site';
 import { OFF_PLATFORM } from './clientNote';
+import { billedTier } from '@/lib/membership';
 
 export type FlagRule = 'off_platform' | 'phone' | 'email_or_link' | 'postcode';
 export type FlagSurface = 'quote note' | 'extra-work proposal' | 'message';
@@ -65,17 +66,96 @@ export async function holdAfterContactAttempt(args: {
     if (upErr) console.error('[sq] contact attempt: hold not set:', upErr.message);
   }
   const who = ct?.business_name || ct?.email || 'A contractor';
-  await notifyAdmins(
-    `Contact-detail attempt: ${who} — messages now held`,
-    [
-      `${who} tried to send a message before award that was refused (${args.rule.replace(/_/g, ' ')}).`,
-      `Their messages before award are now held for your approval for ${HOLD_DAYS} days.`,
-      '',
-      `"${args.body}"`,
-      '',
-      args.submissionId ? `Job: ${siteUrl()}/admin/submissions/${args.submissionId}#messages` : '',
-    ].join('\n'),
-  );
+  // Independent, and both swallow their own failures: the contractor's
+  // warning and admin's copy go out side by side rather than one after the
+  // other on the path back to the browser.
+  await Promise.all([
+    warnContractor({
+      contractorId: args.contractorId,
+      email: ct?.email,
+      businessName: ct?.business_name,
+      rule: args.rule,
+      // The hold in force, which an admin or an earlier attempt may have set
+      // longer than this one would.
+      until: already ? (ct.messages_moderated_until as string) : until,
+    }),
+    notifyAdmins(
+      `Contact-detail attempt: ${who} — messages now held`,
+      [
+        `${who} tried to send a message before award that was refused (${args.rule.replace(/_/g, ' ')}).`,
+        `Their messages before award are now held for your approval for ${HOLD_DAYS} days.`,
+        '',
+        `"${args.body}"`,
+        '',
+        args.submissionId ? `Job: ${siteUrl()}/admin/submissions/${args.submissionId}#messages` : '',
+      ].join('\n'),
+    ),
+  ]);
+}
+
+/** One warning per contractor per this many days, however many attempts. */
+const WARN_EVERY_DAYS = HOLD_DAYS;
+
+/**
+ * The contractor hears about it too (sq_contact_warning): what was refused
+ * and why, that their messages are now checked, and the honest way to do
+ * what they were trying to do — Open membership puts the customer's details
+ * on every invitation, so there is nothing to smuggle. An Open member never
+ * gets here (the contact rules are off for them), so the invitation is to
+ * move up, from free or from Premium.
+ *
+ * Once per WARN_EVERY_DAYS, by contractor: the guard is a conditional update
+ * of contractors.contact_warned_at, so of two refusals in flight at once only
+ * the one whose update returns the row sends, and a changed address does not
+ * reset the clock. A failed lookup means no email — the point of the guard
+ * is not to nag, and an error must not turn into a second copy. Never throws.
+ */
+async function warnContractor(args: {
+  contractorId: string;
+  email: string | null | undefined;
+  businessName: string | null | undefined;
+  rule: FlagRule;
+  /** When the hold on their messages ends. */
+  until: string;
+}): Promise<void> {
+  if (!args.email) return;
+  const admin = createServiceRoleClient();
+  const now = new Date();
+  const since = new Date(now.getTime() - WARN_EVERY_DAYS * 86_400_000).toISOString();
+  const [won, sub] = await Promise.all([
+    admin
+      .from('contractors')
+      .update({ contact_warned_at: now.toISOString() })
+      .eq('id', args.contractorId)
+      .or(`contact_warned_at.is.null,contact_warned_at.lt.${since}`)
+      .select('id'),
+    // What Stripe bills them for, if anything: a paid Premium is told the
+    // move is prorated; a comp or nothing is told the price.
+    admin
+      .from('subscriptions')
+      .select('status, tier, plan, current_period_end, cancel_at_period_end')
+      .eq('contractor_id', args.contractorId)
+      .maybeSingle(),
+  ]);
+  if (won.error) {
+    console.error('[sq] contact warning: guard failed:', won.error.message);
+    return;
+  }
+  if (!won.data?.length) return;
+  if (sub.error) console.error('[sq] contact warning: subscription lookup failed:', sub.error.message);
+  const billed = sub.error ? null : billedTier(sub.data);
+  if (billed === 'open') return;
+  const { error } = await admin.from('pending_emails').insert({
+    kind: 'sq_contact_warning',
+    to_email: args.email,
+    payload: {
+      business_name: args.businessName ?? null,
+      rule: args.rule,
+      held_until: args.until,
+      billed_premium: billed === 'premium',
+    },
+  });
+  if (error) console.error('[sq] contact warning not queued:', error.message);
 }
 
 /**

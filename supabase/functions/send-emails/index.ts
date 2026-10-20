@@ -63,6 +63,7 @@ const SQ_CONTRACTOR_KINDS = new Set([
   'sq_job_amended', 'sq_message_to_contractor',
   'sq_visit_reminder', 'sq_visit_accepted', 'sq_visit_declined',
   'sq_weekly_digest', 'sq_thread_visit_to_contractor', 'sq_job_withdrawn', 'sq_price_passed',
+  'sq_contact_warning',
 ]);
 
 /** The customer's reason for passing on a price, in the contractor's email. */
@@ -219,6 +220,57 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `The link works for 24 hours. If you didn't ask for this, ignore it ` +
           `and nothing will change.`,
       };
+    /**
+     * A contractor's message to a customer before award was refused for a
+     * contact detail or another channel, and their messages are now held
+     * for approval (offPlatformAlert.ts holdAfterContactAttempt). Says what
+     * happened and why, once, and offers the honest route to the same
+     * thing: Open membership puts the customer's details on every
+     * invitation. p.tier is what they hold now ('premium' or null), so the
+     * invitation is worded as a move up or a join.
+     */
+    case 'sq_contact_warning': {
+      // messageText.ts files "give me a call" and "message me on WhatsApp"
+      // under the phone rule too, so that branch must not claim a number.
+      const what =
+        p.rule === 'phone'
+          ? 'a phone number, or an invitation to talk somewhere else'
+          : p.rule === 'email_or_link'
+            ? 'an email address, a link or another way to get in touch'
+            : p.rule === 'postcode'
+              ? 'a full postcode'
+              : 'a way to get in touch outside the site';
+      const heldUntil = p.held_until
+        ? new Date(String(p.held_until)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'Europe/London' })
+        : null;
+      const premium = p.billed_premium === true;
+      return {
+        subject: 'A message to a customer was held — and the proper way to swap details',
+        text:
+          `Hello${p.business_name ? ` ${p.business_name}` : ''},\n\n` +
+          `A message you sent to a customer today included ${what}. Until a job is booked, ` +
+          `messages between you and the customer go through the site, and we don't pass on ` +
+          `contact details either way — it's clause 8 of the contractor terms. The message ` +
+          `wasn't delivered, and ${heldUntil ? `until ${heldUntil}` : 'for the next 30 days'} your ` +
+          `messages to customers will be checked by us before they're passed on, so replies may ` +
+          `take a few hours to arrive.\n\n` +
+          `We do it because the customer pays us, we carry the insurance on every job and we ` +
+          `chase the balance, and none of that works for a job arranged privately.\n\n` +
+          `If you'd rather ring customers and agree the work directly, that's exactly what Open ` +
+          `membership is for: the customer's name, phone and email on every job you're invited ` +
+          `to, the moment it arrives, and you can agree the work with them directly with ` +
+          `nothing added on top — or send a price through us at 5% as usual. ` +
+          (premium
+            ? `You're on Premium now, so it's a move up to £49 a month or £399 a year, prorated ` +
+              `against what you've already paid.`
+            : `It's £49 a month or £399 a year, and it includes everything in Premium: first ` +
+              `refusal on new jobs and 5% commission instead of 15%.`) +
+          `\n\n` +
+          `${premium ? 'Move up to Open' : 'Join Open'}: ${SITE_URL}/account/membership\n\n` +
+          `If the message was refused by mistake, reply to this email and we'll look at it.`,
+      };
+    }
+
     case 'application_approved':
       return {
         subject: `You’re approved — welcome to the network`,
