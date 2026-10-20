@@ -367,6 +367,7 @@ export default async function AccountPage({
               <div className={ac.quickLinks}>
                 <Link href="/invitations">All invitations &amp; history</Link>
                 <Link href="/won">Won jobs</Link>
+                {(isOpen || !app) && <Link href="/account/market">Market data</Link>}
               </div>
 
               <MembershipCard

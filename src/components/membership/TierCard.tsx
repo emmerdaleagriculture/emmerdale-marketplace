@@ -24,6 +24,7 @@ export const OPEN_BENEFITS: ReactNode[] = [
   <><b>The customer’s name, phone and email</b> on every job you’re invited to, the moment it arrives.</>,
   <><b>Agree the work directly</b> with nothing added on top — or send a price through us at 5% as usual.</>,
   <><b>A listing on our county pages</b>, with a link to your website and customers’ enquiries sent straight to you.</>,
+  <><b>Market data for your area:</b> jobs month by month, what each kind of work goes for, and your win rate against the field.</>,
 ];
 export const FREE_BENEFITS: ReactNode[] = [
   <><b>Every job in your area</b> once members have had first refusal.</>,

@@ -1,0 +1,257 @@
+/*
+ * Market data: four numbers, a year of jobs as bars, a table of what work
+ * goes for, and the method. Bars are plain divs — one series, so no
+ * legend; the month's figures are in the hover and in the table beneath.
+ */
+.lead {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  max-width: 60ch;
+  margin: 0 0 28px;
+}
+.lead b {
+  color: var(--ink);
+}
+.pitch {
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--cream);
+  padding: 24px 26px;
+  margin: 0 0 28px;
+}
+.pitch h2 {
+  font-family: var(--font-display-stack);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--jd-green-deep);
+  margin: 0 0 8px;
+}
+.pitch p {
+  margin: 0 0 14px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.pitch a {
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.h2 {
+  font-family: var(--font-display-stack);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--jd-green-deep);
+  margin: 36px 0 6px;
+}
+.sub {
+  margin: 0 0 18px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink-3);
+  max-width: 64ch;
+}
+
+/* ── The chart ───────────────────────────────────────────────────────── */
+.chart {
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--white);
+  padding: 20px 18px 12px;
+}
+.plot {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 6px;
+  height: 180px;
+  align-items: end;
+  border-bottom: 1px solid var(--rule);
+}
+.gridline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed #e4e7df;
+  pointer-events: none;
+}
+.gridlabel {
+  position: absolute;
+  left: 0;
+  transform: translateY(-100%);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  padding-bottom: 2px;
+}
+.col {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+}
+.col:hover .tip {
+  display: block;
+}
+/* The edge columns' tips hang inward, not off the chart (the plot's first
+   two children are the gridlines). */
+.col:nth-child(-n + 5) .tip {
+  left: 0;
+  transform: none;
+}
+.col:nth-last-child(-n + 3) .tip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.bar {
+  width: 60%;
+  max-width: 28px;
+  min-height: 2px;
+  background: var(--jd-green);
+  border-radius: 4px 4px 0 0;
+}
+.barEmpty {
+  background: #e4e7df;
+}
+.barLabel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(-100%);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.tip {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: var(--jd-green-deep);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  display: none;
+  pointer-events: none;
+  z-index: 1;
+}
+.months {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 6px;
+  padding-top: 8px;
+}
+.month {
+  text-align: center;
+  font-size: 11px;
+  color: var(--ink-3);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.monthShort {
+  display: none;
+}
+.span {
+  margin: 8px 0 0;
+  text-align: right;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.tableToggle {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.tableToggle summary {
+  cursor: pointer;
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────── */
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--white);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.table th,
+.table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+.table th {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  background: var(--cream);
+}
+.table tr:last-child td {
+  border-bottom: 0;
+}
+.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+.muted {
+  color: var(--ink-3);
+}
+.fine {
+  font-size: 13px;
+  color: var(--ink-3);
+  line-height: 1.55;
+  margin: 12px 0 0;
+  max-width: 64ch;
+}
+.back {
+  font-size: 15px;
+  margin: 32px 0;
+}
+.back a {
+  text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  .plot {
+    height: 150px;
+    gap: 3px;
+  }
+  .months {
+    gap: 3px;
+  }
+  .month {
+    font-size: 10px;
+  }
+  .monthFull {
+    display: none;
+  }
+  .monthShort {
+    display: inline;
+  }
+  .barLabel {
+    font-size: 11px;
+  }
+  .pitch {
+    padding: 20px 18px;
+  }
+}

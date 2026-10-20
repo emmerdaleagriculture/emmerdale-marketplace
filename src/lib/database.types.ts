@@ -3171,6 +3171,20 @@ export type Database = {
         Args: { p_contractor_id: string }
         Returns: string | null
       }
+      sq_area_jobs: {
+        Args: { p_contractor_id: string; p_since: string }
+        Returns: {
+          awarded_at: string | null
+          awarded_contractor_id: string | null
+          distributed_at: string | null
+          id: string
+          service_id: number | null
+        }[]
+      }
+      sq_market_data: {
+        Args: { p_contractor_id: string }
+        Returns: Json
+      }
       sq_reveal_contact: {
         Args: { p_token: string }
         Returns: Json
