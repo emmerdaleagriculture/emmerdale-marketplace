@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './SiteHeader.module.css';
 import { SocialLinks } from './SocialLinks';
-import { useViewer, type Membership } from './useViewer';
+import { isContractor as contractorOf, isCustomer as customerOf, useViewer, type Membership, type Viewer } from './useViewer';
 
 /**
  * The header's links, behind a burger at every width.
@@ -219,9 +219,9 @@ function NavLink({
   );
 }
 
-export function SiteNav() {
-  const viewer = useViewer();
-  const [open, setOpen] = useState(false);
+export function SiteNav({ viewer: known, defaultOpen = false }: { viewer?: Viewer; defaultOpen?: boolean } = {}) {
+  const viewer = useViewer(known);
+  const [open, setOpen] = useState(defaultOpen);
   const pathname = usePathname();
 
   // A menu left open across a navigation covers the page you asked for.
@@ -256,8 +256,8 @@ export function SiteNav() {
   const close = () => setOpen(false);
 
   const role = viewer.signedIn ? viewer.role : null;
-  const isContractor = role === 'contractor' || role === 'both';
-  const isCustomer = role === 'customer' || role === 'both';
+  const isContractor = contractorOf(viewer);
+  const isCustomer = customerOf(viewer);
 
   let groups: Group[];
   if (!viewer.signedIn) {

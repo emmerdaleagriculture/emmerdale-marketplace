@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useViewer } from '@/components/useViewer';
+import { useViewer, type Viewer } from '@/components/useViewer';
 
 /**
  * "Log in" for visitors; the way back to their own side for someone already
@@ -11,8 +11,17 @@ import { useViewer } from '@/components/useViewer';
  * Resolved in the browser (useViewer) so the front page stays static: it
  * renders "Log in" first and swaps on hydration.
  */
-export function AccountLink({ className, onClick }: { className?: string; onClick?: () => void }) {
-  const viewer = useViewer();
+export function AccountLink({
+  viewer: known,
+  className,
+  onClick,
+}: {
+  /** Already resolved by the header; looked up here only when absent. */
+  viewer?: Viewer;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const viewer = useViewer(known);
 
   const { href, label } = !viewer.signedIn
     ? { href: '/login', label: 'Log in' }
