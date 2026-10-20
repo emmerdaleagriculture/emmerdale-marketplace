@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { createStaticClient } from '@/lib/supabase/static';
 import { memoize, REFERENCE_TTL_MS } from '@/lib/memo';
 import { createServiceRoleClient } from '@/lib/supabase/server';
@@ -76,3 +77,53 @@ export function getCountyServiceCoverage(serviceId: number): Promise<Record<stri
   }
   return loader();
 }
+
+/** One Open member's listing on a county page (county_directory view). */
+export type DirectoryEntry = {
+  contractorId: string;
+  businessName: string;
+  website: string | null;
+  blurb: string | null;
+  services: number[];
+  servicesOnly: boolean;
+  ratingAvg: number | null;
+  ratingCount: number;
+};
+
+/** The tag a listing change clears (account/actions.ts). */
+export const COUNTY_DIRECTORY_TAG = 'county-directory';
+
+/**
+ * The Open members listed on each county page, keyed by county name
+ * (county_directory view, 20261021110000). Service role like the coverage
+ * counts. Cached under a tag rather than memoised in the instance: a
+ * member who edits their listing clears it with revalidateTag, which an
+ * in-memory copy on another instance would not hear about, and the county
+ * pages it feeds are then rebuilt from fresh rows.
+ */
+export const getCountyDirectory = unstable_cache(
+  async (): Promise<Record<string, DirectoryEntry[]>> => {
+    const supabase = createServiceRoleClient();
+    const { data } = await supabase
+      .from('county_directory')
+      .select('county, contractor_id, business_name, website, directory_blurb, services, services_only, rating_avg, rating_count')
+      .order('business_name');
+    const byCounty: Record<string, DirectoryEntry[]> = {};
+    for (const row of data ?? []) {
+      if (!row.county || !row.contractor_id || !row.business_name) continue;
+      (byCounty[row.county] ??= []).push({
+        contractorId: row.contractor_id,
+        businessName: row.business_name,
+        website: row.website,
+        blurb: row.directory_blurb,
+        services: row.services ?? [],
+        servicesOnly: row.services_only ?? false,
+        ratingAvg: row.rating_avg,
+        ratingCount: row.rating_count ?? 0,
+      });
+    }
+    return byCounty;
+  },
+  ['county-directory'],
+  { tags: [COUNTY_DIRECTORY_TAG], revalidate: 600 },
+);

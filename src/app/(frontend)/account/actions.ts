@@ -1,7 +1,9 @@
 'use server';
 
 import { z } from 'zod';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
+import { countySlug } from '@/lib/verticals';
+import { COUNTY_DIRECTORY_TAG } from '@/lib/reference';
 import { createClient } from '@/lib/supabase/server';
 import { resolveCounty } from '@/lib/postcodes';
 import type { FormState } from '@/lib/form';
@@ -14,6 +16,17 @@ const ProfileSchema = z.object({
   base_postcode: z.string().trim().min(3, 'Base postcode is required.'),
   county_ids: z.array(z.coerce.number().int()).min(1, 'Select at least one county.'),
   service_ids: z.array(z.coerce.number().int()).min(1, 'Pick at least one service.'),
+});
+
+/** The listing's fields, present only when the form showed them (Open members). */
+const DirectorySchema = z.object({
+  website: z
+    .string()
+    .trim()
+    .max(200)
+    .transform((v) => (v && !/^https?:\/\//i.test(v) ? `https://${v}` : v.replace(/^https?:\/\//i, (m) => m.toLowerCase())))
+    .refine((v) => !v || /^https?:\/\/[^\s/]+\.[^\s/]+/i.test(v), 'That website address doesn’t look right.'),
+  directory_blurb: z.string().trim().max(160, 'Keep the line under 160 characters.'),
 });
 
 export async function updateProfileAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -38,6 +51,22 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   const notify = formData.get('notify_new_jobs') === 'on';
   const notifySms = formData.get('notify_sms') === 'on';
 
+  // The directory section is only on the form for an Open member; a form
+  // without it leaves the listing columns alone.
+  let directory: { website: string | null; directory_blurb: string | null; directory_listed: boolean } | null = null;
+  if (formData.has('directory_section')) {
+    const dir = DirectorySchema.safeParse({
+      website: formData.get('website') ?? '',
+      directory_blurb: formData.get('directory_blurb') ?? '',
+    });
+    if (!dir.success) return { error: dir.error.issues[0]?.message ?? 'Please check the listing.' };
+    directory = {
+      website: dir.data.website || null,
+      directory_blurb: dir.data.directory_blurb || null,
+      directory_listed: formData.get('directory_listed') === 'on',
+    };
+  }
+
   // Refresh display-only base coords when the geocode succeeds (§15). A
   // transient postcodes.io failure must not wipe previously stored coords —
   // that would strip distances from every future invitation.
@@ -45,7 +74,10 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
 
   // A number verified by text in the app stays marked as such only while it
   // is the number on the row.
-  const { data: before } = await supabase.from('contractors').select('phone, phone_verified_at').eq('id', user.id).maybeSingle();
+  const [{ data: before }, { data: beforeCounties }] = await Promise.all([
+    supabase.from('contractors').select('phone, phone_verified_at').eq('id', user.id).maybeSingle(),
+    supabase.from('contractor_counties').select('county_id').eq('contractor_id', user.id),
+  ]);
   const phoneChanged = before?.phone !== d.phone;
 
   // Update own profile (RLS: contractors_update_own; status is trigger-guarded).
@@ -61,6 +93,7 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
       ...(geo.lat != null && geo.lng != null ? { base_lat: geo.lat, base_lng: geo.lng } : {}),
       notify_new_jobs: notify,
       notify_sms: notifySms,
+      ...(directory ?? {}),
     })
     .eq('id', user.id);
   if (upErr) return { error: `Could not save: ${upErr.message}` };
@@ -75,6 +108,20 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   }
 
   revalidatePath('/account');
+  if (directory) {
+    // Their listing changed: clear the directory, then ask for each of
+    // their county pages — the ones they cover now and the ones they just
+    // dropped — to be rebuilt rather than wait a day.
+    revalidateTag(COUNTY_DIRECTORY_TAG);
+    const ids = Array.from(new Set([...d.county_ids, ...(beforeCounties ?? []).map((r) => r.county_id!).filter(Boolean)]));
+    const { data: names } = await supabase.from('counties').select('name').in('id', ids);
+    for (const c of names ?? []) {
+      const slug = countySlug(c.name);
+      revalidatePath(`/paddock-maintenance/${slug}`);
+      revalidatePath(`/hay-bales/${slug}`);
+      revalidatePath(`/tractor-hire/${slug}`);
+    }
+  }
   return { ok: true, message: 'Your details have been saved.' };
 }
 

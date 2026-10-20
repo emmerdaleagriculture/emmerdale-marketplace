@@ -390,6 +390,7 @@ export default async function AccountPage({
             contractor={contractor}
             counties={counties}
             selectedCounties={selectedCounties}
+            listing={isOpen && status === 'approved'}
             services={services}
           />
 

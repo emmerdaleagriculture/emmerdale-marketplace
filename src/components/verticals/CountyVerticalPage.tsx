@@ -5,6 +5,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { NotesTeaser } from '@/components/notes/NotesTeaser';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
+import { CountyDirectory } from '@/components/directory/CountyDirectory';
 import { COMPANY_LEGAL_NAME, ORG_ID, siteUrl } from '@/lib/site';
 import { VERTICALS, regionPhrase, type VerticalKey, type CountyRef } from '@/lib/verticals';
 import { verticalNote, verticalNoteHeading } from '@/lib/verticalRegions';
@@ -19,7 +20,7 @@ const SITE = siteUrl();
  * /hay-bales/hampshire or /tractor-hire/surrey. Copy + schema come from the
  * vertical config, keyed on the county name.
  */
-export function CountyVerticalPage({
+export async function CountyVerticalPage({
   vertical,
   county,
   siblings,
@@ -110,6 +111,8 @@ export function CountyVerticalPage({
           />
         </div>
       </main>
+
+      <CountyDirectory county={name} serviceId={v.serviceId} />
 
       <section className={s.section}>
         <div className={s.sectionInner}>
