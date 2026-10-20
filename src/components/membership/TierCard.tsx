@@ -15,12 +15,12 @@ export type CardTier = MembershipTier | 'free';
 export const gbp = (n: number) => `£${n}`;
 
 export const PREMIUM_BENEFITS: ReactNode[] = [
-  <><b>First refusal on new jobs</b> in your area, for up to 7 days before anyone else sees them.</>,
+  <><b>First refusal on new jobs</b> in your area, for up to 7 days before the rest of the market sees them.</>,
   <><b>5% commission instead of 15%.</b> Price a job at £400 and the customer sees £420, not £460.</>,
   <><b>Cancel any time.</b> You keep it to the end of the period you’ve paid for.</>,
 ];
 export const OPEN_BENEFITS: ReactNode[] = [
-  <><b>First look ahead of Premium.</b> Every new job reaches Open members 2 hours before Premium members see it.</>,
+  <><b>First look ahead of Premium.</b> New jobs reach Open members up to 2 hours before Premium members in the same area.</>,
   <><b>The customer’s name, phone and email</b> on every job you’re invited to, the moment it arrives.</>,
   <><b>Agree the work directly</b> with nothing added on top — or send a price through us at 5% as usual.</>,
 ];
@@ -32,7 +32,7 @@ export const FREE_BENEFITS: ReactNode[] = [
 
 const BLURB: Record<CardTier, string> = {
   free: 'Every job in your area after members have seen it, at our standard commission.',
-  premium: 'First look at every job in your area, and 5% commission instead of 15%.',
+  premium: 'Every job in your area ahead of the market, and 5% commission instead of 15%.',
   open: 'Everything in Premium, plus the customer’s contact details on every job.',
 };
 const GLYPH: Record<CardTier, string> = { free: '', premium: '★ ', open: '◆ ' };

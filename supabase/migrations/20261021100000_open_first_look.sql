@@ -31,8 +31,8 @@ alter table public.job_submissions add column if not exists open_first_until tim
 alter table public.job_invitations add column if not exists open_first boolean not null default false;
 
 -- Who a premium window would invite now: every vetted member covering the
--- county and in range who wants the work and has not already been invited,
--- with their tier. The one query the window start, the hand-off and the
+-- county and in range who wants the work, can be emailed, and has not
+-- already been invited, with their tier. The one query the window start, the hand-off and the
 -- late joiner share.
 create or replace function public.sq_premium_candidates(p_submission_id uuid)
  returns table (contractor_id uuid, is_open boolean)
@@ -54,6 +54,7 @@ as $function$
      and ct.status = 'approved'
      and ct.vetted_at is not null
      and contractor_is_premium(ct.id)
+     and not email_undeliverable(ct.email)
      and sq_contractor_wants_job(ct, js)
      and sq_in_invite_range(js.lat, js.lng, ct.base_lat, ct.base_lng, ct.invite_radius_miles)
      and (jsonb_array_length(allow.v) = 0
@@ -72,14 +73,16 @@ CREATE OR REPLACE FUNCTION public.sq_start_premium_window(p_submission_id uuid)
 AS $function$
 declare
   v_js      job_submissions%rowtype;
-  v_ct      record;
+  v_id      uuid;
+  v_open    uuid[] := '{}';
+  v_waiting uuid[] := '{}';
   v_n       int := 0;
-  v_open    int := 0;
-  v_waiting int := 0;
   v_hours   int := app_config_num('sq_premium_window_hours', 168)::int;
+  v_reply   int := app_config_num('sq_premium_reply_hours', 24)::int;
   v_head    int := app_config_num('sq_open_first_hours', 2)::int;
   v_staged  boolean := false;
   v_opens   timestamptz;
+  v_extra   jsonb;
 begin
   select * into v_js from job_submissions where id = p_submission_id;
   if not found or v_js.premium_window or v_js.repeat_of is not null
@@ -88,20 +91,25 @@ begin
   end if;
 
   v_opens := now() + make_interval(hours => v_hours);
+  -- The deadline the no-reply rule works to, said in the invitation.
+  v_extra := jsonb_build_object('premium', true, 'market_opens_at', v_opens,
+                                'reply_by', now() + make_interval(hours => v_reply));
+
+  -- The candidates, read once and sorted by tier.
+  select coalesce(array_agg(c.contractor_id) filter (where c.is_open), '{}'),
+         coalesce(array_agg(c.contractor_id) filter (where not c.is_open), '{}')
+    into v_open, v_waiting
+    from sq_premium_candidates(v_js.id) c;
 
   -- A head start only when there is someone to have it and someone to wait.
-  select count(*) filter (where is_open), count(*) filter (where not is_open)
-    into v_open, v_waiting
-    from sq_premium_candidates(v_js.id);
-  v_staged := v_head > 0 and v_open > 0 and v_waiting > 0;
+  v_staged := v_head > 0 and cardinality(v_open) > 0 and cardinality(v_waiting) > 0;
 
   if v_staged then
-    for v_ct in select c.contractor_id from sq_premium_candidates(v_js.id) c where c.is_open loop
-      if sq_invite_contractor(v_js.id, v_ct.contractor_id,
-           jsonb_build_object('premium', true, 'market_opens_at', v_opens,
-                              'open_first', true, 'open_first_hours', v_head)) then
+    foreach v_id in array v_open loop
+      if sq_invite_contractor(v_js.id, v_id,
+           v_extra || jsonb_build_object('open_first', true, 'open_first_hours', v_head)) then
         update job_invitations set premium_offer = true, open_first = true
-         where submission_id = v_js.id and contractor_id = v_ct.contractor_id;
+         where submission_id = v_js.id and contractor_id = v_id;
         v_n := v_n + 1;
       end if;
     end loop;
@@ -110,11 +118,10 @@ begin
   end if;
 
   if not v_staged then
-    for v_ct in select c.contractor_id from sq_premium_candidates(v_js.id) c loop
-      if sq_invite_contractor(v_js.id, v_ct.contractor_id,
-           jsonb_build_object('premium', true, 'market_opens_at', v_opens)) then
+    foreach v_id in array (v_open || v_waiting) loop
+      if sq_invite_contractor(v_js.id, v_id, v_extra) then
         update job_invitations set premium_offer = true
-         where submission_id = v_js.id and contractor_id = v_ct.contractor_id;
+         where submission_id = v_js.id and contractor_id = v_id;
         v_n := v_n + 1;
       end if;
     end loop;
@@ -133,7 +140,7 @@ begin
     perform log_job_event(v_js.id, 'premium_window', null, null, 'system', null, null,
       jsonb_build_object('invited', v_n, 'market_opens_at', v_opens,
                          'open_first', v_staged, 'premium_waiting',
-                         case when v_staged then v_waiting else 0 end));
+                         case when v_staged then cardinality(v_waiting) else 0 end));
   end if;
   return v_n;
 end;
@@ -159,9 +166,13 @@ begin
     return 0;
   end if;
 
+  -- The no-reply rule still counts from the window's start, so the
+  -- invitation names that deadline rather than promising a fresh 24 hours.
   for v_ct in select c.contractor_id from sq_premium_candidates(v_js.id) c loop
     if sq_invite_contractor(v_js.id, v_ct.contractor_id,
-         jsonb_build_object('premium', true, 'market_opens_at', v_js.market_opens_at)) then
+         jsonb_build_object('premium', true, 'market_opens_at', v_js.market_opens_at,
+                            'reply_by', v_js.premium_started_at
+                              + make_interval(hours => app_config_num('sq_premium_reply_hours', 24)::int))) then
       update job_invitations set premium_offer = true
        where submission_id = v_js.id and contractor_id = v_ct.contractor_id;
       v_n := v_n + 1;
@@ -388,5 +399,95 @@ begin
   end loop;
 
   return v_invited;
+end;
+$function$;
+
+-- open_submission_to_market, as in 20261009120000 but for one line: a
+-- window that ends early (the customer passes on a price, an admin opens
+-- the job) takes any head start with it, so open_first_until is null
+-- whenever market_opens_at is.
+CREATE OR REPLACE FUNCTION public.open_submission_to_market(p_submission_id uuid, p_reason text DEFAULT 'customer'::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_js        job_submissions%rowtype;
+  v_allowlist jsonb;
+  v_match     record;
+  v_invited   int := 0;
+  v_too_far   int := 0;
+  v_name      text;
+  v_premium   int;
+begin
+  select * into v_js from job_submissions where id = p_submission_id for update;
+  if not found then return jsonb_build_object('ok', false, 'reason', 'not_found'); end if;
+  if v_js.market_opens_at is null then return jsonb_build_object('ok', false, 'reason', 'not_direct'); end if;
+  if v_js.status not in ('distributed', 'quotes_receiving') then
+    return jsonb_build_object('ok', false, 'reason', 'closed');
+  end if;
+
+  -- HPM first, then premium, then everyone: a first-refusal offer that
+  -- lapses, is declined, sits unaccepted or has its price passed goes to premium members before the
+  -- market. Once only — the premium window's own ending opens the market.
+  if v_js.first_refusal and not v_js.premium_window
+     and p_reason in ('declined', 'timeout', 'unaccepted', 'passed') then
+    v_premium := sq_start_premium_window(v_js.id);
+    if v_premium > 0 then
+      return jsonb_build_object('ok', true, 'premium_window', true, 'invited', v_premium);
+    end if;
+  end if;
+
+  v_allowlist := coalesce(
+    (select value from app_config where key = 'sq_test_contractor_allowlist'), '[]'::jsonb);
+
+  for v_match in
+    select ct.id,
+           sq_in_invite_range(v_js.lat, v_js.lng, ct.base_lat, ct.base_lng, ct.invite_radius_miles) as near
+      from contractors ct
+      join contractor_counties cc on cc.contractor_id = ct.id
+     where cc.county_id = v_js.county_id
+       and ct.status = 'approved'
+       and ct.vetted_at is not null
+       and sq_contractor_wants_job(ct, v_js)
+       and (jsonb_array_length(v_allowlist) = 0
+            or ct.email in (select jsonb_array_elements_text(v_allowlist)))
+  loop
+    if not v_match.near then
+      v_too_far := v_too_far + 1;
+    elsif sq_invite_contractor(v_js.id, v_match.id, jsonb_build_object('opened_to_market', p_reason)) then
+      v_invited := v_invited + 1;
+    end if;
+  end loop;
+
+  update job_submissions
+     set market_opens_at = null,
+         open_first_until = null,
+         distributed_at = now(),
+         expires_at = greatest(expires_at,
+           now() + make_interval(days => app_config_num('sq_job_expiry_days', 7)::int))
+   where id = v_js.id;
+
+  perform log_job_event(v_js.id, 'market_opened', null, null, 'system', null, null,
+    jsonb_build_object('reason', p_reason, 'invited_count', v_invited, 'too_far', v_too_far));
+
+  -- Nobody to price it. The job stays open (the direct contractor's own
+  -- invitation may still be live) but it is now an admin's problem, said so.
+  if v_invited = 0 then
+    perform sq_notify_once(v_js.id, '__admin__', 'sq_no_matches', '__admin__',
+      sq_job_facts(v_js.id) || jsonb_build_object('supply_gap', true, 'too_far', v_too_far,
+                                                  'market_opened', true));
+  end if;
+
+  if p_reason in ('declined', 'timeout') and not v_js.first_refusal then
+    select business_name into v_name from contractors where id = v_js.preferred_contractor_id;
+    perform sq_notify_once(v_js.id, coalesce(v_js.contact_email, 'unknown'), 'sq_direct_fallback',
+      v_js.contact_email, jsonb_build_object(
+        'client_token', v_js.client_token, 'contact_name', v_js.contact_name,
+        'contractor_name', v_name, 'reason', p_reason, 'invited', v_invited));
+  end if;
+
+  return jsonb_build_object('ok', true, 'invited', v_invited, 'too_far', v_too_far);
 end;
 $function$;

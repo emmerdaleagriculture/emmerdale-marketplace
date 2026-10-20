@@ -240,9 +240,10 @@ export default function TermsPage() {
             not opening it within <strong>2 hours</strong> counts as passing for the
             purpose of the hold (you can still price it). If no premium member has
             priced it or messaged the customer within <strong>24 hours</strong>, it
-            goes to other contractors then. Within the hold, Open members are sent the
-            job first; Premium members follow <strong>2 hours</strong> later, or sooner
-            if every Open member has priced or passed. Where another contractor already has first refusal in an
+            goes to other contractors then. Within the hold, where both Open and Premium
+            members are in range, Open members are sent the job first and Premium members
+            follow up to <strong>2 hours</strong> later, or sooner if every Open member has
+            priced or passed; the 24 hours above still run from the start of the hold. Where another contractor already has first refusal in an
             area by separate agreement, that comes first and premium follows it. Repeat
             jobs a customer has asked a named contractor for are not included. The
             customer can accept any price at any time, including during the window.
