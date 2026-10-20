@@ -37,8 +37,8 @@ export function readMessagePhotos(formData: FormData): { files: File[] } | { err
   }
   for (const f of files) {
     if (!PHOTO_TYPES[f.type]) return { error: 'Photos need to be JPEG, PNG or WebP pictures.' };
-    if (f.size > PHOTO_MAX_BYTES) return { error: 'One of those photos is too large — try a smaller one.' };
-    if (f.size < PHOTO_MIN_BYTES) return { error: 'One of those photos came through empty — remove it and add it again.' };
+    if (f.size > PHOTO_MAX_BYTES) return { error: 'One of those photos is too large. Try a smaller one.' };
+    if (f.size < PHOTO_MIN_BYTES) return { error: 'One of those photos came through empty. Remove it and add it again.' };
   }
   return { files };
 }

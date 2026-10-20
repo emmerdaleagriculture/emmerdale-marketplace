@@ -54,7 +54,7 @@ export async function classifyAndDistributeAction(
     message:
       res.invited !== undefined
         ? `Classified and sent to ${res.invited} contractor${res.invited === 1 ? '' : 's'}.`
-        : `Classified — status now ${res.status ?? 'unchanged'}.`,
+        : `Classified. Status now ${res.status ?? 'unchanged'}.`,
   };
 }
 
@@ -123,7 +123,7 @@ export async function cancelJobAction(_prev: FormState, formData: FormData): Pro
   const user = await assertAdmin();
   const id = String(formData.get('submission_id') ?? '');
   const reason = String(formData.get('reason') ?? '').trim();
-  if (!reason) return { error: 'A reason is required — it goes in the audit log.' };
+  if (!reason) return { error: 'A reason is required. It goes in the audit log.' };
 
   const admin = createServiceRoleClient();
   const { data: js } = await admin
@@ -186,7 +186,7 @@ export async function markContactedAction(
   const user = await assertAdmin();
   const id = String(formData.get('submission_id') ?? '');
   const reason = String(formData.get('reason') ?? '').trim();
-  if (!reason) return { error: 'Say how you know — it goes in the audit log.' };
+  if (!reason) return { error: 'Say how you know. It goes in the audit log.' };
 
   const admin = createServiceRoleClient();
   const { data: updated, error } = await admin
@@ -293,7 +293,7 @@ export async function recordPayoutAction(
 
   refresh(id);
   revalidatePath('/admin/money');
-  return { ok: true, message: `Recorded ${formatGBP(amount)} paid — ${contractor?.email ? 'the contractor has been told' : 'no contractor email to tell'}.` };
+  return { ok: true, message: `Recorded ${formatGBP(amount)} paid. ${contractor?.email ? 'The contractor has been told' : 'No contractor email to tell'}.` };
 }
 
 /** Operator: take back a payout recorded by mistake. */
@@ -337,7 +337,7 @@ export async function markCompletedAction(
   const user = await assertAdmin();
   const id = String(formData.get('submission_id') ?? '');
   const reason = String(formData.get('reason') ?? '').trim();
-  if (!reason) return { error: 'A reason is required — it goes in the audit log.' };
+  if (!reason) return { error: 'A reason is required. It goes in the audit log.' };
 
   const admin = createServiceRoleClient();
   const { data, error } = await admin.rpc('mark_submission_completed', {
@@ -349,7 +349,7 @@ export async function markCompletedAction(
   const res = data as { ok: boolean; reason?: string; status?: string };
   if (!res.ok) return { error: `Can’t complete from status "${res.status ?? res.reason}".` };
   refresh(id);
-  return { ok: true, message: 'Marked complete — the customer gets a rating request.' };
+  return { ok: true, message: 'Marked complete. The customer gets a rating request.' };
 }
 
 /**
@@ -404,7 +404,7 @@ export async function clearClientNoteAction(
   const { error } = await admin.rpc('sq_clear_client_note', { p_client_quote_id: clientQuoteId });
   if (error) {
     console.error('[admin] sq_clear_client_note failed:', error);
-    return { error: 'Could not clear that note — try again.' };
+    return { error: 'Could not clear that note. Try again.' };
   }
 
   refresh(submissionId);
@@ -425,7 +425,7 @@ export async function deleteJobAction(_prev: FormState, formData: FormData): Pro
   const id = String(formData.get('submission_id') ?? '');
   const reason = String(formData.get('reason') ?? '').trim();
   if (!id) return { error: 'Missing the job.' };
-  if (!reason) return { error: 'Say why — it goes in the email that records the delete.' };
+  if (!reason) return { error: 'Say why. It goes in the email that records the delete.' };
 
   const admin = createServiceRoleClient();
   const { data: js } = await admin
@@ -433,7 +433,7 @@ export async function deleteJobAction(_prev: FormState, formData: FormData): Pro
     .select('status, raw_text, postcode, contact_name, contact_email, created_at')
     .eq('id', id)
     .maybeSingle();
-  if (!js) return { error: 'Not found — it may already be deleted.' };
+  if (!js) return { error: 'Not found. It may already be deleted.' };
 
   const { data, error } = await admin.rpc('admin_delete_submission', { p_submission_id: id });
   if (error) return { error: `Could not delete: ${error.message}` };
@@ -441,10 +441,10 @@ export async function deleteJobAction(_prev: FormState, formData: FormData): Pro
   if (!res.ok) {
     if (res.reason === 'payments' || res.reason === 'status') {
       return {
-        error: `Can’t delete a job at "${res.status}" — it involves money or an award. Cancel it instead.`,
+        error: `Can’t delete a job at "${res.status}": it involves money or an award. Cancel it instead.`,
       };
     }
-    return { error: 'Not found — it may already be deleted.' };
+    return { error: 'Not found. It may already be deleted.' };
   }
 
   // Photos live in storage, outside the transaction. A failure here leaves
@@ -510,7 +510,7 @@ export async function addExtraWorkAction(_prev: FormState, formData: FormData): 
       bad_price: 'Enter a price above zero.',
       bad_basis: 'Pick a VAT option.',
     };
-    return { error: why[res?.reason ?? ''] ?? 'That didn’t go through — nothing was sent.' };
+    return { error: why[res?.reason ?? ''] ?? 'That didn’t go through. Nothing was sent.' };
   }
   refresh(id);
   if (res.id) refresh(res.id);
@@ -542,7 +542,7 @@ export async function moderateMessageAction(
   const res = data as { ok: boolean; reason?: string } | null;
   if (error || !res?.ok) {
     if (error) console.error('[admin] moderate message failed:', error.message);
-    return { error: res?.reason === 'not_held' ? 'Already decided.' : 'That didn’t go through — try again.' };
+    return { error: res?.reason === 'not_held' ? 'Already decided.' : 'That didn’t go through. Try again.' };
   }
   revalidatePath(`/admin/submissions/${submissionId}`);
   return { ok: true };

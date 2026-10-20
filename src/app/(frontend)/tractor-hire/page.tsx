@@ -32,7 +32,7 @@ const serviceJsonLd = {
   name: 'Tractor & trailer hire for events',
   serviceType: ['Wedding tractor hire', 'Prom tractor hire', 'Event tractor hire'],
   description:
-    `Hire a tractor and trailer with an experienced operator for weddings, proms, photoshoots and events — matched to an operator by area across ${SERVICE_AREA}.`,
+    `Hire a tractor and trailer with an experienced operator for weddings, proms, photoshoots and events, matched to an operator by area across ${SERVICE_AREA}.`,
   areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
   provider: {
     '@type': 'Organization',
@@ -50,11 +50,11 @@ const faqs = [
   },
   {
     q: 'Does it come with a driver?',
-    a: 'Yes — an experienced operator drives the tractor. You’re not expected to drive it yourself, and it keeps everything safe and properly insured.',
+    a: 'Yes. An experienced operator drives the tractor. You’re not expected to drive it yourself, and it keeps everything safe and properly insured.',
   },
   {
     q: 'How much does it cost?',
-    a: 'It depends on the tractor, how far it needs to travel, and how long you need it. The price is agreed directly with the operator. Send an enquiry with the date and location and we’ll come back with options — no obligation.',
+    a: 'It depends on the tractor, how far it needs to travel, and how long you need it. The price is agreed directly with the operator. Send an enquiry with the date and location and we’ll come back with options, no obligation.',
   },
   {
     q: 'Which areas do you cover?',
@@ -83,11 +83,11 @@ export default function TractorHirePage() {
           <Breadcrumb items={[{ label: 'Tractor hire' }]} />
           <div className={a.eyebrow}>Tractor hire · Events</div>
           <h1 className={a.title}>
-            A tractor for your big day — <em>matched to an operator near you.</em>
+            A tractor for your big day, <em>matched to an operator near you.</em>
           </h1>
           <p className={a.sub}>
             Arriving at your wedding on a tractor and trailer, a vintage tractor for
-            the prom, or a proper farm tractor for a photoshoot or parade — tell us
+            the prom, or a proper farm tractor for a photoshoot or parade. Tell us
             the occasion and we’ll match you with an experienced operator near you,
             across {SERVICE_AREA}. Driver included, no obligation.
           </p>
@@ -96,7 +96,7 @@ export default function TractorHirePage() {
           <EnquiryForm
             category="tractor-hire"
             detailsLabel="What’s the occasion?"
-            detailsPlaceholder="e.g. Vintage tractor + trailer to bring the bride to a wedding near SO21 on 14 June — about 2 miles"
+            detailsPlaceholder="e.g. Vintage tractor + trailer to bring the bride to a wedding near SO21 on 14 June, about 2 miles"
             submitLabel="Send tractor enquiry"
           />
         </div>
@@ -109,24 +109,24 @@ export default function TractorHirePage() {
             A little bit of the countryside, <em>wherever you need it.</em>
           </h2>
           <p className={s.sectionLede}>
-            The tractors do the hard graft the rest of the year — but they scrub up
+            The tractors do the hard graft the rest of the year, but they scrub up
             well for a day out too.
           </p>
           <div className={s.sectionInner} style={{ maxWidth: 760, lineHeight: 1.9 }}>
             <ul>
               <li>
-                <strong>Weddings</strong> — arrive (or leave) in style on a decorated
+                <strong>Weddings</strong>: arrive (or leave) in style on a decorated
                 trailer.
               </li>
               <li>
-                <strong>Proms</strong> — a memorable entrance that isn’t another limo.
+                <strong>Proms</strong>: a memorable entrance that isn’t another limo.
               </li>
               <li>
-                <strong>Photoshoots &amp; film</strong> — an authentic farm tractor on
+                <strong>Photoshoots &amp; film</strong>: an authentic farm tractor on
                 set.
               </li>
               <li>
-                <strong>Parades, shows &amp; promotions</strong> — a real head-turner.
+                <strong>Parades, shows &amp; promotions</strong>: a real head-turner.
               </li>
             </ul>
           </div>

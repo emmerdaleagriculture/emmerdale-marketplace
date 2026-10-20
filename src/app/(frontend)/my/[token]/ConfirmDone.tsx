@@ -40,7 +40,7 @@ export function ConfirmDone({
           {state.error && <p className={f.error}>{state.error}</p>}
           <input type="hidden" name="token" value={token} />
           <button className={f.btnPrimary} type="submit" disabled={pending}>
-            {pending ? 'Confirming…' : 'Yes — the work is done'}
+            {pending ? 'Confirming…' : 'Yes, the work is done'}
           </button>
         </form>
       )}

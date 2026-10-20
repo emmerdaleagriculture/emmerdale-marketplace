@@ -114,7 +114,7 @@ export function FeedbackWidget() {
 
               <label className={s.field}>
                 <span className={s.label}>
-                  What went wrong, or what&rsquo;s missing — anything at all, in your own words
+                  What went wrong, or what&rsquo;s missing (anything at all, in your own words)
                 </span>
                 <textarea ref={box} className={s.textarea} name="message" rows={4} required maxLength={4000} />
               </label>

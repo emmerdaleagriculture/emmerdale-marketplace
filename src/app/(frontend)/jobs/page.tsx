@@ -83,7 +83,7 @@ export default async function JobsBoardPage() {
             <>
               <p className={a.sub}>
                 Jobs in the counties you cover. Open one to see the full details and
-                the customer’s contact — then get in touch directly. The customer
+                the customer’s contact, then get in touch directly. The customer
                 chooses who they hire, so a quick call goes a long way.
               </p>
 
@@ -127,7 +127,7 @@ export default async function JobsBoardPage() {
                 <>
                   <div className={a.groupTitle}>Jobs you’ve opened</div>
                   <p className={a.sub}>
-                    You’ve seen the customer’s details for these — get in touch if
+                    You’ve seen the customer’s details for these. Get in touch if
                     you haven’t already.
                   </p>
                   <div className={j.grid}>

@@ -13,9 +13,9 @@ export const PART_A: ServiceContent[] = [
     intro:
       'Topping cuts the long, stemmy grass and weeds that horses and livestock leave behind, so the paddock regrows evenly with fresh, leafy grass. It’s for horse owners, smallholders and anyone whose field has gone patchy, tufty or tall.',
     involves: [
-      'A tractor pulls a topper — a rotary or flail mower built for rough grass — across the field, cutting everything to an even height. The cut material is left lying where it falls to dry and break down.',
+      'A tractor pulls a topper (a rotary or flail mower built for rough grass) across the field, cutting everything to an even height. The cut material is left lying where it falls to dry and break down.',
       'Grazing animals are picky. Horses in particular create short, overgrazed “lawns” and long, rank “roughs” around their droppings. Topping evens those out and stops grasses and weeds such as docks and thistles going to seed.',
-      'The usual cutting height is somewhere around 7–10 cm (3–4 inches). Going lower scalps the grass, weakens it and lets weeds and bare patches in — a paddock is not a lawn.',
+      'The usual cutting height is somewhere around 7–10 cm (3–4 inches). Going lower scalps the grass, weakens it and lets weeds and bare patches in. A paddock is not a lawn.',
     ],
     when: [
       'Most topping happens from late spring through summer, roughly May to September, once grasses and weeds start throwing up seed heads. One cut in early summer and another later on is common; heavily grazed horse paddocks may need more.',
@@ -23,7 +23,7 @@ export const PART_A: ServiceContent[] = [
     ],
     priceFactors: [
       'Acreage, and whether it’s one open field or several small paddocks with gates between them',
-      'How long and dense the growth is — a first cut of neglected grass is slower than routine topping',
+      'How long and dense the growth is: a first cut of neglected grass is slower than routine topping',
       'Access: gateway width, tracks and whether a full-size tractor can get in',
       'Slopes, ditches, stones and obstacles such as jumps, troughs or trees',
       'Travel distance to your field',
@@ -37,7 +37,7 @@ export const PART_A: ServiceContent[] = [
     faqs: [
       {
         q: 'When should you top a paddock?',
-        a: 'From late spring through summer, when grasses and weeds are starting to set seed — typically May to September. Choose a dry day on firm ground. Topping before seed heads ripen stops weeds spreading and encourages leafy regrowth.',
+        a: 'From late spring through summer, when grasses and weeds are starting to set seed, typically May to September. Choose a dry day on firm ground. Topping before seed heads ripen stops weeds spreading and encourages leafy regrowth.',
       },
       {
         q: 'How short should you top a paddock?',
@@ -65,11 +65,11 @@ export const PART_A: ServiceContent[] = [
       'Finish mowing for large lawns, paddocks, orchards and event fields. A neat, even cut from a tractor-mounted mower. Describe the area and get prices.',
     h1: 'Finish mowing for large lawns and grass areas',
     intro:
-      'Finish mowing gives a tidy, lawn-like cut over areas too big for a ride-on mower — large gardens, paddocks near the house, orchards, parkland and fields used for events. It’s for when the grass needs to look good, not just be cut down.',
+      'Finish mowing gives a tidy, lawn-like cut over areas too big for a ride-on mower: large gardens, paddocks near the house, orchards, parkland and fields used for events. It’s for when the grass needs to look good, not just be cut down.',
     involves: [
       'A finishing mower is a tractor-mounted rotary mower with several blades and a roller or wheels that hold it at a set height. It cuts cleanly and spreads the clippings finely, so the result looks close to a lawn rather than a rough field.',
       'It is a different machine from a topper. A topper is built to chew through tall, rough growth; a finishing mower is built for a neat cut on grass that is already kept reasonably short.',
-      'Cutting height can be set lower than when topping — often 5 cm or so — and regular visits through the growing season keep the finish consistent.',
+      'Cutting height can be set lower than when topping (often 5 cm or so), and regular visits through the growing season keep the finish consistent.',
     ],
     when: [
       'Through the growing season, from around April to October, with visits every two to four weeks depending on how fast the grass grows and how tidy you want it. Before an event, a cut a few days ahead lets the grass recover and the clippings settle.',
@@ -77,7 +77,7 @@ export const PART_A: ServiceContent[] = [
     ],
     priceFactors: [
       'The area to be cut and how many separate sections there are',
-      'How often you want it done — one-off or regular through the season',
+      'How often you want it done: one-off or regular through the season',
       'Obstacles: trees, beds, posts, play equipment and edges that need care',
       'How long the grass is now; very overgrown areas may need topping first',
       'Access for a tractor, and whether any strimming or edging is wanted as well',
@@ -85,7 +85,7 @@ export const PART_A: ServiceContent[] = [
     ],
     goodToKnow: [
       'If the grass has got away from you, a finishing mower struggles. It is often quicker to top it first and then finish mow once it is back under control.',
-      'Tell the contractor about hidden hazards — drain covers, sprinkler heads, stumps, tent-peg holes — before they start.',
+      'Tell the contractor about hidden hazards (drain covers, sprinkler heads, stumps, tent-peg holes) before they start.',
       'A tractor is heavier than a garden mower. On soft lawns or after rain, it may be better to wait a few days than to leave wheel marks.',
     ],
     faqs: [
@@ -127,7 +127,7 @@ export const PART_A: ServiceContent[] = [
     ],
     priceFactors: [
       'Field size and the number of separate paddocks',
-      'How much work the surface needs — heavy poaching or lots of molehills take more passes',
+      'How much work the surface needs: heavy poaching or lots of molehills take more passes',
       'Chain harrows or heavier tined harrows',
       'Ground conditions and slopes',
       'Access and gateway width',
@@ -136,7 +136,7 @@ export const PART_A: ServiceContent[] = [
     goodToKnow: [
       'Harrowing and rolling often go together: harrow first to level and open the sward, then roll to firm it down.',
       'If the ground is too wet, harrows smear mud and pull out grass rather than dead material. Wait until the surface is dry enough to walk on without sinking.',
-      'Keep horses off a field harrowed in summer to spread droppings until the weather has had time to dry it out — a few weeks is common.',
+      'Keep horses off a field harrowed in summer to spread droppings until the weather has had time to dry it out (typically a few weeks).',
     ],
     faqs: [
       {
@@ -181,7 +181,7 @@ export const PART_A: ServiceContent[] = [
     ],
     priceFactors: [
       'Field size and number of paddocks',
-      'How rough the surface is — deep poaching may need harrowing first',
+      'How rough the surface is: deep poaching may need harrowing first',
       'The type and weight of roller wanted',
       'Slopes; steep ground limits where a heavy roller can safely go',
       'Access and gateway width',
@@ -190,7 +190,7 @@ export const PART_A: ServiceContent[] = [
     goodToKnow: [
       'Harrow first, then roll. Harrowing levels molehills and drags out dead grass; rolling then firms everything down.',
       'Don’t roll frosty or waterlogged ground. It damages the grass and compacts the soil.',
-      'Fields that stay wet and poached every winter may have a drainage or compaction problem that rolling won’t solve — sub-soiling or mole ploughing may be worth looking at.',
+      'Fields that stay wet and poached every winter may have a drainage or compaction problem that rolling won’t solve. Sub-soiling or mole ploughing may be worth looking at.',
     ],
     faqs: [
       {
@@ -231,7 +231,7 @@ export const PART_A: ServiceContent[] = [
     ],
     priceFactors: [
       'Paddock size and how many paddocks there are',
-      'How much has built up — a field left for months takes longer and fills the hopper more often',
+      'How much has built up: a field left for months takes longer and fills the hopper more often',
       'How far it is to the muck heap for emptying, or whether the muck has to be taken away',
       'Ground conditions, slopes and access for the machine',
       'One-off clear-up or regular visits',
@@ -275,7 +275,7 @@ export const PART_A: ServiceContent[] = [
     intro:
       'Overseeding sows new grass seed into an existing field to thicken up thin, bare or weedy areas without ploughing and starting again. It’s for paddocks worn out by winter grazing, poaching or years of heavy use.',
     involves: [
-      'The existing grass is opened up first — usually with tined harrows or a scarifier — so the seed can reach the soil. The seed is then sown with a harrow seeder that scratches and broadcasts in one pass, or with a slot drill that cuts seed into the ground.',
+      'The existing grass is opened up first (usually with tined harrows or a scarifier) so the seed can reach the soil. The seed is then sown with a harrow seeder that scratches and broadcasts in one pass, or with a slot drill that cuts seed into the ground.',
       'Rolling after sowing presses the seed into firm contact with the soil, which is what makes it germinate. Seed that sits on top of a thatch of dead grass mostly fails.',
       'The seed mix matters. Mixes sold for horse paddocks usually contain hard-wearing grasses and less ryegrass than mixes for dairy cattle; your contractor may supply seed or sow seed you have bought.',
     ],
@@ -286,13 +286,13 @@ export const PART_A: ServiceContent[] = [
     priceFactors: [
       'Area to be sown',
       'Whether the seed is supplied by the contractor or by you, and the mix chosen',
-      'How much preparation is needed — harrowing, scarifying or rolling passes',
+      'How much preparation is needed: harrowing, scarifying or rolling passes',
       'The state of the existing sward: thin patches or a whole field',
       'Access, slopes and ground conditions',
       'Travel distance',
     ],
     goodToKnow: [
-      'Keep animals off until the new grass is well rooted — often six to eight weeks or more. A simple test is to tug a handful of new grass: if it pulls out roots and all, it isn’t ready.',
+      'Keep animals off until the new grass is well rooted, often six to eight weeks or more. A simple test is to tug a handful of new grass: if it pulls out roots and all, it isn’t ready.',
       'Check with whoever does your weed control before spraying. Many grassland weedkillers can harm young grass seedlings, so there are usually intervals to observe before and after sowing.',
       'Overseeding won’t fix the reason the grass thinned. If the pH is low, the ground is compacted or the field is overstocked, deal with that too or the new grass will go the same way.',
     ],
@@ -335,7 +335,7 @@ export const PART_A: ServiceContent[] = [
     ],
     when: [
       'Early autumn, around September, is the classic time: the grass is still growing strongly enough to recover and there’s moisture in the ground. Spring, once growth has started, is the second choice, and is lighter-touch.',
-      'Avoid scarifying in hot, dry weather or when the grass isn’t growing — it won’t recover, and weeds will fill the gaps. Very wet ground tears rather than scratches.',
+      'Avoid scarifying in hot, dry weather or when the grass isn’t growing. It won’t recover, and weeds will fill the gaps. Very wet ground tears rather than scratches.',
     ],
     priceFactors: [
       'Area to be scarified',
@@ -365,7 +365,7 @@ export const PART_A: ServiceContent[] = [
       },
       {
         q: 'Why does moss keep coming back in my field?',
-        a: 'Moss thrives where grass struggles: acidic soil, compaction, poor drainage and shade. Scarifying removes it, but correcting the underlying cause — often with lime or better drainage — is what keeps it away.',
+        a: 'Moss thrives where grass struggles: acidic soil, compaction, poor drainage and shade. Scarifying removes it, but correcting the underlying cause (often with lime or better drainage) is what keeps it away.',
       },
     ],
     related: ['overseeding', 'harrowing', 'lime-spreading', 'mowing'],
@@ -384,17 +384,17 @@ export const PART_A: ServiceContent[] = [
       'Fertiliser spreading puts an even dressing of granular fertiliser across grassland to boost growth where the soil is short of nutrients. It’s for grazing and hay fields that have been cropped hard, and for paddocks where a soil test shows something is lacking.',
     involves: [
       'A tractor-mounted spinner spreader throws granules across a set width, and the tractor drives at matched spacings so the whole field gets the same rate. An even spread matters: overlaps scorch and gaps leave pale stripes.',
-      'Grassland fertiliser usually supplies nitrogen for growth, often with phosphate, potash or sulphur. Horse paddocks generally need much less nitrogen than dairy or silage fields — lush, sugary grass can be a problem for horses and ponies prone to laminitis.',
+      'Grassland fertiliser usually supplies nitrogen for growth, often with phosphate, potash or sulphur. Horse paddocks generally need much less nitrogen than dairy or silage fields. Lush, sugary grass can be a problem for horses and ponies prone to laminitis.',
       'The right product and rate depend on the field. A soil test for pH, phosphate and potash is the sensible starting point, and on grazing fields a low-nitrogen or no-nitrogen dressing is often all that’s needed.',
     ],
     when: [
-      'Spring is the main time, once the grass has started to grow and the soil is warming — typically March to April. Hay and silage fields may have a further dressing after cutting. Spreading when the grass can’t use it just wastes fertiliser and risks it washing into watercourses.',
-      'Don’t spread on waterlogged, flooded, frozen or snow-covered ground, or when heavy rain is forecast. In Nitrate Vulnerable Zones there are closed periods, running through autumn and winter, when nitrogen fertiliser can’t be spread on grassland — check the current dates on GOV.UK if your land is in an NVZ.',
+      'Spring is the main time, once the grass has started to grow and the soil is warming, typically March to April. Hay and silage fields may have a further dressing after cutting. Spreading when the grass can’t use it just wastes fertiliser and risks it washing into watercourses.',
+      'Don’t spread on waterlogged, flooded, frozen or snow-covered ground, or when heavy rain is forecast. In Nitrate Vulnerable Zones there are closed periods, running through autumn and winter, when nitrogen fertiliser can’t be spread on grassland. Check the current dates on GOV.UK if your land is in an NVZ.',
     ],
     priceFactors: [
       'Acreage and the number of separate fields',
       'Whether the contractor supplies the fertiliser or spreads yours',
-      'The product and rate — heavier dressings mean more loads',
+      'The product and rate: heavier dressings mean more loads',
       'Access for a tractor and spreader, and field shape',
       'Watercourses, hedges and boundaries that need careful edge spreading',
       'Travel distance',
@@ -402,7 +402,7 @@ export const PART_A: ServiceContent[] = [
     goodToKnow: [
       'Keep horses and livestock off until the granules have been washed in by rain; check the product label for any grazing interval.',
       'Keep fertiliser well clear of ditches, streams and ponds. Spreaders can be set to throw to one side only along a boundary.',
-      'Don’t spread nitrogen fertiliser at the same time as lime — leave a gap of a few weeks between them.',
+      'Don’t spread nitrogen fertiliser at the same time as lime. Leave a gap of a few weeks between them.',
       'If you have laminitis-prone horses or ponies, tell the contractor. A dressing for a dairy field is not the right one for a pony paddock.',
     ],
     faqs: [
@@ -449,7 +449,7 @@ export const PART_A: ServiceContent[] = [
     priceFactors: [
       'Acreage and how much lime per acre the soil test calls for',
       'The type of lime: ground limestone, magnesian or granulated',
-      'Access for a lorry or tractor and spreader — narrow lanes and gateways matter',
+      'Access for a lorry or tractor and spreader: narrow lanes and gateways matter',
       'Whether the lime is supplied and delivered, or already on site',
       'Ground conditions and slopes',
       'Travel and delivery distance',

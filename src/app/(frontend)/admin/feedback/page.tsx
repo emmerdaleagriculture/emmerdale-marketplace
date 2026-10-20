@@ -5,7 +5,7 @@ import { setFeedbackHandledAction } from './actions';
 import s from '../admin.module.css';
 import { AdminTable } from '../ui';
 
-export const metadata: Metadata = { title: 'Problem reports — Admin' };
+export const metadata: Metadata = { title: 'Problem reports · Admin' };
 export const dynamic = 'force-dynamic';
 
 /**

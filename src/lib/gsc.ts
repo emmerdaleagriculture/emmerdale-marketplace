@@ -104,7 +104,7 @@ export async function exchangeCodeForTokens(
   };
   if (!json.refresh_token) {
     throw new Error(
-      'No refresh_token returned. Re-grant with prompt=consent — Google only returns one on a fresh consent.',
+      'No refresh_token returned. Re-grant with prompt=consent: Google only returns one on a fresh consent.',
     );
   }
   return {
@@ -197,7 +197,7 @@ export async function isGscConnected(): Promise<boolean> {
  */
 export async function getGoogleAccessToken(): Promise<string> {
   const refreshToken = await getStoredRefreshToken();
-  if (!refreshToken) throw new Error('Not connected — visit /admin/seo/auth/connect');
+  if (!refreshToken) throw new Error('Not connected. Visit /admin/seo/auth/connect');
   return getAccessTokenFromRefresh(refreshToken);
 }
 
@@ -206,7 +206,7 @@ export async function gscQuery(args: GscQueryArgs): Promise<GscRow[]> {
   if (!siteUrl) throw new Error('GSC_SITE_URL not set');
 
   const refreshToken = await getStoredRefreshToken();
-  if (!refreshToken) throw new Error('Not connected — visit /admin/seo/auth/connect');
+  if (!refreshToken) throw new Error('Not connected. Visit /admin/seo/auth/connect');
 
   const token = await getAccessTokenFromRefresh(refreshToken);
   const url = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`;
@@ -240,7 +240,7 @@ export async function gscQuery(args: GscQueryArgs): Promise<GscRow[]> {
  */
 export async function listSites(): Promise<Array<{ siteUrl: string; permissionLevel: string }>> {
   const refreshToken = await getStoredRefreshToken();
-  if (!refreshToken) throw new Error('Not connected — visit /admin/seo/auth/connect');
+  if (!refreshToken) throw new Error('Not connected. Visit /admin/seo/auth/connect');
   const token = await getAccessTokenFromRefresh(refreshToken);
   const res = await fetch('https://searchconsole.googleapis.com/webmasters/v3/sites', {
     headers: { Authorization: `Bearer ${token}` },

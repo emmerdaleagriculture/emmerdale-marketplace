@@ -116,10 +116,10 @@ export default async function OrderAgainPage({ params }: { params: Promise<{ id:
             {direct && previousName ? `Book ${previousName} again.` : 'Same job, fresh prices.'}
           </h1>
           <p className={a.sub}>
-            Everything below is copied from last time — the field, the access notes and
+            Everything below is copied from last time: the field, the access notes and
             the photos. Change anything that&rsquo;s moved on, then send it.{' '}
             {direct && previousName
-              ? `We'll ask ${previousName} to price it first. If they can't within 48 hours, it goes to other contractors who cover ${countyName ?? 'your area'} — you won't need to do anything.`
+              ? `We'll ask ${previousName} to price it first. If they can't within 48 hours, it goes to other contractors who cover ${countyName ?? 'your area'}. You won't need to do anything.`
               : `It goes to every contractor who covers ${countyName ?? 'your area'}, and their prices appear on your job page as they come in.`}
           </p>
           {previousName && (

@@ -143,7 +143,7 @@ export function LandingFlow({
 
   const useMyLocation = async () => {
     if (!navigator.geolocation) {
-      setGeoHint('This browser can’t share your location — type a postcode instead.');
+      setGeoHint('This browser can’t share your location. Type a postcode instead.');
       return;
     }
     setLocating(true);
@@ -167,8 +167,8 @@ export function LandingFlow({
     if (!pos) {
       setGeoHint(
         denied
-          ? 'Location is blocked for this site — allow it in your browser, or type a postcode.'
-          : 'Couldn’t get a location fix — type a postcode instead.',
+          ? 'Location is blocked for this site. Allow it in your browser, or type a postcode.'
+          : 'Couldn’t get a location fix. Type a postcode instead.',
       );
       setLocating(false);
       return;
@@ -178,7 +178,7 @@ export function LandingFlow({
     if (accuracy > GEO_ACCURACY_LIMIT_M) {
       const km = Math.max(2, Math.round(accuracy / 1000));
       setGeoHint(
-        `Your device could only place you to within about ${km}km (usually a computer without GPS) — type the postcode instead.`,
+        `Your device could only place you to within about ${km}km (usually a computer without GPS). Type the postcode instead.`,
       );
       setLocating(false);
       return;
@@ -198,12 +198,12 @@ export function LandingFlow({
       const postcode: string | undefined = json?.result?.[0]?.postcode;
       if (postcode && locationRef.current) {
         locationRef.current.value = postcode;
-        setGeoHint('Double-check that’s right — it’s the nearest postcode to your position.');
+        setGeoHint('Double-check that’s right. It’s the nearest postcode to your position.');
       } else {
-        setGeoHint('Got your location — add the postcode if you know it.');
+        setGeoHint('Got your location. Add the postcode if you know it.');
       }
     } catch {
-      setGeoHint('Got your location — add the postcode if you know it.');
+      setGeoHint('Got your location. Add the postcode if you know it.');
     }
     setLocating(false);
   };
@@ -426,7 +426,7 @@ export function LandingFlow({
               {svc.name}
             </option>
           ))}
-          <option value="other">Something else — I&rsquo;ll describe it</option>
+          <option value="other">Something else (I&rsquo;ll describe it)</option>
         </select>
       </label>
 
@@ -522,7 +522,7 @@ export function LandingFlow({
           {awaitingToken ? 'One moment…' : pending ? 'Working…' : 'Next'}
         </button>
         <p className={s.noObligation}>
-          Free, and no obligation — you&rsquo;re not booking anything yet.
+          Free, and no obligation. You&rsquo;re not booking anything yet.
         </p>
       </div>
 
@@ -536,7 +536,7 @@ export function LandingFlow({
         <Turnstile resetOn={state} onToken={setCaptchaToken} />
         {awaitingToken && (
           <p className={`${f.hint} ${s.captchaNote}`}>
-            Just finishing the security check — one moment.
+            Just finishing the security check, one moment.
           </p>
         )}
       </div>

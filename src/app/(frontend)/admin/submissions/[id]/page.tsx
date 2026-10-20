@@ -25,7 +25,7 @@ import { ContractorLink } from '../ContractorLink';
 import { signMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 import { formatVisitWhen } from '@/lib/sealedQuotes/visits';
 
-export const metadata: Metadata = { title: 'Submission — Admin' };
+export const metadata: Metadata = { title: 'Submission · Admin' };
 
 type AdminMessage = {
   id: string;
@@ -126,7 +126,7 @@ function MessageThreads({
                               picture can't be, so it is shown for a person to look at. */}
                           {m.phase === 'pre_award' && (
                             <p className={p.photoCheck}>
-                              Sent before award — check for phone numbers, names or signwriting
+                              Sent before award: check for phone numbers, names or signwriting
                             </p>
                           )}
                         </>
@@ -134,11 +134,11 @@ function MessageThreads({
                       {m.body && <p className={p.bubbleBody}>{m.body}</p>}
                       {m.moderation === 'held' && (
                         <>
-                          <p className={p.photoCheck}>Held — the other side hasn’t seen this</p>
+                          <p className={p.photoCheck}>Held: the other side hasn’t seen this</p>
                           <ModerateMessage submissionId={submissionId} messageId={m.id} />
                         </>
                       )}
-                      {m.moderation === 'rejected' && <p className={p.photoCheck}>Rejected — not delivered</p>}
+                      {m.moderation === 'rejected' && <p className={p.photoCheck}>Rejected: not delivered</p>}
                       <div className={p.bubbleTime}>
                         {formatDateTime(m.created_at)} ·{' '}
                         {m.read_at ? `read ${formatDateTime(m.read_at)}` : 'not read yet'}
@@ -310,7 +310,7 @@ export default async function SubmissionDetailPage({
         ? '—'
         : sub.service_confirmed
           ? 'accepted by customer'
-          : 'declined — customer picked/typed their own',
+          : 'declined: customer picked/typed their own',
     ],
     ['In their words', sub.service_verbatim ?? '—'],
     ['Alternatives offered', alternatives.length ? alternatives.join(', ') : '—'],
@@ -343,9 +343,9 @@ export default async function SubmissionDetailPage({
     ],
     ['Obstacles', sub.obstacles ?? '—'],
     ['Site visit', !sub.visit_status ? '—'
-      : sub.visit_status === 'awaiting_visit' ? `Awaiting the contractor — price stands ${sub.visit_due_at ? formatDate(sub.visit_due_at) : ''} if nothing is sent`
-      : sub.visit_status === 'revised' ? `Revised to ${formatGBP(sub.visit_revised_client_pence ?? 0)} — waiting on the customer. “${sub.visit_revision_reason ?? ''}”`
-      : sub.visit_status === 'declined' ? 'Revised price declined — deposit refunded, job cancelled'
+      : sub.visit_status === 'awaiting_visit' ? `Awaiting the contractor. Price stands ${sub.visit_due_at ? formatDate(sub.visit_due_at) : ''} if nothing is sent`
+      : sub.visit_status === 'revised' ? `Revised to ${formatGBP(sub.visit_revised_client_pence ?? 0)}, waiting on the customer. “${sub.visit_revision_reason ?? ''}”`
+      : sub.visit_status === 'declined' ? 'Revised price declined: deposit refunded, job cancelled'
       : 'Price confirmed after the visit'],
     ['Contact', sub.contact_name ? `${sub.contact_name} · ${sub.contact_phone ?? '—'} · ${sub.contact_email ?? '—'} (prefers ${sub.contact_preference ?? '—'})` : '—'],
     ['Parse', `${sub.parse_source ?? '—'} · ${sub.model_version ?? 'no model'} · prompt ${sub.prompt_version ?? '—'}`],
@@ -399,10 +399,10 @@ export default async function SubmissionDetailPage({
                 <td title={p.last_error ?? undefined}>
                   {p.status}
                   {p.kind === 'balance' && p.status === 'due' && p.attempts > 0
-                    ? ` (retrying — ${p.attempts} so far)`
+                    ? ` (retrying, ${p.attempts} so far)`
                     : ''}
-                  {p.status === 'failed' ? ' — customer asked to pay from their job page' : ''}
-                  {p.status === 'requested' ? ' — customer to pay (card on their job page, or bank transfer)' : ''}
+                  {p.status === 'failed' ? ': customer asked to pay from their job page' : ''}
+                  {p.status === 'requested' ? ': customer to pay (card on their job page, or bank transfer)' : ''}
                   {p.kind === 'balance' && ['requested', 'due', 'failed'].includes(p.status) && (
                     <BalanceTransferButton
                       submissionId={id}
@@ -433,8 +433,8 @@ export default async function SubmissionDetailPage({
               <>
                 <a href={invoiceUrl} target="_blank" rel="noopener noreferrer">
                   {sub.contractor_invoice_name ?? 'Invoice'}
-                </a>{' '}
-                — sent{' '}
+                </a>
+                , sent{' '}
                 {sub.contractor_invoice_at
                   ? new Date(sub.contractor_invoice_at).toLocaleString('en-GB')
                   : ''}
@@ -515,7 +515,7 @@ export default async function SubmissionDetailPage({
       {outreach.lines.emailed.length > 0 && (
         <>
           <div id="outreach" className={s.sectionLabel}>
-            Outreach — {outreach.counts.invited} invited
+            Outreach · {outreach.counts.invited} invited
           </div>
           <OutreachStats id={sub.id} counts={outreach.counts} active={show} />
           <div className={p.stageTitle}>{STAGE_TITLES[show]}</div>
@@ -526,7 +526,7 @@ export default async function SubmissionDetailPage({
       {allQuotes.length > 0 && (
         <>
           <div className={s.sectionLabel}>
-            Prices — both sides (never shown elsewhere) · commission {Math.round(markupRate * 100)}%
+            Prices, both sides (never shown elsewhere) · commission {Math.round(markupRate * 100)}%
             {markupArm ? ` (split test, arm ${markupArm.toUpperCase()})` : ''}
           </div>
           <AdminTable head={['Label', 'Contractor', 'Contractor price', 'Client price', 'Margin', 'Status', 'Note to the customer', 'Notes to us (historic)']}>
@@ -586,7 +586,7 @@ export default async function SubmissionDetailPage({
 
       {messages.length > 0 && (
         <>
-          <div className={s.sectionLabel} id="messages">Messages — customer and contractors</div>
+          <div className={s.sectionLabel} id="messages">Messages: customer and contractors</div>
           <MessageThreads messages={messages} customer={sub.contact_name} photoUrls={messagePhotoUrls} submissionId={id} />
         </>
       )}

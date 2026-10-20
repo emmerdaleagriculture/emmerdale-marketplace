@@ -25,7 +25,7 @@ export async function passPriceAction(_prev: FormState, formData: FormData): Pro
   const quoteId = String(formData.get('client_quote_id') ?? '');
   const op = String(formData.get('op') ?? 'pass');
   const reason = String(formData.get('reason') ?? '');
-  if (!UUID.test(quoteId)) return { error: 'That didn’t work — please try again.' };
+  if (!UUID.test(quoteId)) return { error: 'That didn’t work. Please try again.' };
   const js = await jobFor(token);
   if (!js) return { error: 'This link is no longer valid.' };
 
@@ -40,7 +40,7 @@ export async function passPriceAction(_prev: FormState, formData: FormData): Pro
   const out = res.data as { ok: boolean; reason?: string } | null;
   if (res.error || !out?.ok) {
     if (res.error) console.error('[sq] pass price failed:', res.error.message);
-    return { error: out?.reason === 'not_open' ? 'This job has moved on.' : 'That didn’t work — please try again.' };
+    return { error: out?.reason === 'not_open' ? 'This job has moved on.' : 'That didn’t work. Please try again.' };
   }
   revalidatePath(`/my/${token}`);
   return { ok: true };

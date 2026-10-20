@@ -35,9 +35,9 @@ export const UNATTRIBUTED = 'Unattributed (direct / organic)';
 const INTERNAL_PREFIX = 'site:';
 
 const NAMED: Record<string, string> = {
-  fb: 'Meta — Facebook',
-  ig: 'Meta — Instagram',
-  th: 'Meta — Threads',
+  fb: 'Meta · Facebook',
+  ig: 'Meta · Instagram',
+  th: 'Meta · Threads',
   'hay-bales-enquiry': 'Hay-bales lead import',
 };
 
@@ -75,11 +75,11 @@ function labelOf(src: string): string {
   if (src === 'search') return 'Organic search';
   // Arrived from Facebook or Instagram without our ad tags: an unpaid post,
   // a share, or an ad whose tags were lost. Kept apart from the tagged ads.
-  if (src === 'social:facebook') return 'Facebook — untagged';
-  if (src === 'social:instagram') return 'Instagram — untagged';
-  if (src.startsWith('ref:')) return `Referral — ${src.slice(4)}`;
+  if (src === 'social:facebook') return 'Facebook · untagged';
+  if (src === 'social:instagram') return 'Instagram · untagged';
+  if (src.startsWith('ref:')) return `Referral · ${src.slice(4)}`;
   if (src.startsWith(INTERNAL_PREFIX)) {
-    return `Internal — ${src.slice(INTERNAL_PREFIX.length)} page`;
+    return `Internal · ${src.slice(INTERNAL_PREFIX.length)} page`;
   }
   return src;
 }
@@ -101,7 +101,7 @@ export function channelOf(row: Attributed): string {
  * paid: they are traffic the site already had, moving between its own pages.
  */
 export function isPaid(channel: string): boolean {
-  return channel === 'Google Ads' || channel.startsWith('Meta —');
+  return channel === 'Google Ads' || channel.startsWith('Meta ·');
 }
 
 /** Ordering: paid first (it costs money), then size, then name. */

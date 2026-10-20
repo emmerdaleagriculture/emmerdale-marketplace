@@ -97,11 +97,11 @@ export function emailProblemMessage(
 ): string {
   const domain = email.trim().split('@')[1] ?? 'that domain';
   if (problem.suggestion) {
-    return `We can’t send email to ${domain} — did you mean ${problem.suggestion}? ${stake}, so it needs to be right.`;
+    return `We can’t send email to ${domain}. Did you mean ${problem.suggestion}? ${stake}, so it needs to be right.`;
   }
   return problem.reason === 'no_domain'
-    ? `We can’t find ${domain} — please check the spelling. ${stake}.`
-    : `${domain} doesn’t accept email. Please use an address you can receive at — ${stake.charAt(0).toLowerCase()}${stake.slice(1)}.`;
+    ? `We can’t find ${domain}. Please check the spelling. ${stake}.`
+    : `${domain} doesn’t accept email. Please use an address you can receive at: ${stake.charAt(0).toLowerCase()}${stake.slice(1)}.`;
 }
 
 /**

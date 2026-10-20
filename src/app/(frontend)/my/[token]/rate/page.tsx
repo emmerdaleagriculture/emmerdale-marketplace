@@ -39,12 +39,12 @@ export default async function RatePage({ params }: { params: Promise<{ token: st
             <p className={a.sub}>
               You rated this job {'★'.repeat(existing.stars)}
               {'☆'.repeat(5 - existing.stars)}
-              {existing.comment ? ` — “${existing.comment}”` : ''}. Thank you.
+              {existing.comment ? `: “${existing.comment}”` : ''}. Thank you.
             </p>
           ) : (
             <>
               <p className={a.sub}>
-                A quick rating helps the next customer choose — and it never affects
+                A quick rating helps the next customer choose, and it never affects
                 what anyone gets paid.
               </p>
               <RatingForm token={token} />

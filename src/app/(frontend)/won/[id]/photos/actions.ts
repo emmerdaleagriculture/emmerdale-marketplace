@@ -18,7 +18,7 @@ export async function uploadWorkPhotoAction(_prev: FormState, formData: FormData
   const submissionId = String(formData.get('submission_id') || '');
   const phase = String(formData.get('phase') || '');
   const file = formData.get('photo');
-  if (!submissionId || (phase !== 'before' && phase !== 'after')) return { error: 'Something went wrong — try again.' };
+  if (!submissionId || (phase !== 'before' && phase !== 'after')) return { error: 'Something went wrong. Try again.' };
   if (!(file instanceof File) || file.size === 0) return { error: 'Choose a photo.' };
   if (file.size > MAX) return { error: 'That photo is too large.' };
   const ext = TYPES[file.type];
@@ -45,12 +45,12 @@ export async function uploadWorkPhotoAction(_prev: FormState, formData: FormData
     .upload(path, Buffer.from(await file.arrayBuffer()), { contentType: file.type, upsert: false });
   if (upErr) {
     console.error('[work-photos] upload failed:', upErr.message);
-    return { error: 'The upload didn’t go through — try again.' };
+    return { error: 'The upload didn’t go through. Try again.' };
   }
   const { error } = await admin.from('job_work_photos').insert({ submission_id: submissionId, contractor_id: user.id, phase, path });
   if (error) {
     console.error('[work-photos] insert failed:', error.message);
-    return { error: 'The photo didn’t save — try again.' };
+    return { error: 'The photo didn’t save. Try again.' };
   }
   revalidatePath(`/won/${submissionId}/photos`);
   return { ok: true };

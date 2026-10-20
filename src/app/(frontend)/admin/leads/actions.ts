@@ -164,7 +164,7 @@ export async function publishLeadAsSubmissionAction(
     .maybeSingle();
   if (claimError) {
     console.error('[leads] claim failed:', claimError);
-    return refuse('Could not take that lead — try again.');
+    return refuse('Could not take that lead. Try again.');
   }
   if (!claimed) return refuse('That lead has already been published or dismissed.');
   const { data: sub, error } = await admin

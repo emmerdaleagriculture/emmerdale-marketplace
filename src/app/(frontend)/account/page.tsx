@@ -155,7 +155,7 @@ export default async function AccountPage({
       key: `contact-${j.id}`,
       href: '/won',
       title: `Call ${j.contact_name ?? 'your customer'}`,
-      detail: `${clip(j.service ?? 'Job', 50)} · won ${j.awarded_at ? timeAgo(j.awarded_at) : 'recently'} — they’re expecting to hear from you within 24 hours`,
+      detail: `${clip(j.service ?? 'Job', 50)} · won ${j.awarded_at ? timeAgo(j.awarded_at) : 'recently'}. They’re expecting to hear from you within 24 hours`,
       cta: 'Details',
       urgent: true,
     })),
@@ -163,7 +163,7 @@ export default async function AccountPage({
       key: `invoice-${j.id}`,
       href: '/won',
       title: 'Send your invoice',
-      detail: `${clip(j.service ?? 'Job', 50)}${j.contractor_price_pence != null ? ` · ${formatGBP(j.contractor_price_pence)}` : ''} — your payout is released once it’s in`,
+      detail: `${clip(j.service ?? 'Job', 50)}${j.contractor_price_pence != null ? ` · ${formatGBP(j.contractor_price_pence)}` : ''}. Your payout is released once it’s in`,
       cta: 'Upload',
     })),
     ...toPrice.slice(0, 5).map((i) => ({
@@ -250,7 +250,7 @@ export default async function AccountPage({
             <div className={`${ac.banner} ${ac.pending}`}>
               <div className={ac.bannerTitle}>Application under review</div>
               We’re reviewing your application. You’ll get an email when you’re
-              approved — then jobs in your counties will appear here. You can update
+              approved. Then jobs in your counties will appear here. You can update
               your details below in the meantime.
             </div>
           )}
@@ -275,7 +275,7 @@ export default async function AccountPage({
                   manage billing below, but only we can lift the suspension;
                   an application we turned down has to talk to us. */}
               {contractor.vetted_at && !isPremium && !app
-                ? 'You can come back by taking out premium membership below — your account is restored as soon as you join.'
+                ? 'You can come back by taking out premium membership below: your account is restored as soon as you join.'
                 : 'Please get in touch if you think this is a mistake.'}
             </div>
           )}
@@ -339,7 +339,7 @@ export default async function AccountPage({
 
               {awaiting.length > 0 && (
                 <>
-                  <h2 className={a.groupTitle}>Priced — waiting on the customer</h2>
+                  <h2 className={a.groupTitle}>Priced, waiting on the customer</h2>
                   <ul className={ac.actions}>
                     {awaiting.map((i) => (
                       <li key={i.id}>
@@ -410,8 +410,8 @@ export default async function AccountPage({
           </div>
 
           <ContactUsButton
-            subject={`Contractor enquiry — ${contractor.business_name}`}
-            body={`\n\n—\n${contractor.business_name} · ${user.email ?? ''}`}
+            subject={`Contractor enquiry: ${contractor.business_name}`}
+            body={`\n\n${contractor.business_name} · ${user.email ?? ''}`}
           />
         </div>
       </main>

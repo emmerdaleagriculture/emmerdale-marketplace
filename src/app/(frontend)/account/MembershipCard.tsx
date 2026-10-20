@@ -59,7 +59,7 @@ export function MembershipCard({
   if (member && billed && sub?.status === 'past_due') {
     status = (
       <>
-        <b>Your last payment didn’t go through.</b> Stripe will try again — update your card to keep
+        <b>Your last payment didn’t go through.</b> Stripe will try again. Update your card to keep
         your membership.
       </>
     );
@@ -142,12 +142,12 @@ export function MembershipCard({
       </span>
       {notice === 'success' && (
         <span className={ac.subNotice}>
-          <b>Thanks — you’re in.</b> It can take a minute for Stripe to confirm.
+          <b>Thanks, you’re in.</b> It can take a minute for Stripe to confirm.
         </span>
       )}
       {notice === 'changed' && (
         <span className={ac.subNotice}>
-          <b>Done — your membership has changed.</b>
+          <b>Done. Your membership has changed.</b>
         </span>
       )}
       {notice === 'cancelled' && <span className={ac.subNotice}>No payment was taken.</span>}

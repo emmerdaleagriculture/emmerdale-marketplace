@@ -79,28 +79,28 @@ function countyFaqs(name: string, region: string, coverage: number): Faq[] {
       q: `Who does paddock maintenance in ${name}?`,
       a:
         coverage > 0
-          ? `We pass jobs to agricultural contractors covering ${name} — ${coverage} of them are in the network today. Describe what needs doing and the ones who cover your area get in touch with you directly.`
-          : `We match paddock work in ${name} with agricultural contractors covering ${regionPhrase(region)}. Coverage grows as contractors join, so send the job through and we’ll tell you honestly where we stand in your area — there’s no obligation either way.`,
+          ? `We pass jobs to agricultural contractors covering ${name}: ${coverage} of them are in the network today. Describe what needs doing and the ones who cover your area get in touch with you directly.`
+          : `We match paddock work in ${name} with agricultural contractors covering ${regionPhrase(region)}. Coverage grows as contractors join, so send the job through and we’ll tell you honestly where we stand in your area. There’s no obligation either way.`,
     },
     {
       q: `How much does paddock topping cost in ${name}?`,
-      a: `It depends on the acreage, how heavy the growth is, how good the access is for machinery and how far the contractor travels to reach you — so the price comes from the contractor who’d do the work, not from us. Describing the job takes a minute and quotes are free.`,
+      a: `It depends on the acreage, how heavy the growth is, how good the access is for machinery and how far the contractor travels to reach you, so the price comes from the contractor who’d do the work, not from us. Describing the job takes a minute and quotes are free.`,
     },
     {
       q: `Will someone come out to a small paddock in ${name}?`,
-      a: `Yes — a single pony paddock is a perfectly normal job. We handle work for private paddock owners and one-horse fields through to equestrian yards, smallholdings, farms and estates across ${name}.`,
+      a: `Yes. A single pony paddock is a perfectly normal job. We handle work for private paddock owners and one-horse fields through to equestrian yards, smallholdings, farms and estates across ${name}.`,
     },
     {
       q: `What if my field is in ${name} but near the border?`,
-      a: `Not a problem. Give us the postcode and we’ll match on where the field actually is — contractors work across county lines all the time, and plenty cover more than one county.`,
+      a: `Not a problem. Give us the postcode and we’ll match on where the field actually is. Contractors work across county lines all the time, and plenty cover more than one county.`,
     },
     {
       q: 'Who runs this?',
-      a: `${COMPANY_LEGAL_NAME}, the company behind Hampshire Paddock Management — a contracting firm that does paddock work every day. You book and pay through us, and the contractor does the work.`,
+      a: `${COMPANY_LEGAL_NAME}, the company behind Hampshire Paddock Management, a contracting firm that does paddock work every day. You book and pay through us, and the contractor does the work.`,
     },
     {
       q: 'How do I pay?',
-      a: 'A 15% deposit by card to book the job, and the rest once the work is done and you have confirmed it — taken from the same card, due within 7 days of sign-off. The deposit is non-refundable if you cancel.',
+      a: 'A 15% deposit by card to book the job, and the rest once the work is done and you have confirmed it, taken from the same card, due within 7 days of sign-off. The deposit is non-refundable if you cancel.',
     },
   ];
 }
@@ -126,7 +126,7 @@ export default async function PaddockCountyPage({
     '@type': 'Service',
     name: `Paddock maintenance in ${name}`,
     serviceType: services.filter((svc) => svc.listed !== false).map((svc) => svc.name),
-    description: `Paddock maintenance and agricultural contracting in ${name} — field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance for paddock owners, equestrian yards, smallholdings, farms and estates.`,
+    description: `Paddock maintenance and agricultural contracting in ${name}: field topping, chain harrowing, rolling, weed spraying, hedge cutting, fencing and land clearance for paddock owners, equestrian yards, smallholdings, farms and estates.`,
     url: `${SITE}/paddock-maintenance/${county}`,
     areaServed: { '@type': 'AdministrativeArea', name },
     provider: {
@@ -153,13 +153,13 @@ export default async function PaddockCountyPage({
           />
           <div className={a.eyebrow}>Paddock &amp; field work · {name}</div>
           <h1 className={a.title}>
-            Agricultural contractors and paddock maintenance in {name} —{' '}
+            Agricultural contractors and paddock maintenance in {name}:{' '}
             <em>tell us what needs doing.</em>
           </h1>
           <p className={a.sub}>
             An overgrown paddock, a field of docks and nettles, grass that got
             away from you over the summer. Describe it in your own words and
-            we&rsquo;ll pass it to agricultural contractors covering {name} —
+            we&rsquo;ll pass it to agricultural contractors covering {name},
             free, and with no obligation to accept a quote.
           </p>
 
@@ -177,7 +177,7 @@ export default async function PaddockCountyPage({
               <>
                 We&rsquo;re still building coverage in {name}
                 {name === ref.region ? '' : ` and across ${regionPhrase(ref.region)}`}.
-                Send the job through anyway — we&rsquo;ll tell you
+                Send the job through anyway. We&rsquo;ll tell you
                 straight where we stand rather than leave you waiting, and jobs
                 coming in are exactly how we bring contractors into a new area.
               </>
@@ -201,7 +201,7 @@ export default async function PaddockCountyPage({
             <p className={s.sectionLede}>{note.timing}</p>
             <p className={s.sectionLede}>
               Not sure which of those your field needs? Describe what it looks
-              like and the contractor will tell you — that&rsquo;s their job, not
+              like and the contractor will tell you: that&rsquo;s their job, not
               yours.
             </p>
           </div>
@@ -252,7 +252,7 @@ export default async function PaddockCountyPage({
             Written from <em>the seat of a tractor.</em>
           </>
         }
-        lede={`What paddocks need through the year — the same jobs the contractors covering ${name} are doing this month.`}
+        lede={`What paddocks need through the year: the same jobs the contractors covering ${name} are doing this month.`}
       />
 
       {siblings.length > 0 && (

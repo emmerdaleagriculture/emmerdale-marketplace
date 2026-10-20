@@ -133,7 +133,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               <p className={a.sub} style={{ marginTop: 14, marginBottom: 0, fontSize: 13 }}>
                 {closed
                   ? 'This job is no longer open, but you keep the details you were shown.'
-                  : 'Other contractors in the area can see this job too — the customer decides who to hire, so get in touch soon. You arrange the work and invoice them directly. These details are for this enquiry only.'}
+                  : 'Other contractors in the area can see this job too. The customer decides who to hire, so get in touch soon. You arrange the work and invoice them directly. These details are for this enquiry only.'}
               </p>
             </div>
           ) : (

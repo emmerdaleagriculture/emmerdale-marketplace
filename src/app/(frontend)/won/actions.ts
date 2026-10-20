@@ -25,7 +25,7 @@ export async function logFirstContactAction(
   if (!user) return { error: 'Sign in to log contact.' };
 
   const submissionId = String(formData.get('submission_id') ?? '');
-  if (!submissionId) return { error: 'Something went wrong — refresh and try again.' };
+  if (!submissionId) return { error: 'Something went wrong. Refresh and try again.' };
 
   const admin = createServiceRoleClient();
   const { data, error } = await admin.rpc('log_first_contact', {
@@ -34,15 +34,15 @@ export async function logFirstContactAction(
   });
   if (error) {
     console.error('[sq] log_first_contact failed:', error);
-    return { error: 'That didn’t go through — please try again.' };
+    return { error: 'That didn’t go through. Please try again.' };
   }
   const res = data as { ok: boolean; reason?: string };
   if (!res.ok) {
     if (res.reason === 'not_yours') return { error: 'This job isn’t assigned to your account.' };
-    return { error: 'This job has moved on — refresh to see its current state.' };
+    return { error: 'This job has moved on. Refresh to see its current state.' };
   }
   revalidatePath('/won');
-  return { ok: true, message: 'Logged — thanks. Good luck with the job.' };
+  return { ok: true, message: 'Logged, thanks. Good luck with the job.' };
 }
 
 /**
@@ -61,7 +61,7 @@ export async function markDoneAction(
   if (!user) return { error: 'Sign in to update a job.' };
 
   const submissionId = String(formData.get('submission_id') ?? '');
-  if (!submissionId) return { error: 'Something went wrong — refresh and try again.' };
+  if (!submissionId) return { error: 'Something went wrong. Refresh and try again.' };
 
   const admin = createServiceRoleClient();
   const { data, error } = await admin.rpc('mark_completed_by_contractor', {
@@ -70,15 +70,15 @@ export async function markDoneAction(
   });
   if (error) {
     console.error('[sq] mark_completed_by_contractor failed:', error);
-    return { error: 'That didn’t go through — please try again.' };
+    return { error: 'That didn’t go through. Please try again.' };
   }
   const res = data as { ok: boolean; reason?: string };
   if (!res.ok) {
     if (res.reason === 'not_yours') return { error: 'This job isn’t assigned to your account.' };
-    return { error: 'This job has moved on — refresh to see its current state.' };
+    return { error: 'This job has moved on. Refresh to see its current state.' };
   }
   revalidatePath('/won');
-  return { ok: true, message: 'Marked done — we’ve asked the customer to confirm.' };
+  return { ok: true, message: 'Marked done. We’ve asked the customer to confirm.' };
 }
 
 /**
@@ -103,7 +103,7 @@ export async function proposeExtraWorkAction(
   const basis = String(formData.get('price_basis') ?? 'unspecified');
   const pence = poundsInputToPence(String(formData.get('price') ?? ''));
   const note = String(formData.get('note_to_client') ?? '').trim().slice(0, CLIENT_NOTE_MAX);
-  if (!submissionId) return { error: 'Something went wrong — refresh and try again.' };
+  if (!submissionId) return { error: 'Something went wrong. Refresh and try again.' };
   if (description.length < 3) return { error: 'Say what the extra work is.' };
   if (description.length > 200) return { error: 'Keep the description under 200 characters.' };
   if (pence === null) return { error: 'Enter your price in pounds, e.g. 250.' };
@@ -133,7 +133,7 @@ export async function proposeExtraWorkAction(
   });
   if (error) {
     console.error('[sq] contractor_add_extra_work failed:', error);
-    return { error: 'That didn’t go through — please try again.' };
+    return { error: 'That didn’t go through. Please try again.' };
   }
   const res = data as { ok: boolean; reason?: string; id?: string; client_price_pence?: number };
   if (!res.ok) {
@@ -146,7 +146,7 @@ export async function proposeExtraWorkAction(
       bad_price: 'Enter a price above zero.',
       bad_basis: 'Pick a VAT option.',
     };
-    return { error: why[res.reason ?? ''] ?? 'That didn’t go through — nothing was sent.' };
+    return { error: why[res.reason ?? ''] ?? 'That didn’t go through. Nothing was sent.' };
   }
 
   const { data: contractor } = await admin
@@ -169,7 +169,7 @@ export async function proposeExtraWorkAction(
   revalidatePath('/won');
   return {
     ok: true,
-    message: `Sent — the customer sees ${formatGBP(res.client_price_pence ?? 0)} and can accept it on their job page. We’ll tell you if they do.`,
+    message: `Sent. The customer sees ${formatGBP(res.client_price_pence ?? 0)} and can accept it on their job page. We’ll tell you if they do.`,
   };
 }
 
@@ -205,10 +205,10 @@ export async function uploadInvoiceAction(
 
   const submissionId = String(formData.get('submission_id') ?? '');
   const file = formData.get('invoice');
-  if (!submissionId) return { error: 'Something went wrong — refresh and try again.' };
+  if (!submissionId) return { error: 'Something went wrong. Refresh and try again.' };
   if (!(file instanceof File) || file.size === 0) return { error: 'Choose a file first.' };
   if (file.size > INVOICE_MAX_BYTES) {
-    return { error: 'That file is over 10MB — please send a smaller one.' };
+    return { error: 'That file is over 10MB. Please send a smaller one.' };
   }
   const ext = INVOICE_TYPES[file.type];
   if (!ext) return { error: 'Send a PDF or a photo (JPG, PNG).' };
@@ -238,7 +238,7 @@ export async function uploadInvoiceAction(
     });
   if (upErr) {
     console.error('[sq] invoice upload failed:', upErr);
-    return { error: 'That didn’t upload — please try again.' };
+    return { error: 'That didn’t upload. Please try again.' };
   }
 
   const { error: updErr } = await admin
@@ -251,7 +251,7 @@ export async function uploadInvoiceAction(
     .eq('id', submissionId);
   if (updErr) {
     console.error('[sq] invoice record failed:', updErr);
-    return { error: 'Uploaded, but we couldn’t record it — please tell us.' };
+    return { error: 'Uploaded, but we couldn’t record it. Please tell us.' };
   }
 
   const { data: contractor } = await admin
@@ -302,7 +302,7 @@ export async function uploadInvoiceAction(
   return {
     ok: true,
     message:
-      'Invoice received — thanks. It’s paid once the customer’s funds have cleared into our account, typically 7 days or less.',
+      'Invoice received, thanks. It’s paid once the customer’s funds have cleared into our account, typically 7 days or less.',
   };
 }
 
@@ -317,7 +317,7 @@ export async function confirmVisitPriceAction(_prev: FormState, formData: FormDa
   } = await supabase.auth.getUser();
   if (!user) return { error: 'Sign in to update a job.' };
   const submissionId = String(formData.get('submission_id') ?? '');
-  if (!submissionId) return { error: 'Something went wrong — refresh and try again.' };
+  if (!submissionId) return { error: 'Something went wrong. Refresh and try again.' };
 
   const { data, error } = await createServiceRoleClient().rpc('sq_visit_confirm', {
     p_submission_id: submissionId,
@@ -326,10 +326,10 @@ export async function confirmVisitPriceAction(_prev: FormState, formData: FormDa
   const res = data as { ok: boolean; reason?: string } | null;
   if (error || !res?.ok) {
     if (error) console.error('[sq] sq_visit_confirm failed:', error.message);
-    return { error: res?.reason === 'not_yours' ? 'This job isn’t assigned to your account.' : 'This has already been settled — refresh to see the job.' };
+    return { error: res?.reason === 'not_yours' ? 'This job isn’t assigned to your account.' : 'This has already been settled. Refresh to see the job.' };
   }
   revalidatePath('/won');
-  return { ok: true, message: 'Price confirmed — we’ve let the customer know.' };
+  return { ok: true, message: 'Price confirmed. We’ve let the customer know.' };
 }
 
 /**
@@ -345,9 +345,9 @@ export async function reviseVisitPriceAction(_prev: FormState, formData: FormDat
   const submissionId = String(formData.get('submission_id') ?? '');
   const pence = poundsInputToPence(String(formData.get('price') ?? ''));
   const reason = String(formData.get('reason') ?? '').trim();
-  if (!submissionId) return { error: 'Something went wrong — refresh and try again.' };
+  if (!submissionId) return { error: 'Something went wrong. Refresh and try again.' };
   if (pence == null || pence <= 0) return { error: 'Enter the new price in pounds, e.g. 450.' };
-  if (reason.length < 3) return { error: 'Say what you found that changes the price — the customer will see it.' };
+  if (reason.length < 3) return { error: 'Say what you found that changes the price. The customer will see it.' };
   // The reason goes to the customer after award, so contact details are fine;
   // an off-platform payment arrangement is not.
   const problem = clientNoteProblem(reason);
@@ -368,20 +368,20 @@ export async function reviseVisitPriceAction(_prev: FormState, formData: FormDat
     switch (res?.reason) {
       case 'below_deposit':
         return {
-          error: `That’s less than the customer has already paid. The lowest price you can set here is ${formatGBP(res.min_contractor_pence ?? 0)} — for less than that, get in touch with us.`,
+          error: `That’s less than the customer has already paid. The lowest price you can set here is ${formatGBP(res.min_contractor_pence ?? 0)}. For less than that, get in touch with us.`,
         };
       case 'same_price':
-        return { error: 'That’s the price you quoted — use “Confirm the price” instead.' };
+        return { error: 'That’s the price you quoted. Use “Confirm the price” instead.' };
       case 'not_yours':
         return { error: 'This job isn’t assigned to your account.' };
       case 'bad_reason':
         return { error: 'Keep the reason under 1,000 characters.' };
       default:
-        return { error: 'This has already been settled — refresh to see the job.' };
+        return { error: 'This has already been settled. Refresh to see the job.' };
     }
   }
   revalidatePath('/won');
-  return { ok: true, message: 'Sent — the customer will accept the new price or decline it. We’ll email you either way.' };
+  return { ok: true, message: 'Sent. The customer will accept the new price or decline it. We’ll email you either way.' };
 }
 
 /**

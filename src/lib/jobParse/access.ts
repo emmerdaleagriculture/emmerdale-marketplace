@@ -12,8 +12,8 @@
 export const GATE_WIDTH_OPTIONS = [
   { value: 'standard', label: 'Normal field gate (about 12ft)' },
   { value: 'wide', label: 'Wider than that' },
-  { value: 'narrow', label: 'Narrower — tight access' },
-  { value: 'none', label: 'No gate — open access' },
+  { value: 'narrow', label: 'Narrower (tight access)' },
+  { value: 'none', label: 'No gate (open access)' },
   { value: 'unsure', label: 'Not sure' },
 ] as const;
 

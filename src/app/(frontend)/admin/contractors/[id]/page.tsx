@@ -16,7 +16,7 @@ import { DeleteContractorButton } from '../DeleteContractorButton';
 import s from '../../admin.module.css';
 import { StatusPill } from '../../ui';
 
-export const metadata: Metadata = { title: 'Contractor — Admin' };
+export const metadata: Metadata = { title: 'Contractor · Admin' };
 
 export default async function ContractorDetailPage({
   params,
@@ -161,7 +161,7 @@ export default async function ContractorDetailPage({
       <p className={s.dValue}>
         {c.services_only ? (
           <>
-            <b>Only the services ticked</b> — a job for anything else is not sent to them, even in their counties.
+            <b>Only the services ticked</b>: a job for anything else is not sent to them, even in their counties.
           </>
         ) : (
           <>Any job in their counties within range; the service is not checked.</>
@@ -175,7 +175,7 @@ export default async function ContractorDetailPage({
         {c.invite_radius_miles == null
           ? 'the default (40 miles from base)'
           : c.invite_radius_miles >= 1000
-            ? 'none — nationwide'
+            ? 'none (nationwide)'
             : `${c.invite_radius_miles} miles from base`}
       </p>
       <div className={s.actions}>
@@ -268,7 +268,7 @@ export default async function ContractorDetailPage({
       <div className={s.sectionLabel} id="warning">
         Warnings{warnings.length > 0 ? ` (${warnings.length})` : ''}
       </div>
-      {warned === '1' && <p className={s.dValue}>Warning queued — it goes out within a minute.</p>}
+      {warned === '1' && <p className={s.dValue}>Warning queued. It goes out within a minute.</p>}
       {warnings.length > 0 && (
         <AdminTable head={['Sent', 'Job', 'Email']}>
           {warnings.map((w) => {

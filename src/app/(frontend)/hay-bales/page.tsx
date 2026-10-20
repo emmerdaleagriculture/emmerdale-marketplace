@@ -32,7 +32,7 @@ const serviceJsonLd = {
   name: 'Hay, straw & haylage supply',
   serviceType: ['Hay supply', 'Straw supply', 'Haylage supply'],
   description:
-    `Sourcing hay, straw and haylage for horse owners, smallholders, farms and equestrian yards — matched to suppliers by area across ${SERVICE_AREA}.`,
+    `Sourcing hay, straw and haylage for horse owners, smallholders, farms and equestrian yards, matched to suppliers by area across ${SERVICE_AREA}.`,
   areaServed: { '@type': 'AdministrativeArea', name: SERVICE_AREA },
   provider: {
     '@type': 'Organization',
@@ -46,7 +46,7 @@ const serviceJsonLd = {
 const faqs = [
   {
     q: 'What can you supply?',
-    a: 'Meadow and seed hay, barley and wheat straw, and haylage — in big square or round bales, or conventional small bales. Tell us the type, quantity and how you’d like it delivered or collected, and we’ll match you with a supplier who has it.',
+    a: 'Meadow and seed hay, barley and wheat straw, and haylage, in big square or round bales, or conventional small bales. Tell us the type, quantity and how you’d like it delivered or collected, and we’ll match you with a supplier who has it.',
   },
   {
     q: 'Do you deliver hay and straw?',
@@ -54,7 +54,7 @@ const faqs = [
   },
   {
     q: 'How much does it cost?',
-    a: 'Price depends on the forage type, bale size, quantity and your location, and it’s agreed directly with the supplier. Send an enquiry and we’ll come back to you with options — there’s no obligation.',
+    a: 'Price depends on the forage type, bale size, quantity and your location, and it’s agreed directly with the supplier. Send an enquiry and we’ll come back to you with options. There’s no obligation.',
   },
   {
     q: 'Which areas do you cover?',
@@ -83,12 +83,12 @@ export default function HayBalesPage() {
           <Breadcrumb items={[{ label: 'Hay, straw & haylage' }]} />
           <div className={a.eyebrow}>Hay · Straw · Haylage</div>
           <h1 className={a.title}>
-            Hay, straw &amp; haylage — <em>matched to a supplier near you.</em>
+            Hay, straw &amp; haylage, <em>matched to a supplier near you.</em>
           </h1>
           <p className={a.sub}>
             Whether you need a few small bales for the ponies or a full load of big
             bales for the yard, tell us what you’re after and we’ll match you with a
-            supplier near you. Delivered or collected, across {SERVICE_AREA} — no
+            supplier near you. Delivered or collected, across {SERVICE_AREA}. No
             obligation.
           </p>
 
@@ -96,7 +96,7 @@ export default function HayBalesPage() {
           <EnquiryForm
             category="hay"
             detailsLabel="Anything else the supplier should know?"
-            detailsPlaceholder="e.g. good meadow hay for two horses, needed by the end of the month — access is fine for a tractor and trailer"
+            detailsPlaceholder="e.g. good meadow hay for two horses, needed by the end of the month. Access is fine for a tractor and trailer"
             submitLabel="Send hay enquiry"
           />
         </div>
@@ -110,21 +110,21 @@ export default function HayBalesPage() {
           </h2>
           <p className={s.sectionLede}>
             Hay for horses and smallholdings, straw for bedding, and haylage for
-            harder-keeping animals — in whatever bale size suits you.
+            harder-keeping animals, in whatever bale size suits you.
           </p>
           <div className={s.sectionInner} style={{ maxWidth: 760, lineHeight: 1.9 }}>
             <ul>
               <li>
-                <strong>Hay</strong> — meadow and seed hay, small or big bales.
+                <strong>Hay</strong>: meadow and seed hay, small or big bales.
               </li>
               <li>
-                <strong>Straw</strong> — barley and wheat straw for bedding.
+                <strong>Straw</strong>: barley and wheat straw for bedding.
               </li>
               <li>
-                <strong>Haylage</strong> — wrapped bales for horses and livestock.
+                <strong>Haylage</strong>: wrapped bales for horses and livestock.
               </li>
               <li>
-                <strong>By the load or the trailer-full</strong> — small quantities
+                <strong>By the load or the trailer-full</strong>: small quantities
                 for private owners through to bulk for yards and farms.
               </li>
             </ul>
@@ -174,7 +174,7 @@ export default function HayBalesPage() {
             Hay, straw & haylage, <em>explained.</em>
           </>
         }
-        lede="Bale types, cut timing and what good forage actually looks like — notes from people who make it."
+        lede="Bale types, cut timing and what good forage actually looks like: notes from people who make it."
       />
 
       <CountyLinks vertical="hay-bales" heading="Find hay & straw in your county" />

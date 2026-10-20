@@ -57,13 +57,13 @@ export function PostJobForm({
       <div className={a.groupTitle}>The job</div>
       <label className={f.field}>
         <span className={f.label}>Title</span>
-        <input className={f.input} name="title" required placeholder="e.g. Paddock topping — 6 acres" defaultValue={v?.title} />
+        <input className={f.input} name="title" required placeholder="e.g. Paddock topping, 6 acres" defaultValue={v?.title} />
       </label>
       <label className={f.field}>
         <span className={f.label}>Description</span>
         <textarea className={f.textarea} name="description" required defaultValue={v?.description} />
         <span className={f.hint}>
-          What needs doing, roughly how much land, access, timing — whatever a
+          What needs doing, roughly how much land, access, timing. Whatever a
           contractor would want to know before calling.
         </span>
       </label>
@@ -113,7 +113,7 @@ export function PostJobForm({
       <div className={a.groupTitle}>Who should contractors contact?</div>
       <p className={a.sub}>
         You, or the customer the work is for. Only shared with contractors who
-        open the job — the listing shows a first name at most.
+        open the job. The listing shows a first name at most.
       </p>
       <div className={a.row2}>
         <label className={f.field}>
@@ -135,7 +135,7 @@ export function PostJobForm({
       <label className={f.checkRow}>
         <input type="checkbox" name="consent" defaultChecked={v?.consent} />
         <span>
-          The person named above (me, or my customer — with their agreement) is
+          The person named above (me, or my customer, with their agreement) is
           happy for their name and contact details to be shared with vetted
           contractors in the network so they can get in touch directly about
           this job.

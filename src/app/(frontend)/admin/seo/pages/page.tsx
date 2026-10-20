@@ -6,7 +6,7 @@ import { seoGuard } from '../guard';
 import styles from '../seo.module.css';
 
 export const metadata: Metadata = {
-  title: 'Pages — Admin',
+  title: 'Pages · Admin',
   robots: { index: false, follow: false },
 };
 
@@ -99,7 +99,7 @@ export default async function PagesPage() {
       <ul style={{ margin: '0.5rem 0 0 1.25rem', lineHeight: 1.8 }}>
         {ga4Properties.map((p) => (
           <li key={p.id}>
-            <code>{p.id}</code> — {p.name}
+            <code>{p.id}</code> · {p.name}
             {p.account ? ` (${p.account})` : ''}
             {p.id === ga4PropId ? ' ← currently configured' : ''}
           </li>
@@ -140,7 +140,7 @@ export default async function PagesPage() {
               <ul style={{ margin: '0 0 0 1.25rem', lineHeight: 1.8 }}>
                 {ga4Properties.map((p) => (
                   <li key={p.id}>
-                    <code>{p.id}</code> — {p.name}
+                    <code>{p.id}</code> · {p.name}
                     {p.account ? ` (${p.account})` : ''}
                   </li>
                 ))}
@@ -162,7 +162,7 @@ export default async function PagesPage() {
                 </p>
               ) : /insufficient.*scope|ACCESS_TOKEN_SCOPE|invalid_scope/i.test(ga4SetupErr) ? (
                 <p style={{ margin: '0.5rem 0' }}>
-                  Your connection doesn’t include Analytics access —{' '}
+                  Your connection doesn’t include Analytics access:{' '}
                   <Link href="/admin/seo/auth/connect">re-connect to Google</Link> and grant
                   it, then reload.
                 </p>
@@ -294,7 +294,7 @@ export default async function PagesPage() {
             </h2>
           </div>
           <p className={styles.tableNote}>
-            All pages by sessions from Google Analytics ({startDate} → {endDate}) — this
+            All pages by sessions from Google Analytics ({startDate} → {endDate}). This
             counts every visit, not just search traffic, so it shows data even before the
             site ranks in Google.
           </p>

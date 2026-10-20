@@ -13,7 +13,7 @@ import f from '@/components/forms/forms.module.css';
 export const metadata: Metadata = {
   title: 'Log in',
   description:
-    'Log in to Emmerdale Agriculture — one login for customers tracking a job and for contractors in the network.',
+    'Log in to Emmerdale Agriculture: one login for customers tracking a job and for contractors in the network.',
   alternates: { canonical: '/login' },
   // A login form has no search value — keep it out of the index (and the sitemap).
   robots: { index: false, follow: true },

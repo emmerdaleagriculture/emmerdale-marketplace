@@ -371,7 +371,7 @@ export default async function LandingPage() {
                     Hampshire Paddock Management
                   </a>{' '}
                   looking after paddocks, smallholdings and grassland across the
-                  South of England — topping, harrowing, rolling, hedges, the
+                  South of England: topping, harrowing, rolling, hedges, the
                   everyday work that keeps land in good order. I&rsquo;m also the
                   founder of{' '}
                   {/* A followed link on purpose (Tom, 2026-09-24): no nofollow,
@@ -437,7 +437,7 @@ export default async function LandingPage() {
                 Apply to join
               </TrackedLink>
               <p className={s.operatorsMeta}>
-                No fee — you receive 100% of what you quoted
+                No fee: you receive 100% of what you quoted
                 <a href="#footnote-fees" aria-label="See note on card and transfer charges">*</a>
               </p>
             </div>

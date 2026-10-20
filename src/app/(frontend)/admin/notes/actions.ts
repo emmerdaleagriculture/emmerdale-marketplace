@@ -57,7 +57,7 @@ export async function saveNoteAction(_prev: FormState, formData: FormData): Prom
   if (!title) return { error: 'A title is required.' };
 
   const slug = slugify(String(formData.get('slug') ?? '').trim() || title);
-  if (!slug) return { error: 'Couldn’t derive a slug — set one explicitly.' };
+  if (!slug) return { error: 'Couldn’t derive a slug. Set one explicitly.' };
 
   const validTags = new Set(CURATED_TAGS.map((t) => t.slug));
   const tags = formData

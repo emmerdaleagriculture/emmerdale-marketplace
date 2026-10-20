@@ -28,17 +28,17 @@ export const SOURCE_GROUPS = [
 export type SourceGroup = (typeof SOURCE_GROUPS)[number];
 
 export function groupOf(channel: string): SourceGroup {
-  if (channel.startsWith('Meta —')) return 'Facebook / Instagram ads';
-  if (channel === 'Facebook — untagged' || channel === 'Instagram — untagged') return 'Facebook / Instagram, untagged';
+  if (channel.startsWith('Meta ·')) return 'Facebook / Instagram ads';
+  if (channel === 'Facebook · untagged' || channel === 'Instagram · untagged') return 'Facebook / Instagram, untagged';
   if (channel === 'Google Ads') return 'Google Ads';
   if (channel === 'Organic search') return 'Search (organic)';
-  if (channel.startsWith('Referral —')) return 'Other websites';
+  if (channel.startsWith('Referral ·')) return 'Other websites';
   if (channel === 'Hay-bales lead import') return 'Enquiries & leads';
   return 'Unknown';
 }
 
 /** A channel that says nothing about the outside world. */
-const uninformative = (channel: string) => channel === UNATTRIBUTED || channel.startsWith('Internal —');
+const uninformative = (channel: string) => channel === UNATTRIBUTED || channel.startsWith('Internal ·');
 
 const MATCH_SECONDS = 60;
 const LOOKBACK_MS = 3 * 24 * 60 * 60 * 1000;

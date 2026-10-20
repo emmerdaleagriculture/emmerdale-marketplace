@@ -94,7 +94,7 @@ export default async function TagHubPage({ params }: { params: Promise<Params> }
           <div className={styles.heroPhoto}>
             <Image
               src={heroPhoto.url}
-              alt={`${def.label} — field and paddock work`}
+              alt={`${def.label}: field and paddock work`}
               fill
               priority
               sizes="100vw"
@@ -131,7 +131,7 @@ export default async function TagHubPage({ params }: { params: Promise<Params> }
            dead-ending in the blog. */}
       <ServiceLinks
         links={serviceLinksForTags([def.slug])}
-        heading={`${def.label} — get it done`}
+        heading={`${def.label}: get it done`}
       />
 
       {/* ===== CTA BAND ===== */}

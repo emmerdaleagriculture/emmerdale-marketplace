@@ -127,7 +127,7 @@ export async function POST(request: Request) {
     await log(invitation.id, 'error', { reason: 'llm_cap' });
     await notifyAdmins(
       'Inbound reply cap reached',
-      `Invitation ${invitation.id} has had ${count} email replies — handling manually.\n\n${excerpt.slice(0, 800)}`,
+      `Invitation ${invitation.id} has had ${count} email replies. Handling manually.\n\n${excerpt.slice(0, 800)}`,
     );
     return NextResponse.json({ received: true, outcome: 'cap' });
   }
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
       await notifyAdmins(
         'Contractor wants out of a priced job',
         `Invitation ${invitation.id} (${contractorEmail}) replied declining, but ` +
-          `decline was refused (${res?.reason ?? 'unknown'}) — they likely want to ` +
+          `decline was refused (${res?.reason ?? 'unknown'}). They likely want to ` +
           `withdraw a live price. Handle before the customer accepts it.\n\n${excerpt.slice(0, 800)}`,
       );
       return NextResponse.json({ received: true, outcome: 'decline_needs_human' });
@@ -176,7 +176,7 @@ export async function POST(request: Request) {
     await log(invitation.id, 'no_figure', parse);
     await notifyAdmins(
       'Inbound reply needs a human',
-      `Invitation ${invitation.id} (${contractorEmail}) — ` +
+      `Invitation ${invitation.id} (${contractorEmail}): ` +
         `${parse.is_range ? 'a range' : parse.mentions_vat ? 'VAT-qualified' : 'no firm figure'}.\n\n` +
         `Read as: ${JSON.stringify(parse)}\n\n${excerpt.slice(0, 800)}`,
     );

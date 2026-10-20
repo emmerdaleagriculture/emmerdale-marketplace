@@ -80,7 +80,7 @@ export async function holdAfterContactAttempt(args: {
       until: already ? (ct.messages_moderated_until as string) : until,
     }),
     notifyAdmins(
-      `Contact-detail attempt: ${who} — messages now held`,
+      `Contact-detail attempt: ${who}, messages now held`,
       [
         `${who} tried to send a message before award that was refused (${args.rule.replace(/_/g, ' ')}).`,
         `Their messages before award are now held for your approval for ${HOLD_DAYS} days.`,

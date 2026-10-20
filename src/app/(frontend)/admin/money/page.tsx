@@ -6,7 +6,7 @@ import { formatDate, formatDateTime } from '@/lib/time';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
 
-export const metadata: Metadata = { title: 'Money — Admin' };
+export const metadata: Metadata = { title: 'Money · Admin' };
 export const dynamic = 'force-dynamic';
 
 /**

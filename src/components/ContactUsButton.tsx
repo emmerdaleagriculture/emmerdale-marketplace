@@ -13,7 +13,7 @@ import s from './ContactUsButton.module.css';
 export function ContactUsButton({
   subject,
   body,
-  note = 'Questions, problems or anything else — a real person reads these.',
+  note = 'Questions, problems or anything else. A real person reads these.',
   className,
 }: {
   subject: string;

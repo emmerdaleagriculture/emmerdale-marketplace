@@ -4,7 +4,7 @@ import { NewJobForm } from './NewJobForm';
 import { getCounties, getServices } from '@/lib/reference';
 import s from '../../admin.module.css';
 
-export const metadata: Metadata = { title: 'New job — Admin' };
+export const metadata: Metadata = { title: 'New job · Admin' };
 
 export default async function NewJobPage() {
   const [services, counties] = await Promise.all([getServices(), getCounties()]);

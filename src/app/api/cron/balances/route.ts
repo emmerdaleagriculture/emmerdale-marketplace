@@ -106,7 +106,7 @@ async function run(request: Request) {
         payment_method: claim.stripe_payment_method_id,
         off_session: true,
         confirm: true,
-        description: `Balance — ${formatGBP(claim.amount_pence)}`,
+        description: `Balance: ${formatGBP(claim.amount_pence)}`,
         metadata: {
           kind: 'sq_balance_charge',
           payment_id: claim.payment_id,

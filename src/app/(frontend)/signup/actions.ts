@@ -20,7 +20,7 @@ const SignupSchema = z.object({
 });
 
 const SUCCESS_MESSAGE =
-  'Account created. Check your email to confirm your address — then sign in and tell us about your business.';
+  'Account created. Check your email to confirm your address, then sign in and tell us about your business.';
 
 export async function signUpAction(_prev: FormState, formData: FormData): Promise<FormState> {
   // Bot traps: a hidden field real users never see, and a minimum time-to-fill.

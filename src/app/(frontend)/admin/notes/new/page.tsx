@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { NoteEditor } from '../NoteEditor';
 import s from '../../admin.module.css';
 
-export const metadata: Metadata = { title: 'New note — Admin' };
+export const metadata: Metadata = { title: 'New note · Admin' };
 
 export default function NewNotePage() {
   return (

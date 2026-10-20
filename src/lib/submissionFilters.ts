@@ -5,12 +5,12 @@
  */
 
 export const SUBMISSION_FILTERS = {
-  started: 'Started a job — last 30 days',
-  sent: 'Sent it — last 30 days',
-  reached: 'Reached contractors — last 30 days',
-  priced: 'Got a price — last 30 days',
-  paid: 'Paid — last 30 days',
-  completed: 'Completed — last 30 days',
+  started: 'Started a job (last 30 days)',
+  sent: 'Sent it (last 30 days)',
+  reached: 'Reached contractors (last 30 days)',
+  priced: 'Got a price (last 30 days)',
+  paid: 'Paid (last 30 days)',
+  completed: 'Completed (last 30 days)',
   awaiting_confirm: 'Awaiting customer confirmation',
   awaiting_payment: 'Accepted, deposit not paid',
   no_quotes_48h: 'No price after 48h',

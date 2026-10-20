@@ -25,7 +25,7 @@ export function NotesClient({ posts }: Props) {
   return (
     <section className={styles.postsWrap}>
       {posts.length === 0 ? (
-        <div className={styles.empty}>No posts yet — check back soon.</div>
+        <div className={styles.empty}>No posts yet. Check back soon.</div>
       ) : (
         <>
           <div className={styles.postsGrid}>

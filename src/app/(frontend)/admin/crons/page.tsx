@@ -4,7 +4,7 @@ import { HTTP_CRONS, isLate } from '@/lib/cron/registry';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles, ago } from '../ui';
 
-export const metadata: Metadata = { title: 'Scheduled jobs — Admin' };
+export const metadata: Metadata = { title: 'Scheduled jobs · Admin' };
 export const dynamic = 'force-dynamic';
 
 /**
@@ -63,7 +63,7 @@ export default async function CronsPage() {
     const failures = mine.filter((r) => r.ok === false).length;
     const verdict: Verdict = !last
       ? {
-          label: 'never seen — check it is registered in Vercel',
+          label: 'never seen: check it is registered in Vercel',
           bad: true,
         }
       : last.ok === false
@@ -98,7 +98,7 @@ export default async function CronsPage() {
       <h1 className={s.h1}>Scheduled jobs</h1>
       <p className={s.sub}>
         Everything that runs on a timer. The question this page answers is not
-        &ldquo;did anything happen&rdquo; but &ldquo;did it run&rdquo; — a job that fired
+        &ldquo;did anything happen&rdquo; but &ldquo;did it run&rdquo;: a job that fired
         and found nothing to do and a job that never fired look the same everywhere
         else, and only one of them is fine.
       </p>
@@ -109,7 +109,7 @@ export default async function CronsPage() {
         <Tile value={runs.length} label="Runs recorded" hint="HTTP crons, last 200" />
       </Tiles>
 
-      <div className={s.sectionLabel}>Vercel Cron — the app&rsquo;s own endpoints</div>
+      <div className={s.sectionLabel}>Vercel Cron: the app&rsquo;s own endpoints</div>
       <AdminTable head={['Job', 'Schedule', 'Last run', 'Took', 'Result', 'State']}>
         {httpRows.map(({ job, last, verdict, failures }) => (
           <tr key={job.name}>
@@ -142,7 +142,7 @@ export default async function CronsPage() {
         ))}
       </AdminTable>
 
-      <div className={s.sectionLabel}>pg_cron — jobs running inside the database</div>
+      <div className={s.sectionLabel}>pg_cron: jobs running inside the database</div>
       <AdminTable head={['Job', 'Schedule', 'Last run', 'Outcome', '24h', 'State']}>
         {pgRows.map((j) => {
           return (
@@ -184,7 +184,7 @@ export default async function CronsPage() {
       <p className={s.sub}>
         A Vercel job reading <em>never seen</em> has not called in since this page
         started recording, which is either a job added in the last few minutes or one
-        that is not registered at all — check Settings → Cron Jobs in Vercel. pg_cron
+        that is not registered at all. Check Settings → Cron Jobs in Vercel. pg_cron
         jobs are read live from the database, so that list is always the truth about
         what is scheduled there.
       </p>

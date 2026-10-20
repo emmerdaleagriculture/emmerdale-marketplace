@@ -27,7 +27,7 @@ export function PassPanel({ token, declined }: { token: string; declined: boolea
     <>
       {passed ? (
         <div className={q.closedPanel}>
-          <strong>Passed — thanks for the quick answer.</strong> We won&rsquo;t chase you
+          <strong>Passed, thanks for the quick answer.</strong> We won&rsquo;t chase you
           about this job again. Nothing else is needed from you.
         </div>
       ) : (
@@ -49,7 +49,7 @@ export function PassPanel({ token, declined }: { token: string; declined: boolea
         </span>
         <div className={f.chips}>
           <button type="submit" className={f.chip} disabled={undoing || passing}>
-            {undoing ? 'One moment…' : passed ? 'Undo — I want to price this job' : 'Open the job to price it'}
+            {undoing ? 'One moment…' : passed ? 'Undo: I want to price this job' : 'Open the job to price it'}
           </button>
         </div>
       </form>

@@ -12,7 +12,7 @@ export async function closeCustomer(email: string): Promise<{ jobs: number; with
   const res = data as { ok: boolean; reason?: string; jobs: number; withdrawn: number; photo_paths: string[]; user_ids: string[] } | null;
   if (error || !res?.ok) {
     console.error('[sq] close customer failed:', error?.message ?? res?.reason);
-    return { error: 'That didn’t work — nothing has been changed.' };
+    return { error: 'That didn’t work. Nothing has been changed.' };
   }
   if (res.photo_paths.length > 0) {
     const { error: rmErr } = await admin.storage.from('job-photos').remove(res.photo_paths);

@@ -125,8 +125,8 @@ export default async function MembershipPage({
 
           <ContactUsButton
             className={s.contact}
-            subject={`Membership — ${contractor.business_name}`}
-            body={`\n\n—\n${contractor.business_name} · ${user.email ?? ''}`}
+            subject={`Membership: ${contractor.business_name}`}
+            body={`\n\n${contractor.business_name} · ${user.email ?? ''}`}
           />
         </div>
       </main>

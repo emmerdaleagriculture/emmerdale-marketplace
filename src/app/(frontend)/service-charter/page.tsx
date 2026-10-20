@@ -28,7 +28,7 @@ export default function ServiceCharterPage() {
           <Breadcrumb tone="light" items={[{ label: 'Service charter' }]} />
           <h1>What to expect from us</h1>
           <p className={l.updated}>
-            Emmerdale Agriculture — Customer Service Charter ·{' '}
+            Emmerdale Agriculture: Customer Service Charter ·{' '}
             <strong>Version 2.1, 22 September 2026</strong>
           </p>
           <p>
@@ -39,8 +39,8 @@ export default function ServiceCharterPage() {
 
           <h2>Before you book</h2>
           <p>
-            <strong>One fixed price, upfront.</strong> You describe the job — service, area,
-            postcode, access, photos — and we give you a single price that includes the
+            <strong>One fixed price, upfront.</strong> You describe the job (service, area,
+            postcode, access, photos) and we give you a single price that includes the
             contractor, our fee and VAT. No quotes from six different vans, no haggling, no
             surprises on the day.
           </p>
@@ -54,14 +54,14 @@ export default function ServiceCharterPage() {
             checked before they see a job: who they are, that they are a working
             contracting business, and a conversation with us. They&rsquo;ve signed up to
             our Contractor Code of Conduct. Whoever does the work, the job is covered by
-            our own insurance — you are not relying on their paperwork.
+            our own insurance. You are not relying on their paperwork.
           </p>
 
           <h2>After you book</h2>
           <p>
             <strong>You pay in two parts.</strong> A 15% deposit by card books the job. The
             rest is only taken once the work is done and you&rsquo;ve confirmed you&rsquo;re
-            happy with it — from the same card, within 7 days of you signing the job off. The
+            happy with it, from the same card, within 7 days of you signing the job off. The
             contractor isn&rsquo;t paid until then.
           </p>
           <p>
@@ -81,7 +81,7 @@ export default function ServiceCharterPage() {
           </p>
           <p>
             <strong>Photographs before and after.</strong> The contractor photographs the site
-            before starting and again when finished — same angles — and they&rsquo;re uploaded
+            before starting and again when finished (same angles) and they&rsquo;re uploaded
             to your job page the same day. You can see exactly what was done, even if you
             weren&rsquo;t there.
           </p>
@@ -89,7 +89,7 @@ export default function ServiceCharterPage() {
             <strong>Respect for your property.</strong> Gates closed. Agreed routes kept to. No
             rutting, no damage to verges, drives, fences or hedges outside the job. Horses and
             livestock never worked around without a plan agreed with you. No smoking, vaping
-            or alcohol on your land. Site left clean — string, netting, packaging and offcuts
+            or alcohol on your land. Site left clean: string, netting, packaging and offcuts
             gone.
           </p>
           <p>
@@ -101,8 +101,8 @@ export default function ServiceCharterPage() {
           <p>
             <strong>You confirm, then the rest is paid.</strong> When the job is marked
             complete you get an email. You have three working days to confirm or tell us about
-            a problem. Only once you&rsquo;ve confirmed — or those three days have passed
-            without a word — do we take the balance and pay the contractor. If you raise a
+            a problem. Only once you&rsquo;ve confirmed (or those three days have passed
+            without a word) do we take the balance and pay the contractor. If you raise a
             problem, nothing is taken while we sort it out.
           </p>
           <p>
@@ -113,15 +113,15 @@ export default function ServiceCharterPage() {
           <p>
             <strong>Insured.</strong> We carry £5 million of public liability cover on
             every job done through our service. If something goes wrong, we manage the
-            claim with you — you deal with us, not with the contractor&rsquo;s insurer.
+            claim with you: you deal with us, not with the contractor&rsquo;s insurer.
           </p>
 
           <h2>If you need to cancel</h2>
           <p>
-            You can cancel any time before work starts. The deposit isn&rsquo;t refunded — it
+            You can cancel any time before work starts. The deposit isn&rsquo;t refunded (it
             covers the matching and scheduling already done and any call-out owed to the
-            contractor — and nothing more is taken. If we cancel — no contractor available, or
-            the job can&rsquo;t be done safely or lawfully — you get your deposit back in full.
+            contractor) and nothing more is taken. If we cancel (no contractor available, or
+            the job can&rsquo;t be done safely or lawfully) you get your deposit back in full.
             Weather reschedules cost nothing.
           </p>
 

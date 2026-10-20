@@ -113,8 +113,8 @@ export async function POST(request: Request) {
                 : `PAYMENT NEEDS A HUMAN: award failed (${res.reason ?? 'unknown'})`,
               `Stripe session ${session.id} completed payment for submission ` +
                 `${session.metadata?.submission_id ?? '(unknown)'} but the award did not ` +
-                `happen (reason: ${res.reason ?? 'unknown'}). The money has been taken — ` +
-                `investigate and refund or award manually.`,
+                `happen (reason: ${res.reason ?? 'unknown'}). The money has been taken. ` +
+                `Investigate and refund or award manually.`,
             );
           }
         } else if (isBalancePayment(session)) {

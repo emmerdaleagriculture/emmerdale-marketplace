@@ -70,7 +70,7 @@ export default async function PassPage({ params }: { params: Promise<{ token: st
             )}
 
           <ContactUsButton
-            subject={`About a job to price — ${service}${location ? `, ${location}` : ''} (ref ${js.id.slice(0, 8)})`}
+            subject={`About a job to price: ${service}${location ? `, ${location}` : ''} (ref ${js.id.slice(0, 8)})`}
             note="A question about this job?"
           />
         </div>

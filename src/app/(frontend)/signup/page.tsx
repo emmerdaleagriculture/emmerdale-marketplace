@@ -68,7 +68,7 @@ export default async function SignupPage({
                   <div>
                     <strong>Order the same work again</strong>
                     <span>
-                      A couple of taps and it goes back out to contractors — the field,
+                      A couple of taps and it goes back out to contractors: the field,
                       the access notes and the boundary you drew, all still there.
                     </span>
                   </div>
@@ -88,11 +88,11 @@ export default async function SignupPage({
             <>
             <div className={a.eyebrow}>For contractors</div>
             <h1 className={a.title}>
-              Join the network — <em>free.</em>
+              Join the network, <em>free.</em>
             </h1>
             <p className={a.sub}>
               Create your account to get started. Next, we’ll ask about your
-              business and the counties you cover — then we review your application
+              business and the counties you cover. Then we review your application
               and email you when you’re approved.
             </p>
             <ul className={a.benefits}>
@@ -109,7 +109,7 @@ export default async function SignupPage({
                 <div>
                   <strong>It costs you nothing</strong>
                   <span>
-                    Free to join and free to quote, and you keep the price you give us —
+                    Free to join and free to quote, and you keep the price you give us:
                     our margin sits on top, paid by the customer.
                   </span>
                 </div>
@@ -120,7 +120,7 @@ export default async function SignupPage({
                   <span>
                     The customer pays us a deposit to book you and the balance when the
                     job’s done and they’ve confirmed it. You’re paid your full price once
-                    that clears — you never chase the customer for money.
+                    that clears. You never chase the customer for money.
                   </span>
                 </div>
               </li>
@@ -129,7 +129,7 @@ export default async function SignupPage({
                   <strong>You get a proper job pack</strong>
                   <span>
                     Location, acreage, access, gateway width and photos, checked before it
-                    reaches you — so you can price it without a site visit or a phone call.
+                    reaches you, so you can price it without a site visit or a phone call.
                   </span>
                 </div>
               </li>

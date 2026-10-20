@@ -8,7 +8,7 @@ import { redactPath } from '@/lib/analyticsPaths';
 import { parseJobPath } from '@/lib/feedback/jobPath';
 import type { FormState } from '@/lib/form';
 
-const SUCCESS = 'Thanks — that has gone straight to us, and we will look at it today.';
+const SUCCESS = 'Thanks. That has gone straight to us, and we will look at it today.';
 
 const FeedbackSchema = z.object({
   message: z.string().trim().min(3, 'Tell us a little more than that.').max(4000),
@@ -153,7 +153,7 @@ export async function submitFeedbackAction(_prev: FormState, formData: FormData)
   });
   if (error) {
     console.error('[feedback] insert failed:', error);
-    return { error: 'That did not send — try again, or email us directly.' };
+    return { error: 'That did not send. Try again, or email us directly.' };
   }
 
   // Stored first, then told: an email that fails must not lose the message.

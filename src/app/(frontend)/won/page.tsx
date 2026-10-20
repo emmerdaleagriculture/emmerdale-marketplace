@@ -25,13 +25,13 @@ export const metadata: Metadata = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  awarded: 'Yours — contact the customer',
+  awarded: 'Yours: contact the customer',
   contacted: 'Contact logged',
   scheduled: 'Scheduled',
   in_progress: 'In progress',
-  completed_by_contractor: 'Done — awaiting the customer’s confirmation',
-  completed: 'Complete — waiting for the customer’s balance',
-  paid: 'Customer paid in full — payout due on your invoice',
+  completed_by_contractor: 'Done, awaiting the customer’s confirmation',
+  completed: 'Complete, waiting for the customer’s balance',
+  paid: 'Customer paid in full. Payout due on your invoice',
   variation_pending: 'New price with the customer',
 };
 
@@ -131,14 +131,14 @@ export default async function WonJobsPage() {
           <p className={a.sub}>
             Each of these customers accepted your price and paid a deposit. You&rsquo;re
             paid your full price once the job is done, they&rsquo;ve confirmed it, the
-            balance has cleared and your invoice is in — contact them and get it
+            balance has cleared and your invoice is in. Contact them and get it
             arranged as soon as you can.
           </p>
 
           {jobs.length === 0 ? (
             <div className={s.empty}>
               Nothing yet. When a customer accepts your price and pays their deposit,
-              the job — and their full details — appear here.
+              the job (and their full details) appear here.
             </div>
           ) : (
             <div className={s.list}>
@@ -148,7 +148,7 @@ export default async function WonJobsPage() {
                     <span className={s.service}>{job.service}</span>
                     <span className={s.status}>
                       {job.paid_out_on
-                        ? 'Paid out — thank you'
+                        ? 'Paid out, thank you'
                         : (STATUS_LABELS[job.status ?? ''] ?? job.status)}
                     </span>
                   </div>
@@ -294,7 +294,7 @@ export default async function WonJobsPage() {
                     ['awarded', 'contacted', 'scheduled', 'in_progress', 'completed_by_contractor', 'completed', 'paid'].includes(job.status ?? '') &&
                     (openExtra.has(job.id) ? (
                       <p className={s.invoiceHint} style={{ marginTop: 12 }}>
-                        Extra work — &ldquo;{openExtra.get(job.id)}&rdquo; — is priced and with
+                        Extra work (&ldquo;{openExtra.get(job.id)}&rdquo;) is priced and with
                         the customer. We&rsquo;ll tell you when they answer.
                       </p>
                     ) : (
@@ -319,7 +319,7 @@ export default async function WonJobsPage() {
                           })}
                           .
                         </strong>
-                        {job.contractor_invoice_at && <> Invoice received{job.contractor_invoice_name ? ` — ${job.contractor_invoice_name}` : ''}.</>}
+                        {job.contractor_invoice_at && <> Invoice received{job.contractor_invoice_name ? ` (${job.contractor_invoice_name})` : ''}.</>}
                       </p>
                     </div>
                   )}
@@ -338,7 +338,7 @@ export default async function WonJobsPage() {
           )}
 
           <ContactUsButton
-            subject="Contractor enquiry — a won job"
+            subject="Contractor enquiry: a won job"
             note="Trouble reaching a customer, a problem on site, or a question about your payout?"
           />
         </div>

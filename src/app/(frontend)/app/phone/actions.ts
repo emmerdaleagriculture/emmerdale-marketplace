@@ -40,7 +40,7 @@ export async function sendPhoneCodeAction(_prev: PhoneState, formData: FormData)
   const raw = String(formData.get('phone') || '');
   const phone = ukMobile(raw.startsWith('+') || raw.startsWith('0') ? raw : `+44${raw}`);
   if (!phone) {
-    return { error: 'Enter a UK mobile number — texts can only go to a mobile.' };
+    return { error: 'Enter a UK mobile number. Texts can only go to a mobile.' };
   }
 
   const v = await getVerification(user.id);

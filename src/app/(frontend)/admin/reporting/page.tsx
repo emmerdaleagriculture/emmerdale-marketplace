@@ -7,7 +7,7 @@ import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
 import { Fold, PieCard, type PieSlice } from '../Pie';
 
-export const metadata: Metadata = { title: 'Reporting — Admin' };
+export const metadata: Metadata = { title: 'Reporting · Admin' };
 
 /**
  * Landing-page funnel reporting (spec §30, the Part 1 slice): first-party
@@ -252,7 +252,7 @@ export default async function ReportingPage() {
 
       {viewsMissing && (
         <div className={s.empty}>
-          View tracking isn&rsquo;t live yet — the landing_views migration
+          View tracking isn&rsquo;t live yet: the landing_views migration
           hasn&rsquo;t been applied. Parse and confirm numbers below are real.
         </div>
       )}
@@ -265,10 +265,10 @@ export default async function ReportingPage() {
       </Tiles>
       <PieCard title="Landings in the last 30 days, what happened next" slices={landingSlices} centre="landings" empty="No landings recorded." />
 
-      <div className={s.sectionLabel}>Where people are lost — last 30 days</div>
+      <div className={s.sectionLabel}>Where people are lost, last 30 days</div>
       {(viewsMissing || funnel[1].n > funnel[0].n) && (
         <div className={s.empty}>
-          More jobs than landings recorded, so the first step is under-counting —
+          More jobs than landings recorded, so the first step is under-counting:
           the view beacon is blocked, failing, or these jobs arrived before it was
           live. Steps below it are still sound; the landing→job rate is not.
         </div>
@@ -316,7 +316,7 @@ export default async function ReportingPage() {
         </>
       )}
 
-      <div className={s.sectionLabel}>Daily — last 14 days</div>
+      <div className={s.sectionLabel}>Daily, last 14 days</div>
       <PieCard title="Landings, this week against last" slices={dailySlices} centre="landings, 14d" empty="No landings in the last 14 days." />
       <Fold summary="Day by day">
       <AdminTable head={['Day', 'Landings', 'Parses', 'Confirmed']}>
@@ -331,7 +331,7 @@ export default async function ReportingPage() {
       </AdminTable>
       </Fold>
 
-      <div className={s.sectionLabel}>Attribution — last 30 days</div>
+      <div className={s.sectionLabel}>Attribution, last 30 days</div>
       <PieCard title="Landings, by source" slices={sourceSlices} centre="landings" empty="No landings attributed." />
       <Fold summary="Every source, with parses and confirms">
       <AdminTable head={['Source', 'Landings', 'Parses', 'Confirmed', 'Via our pages', 'Landing → job']}>
@@ -350,7 +350,7 @@ export default async function ReportingPage() {
       </AdminTable>
       </Fold>
 
-      <div className={s.sectionLabel}>Parse pipeline — last 30 days</div>
+      <div className={s.sectionLabel}>Parse pipeline, last 30 days</div>
       <Tiles>
         <div className={s.metric}>
           {/* Empty by design, for the same reason as the fallback count: no
@@ -367,10 +367,10 @@ export default async function ReportingPage() {
               the wording — which means every parse is deterministic now and
               this number should equal the total. Reading it as "the LLM is
               down" sends people chasing a bug that was a deliberate decision. */}
-          <div className={s.metricHint}>expected — no model in job creation since 8e86e71</div>
+          <div className={s.metricHint}>expected: no model in job creation since 8e86e71</div>
         </div>
-        <Tile value={unmatchedCount} label="Unmatched services" hint={<>of {confirmed.length} confirmed — taxonomy gaps</>} />
-        <Tile value={declinedCount} label="Reclassified by customer" hint="said &ldquo;not quite&rdquo; — prompt feedback" />
+        <Tile value={unmatchedCount} label="Unmatched services" hint={<>of {confirmed.length} confirmed (taxonomy gaps)</>} />
+        <Tile value={declinedCount} label="Reclassified by customer" hint="said &ldquo;not quite&rdquo; (prompt feedback)" />
       </Tiles>
       <PieCard title="Parse outcomes" slices={outcomeSlices} centre="parses" empty="No parses in the last 30 days." />
       <Fold summary="Outcomes and model versions, in a table">
@@ -384,7 +384,7 @@ export default async function ReportingPage() {
       </AdminTable>
       </Fold>
 
-      <div className={s.sectionLabel}>Confirmed jobs — last 30 days</div>
+      <div className={s.sectionLabel}>Confirmed jobs, last 30 days</div>
       <Tiles>
         <Tile value={pct(boundaryCount, confirmed.length)} label="Boundary drawn" hint={<>{boundaryCount} of {confirmed.length}</>} />
         <Tile value={pct(photoCount, confirmed.length)} label="With photos" hint={<>{photoCount} of {confirmed.length}</>} />

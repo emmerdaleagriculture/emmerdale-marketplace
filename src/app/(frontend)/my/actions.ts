@@ -41,7 +41,7 @@ export async function claimJobAction(_prev: FormState, formData: FormData): Prom
       return { error: 'This job is already on another account.' };
     }
     if (outcome.reason === 'invalid') return { error: 'This link is no longer valid.' };
-    return { error: 'That didn’t go through — please try again.' };
+    return { error: 'That didn’t go through. Please try again.' };
   }
 
   revalidatePath('/my');
@@ -104,7 +104,7 @@ export async function scheduleJobAction(_prev: FormState, formData: FormData): P
   });
   if (error) {
     console.error('[customer] schedule insert failed:', error);
-    return { error: 'That didn’t go through — please try again.' };
+    return { error: 'That didn’t go through. Please try again.' };
   }
 
   revalidatePath('/my');
@@ -123,7 +123,7 @@ export async function switchScheduleModeAction(
 ): Promise<FormState> {
   const id = String(formData.get('schedule_id') ?? '');
   const mode = modeFrom(formData);
-  if (!id) return { error: 'Something went wrong — refresh and try again.' };
+  if (!id) return { error: 'Something went wrong. Refresh and try again.' };
 
   const supabase = await createClient();
   const {
@@ -140,15 +140,15 @@ export async function switchScheduleModeAction(
   // "The same contractor" needs one on record.
   if (mode === 'same') query = query.not('contractor_id', 'is', null);
   const { data: changed, error } = await query.select('id');
-  if (error) return { error: 'That didn’t go through — please try again.' };
+  if (error) return { error: 'That didn’t go through. Please try again.' };
   if (!changed || changed.length === 0) {
-    return { error: 'That repeat can’t be changed — refresh to see what’s set.' };
+    return { error: 'That repeat can’t be changed. Refresh to see what’s set.' };
   }
 
   revalidatePath('/my');
   return {
     ok: true,
-    message: mode === 'same' ? 'Done — your contractor will be asked first.' : 'Done — it will go out for fresh prices.',
+    message: mode === 'same' ? 'Done. Your contractor will be asked first.' : 'Done. It will go out for fresh prices.',
   };
 }
 
@@ -158,7 +158,7 @@ export async function cancelScheduleAction(
   formData: FormData,
 ): Promise<FormState> {
   const id = String(formData.get('schedule_id') ?? '');
-  if (!id) return { error: 'Something went wrong — refresh and try again.' };
+  if (!id) return { error: 'Something went wrong. Refresh and try again.' };
 
   const supabase = await createClient();
   const {
@@ -172,11 +172,11 @@ export async function cancelScheduleAction(
     .eq('id', id)
     .eq('customer_id', user.id)
     .select('id');
-  if (error) return { error: 'That didn’t go through — please try again.' };
+  if (error) return { error: 'That didn’t go through. Please try again.' };
   // Zero rows is not success: a stale page would otherwise say "Stopped" about
   // a schedule that is still running.
   if (!stopped || stopped.length === 0) {
-    return { error: 'That repeat is no longer here — refresh to see what’s set.' };
+    return { error: 'That repeat is no longer here. Refresh to see what’s set.' };
   }
 
   revalidatePath('/my');
@@ -225,7 +225,7 @@ export async function editJobAction(_prev: FormState, formData: FormData): Promi
     .maybeSingle();
   if (!js) return { error: 'This link is no longer valid.' };
   if (!EDITABLE_STATUSES.includes(js.status)) {
-    return { error: 'This job is already booked — email us and we’ll sort it out.' };
+    return { error: 'This job is already booked. Email us and we’ll sort it out.' };
   }
 
   const description = String(formData.get('service_verbatim') ?? '').trim().slice(0, 2000);
@@ -257,7 +257,7 @@ export async function editJobAction(_prev: FormState, formData: FormData): Promi
   if (urgency !== js.urgency || targetDate !== js.target_date) changes.push('When it needs doing');
   if (accessNotes !== js.access_notes) changes.push('Access notes');
   if (obstacles !== js.obstacles) changes.push('What is in the way');
-  if (changes.length === 0) return { ok: true, message: 'Nothing to change — that all matches what we have.' };
+  if (changes.length === 0) return { ok: true, message: 'Nothing to change. That all matches what we have.' };
 
   const amendedAt = new Date().toISOString();
   const { data: updated, error } = await admin
@@ -280,7 +280,7 @@ export async function editJobAction(_prev: FormState, formData: FormData): Promi
     .select('id');
   if (error || !updated || updated.length === 0) {
     console.error('[amend] update failed:', error);
-    return { error: 'That didn’t go through — please try again.' };
+    return { error: 'That didn’t go through. Please try again.' };
   }
 
   await admin.rpc('log_job_event', {
@@ -354,7 +354,7 @@ export async function editJobAction(_prev: FormState, formData: FormData): Promi
     ok: true,
     message:
       notified > 0
-        ? 'Updated. The contractors who have already priced it have been told — their price still stands unless they choose to change it.'
+        ? 'Updated. The contractors who have already priced it have been told. Their price still stands unless they choose to change it.'
         : 'Updated. Contractors will see the corrected details when they price it.',
   };
 }
@@ -402,7 +402,7 @@ export async function updateDetailsAction(_prev: FormState, formData: FormData):
   );
   if (error) {
     console.error('[customer] details update failed:', error);
-    return { error: 'That didn’t go through — please try again.' };
+    return { error: 'That didn’t go through. Please try again.' };
   }
 
   revalidatePath('/my');

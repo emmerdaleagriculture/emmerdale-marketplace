@@ -7,7 +7,7 @@ import { LANDING_FLOW_PATHS } from '@/lib/landingPaths';
 import s from '../../admin.module.css';
 import { AdminTable } from '../../ui';
 
-export const metadata: Metadata = { title: 'Journey — Admin' };
+export const metadata: Metadata = { title: 'Journey · Admin' };
 export const dynamic = 'force-dynamic';
 
 const PATHS = [
@@ -163,7 +163,7 @@ export default async function JourneyPage({
     <div>
       <h1 className={s.h1}>Journey</h1>
       <p className={s.sub}>
-        Where people click and how far they scroll. Aggregated per visit — a visit is
+        Where people click and how far they scroll. Aggregated per visit: a visit is
         one browser tab, and nothing here identifies anyone.{' '}
         <Link href="/admin/reporting">Funnel numbers are next door.</Link>
       </p>
@@ -192,7 +192,7 @@ export default async function JourneyPage({
       {visits === 0 ? (
         <div className={s.empty}>
           Nothing recorded for this page yet. The beacon sends when a tab is hidden or
-          closed, so the first numbers appear after real visits end — not while you are
+          closed, so the first numbers appear after real visits end, not while you are
           looking at the page yourself.
         </div>
       ) : (
@@ -249,7 +249,7 @@ export default async function JourneyPage({
                       <td>{r.action === 'parse' ? 'Step 1' : 'Step 2'}</td>
                       <td style={{ color: r.outcome === 'fallback' ? '#8a6d1f' : '#a02a2a' }}>
                         <code>{r.reason}</code>
-                        {r.outcome === 'fallback' && ' — let through'}
+                        {r.outcome === 'fallback' && ' · let through'}
                       </td>
                       <td>{r.n}</td>
                       <td>
@@ -307,13 +307,13 @@ export default async function JourneyPage({
 
           <div className={s.sectionLabel}>Click heat, over the live page</div>
           <p className={s.sub} style={{ marginTop: -8 }}>
-            The page as it is now, not a screenshot — so if the layout has changed since
+            The page as it is now, not a screenshot. So if the layout has changed since
             these clicks, they sit where the old layout put them.
           </p>
           <p className={s.metricHint} style={{ marginBottom: 8 }}>
             {desktopClicks.length} desktop click{desktopClicks.length === 1 ? '' : 's'} shown.
             {phoneClicks > 0
-              ? ` ${phoneClicks} from narrow screens are left out — they were made on a different layout, so they'd land in the wrong place here.`
+              ? ` ${phoneClicks} from narrow screens are left out: they were made on a different layout, so they'd land in the wrong place here.`
               : ''}
           </p>
           <HeatOverlay

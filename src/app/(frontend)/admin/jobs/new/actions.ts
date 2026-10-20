@@ -112,7 +112,7 @@ export async function createJobAction(_prev: JobFormState, formData: FormData): 
 
   if (!countyId) {
     return {
-      error: r?.error ?? 'Enter a postcode or pick a county — one of the two is needed.',
+      error: r?.error ?? 'Enter a postcode or pick a county. One of the two is needed.',
       values,
     };
   }

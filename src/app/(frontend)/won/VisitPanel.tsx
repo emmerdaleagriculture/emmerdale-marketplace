@@ -55,7 +55,7 @@ export function VisitPanel({
             <input className={f.input} name="price" inputMode="decimal" required placeholder="e.g. 450" />
           </label>
           <label className={f.field}>
-            <span className={f.label}>What you found that changes it — the customer sees this</span>
+            <span className={f.label}>What you found that changes it (the customer sees this)</span>
             <textarea className={f.textarea} name="reason" rows={3} maxLength={1000} required />
           </label>
           <p className={f.hint}>

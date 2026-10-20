@@ -119,7 +119,7 @@ export function QuoteWidget() {
           ))}
           {/* An unmatched job is a first-class answer, not a dead end: the
               /start form takes free text either way. */}
-          <option value="other">Something else — I&rsquo;ll describe it</option>
+          <option value="other">Something else (I&rsquo;ll describe it)</option>
         </select>
       </div>
 
@@ -148,7 +148,7 @@ export function QuoteWidget() {
         Get started
       </button>
       <p className={s.widgetReassure}>
-        Free and no obligation — you&rsquo;re not booking anything yet.
+        Free and no obligation: you&rsquo;re not booking anything yet.
       </p>
     </div>
   );

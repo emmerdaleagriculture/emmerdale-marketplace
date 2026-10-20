@@ -52,29 +52,29 @@ export const VERTICALS: Record<VerticalKey, VerticalConfig> = {
     metaTitle: (c) => `Hay, Straw & Haylage in ${c}`,
     metaDescription: (c) =>
       `Hay, straw or haylage in ${c}: tell us what you need and we’ll match you with a supplier near you. Any bale size, delivered or collected.`,
-    h1Main: (c) => `Hay, straw & haylage in ${c} —`,
+    h1Main: (c) => `Hay, straw & haylage in ${c},`,
     h1Em: 'matched to a supplier near you.',
     intro: (c) =>
       `Whether it’s a few small bales for the ponies or a full load of big bales for the yard, tell us what you need and we’ll match you with a hay, straw or haylage supplier in ${c}. Delivered or collected, no obligation.`,
     serviceName: 'Hay, straw & haylage supply',
     serviceType: ['Hay supply', 'Straw supply', 'Haylage supply'],
     serviceDescription: (c) =>
-      `Sourcing hay, straw and haylage for horse owners, smallholders, farms and equestrian yards in ${c} — matched to local suppliers.`,
+      `Sourcing hay, straw and haylage for horse owners, smallholders, farms and equestrian yards in ${c}, matched to local suppliers.`,
     detailsLabel: 'Anything else the supplier should know?',
-    detailsPlaceholder: 'e.g. good meadow hay for two horses, needed by the end of the month — access is fine for a tractor and trailer',
+    detailsPlaceholder: 'e.g. good meadow hay for two horses, needed by the end of the month. Access is fine for a tractor and trailer',
     submitLabel: 'Send hay enquiry',
     faqs: (c) => [
       {
         q: `Can you supply hay in ${c}?`,
-        a: `Yes — we match hay, straw and haylage enquiries with suppliers across ${c}. Tell us the forage type, quantity and how you’d like it delivered or collected, and we’ll connect you with someone local who has it.`,
+        a: `Yes: we match hay, straw and haylage enquiries with suppliers across ${c}. Tell us the forage type, quantity and how you’d like it delivered or collected, and we’ll connect you with someone local who has it.`,
       },
       {
         q: 'What types can I get?',
-        a: 'Meadow and seed hay, barley and wheat straw, and haylage — in big square or round bales, or conventional small bales, by the load or the trailer-full.',
+        a: 'Meadow and seed hay, barley and wheat straw, and haylage, in big square or round bales, or conventional small bales, by the load or the trailer-full.',
       },
       {
         q: 'How much does it cost?',
-        a: 'Price depends on the forage type, bale size, quantity and distance, and it’s agreed directly with the supplier. Send an enquiry and we’ll come back with options — no obligation.',
+        a: 'Price depends on the forage type, bale size, quantity and distance, and it’s agreed directly with the supplier. Send an enquiry and we’ll come back with options, no obligation.',
       },
     ],
   },
@@ -87,25 +87,25 @@ export const VERTICALS: Record<VerticalKey, VerticalConfig> = {
     metaTitle: (c) => `Wedding & Event Tractor Hire in ${c}`,
     metaDescription: (c) =>
       `Hire a tractor and trailer in ${c} for a wedding, prom or parade, with an experienced driver. Matched to an operator near you, no obligation.`,
-    h1Main: (c) => `Tractor hire in ${c} —`,
+    h1Main: (c) => `Tractor hire in ${c}`,
     h1Em: 'for weddings, proms & events.',
     intro: (c) =>
-      `Arriving at your wedding on a tractor and trailer, a vintage tractor for the prom, or a proper farm tractor for a photoshoot — tell us the occasion and we’ll match you with an experienced operator in ${c}. Driver included, no obligation.`,
+      `Arriving at your wedding on a tractor and trailer, a vintage tractor for the prom, or a proper farm tractor for a photoshoot: tell us the occasion and we’ll match you with an experienced operator in ${c}. Driver included, no obligation.`,
     serviceName: 'Tractor & trailer hire for events',
     serviceType: ['Wedding tractor hire', 'Prom tractor hire', 'Event tractor hire'],
     serviceDescription: (c) =>
       `Tractor and trailer hire with an experienced operator for weddings, proms, photoshoots and events in ${c}.`,
     detailsLabel: 'What’s the occasion?',
-    detailsPlaceholder: 'e.g. Vintage tractor + trailer to bring the bride to a wedding on 14 June — about 2 miles',
+    detailsPlaceholder: 'e.g. Vintage tractor + trailer to bring the bride to a wedding on 14 June, about 2 miles',
     submitLabel: 'Send tractor enquiry',
     faqs: (c) => [
       {
         q: `Can I hire a tractor in ${c}?`,
-        a: `Yes — we match tractor-hire enquiries with operators across ${c}. Tell us the date, the place and the occasion, and we’ll connect you with someone local who can help.`,
+        a: `Yes: we match tractor-hire enquiries with operators across ${c}. Tell us the date, the place and the occasion, and we’ll connect you with someone local who can help.`,
       },
       {
         q: 'What can I hire one for?',
-        a: 'Weddings, proms, photoshoots, parades, farm-themed parties and promotional events. An experienced operator drives it — you’re not expected to drive it yourself.',
+        a: 'Weddings, proms, photoshoots, parades, farm-themed parties and promotional events. An experienced operator drives it. You’re not expected to drive it yourself.',
       },
       {
         q: 'How much does it cost?',

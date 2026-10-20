@@ -102,15 +102,15 @@ export default async function MyJobsPage() {
           {jobs.length === 0 ? (
             <p className={a.sub}>
               Nothing here yet. Open the link we emailed you for a job and choose{' '}
-              <strong>Save to my account</strong> — that job and any others at the same
+              <strong>Save to my account</strong>. That job and any others at the same
               address will appear here.
             </p>
           ) : (
             <>
               <p className={a.sub}>
                 Everything you&rsquo;ve had done, and everything on its way. A job you&rsquo;ve
-                had before can go out again in a couple of taps — to the same contractor or
-                for fresh prices — or on its own, as often as you need it.
+                had before can go out again in a couple of taps (to the same contractor or
+                for fresh prices) or on its own, as often as you need it.
               </p>
 
               <div style={{ display: 'grid', gap: 18 }}>
@@ -161,7 +161,7 @@ export default async function MyJobsPage() {
                                 </form>
                               </div>
                               <p className={f.hint} style={{ margin: 0 }}>
-                                Booking again asks {contractorName} first — if they can&rsquo;t
+                                Booking again asks {contractorName} first. If they can&rsquo;t
                                 price it within 48 hours, it goes to other contractors. Fresh
                                 prices sends it to every contractor who covers{' '}
                                 {county ?? 'your area'}.
@@ -179,7 +179,7 @@ export default async function MyJobsPage() {
                           {repeat ? (
                             <div style={{ display: 'grid', gap: 6 }}>
                               <span>
-                                Repeating every {repeat.interval_months} months — next one{' '}
+                                Repeating every {repeat.interval_months} months, next one{' '}
                                 {formatDateTime(repeat.next_run_at)}
                                 {' · '}
                                 {repeatMode === 'same' && repeatContractor
@@ -216,7 +216,7 @@ export default async function MyJobsPage() {
 
           <ContactUsButton
             subject="Customer enquiry"
-            body={`\n\n—\nSent from my account (${user.email ?? ''})`}
+            body={`\n\nSent from my account (${user.email ?? ''})`}
           />
         </div>
       </main>

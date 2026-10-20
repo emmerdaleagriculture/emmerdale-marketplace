@@ -68,8 +68,8 @@ export function HeatOverlay({
     <>
       {blocked && (
         <p className="heat-warn" style={{ fontSize: 13, margin: '0 0 8px' }}>
-          Couldn&rsquo;t measure the page height, so the overlay is scaled to a default —
-          click positions below may not line up with the page.
+          Couldn&rsquo;t measure the page height, so the overlay is scaled to a default.
+          Click positions below may not line up with the page.
         </p>
       )}
     <div

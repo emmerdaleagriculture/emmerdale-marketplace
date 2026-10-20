@@ -40,7 +40,7 @@ export default function CustomerTermsPage() {
             as Emmerdale Agriculture at emmerdaleagriculture.com (<strong>we</strong>,{' '}
             <strong>us</strong>, <strong>Emmerdale Agriculture</strong>).
             <br />
-            <strong>Version 2.4 — 19 October 2026</strong>
+            <strong>Version 2.4, 19 October 2026</strong>
           </p>
 
           <p>
@@ -63,8 +63,8 @@ export default function CustomerTermsPage() {
           </p>
           <p>
             1.3 We are not a lead-generation site. We choose the Contractor, set the price,
-            take your payment in two parts — a deposit to book and the balance once you have
-            confirmed the work is done — and deal with any problem.
+            take your payment in two parts (a deposit to book and the balance once you have
+            confirmed the work is done) and deal with any problem.
           </p>
 
           <h2>2. Requesting a Job and getting a price</h2>
@@ -95,13 +95,13 @@ export default function CustomerTermsPage() {
             and they receive your details to arrange a visit. After the visit they either
             confirm the Price or send a revised one with their reason. If they do neither
             within 7 days of booking, the Price stands. If the Price is revised you may accept
-            it — the balance is then worked out from the new Price — or decline it, in which
+            it (the balance is then worked out from the new Price) or decline it, in which
             case the Job is cancelled and your deposit is refunded in full. You are not charged
             for the visit.
           </p>
           <p>
             2.5 <strong>Messages.</strong> You can message any Contractor who has priced your
-            Job, or who has sent you a question, from your Job page — before you accept a
+            Job, or who has sent you a question, from your Job page, before you accept a
             Price and afterwards. Until you accept a Price the Contractor is shown to you by a
             letter and does not have your details, so a message must not contain a phone
             number, email address or website; the page will not send one that does. After you
@@ -130,8 +130,8 @@ export default function CustomerTermsPage() {
             confirm the Job is complete, or when the confirmation period in clause 7 has
             passed. By paying the deposit you authorise us to charge the balance to the same
             card at that point. The balance is payable within <strong>7 days</strong> of it
-            falling due. If we cannot take it from your card — for example because the card
-            has expired or your bank asks you to approve the payment — we will tell you, and
+            falling due. If we cannot take it from your card (for example because the card
+            has expired or your bank asks you to approve the payment), we will tell you, and
             you can pay it from your Job page.
           </p>
           <p>
@@ -139,7 +139,7 @@ export default function CustomerTermsPage() {
             Prices shown to businesses may be stated exclusive of VAT.
           </p>
 
-          <h2>4. What happens next — our commitments to you</h2>
+          <h2>4. What happens next: our commitments to you</h2>
           <p>Once you have paid the deposit:</p>
           <ol type="a">
             <li>
@@ -240,7 +240,7 @@ export default function CustomerTermsPage() {
             the Contractor (or another Contractor) to{' '}
             <strong>return and put it right within 7 days</strong>, at no cost to you. If that
             is not possible or you reasonably refuse, we will reduce the Price by an
-            appropriate amount — taken off your balance, or refunded from your deposit where
+            appropriate amount, taken off your balance, or refunded from your deposit where
             the reduction is more than the balance.
           </p>
           <p>
@@ -280,8 +280,8 @@ export default function CustomerTermsPage() {
             service (matching and scheduling a Contractor) straight away. If you cancel within
             those 14 days, we will refund your deposit less a proportionate charge for the
             service already provided up to the point of cancellation, which we set at the
-            whole deposit once a Contractor has been assigned to your Job, and at nil — a full
-            refund of the deposit — if no Contractor has yet been assigned.
+            whole deposit once a Contractor has been assigned to your Job, and at nil (a full
+            refund of the deposit) if no Contractor has yet been assigned.
           </p>
           <p>
             9.5 <strong>If we cancel.</strong> If we cannot find a Contractor, or the
@@ -409,7 +409,7 @@ export default function CustomerTermsPage() {
                 <tr>
                   <td>You fail to give access at the agreed time and the Contractor cannot work</td>
                   <td>The deposit</td>
-                  <td>Nothing further is taken — or a reschedule at no extra cost if we can</td>
+                  <td>Nothing further is taken, or a reschedule at no extra cost if we can</td>
                 </tr>
                 <tr>
                   <td>

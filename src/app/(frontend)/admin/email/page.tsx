@@ -4,7 +4,7 @@ import { timeAgo } from '@/lib/time';
 import s from '../admin.module.css';
 import { AdminTable } from '../ui';
 
-export const metadata: Metadata = { title: 'Email — Admin' };
+export const metadata: Metadata = { title: 'Email · Admin' };
 export const dynamic = 'force-dynamic';
 
 const GIVE_UP_AT = 5; // send-emails stops retrying here
@@ -108,9 +108,9 @@ export default async function AdminEmailPage() {
             Last ran <strong>{timeAgo(lastTick.called_at)}</strong>, returned{' '}
             <strong>{lastTick.status_code}</strong>.{' '}
             {drainStale
-              ? 'That is more than five minutes ago — the schedule is not running.'
+              ? 'That is more than five minutes ago. The schedule is not running.'
               : ticks.some((t) => t.status_code >= 300)
-                ? 'Recent calls have failed — check the function secrets and the Vault cron_secret.'
+                ? 'Recent calls have failed. Check the function secrets and the Vault cron_secret.'
                 : 'Healthy.'}
           </>
         )}
@@ -137,7 +137,7 @@ export default async function AdminEmailPage() {
       {(stuck.data ?? []).length > 0 && (
         <>
           <div className={s.sectionLabel}>
-            Given up — {GIVE_UP_AT} attempts reached, these will never send
+            Given up: {GIVE_UP_AT} attempts reached, these will never send
           </div>
           <AdminTable head={['Kind', 'To', 'Attempts', 'Age']}>
             {(stuck.data ?? []).map((r) => (
@@ -155,7 +155,7 @@ export default async function AdminEmailPage() {
       {notArrived.length > 0 && (
         <>
           <div className={s.sectionLabel}>
-            Did not arrive — accepted by Resend, then rejected by the recipient
+            Did not arrive: accepted by Resend, then rejected by the recipient
           </div>
           <AdminTable head={['Kind', 'To', 'What happened', 'Reason', 'When']}>
             {notArrived.map((r) => (

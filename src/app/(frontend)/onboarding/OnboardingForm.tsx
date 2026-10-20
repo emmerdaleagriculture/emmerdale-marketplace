@@ -73,13 +73,13 @@ export function OnboardingForm({
         <label className={f.field}>
           <span className={f.label}>Base postcode</span>
           <input className={f.input} type="text" name="base_postcode" required />
-          <span className={f.hint}>For our records only — not used to match jobs.</span>
+          <span className={f.hint}>For our records only, not used to match jobs.</span>
         </label>
       </div>
 
       <div className={a.groupTitle}>What work do you do?</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>
-        Everything starts ticked — untick anything you don&rsquo;t do. You can
+        Everything starts ticked. Untick anything you don&rsquo;t do. You can
         change them any time.
       </p>
       {/* All on by default (2026-09-23): jobs reach every contractor in the
@@ -96,8 +96,8 @@ export function OnboardingForm({
 
       <div className={a.groupTitle}>Choose your membership</div>
       <p className={f.hint} style={{ marginBottom: 16 }}>
-        New jobs come to members first, and their prices land cheaper. Start free if you like —
-        you can move up any time from your account.
+        New jobs come to members first, and their prices land cheaper. Start free if you like.
+        You can move up any time from your account.
       </p>
       {/* The same three cards as /account/membership, with a pick in the
           foot instead of a Stripe button. The whole card selects its tier. */}
@@ -108,11 +108,11 @@ export function OnboardingForm({
           </TierCard>
           <TierCard tier="premium" current={tier === 'premium'} tag={tier === 'premium' ? 'Your pick' : undefined} onSelect={select('monthly')}>
             {pick('monthly', `£${MEMBERSHIP_PRICES.premium.monthly} a month`)}
-            {pick('annual', <>£{MEMBERSHIP_PRICES.premium.annual} a year — <b>save £{annualSaving('premium')}</b></>)}
+            {pick('annual', <>£{MEMBERSHIP_PRICES.premium.annual} a year, <b>save £{annualSaving('premium')}</b></>)}
           </TierCard>
           <TierCard tier="open" current={tier === 'open'} tag={tier === 'open' ? 'Your pick' : undefined} onSelect={select('open_monthly')}>
             {pick('open_monthly', `£${MEMBERSHIP_PRICES.open.monthly} a month`)}
-            {pick('open_annual', <>£{MEMBERSHIP_PRICES.open.annual} a year — <b>save £{annualSaving('open')}</b></>)}
+            {pick('open_annual', <>£{MEMBERSHIP_PRICES.open.annual} a year, <b>save £{annualSaving('open')}</b></>)}
           </TierCard>
         </TierGrid>
       </div>

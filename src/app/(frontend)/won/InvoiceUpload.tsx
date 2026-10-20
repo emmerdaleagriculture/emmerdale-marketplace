@@ -43,7 +43,7 @@ export function InvoiceUpload({
       <div className={s.invoiceDone}>
         <p>
           <strong>Invoice received.</strong>{' '}
-          {sentName ? `${sentName} — ` : ''}
+          {sentName ? `${sentName}, ` : ''}
           {sentAt ? new Date(sentAt).toLocaleDateString('en-GB') : ''}. It&rsquo;s paid
           once the customer&rsquo;s balance has cleared.
         </p>
@@ -60,7 +60,7 @@ export function InvoiceUpload({
       <input type="hidden" name="submission_id" value={submissionId} />
 
       <p className={s.invoicePrompt}>
-        {replacing ? 'Replace your invoice' : 'Send us your invoice — it’s paid once the customer’s balance has cleared.'}
+        {replacing ? 'Replace your invoice' : 'Send us your invoice. It’s paid once the customer’s balance has cleared.'}
       </p>
 
       <input

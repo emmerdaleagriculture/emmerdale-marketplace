@@ -78,7 +78,7 @@ export function WithdrawJob({
           </select>
           <span className={f.hint}>
             Booking through us is how the price you were shown, and your protection if anything goes
-            wrong, work. We won&rsquo;t contact you about it — it helps us keep the network honest.
+            wrong, work. We won&rsquo;t contact you about it. It helps us keep the network honest.
           </span>
         </label>
       )}

@@ -7,7 +7,7 @@ import { formatDateTime } from '@/lib/time';
 import s from '../../admin.module.css';
 import { AdminTable, StatusPill } from '../../ui';
 
-export const metadata: Metadata = { title: 'Job — Admin' };
+export const metadata: Metadata = { title: 'Job · Admin' };
 
 export default async function AdminJobDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

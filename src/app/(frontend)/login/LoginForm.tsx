@@ -111,13 +111,13 @@ export function LoginForm({ next }: { next?: string }) {
       <p className={a.altLink} style={{ marginTop: 18 }}>
         {side === 'contractor' ? (
           <>
-            New here? <Link href="/signup">Join the network</Link> — it&rsquo;s
+            New here? <Link href="/signup">Join the network</Link>. It&rsquo;s
             free.
           </>
         ) : side === 'customer' ? (
           <>
             No account yet? You get one by saving a job from the link we email
-            you — <Link href="/start">tell us about the job</Link>.
+            you: <Link href="/start">tell us about the job</Link>.
           </>
         ) : (
           <>

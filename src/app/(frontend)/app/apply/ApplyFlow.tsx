@@ -153,7 +153,7 @@ export function ApplyFlow({ services, contactName }: { services: ServiceOption[]
             <span>
               <b>Nationwide, for my services only</b>
               <br />
-              <small style={{ color: 'var(--ink-3)' }}>For suppliers who deliver anywhere — hay, straw, haylage. You&rsquo;ll only be sent jobs for the services you picked.</small>
+              <small style={{ color: 'var(--ink-3)' }}>For suppliers who deliver anywhere: hay, straw, haylage. You&rsquo;ll only be sent jobs for the services you picked.</small>
             </span>
           </label>
         </div>
@@ -239,7 +239,7 @@ export function ApplyFlow({ services, contactName }: { services: ServiceOption[]
                   }
                 }
                 if (step === 'coverage' && !postcode.trim()) {
-                  setStepError('Enter your base postcode — we need it even for nationwide suppliers, for your records and payouts.');
+                  setStepError('Enter your base postcode. We need it even for nationwide suppliers, for your records and payouts.');
                   return;
                 }
                 setStepError('');

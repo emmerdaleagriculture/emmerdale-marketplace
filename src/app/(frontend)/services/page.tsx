@@ -32,11 +32,11 @@ export default function ServicesIndex() {
           <Breadcrumb tone="light" items={[{ label: 'Services' }]} />
           <div className={a.eyebrow}>Everything we price</div>
           <h1 className={a.title}>
-            Agricultural contracting services — <em>what each job involves.</em>
+            Agricultural contracting services: <em>what each job involves.</em>
           </h1>
           <p className={a.sub}>
             From topping a pony paddock to grading a farm track. Pick a job to see what&rsquo;s
-            involved, when it&rsquo;s best done and what affects the price — then get prices
+            involved, when it&rsquo;s best done and what affects the price, then get prices
             from contractors covering your area.
           </p>
         </div>
@@ -46,7 +46,7 @@ export default function ServicesIndex() {
           <ul className={t.prose}>
             {items.map((c) => (
               <li key={c.slug}>
-                <Link href={c.href}>{c.name}</Link> — {c.blurb}
+                <Link href={c.href}>{c.name}</Link>: {c.blurb}
               </li>
             ))}
           </ul>

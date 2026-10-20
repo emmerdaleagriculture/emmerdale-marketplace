@@ -43,12 +43,12 @@ export function CancelJob({ token, refundLabel, feeLabel, refundPence }: {
         <>
           <p>
             <strong>Cancel this job?</strong> The {feeLabel} deposit isn&rsquo;t
-            refundable — it covers the matching and scheduling already done, and it is
+            refundable. It covers the matching and scheduling already done, and it is
             the cancellation fee in our terms.
             {refundPence > 0 && (
               <>
                 {' '}
-                Anything you&rsquo;ve paid above it — <strong>{refundLabel}</strong> —
+                Anything you&rsquo;ve paid above it (<strong>{refundLabel}</strong>)
                 goes back to your card, usually within 5 working days.
               </>
             )}{' '}

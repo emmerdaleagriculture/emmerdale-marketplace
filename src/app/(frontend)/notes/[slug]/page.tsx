@@ -50,7 +50,7 @@ export async function generateMetadata({
   if (!post) return { title: 'Post not found' };
 
   const heroUrl = noteHeroUrl(post.hero_path);
-  const description = post.excerpt || 'Notes from the field — Emmerdale Agriculture.';
+  const description = post.excerpt || 'Notes from the field · Emmerdale Agriculture.';
 
   return {
     // The headline alone, with no brand suffix: these are full sentences of

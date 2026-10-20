@@ -77,7 +77,7 @@ export function AccountForm({
         </summary>
         <div className={ac.sectionBody}>
           <p className={f.hint} style={{ marginBottom: 12 }}>
-            Fewer services means fewer irrelevant invitations — keep this accurate and
+            Fewer services means fewer irrelevant invitations: keep this accurate and
             you&rsquo;ll only hear about work you actually want.
           </p>
           <ServicePicker services={services} selected={contractor.services ?? []} />
@@ -116,7 +116,7 @@ export function AccountForm({
           </label>
           <p className={f.hint} style={{ marginTop: 8 }}>
             Turned off, new jobs still appear on this dashboard and under Jobs to
-            price — you just won&rsquo;t be emailed about them.
+            price. You just won&rsquo;t be emailed about them.
           </p>
           <label className={f.checkRow} style={{ marginTop: 16 }}>
             <input type="checkbox" name="notify_sms" defaultChecked={contractor.notify_sms} />

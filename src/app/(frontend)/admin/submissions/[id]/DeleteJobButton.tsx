@@ -34,7 +34,7 @@ export function DeleteJobButton({ submissionId, status }: { submissionId: string
   if (!DELETABLE.has(status)) {
     return (
       <p className={f.hint}>
-        This job can&rsquo;t be deleted at &ldquo;{status}&rdquo; — it involves money or an
+        This job can&rsquo;t be deleted at &ldquo;{status}&rdquo;: it involves money or an
         award. Cancel it instead.
       </p>
     );
@@ -56,7 +56,7 @@ export function DeleteJobButton({ submissionId, status }: { submissionId: string
         This permanently removes the job, its invitations, prices and history. It can&rsquo;t
         be undone.
         {live &&
-          ' Contractors have already been sent this job — their links will stop working.'}
+          ' Contractors have already been sent this job. Their links will stop working.'}
       </p>
       <input
         className={f.input}

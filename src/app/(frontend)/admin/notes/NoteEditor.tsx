@@ -80,7 +80,7 @@ export function NoteEditor({ note, heroUrl }: { note: EditableNote | null; heroU
           />
           {note?.published && (
             <span className={f.hint}>
-              Changing the slug of a published post breaks its existing URL — Google and any shared
+              Changing the slug of a published post breaks its existing URL: Google and any shared
               links will 404.
             </span>
           )}
@@ -160,12 +160,12 @@ export function NoteEditor({ note, heroUrl }: { note: EditableNote | null; heroU
 
         <label className={f.checkRow}>
           <input type="checkbox" name="featured" defaultChecked={note?.featured} />
-          Featured — pinned to the top of /notes (newest featured post wins)
+          Featured: pinned to the top of /notes (newest featured post wins)
         </label>
 
         <label className={f.checkRow}>
           <input type="checkbox" name="published" defaultChecked={note?.published} />
-          Published — visible on the site
+          Published: visible on the site
         </label>
 
         <div className={s.actions}>

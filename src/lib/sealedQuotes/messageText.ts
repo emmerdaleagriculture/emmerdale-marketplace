@@ -116,7 +116,7 @@ export function messageRefusal(
   const t = body.trim();
   if (!t) return hasPhotos ? null : { text: 'Write a message or add a photo first.', flag: null };
   if (t.length > MESSAGE_MAX) {
-    return { text: `That message is too long — keep it under ${MESSAGE_MAX} characters.`, flag: null };
+    return { text: `That message is too long. Keep it under ${MESSAGE_MAX} characters.`, flag: null };
   }
   if (open && sender === 'contractor') return null;
   if (OFF_PLATFORM.test(t)) {
@@ -125,7 +125,7 @@ export function messageRefusal(
       text:
         sender === 'contractor'
           ? OFF_PLATFORM_REFUSAL
-          : 'Please leave payment arrangements out — you pay for the job through us, and the contractor is paid by us.',
+          : 'Please leave payment arrangements out. You pay for the job through us, and the contractor is paid by us.',
     };
   }
   if (state === 'pre_award') {
@@ -143,8 +143,8 @@ export function messageRefusal(
         flag: 'email_or_link',
         text:
           sender === 'contractor'
-            ? 'Please take the link or email address out — the customer deals with us until they accept a price.'
-            : 'Please take the link or email address out — contractors get your details once you accept a price.',
+            ? 'Please take the link or email address out. The customer deals with us until they accept a price.'
+            : 'Please take the link or email address out. Contractors get your details once you accept a price.',
       };
     }
     if (FULL_POSTCODE.test(t)) {
@@ -152,8 +152,8 @@ export function messageRefusal(
         flag: 'postcode',
         text:
           sender === 'contractor'
-            ? 'Please take the full postcode out — the customer gets your details once they accept your price.'
-            : 'Please take the full postcode or address out — the contractor sees your area now, and gets your address once you accept a price.',
+            ? 'Please take the full postcode out. The customer gets your details once they accept your price.'
+            : 'Please take the full postcode or address out. The contractor sees your area now, and gets your address once you accept a price.',
       };
     }
     if (hasPhoneNumber(t) || CONTACT_ELSEWHERE.test(t) || (recent.length > 0 && hasPhoneNumber(joined))) {
@@ -161,8 +161,8 @@ export function messageRefusal(
         flag: 'phone',
         text:
           sender === 'contractor'
-            ? 'Please keep the conversation here — no phone numbers or other apps until the customer accepts your price, and then we pass your details on.'
-            : 'Please keep the conversation here — no phone numbers or other apps until you accept a price, and the contractor you book gets your details then.',
+            ? 'Please keep the conversation here: no phone numbers or other apps until the customer accepts your price, and then we pass your details on.'
+            : 'Please keep the conversation here: no phone numbers or other apps until you accept a price, and the contractor you book gets your details then.',
       };
     }
   }
@@ -171,8 +171,8 @@ export function messageRefusal(
       flag: null,
       text:
         state === 'pre_award'
-          ? 'Please leave amounts out — the customer sees our price, not yours. Put a figure in the price box instead.'
-          : 'Please leave amounts out — the customer’s price is fixed and includes our fee. If the job has changed and the price should too, get in touch with us.',
+          ? 'Please leave amounts out. The customer sees our price, not yours. Put a figure in the price box instead.'
+          : 'Please leave amounts out. The customer’s price is fixed and includes our fee. If the job has changed and the price should too, get in touch with us.',
     };
   }
   return null;
@@ -202,16 +202,16 @@ export function normaliseMessage(body: string): string {
 export function postRefusal(reason: string | undefined): string {
   switch (reason) {
     case 'closed':
-      return 'This conversation has closed — the job has moved on.';
+      return 'This conversation has closed: the job has moved on.';
     case 'too_many':
-      return 'That’s a lot of messages in an hour — please wait a little before sending more.';
+      return 'That’s a lot of messages in an hour. Please wait a little before sending more.';
     case 'state_changed':
-      return 'The job has just changed — please check your message still fits and send it again.';
+      return 'The job has just changed. Please check your message still fits and send it again.';
     case 'too_many_photos':
-      return 'That’s too many photos for one message — send up to four at a time.';
+      return 'That’s too many photos for one message. Send up to four at a time.';
     case 'no_thread':
       return 'You can message a contractor once they’ve sent a price or a question.';
     default:
-      return 'That didn’t send — please try again.';
+      return 'That didn’t send. Please try again.';
   }
 }

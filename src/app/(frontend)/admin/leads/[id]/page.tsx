@@ -9,7 +9,7 @@ import { tidyJobHint, leadServiceIds } from '@/lib/leads';
 import { formatDateTime } from '@/lib/time';
 import s from '../../admin.module.css';
 
-export const metadata: Metadata = { title: 'Review lead — Admin' };
+export const metadata: Metadata = { title: 'Review lead · Admin' };
 
 export default async function LeadReviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

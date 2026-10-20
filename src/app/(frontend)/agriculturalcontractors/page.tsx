@@ -62,7 +62,7 @@ const REASONS: { h: string; body: string[] }[] = [
   {
     h: 'The work arrives already described',
     body: [
-      'Every job comes with what you’d otherwise ask on the phone: the acreage — often measured off a boundary the customer drew on a map — the postcode district, access notes, gate width and photographs, checked before it reaches you.',
+      'Every job comes with what you’d otherwise ask on the phone: the acreage (often measured off a boundary the customer drew on a map), the postcode district, access notes, gate width and photographs, checked before it reaches you.',
       'Enough to price sitting in the yard, without a wasted trip to look at it.',
     ],
   },
@@ -77,7 +77,7 @@ const REASONS: { h: string; body: string[] }[] = [
     h: 'It costs nothing to be on the list',
     body: [
       'No joining fee, no monthly fee, and no commission taken off your invoice.',
-      'You keep the price you quote — our margin sits on top of it and the customer pays that, so nothing comes out of your number.',
+      'You keep the price you quote: our margin sits on top of it and the customer pays that, so nothing comes out of your number.',
     ],
   },
 ];
@@ -87,7 +87,7 @@ const STEPS: { n: number; title: string; body: string }[] = [
   {
     n: 1,
     title: 'A job comes in for your county',
-    body: 'A customer describes what needs doing. We check it over, work out the details and email it to the contractors covering that ground — you among them.',
+    body: 'A customer describes what needs doing. We check it over, work out the details and email it to the contractors covering that ground, you among them.',
   },
   {
     n: 2,
@@ -104,7 +104,7 @@ const STEPS: { n: number; title: string; body: string }[] = [
 const ASKS: { h: string; body: string }[] = [
   {
     h: 'Price it while the job’s still live',
-    body: 'Customers see prices as they arrive and can accept at any moment. There’s no deadline pressure from us — but the sooner you come back, the better your chances of it being yours.',
+    body: 'Customers see prices as they arrive and can accept at any moment. There’s no deadline pressure from us, but the sooner you come back, the better your chances of it being yours.',
   },
   {
     h: 'Turn up when you said you would',
@@ -115,19 +115,19 @@ const ASKS: { h: string; body: string }[] = [
 const faqs = [
   {
     q: 'What does it cost to join?',
-    a: 'Nothing. Registration is free, quoting is free, there is no monthly fee, and nothing is deducted from your invoice. You keep the price you quote — our margin is added on top and paid by the customer.',
+    a: 'Nothing. Registration is free, quoting is free, there is no monthly fee, and nothing is deducted from your invoice. You keep the price you quote: our margin is added on top and paid by the customer.',
   },
   {
     q: 'How and when do I get paid?',
-    a: 'The customer pays a deposit to book the job, and the balance falls due once the work is done and they have confirmed it — or automatically three working days after you mark it complete, if they neither confirm nor raise a problem. You are paid your full quoted price once that balance has cleared and we have your invoice. You never invoice the customer yourself.',
+    a: 'The customer pays a deposit to book the job, and the balance falls due once the work is done and they have confirmed it, or automatically three working days after you mark it complete, if they neither confirm nor raise a problem. You are paid your full quoted price once that balance has cleared and we have your invoice. You never invoice the customer yourself.',
   },
   {
     q: 'What happens if the customer doesn’t pay?',
-    a: 'That is ours to deal with, not yours. A deposit is taken before you start work, and if the balance goes unpaid we chase it — and will pursue the debt until it is paid, formally if it comes to that. You are not the one making those phone calls.',
+    a: 'That is ours to deal with, not yours. A deposit is taken before you start work, and if the balance goes unpaid we chase it, and will pursue the debt until it is paid, formally if it comes to that. You are not the one making those phone calls.',
   },
   {
     q: 'Do I have to quote for everything I’m sent?',
-    a: 'No. There is no obligation to quote and no cost to quote. Price the jobs that suit your kit and your diary, and pass on the rest — passing costs you nothing and does not count against you.',
+    a: 'No. There is no obligation to quote and no cost to quote. Price the jobs that suit your kit and your diary, and pass on the rest. Passing costs you nothing and does not count against you.',
   },
   {
     q: 'Do I set my own prices?',
@@ -143,7 +143,7 @@ const faqs = [
   },
   {
     q: 'Do I need my own insurance and certificates?',
-    a: 'Work done through us is covered by our own public liability policy, so you do not need to hold cover of your own to take jobs from us. We do not ask to see spraying, chainsaw or machinery certificates either — what you are qualified and ticketed to operate is your responsibility as an independent business, not something we sit in judgement on.',
+    a: 'Work done through us is covered by our own public liability policy, so you do not need to hold cover of your own to take jobs from us. We do not ask to see spraying, chainsaw or machinery certificates either. What you are qualified and ticketed to operate is your responsibility as an independent business, not something we sit in judgement on.',
   },
   {
     q: 'What do you get out of it?',
@@ -151,7 +151,7 @@ const faqs = [
   },
   {
     q: 'How much work will I get?',
-    a: 'It depends on your county and the time of year — topping in high summer and hedge cutting after the nesting season are the busy stretches. We would rather tell you straight than promise a number we cannot stand behind.',
+    a: 'It depends on your county and the time of year: topping in high summer and hedge cutting after the nesting season are the busy stretches. We would rather tell you straight than promise a number we cannot stand behind.',
   },
   {
     q: 'What kind of outfit is this for?',
@@ -396,12 +396,12 @@ export default async function AgriculturalContractorsPage() {
         <div className={s.sectionInner}>
           <div className={s.kicker}>Where we cover</div>
           <h2 className={s.sectionTitle}>
-            Contractors in {coveredCount} counties — <em>and growing.</em>
+            Contractors in {coveredCount} counties, <em>and growing.</em>
           </h2>
           <p className={s.sectionLede}>
             The network runs across {SERVICE_AREA}, deepest around our Hampshire
             heartland and spreading out from there. Thin coverage in your county
-            is good news, not bad — it means the work that comes in has fewer
+            is good news, not bad: it means the work that comes in has fewer
             people to go to.
           </p>
         </div>
@@ -430,8 +430,8 @@ export default async function AgriculturalContractorsPage() {
 
       <CredSection>
         Emmerdale Agriculture is run by the people behind{' '}
-        <a href={HPM_URL}>Hampshire Paddock Management</a>{' '}
-        — a contracting firm that tops, harrows, rolls and sprays paddocks for a
+        <a href={HPM_URL}>Hampshire Paddock Management</a>,{' '}
+        a contracting firm that tops, harrows, rolls and sprays paddocks for a
         living. We know what it is to price a job off a photograph, and what a
         wasted trip across three counties costs. That is why the job packs are
         checked before they reach you.
@@ -447,7 +447,7 @@ export default async function AgriculturalContractorsPage() {
       >
         <p className={s.sectionLede} style={{ marginTop: 32 }}>
           The full commercial terms are on the{' '}
-          <Link href="/terms">contractor terms</Link> page — how jobs reach you,
+          <Link href="/terms">contractor terms</Link> page: how jobs reach you,
           how you price them, and how and when you are paid. If something
           isn&rsquo;t answered there either, <Link href="/contact">ask us</Link>.
         </p>
