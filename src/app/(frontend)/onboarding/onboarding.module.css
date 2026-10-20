@@ -26,3 +26,8 @@
   margin: 0;
   accent-color: var(--jd-green-dark);
 }
+
+/* The one button under three cards: centred, like the cards' own. */
+.submit {
+  justify-content: center;
+}

@@ -120,7 +120,7 @@ export function OnboardingForm({
         </p>
       )}
 
-      <div className={a.actions}>
+      <div className={`${a.actions} ${o.submit}`}>
         <button className={f.btnPrimary} type="submit" disabled={pending}>
           {pending
             ? 'Saving…'
