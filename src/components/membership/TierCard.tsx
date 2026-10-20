@@ -20,6 +20,7 @@ export const PREMIUM_BENEFITS: ReactNode[] = [
   <><b>Cancel any time.</b> You keep it to the end of the period you’ve paid for.</>,
 ];
 export const OPEN_BENEFITS: ReactNode[] = [
+  <><b>First look ahead of Premium.</b> Every new job reaches Open members 2 hours before Premium members see it.</>,
   <><b>The customer’s name, phone and email</b> on every job you’re invited to, the moment it arrives.</>,
   <><b>Agree the work directly</b> with nothing added on top — or send a price through us at 5% as usual.</>,
 ];

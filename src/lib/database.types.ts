@@ -1206,6 +1206,7 @@ export type Database = {
       job_invitations: {
         Row: {
           premium_offer: boolean
+          open_first: boolean
           contact_revealed_at: string | null
           contractor_id: string
           decline_reason: string | null
@@ -1220,6 +1221,7 @@ export type Database = {
         }
         Insert: {
           premium_offer?: boolean
+          open_first?: boolean
           contact_revealed_at?: string | null
           contractor_id: string
           decline_reason?: string | null
@@ -1234,6 +1236,7 @@ export type Database = {
         }
         Update: {
           premium_offer?: boolean
+          open_first?: boolean
           contact_revealed_at?: string | null
           contractor_id?: string
           decline_reason?: string | null
@@ -1711,6 +1714,7 @@ export type Database = {
         Row: {
           premium_started_at: string | null
           premium_window: boolean
+          open_first_until: string | null
           markup_arm: string | null
           markup_assigned_at: string | null
           markup_rate: number | null
@@ -1796,6 +1800,7 @@ export type Database = {
         Insert: {
           premium_started_at?: string | null
           premium_window?: boolean
+          open_first_until?: string | null
           markup_arm?: string | null
           markup_assigned_at?: string | null
           markup_rate?: number | null
@@ -1881,6 +1886,7 @@ export type Database = {
         Update: {
           premium_started_at?: string | null
           premium_window?: boolean
+          open_first_until?: string | null
           markup_arm?: string | null
           markup_assigned_at?: string | null
           markup_rate?: number | null
