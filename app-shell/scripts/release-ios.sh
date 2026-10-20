@@ -37,11 +37,27 @@ security import "$WORK/certificate.p12" -P "$IOS_CERTIFICATE_PASSWORD" -A -t cer
 security set-key-partition-list -S apple-tool:,apple:,codesign: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
 security list-keychains -d user -s "$KEYCHAIN" "$HOME/Library/Keychains/login.keychain-db"
 
+# Manual signing is applied to the App target only. Passing these on the
+# xcodebuild command line would also apply them to the Swift packages the
+# plugins pull in (GoogleSignIn, AppAuth, the camera library...), which can't
+# take a provisioning profile and fail the archive.
+python3 - "$TEAM_ID" "$PROFILE_UUID" <<'PY'
+import sys
+team, uuid = sys.argv[1], sys.argv[2]
+p = 'ios/App/App.xcodeproj/project.pbxproj'
+s = open(p).read()
+old = '\t\t\t\tCODE_SIGN_STYLE = Automatic;'
+assert s.count(old) == 2, 'expected the App target Debug and Release settings'
+new = ('\t\t\t\tCODE_SIGN_STYLE = Manual;\n'
+       '\t\t\t\tCODE_SIGN_IDENTITY = "Apple Distribution";\n'
+       f'\t\t\t\tDEVELOPMENT_TEAM = {team};\n'
+       f'\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{uuid}";')
+open(p, 'w').write(s.replace(old, new))
+PY
+
 xcodebuild -project ios/App/App.xcodeproj -scheme App \
   -configuration Release -destination 'generic/platform=iOS' \
   -archivePath "$WORK/App.xcarchive" \
-  CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution' \
-  DEVELOPMENT_TEAM="$TEAM_ID" PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
   CURRENT_PROJECT_VERSION="$APP_BUILD_NUMBER" MARKETING_VERSION=1.0.0 archive
 xcodebuild -exportArchive -archivePath "$WORK/App.xcarchive" \
   -exportOptionsPlist "$WORK/ExportOptions.plist" -exportPath "$RUNNER_TEMP/ios-export"
