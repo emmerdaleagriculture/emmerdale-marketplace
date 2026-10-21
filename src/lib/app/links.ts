@@ -16,11 +16,6 @@ import { isNativeApp } from '@/lib/app/isApp';
  */
 let listening = false;
 
-async function plugin() {
-  const mod = await import('@capacitor/app');
-  return mod.App;
-}
-
 function goIfOurs(url: string | null | undefined): void {
   if (!url) return;
   try {
@@ -35,7 +30,12 @@ function goIfOurs(url: string | null | undefined): void {
 export async function listenForAppLinks(): Promise<void> {
   if (!isNativeApp() || listening) return;
   try {
-    const app = await plugin();
+    // Destructured from the module, never resolved as a promise's value: a
+    // plugin proxy answers `then` like any other method, so a promise that
+    // resolves with one calls it, the runtime rejects ("App.then() is not
+    // implemented", Sentry 155101834), and the await never settles.
+    // capacitorThenable.test.ts shows it.
+    const { App: app } = await import('@capacitor/app');
     await app.addListener('appUrlOpen', (event) => goIfOurs(event.url));
     listening = true;
     // A cold start from a link: the system hands the URL over once.

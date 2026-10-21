@@ -1,0 +1,29 @@
+name: Tests
+
+# The unit suite on every pull request. Vercel builds the app but does not
+# run vitest, so until this existed a regression test only caught what
+# somebody remembered to run locally (noticed reviewing #253).
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vitest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run
