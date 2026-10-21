@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 import { usePathname } from 'next/navigation';
 import { isSensitivePath, redactPath } from '@/lib/analyticsPaths';
+import { isNativeApp } from '@/lib/app/isApp';
 
 /**
  * Google Analytics and the Meta pixel, kept away from the pages that carry a
@@ -52,7 +53,12 @@ export function Analytics() {
   // because the server cannot know it is being framed.
   const [framed, setFramed] = useState<boolean | null>(null);
   useEffect(() => {
-    setFramed(window.self !== window.top);
+    // The native app counts as "framed" too: no Google Analytics, Google
+    // Ads or Meta pixel inside it. Apple treats ad and pixel tags in an app
+    // as tracking, which needs the App Tracking Transparency prompt and a
+    // "Data Used to Track You" privacy label. Without them the app has
+    // neither, and Google Play's Data safety form stays simple too.
+    setFramed(window.self !== window.top || isNativeApp());
   }, []);
 
   useEffect(() => {
