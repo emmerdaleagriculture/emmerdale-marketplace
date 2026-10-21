@@ -14,10 +14,12 @@ export function FooterAccountLinks() {
 
   if (!viewer.signedIn) {
     return (
-      <>
+      // display: contents keeps the links laid out as the footer's own;
+      // data-viewer-slot hides them until the viewer is known (useViewer).
+      <span data-viewer-slot style={{ display: 'contents' }}>
         <Link href="/signup">Join as a contractor</Link>
         <Link href="/login">Log in</Link>
-      </>
+      </span>
     );
   }
 

@@ -42,7 +42,9 @@ export const BOOK_HREF = '/start';
  * front page was being shown it with a lone "Dashboard" tacked on the end.
  * Resolved in the browser like the account link, so the page stays static
  * and the swap happens on hydration; the resolved viewer and the menu's open
- * state go across with it, so nothing flashes or shuts.
+ * state go across with it, so nothing flashes or shuts. For a visitor with a
+ * session the customer header is invisible until then (data-viewer-slot,
+ * see useViewer), so a contractor never sees it and then sees it replaced.
  */
 export function HomeHeader() {
   const viewer = useViewer();
@@ -83,7 +85,7 @@ function CustomerHeader({
   const close = () => setOpen(() => false);
 
   return (
-    <header className={`${s.nav} ${scrolled ? s.navScrolled : ''}`} data-app-hide>
+    <header className={`${s.nav} ${scrolled ? s.navScrolled : ''}`} data-app-hide data-viewer-slot>
       <div className={`${s.container} ${s.navInner}`}>
         <Link href="/" className={s.brand} aria-label="Emmerdale Agriculture home">
           <BrandLockup width={105} className={s.brandLockupNav} priority sizes="(max-width: 767px) 89px, 105px" />

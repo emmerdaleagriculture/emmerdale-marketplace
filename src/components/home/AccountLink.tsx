@@ -32,7 +32,7 @@ export function AccountLink({
         : { href: '/account', label: 'Dashboard' };
 
   return (
-    <Link href={href} className={className} onClick={onClick}>
+    <Link href={href} className={className} onClick={onClick} data-viewer-slot>
       {label}
     </Link>
   );
