@@ -414,12 +414,11 @@ export async function clearClientNoteAction(
 /**
  * Operator: take a whole price off the customer's list — an hourly rate
  * sent as a job price (CGS Ltd, 21 Oct 2026), or anything else that should
- * never have stood. Status 'closed' drops it from the customer's page like
- * any closed price; withdrawn_at says it was withdrawn rather than lost, so
- * the admin list leaves it out of the job's price range. The contractor's
- * invitation is untouched: they can send a new price from the same link.
- *
- * Logged first and refused if the log fails, as clearClientNoteAction.
+ * never have stood. sq_withdraw_client_quote does it in one transaction:
+ * the price closed and marked withdrawn (so the admin list's range leaves
+ * it out), the contractor's quote no longer standing (position, market
+ * data), their invitation back to 'viewed' so they can price again, and
+ * the reason logged. Telling the contractor why is left to the admin.
  */
 export async function withdrawClientQuoteAction(
   _prev: FormState,
@@ -432,51 +431,28 @@ export async function withdrawClientQuoteAction(
   if (!submissionId || !clientQuoteId) return { error: 'Missing the price.' };
   if (!reason) return { error: 'Say why you are withdrawing it.' };
 
-  const admin = createServiceRoleClient();
-  const { data: before } = await admin
-    .from('client_quotes')
-    .select('status, client_price_pence, contractor_id')
-    .eq('id', clientQuoteId)
-    .eq('submission_id', submissionId)
-    .maybeSingle();
-  if (!before) return { error: 'That price is not on this job.' };
-  // An accepted price has a deposit behind it: that is a cancellation, not this.
-  if (before.status !== 'active') return { error: `That price is ${before.status}, so there is nothing to withdraw.` };
-
-  const { error: logError } = await admin.rpc('log_job_event', {
-    p_job_id: submissionId,
-    p_event_type: 'price_withdrawn',
-    p_from: null,
-    p_to: null,
-    p_actor_type: 'operator',
+  const { data, error } = await createServiceRoleClient().rpc('sq_withdraw_client_quote', {
+    p_submission_id: submissionId,
+    p_client_quote_id: clientQuoteId,
     p_actor_id: user.id,
     p_reason: reason,
-    p_metadata: {
-      client_quote_id: clientQuoteId,
-      contractor_id: before.contractor_id,
-      client_price_pence: before.client_price_pence,
-    },
   });
-  if (logError) {
-    console.error('[admin] log_job_event price_withdrawn failed:', logError);
-    return { error: 'Could not record the withdrawal, so nothing was changed.' };
-  }
-
-  // Only while still active: an acceptance landing in between wins.
-  const { data: done, error } = await admin
-    .from('client_quotes')
-    .update({ status: 'closed', withdrawn_at: new Date().toISOString() })
-    .eq('id', clientQuoteId)
-    .eq('status', 'active')
-    .select('id');
   if (error) {
-    console.error('[admin] withdraw price failed:', error);
-    return { error: 'Could not withdraw that price. Try again.' };
+    console.error('[admin] sq_withdraw_client_quote failed:', error);
+    return { error: 'Could not withdraw that price, so nothing was changed. Try again.' };
   }
-  if (!done?.length) return { error: 'That price changed before it could be withdrawn. Reload and check.' };
+  const result = data as { ok: boolean; reason?: string } | null;
+  if (!result?.ok) {
+    return {
+      error:
+        result?.reason === 'not_found'
+          ? 'That price is not on this job.'
+          : `That price is ${result?.reason ?? 'no longer live'}, so there is nothing to withdraw. Reload and check.`,
+    };
+  }
 
   refresh(submissionId);
-  return { ok: true, message: 'Price withdrawn.' };
+  return { ok: true, message: 'Price withdrawn. Tell the contractor why.' };
 }
 
 /**

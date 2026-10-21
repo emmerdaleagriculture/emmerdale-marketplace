@@ -8,7 +8,7 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
 import { paymentReference } from '@/lib/site';
 import { getServices } from '@/lib/reference';
 import { DistributionPanel } from './DistributionPanel';
-import { ClearNoteButton } from './ClearNoteButton';
+import { RetractButton } from './RetractButton';
 import { DeleteJobButton } from './DeleteJobButton';
 import { ExtraWorkForm } from './ExtraWorkForm';
 import { PayoutPanel } from './PayoutPanel';
@@ -563,7 +563,7 @@ export default async function SubmissionDetailPage({
                     {/* An hourly rate posing as a job price, or anything else
                         that shouldn't be in front of the customer. */}
                     {cq.status === 'active' && (
-                      <ClearNoteButton submissionId={id} clientQuoteId={cq.id} kind="price" />
+                      <RetractButton submissionId={id} clientQuoteId={cq.id} kind="price" />
                     )}
                   </td>
                   {/* Nothing reviews this before the customer reads it,
@@ -572,7 +572,7 @@ export default async function SubmissionDetailPage({
                     {cq.contractor_note ? (
                       <>
                         “{cq.contractor_note}”
-                        <ClearNoteButton submissionId={id} clientQuoteId={cq.id} />
+                        <RetractButton submissionId={id} clientQuoteId={cq.id} />
                       </>
                     ) : (
                       '—'

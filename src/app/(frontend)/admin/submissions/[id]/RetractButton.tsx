@@ -8,7 +8,7 @@ import f from '@/components/forms/forms.module.css';
 const EMPTY: FormState = {};
 
 /**
- * Takes a contractor's note off the customer's price card. Nothing reviews a
+ * RetractButton: takes a contractor's note off the customer's price card. Nothing reviews a
  * note before it is published, so this is the retraction — sat next to the
  * note itself rather than in the operator panel, because you decide to pull
  * one the moment you read it.
@@ -26,7 +26,7 @@ const COPY = {
   price: { button: 'Withdraw', placeholder: 'Why are you withdrawing it?', busy: 'Withdrawing…', done: 'withdrawn' },
 };
 
-export function ClearNoteButton({
+export function RetractButton({
   submissionId,
   clientQuoteId,
   kind = 'note',
