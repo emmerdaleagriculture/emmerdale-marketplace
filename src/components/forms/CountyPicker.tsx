@@ -24,15 +24,20 @@ export type CountyOption = {
  * counties are ticked, open only where something already is — 170 checkboxes
  * made the account page 13,000px tall on a phone. Onboarding keeps the open
  * list, where choosing is the whole point.
+ *
+ * `onSelectAll` fires after "Select all", which sets the boxes itself and
+ * so raises no change event for a form above to hear.
  */
 export function CountyPicker({
   counties,
   selected = [],
   collapsible = false,
+  onSelectAll,
 }: {
   counties: CountyOption[];
   selected?: number[];
   collapsible?: boolean;
+  onSelectAll?: () => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const selectedSet = new Set(selected);
@@ -73,6 +78,7 @@ export function CountyPicker({
       b.checked = !allOn;
     });
     recount(region);
+    onSelectAll?.();
   }
 
   const grid = (region: string, list: CountyOption[]) => (

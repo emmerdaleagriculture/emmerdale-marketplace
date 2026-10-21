@@ -218,7 +218,6 @@ export default async function AccountPage({
   const membership = membershipOf(subQ.data, contractor);
   const isOpen = membership === 'open';
   const isPremium = membership !== null;
-  const serviceCount = (contractor.services ?? []).length;
 
   return (
     <div className={a.wrap}>
@@ -387,11 +386,6 @@ export default async function AccountPage({
           )}
 
           <h2 id="settings" className={a.groupTitle}>Your settings</h2>
-          <p className={ac.coverage}>
-            You cover <b>{selectedCounties.length}</b> {selectedCounties.length === 1 ? 'county' : 'counties'} and{' '}
-            <b>{serviceCount}</b> {serviceCount === 1 ? 'service' : 'services'}. Keep these
-            accurate and you’ll only hear about work you want.
-          </p>
           <AccountForm
             contractor={contractor}
             counties={counties}

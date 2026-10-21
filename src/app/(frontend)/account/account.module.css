@@ -262,6 +262,43 @@
   gap: 8px;
   margin-top: 16px;
 }
+/* Something changed: the bar stays at the bottom of the screen until it is
+   saved, so the Save button is never below three folded sections. */
+.formFootPending {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--cream);
+  border-top: 1px solid var(--rule);
+}
+/* Button first: between a phone and a desktop the feedback tab is not
+   lifted, and it lands on the bar's right-hand end. */
+.formFootPending .unsaved {
+  order: 2;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.formFootPending .unsaved::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--jd-yellow-dark);
+  vertical-align: middle;
+}
+/* In the app the tab bar sits under it. */
+:global(html[data-app][data-app-tabs]) .formFootPending {
+  bottom: calc(var(--app-tabbar-h) + var(--app-safe-bottom));
+}
 
 /* Subscription card */
 .subCard {
