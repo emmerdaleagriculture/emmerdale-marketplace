@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CLIENT_NOTE_MAX, clientNoteProblem } from './clientNote';
+import { CLIENT_NOTE_MAX, clientNoteProblem, hourlyRateProblem } from './clientNote';
 
 /**
  * These guardrails are the whole review process. A contractor's note reaches
@@ -115,5 +115,53 @@ describe('clientNoteProblem — what a customer may be shown', () => {
   it('lets a VAT status through', () => {
     ok('I am not VAT registered so there is no VAT on this.');
     ok('Price is without VAT.');
+  });
+});
+
+describe('hourlyRateProblem — a price note must not turn the price into a rate', () => {
+  const rate = (s: string) => expect(hourlyRateProblem(s)).toBeTypeOf('string');
+  const fine = (s: string) => expect(hourlyRateProblem(s)).toBeNull();
+
+  it('refuses the hourly notes contractors actually sent', () => {
+    rate('this is price per hour. travel to and from job will be charged');
+    rate('Price is per hour. Travel charge not included, no VAT');
+    rate('I may need to see the place first but this is likely to be the price. I normally charge by the hour');
+    rate('Travel included in hourly rate');
+  });
+
+  it('refuses the other ways of writing a rate', () => {
+    rate('£40 per hr');
+    rate('45 p/h plus diesel');
+    rate('45/hr');
+    rate('3 hrs at 45');
+    rate('Approx 4 hours @ £50');
+    rate('Charged per hours worked');
+    rate('45ph plus diesel');
+    rate('45 p.h. plus diesel');
+    rate('4 hrs x 50');
+    rate('my hour rate is 45');
+    rate('40 an hour plus fuel');
+  });
+
+  it('lets a note that says it is NOT hourly through', () => {
+    fine('Fixed price for the whole job, not hourly');
+    fine("I don't charge by the hour, this is the total");
+    fine('Whole job price rather than per hour');
+  });
+
+  it('lets work rates and start times through', () => {
+    fine('Flail does 2 acres per hour so about 3 hours');
+    fine('2 acres/hr so half a day');
+    fine('Allow 3 hours at 8am start');
+    fine('Allow 3 hours at 10am');
+    fine('3 hrs at 10:30');
+  });
+
+  it('lets time estimates and notice periods through', () => {
+    fine('It would take a few hours to do to a high standard.');
+    fine('About 3 hours with the flail, weather allowing.');
+    fine('Need 24 hours notice before we start.');
+    fine('Can be there within the hour of arranging.');
+    fine('');
   });
 });

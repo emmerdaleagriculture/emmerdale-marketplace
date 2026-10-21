@@ -83,8 +83,54 @@ export const OFF_PLATFORM = new RegExp(
   'i',
 );
 
+export const MONEY_REFUSAL =
+  'Please leave amounts out of the note. The customer sees our price, not yours, so a figure here will confuse them. Put it in the price box instead.';
+
 export const OFF_PLATFORM_REFUSAL =
   'Please leave payment arrangements out. Every job is paid through us, deposit and balance, and nothing is paid to the contractor directly.';
+
+/**
+ * A price that is really an hourly rate: "this is price per hour", "I
+ * normally charge by the hour", "travel included in hourly rate" (all real,
+ * Sept–Oct 2026). The customer accepts one figure and pays a deposit on it,
+ * so an hourly rate written beside a total leaves them not knowing what the
+ * job costs. Price notes only (quote/[token]/actions.ts), and not on a
+ * "£ per unit" price, where hours × rate already is the total: after award
+ * an extra or a description may fairly talk about hours.
+ *
+ * "takes 3 hours", "24 hours' notice", "2 acres per hour" and "3 hours at
+ * 8am" stay legal; so does saying it ISN'T hourly ("fixed price, not
+ * hourly"). It is the rate words — hourly, per hour, by the hour, /hr, 45ph,
+ * "3 hrs at 45", "4 hrs x 50", "40 an hour" — that are refused.
+ */
+export const HOURLY = new RegExp(
+  [
+    '\\bhourly\\b',
+    '\\bhour\\s+rate\\b',
+    '\\bby\\s+the\\s+(?:hour|hr)\\b',
+    '\\bper\\s+(?:hour|hr)s?\\b',
+    '\\/\\s*(?:hour|hr|h)\\b',
+    '\\d\\s*p\\.?\\s?h\\b\\.?',
+    '\\d\\s*(?:an?)\\s+(?:hour|hr)\\b',
+    // A figure, not a time: the number must not run on into a clock time.
+    "\\b(?:hours?|hrs?)\\s+(?:at|@|x|×|\\*)\\s*£?\\d+(?![\\d:.]|\\s*(?:am|pm|o'?clock)\\b)",
+  ].join('|'),
+  'i',
+);
+
+/** Work rates, not money: "2 acres per hour", "100 metres/hr". */
+const WORK_RATE = /\b(?:acres?|hectares?|ha|metres?|meters?|m|yards?|bales?|loads?|tonnes?|tons?)\s*(?:per|\/|an?)\s*(?:hour|hr|h)s?\b/gi;
+/** "not hourly", "don't charge by the hour", "no hourly rate". */
+const DENIED = /\b(?:not|never|no|n[o']t|isn'?t|don'?t|doesn'?t|won'?t|rather\s+than|instead\s+of)\s+(?:\w+\s+){0,3}?(?:hourly|by\s+the\s+(?:hour|hr)|per\s+(?:hour|hr)|an?\s+hour(?:ly)?\s+rate)\b/gi;
+
+export const HOURLY_REFUSAL =
+  'Please price the whole job rather than an hourly rate. The customer accepts one figure and pays a deposit on it, so give the total for the work they’ve described. If you’d need to see the site first, tick the box below.';
+
+/** null when a price note doesn't turn the price into an hourly rate. */
+export function hourlyRateProblem(note: string): string | null {
+  const t = note.replace(WORK_RATE, ' ').replace(DENIED, ' ');
+  return HOURLY.test(t) ? HOURLY_REFUSAL : null;
+}
 
 /** What people put between the digits of a phone number. */
 const PHONE_SEPARATOR = /[\s().\-–—]+/;
@@ -152,8 +198,6 @@ export function clientNoteProblem(note: string): string | null {
   // Before MONEY: "400 quid cash" should be told about the cash, which is
   // the part admin gets flagged about.
   if (OFF_PLATFORM.test(t)) return OFF_PLATFORM_REFUSAL;
-  if (MONEY.test(t)) {
-    return 'Please leave amounts out of the note. The customer sees our price, not yours, so a figure here will confuse them. Put it in the price box instead.';
-  }
+  if (MONEY.test(t)) return MONEY_REFUSAL;
   return null;
 }
