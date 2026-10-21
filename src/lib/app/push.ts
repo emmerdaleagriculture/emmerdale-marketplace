@@ -1,6 +1,6 @@
 import { appPlatform, isNativeApp } from '@/lib/app/isApp';
 import { appVersionFromUserAgent } from '@/lib/appMode';
-import { nativePlugin } from '@/lib/app/nativePlugin';
+import { registerPlugin } from '@capacitor/core';
 import type { FirebaseMessagingPlugin } from '@capacitor-firebase/messaging';
 
 /**
@@ -18,20 +18,22 @@ export type PushPermission = 'granted' | 'denied' | 'prompt' | 'unavailable';
  * SDK, which this site does not ship (nothing here runs on the web). The
  * frame registers the native side under this name.
  *
- * Boxed by nativePlugin, never returned bare: a plugin proxy resolved as a
- * promise's value is mistaken for a thenable and the await never settles.
+ * Synchronous on purpose. A plugin proxy answers `then` like any other
+ * method, so a promise that resolves with one (an async function returning
+ * it, as this once did) calls it, the runtime rejects with "X.then() is not
+ * implemented", and the await never settles: see capacitorThenable.test.ts.
+ * @capacitor/core is already in the bundle through isApp.ts, so there is
+ * nothing to load lazily. Registered once: a second call warns.
  */
-function plugin() {
-  return nativePlugin(
-    () => import('@capacitor/core'),
-    ({ registerPlugin }) => registerPlugin<FirebaseMessagingPlugin>('FirebaseMessaging'),
-  );
+let registered: FirebaseMessagingPlugin | null = null;
+function plugin(): FirebaseMessagingPlugin {
+  return (registered ??= registerPlugin<FirebaseMessagingPlugin>('FirebaseMessaging'));
 }
 
 export async function pushPermission(): Promise<PushPermission> {
   if (!isNativeApp()) return 'unavailable';
   try {
-    const { receive } = await (await plugin()).plugin.checkPermissions();
+    const { receive } = await plugin().checkPermissions();
     return receive === 'granted' ? 'granted' : receive === 'denied' ? 'denied' : 'prompt';
   } catch {
     return 'unavailable';
@@ -81,7 +83,7 @@ export async function registerPush({ ask }: { ask: boolean }): Promise<PushPermi
   if (!ask && pushTurnedOff()) return 'prompt';
   if (ask) rememberOff(false);
   try {
-    const { plugin: fm } = await plugin();
+    const fm = plugin();
     let { receive } = await fm.checkPermissions();
     if (receive !== 'granted' && ask) ({ receive } = await fm.requestPermissions());
     if (receive !== 'granted') return receive === 'denied' ? 'denied' : 'prompt';
@@ -104,7 +106,7 @@ export async function revokePush({ remember = false }: { remember?: boolean } = 
   if (!isNativeApp()) return;
   if (remember) rememberOff(true);
   try {
-    const { plugin: fm } = await plugin();
+    const fm = plugin();
     const { token } = await fm.getToken().catch(() => ({ token: '' }));
     if (token) await send({ token, revoke: true });
     await fm.deleteToken().catch(() => {});
@@ -124,7 +126,7 @@ let listening = false;
 export async function listenForPushTaps(): Promise<void> {
   if (!isNativeApp() || listening) return;
   try {
-    const { plugin: fm } = await plugin();
+    const fm = plugin();
     await fm.addListener('notificationActionPerformed', (event) => {
       const url = String((event.notification?.data as Record<string, unknown> | undefined)?.url ?? '');
       if (!url) return;
