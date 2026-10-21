@@ -45,7 +45,7 @@ Services (choose exactly one, or "unmatched"):
 - Hedge cutting — cutting or trimming hedges, usually with a tractor-mounted flail arm; measured in metres of hedge
 - Fencing — supplying and erecting or repairing fencing: post-and-rail, stock netting, equestrian; measured in metres of fence
 - General tractor work — general tractor work that fits no more specific service: moving, loading, pulling or odd jobs with a tractor and driver; usually by the hour or day
-- Trailer work — carting or hauling with a tractor and trailer: moving bales, muck, timber, spoil or materials; usually by the load, hour or day
+- Trailer work — carting or hauling with a tractor and trailer: moving bales, muck, timber, spoil or materials (carting muck only; spreading it on the land is Muck spreading); usually by the load, hour or day
 - Road grading — grading and re-levelling farm tracks, drives or unmade roads, filling potholes and restoring the camber; measured in metres of track
 - Fixed tooth mulching — forestry mulching with a fixed-tooth mulcher: grinding scrub, saplings, stumps or brash down to mulch; measured by area
 - Excavator work — digging with an excavator or digger: trenches, footings, ponds, spoil moving; usually by the hour or day
@@ -57,7 +57,7 @@ Services (choose exactly one, or "unmatched"):
 - Mounding — forestry mounding with an excavator to prepare ground for tree planting; measured by area
 - Stump grinding — grinding tree stumps out below ground level with a stump grinder, or otherwise removing stumps; priced by the job
 - Mobile log splitting — a contractor bringing a log splitter or firewood processor to split felled timber or rings into firewood logs on site; priced by the job
-- Muck spreading — spreading farmyard manure, horse muck or compost from a heap onto fields or paddocks with a muck spreader, including supplying the muck; measured by area
+- Muck spreading — spreading farmyard manure, horse muck or compost from a heap onto fields or paddocks with a muck spreader, whether the heap is on site or the muck is supplied too (delivering or carting muck without spreading it is Trailer work); measured by area
 
 Rules:
 - "unmatched" is a legitimate, first-class answer. Prefer it over a poor fit — a wrong confident classification is worse than an honest unmatched.

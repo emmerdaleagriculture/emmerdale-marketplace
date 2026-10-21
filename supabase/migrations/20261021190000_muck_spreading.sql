@@ -59,7 +59,9 @@ language sql immutable set search_path = public as $$
     ('mown',            'Finish mowing'),
     -- 20261021190000. Spreading before the bare stems: "muck spreading" and
     -- "spread muckheap" are both at the earliest position with 'muck', and the
-    -- longer pattern wins the tie. A muck heap is spreading work, not sweeping.
+    -- longer pattern wins the tie. A muck heap is closer to spreading than to
+    -- sweeping, even when the job is carting it away. Not bare 'slurry': it is
+    -- liquid, goes on by tanker, and "slurry pit" is often yard work.
     ('muck spread',     'Muck spreading'),
     ('spread muck',     'Muck spreading'),
     ('spreading muck',  'Muck spreading'),
@@ -69,7 +71,13 @@ language sql immutable set search_path = public as $$
     ('spreading manure','Muck spreading'),
     ('spread the manure','Muck spreading'),
     ('dung spread',     'Muck spreading'),
-    ('slurry',          'Muck spreading'),
+    ('spread my muck',  'Muck spreading'),
+    ('spread our muck', 'Muck spreading'),
+    ('spread horse muck','Muck spreading'),
+    ('spread the horse muck','Muck spreading'),
+    ('muck needs spread','Muck spreading'),
+    ('muck to be spread','Muck spreading'),
+    ('manure to be spread','Muck spreading'),
     ('farmyard manure', 'Muck spreading'),
     ('muck heap',       'Muck spreading'),
     ('muckheap',        'Muck spreading'),

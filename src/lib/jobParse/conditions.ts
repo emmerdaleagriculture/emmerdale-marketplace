@@ -389,6 +389,7 @@ const LOG_QUESTIONS: ConditionQuestion[] = [
  * whether there is one at all (or the muck has to be bought in), how big it
  * is (loads, and so hours), and whether a loader is needed to fill the
  * spreader. Rotted muck spreads evenly; fresh bedding lumps and clogs.
+ * Supplied muck is priced by the load, so that case asks how many.
  */
 const MUCK_QUESTIONS: ConditionQuestion[] = [
   {
@@ -414,6 +415,20 @@ const MUCK_QUESTIONS: ConditionQuestion[] = [
       { value: 'medium', label: 'A few loads (about 3 to 10)' },
       { value: 'large', label: 'More than 10 loads' },
       { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'supply_loads',
+    label: 'Roughly how much muck do you need?',
+    short: 'Supply',
+    hint: 'A trailer load is about 8 tonnes. The contractor can advise on a rate per acre.',
+    required: true,
+    showIf: (a) => a.muck_source === 'supply',
+    options: [
+      { value: 'small', label: 'A couple of trailer loads or less' },
+      { value: 'medium', label: 'A few loads (about 3 to 10)' },
+      { value: 'large', label: 'More than 10 loads' },
+      { value: 'not_sure', label: 'Not sure, advise me' },
     ],
   },
   {
