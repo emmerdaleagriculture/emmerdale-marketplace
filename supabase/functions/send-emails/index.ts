@@ -286,8 +286,9 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             `puts the customer's name, phone and email on every job you're invited to, the ` +
             `moment it arrives, so you can ring them and agree the work directly with nothing ` +
             `added on top, or send a price through us at 5% as usual. Open members see new jobs ` +
-            `first, ahead of Premium, and get a listing on our county pages and market data ` +
-            `for their area. ` +
+            `first, ahead of Premium, and get market data for their area. They're also listed ` +
+            `on our county pages with a link to their own website, which helps their site ` +
+            `show up in Google as well as sending customers' enquiries straight to them. ` +
             (p.tier === 'premium'
               ? `You're on Premium, so it's a move up to £49 a month or £399 a year, prorated ` +
                 `against what you've already paid.\n\n` +
