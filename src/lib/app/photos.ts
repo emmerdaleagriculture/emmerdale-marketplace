@@ -1,19 +1,18 @@
-import { Capacitor } from '@capacitor/core';
+import * as Sentry from '@sentry/nextjs';
 import { isNativeApp } from '@/lib/app/isApp';
 import { downscalePhotos } from '@/lib/photoDownscale';
 
 /**
- * True only when the native Camera plugin is really in this build. An older
- * app build without it (or any plugin failure) falls back to the ordinary
- * file input, which iOS and Android also show as Take Photo / Library.
+ * Whether the photo buttons use the native Camera plugin. Off for now: in
+ * build 1.0.0 (3) on iOS the plugin call failed before showing anything,
+ * and pickPhoto() swallowed the error, so tapping a photo box did nothing.
+ * The screens fall back to their <input type="file" accept="image/*">,
+ * which iOS shows as its own Take Photo / Photo Library sheet and Android
+ * as its chooser: native UI, no plugin. Turn this back on once a
+ * device test of pickPhoto() passes (failures now reach Sentry).
  */
 export function nativeCamera(): boolean {
-  if (!isNativeApp()) return false;
-  try {
-    return Capacitor.isPluginAvailable('Camera');
-  } catch {
-    return false;
-  }
+  return false;
 }
 
 function base64ToBlob(b64: string, type: string): Blob {
@@ -55,6 +54,7 @@ export async function pickPhoto(): Promise<File | null> {
   } catch (err) {
     if (/cancel/i.test(String((err as { message?: string })?.message ?? err))) return null;
     console.error('[photos] camera failed:', err);
+    Sentry.captureException(err, { tags: { area: 'app-photos' } });
     return null;
   }
 }
