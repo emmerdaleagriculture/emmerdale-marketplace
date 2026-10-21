@@ -1,5 +1,27 @@
+import { Capacitor } from '@capacitor/core';
 import { isNativeApp } from '@/lib/app/isApp';
 import { downscalePhotos } from '@/lib/photoDownscale';
+
+/**
+ * True only when the native Camera plugin is really in this build. An older
+ * app build without it (or any plugin failure) falls back to the ordinary
+ * file input, which iOS and Android also show as Take Photo / Library.
+ */
+export function nativeCamera(): boolean {
+  if (!isNativeApp()) return false;
+  try {
+    return Capacitor.isPluginAvailable('Camera');
+  } catch {
+    return false;
+  }
+}
+
+function base64ToBlob(b64: string, type: string): Blob {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type });
+}
 
 /**
  * A photo for the job, from the phone's camera or library in the frame
@@ -10,18 +32,24 @@ export async function pickPhoto(): Promise<File | null> {
   if (!isNativeApp()) return null;
   try {
     const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+    // Base64, not a file URI: the app frame loads the live website, so the
+    // page's origin is https://www.emmerdaleagriculture.com and it cannot
+    // fetch() the capacitor:// / file:// path a Uri result points at. The
+    // fetch failed silently and the photo never appeared.
     const photo = await Camera.getPhoto({
-      resultType: CameraResultType.Uri,
+      resultType: CameraResultType.Base64,
       source: CameraSource.Prompt,
       quality: 85,
+      width: 2000,
       correctOrientation: true,
       promptLabelHeader: 'Add a photo',
       promptLabelPhoto: 'From your library',
       promptLabelPicture: 'Take a photo',
     });
-    if (!photo.webPath) return null;
-    const blob = await (await fetch(photo.webPath)).blob();
-    const file = new File([blob], `photo.${photo.format || 'jpg'}`, { type: blob.type || 'image/jpeg' });
+    if (!photo.base64String) return null;
+    const format = (photo.format || 'jpeg').toLowerCase();
+    const type = `image/${format === 'jpg' ? 'jpeg' : format}`;
+    const file = new File([base64ToBlob(photo.base64String, type)], `photo.${format === 'jpeg' ? 'jpg' : format}`, { type });
     const [small] = await downscalePhotos([file]);
     return small ?? file;
   } catch (err) {

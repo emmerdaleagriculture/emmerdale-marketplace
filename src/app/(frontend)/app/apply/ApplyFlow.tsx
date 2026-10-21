@@ -7,8 +7,7 @@ import { baseLookupAction, submitApplicationAction, type LookupState } from './a
 import { CONDUCT_VERSION } from '@/lib/contractors/conduct';
 import { ServicePicker, type ServiceOption } from '@/components/forms/ServicePicker';
 import { RadiusMap } from './RadiusMap';
-import { pickPhoto } from '@/lib/app/photos';
-import { isNativeApp } from '@/lib/app/isApp';
+import { nativeCamera, pickPhoto } from '@/lib/app/photos';
 import { emptyFormState } from '@/lib/form';
 import f from '@/components/forms/forms.module.css';
 import ui from '../app-ui.module.css';
@@ -75,7 +74,7 @@ export function ApplyFlow({ services, contactName }: { services: ServiceOption[]
   }, [certs]);
 
   async function snapInsurance() {
-    if (isNativeApp()) {
+    if (nativeCamera()) {
       const file = await pickPhoto();
       if (file) setInsurance(file);
     } else {

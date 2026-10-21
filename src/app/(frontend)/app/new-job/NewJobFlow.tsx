@@ -8,8 +8,7 @@ import { ServiceQuestions } from '@/app/(frontend)/start/ServiceQuestions';
 import { hasAnswer, isAreaPriced, quantityFor, visibleChoices } from '@/lib/jobParse/conditions';
 import { choicesFromPick, serviceFromPick } from '@/lib/jobParse/servicePick';
 import { readFirstTouch } from '@/lib/firstTouch';
-import { filesToPhotos, pickPhoto } from '@/lib/app/photos';
-import { isNativeApp } from '@/lib/app/isApp';
+import { filesToPhotos, nativeCamera, pickPhoto } from '@/lib/app/photos';
 import { Turnstile } from '@/components/forms/Turnstile';
 import { ServiceTileIcon, type TileIcon } from '../home/popular';
 import f from '@/components/forms/forms.module.css';
@@ -133,7 +132,7 @@ export function NewJobFlow({
   const putPhoto = (i: number, file: File | null) => setPhotos((p) => p.map((x, j) => (j === i ? file : x)));
   async function addPhoto(i: number) {
     setSlot(i);
-    if (isNativeApp()) {
+    if (nativeCamera()) {
       const file = await pickPhoto();
       if (file) putPhoto(i, file);
     } else {
