@@ -271,12 +271,15 @@
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px 16px;
   padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px));
   background: var(--cream);
   border-top: 1px solid var(--rule);
 }
+/* Button first: between a phone and a desktop the feedback tab is not
+   lifted, and it lands on the bar's right-hand end. */
 .formFootPending .unsaved {
+  order: 2;
   margin: 0;
   font-size: 14px;
   font-weight: 600;
