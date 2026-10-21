@@ -18,6 +18,7 @@ export type ServiceIconKey =
   | 'flail'
   | 'flail_collect'
   | 'lime'
+  | 'muck_spreading'
   | 'tree'
   | 'stump'
   | 'logs'
@@ -182,6 +183,16 @@ const PATHS: Record<ServiceIconKey, ReactNode> = {
       <path d="M18 22 V26" />
       <path d="M18 28 L8 34 M18 28 L18 35 M18 28 L28 34" />
       <path d="M31 18 h.01 M34 24 h.01 M4 22 h.01" />
+    </>
+  ),
+  // A muck spreader: the box on its wheel, a spray of lumps thrown out the back.
+  muck_spreading: (
+    <>
+      <path d="M4 14 H24 V26 H4 Z" />
+      <circle cx="12" cy="30" r="4" />
+      <path d="M24 20 H28" />
+      <path d="M8 14 L11 10 L15 13 L19 9 L22 14" />
+      <path d="M30 14 h.01 M34 18 h.01 M31 22 h.01 M36 25 h.01 M33 29 h.01" />
     </>
   ),
   // A tree and a felled log.

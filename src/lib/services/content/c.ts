@@ -381,7 +381,7 @@ export const PART_C: ServiceContent[] = [
         a: 'Yes. A loader and tipping trailer can load and cart a muck heap away, or move it to a field for spreading. Say where it is going and how big the heap is.',
       },
     ],
-    related: ['general-tractor-work', 'muck-sweeping', 'road-construction', 'tree-felling'],
+    related: ['general-tractor-work', 'muck-spreading', 'road-construction', 'tree-felling'],
   },
   {
     card: 'fencing',

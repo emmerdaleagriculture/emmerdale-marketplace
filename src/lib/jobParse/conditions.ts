@@ -384,6 +384,52 @@ const LOG_QUESTIONS: ConditionQuestion[] = [
   },
 ];
 
+/**
+ * Muck spreading is priced on the acreage, but the job turns on the heap:
+ * whether there is one at all (or the muck has to be bought in), how big it
+ * is (loads, and so hours), and whether a loader is needed to fill the
+ * spreader. Rotted muck spreads evenly; fresh bedding lumps and clogs.
+ */
+const MUCK_QUESTIONS: ConditionQuestion[] = [
+  {
+    key: 'muck_source',
+    label: 'Where is the muck coming from?',
+    short: 'Muck',
+    required: true,
+    options: [
+      { value: 'heap', label: 'A heap here on site' },
+      { value: 'supply', label: 'I need it supplied as well' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'heap_size',
+    label: 'Roughly how big is the heap?',
+    short: 'Heap',
+    hint: 'A rough guess is fine. A trailer load is about 8 tonnes.',
+    required: true,
+    showIf: (a) => a.muck_source === 'heap',
+    options: [
+      { value: 'small', label: 'A couple of trailer loads or less' },
+      { value: 'medium', label: 'A few loads (about 3 to 10)' },
+      { value: 'large', label: 'More than 10 loads' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'muck_type',
+    label: 'What kind of muck is it?',
+    short: 'Type',
+    showIf: (a) => a.muck_source === 'heap',
+    options: [
+      { value: 'rotted', label: 'Well rotted' },
+      { value: 'fresh', label: 'Fresh, with straw or shavings' },
+      { value: 'mixed', label: 'A mix' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+];
+
 export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQuestion[]>> = {
   'Weed control': WEED_QUESTIONS,
   Spraying: WEED_QUESTIONS,
@@ -391,6 +437,7 @@ export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQues
   'Hay, straw & haylage': HAY_QUESTIONS,
   'Stump grinding': STUMP_QUESTIONS,
   'Mobile log splitting': LOG_QUESTIONS,
+  'Muck spreading': MUCK_QUESTIONS,
   'Paddock topping': [
     {
       key: 'last_cut',

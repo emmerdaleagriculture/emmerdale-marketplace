@@ -480,4 +480,58 @@ export const PART_A: ServiceContent[] = [
     ],
     related: ['fertiliser', 'scarifying', 'overseeding', 'harrowing'],
   },
+
+  // 10. Muck spreading
+  {
+    card: 'muck-spreading',
+    path: 'muck-spreading',
+    canonical: ['Muck spreading'],
+    metaTitle: 'Muck Spreading for Paddocks and Fields',
+    metaDescription:
+      'Muck spreading for paddocks and grassland: the muck heap loaded and spread back on the land. Find local contractors and get prices.',
+    h1: 'Muck spreading for paddocks and fields',
+    intro:
+      'Muck spreading turns a muck heap back into fertiliser. A contractor loads the heap into a spreader and spreads it thinly across your fields, so the heap goes and the grass gets the nutrients. It also suits anyone who wants farmyard manure or compost brought in and spread.',
+    involves: [
+      'A loader, often a tractor with a front loader or a telehandler, fills a muck spreader from the heap. The spreader’s beaters shred the muck and throw it out behind in an even layer as the tractor drives up and down the field.',
+      'Well rotted muck spreads evenly and breaks down quickly. Fresh muck with a lot of straw or shavings in it is lumpier, takes longer to break down and can smother the grass if it goes on too thickly.',
+      'If there is no heap on site, some contractors can supply farmyard manure or compost and spread it, which they will price per load or per tonne.',
+    ],
+    when: [
+      'Late winter and early spring, before the grass gets going, is the usual time, along with late summer after a cut of hay. The ground needs to be firm enough to carry a loaded spreader without rutting.',
+      'Don’t spread on waterlogged, flooded, frozen or snow-covered ground, or close to ditches, streams and wells. In a Nitrate Vulnerable Zone there are closed periods and limits on how much manure can go on each year. Check the current rules on GOV.UK if your land is in an NVZ.',
+    ],
+    priceFactors: [
+      'How big the heap is: the number of loads decides the hours',
+      'The acreage it is going on, and how far the fields are from the heap',
+      'Whether a loader is needed, or you can load the spreader yourself',
+      'Whether the muck is supplied or already on site',
+      'Access for a tractor and spreader through gateways and along tracks',
+      'Travel distance',
+    ],
+    goodToKnow: [
+      'Keep horses off spread paddocks until the muck has broken down and been washed in. Spreading horse muck back onto horse paddocks can spread worms, so many owners put it on hay or arable ground instead.',
+      'Tell the contractor if there is plastic, baler twine or rubbish in the heap. It jams spreaders and ends up across the field.',
+      'Leave room around the heap for a loader to work and a spreader to turn.',
+    ],
+    faqs: [
+      {
+        q: 'When is the best time to spread muck?',
+        a: 'Late winter or early spring, when the ground is firm and the grass is about to grow, or after a hay cut. Avoid wet, frozen or waterlogged ground, and spells when heavy rain is forecast.',
+      },
+      {
+        q: 'Can I spread horse muck on my horse paddocks?',
+        a: 'You can, but it is safer when the muck is well rotted, because composting kills most worm eggs. Many owners spread it on fields used for hay or other stock instead.',
+      },
+      {
+        q: 'How long should horses stay off after muck spreading?',
+        a: 'Until the muck has broken down and been washed into the sward, usually a few weeks depending on rain and how thickly it went on.',
+      },
+      {
+        q: 'Do I need to rot muck before spreading it?',
+        a: 'It is better rotted. A heap left for six months or more breaks down into a crumbly manure that spreads evenly. Fresh muck can be spread, but it is lumpier and slower to work in.',
+      },
+    ],
+    related: ['harrowing', 'fertiliser', 'muck-sweeping', 'lime-spreading'],
+  },
 ];

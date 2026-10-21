@@ -12,7 +12,7 @@ import { LlmParseSchema, RECORD_JOB_PARSE_TOOL, type LlmParse } from './schema';
  */
 
 export const MODEL_VERSION = 'claude-haiku-4-5';
-export const PROMPT_VERSION = 'v5'; // v5: Stump grinding, Mobile log splitting; v4: Lime spreading, Tree felling & chipping, Sub-soiling, Scarifying; v3: Fencing, Ditch clearance, and seven machinery/forestry services; v2: Hedge cutting
+export const PROMPT_VERSION = 'v6'; // v6: Muck spreading; v5: Stump grinding, Mobile log splitting; v4: Lime spreading, Tree felling & chipping, Sub-soiling, Scarifying; v3: Fencing, Ditch clearance, and seven machinery/forestry services; v2: Hedge cutting
 
 /** Hard latency ceiling on the parse call (spec §4 step 2). */
 // 15 s, up from 8: Haiku averages ~2.7 s here, but one live customer hit the
@@ -39,7 +39,7 @@ Services (choose exactly one, or "unmatched"):
 - Spraying — applying herbicide or pesticide across a field
 - Fertiliser application — spreading fertiliser
 - Overseeding — re-seeding or overseeding grassland
-- Manure sweeping — sweeping or collecting droppings from paddocks
+- Manure sweeping — sweeping or collecting droppings from paddocks (NOT spreading a muck heap on the land — that is Muck spreading)
 - Hay, straw & haylage — supplying or delivering hay, straw or haylage bales
 - Tractor hire (events) — hiring a tractor (with driver) for an event or show
 - Hedge cutting — cutting or trimming hedges, usually with a tractor-mounted flail arm; measured in metres of hedge
@@ -57,6 +57,7 @@ Services (choose exactly one, or "unmatched"):
 - Mounding — forestry mounding with an excavator to prepare ground for tree planting; measured by area
 - Stump grinding — grinding tree stumps out below ground level with a stump grinder, or otherwise removing stumps; priced by the job
 - Mobile log splitting — a contractor bringing a log splitter or firewood processor to split felled timber or rings into firewood logs on site; priced by the job
+- Muck spreading — spreading farmyard manure, horse muck or compost from a heap onto fields or paddocks with a muck spreader, including supplying the muck; measured by area
 
 Rules:
 - "unmatched" is a legitimate, first-class answer. Prefer it over a poor fit — a wrong confident classification is worse than an honest unmatched.
