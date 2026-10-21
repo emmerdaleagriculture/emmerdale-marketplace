@@ -26,6 +26,16 @@ export function StickyBar({ href, watch }: { href: string; watch: string }) {
     return () => io.disconnect();
   }, [watch]);
 
+  // Mark <body> while the bar is up so the "Report a problem" tab can step
+  // up over it rather than sit on the button (feedback.module.css).
+  useEffect(() => {
+    if (!visible) return;
+    document.body.dataset.stickyBar = 'on';
+    return () => {
+      delete document.body.dataset.stickyBar;
+    };
+  }, [visible]);
+
   return (
     <div className={`${s.stickybar} ${visible ? s.stickybarVisible : ''}`} aria-hidden={!visible}>
       <div className={s.stickybarInner}>
