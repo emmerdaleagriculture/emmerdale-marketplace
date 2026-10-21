@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { removeWorkPhotoAction, uploadWorkPhotoAction } from './actions';
 import { markDoneAction } from '../../actions';
 import type { WorkPhoto } from '@/lib/sealedQuotes/workPhotos';
-import { pickPhoto, filesToPhotos } from '@/lib/app/photos';
+import { nativeCamera, pickPhoto, filesToPhotos } from '@/lib/app/photos';
 import { isNativeApp } from '@/lib/app/isApp';
 import { emptyFormState } from '@/lib/form';
 import f from '@/components/forms/forms.module.css';
@@ -40,7 +40,7 @@ export function WorkPhotos({ submissionId, photos, done }: { submissionId: strin
 
   async function add(which: 'before' | 'after') {
     setPhase(which);
-    if (isNativeApp()) {
+    if (nativeCamera()) {
       const file = await pickPhoto();
       if (file) setPending(file);
     } else {
