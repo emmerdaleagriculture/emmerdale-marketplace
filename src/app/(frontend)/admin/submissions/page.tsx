@@ -75,6 +75,10 @@ type Row = {
   texts_delivered?: number;
   texts_failed?: number;
   texts_tapped?: number;
+  pushes_sent?: number;
+  pushes_failed?: number;
+  pushes_tapped?: number;
+  opened_in_app?: number;
   quotes_live: number;
   lowest_client_pence: number | null;
   hidden_at: string | null;
@@ -444,6 +448,10 @@ export default async function AdminSubmissionsPage({
   const textsSent = sum('texts_sent');
   const textsDelivered = sum('texts_delivered');
   const textsTapped = sum('texts_tapped');
+  const pushesSent = sum('pushes_sent');
+  const pushesFailed = sum('pushes_failed');
+  const pushesTapped = sum('pushes_tapped');
+  const openedInApp = sum('opened_in_app');
   const priced = sum('priced');
   const declined = sum('declined');
 
@@ -461,7 +469,8 @@ export default async function AdminSubmissionsPage({
     ['Jobs', jobs.length, `${jobs.filter((r) => QUOTING.has(r.status)).length} getting quotes`],
     ['Emails sent', sent, failed > 0 ? `${delivered} delivered · ${failed} failed` : `${delivered} delivered`],
     ['Texts sent', textsSent, `${textsDelivered} delivered · ${textsTapped} tapped`],
-    ['Opened', opened, `${pct(opened, invited)}% of ${invited} invited`],
+    ['App notifications', pushesSent, pushesFailed > 0 ? `${pushesTapped} tapped · ${pushesFailed} failed` : `${pushesTapped} tapped`],
+    ['Opened', opened, `${pct(opened, invited)}% of ${invited} invited · ${openedInApp} in app`],
     ['Responded', priced + declined, `${priced} priced · ${declined} passed`],
     ['Drafts', drafts.length, 'started, not finished'],
   ];
@@ -472,10 +481,11 @@ export default async function AdminSubmissionsPage({
       <p className={s.sub}>
         Jobs described on the landing page, newest first
         {rows.length >= LIMIT ? (searching ? ` (latest ${LIMIT} matches, narrow the search for older ones)` : ` (latest ${LIMIT})`) : ''}. Opened means the
-        contractor opened the job, from the email or the text; tapped means they
-        tapped the link in the text (texts have no read receipts, so delivered
-        is as far as they report). Tap the numbers on a row to
-        see who.
+        contractor opened the job, from the email, the text or the app; tapped means
+        they tapped the link in the text (texts have no read receipts, so delivered
+        is as far as they report) or the app notification, which opens the app. In
+        the app counts jobs whose first look was in the app. Tap the numbers on a
+        row to see who.
       </p>
 
       {error && <div className={s.blocked}>Couldn’t load submissions: {error.message}</div>}

@@ -3378,7 +3378,7 @@ export type Database = {
         Args: { p_reason?: string; p_submission_id: string }
         Returns: Json
       }
-      record_invitation_view: { Args: { p_token: string }; Returns: Json }
+      record_invitation_view: { Args: { p_token: string; p_in_app?: boolean }; Returns: Json }
       record_undeliverable_email: {
         Args: { p_detail: string; p_email: string; p_kind: string }
         Returns: undefined

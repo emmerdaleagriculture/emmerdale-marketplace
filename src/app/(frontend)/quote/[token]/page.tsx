@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { after } from 'next/server';
 import { jobAcres } from '@/lib/jobParse/geometry';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { headers } from 'next/headers';
+import { isAppUserAgent } from '@/lib/appMode';
 import { getInvitationByToken, getLiveQuote, signPhotos } from '@/lib/sealedQuotes/data';
 import { formatGBP, formatRate, vatNote } from '@/lib/sealedQuotes/money';
 import { timeLeft, formatDate, formatDateTime } from '@/lib/time';
@@ -52,8 +54,12 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   // Viewing is itself an event (it is what "viewed" means), but a write
   // has no place on the contractor's wait: recorded after the response.
   const admin = createServiceRoleClient();
+  // The app's own frame, by its user agent: the ?app=1 cookie is a look at
+  // the styling in a browser, not an app open. Read now, while the request
+  // is still here: after() runs once it has gone.
+  const inApp = isAppUserAgent((await headers()).get('user-agent'));
   after(async () => {
-    const { error } = await admin.rpc('record_invitation_view', { p_token: token });
+    const { error } = await admin.rpc('record_invitation_view', { p_token: token, p_in_app: inApp });
     if (error) console.error('[sq] record view failed:', error.message);
   });
   // Everything depends only on the invitation: one round trip, not four.

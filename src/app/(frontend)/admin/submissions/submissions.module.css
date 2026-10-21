@@ -328,10 +328,11 @@
 .muted { background: var(--cream); color: var(--ink-3); border: 1px solid var(--rule); }
 .draft { background: #eaf0f6; color: #2d4a6b; }
 
-/* Outreach numbers: five across, three on a phone. */
+/* Outreach numbers: nine across on a wide job page, three rows of three
+   in the modal (640px at most) and on anything narrower than 900px. */
 .stats {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(9, 1fr);
   gap: 1px;
   background: var(--rule);
   border: 1px solid var(--rule);
@@ -489,16 +490,13 @@
     text-align: left;
   }
 }
-/* On a phone: three on the first row, then two to a row — no empty cell. */
-@media (max-width: 520px) {
+/* Nine across clips "Responded" below about 900px, and always in the modal. */
+.modalBody .stats {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 900px) {
   .stats {
-    grid-template-columns: repeat(6, 1fr);
-  }
-  .stat {
-    grid-column: span 2;
-  }
-  .stat:nth-child(n + 4) {
-    grid-column: span 3;
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
