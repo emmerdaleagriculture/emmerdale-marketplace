@@ -392,7 +392,7 @@ export function NewJobFlow({
               ),
             )}
           </div>
-          <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={async (e) => { const [file] = await filesToPhotos(e.target.files); if (file) putPhoto(slot, file); e.target.value = ''; }} />
+          <input ref={fileRef} type="file" accept="image/*" hidden onChange={async (e) => { const [file] = await filesToPhotos(e.target.files); if (file) putPhoto(slot, file); e.target.value = ''; }} />
           <div className="appFooterCta">
             <button type="button" className={`${ui.btn} ${ui.btnPrimary}`} onClick={() => setStep('review')}>
               {photoList.length ? 'Continue' : 'Skip photos'}
