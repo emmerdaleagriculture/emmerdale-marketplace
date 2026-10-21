@@ -32,7 +32,7 @@ export default function DeleteAccountPage() {
           <ol>
             <li>Open the Emmerdale Agriculture app and sign in.</li>
             <li>Go to <strong>Account</strong>.</li>
-            <li>Tap <strong>Delete account</strong> and confirm.</li>
+            <li>Tap <strong>Delete my account</strong> and confirm.</li>
           </ol>
 
           <h2>On the website</h2>
