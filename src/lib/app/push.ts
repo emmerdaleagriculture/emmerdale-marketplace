@@ -1,5 +1,6 @@
 import { appPlatform, isNativeApp } from '@/lib/app/isApp';
 import { appVersionFromUserAgent } from '@/lib/appMode';
+import { nativePlugin } from '@/lib/app/nativePlugin';
 import type { FirebaseMessagingPlugin } from '@capacitor-firebase/messaging';
 
 /**
@@ -16,16 +17,21 @@ export type PushPermission = 'granted' | 'denied' | 'prompt' | 'unavailable';
  * that entry also registers a web implementation built on the Firebase JS
  * SDK, which this site does not ship (nothing here runs on the web). The
  * frame registers the native side under this name.
+ *
+ * Boxed by nativePlugin, never returned bare: a plugin proxy resolved as a
+ * promise's value is mistaken for a thenable and the await never settles.
  */
-async function plugin(): Promise<FirebaseMessagingPlugin> {
-  const { registerPlugin } = await import('@capacitor/core');
-  return registerPlugin<FirebaseMessagingPlugin>('FirebaseMessaging');
+function plugin() {
+  return nativePlugin(
+    () => import('@capacitor/core'),
+    ({ registerPlugin }) => registerPlugin<FirebaseMessagingPlugin>('FirebaseMessaging'),
+  );
 }
 
 export async function pushPermission(): Promise<PushPermission> {
   if (!isNativeApp()) return 'unavailable';
   try {
-    const { receive } = await (await plugin()).checkPermissions();
+    const { receive } = await (await plugin()).plugin.checkPermissions();
     return receive === 'granted' ? 'granted' : receive === 'denied' ? 'denied' : 'prompt';
   } catch {
     return 'unavailable';
@@ -75,7 +81,7 @@ export async function registerPush({ ask }: { ask: boolean }): Promise<PushPermi
   if (!ask && pushTurnedOff()) return 'prompt';
   if (ask) rememberOff(false);
   try {
-    const fm = await plugin();
+    const { plugin: fm } = await plugin();
     let { receive } = await fm.checkPermissions();
     if (receive !== 'granted' && ask) ({ receive } = await fm.requestPermissions());
     if (receive !== 'granted') return receive === 'denied' ? 'denied' : 'prompt';
@@ -98,7 +104,7 @@ export async function revokePush({ remember = false }: { remember?: boolean } = 
   if (!isNativeApp()) return;
   if (remember) rememberOff(true);
   try {
-    const fm = await plugin();
+    const { plugin: fm } = await plugin();
     const { token } = await fm.getToken().catch(() => ({ token: '' }));
     if (token) await send({ token, revoke: true });
     await fm.deleteToken().catch(() => {});
@@ -118,7 +124,7 @@ let listening = false;
 export async function listenForPushTaps(): Promise<void> {
   if (!isNativeApp() || listening) return;
   try {
-    const fm = await plugin();
+    const { plugin: fm } = await plugin();
     await fm.addListener('notificationActionPerformed', (event) => {
       const url = String((event.notification?.data as Record<string, unknown> | undefined)?.url ?? '');
       if (!url) return;

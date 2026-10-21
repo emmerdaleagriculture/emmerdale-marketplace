@@ -1,4 +1,5 @@
 import { isNativeApp } from '@/lib/app/isApp';
+import { nativePlugin } from '@/lib/app/nativePlugin';
 
 /**
  * Universal links and Android app links, inside the frame.
@@ -16,9 +17,9 @@ import { isNativeApp } from '@/lib/app/isApp';
  */
 let listening = false;
 
-async function plugin() {
-  const mod = await import('@capacitor/app');
-  return mod.App;
+// Through nativePlugin, never returned bare: see that file for why.
+function plugin() {
+  return nativePlugin(() => import('@capacitor/app'), (m) => m.App);
 }
 
 function goIfOurs(url: string | null | undefined): void {
@@ -35,7 +36,7 @@ function goIfOurs(url: string | null | undefined): void {
 export async function listenForAppLinks(): Promise<void> {
   if (!isNativeApp() || listening) return;
   try {
-    const app = await plugin();
+    const { plugin: app } = await plugin();
     await app.addListener('appUrlOpen', (event) => goIfOurs(event.url));
     listening = true;
     // A cold start from a link: the system hands the URL over once.
