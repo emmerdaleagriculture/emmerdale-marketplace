@@ -1,12 +1,13 @@
 -- ============================================================================
--- Muck spreading joins the services table.
+-- Muck spreading and Muck heap removal join the services table.
 --
 -- Tom (2026-10-21). Until now the only muck service was Manure sweeping
 -- (collecting droppings off a paddock), so a job to spread a muck heap had
 -- nowhere to go: the parser left it unmatched and the board labeller called
 -- it Manure sweeping off the word "muck". Three such jobs since 15 Sep.
 --
--- Priced by the acre it goes on (area_priced), like lime, and listed.
+-- Spreading is priced by the acre it goes on (area_priced), like lime.
+-- Removal is priced by the job (loads, not acres). Both listed.
 -- Ticked for every contractor by APPENDING the id (the 20261011180000
 -- pattern); services_only contractors are skipped, their ticks are a filter.
 --
@@ -14,18 +15,19 @@
 -- ============================================================================
 
 insert into services (name, area_priced, listed) values
-  ('Muck spreading', true, true)
+  ('Muck spreading',    true,  true),
+  ('Muck heap removal', false, true)
 on conflict (name) do nothing;
 
 update contractors k
    set services = (
      select array_agg(distinct id order by id)
        from unnest(coalesce(k.services, '{}'::int[]) ||
-            (select array_agg(id) from services where name = 'Muck spreading')) as t(id)
+            (select array_agg(id) from services where name in ('Muck spreading', 'Muck heap removal'))) as t(id)
    )
  where not coalesce(k.services_only, false)
    and not (coalesce(k.services, '{}'::int[]) @>
-            (select array_agg(id) from services where name = 'Muck spreading'));
+            (select array_agg(id) from services where name in ('Muck spreading', 'Muck heap removal')));
 
 create or replace function service_label_from_text(p_text text) returns text
 language sql immutable set search_path = public as $$
@@ -59,9 +61,21 @@ language sql immutable set search_path = public as $$
     ('mown',            'Finish mowing'),
     -- 20261021190000. Spreading before the bare stems: "muck spreading" and
     -- "spread muckheap" are both at the earliest position with 'muck', and the
-    -- longer pattern wins the tie. A muck heap is closer to spreading than to
-    -- sweeping, even when the job is carting it away. Not bare 'slurry': it is
-    -- liquid, goes on by tanker, and "slurry pit" is often yard work.
+    -- longer pattern wins the tie. A heap taken away or cleared is removal;
+    -- a heap with no verb is closer to spreading than to sweeping. Not bare
+    -- 'slurry': it is liquid, goes on by tanker, and "slurry pit" is yard work.
+    ('muck heap remov', 'Muck heap removal'),
+    ('muck heap clear', 'Muck heap removal'),
+    ('muck heap taken', 'Muck heap removal'),
+    ('muckheap remov',  'Muck heap removal'),
+    ('manure heap remov','Muck heap removal'),
+    ('muck removal',    'Muck heap removal'),
+    ('manure removal',  'Muck heap removal'),
+    ('remove the muck', 'Muck heap removal'),
+    ('remove muck',     'Muck heap removal'),
+    ('clear the muck heap','Muck heap removal'),
+    ('clear muck heap', 'Muck heap removal'),
+    ('muck away',       'Muck heap removal'),
     ('muck spread',     'Muck spreading'),
     ('spread muck',     'Muck spreading'),
     ('spreading muck',  'Muck spreading'),

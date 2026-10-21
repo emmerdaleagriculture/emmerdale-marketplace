@@ -114,6 +114,13 @@ export const HOME_SERVICES: HomeService[] = [
     icon: 'muck_spreading',
   },
   {
+    slug: 'muck-heap-removal',
+    name: 'Muck heap removal',
+    label: 'muck heap removal',
+    blurb: 'The muck heap loaded up and taken away, leaving the yard clear.',
+    icon: 'muck_heap',
+  },
+  {
     slug: 'scarifying',
     name: 'Scarifying',
     label: 'scarifying',
