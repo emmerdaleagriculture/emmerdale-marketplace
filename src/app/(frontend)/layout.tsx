@@ -105,6 +105,14 @@ export const viewport: Viewport = {
  */
 const APP_MODE_SCRIPT = `(function(){try{var ua=navigator.userAgent||'';if(ua.indexOf('${APP_UA_TOKEN}')>-1||/(^|; )${APP_COOKIE}=1(;|$)/.test(document.cookie)){document.documentElement.setAttribute('data-app','1');document.documentElement.setAttribute('data-platform',/iPhone|iPad|iPod/i.test(ua)?'ios':/Android/i.test(ua)?'android':'web');}}catch(e){}})();`;
 
+/**
+ * Same moment, same reason: a session cookie marks html[data-session], and
+ * globals.css keeps the signed-in parts of the header invisible until
+ * useViewer knows who this is — so a signed-in visitor never watches the
+ * signed-out header swap for theirs. No cookie, nothing hidden.
+ */
+const SESSION_SCRIPT = `(function(){try{if(/(^|;\\s*)sb-[^=]+=/.test(document.cookie))document.documentElement.setAttribute('data-session','1');}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -116,6 +124,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body>
         <script dangerouslySetInnerHTML={{ __html: APP_MODE_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: SESSION_SCRIPT }} />
         {children}
         {/* The app's bottom tab bar and back bar. Renders nothing on the
             website: it waits for html[data-app]. */}
