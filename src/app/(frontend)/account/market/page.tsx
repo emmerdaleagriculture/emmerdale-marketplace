@@ -91,6 +91,9 @@ export default async function MarketDataPage() {
   // (account/page.tsx, membership/page.tsx), so the pitch there says only
   // what the page is.
   const app = await isAppRequest();
+  // Market data is an Open benefit. In the app a non-Open contractor is
+  // sent back to Earnings rather than shown what Open would give them.
+  if (app && !isOpen) redirect('/app/earnings');
   let data: MarketData | null = null;
   if (isOpen) {
     const { data: raw, error } = await createServiceRoleClient().rpc('sq_market_data', { p_contractor_id: user.id });

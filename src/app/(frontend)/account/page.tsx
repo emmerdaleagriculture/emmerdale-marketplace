@@ -254,7 +254,7 @@ export default async function AccountPage({
               your details below in the meantime.
             </div>
           )}
-          {status === 'pending' && (
+          {status === 'pending' && (!app || isPremium) && (
             <MembershipCard
               membership={membership}
               sub={subQ.data ?? null}
@@ -282,7 +282,7 @@ export default async function AccountPage({
           {/* The card for anyone with something to do about it: a vetted
               contractor who can rejoin, or a member Stripe is still billing.
               A comped member has nothing to manage, so no card. */}
-          {status === 'suspended' && ((contractor.vetted_at && !isPremium) || isLiveSub(subQ.data)) && (
+          {status === 'suspended' && (!app || isPremium) && ((contractor.vetted_at && !isPremium) || isLiveSub(subQ.data)) && (
             <MembershipCard
               membership={membership}
               sub={subQ.data ?? null}
@@ -370,14 +370,19 @@ export default async function AccountPage({
                 {(isOpen || !app) && <Link href="/account/market">Market data</Link>}
               </div>
 
-              <MembershipCard
-                membership={membership}
-                sub={subQ.data ?? null}
-                compedUntil={contractor.premium_comped_until ?? null}
-                openCompedUntil={contractor.open_comped_until ?? null}
-                notice={subNotice}
-                app={app}
-              />
+              {/* In the app, only members see a card (their own plan). Plans
+                  are not offered there at all: the website is the only
+                  place to see or buy one, like Spotify. */}
+              {(!app || isPremium) && (
+                <MembershipCard
+                  membership={membership}
+                  sub={subQ.data ?? null}
+                  compedUntil={contractor.premium_comped_until ?? null}
+                  openCompedUntil={contractor.open_comped_until ?? null}
+                  notice={subNotice}
+                  app={app}
+                />
+              )}
             </>
           )}
 
