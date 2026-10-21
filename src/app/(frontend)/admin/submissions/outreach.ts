@@ -48,12 +48,12 @@ export async function loadOutreach(id: string): Promise<Outreach> {
       .eq('kind', 'sq_invitation')
       .eq('payload->>submission_id', id)
       .order('created_at', { ascending: true }),
-    // The first look at each invitation, with whether it was in the app
-    // (record_invitation_view's p_in_app, migration 20261021170000).
+    // The first look in the app at each invitation (record_invitation_view's
+    // p_in_app, migration 20261021170000): one app_view event per invitation.
     admin
       .from('invitation_events')
-      .select('invitation_id, metadata, invitation:job_invitations!inner(submission_id)')
-      .eq('event_type', 'viewed')
+      .select('invitation_id, created_at, invitation:job_invitations!inner(submission_id)')
+      .eq('event_type', 'app_view')
       .eq('invitation.submission_id', id),
   ]);
   const invitations = invitationsQ.data ?? [];
@@ -77,11 +77,9 @@ export async function loadOutreach(id: string): Promise<Outreach> {
   const pushes = pushesQ.error ? [] : (pushesQ.data ?? []);
   type Push = (typeof pushes)[number];
   const failedPush = (p: Push) => p.status === 'failed';
-  const inApp = new Set(
-    (viewsQ.data ?? [])
-      .filter((v) => (v.metadata as { in_app?: unknown } | null)?.in_app === true)
-      .map((v) => v.invitation_id),
-  );
+  if (viewsQ.error) console.error('[outreach] app views failed:', viewsQ.error.message);
+  // Invitation id → when it was first opened in the app.
+  const inApp = new Map((viewsQ.data ?? []).map((v) => [v.invitation_id, v.created_at] as const));
   const contractorQuotes = contractorQuotesQ.data ?? [];
   const clientQuotes = clientQuotesQ.data ?? [];
 
@@ -113,7 +111,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
     pushes_sent: pushes.filter((p) => p.status === 'sent').length,
     pushes_failed: pushes.filter(failedPush).length,
     pushes_tapped: pushes.filter((p) => p.clicked_at).length,
-    opened_in_app: invitations.filter((i) => i.opened_at && inApp.has(i.id)).length,
+    opened_in_app: invitations.filter((i) => inApp.has(i.id)).length,
     quotes_live: clientQuotes.filter((q) => q.status === 'active').length,
     lowest_client_pence: clientQuotes
       .filter((q) => q.status === 'active' || q.status === 'accepted')
@@ -178,18 +176,28 @@ export async function loadOutreach(id: string): Promise<Outreach> {
     const inv = t.contractor_id ? invByContractor.get(t.contractor_id) : undefined;
     return { who: (inv && contractorOf(inv)?.business_name) ?? t.to_phone, whoId: t.contractor_id, sub: inv ? t.to_phone : undefined };
   };
+  // One wording for a text and a push: what happened to it, and whether
+  // its link was tapped. `sent` is the furthest it got (a text's delivery
+  // status, or plain "sent" for a push, which has no receipts).
+  const channelOutcome = (
+    m: { status: string; detail: string | null; clicked_at: string | null; clicks: number },
+    bad: boolean,
+    failedDetail: string | null,
+    sent: string,
+  ) =>
+    bad
+      ? `Failed: ${failedDetail ?? m.status}`
+      : m.status === 'sent'
+        ? sent + (m.clicked_at ? (m.clicks > 1 ? ` · tapped ${m.clicks} times` : ' · tapped') : '')
+        : m.status === 'skipped'
+          ? `Not sent: ${m.detail ?? 'skipped'}`
+          : m.status;
   const texted: OutreachLine[] = texts.map((t) => {
     const bad = failedText(t);
     return {
       key: t.id,
       ...textWho(t),
-      what: bad
-        ? `Failed: ${t.delivery_detail ?? t.detail ?? t.delivery_status ?? t.status}`
-        : t.status === 'sent'
-          ? (t.delivery_status ?? 'sent') + (t.clicked_at ? ' · tapped' : '')
-          : t.status === 'skipped'
-            ? `Not sent: ${t.detail ?? 'skipped'}`
-            : t.status,
+      what: channelOutcome(t, bad, t.delivery_detail ?? t.detail ?? t.delivery_status, t.delivery_status ?? 'sent'),
       when: t.delivery_at ?? t.sent_at ?? t.created_at,
       bad,
     };
@@ -208,19 +216,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
   };
   const pushed: OutreachLine[] = pushes.map((p) => {
     const bad = failedPush(p);
-    return {
-      key: p.id,
-      ...pushWho(p),
-      what: bad
-        ? `Failed: ${p.detail ?? p.status}`
-        : p.status === 'sent'
-          ? `sent${p.clicked_at ? (p.clicks > 1 ? ` · tapped ${p.clicks} times` : ' · tapped') : ''}`
-          : p.status === 'skipped'
-            ? `Not sent: ${p.detail ?? 'skipped'}`
-            : p.status,
-      when: p.sent_at ?? p.created_at,
-      bad,
-    };
+    return { key: p.id, ...pushWho(p), what: channelOutcome(p, bad, p.detail, 'sent'), when: p.sent_at ?? p.created_at, bad };
   });
 
   return {
@@ -231,9 +227,9 @@ export async function loadOutreach(id: string): Promise<Outreach> {
       tapped,
       pushed,
       app: invitations
-        .filter((i) => i.opened_at && inApp.has(i.id))
-        .sort((a, b) => byTime(a.opened_at, b.opened_at))
-        .map((i) => invLine(i, i.opened_at)),
+        .filter((i) => inApp.has(i.id))
+        .sort((a, b) => byTime(inApp.get(a.id) ?? null, inApp.get(b.id) ?? null))
+        .map((i) => invLine(i, inApp.get(i.id) ?? null)),
       opened: invitations
         .filter((i) => i.opened_at)
         .sort((a, b) => byTime(a.opened_at, b.opened_at))

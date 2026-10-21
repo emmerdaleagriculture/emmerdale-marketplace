@@ -3,8 +3,17 @@
 -- in the app.
 --
 -- record_invitation_view gains p_in_app: the quote page passes whether the
--- request came from the app, and the 'viewed' event keeps it in metadata.
--- One signature only, so PostgREST never has two to choose between.
+-- request came from the app's own frame. The first look of all still
+-- writes 'viewed'; the first look in the app writes 'app_view', whenever
+-- that is, so an email open on a laptop followed by the push on the phone
+-- still counts as an app open. One signature only, so PostgREST never has
+-- two to choose between.
+
+alter table public.invitation_events drop constraint if exists invitation_events_event_type_check;
+alter table public.invitation_events add constraint invitation_events_event_type_check
+  check (event_type = any (array['sent', 'viewed', 'priced', 'revised', 'declined', 'undeclined', 'reminded',
+                                 'confirm_pending', 'confirmed', 'closed_awarded', 'closed_stale',
+                                 'contact_revealed', 'app_view']));
 
 drop function if exists public.record_invitation_view(text);
 
@@ -22,8 +31,14 @@ begin
     update job_invitations
        set opened_at = now(), status = case when status = 'sent' then 'viewed' else status end
      where id = v_inv.id;
-    insert into invitation_events (invitation_id, contractor_id, event_type, metadata)
-    values (v_inv.id, v_inv.contractor_id, 'viewed', jsonb_build_object('in_app', coalesce(p_in_app, false)));
+    insert into invitation_events (invitation_id, contractor_id, event_type)
+    values (v_inv.id, v_inv.contractor_id, 'viewed');
+  end if;
+  if coalesce(p_in_app, false)
+     and not exists (select 1 from invitation_events
+                      where invitation_id = v_inv.id and event_type = 'app_view') then
+    insert into invitation_events (invitation_id, contractor_id, event_type)
+    values (v_inv.id, v_inv.contractor_id, 'app_view');
   end if;
   return jsonb_build_object('ok', true);
 end;
@@ -81,11 +96,10 @@ as $function$
       left join lateral (
         select count(*) as invited,
                count(ji.opened_at) as opened,
-               -- The first look was in the app (record_invitation_view's p_in_app).
+               -- Opened in the app at some point (record_invitation_view's p_in_app).
                count(*) filter (where exists (
                  select 1 from invitation_events ev
-                  where ev.invitation_id = ji.id and ev.event_type = 'viewed'
-                    and ev.metadata->>'in_app' = 'true')) as opened_in_app,
+                  where ev.invitation_id = ji.id and ev.event_type = 'app_view')) as opened_in_app,
                count(*) filter (where exists (
                  select 1 from contractor_quotes q where q.invitation_id = ji.id)) as priced,
                count(*) filter (where ji.decline_reason is not null or ji.status = 'declined') as declined
