@@ -191,7 +191,7 @@ export default async function SubmissionDetailPage({
     admin
       .from('client_quotes')
       .select(
-        `id, status, client_price_pence, markup_rate, premium, contractor_display_label, contractor_real_name, valid_until, created_at, contractor_note,
+        `id, status, withdrawn_at, client_price_pence, markup_rate, premium, contractor_display_label, contractor_real_name, valid_until, created_at, contractor_note,
          cq:contractor_quotes(contractor_price_pence, quote_type, rate_value_pence, rate_minimum_pence, source, notes_internal, site_visit_required,
            contractor:contractors(id, business_name))`,
       )
@@ -540,7 +540,7 @@ export default async function SubmissionDetailPage({
                 contractor: { id: string; business_name: string } | null;
               } | null;
               return (
-                <tr key={cq.id}>
+                <tr key={cq.id} style={cq.withdrawn_at ? { opacity: 0.5 } : undefined}>
                   <td>{cq.contractor_display_label}</td>
                   <td>
                     <ContractorLink id={inner?.contractor?.id}>{inner?.contractor?.business_name ?? '—'}</ContractorLink>
@@ -558,7 +558,14 @@ export default async function SubmissionDetailPage({
                       ? ` (${Math.round(Number(cq.markup_rate) * 100)}%)`
                       : ''}
                   </td>
-                  <td>{cq.status}</td>
+                  <td>
+                    {cq.withdrawn_at ? 'withdrawn' : cq.status}
+                    {/* An hourly rate posing as a job price, or anything else
+                        that shouldn't be in front of the customer. */}
+                    {cq.status === 'active' && (
+                      <ClearNoteButton submissionId={id} clientQuoteId={cq.id} kind="price" />
+                    )}
+                  </td>
                   {/* Nothing reviews this before the customer reads it,
                       so the only control is taking it back afterwards. */}
                   <td>

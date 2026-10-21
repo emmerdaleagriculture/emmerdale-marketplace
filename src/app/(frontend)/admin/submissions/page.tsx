@@ -424,6 +424,8 @@ export default async function AdminSubmissionsPage({
         .from('client_quotes')
         .select('submission_id, client_price_pence')
         .neq('status', 'superseded')
+        // A withdrawn price never stood (withdrawClientQuoteAction).
+        .is('withdrawn_at', null)
         .order('id')
         .range(from, to),
     ),

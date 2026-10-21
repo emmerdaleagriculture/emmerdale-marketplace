@@ -107,6 +107,7 @@ export type Database = {
           unit_label: string | null
           unit_quantity: number | null
           valid_until: string
+          withdrawn_at: string | null
           viewed_at: string | null
         }
         Insert: {
@@ -132,6 +133,7 @@ export type Database = {
           unit_label?: string | null
           unit_quantity?: number | null
           valid_until: string
+          withdrawn_at: string | null
           viewed_at?: string | null
         }
         Update: {
@@ -157,6 +159,7 @@ export type Database = {
           unit_label?: string | null
           unit_quantity?: number | null
           valid_until?: string
+          withdrawn_at?: string | null
           viewed_at?: string | null
         }
         Relationships: [
