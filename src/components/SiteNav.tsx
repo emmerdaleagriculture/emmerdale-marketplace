@@ -384,7 +384,7 @@ export function SiteNav({ viewer: known, defaultOpen = false }: { viewer?: Viewe
       {/* Nothing for a customer or an admin: an empty landmark is noise. */}
       {/* data-viewer-slot: invisible until the viewer is known (globals.css),
           so "Join the network" never shows a signed-in member and swaps. */}
-      {bar && <nav className={styles.bar} aria-label="Membership" data-viewer-slot>{bar}</nav>}
+      {bar && <nav className={styles.bar} aria-label="Membership" data-viewer-slot="member">{bar}</nav>}
 
       {/* Instagram and TikTok: before the burger on a phone, after it on
           desktop (SiteHeader.module.css reorders them). */}

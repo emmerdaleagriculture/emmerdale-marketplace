@@ -146,13 +146,20 @@ html[data-app][data-app-tabs] .appFooterCta {
 }
 
 /* Signed in: the parts of the header and footer that depend on who you are
-   stay invisible (space kept, nothing jumps) until useViewer knows, so the
-   signed-out version never shows and swaps. html[data-session] is set before
-   paint by the root layout; html[data-viewer] by useViewer. If the script
-   never runs, the slot shows itself after 2.5s rather than stay blank. */
+   stay invisible until useViewer knows, so the signed-out version never
+   shows and swaps. html[data-session] and [data-viewer-role] are set before
+   paint by the root layout, only when a viewer is cached for the session;
+   html[data-viewer] by useViewer. If the script never runs, the slot shows
+   itself after 2.5s rather than stay blank. */
 html[data-session]:not([data-viewer]) [data-viewer-slot] {
   visibility: hidden;
   animation: viewer-reveal 0s 2.5s forwards;
+}
+/* The membership bar is a contractor's only: for anyone else it would hold
+   its space while hidden and then vanish, moving the burger along. */
+html[data-session][data-viewer-role='customer']:not([data-viewer]) [data-viewer-slot='member'],
+html[data-session][data-viewer-role='account']:not([data-viewer]) [data-viewer-slot='member'] {
+  display: none;
 }
 @keyframes viewer-reveal {
   to {
