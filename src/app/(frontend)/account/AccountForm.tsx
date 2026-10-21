@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { updateProfileAction } from './actions';
 import { emptyFormState } from '@/lib/form';
 import { CountyPicker, type CountyOption } from '@/components/forms/CountyPicker';
@@ -15,6 +15,12 @@ import ac from './account.module.css';
  * reach on a phone. Closed <details> still submit their inputs; if a required
  * field inside one is empty, the invalid event opens its section so the
  * browser can focus it instead of silently refusing to submit.
+ *
+ * The section headers count what is ticked right now, and once anything has
+ * changed the Save bar sticks to the bottom of the screen saying so. A
+ * contractor wrote in having unticked services several times and seen the
+ * header still say 29: nothing on the page moved until Save, which sat
+ * below three folded sections.
  */
 export function AccountForm({
   contractor,
@@ -31,11 +37,30 @@ export function AccountForm({
   listing?: boolean;
 }) {
   const [state, action, pending] = useActionState(updateProfileAction, emptyFormState);
-  const serviceCount = (contractor.services ?? []).length;
+  const formRef = useRef<HTMLFormElement>(null);
+  const [serviceCount, setServiceCount] = useState((contractor.services ?? []).length);
+  const [countyCount, setCountyCount] = useState(selectedCounties.length);
+  const [dirty, setDirty] = useState(false);
+
+  // What is ticked, from the boxes themselves: "Select all" in the county
+  // picker sets them without a change event, so it calls this directly.
+  function recount() {
+    const form = formRef.current;
+    if (!form) return;
+    setServiceCount(form.querySelectorAll('input[name="service_ids"]:checked').length);
+    setCountyCount(form.querySelectorAll('input[name="county_ids"]:checked').length);
+    setDirty(true);
+  }
+  // Saved: the server has re-rendered the props, and the bar can go.
+  useEffect(() => {
+    if (state.ok) setDirty(false);
+  }, [state]);
 
   return (
     <form
+      ref={formRef}
       action={action}
+      onChange={recount}
       onInvalidCapture={(e) => {
         const section = (e.target as HTMLElement).closest('details');
         if (section) section.open = true;
@@ -88,7 +113,7 @@ export function AccountForm({
         <summary className={ac.sectionHead}>
           Counties you cover
           <span className={ac.sectionMeta}>
-            {selectedCounties.length} {selectedCounties.length === 1 ? 'county' : 'counties'}
+            {countyCount} {countyCount === 1 ? 'county' : 'counties'}
           </span>
         </summary>
         <div className={ac.sectionBody}>
@@ -96,7 +121,7 @@ export function AccountForm({
             Changes take effect straight away: add a county and any jobs still open
             there are sent to you.
           </p>
-          <CountyPicker counties={counties} selected={selectedCounties} collapsible />
+          <CountyPicker counties={counties} selected={selectedCounties} collapsible onChange={recount} />
         </div>
       </details>
 
@@ -177,9 +202,14 @@ export function AccountForm({
         </details>
       )}
 
-      <div className={ac.formFoot}>
+      <div className={`${ac.formFoot} ${dirty ? ac.formFootPending : ''}`.trim()}>
         {state.error && <p className={f.error}>{state.error}</p>}
-        {state.ok && <p className={f.success}>{state.message}</p>}
+        {state.ok && !dirty && <p className={f.success}>{state.message}</p>}
+        {dirty && !pending && (
+          <p className={ac.unsaved} role="status">
+            Unsaved changes
+          </p>
+        )}
         <button className={f.btnPrimary} type="submit" disabled={pending}>
           {pending ? 'Saving…' : 'Save changes'}
         </button>
