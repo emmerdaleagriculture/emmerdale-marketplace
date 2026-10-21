@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import { refundUnapprovedPremium } from '@/lib/stripe';
+import { billedTier } from '@/lib/membership';
 import { WARNING_SUBJECT } from '@/lib/sealedQuotes/contractorWarning';
 
 async function assertAdmin() {
@@ -69,13 +70,33 @@ export async function setContractorStatus(formData: FormData) {
   }
 
   if (status === 'approved' && before?.status === 'pending') {
-    // The email offers Open to anyone not on it, worded by what they hold.
-    const { data: tier } = await admin.rpc('contractor_tier', { p_contractor_id: id });
-    await admin.from('pending_emails').insert({
+    // The email offers Open to anyone who doesn't hold it (a comp counts),
+    // as a prorated move up only when Stripe bills them for Premium — the
+    // same rule as the contact warning (offPlatformAlert.ts). If either
+    // lookup fails the email goes without the offer rather than pitch a
+    // paying member the wrong thing.
+    const [tierRes, subRes] = await Promise.all([
+      admin.rpc('contractor_tier', { p_contractor_id: id }),
+      admin
+        .from('subscriptions')
+        .select('status, tier, plan, current_period_end, cancel_at_period_end')
+        .eq('contractor_id', id)
+        .maybeSingle(),
+    ]);
+    if (tierRes.error) console.error('[admin] approval: tier lookup failed:', tierRes.error.message);
+    if (subRes.error) console.error('[admin] approval: subscription lookup failed:', subRes.error.message);
+    const known = !tierRes.error && !subRes.error;
+    const { error: qErr } = await admin.from('pending_emails').insert({
       kind: 'application_approved',
       to_email: before.email,
-      payload: { contractor_id: id, business_name: before.business_name, tier: tier ?? null },
+      payload: {
+        contractor_id: id,
+        business_name: before.business_name,
+        open_offer: known && tierRes.data !== 'open',
+        billed_premium: known && billedTier(subRes.data) === 'premium',
+      },
     });
+    if (qErr) console.error('[admin] approval email not queued:', qErr.message);
   }
 
   // Approval, vetting, suspension and a comp all change who is listed.

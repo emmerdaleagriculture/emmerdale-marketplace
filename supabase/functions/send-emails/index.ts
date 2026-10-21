@@ -161,6 +161,24 @@ function visitWhen(iso: unknown): string {
   });
 }
 
+/**
+ * The price and link that close every Open offer, so the two emails that
+ * make one (sq_contact_warning, application_approved) can't quote different
+ * terms. `billedPremium` = Stripe bills them for Premium: a prorated move up;
+ * anyone else (free, or a comp) is told the price and what it includes.
+ */
+function openOfferClose(billedPremium: boolean): string {
+  return (
+    (billedPremium
+      ? `You’re on Premium now, so it’s a move up to £49 a month or £399 a year, prorated ` +
+        `against what you’ve already paid.`
+      : `It’s £49 a month or £399 a year, and it includes everything in Premium: first ` +
+        `refusal on new jobs and 5% commission instead of 15%.`) +
+    `\n\n` +
+    `${billedPremium ? 'Move up to Open' : 'Join Open'}: ${SITE_URL}/account/membership`
+  );
+}
+
 function render(kind: string, p: Record<string, unknown>): { subject: string; text: string } | null {
   const title = String(p.title ?? 'a job');
   const where = [p.town, p.postcode_district].filter(Boolean).join(', ') || String(p.county ?? '');
@@ -260,42 +278,32 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `membership is for: the customer's name, phone and email on every job you're invited ` +
           `to, the moment it arrives, and you can agree the work with them directly with ` +
           `nothing added on top, or send a price through us at 5% as usual. ` +
-          (premium
-            ? `You're on Premium now, so it's a move up to £49 a month or £399 a year, prorated ` +
-              `against what you've already paid.`
-            : `It's £49 a month or £399 a year, and it includes everything in Premium: first ` +
-              `refusal on new jobs and 5% commission instead of 15%.`) +
+          openOfferClose(premium) +
           `\n\n` +
-          `${premium ? 'Move up to Open' : 'Join Open'}: ${SITE_URL}/account/membership\n\n` +
           `If the message was refused by mistake, reply to this email and we'll look at it.`,
       };
     }
 
     /**
      * Approval, and the one moment a new contractor is certainly reading:
-     * anyone not already on Open is offered it. p.tier is contractor_tier()
-     * at approval ('premium', 'open' or null), so a Premium sign-up reads a
-     * move up, a free one a join, and an Open member nothing at all.
+     * p.open_offer is set for anyone who doesn't hold Open (a comp counts as
+     * holding it), and p.billed_premium words it as a prorated move up. Both
+     * are false when the admin action couldn't look them up, so a paying
+     * member is never pitched the wrong thing.
      */
     case 'application_approved': {
-      const pitch =
-        p.tier === 'open'
-          ? ''
-          : `\n\n` +
-            `One more thing. ${p.tier === 'premium' ? 'Open membership' : 'On the free plan you see a job once members have had first look. Open membership'} ` +
-            `puts the customer's name, phone and email on every job you're invited to, the ` +
-            `moment it arrives, so you can ring them and agree the work directly with nothing ` +
-            `added on top, or send a price through us at 5% as usual. Open members see new jobs ` +
-            `first, ahead of Premium, and get market data for their area. They're also listed ` +
-            `on our county pages with a link to their own website, which helps their site ` +
-            `show up in Google as well as sending customers' enquiries straight to them. ` +
-            (p.tier === 'premium'
-              ? `You're on Premium, so it's a move up to £49 a month or £399 a year, prorated ` +
-                `against what you've already paid.\n\n` +
-                `Move up to Open: ${SITE_URL}/account/membership`
-              : `It's £49 a month or £399 a year, and it includes everything in Premium: ` +
-                `first refusal on new jobs and 5% commission instead of 15%.\n\n` +
-                `Join Open: ${SITE_URL}/account/membership`);
+      const offer =
+        p.open_offer === true
+          ? `\n\n` +
+            `One more thing. Open membership puts the customer’s name, phone and email on ` +
+            `every job you’re invited to, the moment it arrives, so you can ring them and agree ` +
+            `the work directly with nothing added on top, or send a price through us at 5% as ` +
+            `usual. Open members see new jobs first, ahead of Premium, and get market data for ` +
+            `their area. They’re also listed on our county pages with a link to their own ` +
+            `website, which helps their site show up in Google as well as sending customers’ ` +
+            `enquiries straight to them. ` +
+            openOfferClose(p.billed_premium === true)
+          : '';
       return {
         subject: `You’re approved: welcome to the network`,
         text:
@@ -303,7 +311,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `posted in one of your counties, and any jobs already open there are on ` +
           `their way to you now.\n\n` +
           `Sign in to see your jobs: ${SITE_URL}/invitations` +
-          pitch,
+          offer,
       };
     }
 

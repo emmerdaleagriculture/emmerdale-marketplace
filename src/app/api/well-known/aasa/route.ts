@@ -21,6 +21,10 @@ const COMPONENTS = [
   { '/': '/invitations*' },
   { '/': '/won*' },
   { '/': '/jobs*' },
+  // The membership page sells through Stripe, which the app may not (it
+  // redirects there to /app/earnings), so an email's "Join Open" link stays
+  // in the browser. Apple takes the first matching rule: keep this above /account*.
+  { '/': '/account/membership*', exclude: true, comment: 'buying stays in the browser' },
   { '/': '/account*' },
   { '/': '/start*', comment: 'the job flow' },
   { '/': '/login*' },
