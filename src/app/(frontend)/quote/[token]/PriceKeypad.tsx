@@ -37,8 +37,10 @@ export function PriceKeypad({
   const tooLow = pounds > 0 && pence < MIN_JOB_PENCE;
   const customer = pence ? customerPaysPence(pence, rate) : 0;
   const fee = customer - pence;
-  // Only a pitch when premium would actually lower the customer's figure.
-  const withPremium = pence && !premium && premiumRate < rate ? customerPaysPence(pence, premiumRate) : null;
+  // No membership pitch in the app (store rules; plans live on the website
+  // only, the Spotify way). Kept null so the layout below is unchanged.
+  const withPremium: number | null = null;
+  void premium; void premiumRate;
 
   const tap = (d: string) => {
     const next = d === '⌫' ? digits.slice(0, -1) : (digits + d).replace(/^0+(?=\d)/, '').slice(0, 6);

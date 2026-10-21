@@ -102,12 +102,14 @@ export default async function EarningsPage() {
         </div>
       )}
 
+      {/* Members see their own plan. Nothing about plans for anyone else:
+          they are only offered on the website, like Spotify. */}
+      {tier && (
       <div className={ui.card} style={{ marginTop: 22, background: '#fff8d6', border: '1px solid #f2e39a' }}>
         <div className={ui.cardTitle} style={{ color: '#6b5a00' }}>
-          {tier ? `✦ Emmerdale ${tier === 'open' ? 'Open' : 'Premium'} · you’re a member` : '✦ Membership · you’re on the free plan'}
+          {`✦ Emmerdale ${tier === 'open' ? 'Open' : 'Premium'} · you’re a member`}
         </div>
-        {!tier && <p className={ui.cardSub} style={{ marginTop: 4 }}>What members get:</p>}
-        <ul className={ui.promises} style={{ marginTop: 10 }}>
+                <ul className={ui.promises} style={{ marginTop: 10 }}>
           <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
             <span className={ui.tick} aria-hidden="true">✓</span>
             <span><strong>First refusal on new jobs.</strong> Price new jobs near you before anyone else sees them.</span>
@@ -116,12 +118,13 @@ export default async function EarningsPage() {
             <span className={ui.tick} aria-hidden="true">✓</span>
             <span><strong>5% commission, not 15%.</strong> Customers see your price plus less on top.</span>
           </li>
-          <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
+          {tier === 'open' && <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
             <span className={ui.tick} aria-hidden="true">✓</span>
             <span><strong>Open: the customer’s details on every job.</strong> Ring them and agree the work directly.</span>
-          </li>
+          </li>}
         </ul>
       </div>
+      )}
     </main>
   );
 }
