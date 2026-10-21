@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
 import { poundsInputToPence } from '@/lib/sealedQuotes/money';
-import { CLIENT_NOTE_MAX, clientNoteProblem } from '@/lib/sealedQuotes/clientNote';
+import { CLIENT_NOTE_MAX, clientNoteProblem, hourlyRateProblem } from '@/lib/sealedQuotes/clientNote';
 import type { FormState } from '@/lib/form';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -63,6 +63,12 @@ export async function submitQuoteAction(
   }
   const d = parsed.data;
   if (!isTokenFormat(d.token)) return { error: 'This link is not valid.' };
+
+  // A price, not a rate: an hourly figure beside a total leaves the customer
+  // not knowing what the job costs. First, so "£40 per hour" is told to price
+  // the job rather than only to take the figure out. Not flagged to admin.
+  const hourly = hourlyRateProblem(d.note_to_client ?? '');
+  if (hourly) return { error: hourly };
 
   // Checked before the price is even converted: nothing reviews this note
   // between here and the customer reading it.

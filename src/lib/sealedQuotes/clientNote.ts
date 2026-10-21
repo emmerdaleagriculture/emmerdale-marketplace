@@ -86,6 +86,37 @@ export const OFF_PLATFORM = new RegExp(
 export const OFF_PLATFORM_REFUSAL =
   'Please leave payment arrangements out. Every job is paid through us, deposit and balance, and nothing is paid to the contractor directly.';
 
+/**
+ * A price that is really an hourly rate: "this is price per hour", "I
+ * normally charge by the hour", "travel included in hourly rate" (all real,
+ * Sept–Oct 2026). The customer accepts one figure and pays a deposit on it,
+ * so an hourly rate written beside a total leaves them not knowing what the
+ * job costs. Price notes only (quote/[token]/actions.ts): after award an
+ * extra or a description may fairly talk about hours.
+ *
+ * "takes 3 hours" and "24 hours' notice" stay legal; it is the rate words —
+ * hourly, per hour, by the hour, /hr, "3 hrs at 45" — that are refused.
+ */
+export const HOURLY = new RegExp(
+  [
+    '\\bhourly\\b',
+    '\\bby\\s+the\\s+(?:hour|hr)\\b',
+    '\\bper\\s+(?:hour|hr)s?\\b',
+    '\\bp\\s*\\/\\s*(?:h|hr)\\b',
+    '\\/\\s*(?:hour|hr)s?\\b',
+    '\\b(?:hours?|hrs?)\\s+(?:at|@)\\s*£?\\d',
+  ].join('|'),
+  'i',
+);
+
+export const HOURLY_REFUSAL =
+  'Please price the whole job rather than an hourly rate. The customer accepts one figure and pays a deposit on it, so give the total for the work they’ve described. If you’d need to see the site first, tick the box below.';
+
+/** null when a price note doesn't turn the price into an hourly rate. */
+export function hourlyRateProblem(note: string): string | null {
+  return HOURLY.test(note) ? HOURLY_REFUSAL : null;
+}
+
 /** What people put between the digits of a phone number. */
 const PHONE_SEPARATOR = /[\s().\-–—]+/;
 

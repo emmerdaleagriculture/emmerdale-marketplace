@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CLIENT_NOTE_MAX, clientNoteProblem } from './clientNote';
+import { CLIENT_NOTE_MAX, clientNoteProblem, hourlyRateProblem } from './clientNote';
 
 /**
  * These guardrails are the whole review process. A contractor's note reaches
@@ -115,5 +115,34 @@ describe('clientNoteProblem — what a customer may be shown', () => {
   it('lets a VAT status through', () => {
     ok('I am not VAT registered so there is no VAT on this.');
     ok('Price is without VAT.');
+  });
+});
+
+describe('hourlyRateProblem — a price note must not turn the price into a rate', () => {
+  const rate = (s: string) => expect(hourlyRateProblem(s)).toBeTypeOf('string');
+  const fine = (s: string) => expect(hourlyRateProblem(s)).toBeNull();
+
+  it('refuses the hourly notes contractors actually sent', () => {
+    rate('this is price per hour. travel to and from job will be charged');
+    rate('Price is per hour. Travel charge not included, no VAT');
+    rate('I may need to see the place first but this is likely to be the price. I normally charge by the hour');
+    rate('Travel included in hourly rate');
+  });
+
+  it('refuses the other ways of writing a rate', () => {
+    rate('£40 per hr');
+    rate('45 p/h plus diesel');
+    rate('45/hr');
+    rate('3 hrs at 45');
+    rate('Approx 4 hours @ £50');
+    rate('Charged per hours worked');
+  });
+
+  it('lets time estimates and notice periods through', () => {
+    fine('It would take a few hours to do to a high standard.');
+    fine('About 3 hours with the flail, weather allowing.');
+    fine('Need 24 hours notice before we start.');
+    fine('Can be there within the hour of arranging.');
+    fine('');
   });
 });
