@@ -12,7 +12,7 @@ import { LlmParseSchema, RECORD_JOB_PARSE_TOOL, type LlmParse } from './schema';
  */
 
 export const MODEL_VERSION = 'claude-haiku-4-5';
-export const PROMPT_VERSION = 'v5'; // v5: Stump grinding, Mobile log splitting; v4: Lime spreading, Tree felling & chipping, Sub-soiling, Scarifying; v3: Fencing, Ditch clearance, and seven machinery/forestry services; v2: Hedge cutting
+export const PROMPT_VERSION = 'v6'; // v6: Muck spreading, Muck heap removal; v5: Stump grinding, Mobile log splitting; v4: Lime spreading, Tree felling & chipping, Sub-soiling, Scarifying; v3: Fencing, Ditch clearance, and seven machinery/forestry services; v2: Hedge cutting
 
 /** Hard latency ceiling on the parse call (spec §4 step 2). */
 // 15 s, up from 8: Haiku averages ~2.7 s here, but one live customer hit the
@@ -39,13 +39,13 @@ Services (choose exactly one, or "unmatched"):
 - Spraying — applying herbicide or pesticide across a field
 - Fertiliser application — spreading fertiliser
 - Overseeding — re-seeding or overseeding grassland
-- Manure sweeping — sweeping or collecting droppings from paddocks
+- Manure sweeping — sweeping or collecting droppings from paddocks (NOT spreading a muck heap on the land — that is Muck spreading)
 - Hay, straw & haylage — supplying or delivering hay, straw or haylage bales
 - Tractor hire (events) — hiring a tractor (with driver) for an event or show
 - Hedge cutting — cutting or trimming hedges, usually with a tractor-mounted flail arm; measured in metres of hedge
 - Fencing — supplying and erecting or repairing fencing: post-and-rail, stock netting, equestrian; measured in metres of fence
 - General tractor work — general tractor work that fits no more specific service: moving, loading, pulling or odd jobs with a tractor and driver; usually by the hour or day
-- Trailer work — carting or hauling with a tractor and trailer: moving bales, muck, timber, spoil or materials; usually by the load, hour or day
+- Trailer work — carting or hauling with a tractor and trailer: moving bales, muck, timber, spoil or materials (not muck heaps: taking one away is Muck heap removal, spreading it is Muck spreading); usually by the load, hour or day
 - Road grading — grading and re-levelling farm tracks, drives or unmade roads, filling potholes and restoring the camber; measured in metres of track
 - Fixed tooth mulching — forestry mulching with a fixed-tooth mulcher: grinding scrub, saplings, stumps or brash down to mulch; measured by area
 - Excavator work — digging with an excavator or digger: trenches, footings, ponds, spoil moving; usually by the hour or day
@@ -57,6 +57,8 @@ Services (choose exactly one, or "unmatched"):
 - Mounding — forestry mounding with an excavator to prepare ground for tree planting; measured by area
 - Stump grinding — grinding tree stumps out below ground level with a stump grinder, or otherwise removing stumps; priced by the job
 - Mobile log splitting — a contractor bringing a log splitter or firewood processor to split felled timber or rings into firewood logs on site; priced by the job
+- Muck spreading — spreading farmyard manure, horse muck or compost from a heap onto fields or paddocks with a muck spreader, whether the heap is on site or the muck is supplied too (taking a heap away is Muck heap removal); measured by area
+- Muck heap removal — loading a muck or manure heap and taking it away off site, or clearing it out of a yard or stable area; priced by the job
 
 Rules:
 - "unmatched" is a legitimate, first-class answer. Prefer it over a poor fit — a wrong confident classification is worse than an honest unmatched.

@@ -480,4 +480,108 @@ export const PART_A: ServiceContent[] = [
     ],
     related: ['fertiliser', 'scarifying', 'overseeding', 'harrowing'],
   },
+
+  // 10. Muck spreading
+  {
+    card: 'muck-spreading',
+    path: 'muck-spreading',
+    canonical: ['Muck spreading'],
+    metaTitle: 'Muck Spreading for Paddocks and Fields',
+    metaDescription:
+      'Muck spreading for paddocks and grassland: the muck heap loaded and spread back on the land. Find local contractors and get prices.',
+    h1: 'Muck spreading for paddocks and fields',
+    intro:
+      'Muck spreading turns a muck heap back into fertiliser. A contractor loads the heap into a spreader and spreads it thinly across your fields, so the heap goes and the grass gets the nutrients. It also suits anyone who wants farmyard manure or compost brought in and spread.',
+    involves: [
+      'A loader, often a tractor with a front loader or a telehandler, fills a muck spreader from the heap. The spreader’s beaters shred the muck and throw it out behind in an even layer as the tractor drives up and down the field.',
+      'Well rotted muck spreads evenly and breaks down quickly. Fresh muck with a lot of straw or shavings in it is lumpier, takes longer to break down and can smother the grass if it goes on too thickly.',
+      'If there is no heap on site, some contractors can supply farmyard manure or compost and spread it, which they will price per load or per tonne.',
+    ],
+    when: [
+      'Late winter and early spring, before the grass gets going, is the usual time, along with late summer after a cut of hay. The ground needs to be firm enough to carry a loaded spreader without rutting.',
+      'Don’t spread on waterlogged, flooded, frozen or snow-covered ground, or close to ditches, streams and wells. In a Nitrate Vulnerable Zone there are closed periods and limits on how much manure can go on each year. Check the current rules on GOV.UK if your land is in an NVZ.',
+    ],
+    priceFactors: [
+      'How big the heap is: the number of loads decides the hours',
+      'The acreage it is going on, and how far the fields are from the heap',
+      'Whether a loader is needed, or you can load the spreader yourself',
+      'Whether the muck is supplied or already on site',
+      'Access for a tractor and spreader through gateways and along tracks',
+      'Travel distance',
+    ],
+    goodToKnow: [
+      'Keep horses off spread paddocks until the muck has broken down and been washed in. Spreading horse muck back onto horse paddocks can spread worms, so many owners put it on hay or arable ground instead.',
+      'Tell the contractor if there is plastic, baler twine or rubbish in the heap. It jams spreaders and ends up across the field.',
+      'Leave room around the heap for a loader to work and a spreader to turn.',
+    ],
+    faqs: [
+      {
+        q: 'When is the best time to spread muck?',
+        a: 'Late winter or early spring, when the ground is firm and the grass is about to grow, or after a hay cut. Avoid wet, frozen or waterlogged ground, and spells when heavy rain is forecast.',
+      },
+      {
+        q: 'Can I spread horse muck on my horse paddocks?',
+        a: 'You can, but it is safer when the muck is well rotted, because composting kills most worm eggs. Many owners spread it on fields used for hay or other stock instead.',
+      },
+      {
+        q: 'How long should horses stay off after muck spreading?',
+        a: 'Until the muck has broken down and been washed into the sward, usually a few weeks depending on rain and how thickly it went on.',
+      },
+      {
+        q: 'Do I need to rot muck before spreading it?',
+        a: 'It is better rotted. A heap left for six months or more breaks down into a crumbly manure that spreads evenly. Fresh muck can be spread, but it is lumpier and slower to work in.',
+      },
+    ],
+    related: ['muck-heap-removal', 'harrowing', 'fertiliser', 'lime-spreading'],
+  },
+
+  // 11. Muck heap removal
+  {
+    card: 'muck-heap-removal',
+    path: 'muck-heap-removal',
+    canonical: ['Muck heap removal'],
+    metaTitle: 'Muck Heap Removal for Yards and Stables',
+    metaDescription:
+      'Muck heap removal for yards, stables and smallholdings: the heap loaded up and taken away. Find local contractors and get prices.',
+    h1: 'Muck heap removal for yards and stables',
+    intro:
+      'Muck heap removal clears a stable or yard muck heap that has outgrown its space. A contractor loads the heap and takes it away, or moves it somewhere else on your land, so the yard is clear and the heap can start again.',
+    involves: [
+      'A tractor with a front loader, a telehandler or a small digger loads the muck into a trailer or tipper. Each load is driven away, either off site to a farm that will take it or to a spot on your own land.',
+      'Most contractors price by the load or by the job. A small stable heap may be one or two trailer loads; a heap that has built up for a few years can be many more.',
+      'If you have fields that would take it, spreading the muck there is often cheaper than taking it away, and it feeds the grass. A contractor can quote for both.',
+    ],
+    when: [
+      'Any time of year when the ground around the heap is firm enough for a loaded trailer. Late winter, before the ground gets soft, and late summer are common.',
+      'Many arable farms take muck in late summer and autumn before ploughing, which can make it easier and cheaper to find somewhere for it to go.',
+    ],
+    priceFactors: [
+      'How big the heap is, and so the number of loads',
+      'Whether the contractor needs to bring a loader',
+      'Access for a tractor and trailer or lorry, and room to turn',
+      'Where it goes: off site, or somewhere else on your land',
+      'Distance to wherever the muck is tipped',
+      'Plastic, twine or rubbish mixed in, which a farm may refuse',
+    ],
+    goodToKnow: [
+      'Clear the area around the heap so a loader can work and a trailer can turn.',
+      'Keep plastic, baler twine and rubbish out of the heap. Clean muck is easier to place with a farm and cheaper to move.',
+      'Muck is a waste once it leaves your holding. A contractor who takes it away should be a registered waste carrier or take it straight to a farm that will use it.',
+    ],
+    faqs: [
+      {
+        q: 'How much does it cost to get a muck heap removed?',
+        a: 'It depends mostly on the number of loads, the access and how far it has to go. Contractors usually price by the load or for the whole job, so a rough idea of the heap size helps.',
+      },
+      {
+        q: 'Can I spread the muck instead of taking it away?',
+        a: 'Often, yes. If you have fields or a neighbour who will take it, spreading is usually cheaper and puts the nutrients back into the land. Well rotted muck spreads best.',
+      },
+      {
+        q: 'How often should a muck heap be cleared?',
+        a: 'It depends on how many horses or animals you have and how much space there is. Many yards clear the heap once or twice a year before it gets too big to manage.',
+      },
+    ],
+    related: ['muck-spreading', 'trailer-work', 'muck-sweeping', 'general-tractor-work'],
+  },
 ];

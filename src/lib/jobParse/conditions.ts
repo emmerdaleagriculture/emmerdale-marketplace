@@ -384,6 +384,109 @@ const LOG_QUESTIONS: ConditionQuestion[] = [
   },
 ];
 
+/**
+ * Muck spreading is priced on the acreage, but the job turns on the heap:
+ * whether there is one at all (or the muck has to be bought in), how big it
+ * is (loads, and so hours), and whether a loader is needed to fill the
+ * spreader. Rotted muck spreads evenly; fresh bedding lumps and clogs.
+ * Supplied muck is priced by the load, so that case asks how many.
+ */
+const MUCK_QUESTIONS: ConditionQuestion[] = [
+  {
+    key: 'muck_source',
+    label: 'Where is the muck coming from?',
+    short: 'Muck',
+    required: true,
+    options: [
+      { value: 'heap', label: 'A heap here on site' },
+      { value: 'supply', label: 'I need it supplied as well' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'heap_size',
+    label: 'Roughly how big is the heap?',
+    short: 'Heap',
+    hint: 'A rough guess is fine. A trailer load is about 8 tonnes.',
+    required: true,
+    showIf: (a) => a.muck_source === 'heap',
+    options: [
+      { value: 'small', label: 'A couple of trailer loads or less' },
+      { value: 'medium', label: 'A few loads (about 3 to 10)' },
+      { value: 'large', label: 'More than 10 loads' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'supply_loads',
+    label: 'Roughly how much muck do you need?',
+    short: 'Supply',
+    hint: 'A trailer load is about 8 tonnes. The contractor can advise on a rate per acre.',
+    required: true,
+    showIf: (a) => a.muck_source === 'supply',
+    options: [
+      { value: 'small', label: 'A couple of trailer loads or less' },
+      { value: 'medium', label: 'A few loads (about 3 to 10)' },
+      { value: 'large', label: 'More than 10 loads' },
+      { value: 'not_sure', label: 'Not sure, advise me' },
+    ],
+  },
+  {
+    key: 'muck_type',
+    label: 'What kind of muck is it?',
+    short: 'Type',
+    showIf: (a) => a.muck_source === 'heap',
+    options: [
+      { value: 'rotted', label: 'Well rotted' },
+      { value: 'fresh', label: 'Fresh, with straw or shavings' },
+      { value: 'mixed', label: 'A mix' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+];
+
+/**
+ * Muck heap removal is priced by the job: how many loads (the heap's size),
+ * whether the contractor has to bring a loader, and how far a lorry or
+ * tractor and trailer can get to it. Where it goes decides the tipping cost.
+ */
+const MUCK_REMOVAL_QUESTIONS: ConditionQuestion[] = [
+  {
+    key: 'heap_size',
+    label: 'Roughly how big is the heap?',
+    short: 'Heap',
+    hint: 'A rough guess is fine. A trailer load is about 8 tonnes.',
+    required: true,
+    options: [
+      { value: 'small', label: 'A couple of trailer loads or less' },
+      { value: 'medium', label: 'A few loads (about 3 to 10)' },
+      { value: 'large', label: 'More than 10 loads' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'heap_access',
+    label: 'Can a tractor and trailer get right up to it?',
+    short: 'Access',
+    required: true,
+    options: [
+      { value: 'yes', label: 'Yes, right up to it' },
+      { value: 'near', label: 'Close, but not right up to it' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'heap_destination',
+    label: 'Where should the muck go?',
+    short: 'Goes to',
+    options: [
+      { value: 'off_site', label: 'Taken away off site' },
+      { value: 'on_site', label: 'Moved somewhere else on my land' },
+      { value: 'either', label: 'Whatever is easiest' },
+    ],
+  },
+];
+
 export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQuestion[]>> = {
   'Weed control': WEED_QUESTIONS,
   Spraying: WEED_QUESTIONS,
@@ -391,6 +494,8 @@ export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQues
   'Hay, straw & haylage': HAY_QUESTIONS,
   'Stump grinding': STUMP_QUESTIONS,
   'Mobile log splitting': LOG_QUESTIONS,
+  'Muck spreading': MUCK_QUESTIONS,
+  'Muck heap removal': MUCK_REMOVAL_QUESTIONS,
   'Paddock topping': [
     {
       key: 'last_cut',
@@ -557,6 +662,8 @@ const NON_AREA_PRICED: ReadonlySet<string> = new Set([
   // A count of stumps and a pile of timber: no field to draw.
   'Stump grinding',
   'Mobile log splitting',
+  // A heap is loads, not acres.
+  'Muck heap removal',
 ]);
 
 export function isAreaPriced(service: string | null): boolean {

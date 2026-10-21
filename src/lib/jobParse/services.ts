@@ -46,6 +46,8 @@ export const CANONICAL_SERVICES = [
   'Scarifying',
   'Stump grinding',
   'Mobile log splitting',
+  'Muck spreading',
+  'Muck heap removal',
 ] as const;
 
 export type CanonicalService = (typeof CANONICAL_SERVICES)[number];

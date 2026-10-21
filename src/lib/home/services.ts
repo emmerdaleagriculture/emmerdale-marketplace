@@ -107,6 +107,20 @@ export const HOME_SERVICES: HomeService[] = [
     icon: 'lime',
   },
   {
+    slug: 'muck-spreading',
+    name: 'Muck spreading',
+    label: 'muck spreading',
+    blurb: 'The muck heap loaded and spread back on the land as fertiliser.',
+    icon: 'muck_spreading',
+  },
+  {
+    slug: 'muck-heap-removal',
+    name: 'Muck heap removal',
+    label: 'muck heap removal',
+    blurb: 'The muck heap loaded up and taken away, leaving the yard clear.',
+    icon: 'muck_heap',
+  },
+  {
     slug: 'scarifying',
     name: 'Scarifying',
     label: 'scarifying',
