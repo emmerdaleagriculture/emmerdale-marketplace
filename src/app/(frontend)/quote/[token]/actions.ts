@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { isTokenFormat } from '@/lib/sealedQuotes/tokens';
 import { poundsInputToPence } from '@/lib/sealedQuotes/money';
-import { CLIENT_NOTE_MAX, clientNoteProblem, hourlyRateProblem } from '@/lib/sealedQuotes/clientNote';
+import { CLIENT_NOTE_MAX, MONEY_REFUSAL, clientNoteProblem, hourlyRateProblem } from '@/lib/sealedQuotes/clientNote';
 import type { FormState } from '@/lib/form';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -64,25 +64,29 @@ export async function submitQuoteAction(
   const d = parsed.data;
   if (!isTokenFormat(d.token)) return { error: 'This link is not valid.' };
 
-  // A price, not a rate: an hourly figure beside a total leaves the customer
-  // not knowing what the job costs. First, so "£40 per hour" is told to price
-  // the job rather than only to take the figure out. Not flagged to admin.
-  const hourly = hourlyRateProblem(d.note_to_client ?? '');
-  if (hourly) return { error: hourly };
-
   // Checked before the price is even converted: nothing reviews this note
-  // between here and the customer reading it.
-  const noteProblem = clientNoteProblem(d.note_to_client ?? '');
-  if (noteProblem) {
-    const invitation = await getInvitationByToken(d.token);
-    await flagOffPlatform({
-      text: d.note_to_client ?? '',
-      where: 'quote note',
-      sender: 'contractor',
-      submissionId: invitation?.submission?.id,
-      contractorId: invitation?.contractor_id,
-    });
-    return { error: noteProblem };
+  // between here and the customer reading it. Contact details and payment
+  // offers are flagged to admin whatever else the note says.
+  const note = d.note_to_client ?? '';
+  const noteProblem = clientNoteProblem(note);
+  // A price, not a rate: an hourly figure beside a total leaves the customer
+  // not knowing what the job costs. Not on a "£ per unit" price, where hours
+  // × rate is already the total the customer sees.
+  const hourly = d.quote_type === 'unit' ? null : hourlyRateProblem(note);
+  if (noteProblem || hourly) {
+    if (noteProblem) {
+      const invitation = await getInvitationByToken(d.token);
+      await flagOffPlatform({
+        text: note,
+        where: 'quote note',
+        sender: 'contractor',
+        submissionId: invitation?.submission?.id,
+        contractorId: invitation?.contractor_id,
+      });
+    }
+    // "£40 per hour" is told to price the job, not only to drop the figure;
+    // a phone number, a link or a payment offer is still the one named.
+    return { error: (hourly && (!noteProblem || noteProblem === MONEY_REFUSAL) ? hourly : noteProblem) ?? undefined };
   }
   const noteToClient = (d.note_to_client ?? '').trim().slice(0, CLIENT_NOTE_MAX);
 

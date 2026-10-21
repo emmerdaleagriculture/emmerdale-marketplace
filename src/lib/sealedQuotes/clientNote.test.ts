@@ -136,6 +136,25 @@ describe('hourlyRateProblem — a price note must not turn the price into a rate
     rate('3 hrs at 45');
     rate('Approx 4 hours @ £50');
     rate('Charged per hours worked');
+    rate('45ph plus diesel');
+    rate('45 p.h. plus diesel');
+    rate('4 hrs x 50');
+    rate('my hour rate is 45');
+    rate('40 an hour plus fuel');
+  });
+
+  it('lets a note that says it is NOT hourly through', () => {
+    fine('Fixed price for the whole job, not hourly');
+    fine("I don't charge by the hour, this is the total");
+    fine('Whole job price rather than per hour');
+  });
+
+  it('lets work rates and start times through', () => {
+    fine('Flail does 2 acres per hour so about 3 hours');
+    fine('2 acres/hr so half a day');
+    fine('Allow 3 hours at 8am start');
+    fine('Allow 3 hours at 10am');
+    fine('3 hrs at 10:30');
   });
 
   it('lets time estimates and notice periods through', () => {
