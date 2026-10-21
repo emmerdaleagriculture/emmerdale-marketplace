@@ -266,18 +266,15 @@
    saved, so the Save button is never below three folded sections. */
 .formFootPending {
   position: sticky;
-  /* Above the "Report a problem" tab (feedback.module.css: 16px up, 44px tall). */
-  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  bottom: 0;
   z-index: 5;
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px));
   background: var(--cream);
-  border: 1px solid var(--rule);
-  border-radius: 10px;
-  box-shadow: 0 6px 20px rgba(20, 30, 20, 0.12);
+  border-top: 1px solid var(--rule);
 }
 .formFootPending .unsaved {
   margin: 0;
@@ -297,7 +294,7 @@
 }
 /* In the app the tab bar sits under it. */
 :global(html[data-app][data-app-tabs]) .formFootPending {
-  bottom: calc(72px + var(--app-tabbar-h) + var(--app-safe-bottom));
+  bottom: calc(var(--app-tabbar-h) + var(--app-safe-bottom));
 }
 
 /* Subscription card */

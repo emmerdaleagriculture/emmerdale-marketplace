@@ -22,6 +22,10 @@ import ac from './account.module.css';
  * header still say 29: nothing on the page moved until Save, which sat
  * below three folded sections.
  */
+type Live = { services: number; counties: number; phone: string; emails: boolean; texts: boolean };
+const sameLive = (a: Live, b: Live) =>
+  a.services === b.services && a.counties === b.counties && a.phone === b.phone && a.emails === b.emails && a.texts === b.texts;
+
 export function AccountForm({
   contractor,
   counties,
@@ -38,38 +42,89 @@ export function AccountForm({
 }) {
   const [state, action, pending] = useActionState(updateProfileAction, emptyFormState);
   const formRef = useRef<HTMLFormElement>(null);
-  const [serviceCount, setServiceCount] = useState((contractor.services ?? []).length);
-  const [countyCount, setCountyCount] = useState(selectedCounties.length);
+  // What the form holds right now, for the headers; starts as the server has it.
+  const server: Live = {
+    services: (contractor.services ?? []).length,
+    counties: selectedCounties.length,
+    phone: contractor.phone,
+    emails: contractor.notify_new_jobs,
+    texts: contractor.notify_sms,
+  };
+  const [live, setLive] = useState<Live>(server);
   const [dirty, setDirty] = useState(false);
+  // An edit after Save was pressed is not covered by that save.
+  const editedSinceSubmit = useRef(false);
 
-  // What is ticked, from the boxes themselves: "Select all" in the county
-  // picker sets them without a change event, so it calls this directly.
-  function recount() {
+  function readForm(): Live | null {
     const form = formRef.current;
-    if (!form) return;
-    setServiceCount(form.querySelectorAll('input[name="service_ids"]:checked').length);
-    setCountyCount(form.querySelectorAll('input[name="county_ids"]:checked').length);
-    setDirty(true);
+    if (!form) return null;
+    const field = (name: string) => form.elements.namedItem(name) as HTMLInputElement | null;
+    return {
+      services: form.querySelectorAll('input[name="service_ids"]:checked').length,
+      counties: form.querySelectorAll('input[name="county_ids"]:checked').length,
+      phone: field('phone')?.value ?? '',
+      emails: field('notify_new_jobs')?.checked ?? false,
+      texts: field('notify_sms')?.checked ?? false,
+    };
   }
-  // Saved: the server has re-rendered the props, and the bar can go.
+  function changed() {
+    const now = readForm();
+    if (!now) return;
+    setLive((prev) => (sameLive(prev, now) ? prev : now));
+    setDirty(true);
+    editedSinceSubmit.current = true;
+  }
+  // Back navigation restores the boxes without a change event: read them
+  // once the page shows, and treat a difference from the server as unsaved.
   useEffect(() => {
-    if (state.ok) setDirty(false);
+    const sync = () => {
+      const now = readForm();
+      if (!now) return;
+      setLive((prev) => (sameLive(prev, now) ? prev : now));
+      if (!sameLive(now, server)) setDirty(true);
+    };
+    sync();
+    window.addEventListener('pageshow', sync);
+    return () => window.removeEventListener('pageshow', sync);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the server values are the props
+  }, [contractor, selectedCounties]);
+  // Saved, and nothing touched since Save was pressed: the bar can go.
+  useEffect(() => {
+    if (state.ok && !editedSinceSubmit.current) setDirty(false);
   }, [state]);
+  // The feedback tab is fixed to the same corner; this lifts it clear
+  // (feedback.module.css), as the job form's send bar does.
+  useEffect(() => {
+    if (!dirty) return;
+    document.body.dataset.sendBar = 'on';
+    return () => {
+      delete document.body.dataset.sendBar;
+    };
+  }, [dirty]);
 
   return (
     <form
       ref={formRef}
       action={action}
-      onChange={recount}
+      onChange={changed}
+      onSubmit={() => {
+        editedSinceSubmit.current = false;
+      }}
       onInvalidCapture={(e) => {
         const section = (e.target as HTMLElement).closest('details');
         if (section) section.open = true;
       }}
     >
+      <p className={ac.coverage}>
+        You cover <b>{live.counties}</b> {live.counties === 1 ? 'county' : 'counties'} and{' '}
+        <b>{live.services}</b> {live.services === 1 ? 'service' : 'services'}. Keep these
+        accurate and you&rsquo;ll only hear about work you want.
+      </p>
+
       <details className={ac.section}>
         <summary className={ac.sectionHead}>
           Business details
-          <span className={ac.sectionMeta}>{contractor.phone}</span>
+          <span className={ac.sectionMeta}>{live.phone}</span>
         </summary>
         <div className={ac.sectionBody}>
           <div className={a.row2}>
@@ -97,7 +152,7 @@ export function AccountForm({
         <summary className={ac.sectionHead}>
           Work you do
           <span className={ac.sectionMeta}>
-            {serviceCount} {serviceCount === 1 ? 'service' : 'services'}
+            {live.services} {live.services === 1 ? 'service' : 'services'}
           </span>
         </summary>
         <div className={ac.sectionBody}>
@@ -113,7 +168,7 @@ export function AccountForm({
         <summary className={ac.sectionHead}>
           Counties you cover
           <span className={ac.sectionMeta}>
-            {countyCount} {countyCount === 1 ? 'county' : 'counties'}
+            {live.counties} {live.counties === 1 ? 'county' : 'counties'}
           </span>
         </summary>
         <div className={ac.sectionBody}>
@@ -121,7 +176,7 @@ export function AccountForm({
             Changes take effect straight away: add a county and any jobs still open
             there are sent to you.
           </p>
-          <CountyPicker counties={counties} selected={selectedCounties} collapsible onChange={recount} />
+          <CountyPicker counties={counties} selected={selectedCounties} collapsible onSelectAll={changed} />
         </div>
       </details>
 
@@ -129,9 +184,9 @@ export function AccountForm({
         <summary className={ac.sectionHead}>
           Notifications
           <span className={ac.sectionMeta}>
-            {contractor.notify_new_jobs ? 'Emails on' : 'Emails off'}
+            {live.emails ? 'Emails on' : 'Emails off'}
             {' · '}
-            {contractor.notify_sms ? 'Texts on' : 'Texts off'}
+            {live.texts ? 'Texts on' : 'Texts off'}
           </span>
         </summary>
         <div className={ac.sectionBody}>
@@ -203,13 +258,13 @@ export function AccountForm({
       )}
 
       <div className={`${ac.formFoot} ${dirty ? ac.formFootPending : ''}`.trim()}>
-        {state.error && <p className={f.error}>{state.error}</p>}
+        {/* A result belongs to the form as it was sent; an edit since makes it stale. */}
+        {state.error && !dirty && <p className={f.error}>{state.error}</p>}
         {state.ok && !dirty && <p className={f.success}>{state.message}</p>}
-        {dirty && !pending && (
-          <p className={ac.unsaved} role="status">
-            Unsaved changes
-          </p>
-        )}
+        {/* Always in the DOM, so a screen reader hears the text arrive. */}
+        <p className={ac.unsaved} role="status">
+          {dirty && !pending ? 'Unsaved changes' : ''}
+        </p>
         <button className={f.btnPrimary} type="submit" disabled={pending}>
           {pending ? 'Saving…' : 'Save changes'}
         </button>

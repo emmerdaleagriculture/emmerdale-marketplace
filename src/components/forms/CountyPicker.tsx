@@ -25,19 +25,19 @@ export type CountyOption = {
  * made the account page 13,000px tall on a phone. Onboarding keeps the open
  * list, where choosing is the whole point.
  *
- * `onChange` fires after any tick, including "Select all", which sets the
- * boxes itself and so raises no change event of its own.
+ * `onSelectAll` fires after "Select all", which sets the boxes itself and
+ * so raises no change event for a form above to hear.
  */
 export function CountyPicker({
   counties,
   selected = [],
   collapsible = false,
-  onChange,
+  onSelectAll,
 }: {
   counties: CountyOption[];
   selected?: number[];
   collapsible?: boolean;
-  onChange?: () => void;
+  onSelectAll?: () => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const selectedSet = new Set(selected);
@@ -78,7 +78,7 @@ export function CountyPicker({
       b.checked = !allOn;
     });
     recount(region);
-    onChange?.();
+    onSelectAll?.();
   }
 
   const grid = (region: string, list: CountyOption[]) => (
@@ -110,7 +110,6 @@ export function CountyPicker({
       onChange={(e) => {
         const region = (e.target as HTMLInputElement).dataset?.region;
         if (region) recount(region);
-        onChange?.();
       }}
     >
       {Array.from(byRegion.entries()).map(([region, list]) =>
