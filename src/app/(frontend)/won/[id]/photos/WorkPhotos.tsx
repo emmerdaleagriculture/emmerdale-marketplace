@@ -5,7 +5,6 @@ import { removeWorkPhotoAction, uploadWorkPhotoAction } from './actions';
 import { markDoneAction } from '../../actions';
 import type { WorkPhoto } from '@/lib/sealedQuotes/workPhotos';
 import { nativeCamera, pickPhoto, filesToPhotos } from '@/lib/app/photos';
-import { isNativeApp } from '@/lib/app/isApp';
 import { emptyFormState } from '@/lib/form';
 import f from '@/components/forms/forms.module.css';
 import ui from '@/app/(frontend)/app/app-ui.module.css';

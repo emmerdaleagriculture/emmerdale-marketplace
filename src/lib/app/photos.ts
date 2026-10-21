@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { isNativeApp } from '@/lib/app/isApp';
+import { downscalePhotos } from '@/lib/photoDownscale';
 
 /**
  * True only when the native Camera plugin is really in this build. An older
@@ -21,7 +22,6 @@ function base64ToBlob(b64: string, type: string): Blob {
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return new Blob([bytes], { type });
 }
-import { downscalePhotos } from '@/lib/photoDownscale';
 
 /**
  * A photo for the job, from the phone's camera or library in the frame

@@ -9,7 +9,6 @@ import { hasAnswer, isAreaPriced, quantityFor, visibleChoices } from '@/lib/jobP
 import { choicesFromPick, serviceFromPick } from '@/lib/jobParse/servicePick';
 import { readFirstTouch } from '@/lib/firstTouch';
 import { filesToPhotos, nativeCamera, pickPhoto } from '@/lib/app/photos';
-import { isNativeApp } from '@/lib/app/isApp';
 import { Turnstile } from '@/components/forms/Turnstile';
 import { ServiceTileIcon, type TileIcon } from '../home/popular';
 import f from '@/components/forms/forms.module.css';
