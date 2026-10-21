@@ -2,7 +2,9 @@
 
 import { redirect } from 'next/navigation';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
-import { demoCodeMatches, demoEmailCode } from '@/lib/app/demoAccounts';
+import { demoEmailCode } from '@/lib/app/demoAccounts';
+import { tokensEqual } from '@/lib/sealedQuotes/tokens';
+import { getVerification, lockedMinutes, recordFailure, setVerification } from '@/lib/app/phone';
 import { captchaErrorMessage } from '@/lib/captchaError';
 import { emailDeliveryError } from '@/lib/email/deliverable';
 import { roleIntent } from '@/lib/app/landing';
@@ -55,12 +57,21 @@ export async function verifyEmailCodeAction(_prev: EmailCodeState, formData: For
   if (!email) return { error: 'Start again with your email address.' };
   if (token.length < 6) return { error: 'Enter the 6-digit code from the email.' };
 
-  const supabase = await createClient();
   const demo = demoEmailCode(email);
   if (demo) {
-    if (!demoCodeMatches(token, demo)) return { error: 'That code is not right. Check the email and try again.' };
+    // A fixed code never expires, so the attempts are what bounds guessing:
+    // the phone step's counter (five wrong, ten minutes out), on the demo
+    // account itself. Supabase's own OTP limits never see this path.
+    const userId = await demoUserId(email);
+    if (!userId) return { error: 'That code is not right. Check the email and try again.' };
+    const v = await getVerification(userId);
+    const locked = lockedMinutes(v);
+    if (locked) return { error: `Too many wrong codes. Try again in ${locked} minute${locked === 1 ? '' : 's'}.` };
+    if (!tokensEqual(token, demo)) return { error: (await recordFailure(userId, v)).message };
     if (!(await signInDemoAccount(email))) return { error: 'We could not sign you in just now. Please try again.' };
+    await setVerification(userId, { failures: 0, locked_until: null });
   } else {
+    const supabase = await createClient();
     const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
     if (error || !data.session) {
       return {
@@ -72,6 +83,16 @@ export async function verifyEmailCodeAction(_prev: EmailCodeState, formData: For
   }
   const role = roleIntent(String(formData.get('role') || ''));
   redirect(role ? `/app/continue?role=${role}` : '/app/continue');
+}
+
+/** The demo account behind the address: its profile row, customer or contractor. */
+async function demoUserId(email: string): Promise<string | null> {
+  const admin = createServiceRoleClient();
+  const [c, k] = await Promise.all([
+    admin.from('customers').select('id').eq('email', email).maybeSingle(),
+    admin.from('contractors').select('id').eq('email', email).maybeSingle(),
+  ]);
+  return c.data?.id ?? k.data?.id ?? null;
 }
 
 /**

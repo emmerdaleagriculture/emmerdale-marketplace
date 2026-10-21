@@ -161,11 +161,11 @@ async function main() {
   // Three prices on the open job, one accepted on the booked one.
   const price = async (submission: string, invitation: string, contractor: string, label: string, pence: number, status: string) => {
     const { data: cq, error } = await admin.from('contractor_quotes').insert({
-      submission_id: submission, contractor_id: contractor, invitation_id: invitation, quote_type: 'total', contractor_price_pence: pence, price_basis: 'no_vat', valid_until: iso(-24 * 14), source: 'form', confirmed_by_contractor: true,
+      submission_id: submission, contractor_id: contractor, invitation_id: invitation, quote_type: 'total', contractor_price_pence: pence, price_basis: 'no_vat', valid_until: expires, source: 'form', confirmed_by_contractor: true,
     }).select('id').single();
     if (error) throw new Error(`contractor_quotes: ${error.message}`);
     const { data: cl, error: clErr } = await admin.from('client_quotes').insert({
-      submission_id: submission, contractor_quote_id: cq.id, contractor_id: contractor, client_price_pence: Math.round(pence * 1.15), markup_rate: 0.15, contractor_display_label: label, contractor_rating_count: 0, valid_until: iso(-24 * 14), status, price_basis: 'no_vat', contractor_note: 'Can do this within the week, weather allowing.',
+      submission_id: submission, contractor_quote_id: cq.id, contractor_id: contractor, client_price_pence: Math.round(pence * 1.15), markup_rate: 0.15, contractor_display_label: label, contractor_rating_count: 0, valid_until: expires, status, price_basis: 'no_vat', contractor_note: 'Can do this within the week, weather allowing.',
     }).select('id').single();
     if (clErr) throw new Error(`client_quotes: ${clErr.message}`);
     // The booked job points at the price the customer took, as a real award does.

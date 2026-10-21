@@ -1,5 +1,3 @@
-import { timingSafeEqual } from 'node:crypto';
-
 /**
  * The App Store / Play reviewers' demo logins (scripts/seedDemoAccounts.ts).
  * Reviewers have no inbox for these addresses, so the email-code screen
@@ -14,11 +12,4 @@ export function demoEmailCode(email: string, env: Record<string, string | undefi
   const code = (env.DEMO_EMAIL_CODE ?? '').trim();
   if (!/^\d{6}$/.test(code)) return null;
   return DEMO_EMAILS.has(email.trim().toLowerCase()) ? code : null;
-}
-
-/** Same length always (six digits), so the comparison takes the same time whatever was typed. */
-export function demoCodeMatches(typed: string, code: string): boolean {
-  const a = Buffer.from(typed.padEnd(code.length).slice(0, code.length));
-  const b = Buffer.from(code);
-  return typed.length === code.length && timingSafeEqual(a, b);
 }
