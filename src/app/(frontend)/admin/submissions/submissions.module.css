@@ -328,10 +328,11 @@
 .muted { background: var(--cream); color: var(--ink-3); border: 1px solid var(--rule); }
 .draft { background: #eaf0f6; color: #2d4a6b; }
 
-/* Outreach numbers: five across, three on a phone. */
+/* Outreach numbers: nine across on the job page, three to a row in the
+   modal (a container query on .modalBody) and on a phone. */
 .stats {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(9, 1fr);
   gap: 1px;
   background: var(--rule);
   border: 1px solid var(--rule);
@@ -499,6 +500,20 @@
   }
   .stat:nth-child(n + 4) {
     grid-column: span 3;
+  }
+}
+/* The modal is 640px at most: nine boxes across clip the labels, so three
+   rows of three. After the phone rule above, so it wins inside the modal. */
+.modalBody {
+  container-type: inline-size;
+}
+@container (max-width: 720px) {
+  .modalBody .stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .modalBody .stats .stat,
+  .modalBody .stats .stat:nth-child(n + 4) {
+    grid-column: span 1;
   }
 }
 

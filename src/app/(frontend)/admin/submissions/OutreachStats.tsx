@@ -5,13 +5,13 @@ import p from './submissions.module.css';
 import { ContractorLink } from './ContractorLink';
 
 /**
- * The outreach boxes on a submission — emailed, texted, tapped, opened,
- * responded, priced, to client — and the list behind each. With onSelect the boxes are
+ * The outreach boxes on a submission (emailed, texted, tapped, pushed, app
+ * opens, opened, responded, priced, to client) and the list behind each. With onSelect the boxes are
  * buttons (the card's modal); without, links to the submission page with that
  * stage open. No hooks, so it renders on the server or inside the modal.
  */
 
-export const OUTREACH_STAGES = ['emailed', 'texted', 'tapped', 'opened', 'responded', 'priced', 'client'] as const;
+export const OUTREACH_STAGES = ['emailed', 'texted', 'tapped', 'pushed', 'app', 'opened', 'responded', 'priced', 'client'] as const;
 export type OutreachStage = (typeof OUTREACH_STAGES)[number];
 
 export function isOutreachStage(v: unknown): v is OutreachStage {
@@ -31,6 +31,12 @@ export type OutreachCounts = {
   texts_delivered?: number;
   texts_failed?: number;
   texts_tapped?: number;
+  // App notifications (pending_push) and first looks that were in the app.
+  // Optional until migration 20261021170000 is applied.
+  pushes_sent?: number;
+  pushes_failed?: number;
+  pushes_tapped?: number;
+  opened_in_app?: number;
   quotes_live: number;
   lowest_client_pence: number | null;
 };
@@ -41,6 +47,8 @@ export const STAGE_TITLES: Record<OutreachStage, string> = {
   emailed: 'Invitation emails',
   texted: 'Invitation texts',
   tapped: 'Tapped the link in the text',
+  pushed: 'App notifications',
+  app: 'Opened the job in the app',
   opened: 'Opened the job',
   responded: 'Priced or passed',
   priced: 'Prices, then passes',
@@ -51,6 +59,8 @@ const STAGE_EMPTY: Record<OutreachStage, string> = {
   emailed: 'No invitation emails recorded.',
   texted: 'No invitation texts recorded.',
   tapped: 'Nobody has tapped a text link yet.',
+  pushed: 'No app notifications recorded. Only contractors signed in on the app with notifications on get one.',
+  app: 'Nobody has opened the job in the app yet.',
   opened: 'Nobody has opened the job yet.',
   responded: 'Nobody has priced or passed yet.',
   priced: 'No prices and no passes yet.',
@@ -75,6 +85,8 @@ export function OutreachStats({
   const responded = r.priced + r.declined;
   const texted = r.texts_sent ?? 0;
   const textsFailed = r.texts_failed ?? 0;
+  const pushed = r.pushes_sent ?? 0;
+  const pushesFailed = r.pushes_failed ?? 0;
   const cells: [OutreachStage, string, number, string, boolean][] = [
     ['emailed', 'Emailed', r.emails_sent,
       r.emails_failed > 0 ? `${r.emails_failed} failed` : `${r.emails_delivered} delivered`, r.emails_failed > 0],
@@ -82,6 +94,10 @@ export function OutreachStats({
     ['texted', 'Texted', texted,
       textsFailed > 0 ? `${textsFailed} failed` : `${r.texts_delivered ?? 0} delivered`, textsFailed > 0],
     ['tapped', 'Tapped', r.texts_tapped ?? 0, `${pct(r.texts_tapped ?? 0, texted)}%`, false],
+    // Sent is as far as a push reports; a tap is the notification opening the app.
+    ['pushed', 'Pushed', pushed,
+      pushesFailed > 0 ? `${pushesFailed} failed` : `${r.pushes_tapped ?? 0} tapped`, pushesFailed > 0],
+    ['app', 'App opens', r.opened_in_app ?? 0, `${pct(r.opened_in_app ?? 0, r.opened)}% of opens`, false],
     ['opened', 'Opened', r.opened, `${pct(r.opened, r.invited)}%`, false],
     ['responded', 'Responded', responded, `${pct(responded, r.invited)}%`, false],
     ['priced', 'Priced', r.priced, `${r.declined} passed`, false],

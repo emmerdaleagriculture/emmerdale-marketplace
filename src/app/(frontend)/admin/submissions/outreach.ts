@@ -12,7 +12,7 @@ export type Outreach = { counts: OutreachCounts; lines: Record<OutreachStage, Ou
  */
 export async function loadOutreach(id: string): Promise<Outreach> {
   const admin = createServiceRoleClient();
-  const [invitationsQ, emailsQ, contractorQuotesQ, clientQuotesQ, textsQ] = await Promise.all([
+  const [invitationsQ, emailsQ, contractorQuotesQ, clientQuotesQ, textsQ, pushesQ, viewsQ] = await Promise.all([
     admin
       .from('job_invitations')
       .select('id, status, decline_reason, distance_miles, sent_at, opened_at, contact_revealed_at, contractor_id, contractor:contractors(business_name, email)')
@@ -41,6 +41,20 @@ export async function loadOutreach(id: string): Promise<Outreach> {
       .eq('kind', 'sq_invitation')
       .eq('payload->>submission_id', id)
       .order('created_at', { ascending: true }),
+    // App notifications: same shape as the texts, without delivery receipts.
+    admin
+      .from('pending_push')
+      .select('id, status, detail, to_email, user_id, sent_at, created_at, clicked_at, clicks')
+      .eq('kind', 'sq_invitation')
+      .eq('payload->>submission_id', id)
+      .order('created_at', { ascending: true }),
+    // The first look at each invitation, with whether it was in the app
+    // (record_invitation_view's p_in_app, migration 20261021170000).
+    admin
+      .from('invitation_events')
+      .select('invitation_id, metadata, invitation:job_invitations!inner(submission_id)')
+      .eq('event_type', 'viewed')
+      .eq('invitation.submission_id', id),
   ]);
   const invitations = invitationsQ.data ?? [];
   // A delivery retry is a second pending_emails row for the same message, so
@@ -60,6 +74,14 @@ export async function loadOutreach(id: string): Promise<Outreach> {
   // Before migration 20261006190000 the tracking columns don't exist and this
   // errors; the boxes then just read zero.
   const texts = (textsQ.error ? [] : (textsQ.data ?? [])) as unknown as Text[];
+  const pushes = pushesQ.error ? [] : (pushesQ.data ?? []);
+  type Push = (typeof pushes)[number];
+  const failedPush = (p: Push) => p.status === 'failed';
+  const inApp = new Set(
+    (viewsQ.data ?? [])
+      .filter((v) => (v.metadata as { in_app?: unknown } | null)?.in_app === true)
+      .map((v) => v.invitation_id),
+  );
   const contractorQuotes = contractorQuotesQ.data ?? [];
   const clientQuotes = clientQuotesQ.data ?? [];
 
@@ -88,6 +110,10 @@ export async function loadOutreach(id: string): Promise<Outreach> {
     texts_delivered: texts.filter((t) => t.delivery_status === 'delivered').length,
     texts_failed: texts.filter(failedText).length,
     texts_tapped: texts.filter((t) => t.clicked_at).length,
+    pushes_sent: pushes.filter((p) => p.status === 'sent').length,
+    pushes_failed: pushes.filter(failedPush).length,
+    pushes_tapped: pushes.filter((p) => p.clicked_at).length,
+    opened_in_app: invitations.filter((i) => i.opened_at && inApp.has(i.id)).length,
     quotes_live: clientQuotes.filter((q) => q.status === 'active').length,
     lowest_client_pence: clientQuotes
       .filter((q) => q.status === 'active' || q.status === 'accepted')
@@ -108,7 +134,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
     const saw = inv.contact_revealed_at ? ' · saw customer details (Open)' : '';
     if (q) return `Priced ${formatGBP(q.contractor_price_pence)}${q.quote_type === 'rate' ? ' (rate)' : ''}${saw}`;
     if (passed(inv)) return `Passed${inv.decline_reason ? `: ${inv.decline_reason.replace(/_/g, ' ')}` : ''}${saw}`;
-    return inv.opened_at ? `Opened, no response yet${saw}` : 'Not opened';
+    return inv.opened_at ? `Opened${inApp.has(inv.id) ? ' in the app' : ''}, no response yet${saw}` : 'Not opened';
   };
   const invLine = (inv: Inv, when: string | null): OutreachLine => ({
     key: inv.id,
@@ -173,12 +199,41 @@ export async function loadOutreach(id: string): Promise<Outreach> {
     .sort((a, b) => byTime(a.clicked_at, b.clicked_at))
     .map((t) => ({ key: t.id, ...textWho(t), what: t.clicks > 1 ? `Tapped ${t.clicks} times` : 'Tapped', when: t.clicked_at }));
 
+  // App notifications: one line each. A row only exists for a contractor
+  // who was signed in on the app with a live device, so a missing line
+  // means no app, not a failure.
+  const pushWho = (p: Push) => {
+    const inv = p.user_id ? invByContractor.get(p.user_id) : undefined;
+    return { who: (inv && contractorOf(inv)?.business_name) ?? p.to_email, whoId: p.user_id, sub: inv ? 'app' : undefined };
+  };
+  const pushed: OutreachLine[] = pushes.map((p) => {
+    const bad = failedPush(p);
+    return {
+      key: p.id,
+      ...pushWho(p),
+      what: bad
+        ? `Failed: ${p.detail ?? p.status}`
+        : p.status === 'sent'
+          ? `sent${p.clicked_at ? (p.clicks > 1 ? ` · tapped ${p.clicks} times` : ' · tapped') : ''}`
+          : p.status === 'skipped'
+            ? `Not sent: ${p.detail ?? 'skipped'}`
+            : p.status,
+      when: p.sent_at ?? p.created_at,
+      bad,
+    };
+  });
+
   return {
     counts,
     lines: {
       emailed,
       texted,
       tapped,
+      pushed,
+      app: invitations
+        .filter((i) => i.opened_at && inApp.has(i.id))
+        .sort((a, b) => byTime(a.opened_at, b.opened_at))
+        .map((i) => invLine(i, i.opened_at)),
       opened: invitations
         .filter((i) => i.opened_at)
         .sort((a, b) => byTime(a.opened_at, b.opened_at))

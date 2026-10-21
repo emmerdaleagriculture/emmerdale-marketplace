@@ -60,6 +60,13 @@ export function OutreachModal({ id, counts, title }: { id: string; counts: Outre
               {(counts.texts_failed ?? 0) > 0 && <em className={p.miniBad}>{counts.texts_failed} texts failed</em>}
             </span>
           )}
+          {(counts.pushes_sent ?? 0) > 0 && (
+            <span className={p.miniTexts}>
+              <b>{counts.pushes_sent}</b> pushed · <b>{counts.pushes_tapped ?? 0}</b> tapped ·{' '}
+              <b>{counts.opened_in_app ?? 0}</b> opened in the app
+              {(counts.pushes_failed ?? 0) > 0 && <em className={p.miniBad}>{counts.pushes_failed} pushes failed</em>}
+            </span>
+          )}
         </span>
       </button>
       <dialog
