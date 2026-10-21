@@ -54,10 +54,11 @@ const config: CapacitorConfig = {
   },
 
   ios: {
-    // Lets the WebView content sit under the status bar / home indicator
-    // safe areas the way a native iOS app is expected to, rather than
-    // starting flush at the very top edge.
-    contentInset: 'automatic',
+    // 'never': the website already keeps clear of the notch and home bar
+    // itself (globals.css, html[data-app], env(safe-area-inset-*)). With
+    // 'automatic' iOS added the same insets again and kept re-adjusting
+    // them while scrolling, so the screen shook when scrolling back up.
+    contentInset: 'never',
   },
 };
 
