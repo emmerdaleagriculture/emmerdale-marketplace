@@ -1,14 +1,14 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { clearClientNoteAction } from './distribution-actions';
+import { clearClientNoteAction, withdrawClientQuoteAction } from './distribution-actions';
 import type { FormState } from '@/lib/form';
 import f from '@/components/forms/forms.module.css';
 
 const EMPTY: FormState = {};
 
 /**
- * Takes a contractor's note off the customer's price card. Nothing reviews a
+ * RetractButton: takes a contractor's note off the customer's price card. Nothing reviews a
  * note before it is published, so this is the retraction — sat next to the
  * note itself rather than in the operator panel, because you decide to pull
  * one the moment you read it.
@@ -16,18 +16,33 @@ const EMPTY: FormState = {};
  * Two steps, because job_events refuses an operator action without a reason
  * and because the note is already in front of the customer: the second click
  * is the one that does it.
+ *
+ * kind="price" is the same retraction for the whole price: it comes off the
+ * customer's list (withdrawClientQuoteAction). Telling the contractor why
+ * is left to you, in your own words.
  */
-export function ClearNoteButton({
+const COPY = {
+  note: { button: 'Clear', placeholder: 'Why are you pulling it?', busy: 'Clearing…', done: 'cleared' },
+  price: { button: 'Withdraw', placeholder: 'Why are you withdrawing it?', busy: 'Withdrawing…', done: 'withdrawn' },
+};
+
+export function RetractButton({
   submissionId,
   clientQuoteId,
+  kind = 'note',
 }: {
   submissionId: string;
   clientQuoteId: string;
+  kind?: 'note' | 'price';
 }) {
-  const [state, act, pending] = useActionState(clearClientNoteAction, EMPTY);
+  const [state, act, pending] = useActionState(
+    kind === 'price' ? withdrawClientQuoteAction : clearClientNoteAction,
+    EMPTY,
+  );
   const [asking, setAsking] = useState(false);
+  const copy = COPY[kind];
 
-  if (state.ok) return <small> · cleared</small>;
+  if (state.ok) return <small> · {copy.done}</small>;
 
   if (!asking) {
     return (
@@ -37,7 +52,7 @@ export function ClearNoteButton({
         onClick={() => setAsking(true)}
         style={{ padding: '2px 8px', fontSize: 11, marginLeft: 8 }}
       >
-        Clear
+        {copy.button}
       </button>
     );
   }
@@ -49,7 +64,7 @@ export function ClearNoteButton({
       <input
         className={f.input}
         name="reason"
-        placeholder="Why are you pulling it?"
+        placeholder={copy.placeholder}
         required
         maxLength={200}
         style={{ fontSize: 12, padding: '4px 8px', minWidth: 180 }}
@@ -60,7 +75,7 @@ export function ClearNoteButton({
         disabled={pending}
         style={{ padding: '2px 8px', fontSize: 11 }}
       >
-        {pending ? 'Clearing…' : 'Confirm'}
+        {pending ? copy.busy : 'Confirm'}
       </button>
       <button
         type="button"

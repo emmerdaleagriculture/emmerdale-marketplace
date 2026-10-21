@@ -107,6 +107,7 @@ export type Database = {
           unit_label: string | null
           unit_quantity: number | null
           valid_until: string
+          withdrawn_at: string | null
           viewed_at: string | null
         }
         Insert: {
@@ -132,6 +133,7 @@ export type Database = {
           unit_label?: string | null
           unit_quantity?: number | null
           valid_until: string
+          withdrawn_at?: string | null
           viewed_at?: string | null
         }
         Update: {
@@ -157,6 +159,7 @@ export type Database = {
           unit_label?: string | null
           unit_quantity?: number | null
           valid_until?: string
+          withdrawn_at?: string | null
           viewed_at?: string | null
         }
         Relationships: [
@@ -3176,6 +3179,15 @@ export type Database = {
       contractor_tier: {
         Args: { p_contractor_id: string }
         Returns: string | null
+      }
+      sq_withdraw_client_quote: {
+        Args: {
+          p_actor_id: string
+          p_client_quote_id: string
+          p_reason: string
+          p_submission_id: string
+        }
+        Returns: Json
       }
       sq_area_jobs: {
         Args: { p_contractor_id: string; p_since: string }

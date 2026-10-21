@@ -408,7 +408,7 @@ export default async function AdminSubmissionsPage({
       ...(searching ? { p_search: q } : {}),
     }),
     filter === 'priced'
-      ? ids((from, to) => admin.from('client_quotes').select('submission_id').order('id').range(from, to))
+      ? ids((from, to) => admin.from('client_quotes').select('submission_id').is('withdrawn_at', null).order('id').range(from, to))
       : new Set<string | null>(),
     filter === 'paid'
       ? ids((from, to) =>
@@ -424,6 +424,8 @@ export default async function AdminSubmissionsPage({
         .from('client_quotes')
         .select('submission_id, client_price_pence')
         .neq('status', 'superseded')
+        // A withdrawn price never stood (withdrawClientQuoteAction).
+        .is('withdrawn_at', null)
         .order('id')
         .range(from, to),
     ),

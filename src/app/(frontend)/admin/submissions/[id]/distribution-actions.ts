@@ -412,6 +412,50 @@ export async function clearClientNoteAction(
 }
 
 /**
+ * Operator: take a whole price off the customer's list — an hourly rate
+ * sent as a job price (CGS Ltd, 21 Oct 2026), or anything else that should
+ * never have stood. sq_withdraw_client_quote does it in one transaction:
+ * the price closed and marked withdrawn (so the admin list's range leaves
+ * it out), the contractor's quote no longer standing (position, market
+ * data), their invitation back to 'viewed' so they can price again, and
+ * the reason logged. Telling the contractor why is left to the admin.
+ */
+export async function withdrawClientQuoteAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const user = await assertAdmin();
+  const submissionId = String(formData.get('submission_id') ?? '');
+  const clientQuoteId = String(formData.get('client_quote_id') ?? '');
+  const reason = String(formData.get('reason') ?? '').trim();
+  if (!submissionId || !clientQuoteId) return { error: 'Missing the price.' };
+  if (!reason) return { error: 'Say why you are withdrawing it.' };
+
+  const { data, error } = await createServiceRoleClient().rpc('sq_withdraw_client_quote', {
+    p_submission_id: submissionId,
+    p_client_quote_id: clientQuoteId,
+    p_actor_id: user.id,
+    p_reason: reason,
+  });
+  if (error) {
+    console.error('[admin] sq_withdraw_client_quote failed:', error);
+    return { error: 'Could not withdraw that price, so nothing was changed. Try again.' };
+  }
+  const result = data as { ok: boolean; reason?: string } | null;
+  if (!result?.ok) {
+    return {
+      error:
+        result?.reason === 'not_found'
+          ? 'That price is not on this job.'
+          : `That price is ${result?.reason ?? 'no longer live'}, so there is nothing to withdraw. Reload and check.`,
+    };
+  }
+
+  refresh(submissionId);
+  return { ok: true, message: 'Price withdrawn. Tell the contractor why.' };
+}
+
+/**
  * Operator: delete a job outright — for test jobs and junk, where cancelling
  * would leave a fake customer in the boards forever.
  *
