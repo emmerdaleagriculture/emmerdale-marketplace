@@ -69,10 +69,12 @@ export async function setContractorStatus(formData: FormData) {
   }
 
   if (status === 'approved' && before?.status === 'pending') {
+    // The email offers Open to anyone not on it, worded by what they hold.
+    const { data: tier } = await admin.rpc('contractor_tier', { p_contractor_id: id });
     await admin.from('pending_emails').insert({
       kind: 'application_approved',
       to_email: before.email,
-      payload: { contractor_id: id, business_name: before.business_name },
+      payload: { contractor_id: id, business_name: before.business_name, tier: tier ?? null },
     });
   }
 
