@@ -303,7 +303,8 @@
   display: block;
   width: 100%;
   padding: 8px 0;
-  text-align: left;
+  /* Follows the menu's labels: centred on the phone home page, left elsewhere. */
+  text-align: inherit;
   font-size: 14px;
   letter-spacing: 0.02em;
   text-transform: none;
