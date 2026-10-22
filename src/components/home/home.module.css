@@ -1232,6 +1232,19 @@
   opacity: 0.45;
   margin-right: 18px;
 }
+/* A phone can't fit both on one line, and once they wrap the bullet leads
+   the second line and pushes it off centre. Stack them instead. */
+@media (max-width: 520px) {
+  .tickerList {
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 0;
+  }
+  .tickerList li + li::before {
+    content: none;
+  }
+}
 
 /* The sunset banner under the ticker: full width, the image's own ratio. */
 .banner {
