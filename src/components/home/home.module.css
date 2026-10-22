@@ -1726,3 +1726,59 @@
 .reviewBy span {
   color: var(--muted);
 }
+
+/* Phones: the whole page reads centred. Only the booking form keeps its
+   left edge, where labels sit over their fields. */
+@media (max-width: 767px) {
+  .page {
+    text-align: center;
+  }
+  .widget {
+    text-align: left;
+  }
+  .sectionH,
+  .lede,
+  .heroSub,
+  .heroH1 {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .promises li {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .promiseTick {
+    margin-top: 0;
+  }
+  .stepNum {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .byline,
+  .workChips,
+  .coverageLegend {
+    justify-content: center;
+  }
+  .service,
+  .operatorsCta {
+    align-items: center;
+  }
+  .serviceFoot {
+    align-self: stretch;
+  }
+  .operatorsCopy {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  /* The tick sits over the line rather than beside it, or the text centres
+     on a box the tick has already pushed off centre. */
+  .vsCell {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .vsBullet {
+    margin-top: 0;
+  }
+}
