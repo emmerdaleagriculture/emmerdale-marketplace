@@ -12,6 +12,7 @@ import { TrackedLink } from '@/components/home/Track';
 import { CoverageSection } from '@/components/home/CoverageSection';
 import { JobsInProgress } from '@/components/home/JobsInProgress';
 import { RecentWork } from '@/components/home/RecentWork';
+import { Reviews } from '@/components/home/Reviews';
 import { QuoteWidget } from '@/components/home/QuoteWidget';
 import { Comparison } from '@/components/home/Comparison';
 import { UK_COUNTY_NAMES } from '@/lib/coverage';
@@ -286,6 +287,9 @@ export default async function LandingPage() {
         {/* What past work cost — the persuasion engine, straight after the
             hero. Hides itself until there are enough real completed jobs. */}
         <RecentWork />
+
+        {/* What customers said: straight after what they paid. */}
+        <Reviews />
 
         {/* Full service board. Every card carries its service into the form, so
             the customer never describes twice what they already chose. */}
