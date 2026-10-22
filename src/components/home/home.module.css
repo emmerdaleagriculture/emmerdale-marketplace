@@ -1681,7 +1681,7 @@
 }
 @media (min-width: 720px) {
   .reviewList {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 .review {
@@ -1699,7 +1699,10 @@
   font-size: 0.95rem;
 }
 .reviewQuote {
-  margin: 10px 0 16px;
+  margin: 0 0 16px;
+}
+.reviewStars + .reviewQuote {
+  margin-top: 10px;
 }
 .reviewQuote p {
   margin: 0;

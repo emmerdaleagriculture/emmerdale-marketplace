@@ -1,6 +1,7 @@
 import s from './home.module.css';
 
-type Review = { quote: string; name: string; county: string; job: string };
+/** stars only where the customer actually gave a rating on /rate. */
+type Review = { quote: string; name: string; county: string; job: string; stars?: number };
 
 /**
  * What customers said, in their own words.
@@ -10,27 +11,43 @@ type Review = { quote: string; name: string; county: string; job: string };
  * not on its own permission to quote it. Attribution is first name and county,
  * which is what the request email (2026-10-21) offered and nothing more.
  *
- * Adrian agreed on 2026-10-22. Both lines are his ratings of N J Green
- * Services, verbatim from contractor_ratings.
+ * All three agreed on 2026-10-22. Adrian's two lines are his ratings of
+ * N J Green Services, verbatim from contractor_ratings; Robert's and David's
+ * came in their email replies.
  */
 const REVIEWS: Review[] = [
+  {
+    quote: 'Saved me a substantial amount of time trying to find a nearby reliable contractor.',
+    name: 'Robert',
+    county: 'Hampshire',
+    job: 'Hedge cutting',
+    stars: 5,
+  },
   {
     quote: 'Very helpful, knowledgeable and professional.',
     name: 'Adrian',
     county: 'West Sussex',
     job: 'Paddock renovation',
+    stars: 5,
   },
   {
     quote: 'Great work, really appreciated.',
     name: 'Adrian',
     county: 'West Sussex',
     job: 'Fertiliser and lime',
+    stars: 5,
+  },
+  {
+    quote: 'Quick and easy, thankyou.',
+    name: 'David',
+    county: 'West Sussex',
+    job: 'Harrowing',
   },
 ];
 
-const Stars = () => (
-  <span className={s.reviewStars} role="img" aria-label="5 out of 5 stars">
-    ★★★★★
+const Stars = ({ n }: { n: number }) => (
+  <span className={s.reviewStars} role="img" aria-label={`${n} out of 5 stars`}>
+    {'★'.repeat(n)}
   </span>
 );
 
@@ -46,7 +63,7 @@ export function Reviews() {
           {REVIEWS.map((r) => (
             <li key={r.quote} className={s.review}>
               <figure>
-                <Stars />
+                {r.stars ? <Stars n={r.stars} /> : null}
                 <blockquote className={s.reviewQuote}>
                   <p>&ldquo;{r.quote}&rdquo;</p>
                 </blockquote>
