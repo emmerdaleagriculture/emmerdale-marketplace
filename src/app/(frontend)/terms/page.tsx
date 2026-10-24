@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.8, 21 October 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.9, 24 October 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -109,8 +109,8 @@ export default function TermsPage() {
             The customer pays a deposit to book the job, and the balance falls due when
             the work is done and they confirm it, or automatically{' '}
             <strong>three working days</strong> after you mark it complete, if they
-            neither confirm nor raise a problem. The balance is payable by them within{' '}
-            <strong>seven days</strong> of that point.
+            neither confirm nor raise a problem. The balance is payable by them{' '}
+            <strong>on receipt</strong> of our request at that point.
           </p>
           <p>
             You are paid your full quoted price once that balance has cleared and we have

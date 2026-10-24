@@ -50,10 +50,17 @@ function paymentReference(submissionId: unknown): string | null {
 /**
  * When the balance is due, from the terms the SQL side put on the payload
  * (sq_balance_terms_days). Zero since 2026-10-24: on receipt. A payload
- * without the figure is read as on receipt too, not as the old week.
+ * without the figure (a deposit email queued before begin_acceptance
+ * carried it) says nothing about timing rather than guessing either way.
  */
-function balanceTerms(p: Record<string, unknown>): string {
-  const days = Number(p.terms_days ?? 0);
+/** "3 days ago" / "yesterday" / "today", for the overdue alert. */
+function daysSince(iso: unknown): string {
+  const days = Math.floor((Date.now() - new Date(String(iso)).getTime()) / 86_400_000);
+  return days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
+}
+function balanceTerms(p: Record<string, unknown>): string | null {
+  if (p.terms_days == null) return null;
+  const days = Number(p.terms_days);
   return days > 0 ? `within ${days} days` : 'on receipt';
 }
 
@@ -717,7 +724,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           (bal > 0
             ? `Pay the ${gbp(p.amount_pence)} deposit here to confirm the booking:\n${p.checkout_url}\n\n` +
               `The remaining ${gbp(bal)} is charged to the same card once you’ve confirmed the ` +
-              `work is done, and is due ${balanceTerms(p)}.\n\n`
+              `work is done${balanceTerms(p) ? `, and is due ${balanceTerms(p)}` : ''}.\n\n`
             : `Pay here to confirm the booking:\n${p.checkout_url}\n\n`) +
           `The link is valid for 24 hours.\n\n` +
           `Your job page: ${portal}`,
@@ -960,7 +967,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Deposit paid:  ${gbp(p.deposit_pence)}\n` +
           `Balance:       ${gbp(p.amount_pence)}\n\n` +
           `We’ll take the balance from the card you paid the deposit with. It’s due ` +
-          `${balanceTerms(p)}.\n\n` +
+          `${balanceTerms(p) ?? 'on receipt'}.\n\n` +
           `Your job page: ${portal}`,
       };
 
@@ -976,7 +983,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Job total:     ${gbp(p.total_pence)}${vatSuffix(p.price_basis)}\n` +
           `Deposit paid:  ${gbp(p.deposit_pence)}\n` +
           `Balance:       ${gbp(p.amount_pence)}\n\n` +
-          `The balance is due ${balanceTerms(p)}. Pay by card on your job page:\n` +
+          `The balance is due ${balanceTerms(p) ?? 'on receipt'}. Pay by card on your job page:\n` +
           `${portal}\n\n` +
           `Or by bank transfer:\n` +
           `Account name:   ${BANK_ACCOUNT_NAME}\n` +
@@ -1037,10 +1044,15 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     case 'sq_balance_overdue':
       return {
         subject: `BALANCE OVERDUE: ${gbp(p.amount_pence)}`,
+        // requested_at arrives from 20261024200000 on; before that only the
+        // due date, which under on-receipt terms is the request itself.
         text:
-          `The balance on submission ${p.submission_id} passed its due date ` +
-          `(${p.due_at ?? '?'}) without being settled.\n\n` +
-          `${SITE_URL}/admin/submissions/${p.submission_id}`,
+          (p.requested_at
+            ? `The balance on submission ${p.submission_id} was requested ` +
+              `${daysSince(p.requested_at)} and is still unsettled.`
+            : `The balance on submission ${p.submission_id} passed its due date ` +
+              `(${p.due_at ?? '?'}) without being settled.`) +
+          `\n\n${SITE_URL}/admin/submissions/${p.submission_id}`,
       };
 
     // ── Monday round-up for contractors (20260930180000) ─────────────

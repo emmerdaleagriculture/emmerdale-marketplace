@@ -168,7 +168,9 @@ function facts(j: Job, now: number): Fact[] {
       text: `Balance${j.balance_pence != null ? ` ${formatGBP(j.balance_pence)}` : ''} ${PAYMENT_WORDS[j.balance_status] ?? j.balance_status}${
         // The date only while it is ahead: on-receipt balances carry the
         // sign-off moment as due_at, which would read as a missed deadline.
-        ['due', 'requested'].includes(j.balance_status) && j.balance_due_at && new Date(j.balance_due_at) > new Date()
+        // The board view has no request time to tell dated terms apart
+        // (balanceDueLabel does, where the row is to hand), so the clock.
+        ['due', 'requested'].includes(j.balance_status) && j.balance_due_at && new Date(j.balance_due_at).getTime() > now
           ? ` ${formatDate(j.balance_due_at)}`
           : ''
       }`,

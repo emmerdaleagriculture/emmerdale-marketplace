@@ -27,7 +27,7 @@ import { VisitDecision } from './VisitDecision';
 import { WithdrawJob } from './WithdrawJob';
 import { getQuotePasses } from '@/lib/sealedQuotes/passes';
 import { PayBalance } from './PayBalance';
-import { formatDate, formatDateTime } from '@/lib/time';
+import { balanceDueLabel, formatDate, formatDateTime } from '@/lib/time';
 import { paymentReference } from '@/lib/site';
 import { OpenToMarket } from './OpenToMarket';
 import { TextAlerts } from './TextAlerts';
@@ -114,7 +114,7 @@ export default async function ClientPortalPage({
     done
       ? admin
           .from('job_payments')
-          .select('amount_pence, status, due_at')
+          .select('amount_pence, status, due_at, created_at')
           .eq('submission_id', js.id)
           .eq('kind', 'balance')
           .in('status', ['requested', 'due', 'failed'])
@@ -469,14 +469,9 @@ export default async function ClientPortalPage({
                 <PayBalance
                   token={token}
                   amountLabel={formatGBP(balance.amount_pence)}
-                  // A date only while it is ahead: balances are due on receipt
-                  // now, and "due by today" is what that would otherwise say.
-                  // A balance still on the old 7-day terms keeps its date.
-                  dueLabel={
-                    balance.due_at && new Date(balance.due_at).getTime() > Date.now()
-                      ? formatDate(balance.due_at)
-                      : null
-                  }
+                  // On receipt since 2026-10-24; a balance opened under the
+                  // earlier 7-day terms keeps its date (balanceDueLabel).
+                  dueLabel={balanceDueLabel(balance.due_at, balance.created_at)}
                   mode={balance.status === 'due' ? 'due' : balance.status === 'failed' ? 'failed' : 'requested'}
                   reference={paymentReference(js.id)}
                 />

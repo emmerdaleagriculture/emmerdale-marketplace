@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatGBP } from '@/lib/sealedQuotes/money';
-import { formatDate, formatDateTime } from '@/lib/time';
+import { balanceDueLabel, formatDate, formatDateTime } from '@/lib/time';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
 
@@ -100,16 +100,16 @@ function partLine(p: Payment | undefined, fallback: string): { text: string; sub
       return { text: amt, sub: `${formatGBP(p.refunded_pence ?? 0)} refunded` };
     case 'refunded':
       return { text: amt, sub: 'refunded' };
-    // A due date is only worth printing while it is ahead: balances are due
-    // on receipt now, so due_at is the sign-off moment and "by <that day>"
-    // reads as a deadline already missed. Older balances keep their week.
-    case 'due':
-      return { text: amt, sub: p.due_at && new Date(p.due_at) > new Date() ? `due ${formatDate(p.due_at)}` : 'due on receipt' };
-    case 'requested':
-      return {
-        text: amt,
-        sub: `customer to pay${p.due_at && new Date(p.due_at) > new Date() ? ` by ${formatDate(p.due_at)}` : ', on receipt'}`,
-      };
+    // On receipt since 2026-10-24; a balance opened under the earlier 7-day
+    // terms keeps its date, past or not (balanceDueLabel).
+    case 'due': {
+      const by = balanceDueLabel(p.due_at, p.created_at);
+      return { text: amt, sub: by ? `due ${by}` : 'due on receipt' };
+    }
+    case 'requested': {
+      const by = balanceDueLabel(p.due_at, p.created_at);
+      return { text: amt, sub: `customer to pay${by ? ` by ${by}` : ', on receipt'}` };
+    }
     case 'failed':
       return { text: amt, sub: `failed${p.attempts ? ` after ${p.attempts} tries` : ''}`, bad: true };
     case 'expired':

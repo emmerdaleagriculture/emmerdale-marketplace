@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { formatDate, formatDateTime, londonDay } from '@/lib/time';
+import { balanceDueLabel, formatDate, formatDateTime, londonDay } from '@/lib/time';
 import { gateWidthLabel } from '@/lib/jobParse/access';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { paymentReference } from '@/lib/site';
@@ -267,7 +267,7 @@ export default async function SubmissionDetailPage({
   // an operator opening a finished job is usually here to answer.
   const { data: payments } = await admin
     .from('job_payments')
-    .select('id, kind, status, amount_pence, paid_at, due_at, attempts, last_error')
+    .select('id, kind, status, amount_pence, paid_at, due_at, created_at, attempts, last_error')
     .eq('submission_id', id)
     .order('created_at', { ascending: true });
 
@@ -423,9 +423,10 @@ export default async function SubmissionDetailPage({
                   {p.paid_at
                     ? `paid ${new Date(p.paid_at).toLocaleString('en-GB')}`
                     : p.due_at
-                      ? new Date(p.due_at) > new Date()
-                        ? `due ${new Date(p.due_at).toLocaleDateString('en-GB')}`
-                        : 'due on receipt'
+                      ? (() => {
+                          const by = balanceDueLabel(p.due_at, p.created_at);
+                          return by ? `due ${by}` : 'due on receipt';
+                        })()
                       : '—'}
                 </td>
               </tr>

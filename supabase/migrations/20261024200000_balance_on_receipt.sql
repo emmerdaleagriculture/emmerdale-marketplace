@@ -39,15 +39,18 @@ AS $function$
 declare r record; v_n int := 0;
 begin
   for r in
-    select p.id, p.submission_id, p.amount_pence, p.due_at
+    select p.id, p.submission_id, p.amount_pence, p.due_at, p.created_at
       from job_payments p
      where p.kind = 'balance' and p.status in ('due', 'requested', 'failed')
        and p.due_at < now()
        and p.created_at < now() - make_interval(days => app_config_num('sq_balance_overdue_grace_days', 3)::int)
   loop
+    -- requested_at: the email says how long it has been outstanding, which
+    -- under on-receipt terms is the fact; the due date is the request itself.
     if sq_notify_once(r.submission_id, '__admin__', 'sq_balance_overdue', '__admin__',
          jsonb_build_object('submission_id', r.submission_id,
-                            'amount_pence', r.amount_pence, 'due_at', r.due_at)) then
+                            'amount_pence', r.amount_pence, 'due_at', r.due_at,
+                            'requested_at', r.created_at)) then
       v_n := v_n + 1;
     end if;
   end loop;
