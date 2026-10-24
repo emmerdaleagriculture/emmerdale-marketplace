@@ -124,7 +124,9 @@ export function DistributionPanel({
           {/* Further work on the same job ("hedging/ditching and mowing"): the
               primary service stays the label and the pricing mode; these are
               shown to contractors as "Also wanted". Ctrl/Cmd-click for several;
-              none selected clears them. */}
+              none selected clears them. Every service is offered, so a primary
+              swap and "the old primary is now also wanted" is one save — the
+              server drops whichever one is picked as primary. */}
           <select
             key={`also-${alsoServiceIds.join('-')}`}
             multiple
@@ -135,13 +137,11 @@ export function DistributionPanel({
             aria-label="Also wanted"
             title="Also wanted (Ctrl/Cmd-click for several)"
           >
-            {services
-              .filter((sv) => sv.id !== serviceId)
-              .map((sv) => (
-                <option key={sv.id} value={sv.id}>
-                  {sv.name}
-                </option>
-              ))}
+            {services.map((sv) => (
+              <option key={sv.id} value={sv.id}>
+                {sv.name}
+              </option>
+            ))}
           </select>
           <button
             className={f.btnGhost}

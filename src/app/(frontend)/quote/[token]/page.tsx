@@ -7,6 +7,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import { isAppUserAgent } from '@/lib/appMode';
 import { getInvitationByToken, getLiveQuote, signPhotos } from '@/lib/sealedQuotes/data';
+import { getServices } from '@/lib/reference';
 import { formatGBP, formatRate, vatNote } from '@/lib/sealedQuotes/money';
 import { timeLeft, formatDate, formatDateTime } from '@/lib/time';
 import { MinimalHeader } from '@/components/MinimalHeader';
@@ -170,11 +171,13 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   const alsoIds = (js.also_service_ids ?? []) as number[];
   const alsoServices: string[] = [];
   if (alsoIds.length > 0) {
-    const { data: alsoRows } = await admin.from('services').select('id, name').in('id', alsoIds);
-    const byId = new Map((alsoRows ?? []).map((r) => [r.id, r.name]));
+    // The taxonomy is memoised reference data: no extra round trip on the
+    // contractor's hottest page. Never the primary itself (sq_also_services
+    // applies the same rule in SQL).
+    const byId = new Map((await getServices()).map((r) => [r.id, r.name]));
     for (const id of alsoIds) {
       const name = byId.get(id);
-      if (name) alsoServices.push(name);
+      if (name && id !== service?.id) alsoServices.push(name);
     }
   }
 

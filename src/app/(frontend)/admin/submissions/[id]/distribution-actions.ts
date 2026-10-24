@@ -89,18 +89,20 @@ export async function setServiceAction(_prev: FormState, formData: FormData): Pr
     .eq('id', id)
     .maybeSingle();
   if (!before) return { error: 'Not found.' };
+  const alsoBeforeIds = (before.also_service_ids ?? []) as number[];
   const { data: svcRows } = await admin
     .from('services')
     .select('id, name')
-    .in('id', [serviceId, ...alsoIds]);
+    .in('id', [serviceId, ...alsoIds, ...alsoBeforeIds]);
   const nameOf = new Map((svcRows ?? []).map((r) => [r.id, r.name]));
   const svc = nameOf.has(serviceId) ? { name: nameOf.get(serviceId)! } : null;
   if (!svc) return { error: 'Unknown service.' };
   if (alsoIds.some((sid) => !nameOf.has(sid))) return { error: 'Unknown service in “also wanted”.' };
   const alsoNames = alsoIds.map((sid) => nameOf.get(sid)!);
+  const alsoBeforeNames = alsoBeforeIds.map((sid) => nameOf.get(sid)).filter((n): n is string => !!n);
 
   const from = (before.service as { name: string } | null)?.name ?? null;
-  const alsoBefore = ((before.also_service_ids ?? []) as number[]).join(',');
+  const alsoBefore = alsoBeforeIds.join(',');
   if (from === svc.name && alsoBefore === alsoIds.join(',')) return { ok: true, message: 'No change.' };
 
   const { error } = await admin
@@ -110,6 +112,12 @@ export async function setServiceAction(_prev: FormState, formData: FormData): Pr
   if (error) return { error: error.message };
   // job_events refuses an operator action without a reason (§29); the change
   // itself is the reason, and it keeps the old label on record.
+  // Say what actually changed, and keep the old "also" list on record too.
+  const list = (names: string[]) => (names.length ? names.join(', ') : 'none');
+  const changes: string[] = [];
+  if (from !== svc.name) changes.push(`Service set: ${from ?? '(unclassified)'} → ${svc.name}`);
+  if (alsoBefore !== alsoIds.join(','))
+    changes.push(`Also wanted: ${list(alsoBeforeNames)} → ${list(alsoNames)}`);
   const alsoText = alsoNames.length ? `; also ${alsoNames.join(', ')}` : '';
   await admin.rpc('log_job_event', {
     p_job_id: id,
@@ -118,8 +126,8 @@ export async function setServiceAction(_prev: FormState, formData: FormData): Pr
     p_to: null,
     p_actor_type: 'operator',
     p_actor_id: user.id,
-    p_reason: `Service set: ${from ?? '(unclassified)'} → ${svc.name}${alsoText}`,
-    p_metadata: { from, to: svc.name, also: alsoNames },
+    p_reason: changes.join('. '),
+    p_metadata: { from, to: svc.name, also_from: alsoBeforeNames, also: alsoNames },
   });
   refresh(id);
   revalidatePath('/');
