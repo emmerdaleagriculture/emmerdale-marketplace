@@ -469,7 +469,13 @@ export default async function ClientPortalPage({
                 <PayBalance
                   token={token}
                   amountLabel={formatGBP(balance.amount_pence)}
-                  dueLabel={balance.due_at ? formatDate(balance.due_at) : null}
+                  // A date only while it is ahead: balances are due on receipt
+                  // now, and "due by today" is what that would otherwise say.
+                  dueLabel={
+                    balance.due_at && new Date(balance.due_at).getTime() > Date.now() + 36 * 3600 * 1000
+                      ? formatDate(balance.due_at)
+                      : null
+                  }
                   mode={balance.status === 'due' ? 'due' : balance.status === 'failed' ? 'failed' : 'requested'}
                   reference={paymentReference(js.id)}
                 />

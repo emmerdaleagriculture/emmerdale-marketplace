@@ -29,7 +29,7 @@ export default function ServiceCharterPage() {
           <h1>What to expect from us</h1>
           <p className={l.updated}>
             Emmerdale Agriculture: Customer Service Charter ·{' '}
-            <strong>Version 2.1, 22 September 2026</strong>
+            <strong>Version 2.2, 24 October 2026</strong>
           </p>
           <p>
             You are dealing with one company for the whole job: us. This is what that means
@@ -61,7 +61,7 @@ export default function ServiceCharterPage() {
           <p>
             <strong>You pay in two parts.</strong> A 15% deposit by card books the job. The
             rest is only taken once the work is done and you&rsquo;ve confirmed you&rsquo;re
-            happy with it, from the same card, within 7 days of you signing the job off. The
+            happy with it, from the same card, and is due as soon as you sign the job off. The
             contractor isn&rsquo;t paid until then.
           </p>
           <p>

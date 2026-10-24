@@ -76,7 +76,7 @@ const faqs = [
   },
   {
     q: 'How do I pay?',
-    a: 'You pay a 15% deposit by card to book the job, and the rest once the work is done and you have confirmed you are happy with it. The balance is taken from the same card, and is due within 7 days of you signing the job off. The deposit is non-refundable if you cancel.',
+    a: 'You pay a 15% deposit by card to book the job, and the rest once the work is done and you have confirmed you are happy with it. The balance is taken from the same card, and is due on receipt, as soon as you sign the job off. The deposit is non-refundable if you cancel.',
   },
 ];
 

@@ -47,6 +47,15 @@ function paymentReference(submissionId: unknown): string | null {
   if (typeof submissionId !== 'string' || !submissionId) return null;
   return `EA-${submissionId.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
 }
+/**
+ * When the balance is due, from the terms the SQL side put on the payload
+ * (sq_balance_terms_days). Zero since 2026-10-24: on receipt. A payload
+ * without the figure is read as on receipt too, not as the old week.
+ */
+function balanceTerms(p: Record<string, unknown>): string {
+  const days = Number(p.terms_days ?? 0);
+  return days > 0 ? `within ${days} days` : 'on receipt';
+}
 
 const REPLY_DOMAIN = (Deno.env.get('SQ_INBOUND_REPLY_DOMAIN') ?? '').trim();
 
@@ -708,7 +717,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           (bal > 0
             ? `Pay the ${gbp(p.amount_pence)} deposit here to confirm the booking:\n${p.checkout_url}\n\n` +
               `The remaining ${gbp(bal)} is charged to the same card once you’ve confirmed the ` +
-              `work is done, and is due within ${p.terms_days ?? 7} days of that.\n\n`
+              `work is done, and is due ${balanceTerms(p)}.\n\n`
             : `Pay here to confirm the booking:\n${p.checkout_url}\n\n`) +
           `The link is valid for 24 hours.\n\n` +
           `Your job page: ${portal}`,
@@ -951,7 +960,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Deposit paid:  ${gbp(p.deposit_pence)}\n` +
           `Balance:       ${gbp(p.amount_pence)}\n\n` +
           `We’ll take the balance from the card you paid the deposit with. It’s due ` +
-          `within ${p.terms_days ?? 7} days.\n\n` +
+          `${balanceTerms(p)}.\n\n` +
           `Your job page: ${portal}`,
       };
 
@@ -967,7 +976,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `Job total:     ${gbp(p.total_pence)}${vatSuffix(p.price_basis)}\n` +
           `Deposit paid:  ${gbp(p.deposit_pence)}\n` +
           `Balance:       ${gbp(p.amount_pence)}\n\n` +
-          `The balance is due within ${p.terms_days ?? 7} days. Pay by card on your job page:\n` +
+          `The balance is due ${balanceTerms(p)}. Pay by card on your job page:\n` +
           `${portal}\n\n` +
           `Or by bank transfer:\n` +
           `Account name:   ${BANK_ACCOUNT_NAME}\n` +
