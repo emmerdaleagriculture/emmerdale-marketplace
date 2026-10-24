@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from 'next';
 import { Tenor_Sans, DM_Sans, Inter } from 'next/font/google';
 import './globals.css';
 import { COMPANY_LEGAL_NAME, SITE_NAME, SITE_STRAPLINE, siteUrl } from '@/lib/site';
+import { Suspense } from 'react';
 import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
+import { AbroadPrompt } from '@/components/abroad/AbroadPrompt';
 import { Analytics } from '@/components/Analytics';
 import { FirstTouchCapture } from '@/components/FirstTouch';
 import { AppShell } from '@/components/app/AppShell';
@@ -134,6 +136,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             customer. It hides itself on /admin, where the only readers are
             the people it reports to. */}
         <FeedbackWidget />
+        {/* The outside-the-UK invitation: two sign-up links for visitors
+            whose country is not GB, on the content pages only. Suspense
+            because it reads the query string on statically rendered pages. */}
+        <Suspense fallback={null}>
+          <AbroadPrompt />
+        </Suspense>
         <Analytics />
         <FirstTouchCapture />
       </body>

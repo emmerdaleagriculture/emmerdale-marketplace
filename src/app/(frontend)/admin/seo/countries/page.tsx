@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { gscQuery, isoDaysAgo, type GscRow } from '@/lib/gsc';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { countryNameFromAlpha3, countryNameFromCode } from '@/lib/countries';
+import { fetchAll } from '@/lib/supabase/fetchAll';
+import { PROMPT_LABEL_PREFIX, PROMPT_SOURCE_SUFFIX } from '@/lib/abroadPrompt';
 import styles from '../seo.module.css';
 
 export const metadata: Metadata = {
@@ -38,6 +40,7 @@ type Interest = {
   details: string | null;
   email: string;
   ip_country: string | null;
+  source_path: string | null;
   created_at: string;
 };
 
@@ -75,7 +78,7 @@ export default async function CountriesPage() {
     admin.rpc('admin_country_counts', { p_days: RANGE_DAYS }),
     admin
       .from('expansion_interest')
-      .select('id, side, country_name, place, details, email, ip_country, created_at')
+      .select('id, side, country_name, place, details, email, ip_country, source_path, created_at')
       .order('created_at', { ascending: false })
       .limit(200),
   ]);
@@ -83,6 +86,41 @@ export default async function CountriesPage() {
   const counts = (countsData ?? []) as CountryCounts[];
   const interest = (interestData ?? []) as Interest[];
   const dbErr = waitingErr ?? countsErr ?? interestErr;
+
+  // The outside-the-UK prompt (components/abroad/AbroadPrompt): shown,
+  // dismissed, and which sign-up link was taken, by country, last 28 days.
+  // Paged past the row cap; it only ever shows abroad, so this stays small.
+  const since = new Date(Date.now() - RANGE_DAYS * 86_400_000).toISOString();
+  let promptRows: { label: string | null; country: string | null; session_key: string }[] = [];
+  let promptErr: string | null = null;
+  try {
+    promptRows = await fetchAll((from, to) =>
+      admin
+        .from('page_events')
+        .select('label, country, session_key')
+        .like('label', `${PROMPT_LABEL_PREFIX}%`)
+        .gte('created_at', since)
+        .order('id', { ascending: true })
+        .range(from, to),
+    );
+  } catch (err) {
+    promptErr = err instanceof Error ? err.message : String(err);
+  }
+  type PromptStats = { shown: number; dismissed: number; customer: number; contractor: number };
+  const emptyStats = (): PromptStats => ({ shown: 0, dismissed: 0, customer: 0, contractor: 0 });
+  const promptByCountry = new Map<string, PromptStats>();
+  const promptTotal = emptyStats();
+  for (const r of promptRows) {
+    const event = (r.label ?? '').slice(PROMPT_LABEL_PREFIX.length) as keyof PromptStats;
+    if (!(event in promptTotal)) continue;
+    const key = r.country ?? '??';
+    const c = promptByCountry.get(key) ?? emptyStats();
+    c[event] += 1;
+    promptTotal[event] += 1;
+    promptByCountry.set(key, c);
+  }
+  const promptCountries = [...promptByCountry.entries()].sort((a, b) => b[1].shown - a[1].shown);
+  const viaPrompt = interest.filter((r) => (r.source_path ?? '').endsWith(PROMPT_SOURCE_SUFFIX)).length;
 
   return (
     <main className={styles.page}>
@@ -165,6 +203,68 @@ export default async function CountriesPage() {
                   <td className={styles.num}>{fmtNumber(r.parses_rejected)}</td>
                   <td className={styles.num}>{fmtNumber(r.outside_uk)}</td>
                   <td className={styles.num}>{fmtNumber(r.interest)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className={styles.tableSection}>
+        <div className={styles.tableHeader}>
+          <h2>
+            The sign-up prompt <span className={styles.badge}>last {RANGE_DAYS} days</span>
+          </h2>
+        </div>
+        <p className={styles.tableNote}>
+          The “Outside the UK?” card shown on the content pages to visitors whose country is not
+          GB: how often it appeared, how often it was closed, and which sign-up link was taken.
+          Registrations via prompt are waiting-list rows that arrived from it.
+        </p>
+        {promptErr && <p className={styles.error}>{promptErr}</p>}
+        <div className={styles.totals}>
+          <div className={styles.totalCard}>
+            <div className={styles.totalLabel}>Shown</div>
+            <div className={styles.totalValue}>{fmtNumber(promptTotal.shown)}</div>
+          </div>
+          <div className={styles.totalCard}>
+            <div className={styles.totalLabel}>Closed</div>
+            <div className={styles.totalValue}>{fmtNumber(promptTotal.dismissed)}</div>
+          </div>
+          <div className={styles.totalCard}>
+            <div className={styles.totalLabel}>Work done → sign up</div>
+            <div className={styles.totalValue}>{fmtNumber(promptTotal.customer)}</div>
+          </div>
+          <div className={styles.totalCard}>
+            <div className={styles.totalLabel}>Doing the work → sign up</div>
+            <div className={styles.totalValue}>{fmtNumber(promptTotal.contractor)}</div>
+          </div>
+          <div className={styles.totalCard}>
+            <div className={styles.totalLabel}>Registered via prompt</div>
+            <div className={styles.totalValue}>{fmtNumber(viaPrompt)}</div>
+          </div>
+        </div>
+        {promptCountries.length === 0 ? (
+          <p className={styles.muted}>Not shown to anyone yet.</p>
+        ) : (
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Country</th>
+                <th className={styles.num}>Shown</th>
+                <th className={styles.num}>Closed</th>
+                <th className={styles.num}>Work done</th>
+                <th className={styles.num}>Doing the work</th>
+              </tr>
+            </thead>
+            <tbody>
+              {promptCountries.map(([code, c]) => (
+                <tr key={code}>
+                  <td>{code === '??' ? 'Unknown' : countryNameFromCode(code)}</td>
+                  <td className={styles.num}>{fmtNumber(c.shown)}</td>
+                  <td className={styles.num}>{fmtNumber(c.dismissed)}</td>
+                  <td className={styles.num}>{fmtNumber(c.customer)}</td>
+                  <td className={styles.num}>{fmtNumber(c.contractor)}</td>
                 </tr>
               ))}
             </tbody>

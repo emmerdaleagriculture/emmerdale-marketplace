@@ -1,0 +1,116 @@
+/* The outside-the-UK prompt: a card in the bottom-left corner on a desk,
+   a sheet along the bottom edge on a phone. The "Report a problem" tab owns
+   the bottom-right, so on a phone this sits above it rather than under it. */
+.root {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 59;
+  width: min(380px, calc(100vw - 32px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  animation: rise 0.28s ease-out;
+}
+@media (max-width: 620px) {
+  .root {
+    bottom: 72px;
+  }
+  /* The home page's "Get a price" bar marks <body> while it shows. */
+  :global(body[data-sticky-bar='on']) .root {
+    bottom: 142px;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.card {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(20, 30, 20, 0.18);
+  padding: 16px 18px 14px;
+  color: var(--ink);
+}
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--jd-green);
+}
+.title {
+  margin: 4px 0 0;
+  font-family: var(--font-display-stack);
+  font-size: 19px;
+  line-height: 1.25;
+}
+.body {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.close {
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+  flex: none;
+}
+.close:hover {
+  color: var(--ink);
+}
+.choices {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 8px;
+  background: var(--cream);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 1.3;
+}
+.choice:hover {
+  border-color: var(--jd-green);
+  background: var(--jd-green-pale);
+}
+.choice strong {
+  display: block;
+  font-weight: 600;
+}
+.choice span {
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.go {
+  flex: none;
+  font-weight: 700;
+  color: var(--jd-green-dark);
+  white-space: nowrap;
+}
