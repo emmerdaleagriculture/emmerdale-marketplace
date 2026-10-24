@@ -57,6 +57,10 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
       // Priority Access, run in the shadows: who would qualify, and what the
       // window would have done to the jobs we actually had.
       { href: '/admin/priority', label: 'Priority' },
+      // Going worldwide: the waiting list, visitors by country and the
+      // sign-up prompt. Network, not Search: it is supply and demand we
+      // don't have yet, not how Google sees us.
+      { href: '/admin/abroad', label: 'Abroad' },
     ],
   },
   {
@@ -83,7 +87,6 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
       { href: '/admin/seo/trends', label: 'Trends' },
       { href: '/admin/seo/queries', label: 'Queries' },
       { href: '/admin/seo/pages', label: 'Pages' },
-      { href: '/admin/seo/countries', label: 'Countries' },
       { href: '/admin/notes', label: 'Notes' },
     ],
   },
