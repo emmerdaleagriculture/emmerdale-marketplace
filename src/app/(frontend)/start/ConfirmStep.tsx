@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { START_COMPLETE_PATH } from './copy';
 import { confirmJobAction, saveContactDraftAction, type ConfirmActionState } from './actions';
 import type { ParseResult } from '@/lib/jobParse/schema';
@@ -628,9 +629,16 @@ export function ConfirmStep({
             ))}
           </select>
           <span className={f.hint}>
-            {result.county_choice_reason === 'border'
-              ? 'That postcode sits on a county border. Tell us which side your land is on.'
-              : 'We couldn’t place that from what you gave us, so pick the county your land is in.'}
+            {result.county_choice_reason === 'border' ? (
+              'That postcode sits on a county border. Tell us which side your land is on.'
+            ) : (
+              <>
+                We couldn’t place that from what you gave us, so pick the county your land is in.{' '}
+                Not in the UK? We only cover the UK for now:{' '}
+                <Link href="/outside-the-uk?from=/start">tell us where you are</Link> and we’ll let you know
+                when we open there.
+              </>
+            )}
           </span>
         </label>
       )}

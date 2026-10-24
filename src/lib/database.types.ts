@@ -973,6 +973,45 @@ export type Database = {
           },
         ]
       }
+      expansion_interest: {
+        Row: {
+          country_code: string
+          country_name: string
+          created_at: string
+          details: string | null
+          email: string
+          id: number
+          ip_country: string | null
+          place: string | null
+          side: string
+          source_path: string | null
+        }
+        Insert: {
+          country_code: string
+          country_name: string
+          created_at?: string
+          details?: string | null
+          email: string
+          id?: never
+          ip_country?: string | null
+          place?: string | null
+          side: string
+          source_path?: string | null
+        }
+        Update: {
+          country_code?: string
+          country_name?: string
+          created_at?: string
+          details?: string | null
+          email?: string
+          id?: never
+          ip_country?: string | null
+          place?: string | null
+          side?: string
+          source_path?: string | null
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           contact_name: string | null
@@ -1440,6 +1479,7 @@ export type Database = {
       job_parse_events: {
         Row: {
           action: string
+          country: string | null
           created_at: string
           id: number
           ip: string
@@ -1448,6 +1488,7 @@ export type Database = {
         }
         Insert: {
           action: string
+          country?: string | null
           created_at?: string
           id?: number
           ip: string
@@ -1456,6 +1497,7 @@ export type Database = {
         }
         Update: {
           action?: string
+          country?: string | null
           created_at?: string
           id?: number
           ip?: string
@@ -2379,6 +2421,7 @@ export type Database = {
       }
       page_events: {
         Row: {
+          country: string | null
           created_at: string
           depth_pct: number | null
           doc_h: number | null
@@ -2396,6 +2439,7 @@ export type Database = {
           y_pct: number | null
         }
         Insert: {
+          country?: string | null
           created_at?: string
           depth_pct?: number | null
           doc_h?: number | null
@@ -2413,6 +2457,7 @@ export type Database = {
           y_pct?: number | null
         }
         Update: {
+          country?: string | null
           created_at?: string
           depth_pct?: number | null
           doc_h?: number | null
@@ -3222,6 +3267,17 @@ export type Database = {
           p_submission_id: string
         }
         Returns: Json
+      }
+      admin_country_counts: {
+        Args: { p_days?: number }
+        Returns: {
+          country: string
+          interest: number
+          outside_uk: number
+          parses_ok: number
+          parses_rejected: number
+          visits: number
+        }[]
       }
       admin_dashboard: { Args: never; Returns: Json }
       contractor_add_extra_work: {

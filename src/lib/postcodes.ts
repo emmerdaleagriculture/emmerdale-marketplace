@@ -159,7 +159,14 @@ export async function resolveCounty(postcode: string): Promise<CountyResolution>
 
   const norm = normalisePostcode(pc);
   if (!norm.full && !norm.outcode) {
-    return { ok: false, via: 'none', error: 'That doesn’t look like a UK postcode. Check it and try again.' };
+    return {
+      ok: false,
+      via: 'none',
+      // Outside the UK is the other reason a postcode fails here. Phase 0 of
+      // going worldwide: say so, and where to register interest.
+      error:
+        'That doesn’t look like a UK postcode. Check it and try again. Outside the UK? We only cover the UK for now: tell us where you are at emmerdaleagriculture.com/outside-the-uk',
+    };
   }
 
   const supabase = createServiceRoleClient();

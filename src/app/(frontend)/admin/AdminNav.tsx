@@ -83,6 +83,7 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
       { href: '/admin/seo/trends', label: 'Trends' },
       { href: '/admin/seo/queries', label: 'Queries' },
       { href: '/admin/seo/pages', label: 'Pages' },
+      { href: '/admin/seo/countries', label: 'Countries' },
       { href: '/admin/notes', label: 'Notes' },
     ],
   },

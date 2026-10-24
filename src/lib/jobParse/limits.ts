@@ -1,5 +1,6 @@
 import { headers } from 'next/headers';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { requestCountry } from '@/lib/requestGeo';
 
 /**
  * Abuse controls for the /start parse flow (spec §8): per-IP rate limits and
@@ -39,7 +40,10 @@ export async function logParseEvent(
   if (LOCAL_IPS.has(ip)) return;
   try {
     const admin = createServiceRoleClient();
-    await admin.from('job_parse_events').insert({ ip, action, outcome, reason: reason ?? null });
+    // The country Vercel saw, beside the outcome: the one record of whether
+    // anyone outside the UK is trying to post (admin/seo/countries).
+    const country = await requestCountry();
+    await admin.from('job_parse_events').insert({ ip, action, outcome, reason: reason ?? null, country });
   } catch (err) {
     console.error('[jobParse] event log insert failed:', err);
   }
