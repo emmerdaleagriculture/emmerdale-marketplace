@@ -98,7 +98,9 @@
 
 .totals {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  /* 150px, not 170px: two tiles abreast on a 390px phone rather than a
+     stack of five. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 0.75rem;
   margin-bottom: 2rem;
 }
@@ -210,6 +212,16 @@
 
 .tableScroll {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Free text in a cell (what a registrant wrote) wraps inside a readable
+   column instead of stretching the table to the length of the message. */
+.table .wrapCell {
+  min-width: 18ch;
+  max-width: 32ch;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .tableNote {
