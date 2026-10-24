@@ -95,7 +95,7 @@ function labelFor(el: Element | null): string | undefined {
  * is pending and remounts it if the parse fails, so a fresh key per mount would
  * count one frustrated visitor as two visits and deflate every per-visit figure.
  */
-function sessionKey(): string | null {
+export function sessionKey(): string | null {
   try {
     const existing = sessionStorage.getItem('ea_sk');
     if (existing) return existing;

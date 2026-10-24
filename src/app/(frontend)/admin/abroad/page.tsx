@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import { gscQuery, isoDaysAgo, type GscRow } from '@/lib/gsc';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { countryNameFromAlpha3, countryNameFromCode } from '@/lib/countries';
-import { fetchAll } from '@/lib/supabase/fetchAll';
-import { PROMPT_LABEL_PREFIX, PROMPT_SOURCE_SUFFIX } from '@/lib/abroadPrompt';
+import { PROMPT_SOURCE_SUFFIX } from '@/lib/abroadPrompt';
 import styles from '@/app/(frontend)/admin/seo/seo.module.css';
 
 export const metadata: Metadata = {
@@ -89,38 +88,29 @@ export default async function CountriesPage() {
 
   // The outside-the-UK prompt (components/abroad/AbroadPrompt): shown,
   // dismissed, and which sign-up link was taken, by country, last 28 days.
-  // Paged past the row cap; it only ever shows abroad, so this stays small.
-  const since = new Date(Date.now() - RANGE_DAYS * 86_400_000).toISOString();
-  let promptRows: { label: string | null; country: string | null; session_key: string }[] = [];
-  let promptErr: string | null = null;
-  try {
-    promptRows = await fetchAll((from, to) =>
-      admin
-        .from('page_events')
-        .select('label, country, session_key')
-        .like('label', `${PROMPT_LABEL_PREFIX}%`)
-        .gte('created_at', since)
-        .order('id', { ascending: true })
-        .range(from, to),
-    );
-  } catch (err) {
-    promptErr = err instanceof Error ? err.message : String(err);
-  }
+  // Counted in SQL (admin_prompt_counts): no index leads with label, so a
+  // read of the rows was a scan of the whole table per admin visit.
+  const { data: promptData, error: promptRpcErr } = await admin.rpc('admin_prompt_counts', { p_days: RANGE_DAYS });
+  const promptErr = promptRpcErr?.message ?? null;
   type PromptStats = { shown: number; dismissed: number; customer: number; contractor: number };
   const emptyStats = (): PromptStats => ({ shown: 0, dismissed: 0, customer: 0, contractor: 0 });
   const promptByCountry = new Map<string, PromptStats>();
   const promptTotal = emptyStats();
-  for (const r of promptRows) {
-    const event = (r.label ?? '').slice(PROMPT_LABEL_PREFIX.length) as keyof PromptStats;
+  for (const r of (promptData ?? []) as { country: string; event: string; n: number }[]) {
+    const event = r.event as keyof PromptStats;
     if (!(event in promptTotal)) continue;
-    const key = r.country ?? '??';
-    const c = promptByCountry.get(key) ?? emptyStats();
-    c[event] += 1;
-    promptTotal[event] += 1;
-    promptByCountry.set(key, c);
+    const c = promptByCountry.get(r.country) ?? emptyStats();
+    c[event] += r.n;
+    promptTotal[event] += r.n;
+    promptByCountry.set(r.country, c);
   }
   const promptCountries = [...promptByCountry.entries()].sort((a, b) => b[1].shown - a[1].shown);
-  const viaPrompt = interest.filter((r) => (r.source_path ?? '').endsWith(PROMPT_SOURCE_SUFFIX)).length;
+  // Same window as the tiles beside it. The list is the latest 200, which
+  // is more than 28 days of registrations for a long while yet.
+  const since = Date.now() - RANGE_DAYS * 86_400_000;
+  const viaPrompt = interest.filter(
+    (r) => (r.source_path ?? '').endsWith(PROMPT_SOURCE_SUFFIX) && new Date(r.created_at).getTime() >= since,
+  ).length;
 
   return (
     <main className={styles.page}>

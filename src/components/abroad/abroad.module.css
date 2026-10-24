@@ -14,7 +14,11 @@
   .root {
     bottom: 72px;
   }
-  /* The home page's "Get a price" bar marks <body> while it shows. */
+}
+/* The home page's "Get a price" bar (StickyBar, phone and tablet, the same
+   breakpoint feedback.module.css uses) marks <body> while it shows: sit
+   above it, never under it. */
+@media (max-width: 1023px) {
   :global(body[data-sticky-bar='on']) .root {
     bottom: 142px;
   }

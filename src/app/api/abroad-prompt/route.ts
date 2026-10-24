@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { countryFromHeader } from '@/lib/requestGeo';
-import { PROMPT_LABEL_PREFIX } from '@/lib/abroadPrompt';
+import { PROMPT_LABEL_PREFIX, promptAllowedOn } from '@/lib/abroadPrompt';
 
 /**
  * POST /api/abroad-prompt — what happened to the outside-the-UK prompt
@@ -28,7 +28,9 @@ export async function POST(request: Request) {
     return new NextResponse(null, { status: 204 });
   }
   const event = typeof body.event === 'string' && EVENTS.has(body.event) ? body.event : null;
-  const path = typeof body.path === 'string' && body.path.startsWith('/') ? body.path.slice(0, 120) : null;
+  // Only a page the prompt can appear on (same allowlist as the component),
+  // so a hand-made POST cannot pad the counts for pages it never visits.
+  const path = typeof body.path === 'string' && promptAllowedOn(body.path) ? body.path.slice(0, 120) : null;
   const session = typeof body.session === 'string' ? body.session.slice(0, 40) : '';
   if (!event || !path || !session) return new NextResponse(null, { status: 204 });
 
