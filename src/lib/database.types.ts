@@ -2804,6 +2804,180 @@ export type Database = {
         }
         Relationships: []
       }
+      security_anomalies: {
+        Row: {
+          cluster_key: string | null
+          detected_at: string
+          id: number
+          message: string
+          notified_at: string | null
+          recent_count: number
+          resolution: string | null
+          resolved_at: string | null
+          rule: string
+          severity: string
+          stream: string
+          updated_at: string
+        }
+        Insert: {
+          cluster_key?: string | null
+          detected_at?: string
+          id?: never
+          message: string
+          notified_at?: string | null
+          recent_count?: number
+          resolution?: string | null
+          resolved_at?: string | null
+          rule: string
+          severity: string
+          stream: string
+          updated_at?: string
+        }
+        Update: {
+          cluster_key?: string | null
+          detected_at?: string
+          id?: never
+          message?: string
+          notified_at?: string | null
+          recent_count?: number
+          resolution?: string | null
+          resolved_at?: string | null
+          rule?: string
+          severity?: string
+          stream?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      security_audit_allowlist: {
+        Row: {
+          item: string
+          kind: string
+          reason: string
+          reviewed_at: string
+          reviewed_by: string | null
+        }
+        Insert: {
+          item: string
+          kind: string
+          reason: string
+          reviewed_at?: string
+          reviewed_by?: string | null
+        }
+        Update: {
+          item?: string
+          kind?: string
+          reason?: string
+          reviewed_at?: string
+          reviewed_by?: string | null
+        }
+        Relationships: []
+      }
+      security_probe_allowlist: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          cidr: string
+          reason: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          cidr: string
+          reason: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          cidr?: string
+          reason?: string
+        }
+        Relationships: []
+      }
+      security_probe_events: {
+        Row: {
+          actor_ip: string
+          asn_org: string | null
+          backfill: boolean
+          cf_rule_id: string | null
+          check_flag: boolean
+          cluster_key: string
+          cluster_label: string
+          cluster_score: number
+          country: string | null
+          detected_at: string
+          firing_id: string
+          first_seen: string | null
+          id: number
+          ip_score: number
+          ja4: string | null
+          last_seen: string | null
+          requests: number
+          response_action: string | null
+          response_expires_at: string | null
+          severity: string
+          signals: Json
+          top_paths: Json
+          user_agent: string | null
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          actor_ip: string
+          asn_org?: string | null
+          backfill?: boolean
+          cf_rule_id?: string | null
+          check_flag?: boolean
+          cluster_key: string
+          cluster_label: string
+          cluster_score: number
+          country?: string | null
+          detected_at?: string
+          firing_id: string
+          first_seen?: string | null
+          id?: never
+          ip_score?: number
+          ja4?: string | null
+          last_seen?: string | null
+          requests?: number
+          response_action?: string | null
+          response_expires_at?: string | null
+          severity: string
+          signals?: Json
+          top_paths?: Json
+          user_agent?: string | null
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          actor_ip?: string
+          asn_org?: string | null
+          backfill?: boolean
+          cf_rule_id?: string | null
+          check_flag?: boolean
+          cluster_key?: string
+          cluster_label?: string
+          cluster_score?: number
+          country?: string | null
+          detected_at?: string
+          firing_id?: string
+          first_seen?: string | null
+          id?: never
+          ip_score?: number
+          ja4?: string | null
+          last_seen?: string | null
+          requests?: number
+          response_action?: string | null
+          response_expires_at?: string | null
+          severity?: string
+          signals?: Json
+          top_paths?: Json
+          user_agent?: string | null
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       submission_notifications: {
         Row: {
           kind: string
@@ -3681,6 +3855,26 @@ export type Database = {
         }
         Returns: Json
       }
+      audit_anon_writable_rpcs: { Args: never; Returns: Json }
+      detect_probe_detector_gap: { Args: never; Returns: undefined }
+      probe_detector_state_merge: { Args: { p_patch: Json }; Returns: Json }
+      security_anomaly_raise: {
+        Args: {
+          p_cluster_key?: string | null
+          p_dedupe_hours?: number | null
+          p_message: string
+          p_rule: string
+          p_severity: string
+          p_stream: string
+        }
+        Returns: number
+      }
+      security_anomaly_resolve_rule: {
+        Args: { p_cluster_key?: string | null; p_resolution?: string; p_rule: string }
+        Returns: number
+      }
+      security_critical_email_tick: { Args: never; Returns: number }
+      security_daily_digest_tick: { Args: never; Returns: boolean }
       undo_decline_invitation: { Args: { p_token: string }; Returns: Json }
       void_acceptance: { Args: { p_session_id: string }; Returns: Json }
       working_days_since: { Args: { p_from: string }; Returns: number }

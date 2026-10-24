@@ -90,6 +90,16 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
       { href: '/admin/notes', label: 'Notes' },
     ],
   },
+  {
+    // Were we scanned, and what would have given. Its own group rather than
+    // a page under Insight: the health pages say what the system is doing,
+    // these say what somebody else is doing to it.
+    name: 'Security',
+    items: [
+      { href: '/admin/security', label: 'Probes' },
+      { href: '/admin/security/audit', label: 'Audit' },
+    ],
+  },
 ];
 
 /** Longest matching href wins, so /admin/seo/pages marks SEO, not /admin. */
