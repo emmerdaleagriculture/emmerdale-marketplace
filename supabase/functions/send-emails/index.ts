@@ -63,7 +63,7 @@ const SQ_CONTRACTOR_KINDS = new Set([
   'sq_job_amended', 'sq_message_to_contractor',
   'sq_visit_reminder', 'sq_visit_accepted', 'sq_visit_declined',
   'sq_weekly_digest', 'sq_thread_visit_to_contractor', 'sq_job_withdrawn', 'sq_price_passed',
-  'sq_contact_warning', 'directory_enquiry',
+  'sq_contact_warning', 'directory_enquiry', 'sq_members_first_notice',
 ]);
 
 /** The customer's reason for passing on a price, in the contractor's email. */
@@ -410,7 +410,12 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             : p.late_join
               ? `A job in your area is still open for pricing. It went out before you joined ` +
                 `this county, so you’re seeing it now.\n\n`
-              : `A job in your area needs pricing.\n\n`) +
+              // members_first (open_submission_to_market): a premium window
+              // ran and ended before this contractor was invited.
+              : p.members_first
+                ? `A job in your area needs pricing. Members near you were offered it first, ` +
+                  `and it’s now open to everyone.\n\n`
+                : `A job in your area needs pricing.\n\n`) +
           `In their words: “${p.description ?? '—'}”\n\n` +
           // The label can now be the customer's own words, when they were short
           // enough to read as a service name — so it can be word-for-word the
@@ -477,10 +482,59 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             : '') +
           `Price it: ${SITE_URL}/quote/${p.token}\n\n` +
           `Photos, a satellite view of the drawn boundary and the full spec are on that page.\n\n` +
+          // Members in range had this job before it reached them: the one
+          // moment the head start is concrete, so membership is offered here
+          // and nowhere else in the ordinary invitation.
+          (p.members_first
+            ? `Members in your area saw this job before you did. Premium members see every new ` +
+              `job the moment it arrives, ahead of the rest of the network, and pay 5% commission ` +
+              `instead of 15%. It’s £20 a month or £199 a year: ${SITE_URL}/account/membership\n\n`
+            : '') +
           // The spec above is enough to know it is not for you. Until now that
           // meant nothing to click, so a deliberate no looked like an unread
           // email. One tap, no login, undo on the page it lands on.
           `Not one for you? Say so here and we'll stop chasing this one: ${SITE_URL}/quote/${p.token}/pass`,
+      };
+    }
+    /**
+     * A premium window has outlasted the untapped-text rule, so the job will
+     * sit with members for the no-reply rule at least (sq_members_first_notice,
+     * from the direct-window tick). The free contractors in range hear what
+     * happened, as fact and not forecast: no promise it will reach them, the
+     * date it opens by if it does, and the membership that would have had
+     * it. sq_job_facts carries nothing about the customer.
+     */
+    case 'sq_members_first_notice': {
+      const n = Number(p.members_invited ?? 1);
+      const opens = p.market_opens_at
+        ? new Date(String(p.market_opens_at)).toLocaleString('en-GB', {
+            weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit',
+            timeZone: 'Europe/London',
+          })
+        : null;
+      return {
+        subject: `Members have first look at a job in ${p.county ?? 'your area'}: ${p.service ?? 'land work'}`,
+        text:
+          `A new job in your area went to ${n === 1 ? 'a member' : 'members'} of the network first, ` +
+          `so you haven’t been invited to price it yet.\n\n` +
+          `In their words: “${p.description ?? '—'}”\n\n` +
+          (p.service && p.service !== p.description ? `Work:      ${p.service}\n` : '') +
+          (Array.isArray(p.also_services) && p.also_services.length
+            ? `Also:      ${(p.also_services as string[]).join(', ')}\n`
+            : '') +
+          (p.area_priced === false && !(p.area_unit === 'linear_m' && p.area_value)
+            ? ''
+            : `${p.area_unit === 'linear_m' ? 'Length:    ' : 'Area:      '}${areaLine(p)}\n`) +
+          `Where:     ${[p.postcode_district, p.county].filter(Boolean).join(', ') || 'see notes'}\n` +
+          `When:      ${p.urgency ?? 'not stated'}${p.target_date ? ` (by ${p.target_date})` : ''}\n\n` +
+          `If ${n === 1 ? 'they don’t take' : 'none of them takes'} it, the job opens to ` +
+          `everyone in range${opens ? `, by ${opens} at the latest` : ''} and often sooner, and ` +
+          `you’ll get the usual invitation then. There’s nothing to do now.\n\n` +
+          `Premium members see every new job the moment it arrives, ahead of the rest of the ` +
+          `network, and pay 5% commission instead of 15%. It’s £20 a month or £199 a year: ` +
+          `${SITE_URL}/account/membership\n\n` +
+          `You get job emails because they’re on in your account. You can turn them off there: ` +
+          `${SITE_URL}/account`,
       };
     }
     // A day on, still unopened, and the job is short of prices. Once only —
@@ -986,6 +1040,18 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             : counties.length === 1 ? counties[0]
               : `${counties.slice(0, -1).join(', ')} and ${counties[counties.length - 1]}`;
       const hi = p.contact_name ? `Hi ${String(p.contact_name).split(/\s+/)[0]},` : 'Hello,';
+      // Jobs in their counties that went to members first this week
+      // (sq_weekly_digest_payload.members_first, 0 for a member). The count
+      // is by the window's start and area_new by distribution, so a job
+      // still held can be in the first and not the second: said on its own then.
+      const membersFirst = Number(p.members_first ?? 0);
+      const membersLine =
+        membersFirst === 0 ? ''
+          : membersFirst > areaNew
+            ? `${membersFirst} job${membersFirst === 1 ? '' : 's'} there went to members first. `
+            : areaNew === 1 ? 'It went to members first. '
+              : membersFirst === areaNew ? 'All of them went to members first. '
+                : `${membersFirst} of them went to members first. `;
       const messages = Array.isArray(p.messages) ? (p.messages as Record<string, unknown>[]) : [];
       const won = Array.isArray(p.won) ? (p.won as Record<string, unknown>[]) : [];
       const day = (iso: unknown) =>
@@ -1048,7 +1114,13 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             `with few prices in are the ones worth a look.\n\n${lines.join('\n\n')}\n\n`
           : `No jobs are waiting for your price right now, but work is coming in.\n\n`) +
         `In ${where}: ${areaNew} new job${areaNew === 1 ? '' : 's'} this week. ` +
+        membersLine +
         `${Number(p.national_open ?? 0)} jobs are open across the country.\n\n` +
+        (membersFirst > 0
+          ? `Premium members see every new job the moment it arrives, ahead of the rest of the ` +
+            `network, and pay 5% commission instead of 15%, for £20 a month or £199 a year: ` +
+            `${SITE_URL}/account/membership\n\n`
+          : '') +
         `Cover more counties or services to see more work: ${SITE_URL}/account\n\n` +
         `You get this once a week because job emails are on in your account. You can turn them off there.`;
       return p.preview
