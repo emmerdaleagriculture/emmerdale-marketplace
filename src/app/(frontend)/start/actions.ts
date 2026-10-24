@@ -353,13 +353,22 @@ export async function parseJobAction(
   // and a job with no coordinates in a picked county is in range of every
   // contractor there. Refused with the one honest answer, and counted
   // (reason outside_uk) so admin/seo/countries knows who is asking. Only
-  // when both coordinates were actually sent: an absent field reads as 0.
+  // when both coordinates were actually sent (an absent field reads as 0),
+  // and only when nothing in the text placed the land: a Hampshire postcode
+  // typed from a holiday in Spain is a Hampshire job.
   const rawGeoLat = formData.get('geo_lat');
   const rawGeoLng = formData.get('geo_lng');
   const geoLat = Number(rawGeoLat);
   const geoLng = Number(rawGeoLng);
   const geoSent = rawGeoLat !== null && rawGeoLat !== '' && rawGeoLng !== null && rawGeoLng !== '';
-  if (geoSent && Number.isFinite(geoLat) && Number.isFinite(geoLng) && !inBritishIsles(geoLat, geoLng)) {
+  if (
+    merged.county_id === null &&
+    merged.lat === null &&
+    geoSent &&
+    Number.isFinite(geoLat) &&
+    Number.isFinite(geoLng) &&
+    !inBritishIsles(geoLat, geoLng)
+  ) {
     return {
       ...(await refuse(
         ip,

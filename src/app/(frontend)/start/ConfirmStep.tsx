@@ -629,18 +629,21 @@ export function ConfirmStep({
             ))}
           </select>
           <span className={f.hint}>
-            {result.county_choice_reason === 'border' ? (
-              'That postcode sits on a county border. Tell us which side your land is on.'
-            ) : (
-              <>
-                We couldn’t place that from what you gave us, so pick the county your land is in.{' '}
-                Not in the UK? We only cover the UK for now:{' '}
-                <Link href="/outside-the-uk?from=/start">tell us where you are</Link> and we’ll let you know
-                when we open there.
-              </>
-            )}
+            {result.county_choice_reason === 'border'
+              ? 'That postcode sits on a county border. Tell us which side your land is on.'
+              : 'We couldn’t place that from what you gave us, so pick the county your land is in.'}
           </span>
         </label>
+      )}
+      {/* Nothing placed the land at all — no postcode, no pin — and the one
+          other explanation is that it isn't in the UK. Outside the label, so
+          the link doesn't also open the select. */}
+      {result.county_choice_reason === 'unplaced' && !result.postcode && result.lat == null && (
+        <p className={f.hint}>
+          Not in the UK? We only cover the UK for now:{' '}
+          <Link href="/outside-the-uk?from=/start">tell us where you are</Link> and we’ll let you know
+          when we open there.
+        </p>
       )}
 
       <label className={fieldClass('location')}>

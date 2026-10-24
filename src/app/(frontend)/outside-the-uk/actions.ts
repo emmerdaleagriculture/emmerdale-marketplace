@@ -47,6 +47,9 @@ export async function registerInterestAction(_prev: FormState, formData: FormDat
   const d = parsed.data;
 
   const country = countryByCode(d.country);
+  // The form never offers the UK; a stale or hand-made post must not put
+  // UK interest on the overseas list.
+  if (d.country === 'GB') return { error: 'This list is for outside the UK. In the UK, describe your job at /start.' };
   if (!country && d.country !== OTHER_COUNTRY_CODE) return { error: 'Choose your country.' };
   if (!country && !d.place) return { error: 'Tell us which country you’re in.' };
 
@@ -54,21 +57,32 @@ export async function registerInterestAction(_prev: FormState, formData: FormDat
   if (emailError) return { error: emailError };
 
   const countryName = country?.name ?? d.place;
+  const email = d.email.toLowerCase();
   const admin = createServiceRoleClient();
-  const { error } = await admin.from('expansion_interest').insert({
-    side: d.side,
-    country_code: d.country,
-    country_name: countryName,
-    place: d.place || null,
-    details: d.details || null,
-    email: d.email,
-    ip_country: await requestCountry(),
-    source_path: d.source_path || null,
-  });
+  // Once per person, country and side (expansion_interest_once_idx): a
+  // refresh-and-resend is told thanks again and changes nothing, and the
+  // admins hear about each person once.
+  const { data: inserted, error } = await admin
+    .from('expansion_interest')
+    .upsert(
+      {
+        side: d.side,
+        country_code: d.country,
+        country_name: countryName,
+        place: d.place || null,
+        details: d.details || null,
+        email,
+        ip_country: await requestCountry(),
+        source_path: d.source_path || null,
+      },
+      { onConflict: 'email,country_code,side', ignoreDuplicates: true },
+    )
+    .select('id');
   if (error) {
     console.error('[outside-the-uk] insert failed:', error.message);
     return { error: 'Something went wrong saving that. Please try again.' };
   }
+  if (!inserted || inserted.length === 0) return { ok: true, message: SUCCESS };
 
   await notifyAdmins(
     `Outside the UK: ${d.side} in ${countryName}`,

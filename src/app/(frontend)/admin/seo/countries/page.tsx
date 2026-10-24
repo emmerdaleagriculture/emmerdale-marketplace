@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { gscQuery, isoDaysAgo, type GscRow } from '@/lib/gsc';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { countryNameFromAlpha3, countryNameFromCode } from '@/lib/countries';
-import { seoGuard } from '../guard';
 import styles from '../seo.module.css';
 
 export const metadata: Metadata = {
@@ -42,18 +41,19 @@ type Interest = {
   created_at: string;
 };
 
+type Waiting = { country_name: string; customers: number; contractors: number };
+
 /**
- * Is anyone outside the UK trying to use this? Three sources side by side,
- * all for the last 28 days: what Google showed to whom (Search Console by
- * country), who actually arrived and what they did (page_events and
- * job_parse_events by the country Vercel saw), and who asked to be told when
- * we open where they are (expansion_interest). The gate for phase 1 of going
- * worldwide is the last table.
+ * Is anyone outside the UK trying to use this? Three sources side by side:
+ * who asked to be told when we open where they are (expansion_interest, all
+ * time), who actually arrived and what they did in the last 28 days
+ * (page_events and job_parse_events by the country Vercel saw), and what
+ * Google showed to whom (Search Console by country). The gate for phase 1 of
+ * going worldwide is the first table, so this page does not sit behind the
+ * Search Console guard the other /admin/seo pages use: a lapsed Google token
+ * blanks that one section and nothing else.
  */
 export default async function CountriesPage() {
-  const { block } = await seoGuard();
-  if (block) return block;
-
   const endDate = isoDaysAgo(GSC_LAG_DAYS);
   const startDate = isoDaysAgo(GSC_LAG_DAYS + RANGE_DAYS);
 
@@ -66,7 +66,12 @@ export default async function CountriesPage() {
   }
 
   const admin = createServiceRoleClient();
-  const [{ data: countsData, error: countsErr }, { data: interestData, error: interestErr }] = await Promise.all([
+  const [
+    { data: waitingData, error: waitingErr },
+    { data: countsData, error: countsErr },
+    { data: interestData, error: interestErr },
+  ] = await Promise.all([
+    admin.rpc('admin_interest_counts'),
     admin.rpc('admin_country_counts', { p_days: RANGE_DAYS }),
     admin
       .from('expansion_interest')
@@ -74,20 +79,10 @@ export default async function CountriesPage() {
       .order('created_at', { ascending: false })
       .limit(200),
   ]);
+  const waiting = (waitingData ?? []) as Waiting[];
   const counts = (countsData ?? []) as CountryCounts[];
   const interest = (interestData ?? []) as Interest[];
-
-  // The waiting list by country, for the gate: how many on each side.
-  const byCountry = new Map<string, { customers: number; contractors: number }>();
-  for (const r of interest) {
-    const c = byCountry.get(r.country_name) ?? { customers: 0, contractors: 0 };
-    if (r.side === 'contractor') c.contractors += 1;
-    else c.customers += 1;
-    byCountry.set(r.country_name, c);
-  }
-  const waiting = [...byCountry.entries()].sort(
-    (a, b) => b[1].customers + b[1].contractors - (a[1].customers + a[1].contractors),
-  );
+  const dbErr = waitingErr ?? countsErr ?? interestErr;
 
   return (
     <main className={styles.page}>
@@ -108,10 +103,9 @@ export default async function CountriesPage() {
           People outside the UK who asked, on /outside-the-uk, to be told when we open where they
           are. The gate for building a country is here: enough of both sides, in one place.
         </p>
-        {(interestErr || countsErr) && (
+        {dbErr && (
           <p className={styles.error}>
-            {interestErr?.message ?? countsErr?.message}. The migration adding expansion_interest may
-            not be applied yet.
+            {dbErr.message}. The migration adding expansion_interest may not be applied yet.
           </p>
         )}
         {waiting.length === 0 ? (
@@ -126,9 +120,9 @@ export default async function CountriesPage() {
               </tr>
             </thead>
             <tbody>
-              {waiting.map(([name, c]) => (
-                <tr key={name}>
-                  <td>{name}</td>
+              {waiting.map((c) => (
+                <tr key={c.country_name}>
+                  <td>{c.country_name}</td>
                   <td className={styles.num}>{fmtNumber(c.customers)}</td>
                   <td className={styles.num}>{fmtNumber(c.contractors)}</td>
                 </tr>
@@ -145,7 +139,8 @@ export default async function CountriesPage() {
         <p className={styles.tableNote}>
           The country Vercel saw on the request. Visits are distinct landing-page sessions; parses
           are /start submissions; outside UK is a /start attempt refused because the location was
-          outside the British Isles. Rows before the migration have no country and show as ??.
+          outside the British Isles, and is not counted again under rejected. Rows before the
+          migration have no country and show as Unknown.
         </p>
         {counts.length === 0 ? (
           <p className={styles.muted}>Nothing recorded yet.</p>

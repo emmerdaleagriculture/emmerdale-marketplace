@@ -3279,6 +3279,14 @@ export type Database = {
           visits: number
         }[]
       }
+      admin_interest_counts: {
+        Args: never
+        Returns: {
+          contractors: number
+          country_name: string
+          customers: number
+        }[]
+      }
       admin_dashboard: { Args: never; Returns: Json }
       contractor_add_extra_work: {
         Args: {

@@ -36,13 +36,16 @@ create table if not exists public.expansion_interest (
   country_name  text not null,
   place         text,
   details       text,
-  email         text not null,
+  email         text not null check (email = lower(email)),
   ip_country    text check (ip_country is null or ip_country ~ '^[A-Z]{2}$'),
   source_path   text,
   created_at    timestamptz not null default now()
 );
-create index if not exists expansion_interest_country_idx
-  on public.expansion_interest (country_code, side);
+-- One row per person, country and side: the counts gate opening a country,
+-- and a refresh-and-resend must not count twice. Email is stored lowercased
+-- (the action does it; the check keeps it so) so the index can be plain.
+create unique index if not exists expansion_interest_once_idx
+  on public.expansion_interest (email, country_code, side);
 
 alter table public.expansion_interest enable row level security;
 revoke all on public.expansion_interest from public, anon, authenticated;
@@ -70,9 +73,12 @@ as $function$
       from page_events pe, since where pe.created_at >= since.t group by 1
   ),
   p as (
+    -- outside_uk is logged as a rejection; shown as its own column, so it
+    -- is taken out of the general one rather than counted twice.
     select coalesce(jp.country, '??') as country,
            count(*) filter (where jp.outcome = 'ok') as parses_ok,
-           count(*) filter (where jp.outcome = 'rejected') as parses_rejected,
+           count(*) filter (where jp.outcome = 'rejected'
+                              and coalesce(jp.reason, '') <> 'outside_uk') as parses_rejected,
            count(*) filter (where jp.reason = 'outside_uk') as outside_uk
       from job_parse_events jp, since where jp.created_at >= since.t group by 1
   ),
@@ -89,3 +95,22 @@ as $function$
 $function$;
 revoke execute on function public.admin_country_counts(int) from public, anon, authenticated;
 grant execute on function public.admin_country_counts(int) to service_role;
+
+-- The waiting list by country and side, all time: the phase-1 gate. In SQL
+-- so it is never a count over a capped page of rows.
+create or replace function public.admin_interest_counts()
+ returns table (country_name text, customers bigint, contractors bigint)
+ language sql
+ stable
+ security definer
+ set search_path to 'public'
+as $function$
+  select ei.country_name,
+         count(*) filter (where ei.side = 'customer') as customers,
+         count(*) filter (where ei.side = 'contractor') as contractors
+    from expansion_interest ei
+   group by ei.country_name
+   order by count(*) desc, ei.country_name
+$function$;
+revoke execute on function public.admin_interest_counts() from public, anon, authenticated;
+grant execute on function public.admin_interest_counts() to service_role;
