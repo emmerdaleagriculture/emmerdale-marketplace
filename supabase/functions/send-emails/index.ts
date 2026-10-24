@@ -167,6 +167,17 @@ function visitWhen(iso: unknown): string {
  * terms. `billedPremium` = Stripe bills them for Premium: a prorated move up;
  * anyone else (free, or a comp) is told the price and what it includes.
  */
+/**
+ * The Premium pitch for a free contractor at the moments the members' head
+ * start is concrete: the market-open invitation, the digest's members-first
+ * count and the members-first notice. One copy, so a price change is one edit
+ * (stripe.ts holds the real prices: premium_monthly_2000 / premium_annual_19900).
+ */
+const PREMIUM_PITCH =
+  `Premium members see every new job the moment it arrives, ahead of the rest of the ` +
+  `network, and pay 5% commission instead of 15%. It’s £20 a month or £199 a year: ` +
+  `${SITE_URL}/account/membership`;
+
 function openOfferClose(billedPremium: boolean): string {
   return (
     (billedPremium
@@ -486,9 +497,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           // moment the head start is concrete, so membership is offered here
           // and nowhere else in the ordinary invitation.
           (p.members_first
-            ? `Members in your area saw this job before you did. Premium members see every new ` +
-              `job the moment it arrives, ahead of the rest of the network, and pay 5% commission ` +
-              `instead of 15%. It’s £20 a month or £199 a year: ${SITE_URL}/account/membership\n\n`
+            ? `Members in your area saw this job before you did. ${PREMIUM_PITCH}\n\n`
             : '') +
           // The spec above is enough to know it is not for you. Until now that
           // meant nothing to click, so a deliberate no looked like an unread
@@ -530,9 +539,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `If ${n === 1 ? 'they don’t take' : 'none of them takes'} it, the job opens to ` +
           `everyone in range${opens ? `, by ${opens} at the latest` : ''} and often sooner, and ` +
           `you’ll get the usual invitation then. There’s nothing to do now.\n\n` +
-          `Premium members see every new job the moment it arrives, ahead of the rest of the ` +
-          `network, and pay 5% commission instead of 15%. It’s £20 a month or £199 a year: ` +
-          `${SITE_URL}/account/membership\n\n` +
+          `${PREMIUM_PITCH}\n\n` +
           `You get job emails because they’re on in your account. You can turn them off there: ` +
           `${SITE_URL}/account`,
       };
@@ -1041,17 +1048,15 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
               : `${counties.slice(0, -1).join(', ')} and ${counties[counties.length - 1]}`;
       const hi = p.contact_name ? `Hi ${String(p.contact_name).split(/\s+/)[0]},` : 'Hello,';
       // Jobs in their counties that went to members first this week
-      // (sq_weekly_digest_payload.members_first, 0 for a member). The count
-      // is by the window's start and area_new by distribution, so a job
-      // still held can be in the first and not the second: said on its own then.
-      const membersFirst = Number(p.members_first ?? 0);
+      // (sq_weekly_digest_payload.members_first, 0 for a member). A subset
+      // of area_new: distribute_submission stamps distributed_at as it starts
+      // the window, so a job still held is already in the week's count.
+      const membersFirst = Math.min(Number(p.members_first ?? 0), areaNew);
       const membersLine =
         membersFirst === 0 ? ''
-          : membersFirst > areaNew
-            ? `${membersFirst} job${membersFirst === 1 ? '' : 's'} there went to members first. `
-            : areaNew === 1 ? 'It went to members first. '
-              : membersFirst === areaNew ? 'All of them went to members first. '
-                : `${membersFirst} of them went to members first. `;
+          : areaNew === 1 ? 'It went to members first. '
+            : membersFirst === areaNew ? 'All of them went to members first. '
+              : `${membersFirst} of them went to members first. `;
       const messages = Array.isArray(p.messages) ? (p.messages as Record<string, unknown>[]) : [];
       const won = Array.isArray(p.won) ? (p.won as Record<string, unknown>[]) : [];
       const day = (iso: unknown) =>
@@ -1116,11 +1121,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         `In ${where}: ${areaNew} new job${areaNew === 1 ? '' : 's'} this week. ` +
         membersLine +
         `${Number(p.national_open ?? 0)} jobs are open across the country.\n\n` +
-        (membersFirst > 0
-          ? `Premium members see every new job the moment it arrives, ahead of the rest of the ` +
-            `network, and pay 5% commission instead of 15%, for £20 a month or £199 a year: ` +
-            `${SITE_URL}/account/membership\n\n`
-          : '') +
+        (membersFirst > 0 ? `${PREMIUM_PITCH}\n\n` : '') +
         `Cover more counties or services to see more work: ${SITE_URL}/account\n\n` +
         `You get this once a week because job emails are on in your account. You can turn them off there.`;
       return p.preview

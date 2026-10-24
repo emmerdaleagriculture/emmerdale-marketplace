@@ -28,12 +28,26 @@
 -- the window, so is excluded by the existing not-yet-invited check, and the
 -- invitation flag and digest count are both false/0 for anyone who holds
 -- Premium or Open.
+--
+-- Deploy send-emails BEFORE this migration. The tick queues the new kind on
+-- its next run; the old function marks an unknown kind failed, no retry, and
+-- sq_notify_once would never send it again.
 -- ============================================================================
 
 insert into app_config (key, value) values ('sq_members_notice_hours', '3')
 on conflict (key) do nothing;
 
 alter table public.job_submissions add column if not exists members_notice_at timestamptz;
+
+-- Windows already running for a day or more are not "a new job in your
+-- area": stamped as noticed so the first tick does not fire them all at once.
+-- A window started within the last day is still fairly new, and gets its notice.
+update public.job_submissions
+   set members_notice_at = now()
+ where premium_window
+   and market_opens_at is not null
+   and members_notice_at is null
+   and premium_started_at < now() - interval '24 hours';
 
 -- 1. The market-open invitation says members had it first.
 CREATE OR REPLACE FUNCTION public.open_submission_to_market(p_submission_id uuid, p_reason text DEFAULT 'customer'::text)
@@ -89,8 +103,10 @@ begin
     elsif sq_invite_contractor(v_js.id, v_match.id,
              jsonb_build_object('opened_to_market', p_reason,
                                 -- Members were offered it before this contractor.
-                                'members_first', v_js.premium_window
-                                                 and not contractor_is_premium(v_match.id))) then
+                                -- CASE so the lookup only runs after a window.
+                                'members_first', case when v_js.premium_window
+                                                      then not contractor_is_premium(v_match.id)
+                                                      else false end)) then
       v_invited := v_invited + 1;
     end if;
   end loop;
@@ -482,15 +498,22 @@ begin
   end loop;
   -- Windows that have outlasted the untapped-text rule: the free contractors
   -- in range hear about it, once (sq_members_first_notice). 0 hours = off.
+  -- Counted from the NEWEST member invitation, not the window's start: with
+  -- an Open head start the Premium members arrive at the hand-off (~2h) and
+  -- their own untapped clock runs from then, so a notice keyed to the start
+  -- could go out an hour before the window ended. Keep sq_members_notice_hours
+  -- above sq_premium_text_reply_hours for the same reason.
   if app_config_num('sq_members_notice_hours', 3) > 0 then
     for r in
       select js.id
         from job_submissions js
        where js.premium_window
          and js.market_opens_at is not null
+         and js.open_first_until is null
          and js.members_notice_at is null
          and js.status in ('distributed', 'quotes_receiving')
-         and js.premium_started_at
+         and (select max(ji.sent_at) from job_invitations ji
+               where ji.submission_id = js.id and ji.premium_offer)
                <= now() - make_interval(mins => (app_config_num('sq_members_notice_hours', 3) * 60)::int)
     loop
       perform sq_members_first_notice(r.id);
