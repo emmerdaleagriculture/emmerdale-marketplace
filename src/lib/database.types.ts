@@ -3287,6 +3287,14 @@ export type Database = {
           customers: number
         }[]
       }
+      admin_prompt_counts: {
+        Args: { p_days?: number }
+        Returns: {
+          country: string
+          event: string
+          n: number
+        }[]
+      }
       admin_dashboard: { Args: never; Returns: Json }
       contractor_add_extra_work: {
         Args: {

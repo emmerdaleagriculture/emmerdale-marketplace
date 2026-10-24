@@ -48,10 +48,9 @@ export default async function OutsideTheUkPage({
             We only cover the UK <em>for now.</em>
           </h1>
           <p className={a.sub}>
-            Every contractor in our network is in England, Wales, Scotland or Northern Ireland, so
-            we can’t put your job in front of anyone where you are today. We are working out where
-            to open next, and the people who ask are where we start. Tell us where you are and
-            we’ll email you once, when we do.
+            {side === 'contractor'
+              ? 'Every job on the site today is in England, Wales, Scotland or Northern Ireland, so there is nothing here for you to price yet. We are working out where to open next, and the contractors who ask are where we start. Tell us where you are and what you do, and you will hear first, with the first jobs there.'
+              : 'Every contractor in our network is in England, Wales, Scotland or Northern Ireland, so we can’t put your job in front of anyone where you are today. We are working out where to open next, and the people who ask are where we start. Tell us where you are and we’ll email you once, when we do.'}
           </p>
           <InterestForm side={side} country={country} sourcePath={from} />
           <p className={a.sub} style={{ marginTop: 24 }}>

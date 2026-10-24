@@ -54,7 +54,7 @@ function cookies(): [string, string][] {
     });
 }
 
-function hasSession(): boolean {
+export function hasSession(): boolean {
   return cookies().some(([n]) => SESSION_COOKIE_NAME.test(n));
 }
 
