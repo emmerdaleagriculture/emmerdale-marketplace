@@ -26,7 +26,7 @@ import s from './abroad.module.css';
  * (lib/abroadPrompt PROMPT_PATHS). ?abroad=1 forces it, for looking at it.
  *
  * Every show, dismissal and click is beaconed to /api/abroad-prompt and
- * read on /admin/seo/countries.
+ * read on /admin/abroad.
  */
 export function AbroadPrompt() {
   const pathname = usePathname() ?? '';

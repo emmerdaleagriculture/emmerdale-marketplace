@@ -352,7 +352,7 @@ export async function parseJobAction(
   // is nowhere we cover. Until now this fell through to "pick a UK county",
   // and a job with no coordinates in a picked county is in range of every
   // contractor there. Refused with the one honest answer, and counted
-  // (reason outside_uk) so admin/seo/countries knows who is asking. Only
+  // (reason outside_uk) so admin/abroad knows who is asking. Only
   // when both coordinates were actually sent (an absent field reads as 0),
   // and only when nothing in the text placed the land: a Hampshire postcode
   // typed from a holiday in Spain is a Hampshire job.

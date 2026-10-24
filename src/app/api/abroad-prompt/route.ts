@@ -8,7 +8,7 @@ import { PROMPT_LABEL_PREFIX } from '@/lib/abroadPrompt';
  * (components/abroad/AbroadPrompt): shown, dismissed, or one of its two
  * sign-up links taken. One row per event in page_events as a 'step' with
  * an abroad_prompt: label, the page it was on and the country Vercel saw,
- * read back on /admin/seo/countries. Same shape of endpoint as /api/track:
+ * read back on /admin/abroad. Same shape of endpoint as /api/track:
  * public, every field clamped, always 204.
  */
 

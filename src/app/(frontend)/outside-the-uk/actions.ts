@@ -90,7 +90,7 @@ export async function registerInterestAction(_prev: FormState, formData: FormDat
       `Country:  ${countryName}${d.place && country ? ` (${d.place})` : ''}\n` +
       `Email:    ${d.email}\n` +
       (d.details ? `Says:     ${d.details}\n` : '') +
-      `\nAll registrations: /admin/seo/countries`,
+      `\nAll registrations: /admin/abroad`,
   );
 
   return { ok: true, message: SUCCESS };

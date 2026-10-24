@@ -41,7 +41,7 @@ export async function logParseEvent(
   try {
     const admin = createServiceRoleClient();
     // The country Vercel saw, beside the outcome: the one record of whether
-    // anyone outside the UK is trying to post (admin/seo/countries).
+    // anyone outside the UK is trying to post (admin/abroad).
     const country = await requestCountry();
     await admin.from('job_parse_events').insert({ ip, action, outcome, reason: reason ?? null, country });
   } catch (err) {

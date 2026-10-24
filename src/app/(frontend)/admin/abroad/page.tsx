@@ -4,10 +4,10 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { countryNameFromAlpha3, countryNameFromCode } from '@/lib/countries';
 import { fetchAll } from '@/lib/supabase/fetchAll';
 import { PROMPT_LABEL_PREFIX, PROMPT_SOURCE_SUFFIX } from '@/lib/abroadPrompt';
-import styles from '../seo.module.css';
+import styles from '@/app/(frontend)/admin/seo/seo.module.css';
 
 export const metadata: Metadata = {
-  title: 'Countries · Admin',
+  title: 'Abroad · Admin',
   robots: { index: false, follow: false },
 };
 
@@ -126,7 +126,7 @@ export default async function CountriesPage() {
     <main className={styles.page}>
       <header className={styles.head}>
         <div>
-          <h1>Countries</h1>
+          <h1>Abroad</h1>
           <p className={styles.range}>
             Last {RANGE_DAYS} days &middot; {startDate} → {endDate}
           </p>
