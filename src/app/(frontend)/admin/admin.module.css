@@ -737,3 +737,69 @@
   }
   .pieLegend { width: 100%; }
 }
+
+/* Security tab: one card per open finding, bordered by how bad it is. */
+.card {
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-left-width: 4px;
+  border-radius: 4px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+.cardCritical { border-left-color: #a02a2a; }
+.cardWarning { border-left-color: #b7791f; }
+.cardResolved { border-left-color: var(--rule); color: var(--ink-2); }
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.cardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.cardMeta {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.cardBody {
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.cardCheck {
+  display: block;
+  margin-top: 6px;
+  font-weight: 600;
+  color: #a02a2a;
+}
+.cardActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 12px;
+}
+.sevCritical { background: #fdecea; color: #7a1c0e; }
+.sevWarning { background: #fff4dd; color: #6b4600; }
+.sevInfo { background: var(--cream); color: var(--ink-2); }
+/* The detector's last response, shown under the controls. */
+.result {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.resultBad { border-color: #a02a2a; color: #7a1c0e; }
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}

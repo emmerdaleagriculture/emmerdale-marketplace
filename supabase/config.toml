@@ -426,3 +426,8 @@ verify_jwt = false
 
 [functions.sms-events]
 verify_jwt = false
+
+# Gated by x-cron-secret or the service-role bearer inside the function; the
+# anon key passing verify_jwt would not be authorisation.
+[functions.detect-probe-activity]
+verify_jwt = false

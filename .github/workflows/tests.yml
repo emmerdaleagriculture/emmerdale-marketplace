@@ -27,3 +27,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx vitest run
+      # The edge functions' own tests. The probe detector's query test is the
+      # one that would have caught its 414 before it shipped.
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno test --allow-env --allow-net=none supabase/functions
