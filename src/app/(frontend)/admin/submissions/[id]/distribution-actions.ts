@@ -71,22 +71,54 @@ export async function setServiceAction(_prev: FormState, formData: FormData): Pr
   const serviceId = Number(formData.get('service_id'));
   if (!id || !Number.isInteger(serviceId) || serviceId <= 0) return { error: 'Pick a service.' };
 
+  // Further services the customer also wants (display only, never routing).
+  // The primary is never also an "also"; an empty selection clears the list.
+  const alsoIds = Array.from(
+    new Set(
+      formData
+        .getAll('also_service_ids')
+        .map((v) => Number(v))
+        .filter((n) => Number.isInteger(n) && n > 0 && n !== serviceId),
+    ),
+  );
+
   const admin = createServiceRoleClient();
   const { data: before } = await admin
     .from('job_submissions')
-    .select('status, service:services(name)')
+    .select('status, also_service_ids, service:services(name)')
     .eq('id', id)
     .maybeSingle();
   if (!before) return { error: 'Not found.' };
-  const { data: svc } = await admin.from('services').select('name').eq('id', serviceId).maybeSingle();
+  const alsoBeforeIds = (before.also_service_ids ?? []) as number[];
+  const { data: svcRows } = await admin
+    .from('services')
+    .select('id, name')
+    .in('id', [serviceId, ...alsoIds, ...alsoBeforeIds]);
+  const nameOf = new Map((svcRows ?? []).map((r) => [r.id, r.name]));
+  const svc = nameOf.has(serviceId) ? { name: nameOf.get(serviceId)! } : null;
   if (!svc) return { error: 'Unknown service.' };
-  const from = (before.service as { name: string } | null)?.name ?? null;
-  if (from === svc.name) return { ok: true, message: 'No change.' };
+  if (alsoIds.some((sid) => !nameOf.has(sid))) return { error: 'Unknown service in “also wanted”.' };
+  const alsoNames = alsoIds.map((sid) => nameOf.get(sid)!);
+  const alsoBeforeNames = alsoBeforeIds.map((sid) => nameOf.get(sid)).filter((n): n is string => !!n);
 
-  const { error } = await admin.from('job_submissions').update({ service_id: serviceId }).eq('id', id);
+  const from = (before.service as { name: string } | null)?.name ?? null;
+  const alsoBefore = alsoBeforeIds.join(',');
+  if (from === svc.name && alsoBefore === alsoIds.join(',')) return { ok: true, message: 'No change.' };
+
+  const { error } = await admin
+    .from('job_submissions')
+    .update({ service_id: serviceId, also_service_ids: alsoIds })
+    .eq('id', id);
   if (error) return { error: error.message };
   // job_events refuses an operator action without a reason (§29); the change
   // itself is the reason, and it keeps the old label on record.
+  // Say what actually changed, and keep the old "also" list on record too.
+  const list = (names: string[]) => (names.length ? names.join(', ') : 'none');
+  const changes: string[] = [];
+  if (from !== svc.name) changes.push(`Service set: ${from ?? '(unclassified)'} → ${svc.name}`);
+  if (alsoBefore !== alsoIds.join(','))
+    changes.push(`Also wanted: ${list(alsoBeforeNames)} → ${list(alsoNames)}`);
+  const alsoText = alsoNames.length ? `; also ${alsoNames.join(', ')}` : '';
   await admin.rpc('log_job_event', {
     p_job_id: id,
     p_event_type: 'service_changed',
@@ -94,12 +126,12 @@ export async function setServiceAction(_prev: FormState, formData: FormData): Pr
     p_to: null,
     p_actor_type: 'operator',
     p_actor_id: user.id,
-    p_reason: `Service set: ${from ?? '(unclassified)'} → ${svc.name}`,
-    p_metadata: { from, to: svc.name },
+    p_reason: changes.join('. '),
+    p_metadata: { from, to: svc.name, also_from: alsoBeforeNames, also: alsoNames },
   });
   refresh(id);
   revalidatePath('/');
-  return { ok: true, message: `Service set to ${svc.name}.` };
+  return { ok: true, message: `Service set to ${svc.name}${alsoText}.` };
 }
 
 /** Operator: (re-)run distribution for a confirmed submission. */

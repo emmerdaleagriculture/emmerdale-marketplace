@@ -100,6 +100,9 @@ export default async function InvitationsPage() {
                           <span className={s.pillOpen}>Not priced yet</span>
                         )}
                       </div>
+                      {(inv.also_services?.length ?? 0) > 0 && (
+                        <div className={s.meta}>Also wanted: {inv.also_services!.join(', ')}</div>
+                      )}
                       <div className={s.meta}>
                         {[inv.postcode_district, inv.county].filter(Boolean).join(', ')}
                         {inv.distance_miles != null && ` · ${inv.distance_miles} miles`}

@@ -7,6 +7,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import { isAppUserAgent } from '@/lib/appMode';
 import { getInvitationByToken, getLiveQuote, signPhotos } from '@/lib/sealedQuotes/data';
+import { getServices } from '@/lib/reference';
 import { formatGBP, formatRate, vatNote } from '@/lib/sealedQuotes/money';
 import { timeLeft, formatDate, formatDateTime } from '@/lib/time';
 import { MinimalHeader } from '@/components/MinimalHeader';
@@ -165,6 +166,21 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   const jobRate = stamped != null ? Number(stamped) : Number(stdRateRes.data ?? 0.15);
   const effectiveRate = isPremium ? Math.min(jobRate, premiumRate) : jobRate;
 
+  // Further work the customer also wants, beside the primary service. Operator
+  // set; the names in the order they were set.
+  const alsoIds = (js.also_service_ids ?? []) as number[];
+  const alsoServices: string[] = [];
+  if (alsoIds.length > 0) {
+    // The taxonomy is memoised reference data: no extra round trip on the
+    // contractor's hottest page. Never the primary itself (sq_also_services
+    // applies the same rule in SQL).
+    const byId = new Map((await getServices()).map((r) => [r.id, r.name]));
+    for (const id of alsoIds) {
+      const name = byId.get(id);
+      if (name && id !== service?.id) alsoServices.push(name);
+    }
+  }
+
   const spec = {
     service: service?.name ?? null,
     // What the customer actually wrote. Routing stopped classifying services
@@ -207,6 +223,9 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
           />
           <div className={a.eyebrow}>Job to price</div>
           <h1 className={a.title}>{service?.name ?? 'Land work'}</h1>
+          {alsoServices.length > 0 && (
+            <p className={a.sub}>Also wanted: {alsoServices.join(', ')}</p>
+          )}
           <p className={a.sub}>
             {spec.location ? `${spec.location}, ` : ''}
             {county ?? ''} ·{' '}

@@ -416,6 +416,12 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           // enough to read as a service name — so it can be word-for-word the
           // description printed directly above. Don't say it twice.
           (p.service && p.service !== p.description ? `Work:      ${p.service}\n` : '') +
+          // Further services the customer also wants on the same job
+          // (operator-set, sq_job_facts.also_services): the contractor who
+          // skims the subject line should still learn the job is bigger.
+          (Array.isArray(p.also_services) && p.also_services.length
+            ? `Also:      ${(p.also_services as string[]).join(', ')}\n`
+            : '') +
           // Omitted entirely for work that is not measured by the acre —
           // twenty bales of hay have no area, and "not stated" reads as a
           // customer who withheld something. Only an explicit false drops it:

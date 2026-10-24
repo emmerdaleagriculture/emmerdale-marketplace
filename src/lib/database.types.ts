@@ -1796,6 +1796,7 @@ export type Database = {
           quotes_notified_at: string | null
           raw_text: string
           repeat_of: string | null
+          also_service_ids: number[]
           service_alternatives: string[]
           service_attributes: Json
           service_confirmed: boolean | null
@@ -1882,6 +1883,7 @@ export type Database = {
           quotes_notified_at?: string | null
           raw_text: string
           repeat_of?: string | null
+          also_service_ids?: number[]
           service_alternatives?: string[]
           service_attributes?: Json
           service_confirmed?: boolean | null
@@ -1968,6 +1970,7 @@ export type Database = {
           quotes_notified_at?: string | null
           raw_text?: string
           repeat_of?: string | null
+          also_service_ids?: number[]
           service_alternatives?: string[]
           service_attributes?: Json
           service_confirmed?: boolean | null
@@ -3038,6 +3041,7 @@ export type Database = {
       }
       my_sq_invitations: {
         Row: {
+          also_services: string[] | null
           premium_offer: boolean | null
           access_notes: string | null
           area_mapped_value: number | null
@@ -3069,6 +3073,7 @@ export type Database = {
       }
       my_sq_won_jobs: {
         Row: {
+          also_services: string[] | null
           access_notes: string | null
           area_mapped_value: number | null
           area_unit: string | null

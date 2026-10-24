@@ -24,7 +24,7 @@ export async function getInvitationByToken(token: string) {
          open_first_until, premium_started_at,
          area_value, area_unit, area_mapped_value, area_source,
          urgency, target_date, access_notes, obstacles, gate_width,
-         service_attributes, photo_paths, service_verbatim,
+         service_attributes, photo_paths, service_verbatim, also_service_ids,
          service:services (id, name, area_priced),
          county:counties (name)
        )`,
