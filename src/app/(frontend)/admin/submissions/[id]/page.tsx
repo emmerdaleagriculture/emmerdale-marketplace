@@ -312,6 +312,13 @@ export default async function SubmissionDetailPage({
           ? 'accepted by customer'
           : 'declined: customer picked/typed their own',
     ],
+    [
+      'Also wanted',
+      ((sub.also_service_ids ?? []) as number[])
+        .map((sid) => services.find((sv) => sv.id === sid)?.name)
+        .filter(Boolean)
+        .join(', ') || '—',
+    ],
     ['In their words', sub.service_verbatim ?? '—'],
     ['Alternatives offered', alternatives.length ? alternatives.join(', ') : '—'],
     [
@@ -474,6 +481,7 @@ export default async function SubmissionDetailPage({
         submissionId={sub.id}
         status={sub.status}
         serviceId={sub.service_id}
+        alsoServiceIds={(sub.also_service_ids ?? []) as number[]}
         services={services}
       />
 

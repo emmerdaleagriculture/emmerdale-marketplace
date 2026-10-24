@@ -165,6 +165,19 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   const jobRate = stamped != null ? Number(stamped) : Number(stdRateRes.data ?? 0.15);
   const effectiveRate = isPremium ? Math.min(jobRate, premiumRate) : jobRate;
 
+  // Further work the customer also wants, beside the primary service. Operator
+  // set; the names in the order they were set.
+  const alsoIds = (js.also_service_ids ?? []) as number[];
+  const alsoServices: string[] = [];
+  if (alsoIds.length > 0) {
+    const { data: alsoRows } = await admin.from('services').select('id, name').in('id', alsoIds);
+    const byId = new Map((alsoRows ?? []).map((r) => [r.id, r.name]));
+    for (const id of alsoIds) {
+      const name = byId.get(id);
+      if (name) alsoServices.push(name);
+    }
+  }
+
   const spec = {
     service: service?.name ?? null,
     // What the customer actually wrote. Routing stopped classifying services
@@ -207,6 +220,9 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
           />
           <div className={a.eyebrow}>Job to price</div>
           <h1 className={a.title}>{service?.name ?? 'Land work'}</h1>
+          {alsoServices.length > 0 && (
+            <p className={a.sub}>Also wanted: {alsoServices.join(', ')}</p>
+          )}
           <p className={a.sub}>
             {spec.location ? `${spec.location}, ` : ''}
             {county ?? ''} ·{' '}

@@ -33,6 +33,11 @@
   font-size: 18px;
 }
 
+.also {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: -6px 0 12px;
+}
 .status {
   font-size: 12px;
   letter-spacing: 0.05em;

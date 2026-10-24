@@ -30,11 +30,14 @@ export function DistributionPanel({
   submissionId,
   status,
   serviceId,
+  alsoServiceIds = [],
   services,
 }: {
   submissionId: string;
   status: string;
   serviceId: number | null;
+  /** Further services the customer also wants; shown to contractors, display only. */
+  alsoServiceIds?: number[];
   services: ServiceOption[];
 }) {
   const [classifyState, classify, classifying] = useActionState(classifyAndDistributeAction, EMPTY);
@@ -117,6 +120,28 @@ export function DistributionPanel({
                 {sv.name}
               </option>
             ))}
+          </select>
+          {/* Further work on the same job ("hedging/ditching and mowing"): the
+              primary service stays the label and the pricing mode; these are
+              shown to contractors as "Also wanted". Ctrl/Cmd-click for several;
+              none selected clears them. */}
+          <select
+            key={`also-${alsoServiceIds.join('-')}`}
+            multiple
+            className={f.input}
+            name="also_service_ids"
+            defaultValue={alsoServiceIds.map(String)}
+            style={{ maxWidth: 280, minHeight: 96 }}
+            aria-label="Also wanted"
+            title="Also wanted (Ctrl/Cmd-click for several)"
+          >
+            {services
+              .filter((sv) => sv.id !== serviceId)
+              .map((sv) => (
+                <option key={sv.id} value={sv.id}>
+                  {sv.name}
+                </option>
+              ))}
           </select>
           <button
             className={f.btnGhost}

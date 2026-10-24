@@ -152,6 +152,9 @@ export default async function WonJobsPage() {
                         : (STATUS_LABELS[job.status ?? ''] ?? job.status)}
                     </span>
                   </div>
+                  {(job.also_services?.length ?? 0) > 0 && (
+                    <div className={s.also}>Also wanted: {job.also_services!.join(', ')}</div>
+                  )}
                   <div className={s.detailGrid}>
                     <div>
                       <div className={s.dLabel}>Customer</div>
