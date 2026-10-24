@@ -348,6 +348,38 @@ export async function parseJobAction(
       : servicesMentioned(d.raw_text);
   }
 
+  // Land outside the British Isles: the browser said where they are, and it
+  // is nowhere we cover. Until now this fell through to "pick a UK county",
+  // and a job with no coordinates in a picked county is in range of every
+  // contractor there. Refused with the one honest answer, and counted
+  // (reason outside_uk) so admin/seo/countries knows who is asking. Only
+  // when both coordinates were actually sent (an absent field reads as 0),
+  // and only when nothing in the text placed the land: a Hampshire postcode
+  // typed from a holiday in Spain is a Hampshire job.
+  const rawGeoLat = formData.get('geo_lat');
+  const rawGeoLng = formData.get('geo_lng');
+  const geoLat = Number(rawGeoLat);
+  const geoLng = Number(rawGeoLng);
+  const geoSent = rawGeoLat !== null && rawGeoLat !== '' && rawGeoLng !== null && rawGeoLng !== '';
+  if (
+    merged.county_id === null &&
+    merged.lat === null &&
+    geoSent &&
+    Number.isFinite(geoLat) &&
+    Number.isFinite(geoLng) &&
+    !inBritishIsles(geoLat, geoLng)
+  ) {
+    return {
+      ...(await refuse(
+        ip,
+        'parse',
+        'outside_uk',
+        'We only cover the UK at the moment. Tell us where you are at emmerdaleagriculture.com/outside-the-uk and we’ll let you know when we open there.',
+      )),
+      values,
+    };
+  }
+
   // A postcode that straddles a border (SO51 is Hampshire and Wiltshire) or is
   // only an outcode resolves to no county at all. That used to confirm a job
   // with county_id null, which matches no contractor and tells the customer
@@ -366,9 +398,7 @@ export async function parseJobAction(
   }
 
   // "Use my location" fallback: when no postcode geocoded, the browser's own
-  // coordinates still pin the map on the confirm step.
-  const geoLat = Number(formData.get('geo_lat'));
-  const geoLng = Number(formData.get('geo_lng'));
+  // coordinates (read above) still pin the map on the confirm step.
   if (merged.lat === null && inBritishIsles(geoLat, geoLng)) {
     merged.lat = geoLat;
     merged.lng = geoLng;

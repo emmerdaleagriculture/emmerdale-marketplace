@@ -24,7 +24,13 @@ export async function lookupLandAction(_prev: LandState, formData: FormData): Pr
   }
   if (!postcode) return { error: 'Enter a postcode.' };
   const lookup = await lookupLand(postcode);
-  if (!lookup) return { error: 'That doesn’t look like a UK postcode. Check it and try again.', typed: postcode };
+  if (!lookup) {
+    return {
+      error:
+        'That doesn’t look like a UK postcode. Check it and try again. Outside the UK? We only cover the UK for now: tell us where you are at emmerdaleagriculture.com/outside-the-uk?side=contractor',
+      typed: postcode,
+    };
+  }
   if (lookup.error) return { error: 'The postcode service isn’t answering just now. Try again in a moment.', typed: postcode };
   return { ok: true, lookup, typed: postcode };
 }

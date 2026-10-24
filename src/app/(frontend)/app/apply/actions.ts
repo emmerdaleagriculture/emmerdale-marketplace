@@ -35,7 +35,12 @@ export async function baseLookupAction(_prev: LookupState, formData: FormData): 
     return { ok: true, lat: knownLat, lng: knownLng, county: String(formData.get('county') || '') || undefined, counties: countiesWithinMiles(knownLat, knownLng, miles) };
   }
   const geo = await resolveCounty(postcode);
-  if (geo.lat == null || geo.lng == null) return { error: 'That postcode didn’t resolve. Check it and try again.' };
+  if (geo.lat == null || geo.lng == null) {
+    return {
+      error:
+        'That postcode didn’t resolve. Check it and try again. Outside the UK? We only cover the UK for now: tell us where you are at emmerdaleagriculture.com/outside-the-uk?side=contractor',
+    };
+  }
   return { ok: true, lat: geo.lat, lng: geo.lng, county: geo.county_name, counties: countiesWithinMiles(geo.lat, geo.lng, miles) };
 }
 

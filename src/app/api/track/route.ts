@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { LANDING_FLOW_PATHS } from '@/lib/landingPaths';
+import { countryFromHeader } from '@/lib/requestGeo';
 
 /**
  * POST /api/track — the landing-page beacon. Takes a small batch of clicks and
@@ -60,6 +61,10 @@ export async function POST(request: Request) {
     return new NextResponse(null, { status: 204 });
   }
 
+  // The country Vercel saw, per row like the attribution: the question it
+  // answers (is anyone outside the UK arriving?) is asked a row at a time.
+  const country = countryFromHeader(request.headers.get('x-vercel-ip-country'));
+
   const path = typeof body.path === 'string' ? body.path.slice(0, 120) : '';
   const session = typeof body.session === 'string' ? body.session.slice(0, 40) : '';
   if (!PATHS.has(path) || !session || !Array.isArray(body.events)) {
@@ -94,6 +99,7 @@ export async function POST(request: Request) {
         utm_source: utmSource,
         utm_medium: utmMedium,
         has_gclid: hasGclid,
+        country,
       };
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
