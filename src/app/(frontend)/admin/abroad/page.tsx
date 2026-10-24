@@ -113,7 +113,7 @@ export default async function CountriesPage() {
   ).length;
 
   return (
-    <main className={styles.page}>
+    <div className={styles.page}>
       <header className={styles.head}>
         <div>
           <h1>Abroad</h1>
@@ -139,24 +139,26 @@ export default async function CountriesPage() {
         {waiting.length === 0 ? (
           <p className={styles.muted}>Nobody yet.</p>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Country</th>
-                <th className={styles.num}>Customers</th>
-                <th className={styles.num}>Contractors</th>
-              </tr>
-            </thead>
-            <tbody>
-              {waiting.map((c) => (
-                <tr key={c.country_name}>
-                  <td>{c.country_name}</td>
-                  <td className={styles.num}>{fmtNumber(c.customers)}</td>
-                  <td className={styles.num}>{fmtNumber(c.contractors)}</td>
+          <div className={styles.tableScroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Country</th>
+                  <th className={styles.num}>Customers</th>
+                  <th className={styles.num}>Contractors</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {waiting.map((c) => (
+                  <tr key={c.country_name}>
+                    <td>{c.country_name}</td>
+                    <td className={styles.num}>{fmtNumber(c.customers)}</td>
+                    <td className={styles.num}>{fmtNumber(c.contractors)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
@@ -173,30 +175,32 @@ export default async function CountriesPage() {
         {counts.length === 0 ? (
           <p className={styles.muted}>Nothing recorded yet.</p>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Country</th>
-                <th className={styles.num}>Visits</th>
-                <th className={styles.num}>Parses ok</th>
-                <th className={styles.num}>Rejected</th>
-                <th className={styles.num}>Outside UK</th>
-                <th className={styles.num}>Registered</th>
-              </tr>
-            </thead>
-            <tbody>
-              {counts.map((r) => (
-                <tr key={r.country}>
-                  <td>{r.country === '??' ? 'Unknown' : countryNameFromCode(r.country)}</td>
-                  <td className={styles.num}>{fmtNumber(r.visits)}</td>
-                  <td className={styles.num}>{fmtNumber(r.parses_ok)}</td>
-                  <td className={styles.num}>{fmtNumber(r.parses_rejected)}</td>
-                  <td className={styles.num}>{fmtNumber(r.outside_uk)}</td>
-                  <td className={styles.num}>{fmtNumber(r.interest)}</td>
+          <div className={styles.tableScroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Country</th>
+                  <th className={styles.num}>Visits</th>
+                  <th className={styles.num}>Parses ok</th>
+                  <th className={styles.num}>Rejected</th>
+                  <th className={styles.num}>Outside UK</th>
+                  <th className={styles.num}>Registered</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {counts.map((r) => (
+                  <tr key={r.country}>
+                    <td>{r.country === '??' ? 'Unknown' : countryNameFromCode(r.country)}</td>
+                    <td className={styles.num}>{fmtNumber(r.visits)}</td>
+                    <td className={styles.num}>{fmtNumber(r.parses_ok)}</td>
+                    <td className={styles.num}>{fmtNumber(r.parses_rejected)}</td>
+                    <td className={styles.num}>{fmtNumber(r.outside_uk)}</td>
+                    <td className={styles.num}>{fmtNumber(r.interest)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
@@ -237,28 +241,30 @@ export default async function CountriesPage() {
         {promptCountries.length === 0 ? (
           <p className={styles.muted}>Not shown to anyone yet.</p>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Country</th>
-                <th className={styles.num}>Shown</th>
-                <th className={styles.num}>Closed</th>
-                <th className={styles.num}>Work done</th>
-                <th className={styles.num}>Doing the work</th>
-              </tr>
-            </thead>
-            <tbody>
-              {promptCountries.map(([code, c]) => (
-                <tr key={code}>
-                  <td>{code === '??' ? 'Unknown' : countryNameFromCode(code)}</td>
-                  <td className={styles.num}>{fmtNumber(c.shown)}</td>
-                  <td className={styles.num}>{fmtNumber(c.dismissed)}</td>
-                  <td className={styles.num}>{fmtNumber(c.customer)}</td>
-                  <td className={styles.num}>{fmtNumber(c.contractor)}</td>
+          <div className={styles.tableScroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Country</th>
+                  <th className={styles.num}>Shown</th>
+                  <th className={styles.num}>Closed</th>
+                  <th className={styles.num}>Work done</th>
+                  <th className={styles.num}>Doing the work</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {promptCountries.map(([code, c]) => (
+                  <tr key={code}>
+                    <td>{code === '??' ? 'Unknown' : countryNameFromCode(code)}</td>
+                    <td className={styles.num}>{fmtNumber(c.shown)}</td>
+                    <td className={styles.num}>{fmtNumber(c.dismissed)}</td>
+                    <td className={styles.num}>{fmtNumber(c.customer)}</td>
+                    <td className={styles.num}>{fmtNumber(c.contractor)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
@@ -280,26 +286,28 @@ export default async function CountriesPage() {
         {gsc.length === 0 ? (
           <p className={styles.muted}>Nothing in this range yet.</p>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Country</th>
-                <th className={styles.num}>Clicks</th>
-                <th className={styles.num}>Impr.</th>
-                <th className={styles.num}>Position</th>
-              </tr>
-            </thead>
-            <tbody>
-              {gsc.map((r) => (
-                <tr key={r.keys?.[0] ?? '—'}>
-                  <td>{countryNameFromAlpha3(r.keys?.[0] ?? '—')}</td>
-                  <td className={styles.num}>{fmtNumber(r.clicks)}</td>
-                  <td className={styles.num}>{fmtNumber(r.impressions)}</td>
-                  <td className={styles.num}>{r.position.toFixed(1)}</td>
+          <div className={styles.tableScroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Country</th>
+                  <th className={styles.num}>Clicks</th>
+                  <th className={styles.num}>Impr.</th>
+                  <th className={styles.num}>Position</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {gsc.map((r) => (
+                  <tr key={r.keys?.[0] ?? '—'}>
+                    <td>{countryNameFromAlpha3(r.keys?.[0] ?? '—')}</td>
+                    <td className={styles.num}>{fmtNumber(r.clicks)}</td>
+                    <td className={styles.num}>{fmtNumber(r.impressions)}</td>
+                    <td className={styles.num}>{r.position.toFixed(1)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
@@ -330,7 +338,7 @@ export default async function CountriesPage() {
                     <td>{r.side}</td>
                     <td>{r.country_name}</td>
                     <td>{r.place ?? '—'}</td>
-                    <td>{r.details ?? '—'}</td>
+                    <td className={styles.wrapCell}>{r.details ?? '—'}</td>
                     <td>{r.email}</td>
                     <td>{countryNameFromCode(r.ip_country)}</td>
                   </tr>
@@ -340,6 +348,6 @@ export default async function CountriesPage() {
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }
