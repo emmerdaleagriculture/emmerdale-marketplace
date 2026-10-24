@@ -471,8 +471,9 @@ export default async function ClientPortalPage({
                   amountLabel={formatGBP(balance.amount_pence)}
                   // A date only while it is ahead: balances are due on receipt
                   // now, and "due by today" is what that would otherwise say.
+                  // A balance still on the old 7-day terms keeps its date.
                   dueLabel={
-                    balance.due_at && new Date(balance.due_at).getTime() > Date.now() + 36 * 3600 * 1000
+                    balance.due_at && new Date(balance.due_at).getTime() > Date.now()
                       ? formatDate(balance.due_at)
                       : null
                   }

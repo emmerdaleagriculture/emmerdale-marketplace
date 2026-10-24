@@ -100,10 +100,16 @@ function partLine(p: Payment | undefined, fallback: string): { text: string; sub
       return { text: amt, sub: `${formatGBP(p.refunded_pence ?? 0)} refunded` };
     case 'refunded':
       return { text: amt, sub: 'refunded' };
+    // A due date is only worth printing while it is ahead: balances are due
+    // on receipt now, so due_at is the sign-off moment and "by <that day>"
+    // reads as a deadline already missed. Older balances keep their week.
     case 'due':
-      return { text: amt, sub: p.due_at ? `due ${formatDate(p.due_at)}` : 'due' };
+      return { text: amt, sub: p.due_at && new Date(p.due_at) > new Date() ? `due ${formatDate(p.due_at)}` : 'due on receipt' };
     case 'requested':
-      return { text: amt, sub: `customer to pay${p.due_at ? ` by ${formatDate(p.due_at)}` : ''}` };
+      return {
+        text: amt,
+        sub: `customer to pay${p.due_at && new Date(p.due_at) > new Date() ? ` by ${formatDate(p.due_at)}` : ', on receipt'}`,
+      };
     case 'failed':
       return { text: amt, sub: `failed${p.attempts ? ` after ${p.attempts} tries` : ''}`, bad: true };
     case 'expired':

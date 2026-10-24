@@ -423,7 +423,9 @@ export default async function SubmissionDetailPage({
                   {p.paid_at
                     ? `paid ${new Date(p.paid_at).toLocaleString('en-GB')}`
                     : p.due_at
-                      ? `due ${new Date(p.due_at).toLocaleDateString('en-GB')}`
+                      ? new Date(p.due_at) > new Date()
+                        ? `due ${new Date(p.due_at).toLocaleDateString('en-GB')}`
+                        : 'due on receipt'
                       : '—'}
                 </td>
               </tr>

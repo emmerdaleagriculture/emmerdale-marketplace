@@ -44,7 +44,7 @@ export function PayBalance({
     return (
       <p>
         The balance of <strong>{amountLabel}</strong> is due{dueLabel ? ` by ${dueLabel}` : ' now'}.
-        We&rsquo;ll take it from the card you paid your deposit with. Nothing to do.
+        We&rsquo;ll take it from the card you paid your deposit with shortly. Nothing to do.
       </p>
     );
   }
