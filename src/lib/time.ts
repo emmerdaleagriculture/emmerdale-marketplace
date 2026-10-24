@@ -15,6 +15,19 @@ export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
+/**
+ * The date a balance is due, when it has one. Balances have been due on
+ * receipt since 2026-10-24, so due_at is the moment the request went out and
+ * "by <that day>" would read as a deadline already missed; a balance opened
+ * under the earlier 7-day terms keeps its date, including once it is past.
+ * Decided from the row (due_at well after the request), not the clock.
+ */
+export function balanceDueLabel(dueAt: string | null, requestedAt: string | null): string | null {
+  if (!dueAt || !requestedAt) return null;
+  const termed = new Date(dueAt).getTime() - new Date(requestedAt).getTime() > 3600 * 1000;
+  return termed ? formatDate(dueAt) : null;
+}
+
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString('en-GB', {
     day: 'numeric',

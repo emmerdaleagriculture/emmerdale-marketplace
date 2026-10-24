@@ -43,8 +43,8 @@ export function PayBalance({
   if (mode === 'due') {
     return (
       <p>
-        The balance of <strong>{amountLabel}</strong> is due{dueLabel ? ` by ${dueLabel}` : ''}.
-        We&rsquo;ll take it from the card you paid your deposit with. Nothing to do.
+        The balance of <strong>{amountLabel}</strong> is due{dueLabel ? ` by ${dueLabel}` : ' now'}.
+        We&rsquo;ll take it from the card you paid your deposit with shortly. Nothing to do.
       </p>
     );
   }
@@ -55,11 +55,11 @@ export function PayBalance({
         <p>
           We couldn&rsquo;t take the balance of <strong>{amountLabel}</strong> from the card
           you used for the deposit, usually an expired card, or a check your bank wants
-          you to approve. You can settle it here{dueLabel ? `; it's due by ${dueLabel}` : ''}.
+          you to approve. You can settle it here{dueLabel ? `; it's due by ${dueLabel}` : '; it is due now'}.
         </p>
       ) : (
         <p>
-          The balance of <strong>{amountLabel}</strong> is due{dueLabel ? ` by ${dueLabel}` : ''}.
+          The balance of <strong>{amountLabel}</strong> is due{dueLabel ? ` by ${dueLabel}` : ' now, on receipt'}.
           Pay by card here, or by bank transfer below.
         </p>
       )}

@@ -40,7 +40,7 @@ export default function CustomerTermsPage() {
             as Emmerdale Agriculture at emmerdaleagriculture.com (<strong>we</strong>,{' '}
             <strong>us</strong>, <strong>Emmerdale Agriculture</strong>).
             <br />
-            <strong>Version 2.4, 19 October 2026</strong>
+            <strong>Version 2.5, 24 October 2026</strong>
           </p>
 
           <p>
@@ -129,10 +129,10 @@ export default function CustomerTermsPage() {
             3.2 <strong>The balance.</strong> The remaining 85% of the Price falls due when you
             confirm the Job is complete, or when the confirmation period in clause 7 has
             passed. By paying the deposit you authorise us to charge the balance to the same
-            card at that point. The balance is payable within <strong>7 days</strong> of it
-            falling due. If we cannot take it from your card (for example because the card
-            has expired or your bank asks you to approve the payment), we will tell you, and
-            you can pay it from your Job page.
+            card at that point. The balance is payable <strong>on receipt</strong>: it is due
+            as soon as it falls due and we ask you for it. If we cannot take it from your card
+            (for example because the card has expired or your bank asks you to approve the
+            payment), we will tell you, and you can pay it from your Job page straight away.
           </p>
           <p>
             3.3 If you are paying as a business, you confirm that you are authorised to do so.
