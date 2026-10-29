@@ -4,6 +4,7 @@ import { readFirstTouch, visitAttribution } from '@/lib/firstTouch';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { PageTracker, trackStep } from '@/components/PageTracker';
+import { CoverageHint } from '@/components/CoverageHint';
 import { submitForm } from '@/lib/submitForm';
 import { parseJobAction, recordLandingView, type ParseActionState } from './actions';
 import { downscalePhoto } from '@/lib/photoDownscale';
@@ -117,6 +118,10 @@ export function LandingFlow({
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [geoHint, setGeoHint] = useState('');
+  // What is in the location box, for the coverage line under it. The box is
+  // uncontrolled (the URL and "Use my location" both write it through the
+  // DOM), so this mirrors it rather than owning it.
+  const [locationTyped, setLocationTyped] = useState(state.values?.location_raw ?? '');
   const locationRef = useRef<HTMLInputElement>(null);
   const rawTextRef = useRef<HTMLTextAreaElement>(null);
 
@@ -198,6 +203,7 @@ export function LandingFlow({
       const postcode: string | undefined = json?.result?.[0]?.postcode;
       if (postcode && locationRef.current) {
         locationRef.current.value = postcode;
+        setLocationTyped(postcode);
         setGeoHint('Double-check that’s right. It’s the nearest postcode to your position.');
       } else {
         setGeoHint('Got your location. Add the postcode if you know it.');
@@ -273,6 +279,7 @@ export function LandingFlow({
       prefill(rawTextRef.current, q.get('job'), 2000);
     }
     prefill(locationRef.current, q.get('loc'), 200);
+    setLocationTyped(locationRef.current?.value ?? '');
     setServiceHint((q.get('service') ?? '').slice(0, 60));
     if (
       // The home widget and the service pages both hand over a picked
@@ -469,12 +476,19 @@ export function LandingFlow({
             autoComplete="postal-code"
             placeholder="e.g. SO24, or the nearest town"
             defaultValue={state.values?.location_raw}
+            onInput={(e) => setLocationTyped(e.currentTarget.value)}
           />
           <button type="button" className={f.btnGhost} onClick={useMyLocation} disabled={locating}>
             {locating ? 'Finding…' : 'Use my location'}
           </button>
         </div>
         {geoHint && <span className={f.hint}>{geoHint}</span>}
+        {/* Not on the auto-send path: step 1 is hidden and the parse is
+            already in flight, so a lookup here would be a second request
+            racing the one that matters. The confirm page asks instead. */}
+        {!autoSend && (
+          <CoverageHint postcode={locationTyped} service={serviceHint || null} className={f.hint} />
+        )}
       </label>
 
       {/* Photos (spec §26a.3): optional, prompted specifically — a contractor

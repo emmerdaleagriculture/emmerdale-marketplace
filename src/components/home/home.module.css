@@ -1450,6 +1450,16 @@
   margin: 12px 0 0;
   line-height: 1.5;
 }
+/* "41 vetted contractors cover SO51." under the postcode. Green, because it
+   is the one line in the widget that is good news rather than instruction. */
+.widgetHint {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--green);
+  margin: 7px 0 0;
+  line-height: 1.45;
+}
 
 /* Service cards gain a footer row in place of the old link. */
 .serviceFoot {
