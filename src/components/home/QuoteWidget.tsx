@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HOME_SERVICES } from '@/lib/home/services';
 import { ViewOnce } from './Track';
+import { CoverageHint } from '@/components/CoverageHint';
 import s from './home.module.css';
 
 // window.gtag is declared once, in @/components/Analytics.
@@ -142,6 +143,9 @@ export function QuoteWidget() {
             {locating ? 'Locating…' : 'Locate'}
           </button>
         </div>
+        {/* Who would get the job, before they press anything: the thing a
+            postcode on its own never told them. */}
+        <CoverageHint postcode={postcode} service={service || null} className={s.widgetHint} />
       </div>
 
       <button type="button" className={s.widgetGo} onClick={submit}>

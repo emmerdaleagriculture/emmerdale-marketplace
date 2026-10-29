@@ -14,6 +14,7 @@ import { submitForm } from '@/lib/submitForm';
 import { BoundaryMap, type BoundaryState } from './BoundaryMap';
 import { ServiceQuestions } from './ServiceQuestions';
 import { trackStep } from '@/components/PageTracker';
+import { CoverageHint } from '@/components/CoverageHint';
 import { EmailField } from '@/components/forms/EmailField';
 import f from '@/components/forms/forms.module.css';
 import a from '@/app/(frontend)/auth.module.css';
@@ -62,6 +63,9 @@ export function ConfirmStep({
   // nothing in the words matched a job.
   const [listOpen, setListOpen] = useState(false);
   const [areaValue, setAreaValue] = useState(result.area_value?.toString() ?? '');
+  // Mirrors the postcode box for the coverage line under it; the box itself
+  // stays uncontrolled so a resumed draft's value survives like the rest.
+  const [postcodeTyped, setPostcodeTyped] = useState(result.postcode ?? '');
   // A repeat order or a resumed draft arrives with its answers already given.
   const [conditionValues, setConditionValues] = useState<Record<string, string>>(() => {
     const keys = new Set(conditionsFor(result.service).map((q) => q.key));
@@ -655,8 +659,14 @@ export function ConfirmStep({
           autoComplete="postal-code"
           required={missing('location')}
           defaultValue={result.postcode ?? ''}
+          onInput={(e) => setPostcodeTyped(e.currentTarget.value)}
         />
-        {result.county_name && <span className={f.hint}>We make that {result.county_name}.</span>}
+        {result.county_name && postcodeTyped.trim().toUpperCase() === (result.postcode ?? '').toUpperCase() && (
+          <span className={f.hint}>We make that {result.county_name}.</span>
+        )}
+        {/* Who the job goes to. Asked for the postcode in the box, so an edit
+            answers for the new postcode, not the one they arrived with. */}
+        <CoverageHint postcode={postcodeTyped} className={f.hint} />
       </label>
 
       <div className={a.row2}>

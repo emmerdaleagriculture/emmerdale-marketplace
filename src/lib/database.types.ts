@@ -3754,6 +3754,10 @@ export type Database = {
         Args: { p_actor: string; p_note?: string | null; p_payment_id: string }
         Returns: Json
       }
+      sq_coverage_count: {
+        Args: { p_county_id: number; p_lat?: number | null; p_lng?: number | null; p_service_name?: string | null }
+        Returns: number
+      }
       sq_in_invite_range: {
         Args: { p_ct_lat: number; p_ct_lng: number; p_job_lat: number; p_job_lng: number }
         Returns: boolean
