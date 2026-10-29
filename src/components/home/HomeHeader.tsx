@@ -104,10 +104,14 @@ function CustomerHeader({
         </nav>
 
         {/* The latest jobs scrolling by: between the logo and the burger on
-            a phone, between the links and Book online on a wide desktop, and
+            a phone, between the links and the icons on a wide desktop, and
             put away at the widths in between where it would have no room
             (home.module.css). */}
         <JobTicker className={s.navTicker} />
+
+        {/* Instagram and TikTok. Not inside navCta, which is put away below
+            1024px — the icons stay up beside the burger on a phone. */}
+        <SocialLinks className={s.navSocial} />
 
         <div className={s.navCta}>
           <Link
@@ -121,11 +125,6 @@ function CustomerHeader({
               from the customers who now have accounts of their own. */}
           <AccountLink viewer={viewer} className={s.navLogin} />
         </div>
-
-        {/* Instagram and TikTok, after Log in at the far right on desktop.
-            Not inside navCta, which is put away below 1024px — the icons
-            stay up beside the burger on a phone. */}
-        <SocialLinks className={s.navSocial} />
 
         <button
           type="button"
