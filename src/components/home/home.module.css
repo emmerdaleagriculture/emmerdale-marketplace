@@ -790,6 +790,11 @@
    own rules whatever order the stylesheets load in. */
 .navInner .navSocial {
   color: #fbfaf6;
+  /* The icons, button and login pack to the right edge on their own, so
+     the row looks the same with or without the ticker in front of them:
+     before the feed arrives, when it is empty, and at the widths where it
+     is hidden. */
+  margin-left: auto;
   margin-right: 4px;
 }
 .navBook {
