@@ -18,7 +18,8 @@ import styles from './JobTicker.module.css';
  * times to cover the visible width plus one more copy, shifted by exactly one
  * copy's width so the loop joins seamlessly. Speed is constant — the duration
  * comes from the measured width, so eight short jobs and eight long ones scroll
- * at the same pace. Hover pauses it; prefers-reduced-motion stops it, leaving
+ * at the same pace. A mouse hovering pauses it (never touch: a sticky :hover
+ * froze it after navigation); prefers-reduced-motion stops it, leaving
  * the first few jobs standing still.
  */
 
