@@ -182,7 +182,7 @@ async function autoConvertEnquiry(
   admin: ReturnType<typeof createServiceRoleClient>,
   leadId: string,
   d: { category: EnquiryCategory; name: string; phone: string; email: string; details: string; postcode: string },
-  geo: { county_id?: number | null; county_name?: string | null },
+  geo: { county_id?: number | null; county_name?: string | null; lat?: number; lng?: number },
   attribution: SubmissionAttribution,
   spec_: { attributes: Record<string, string>; detailsText: string | null; complete: boolean },
 ): Promise<string | null> {
@@ -225,6 +225,11 @@ async function autoConvertEnquiry(
         // judge whether a job is worth pricing, and "somewhere in Surrey" is
         // not something anyone can price.
         postcode: d.postcode || null,
+        // The postcode's centroid. Without it every invitation goes out with
+        // no "N miles from your base" line and the invite radius cannot be
+        // measured — 18 of the first 20 hay jobs went out like that.
+        lat: geo.lat ?? null,
+        lng: geo.lng ?? null,
         contact_name: d.name,
         contact_phone: d.phone,
         contact_email: d.email,
