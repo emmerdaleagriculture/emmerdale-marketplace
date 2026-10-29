@@ -253,19 +253,8 @@ export async function uploadInvoiceAction(
     return { error: 'That didn’t upload. Please try again.' };
   }
 
-  const { error: updErr } = await admin
-    .from('job_submissions')
-    .update({
-      contractor_invoice_path: path,
-      contractor_invoice_name: file.name.slice(0, 200),
-      contractor_invoice_at: new Date().toISOString(),
-    })
-    .eq('id', submissionId);
-  if (updErr) {
-    console.error('[sq] invoice record failed:', updErr);
-    return { error: 'Uploaded, but we couldn’t record it. Please tell us.' };
-  }
-
+  // Before the job says the invoice is in: a stamp with no amount row
+  // would show "received" with nobody told what it comes to.
   const { data: recorded, error: amtErr } = await admin.rpc('sq_record_invoice_amount', {
     p_submission_id: submissionId,
     p_contractor_id: user.id,
@@ -280,6 +269,20 @@ export async function uploadInvoiceAction(
     return { error: 'Uploaded, but we couldn’t record the amount. Please tell us what it comes to.' };
   }
   const differs = amount.status === 'pending';
+
+  const { error: updErr } = await admin
+    .from('job_submissions')
+    .update({
+      contractor_invoice_path: path,
+      contractor_invoice_name: file.name.slice(0, 200),
+      contractor_invoice_at: new Date().toISOString(),
+    })
+    .eq('id', submissionId);
+  if (updErr) {
+    console.error('[sq] invoice record failed:', updErr);
+    return { error: 'Uploaded, but we couldn’t record it. Please tell us.' };
+  }
+
 
   const { data: contractor } = await admin
     .from('contractors')

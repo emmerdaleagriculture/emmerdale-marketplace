@@ -1004,7 +1004,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `Updated balance for your job: ${gbp(p.amount_pence)} to pay`,
         text:
           `Hi ${first},\n\n` +
-          `${p.contractor_business_name ?? 'Your contractor'}’s invoice for the job came to more ` +
+          `${p.contractor_business_name ?? 'Your contractor'}’s invoice for the job came to ` +
+          `${Number(p.total_pence) < Number(p.old_total_pence) ? 'less' : 'more'} ` +
           `than their quote${p.reason ? `. They told us: “${p.reason}”` : ''}.\n\n` +
           `Quoted total:  ${gbp(p.old_total_pence)}\n` +
           `New total:     ${gbp(p.total_pence)}${vatSuffix(p.price_basis)}\n` +

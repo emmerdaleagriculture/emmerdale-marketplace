@@ -658,54 +658,43 @@ export async function markBalanceTransferredAction(
 }
 
 /**
- * Operator: the contractor's invoice came to more (or less) than the quote,
- * and it stands. Re-prices the job at the quote's own markup and asks the
- * customer for what the new total leaves unpaid (sq_apply_invoice_amount).
+ * Operator: the contractor's invoice came to a different figure from the
+ * quote. "apply" makes it the price (sq_apply_invoice_amount: re-prices at
+ * the quote's own markup, replaces any open balance request, asks the
+ * customer for what the new total leaves unpaid); "decline" pays the quote.
  */
-export async function applyInvoiceAmountAction(_prev: FormState, formData: FormData): Promise<FormState> {
+export async function decideInvoiceAmountAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await assertAdmin();
   const submissionId = String(formData.get('submission_id') ?? '');
-  const note = String(formData.get('note') ?? '').trim() || null;
+  const decision = String(formData.get('decision') ?? '');
+  const note = String(formData.get('note') ?? '').trim().slice(0, 1000) || null;
   if (!submissionId) return { error: 'Missing job.' };
+  if (decision !== 'apply' && decision !== 'decline') return { error: 'Pick one.' };
 
-  const { data, error } = await createServiceRoleClient().rpc('sq_apply_invoice_amount', {
-    p_submission_id: submissionId,
-    p_actor: user.id,
-    p_note: note,
-  });
+  const { data, error } = await createServiceRoleClient().rpc(
+    decision === 'apply' ? 'sq_apply_invoice_amount' : 'sq_decline_invoice_amount',
+    { p_submission_id: submissionId, p_actor: user.id, p_note: note },
+  );
   if (error) return { error: error.message };
-  const res = data as { ok?: boolean; reason?: string; refund_pence?: number; due_pence?: number } | null;
+  const res = data as { ok?: boolean; reason?: string; due_pence?: number; refund_pence?: number } | null;
   if (!res?.ok) {
-    if (res?.reason === 'needs_refund') {
-      return { error: `The customer has paid ${formatGBP(res.refund_pence ?? 0)} more than the new total. Refund it by hand first.` };
-    }
-    if (res?.reason === 'nothing_due') return { error: 'The new total leaves nothing for the customer to pay.' };
-    return { error: `Couldn’t apply it (${res?.reason ?? 'unknown'}).` };
+    if (res?.reason === 'not_pending') return { error: 'This has already been decided. Refresh the page.' };
+    if (res?.reason === 'paid_out') return { error: 'The payout has already been recorded, so the price can’t change now.' };
+    return { error: `Couldn’t do that (${res?.reason ?? 'unknown'}).` };
   }
   refresh(submissionId);
   revalidatePath('/admin/money');
+  if (decision === 'decline') return { ok: true, message: 'Done. The payout stays at the quoted amount.' };
+  if (res.refund_pence) {
+    return {
+      ok: true,
+      message: `Done. The customer has paid ${formatGBP(res.refund_pence)} more than the new total: refund it by hand.`,
+    };
+  }
   return {
     ok: true,
     message: res.due_pence
       ? `Done. The customer has been asked for ${formatGBP(res.due_pence)}.`
       : 'Done. The new total is already covered by what the customer has paid.',
   };
-}
-
-/** Operator: pay what was quoted; the invoice's figure is not passed on. */
-export async function declineInvoiceAmountAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const user = await assertAdmin();
-  const submissionId = String(formData.get('submission_id') ?? '');
-  const note = String(formData.get('note') ?? '').trim() || null;
-  if (!submissionId) return { error: 'Missing job.' };
-
-  const { data, error } = await createServiceRoleClient().rpc('sq_decline_invoice_amount', {
-    p_submission_id: submissionId,
-    p_actor: user.id,
-    p_note: note,
-  });
-  if (error) return { error: error.message };
-  if (!(data as { ok?: boolean } | null)?.ok) return { error: 'This has already been decided. Refresh the page.' };
-  refresh(submissionId);
-  return { ok: true, message: 'Done. The payout stays at the quoted amount.' };
 }

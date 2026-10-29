@@ -79,7 +79,7 @@ export default async function WonJobsPage() {
   // refuses a second), so the card says so instead of offering a form that
   // would be refused.
   const admin = createServiceRoleClient();
-  const [openExtrasRes, markupRes, visitsRes, premiumRes, premiumRateRes] = await Promise.all([
+  const [openExtrasRes, markupRes, visitsRes, premiumRes, premiumRateRes, invoiceDiffersRes] = await Promise.all([
     ids.length
       ? admin
           .from('job_submissions')
@@ -100,7 +100,12 @@ export default async function WonJobsPage() {
     // Premium members' prices carry the premium rate (sq_publish_quote).
     admin.rpc('contractor_is_premium', { p_contractor_id: user.id }),
     admin.from('app_config').select('value').eq('key', 'sq_premium_markup_rate').maybeSingle(),
+    // Invoices that came in at a different figure, still with us to decide.
+    ids.length
+      ? admin.from('contractor_invoice_amounts').select('submission_id').in('submission_id', ids).eq('status', 'pending')
+      : Promise.resolve({ data: [] }),
   ]);
+  const invoiceDiffers = new Set((invoiceDiffersRes.data ?? []).map((r) => r.submission_id));
   const jobRows = new Map((visitsRes.data ?? []).map((v) => [v.id, v]));
   const visits = new Map(
     (visitsRes.data ?? []).filter((v) => v.visit_status === 'awaiting_visit' || v.visit_status === 'revised').map((v) => [v.id, v]),
@@ -334,6 +339,7 @@ export default async function WonJobsPage() {
                       sentName={job.contractor_invoice_name}
                       sentAt={job.contractor_invoice_at}
                       quotedPence={job.contractor_price_pence ?? null}
+                      differs={invoiceDiffers.has(job.id)}
                     />
                   )}
                 </div>

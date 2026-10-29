@@ -462,7 +462,7 @@ export default async function ClientPortalPage({
           {(js.status === 'completed' || js.status === 'paid') && (
             <div className={m.awardPanel}>
               <p>
-                All done{js.status === 'paid' && !balance ? ' and paid in full' : ''}:{' '}
+                All done{js.status === 'paid' ? ' and paid in full' : ''}:{' '}
                 {accepted?.contractor_real_name ?? 'your contractor'} did the work.
               </p>
               {balance && (

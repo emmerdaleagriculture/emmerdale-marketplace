@@ -28,12 +28,15 @@ export function InvoiceUpload({
   sentName,
   sentAt,
   quotedPence,
+  differs = false,
 }: {
   submissionId: string;
   sentName: string | null;
   sentAt: string | null;
   /** Their price on the accepted quote; null if it can't be read. */
   quotedPence: number | null;
+  /** Their last invoice came to a different figure and is with us to decide. */
+  differs?: boolean;
 }) {
   const [state, action, pending] = useActionState(uploadInvoiceAction, EMPTY);
   const [filename, setFilename] = useState<string | null>(null);
@@ -55,8 +58,10 @@ export function InvoiceUpload({
         <p>
           <strong>Invoice received.</strong>{' '}
           {sentName ? `${sentName}, ` : ''}
-          {sentAt ? new Date(sentAt).toLocaleDateString('en-GB') : ''}. It&rsquo;s paid
-          once the customer&rsquo;s balance has cleared.
+          {sentAt ? new Date(sentAt).toLocaleDateString('en-GB') : ''}.{' '}
+          {differs
+            ? 'It came to a different figure from your quote, so we’re checking that with you and the customer before it’s paid.'
+            : 'It’s paid once the customer’s balance has cleared.'}
         </p>
         <button type="button" className={s.linkish} onClick={() => setReplacing(true)}>
           Send a different one
