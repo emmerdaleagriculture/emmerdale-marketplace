@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BrandLockup } from '@/components/home/BrandMark';
 import styles from './SiteHeader.module.css';
+import { JobTicker } from './JobTicker';
 import { SiteNav } from './SiteNav';
 import type { Viewer } from './useViewer';
 
@@ -29,6 +30,9 @@ export function SiteHeader({
         <Link href="/" className={styles.brand} aria-label="Emmerdale Agriculture home">
           <BrandLockup width={105} className={styles.brandLockup} priority sizes="(max-width: 820px) 89px, 105px" />
         </Link>
+        {/* The latest jobs, scrolling in the space between the logo and
+            the burger. Fetched in the browser, so this stays static. */}
+        <JobTicker className={styles.ticker} />
         <SiteNav viewer={viewer} defaultOpen={menuOpen} />
       </div>
     </header>

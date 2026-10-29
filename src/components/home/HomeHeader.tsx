@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AccountLink } from './AccountLink';
 import { BrandLockup } from './BrandMark';
+import { JobTicker } from '@/components/JobTicker';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SocialLinks } from '@/components/SocialLinks';
 import { useViewer, type Viewer } from '@/components/useViewer';
@@ -101,6 +102,12 @@ function CustomerHeader({
             Are you a contractor?
           </Link>
         </nav>
+
+        {/* The latest jobs scrolling by: between the logo and the burger on
+            a phone, between the links and the icons on a wide desktop, and
+            put away at the widths in between where it would have no room
+            (home.module.css). */}
+        <JobTicker className={s.navTicker} />
 
         {/* Instagram and TikTok. Not inside navCta, which is put away below
             1024px — the icons stay up beside the burger on a phone. */}

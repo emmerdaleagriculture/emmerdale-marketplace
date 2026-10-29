@@ -1,0 +1,89 @@
+/*
+ * The header's job ticker. A clipped window with the edges faded out, and
+ * inside it a track that slides left by one copy's width (--shift, measured
+ * in JobTicker.tsx) over --dur seconds, forever. Colours are inherited: the
+ * header is white-on-green and the ticker follows whatever bar it sits in.
+ */
+.ticker {
+  overflow: hidden;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  /* Fade both ends so the jobs appear from and vanish into the bar rather
+     than being cut off at a hard edge. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+  /* Both headers are white on green, but only one of them says so on the
+     element the ticker inherits from. */
+  color: #fbfaf6;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  /* Hidden until measured, so the first paint is not a track standing
+     still at the wrong offset. */
+  visibility: hidden;
+}
+.ticker[data-ready] {
+  visibility: visible;
+}
+.track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: slide var(--dur, 20s) linear infinite;
+}
+.ticker:hover .track {
+  animation-play-state: paused;
+}
+@keyframes slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--shift, -100%));
+  }
+}
+.list {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  margin: 0;
+  /* One item-gap after the last job, so the join between copies is the
+     same distance as the gap between any two jobs. Matches GAP in the TSX. */
+  padding: 0 36px 0 0;
+  list-style: none;
+  flex: none;
+}
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+/* A small yellow mark before each job, the brand's own accent. */
+.item::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffde00;
+  flex: none;
+}
+.service {
+  font-weight: 600;
+  color: currentColor;
+}
+.sep {
+  opacity: 0.55;
+}
+.county {
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation: none;
+  }
+}

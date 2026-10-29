@@ -48,6 +48,15 @@
   margin-right: auto;
   color: var(--white);
 }
+/* The ticker takes whatever the row leaves between the logo and the rest,
+   and can shrink to nothing: it is a window onto a moving strip, not a
+   thing with a width of its own. Empty (no jobs, not yet loaded) it is not
+   rendered at all, and the row packs as it did before. */
+.ticker {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0 8px 0 4px;
+}
 /* The full logo, the size the front page shows it. */
 .brandLockup {
   display: block;
