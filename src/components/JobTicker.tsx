@@ -22,7 +22,10 @@ import styles from './JobTicker.module.css';
  * keyframe set from a measurement it kept the placeholder it saw before the
  * measure (a 36px shift over a minute), and on a phone the ticker stood
  * still after a refresh. The measurement now only sets the number of copies
- * and the duration, both of which it can change under a running animation.
+ * and the duration. Both can change under a running animation (a rotated
+ * phone, a web font arriving after the first measure); a new duration keeps
+ * the elapsed time rather than the fraction, so the strip repositions once
+ * on such a change, which is rare enough to live with.
  *
  * Speed is constant — the duration comes from the measured width, so eight
  * short jobs and eight long ones scroll at the same pace. A mouse hovering
@@ -92,10 +95,12 @@ export function JobTicker({ className }: { className?: string }) {
     };
   }, []);
 
-  // Measure after paint and again whenever the header changes width: how
-  // wide one copy is (so one loop takes the same time per pixel as any other)
-  // and how many copies it takes to keep the visible window full while the
-  // first half scrolls out.
+  // Measure after paint and again whenever the window or the list changes
+  // width (the header resizing; the web font landing after the first
+  // measure): how wide one copy is, so one loop takes the same time per
+  // pixel as any other, and how many copies keep the visible window full
+  // while the first half scrolls out — one more than fits, so sub-pixel
+  // rounding never shows a hairline of empty track at the seam.
   useLayoutEffect(() => {
     if (items.length === 0 || !outer.current || !first.current) return;
     const measure = () => {
@@ -103,11 +108,12 @@ export function JobTicker({ className }: { className?: string }) {
       const box = outer.current?.getBoundingClientRect().width ?? 0;
       if (w === 0) return;
       setWidth(w);
-      setCopies(Math.max(1, Math.ceil(box / w)));
+      setCopies(Math.ceil(box / w) + 1);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(outer.current);
+    ro.observe(first.current);
     return () => ro.disconnect();
   }, [items]);
 

@@ -38,7 +38,10 @@
   will-change: transform;
 }
 .ticker[data-ready] .track {
-  animation: slide 20s linear infinite;
+  /* No duration here: it is always set inline from the measured width. */
+  animation-name: slide;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 /* Pause under a mouse so a job can be read — and only a mouse. A touch
    screen keeps a :hover on whatever was last under the finger, and after a
@@ -96,7 +99,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .track {
+  /* Same selector as the rule that starts it, so this one wins. */
+  .ticker[data-ready] .track {
     animation: none;
   }
 }
