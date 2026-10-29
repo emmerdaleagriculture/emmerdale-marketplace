@@ -135,11 +135,34 @@ export async function POST(request: Request) {
                 `its metadata, so it could not be matched to a job. Investigate.`,
             );
           } else {
-            const { error } = await admin.rpc('sq_settle_balance', {
-              p_payment_id: paymentId,
-              p_intent_id: intentId ?? session.id,
-            });
-            if (error) throw error; // 500 → Stripe retries
+            // The row can have moved on since the session was minted: an
+            // applied invoice amount expires the old request and opens a new
+            // one (sq_apply_invoice_amount). Settling an expired row, or one
+            // at a different figure, would read "paid" at an amount nobody
+            // charged — that is a human's call, with the money already taken.
+            const { data: row } = await admin
+              .from('job_payments')
+              .select('status, amount_pence')
+              .eq('id', paymentId)
+              .maybeSingle();
+            const open = row && ['requested', 'due', 'failed'].includes(row.status);
+            const sameAmount = row && session.amount_total != null && row.amount_pence === session.amount_total;
+            if (row?.status === 'paid') {
+              // Replay: nothing to do.
+            } else if (!row || !open || !sameAmount) {
+              await notifyAdmins(
+                'PAYMENT NEEDS A HUMAN: balance paid against a changed request',
+                `Stripe session ${session.id} paid ${session.amount_total ?? '?'}p for balance row ${paymentId}, ` +
+                  `which is now ${row ? `${row.status} at ${row.amount_pence}p` : 'missing'}. ` +
+                  `The money has been taken; nothing was settled. Refund it or record it by hand on the job.`,
+              );
+            } else {
+              const { error } = await admin.rpc('sq_settle_balance', {
+                p_payment_id: paymentId,
+                p_intent_id: intentId ?? session.id,
+              });
+              if (error) throw error; // 500 → Stripe retries
+            }
           }
         } else if (session.subscription) {
           const subId =

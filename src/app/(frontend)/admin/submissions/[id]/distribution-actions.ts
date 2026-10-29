@@ -656,3 +656,45 @@ export async function markBalanceTransferredAction(
   revalidatePath('/admin/money');
   return { ok: true };
 }
+
+/**
+ * Operator: the contractor's invoice came to a different figure from the
+ * quote. "apply" makes it the price (sq_apply_invoice_amount: re-prices at
+ * the quote's own markup, replaces any open balance request, asks the
+ * customer for what the new total leaves unpaid); "decline" pays the quote.
+ */
+export async function decideInvoiceAmountAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await assertAdmin();
+  const submissionId = String(formData.get('submission_id') ?? '');
+  const decision = String(formData.get('decision') ?? '');
+  const note = String(formData.get('note') ?? '').trim().slice(0, 1000) || null;
+  if (!submissionId) return { error: 'Missing job.' };
+  if (decision !== 'apply' && decision !== 'decline') return { error: 'Pick one.' };
+
+  const { data, error } = await createServiceRoleClient().rpc(
+    decision === 'apply' ? 'sq_apply_invoice_amount' : 'sq_decline_invoice_amount',
+    { p_submission_id: submissionId, p_actor: user.id, p_note: note },
+  );
+  if (error) return { error: error.message };
+  const res = data as { ok?: boolean; reason?: string; due_pence?: number; refund_pence?: number } | null;
+  if (!res?.ok) {
+    if (res?.reason === 'not_pending') return { error: 'This has already been decided. Refresh the page.' };
+    if (res?.reason === 'paid_out') return { error: 'The payout has already been recorded, so the price can’t change now.' };
+    return { error: `Couldn’t do that (${res?.reason ?? 'unknown'}).` };
+  }
+  refresh(submissionId);
+  revalidatePath('/admin/money');
+  if (decision === 'decline') return { ok: true, message: 'Done. The payout stays at the quoted amount.' };
+  if (res.refund_pence) {
+    return {
+      ok: true,
+      message: `Done. The customer has paid ${formatGBP(res.refund_pence)} more than the new total: refund it by hand.`,
+    };
+  }
+  return {
+    ok: true,
+    message: res.due_pence
+      ? `Done. The customer has been asked for ${formatGBP(res.due_pence)}.`
+      : 'Done. The new total is already covered by what the customer has paid.',
+  };
+}

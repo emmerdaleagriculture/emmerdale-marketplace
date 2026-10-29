@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from 'react';
 import { uploadInvoiceAction } from './actions';
 import type { FormState } from '@/lib/form';
+import { formatGBP, poundsInputToPence } from '@/lib/sealedQuotes/money';
 import f from '@/components/forms/forms.module.css';
 import s from './won.module.css';
 
@@ -17,20 +18,33 @@ const EMPTY: FormState = {};
  *
  * A photo counts. Most of this network reads their jobs standing in a yard,
  * and telling someone to go and make a PDF is telling them to do it later.
+ *
+ * The total is asked for alongside it: a box to say the invoice matches the
+ * quote, or the figure it does come to and why. Until 29 Oct 2026 the only
+ * record of an invoice for more than the quote was the photo itself.
  */
 export function InvoiceUpload({
   submissionId,
   sentName,
   sentAt,
+  quotedPence,
+  differs = false,
 }: {
   submissionId: string;
   sentName: string | null;
   sentAt: string | null;
+  /** Their price on the accepted quote; null if it can't be read. */
+  quotedPence: number | null;
+  /** Their last invoice came to a different figure and is with us to decide. */
+  differs?: boolean;
 }) {
   const [state, action, pending] = useActionState(uploadInvoiceAction, EMPTY);
   const [filename, setFilename] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [replacing, setReplacing] = useState(false);
+  const [matches, setMatches] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
 
   const alreadySent = Boolean(sentAt) && !state.ok;
 
@@ -44,8 +58,10 @@ export function InvoiceUpload({
         <p>
           <strong>Invoice received.</strong>{' '}
           {sentName ? `${sentName}, ` : ''}
-          {sentAt ? new Date(sentAt).toLocaleDateString('en-GB') : ''}. It&rsquo;s paid
-          once the customer&rsquo;s balance has cleared.
+          {sentAt ? new Date(sentAt).toLocaleDateString('en-GB') : ''}.{' '}
+          {differs
+            ? 'It came to a different figure from your quote, so we’re checking that with you and the customer before it’s paid.'
+            : 'It’s paid once the customer’s balance has cleared.'}
         </p>
         <button type="button" className={s.linkish} onClick={() => setReplacing(true)}>
           Send a different one
@@ -53,6 +69,9 @@ export function InvoiceUpload({
       </div>
     );
   }
+
+  const amountPence = poundsInputToPence(amount);
+  const amountReady = matches || (amountPence !== null && amountPence > 0 && reason.trim().length >= 3);
 
   return (
     <form action={action} className={s.invoiceForm}>
@@ -79,7 +98,52 @@ export function InvoiceUpload({
         {filename ?? 'Choose a file or take a photo'}
       </button>
 
-      <button className={f.btnPrimary} type="submit" disabled={pending || !filename}>
+      <label className={f.checkRow}>
+        <input
+          type="checkbox"
+          name="matches_quote"
+          checked={matches}
+          onChange={(e) => setMatches(e.target.checked)}
+        />
+        <span>
+          My invoice total is{' '}
+          {quotedPence != null ? <strong>{formatGBP(quotedPence)}</strong> : 'the price'} I quoted
+        </span>
+      </label>
+
+      {!matches && (
+        <>
+          <label className={f.field}>
+            <span className={f.label}>If not, what does your invoice come to? (£)</span>
+            <input
+              className={f.input}
+              name="invoiced"
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="550"
+            />
+          </label>
+          <label className={f.field}>
+            <span className={f.label}>What&rsquo;s different from the quote?</span>
+            <textarea
+              className={f.textarea}
+              name="invoice_note"
+              rows={2}
+              maxLength={1000}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Extra 4 acres cut at the customer's request"
+            />
+            <span className={f.hint}>
+              We check it with you before anything changes, and the customer sees this reason if
+              we ask them for the difference.
+            </span>
+          </label>
+        </>
+      )}
+
+      <button className={f.btnPrimary} type="submit" disabled={pending || !filename || !amountReady}>
         {pending ? 'Sending…' : 'Send invoice'}
       </button>
       <p className={s.invoiceHint}>PDF or a photo, up to 10MB.</p>

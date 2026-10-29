@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { balanceDueLabel, formatDate, formatDateTime, londonDay } from '@/lib/time';
 import { gateWidthLabel } from '@/lib/jobParse/access';
-import { formatGBP } from '@/lib/sealedQuotes/money';
+import { computeClientPricePence, formatGBP } from '@/lib/sealedQuotes/money';
 import { paymentReference } from '@/lib/site';
 import { getServices } from '@/lib/reference';
 import { DistributionPanel } from './DistributionPanel';
@@ -13,6 +13,7 @@ import { DeleteJobButton } from './DeleteJobButton';
 import { ExtraWorkForm } from './ExtraWorkForm';
 import { PayoutPanel } from './PayoutPanel';
 import { BalanceTransferButton } from './BalanceTransferButton';
+import { InvoiceAmountPanel } from './InvoiceAmountPanel';
 import { ModerateMessage } from './ModerateMessage';
 import { CloseCustomerButton } from './CloseCustomerButton';
 import { SuspendedBanner } from '@/components/messages/MessageThread';
@@ -265,21 +266,25 @@ export default async function SubmissionDetailPage({
   // Every movement of money on the job: the deposit, and after sign-off the
   // balance — with where the worker has got to on it, which is the question
   // an operator opening a finished job is usually here to answer.
-  const { data: payments } = await admin
-    .from('job_payments')
-    .select('id, kind, status, amount_pence, paid_at, due_at, created_at, attempts, last_error')
-    .eq('submission_id', id)
-    .order('created_at', { ascending: true });
+  const [{ data: payments }, { data: payout }, { data: invoiceAmount }] = await Promise.all([
+    admin
+      .from('job_payments')
+      .select('id, kind, status, amount_pence, paid_at, due_at, created_at, attempts, last_error')
+      .eq('submission_id', id)
+      .order('created_at', { ascending: true }),
+    // The payout, once one has been sent by hand and recorded here.
+    admin.from('contractor_payouts').select('amount_pence, paid_on, note').eq('submission_id', id).maybeSingle(),
+    // What the contractor said their invoice comes to (sealed, like the payout).
+    admin
+      .from('contractor_invoice_amounts')
+      .select('quoted_pence, invoiced_pence, note, status, client_before_pence, client_after_pence, decided_at, decision_note')
+      .eq('submission_id', id)
+      .maybeSingle(),
+  ]);
 
-  // The payout, once one has been sent by hand and recorded here.
-  const { data: payout } = await admin
-    .from('contractor_payouts')
-    .select('amount_pence, paid_on, note')
-    .eq('submission_id', id)
-    .maybeSingle();
+  const acceptedQuote = allQuotes.find((q) => q.status === 'accepted') ?? null;
   const acceptedCost =
-    (allQuotes.find((q) => q.status === 'accepted')?.cq as { contractor_price_pence: number } | null)
-      ?.contractor_price_pence ?? null;
+    (acceptedQuote?.cq as { contractor_price_pence: number } | null)?.contractor_price_pence ?? null;
 
   let invoiceUrl: string | null = null;
   if (sub.contractor_invoice_path) {
@@ -452,6 +457,15 @@ export default async function SubmissionDetailPage({
               </>
             ) : (
               <>Not sent yet. The job is finished; the payout is due once the balance above has cleared and the invoice is in.</>
+            )}
+            {invoiceAmount && (
+              <InvoiceAmountLine
+                submissionId={id}
+                row={invoiceAmount}
+                markupRate={Number(acceptedQuote?.markup_rate ?? markupRate)}
+                clientPricePence={acceptedQuote?.client_price_pence ?? null}
+                paidOut={Boolean(payout)}
+              />
             )}
           </div>
         </>
@@ -689,5 +703,96 @@ export default async function SubmissionDetailPage({
       <div className={s.sectionLabel}>Delete</div>
       <DeleteJobButton submissionId={sub.id} status={sub.status} />
     </div>
+  );
+}
+
+/**
+ * The contractor's own statement of what their invoice comes to, against the
+ * quote. A difference waits here for a decision (InvoiceAmountPanel).
+ */
+function InvoiceAmountLine({
+  submissionId,
+  row,
+  markupRate,
+  clientPricePence,
+  paidOut,
+}: {
+  submissionId: string;
+  row: {
+    quoted_pence: number;
+    invoiced_pence: number;
+    note: string | null;
+    status: string;
+    client_before_pence: number | null;
+    client_after_pence: number | null;
+    decided_at: string | null;
+    decision_note: string | null;
+  };
+  markupRate: number;
+  clientPricePence: number | null;
+  /** A payout is recorded: the question is closed, whatever the invoice said. */
+  paidOut: boolean;
+}) {
+  if (row.status === 'matches') {
+    return <p>The contractor confirmed the invoice matches the quote ({formatGBP(row.quoted_pence)}).</p>;
+  }
+  const head = (
+    <p>
+      <strong>
+        Invoice is {formatGBP(row.invoiced_pence)}, quote was {formatGBP(row.quoted_pence)}.
+      </strong>
+      {row.note && <> Their reason: &ldquo;{row.note}&rdquo;</>}
+    </p>
+  );
+  if (row.status === 'applied') {
+    return (
+      <>
+        {head}
+        <p>
+          Charged: the customer&rsquo;s total went from{' '}
+          {row.client_before_pence != null ? formatGBP(row.client_before_pence) : '?'} to{' '}
+          {row.client_after_pence != null ? formatGBP(row.client_after_pence) : '?'}
+          {row.decided_at ? ` on ${new Date(row.decided_at).toLocaleString('en-GB')}` : ''}.
+          {row.decision_note ? ` ${row.decision_note}` : ''}
+        </p>
+      </>
+    );
+  }
+  if (row.status === 'declined') {
+    return (
+      <>
+        {head}
+        <p>
+          Declined: paying the quoted amount
+          {row.decided_at ? ` (${new Date(row.decided_at).toLocaleString('en-GB')})` : ''}.
+          {row.decision_note ? ` ${row.decision_note}` : ''}
+        </p>
+      </>
+    );
+  }
+  if (paidOut) {
+    return (
+      <>
+        {head}
+        <p>The payout has been recorded, so this can&rsquo;t be applied now.</p>
+      </>
+    );
+  }
+  const newTotal = computeClientPricePence(row.invoiced_pence, markupRate);
+  const diff = clientPricePence != null ? newTotal - clientPricePence : null;
+  return (
+    <>
+      {head}
+      <p>
+        At this job&rsquo;s markup the customer&rsquo;s total would be {formatGBP(newTotal)}
+        {diff != null && diff !== 0 ? `, ${formatGBP(Math.abs(diff))} ${diff > 0 ? 'more' : 'less'} than now` : ''}.
+        Applying it re-prices the job and emails them for whatever that leaves unpaid, by card on
+        their job page or bank transfer; any open balance request is replaced.
+      </p>
+      <InvoiceAmountPanel
+        submissionId={submissionId}
+        applyLabel={diff != null && diff > 0 ? `Charge the customer ${formatGBP(diff)} more` : 'Apply the invoiced amount'}
+      />
+    </>
   );
 }
