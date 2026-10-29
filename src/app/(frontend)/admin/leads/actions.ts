@@ -8,6 +8,7 @@ import { getUser, isAdminEmail } from '@/lib/auth';
 import type { FormState } from '@/lib/form';
 import { leadAttribution } from '@/lib/attribution';
 import { ENQUIRY_CATEGORIES, isEnquiryCategory } from '@/lib/enquiryCategories';
+import { resolveCounty, storedPostcode } from '@/lib/postcodes';
 
 async function assertAdmin() {
   const user = await getUser();
@@ -118,7 +119,8 @@ export async function publishLeadAsSubmissionAction(
   const phone = String(formData.get('customer_phone') ?? '').trim();
   const email = String(formData.get('customer_email') ?? '').trim();
   const details = String(formData.get('details') ?? '').trim();
-  const postcode = String(formData.get('postcode') ?? '').trim().toUpperCase();
+  // Canonical spaced form: the pre-award redaction splits on the space.
+  const postcode = storedPostcode(String(formData.get('postcode') ?? '')) ?? '';
 
   // Every rejection hands the operator's own edits back. React resets a form
   // once its action resolves, so without this a missed consent tick throws
@@ -150,6 +152,10 @@ export async function publishLeadAsSubmissionAction(
 
   const admin = createServiceRoleClient();
   const now = new Date();
+  // The postcode's centroid, for the "N miles from your base" line and the
+  // invite radius. The county stays the operator's pick: a venue miles from
+  // the enquirer's home is the reason this path lets them choose it.
+  const geo = postcode ? await resolveCounty(postcode) : null;
 
   // Claim the lead BEFORE creating anything. The old path guarded its leads
   // update with .eq('status','pending'); without that, a second submit — a
@@ -180,6 +186,8 @@ export async function publishLeadAsSubmissionAction(
       // Blank is allowed and means county-only: some leads arrive without one,
       // and some — a venue miles from the enquirer's home — are better without.
       postcode: postcode || null,
+      lat: geo?.lat ?? null,
+      lng: geo?.lng ?? null,
       contact_name: name,
       contact_phone: phone || null,
       contact_email: email || null,
