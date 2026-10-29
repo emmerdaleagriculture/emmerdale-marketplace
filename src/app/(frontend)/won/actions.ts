@@ -213,6 +213,18 @@ export async function uploadInvoiceAction(
   const ext = INVOICE_TYPES[file.type];
   if (!ext) return { error: 'Send a PDF or a photo (JPG, PNG).' };
 
+  // Ticked = the invoice is the quoted price. Otherwise the figure it comes
+  // to and why, checked by us before the customer is asked for anything.
+  const matchesQuote = formData.get('matches_quote') === 'on';
+  const invoicedPence = matchesQuote ? null : poundsInputToPence(String(formData.get('invoiced') ?? ''));
+  const invoiceNote = String(formData.get('invoice_note') ?? '').trim().slice(0, 1000);
+  if (!matchesQuote) {
+    if (invoicedPence === null) {
+      return { error: 'Tick the box if your invoice matches your quote, or enter what it comes to.' };
+    }
+    if (invoiceNote.length < 3) return { error: 'Tell us what’s different from the quote.' };
+  }
+
   const admin = createServiceRoleClient();
   const { data: js } = await admin
     .from('job_submissions')
@@ -254,6 +266,21 @@ export async function uploadInvoiceAction(
     return { error: 'Uploaded, but we couldn’t record it. Please tell us.' };
   }
 
+  const { data: recorded, error: amtErr } = await admin.rpc('sq_record_invoice_amount', {
+    p_submission_id: submissionId,
+    p_contractor_id: user.id,
+    p_invoiced_pence: invoicedPence,
+    p_note: invoiceNote || null,
+  });
+  const amount = recorded as
+    | { ok: boolean; reason?: string; status?: string; quoted_pence?: number; invoiced_pence?: number }
+    | null;
+  if (amtErr || !amount?.ok) {
+    console.error('[sq] invoice amount not recorded:', amtErr?.message ?? amount?.reason);
+    return { error: 'Uploaded, but we couldn’t record the amount. Please tell us what it comes to.' };
+  }
+  const differs = amount.status === 'pending';
+
   const { data: contractor } = await admin
     .from('contractors')
     .select('business_name, email')
@@ -281,7 +308,8 @@ export async function uploadInvoiceAction(
         submission_id: submissionId,
         contact_name: js.contact_name,
         service: (js.service as { name: string } | null)?.name ?? js.service_verbatim ?? null,
-        amount_pence: owedPence,
+        // A different figure isn't owed until we've agreed it.
+        amount_pence: differs ? null : owedPence,
         invoice_name: file.name.slice(0, 200),
       },
     });
@@ -289,10 +317,18 @@ export async function uploadInvoiceAction(
   }
 
   await notifyAdmins(
-    `Invoice to pay: ${contractor?.business_name ?? 'a contractor'}`,
+    `${differs ? 'Invoice differs from the quote' : 'Invoice to pay'}: ${contractor?.business_name ?? 'a contractor'}`,
     [
       `${contractor?.business_name ?? 'A contractor'} has sent their invoice for the job for ${js.contact_name ?? 'a customer'}. ` +
       `Pay it once the customer's balance shows as cleared on /admin/money.`,
+      ...(differs
+        ? [
+            '',
+            `It DOESN'T match the quote: invoiced ${formatGBP(amount.invoiced_pence ?? 0)}, quoted ${formatGBP(amount.quoted_pence ?? 0)}.`,
+            `Their reason: ${invoiceNote}`,
+            `Charge the customer the difference, or pay the quoted amount, from the job page.`,
+          ]
+        : []),
       '',
       `Open it on the job: ${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/admin/submissions/${submissionId}`,
     ].join('\n'),
@@ -301,8 +337,11 @@ export async function uploadInvoiceAction(
   revalidatePath('/won');
   return {
     ok: true,
-    message:
-      'Invoice received, thanks. It’s paid once the customer’s funds have cleared into our account, typically 7 days or less.',
+    message: differs
+      ? `Invoice received, thanks. It comes to ${formatGBP(amount.invoiced_pence ?? 0)} against your quote of ` +
+        `${formatGBP(amount.quoted_pence ?? 0)}, so we’ll check the difference with you and the customer ` +
+        'before it’s paid.'
+      : 'Invoice received, thanks. It’s paid once the customer’s funds have cleared into our account, typically 7 days or less.',
   };
 }
 

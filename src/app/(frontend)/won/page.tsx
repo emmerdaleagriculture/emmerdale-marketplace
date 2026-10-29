@@ -333,6 +333,7 @@ export default async function WonJobsPage() {
                       submissionId={job.id}
                       sentName={job.contractor_invoice_name}
                       sentAt={job.contractor_invoice_at}
+                      quotedPence={job.contractor_price_pence ?? null}
                     />
                   )}
                 </div>

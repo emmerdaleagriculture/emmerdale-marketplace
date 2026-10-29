@@ -996,6 +996,32 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `sort it out first.`,
       };
 
+    // The contractor's invoice came to more than the quote and an operator
+    // accepted it (sq_apply_invoice_amount): the job is re-priced and the
+    // customer is asked for what the new total leaves unpaid.
+    case 'sq_balance_revised':
+      return {
+        subject: `Updated balance for your job: ${gbp(p.amount_pence)} to pay`,
+        text:
+          `Hi ${first},\n\n` +
+          `${p.contractor_business_name ?? 'Your contractor'}’s invoice for the job came to more ` +
+          `than their quote${p.reason ? `. They told us: “${p.reason}”` : ''}.\n\n` +
+          `Quoted total:  ${gbp(p.old_total_pence)}\n` +
+          `New total:     ${gbp(p.total_pence)}${vatSuffix(p.price_basis)}\n` +
+          `Already paid:  ${gbp(p.paid_pence)}\n` +
+          `To pay now:    ${gbp(p.amount_pence)}\n\n` +
+          `Pay by card on your job page:\n${portal}\n\n` +
+          `Or by bank transfer:\n` +
+          `Account name:   ${BANK_ACCOUNT_NAME}\n` +
+          `Sort code:      ${BANK_SORT_CODE}\n` +
+          `Account number: ${BANK_ACCOUNT_NUMBER}\n` +
+          (paymentReference(p.submission_id)
+            ? `Reference:      ${paymentReference(p.submission_id)}\n`
+            : '') +
+          `\nIf that doesn’t match the work you asked for, reply to this email before paying and ` +
+          `we’ll sort it out with them first.`,
+      };
+
     case 'sq_balance_paid':
       return {
         subject: `Paid in full. Thank you`,

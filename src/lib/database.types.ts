@@ -424,6 +424,54 @@ export type Database = {
           },
         ]
       }
+      contractor_invoice_amounts: {
+        Row: {
+          client_after_pence: number | null
+          client_before_pence: number | null
+          contractor_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          invoiced_pence: number
+          note: string | null
+          quoted_pence: number
+          status: string
+          submission_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_after_pence?: number | null
+          client_before_pence?: number | null
+          contractor_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          invoiced_pence: number
+          note?: string | null
+          quoted_pence: number
+          status: string
+          submission_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_after_pence?: number | null
+          client_before_pence?: number | null
+          contractor_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          invoiced_pence?: number
+          note?: string | null
+          quoted_pence?: number
+          status?: string
+          submission_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contractor_payouts: {
         Row: {
           amount_pence: number
@@ -3688,6 +3736,18 @@ export type Database = {
       sq_direct_window_tick: { Args: never; Returns: number }
       sq_fail_balance: {
         Args: { p_error: string; p_final?: boolean; p_payment_id: string }
+        Returns: Json
+      }
+      sq_apply_invoice_amount: {
+        Args: { p_actor: string; p_note?: string | null; p_submission_id: string }
+        Returns: Json
+      }
+      sq_decline_invoice_amount: {
+        Args: { p_actor: string; p_note?: string | null; p_submission_id: string }
+        Returns: Json
+      }
+      sq_record_invoice_amount: {
+        Args: { p_contractor_id: string; p_invoiced_pence: number | null; p_note: string | null; p_submission_id: string }
         Returns: Json
       }
       sq_mark_balance_transferred: {
