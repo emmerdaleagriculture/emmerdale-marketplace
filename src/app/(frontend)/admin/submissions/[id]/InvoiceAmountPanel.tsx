@@ -39,7 +39,7 @@ export function InvoiceAmountPanel({
         {pending ? 'Working…' : applyLabel}
       </button>
       <button type="submit" name="decision" value="decline" className={f.btnGhost} disabled={pending}>
-        Pay the quoted amount
+        Pay the quoted amount and ask the customer for it
       </button>
       {state.error && <span className={f.error}>{state.error}</span>}
     </form>

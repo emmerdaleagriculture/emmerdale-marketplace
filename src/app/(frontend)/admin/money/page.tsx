@@ -242,7 +242,7 @@ export default async function MoneyPage() {
             const deposit = partLine(j.payments.find((p) => p.kind === 'deposit'), '—');
             const bal = partLine(
               balance,
-              STOPPED.has(j.status) ? '—' : `${formatGBP(price - (j.payments.find((p) => p.kind === 'deposit')?.amount_pence ?? 0))} at sign-off`,
+              STOPPED.has(j.status) ? '—' : `${formatGBP(price - (j.payments.find((p) => p.kind === 'deposit')?.amount_pence ?? 0))} once invoiced`,
             );
             return (
               <tr key={j.id}>

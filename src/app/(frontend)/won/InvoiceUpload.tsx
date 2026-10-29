@@ -61,7 +61,7 @@ export function InvoiceUpload({
           {sentAt ? new Date(sentAt).toLocaleDateString('en-GB') : ''}.{' '}
           {differs
             ? 'It came to a different figure from your quote, so we’re checking that with you and the customer before it’s paid.'
-            : 'It’s paid once the customer’s balance has cleared.'}
+            : 'We’ve asked the customer for the balance; it’s paid once that has cleared.'}
         </p>
         <button type="button" className={s.linkish} onClick={() => setReplacing(true)}>
           Send a different one
@@ -79,7 +79,9 @@ export function InvoiceUpload({
       <input type="hidden" name="submission_id" value={submissionId} />
 
       <p className={s.invoicePrompt}>
-        {replacing ? 'Replace your invoice' : 'Send us your invoice. It’s paid once the customer’s balance has cleared.'}
+        {replacing
+          ? 'Replace your invoice'
+          : 'Send us your invoice. We ask the customer for the balance once it’s in, and pay you as soon as that has cleared.'}
       </p>
 
       <input

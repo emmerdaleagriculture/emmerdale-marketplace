@@ -147,8 +147,8 @@ export async function acceptQuoteAction(
               : `${serviceName}: ${quote.contractor_display_label}`,
             description: takingDeposit
               ? `${formatGBP(plan.deposit_pence)} now of ${formatGBP(plan.total_pence)}. ` +
-                `The remaining ${formatGBP(plan.balance_pence)} is charged to this card when ` +
-                `you confirm the work is done, and is due ` +
+                `The remaining ${formatGBP(plan.balance_pence)} is requested once you've confirmed ` +
+                `the work is done and your contractor has invoiced, and is due ` +
                 `${plan.terms_days > 0 ? `within ${plan.terms_days} days of that` : 'on receipt'}.`
               : undefined,
           },

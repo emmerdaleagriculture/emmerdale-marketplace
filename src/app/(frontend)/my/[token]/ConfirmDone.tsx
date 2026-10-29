@@ -28,10 +28,10 @@ export function ConfirmDone({
         <strong>{contractorName}</strong> has marked your job as finished.
       </p>
       <p>
-        If you&rsquo;re happy with the work, confirm it below. That settles the job:
-        any balance is charged to the card you paid your deposit with, and your
-        contractor gets paid. If something isn&rsquo;t right, don&rsquo;t confirm: reply
-        to any email from us and we&rsquo;ll sort it out.
+        If you&rsquo;re happy with the work, confirm it below. Once your contractor has
+        sent us their invoice we&rsquo;ll send you the balance to pay, and they&rsquo;re
+        paid when it has cleared. If something isn&rsquo;t right, don&rsquo;t confirm:
+        reply to any email from us and we&rsquo;ll sort it out.
       </p>
       {state.ok ? (
         <p className={f.success}>{state.message}</p>

@@ -154,7 +154,9 @@ export default async function WonJobsPage() {
                     <span className={s.status}>
                       {job.paid_out_on
                         ? 'Paid out, thank you'
-                        : (STATUS_LABELS[job.status ?? ''] ?? job.status)}
+                        : job.status === 'completed' && !job.contractor_invoice_at
+                          ? 'Complete: send your invoice so we can collect the balance'
+                          : (STATUS_LABELS[job.status ?? ''] ?? job.status)}
                     </span>
                   </div>
                   {(job.also_services?.length ?? 0) > 0 && (
