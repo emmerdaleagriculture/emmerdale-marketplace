@@ -14,6 +14,7 @@ import { ExtraWorkForm } from './ExtraWorkForm';
 import { PayoutPanel } from './PayoutPanel';
 import { BalanceTransferButton } from './BalanceTransferButton';
 import { InvoiceAmountPanel } from './InvoiceAmountPanel';
+import { RequestBalanceButton } from './RequestBalanceButton';
 import { ModerateMessage } from './ModerateMessage';
 import { CloseCustomerButton } from './CloseCustomerButton';
 import { SuspendedBanner } from '@/components/messages/MessageThread';
@@ -458,6 +459,13 @@ export default async function SubmissionDetailPage({
             ) : (
               <>Not sent yet. The job is finished; the payout is due once the balance above has cleared and the invoice is in.</>
             )}
+            {/* Since 2026-10-29 the balance waits for the invoice. A contractor
+                who never sends one would leave the customer never asked. */}
+            {['completed', 'paid'].includes(sub.status) &&
+              !(payments ?? []).some((p) => p.kind === 'balance' && p.status !== 'expired') &&
+              invoiceAmount?.status !== 'pending' && (
+                <RequestBalanceButton submissionId={id} invoiceIn={Boolean(sub.contractor_invoice_path)} />
+              )}
             {invoiceAmount && (
               <InvoiceAmountLine
                 submissionId={id}

@@ -867,8 +867,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `Hi ${first},\n\n${p.contractor_business_name ?? 'Your contractor'} has marked your ` +
           `job as finished. Have a look, and if you're happy, confirm it here:\n${portal}\n\n` +
-          `Confirming settles the job: the balance is charged to the card you paid your ` +
-          `deposit with, and your contractor gets paid.\n\n` +
+          `Once you've confirmed and your contractor has sent us their invoice, we'll send ` +
+          `you the balance to pay, and they're paid when it's cleared.\n\n` +
           `If it isn't finished, don't confirm. Reply to this email and we'll sort it out.`,
       };
 
@@ -882,8 +882,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `Hi ${first},\n\n${p.contractor_business_name ?? 'Your contractor'} marked your ` +
           `job as finished a couple of days ago, and we haven't heard from you.\n\n` +
-          `If you're happy with the work, confirm it here. That settles the balance and ` +
-          `their payment goes out:\n` +
+          `If you're happy with the work, confirm it here. We then ask you for the balance ` +
+          `once their invoice is in, and their payment goes out:\n` +
           `${portal}\n\n` +
           `If we don't hear anything, the job confirms itself after three working days, ` +
           `so if something isn't right, tell us now. Reply to this email and we'll ` +
@@ -942,18 +942,25 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `Your ${p.service ? `${p.service} ` : ''}job${p.postcode_district ? ` in ${p.postcode_district}` : ''}` +
           `${p.contact_name ? ` for ${p.contact_name}` : ''} is finished and confirmed.\n\n` +
-          `We just need your invoice before we can pay it. A PDF or a photo of a paper ` +
-          `one is fine. Upload it on the job:\n${SITE_URL}/won\n\n` +
+          `We just need your invoice. The customer isn't asked for the balance until we ` +
+          `have it, so nothing moves until it's in. A PDF or a photo of a paper one is ` +
+          `fine. Upload it on the job:\n${SITE_URL}/won\n\n` +
           `Already sent it another way? Reply and tell us and we'll match it up.`,
       };
 
+    // Sign-off. Since 29 Oct 2026 the customer is not asked for the balance
+    // until the contractor's invoice is in and its total confirmed, so this
+    // is the ask: the invoice is what starts the money moving.
     case 'sq_completion_confirmed':
       return {
-        subject: `Job confirmed complete: payment on its way`,
+        subject: `Job confirmed complete: send your invoice${p.amount_pence ? ` for ${gbp(p.amount_pence)}` : ''}`,
         text:
-          `${p.contact_name ?? 'The customer'} has confirmed the work is done. We’re ` +
-          `collecting the balance from them now; your payment follows once it has cleared ` +
-          `and we have your invoice.\n\nYour won jobs: ${SITE_URL}/won`,
+          `${p.contact_name ?? 'The customer'} has confirmed the work is done.\n\n` +
+          `Send us your invoice${p.amount_pence ? ` for ${gbp(p.amount_pence)}` : ''} now. We ask the ` +
+          `customer for the balance once it's in, and pay you as soon as that has cleared. ` +
+          `A PDF or a photo of a paper one is fine. Upload it on the job:\n${SITE_URL}/won\n\n` +
+          `If the job came to a different figure from your quote, say so on the upload and ` +
+          `we'll sort it out with the customer before anyone is asked to pay.`,
       };
 
     // ── The balance (terms 7.2) ──────────────────────────────────────────────
@@ -979,7 +986,9 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `Balance to pay: ${gbp(p.amount_pence)}`,
         text:
-          `Hi ${first},\n\nThanks for confirming the work is done.\n\n` +
+          `Hi ${first},\n\n` +
+          `${p.contractor_business_name ?? 'Your contractor'} has sent us their invoice for ` +
+          `the job, so here's the balance.\n\n` +
           `Job total:     ${gbp(p.total_pence)}${vatSuffix(p.price_basis)}\n` +
           `Deposit paid:  ${gbp(p.deposit_pence)}\n` +
           `Balance:       ${gbp(p.amount_pence)}\n\n` +

@@ -698,3 +698,31 @@ export async function decideInvoiceAmountAction(_prev: FormState, formData: Form
       : 'Done. The new total is already covered by what the customer has paid.',
   };
 }
+
+/**
+ * Operator: ask the customer for the balance now, at the quoted price,
+ * without waiting for the contractor's invoice (sq_open_balance; a no-op
+ * when one is already open or settled).
+ */
+export async function requestBalanceAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await assertAdmin();
+  const submissionId = String(formData.get('submission_id') ?? '');
+  if (!submissionId) return { error: 'Missing job.' };
+
+  const admin = createServiceRoleClient();
+  const { data, error } = await admin.rpc('sq_open_balance', { p_submission_id: submissionId });
+  if (error) return { error: error.message };
+  const pence = Number(data ?? 0);
+  if (!pence) return { error: 'Nothing was opened: a balance is already open or settled, or the job has no accepted price.' };
+  await admin.from('job_events').insert({
+    job_id: submissionId,
+    event_type: 'balance_requested_by_operator',
+    actor_type: 'operator',
+    actor_id: user.id,
+    reason: 'balance requested without waiting for the invoice',
+    metadata: { amount_pence: pence },
+  });
+  refresh(submissionId);
+  revalidatePath('/admin/money');
+  return { ok: true, message: `Done. The customer has been asked for ${formatGBP(pence)}.` };
+}
