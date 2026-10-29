@@ -100,7 +100,7 @@ function countyFaqs(name: string, region: string, coverage: number): Faq[] {
     },
     {
       q: 'How do I pay?',
-      a: 'A 15% deposit by card to book the job, and the rest once the work is done and you have confirmed it, taken from the same card, due on receipt at sign-off. The deposit is non-refundable if you cancel.',
+      a: 'A 15% deposit by card to book the job, and the rest once the work is done, you have confirmed it and your contractor has invoiced: we send you the balance to pay by card or bank transfer, due on receipt. The deposit is non-refundable if you cancel.',
     },
   ];
 }

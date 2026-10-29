@@ -1,10 +1,11 @@
 -- ============================================================================
 -- The balance waits for the invoice.
 --
--- Until now sign-off (the customer confirming, or auto-confirm after three
--- working days) opened the balance and asked the customer for it at once;
--- the contractor's invoice came afterwards, and on 23 Oct 2026 it came in at
--- a different figure from the one the customer had already been asked for.
+-- Until now sign-off (the customer confirming, auto-confirm after three
+-- working days, or an operator) opened the balance and asked the customer
+-- for it at once; the contractor's invoice came afterwards, and on 23 Oct
+-- 2026 it came in at a different figure from the one the customer had
+-- already been asked for.
 --
 -- Now sign-off asks the CONTRACTOR for their invoice, and the customer is
 -- asked for the balance only once the contractor has confirmed the total:
@@ -12,18 +13,55 @@
 --   * invoice differs, operator applies it         -> balance at the new total
 --     (sq_apply_invoice_amount, unchanged);
 --   * invoice differs, operator pays the quote     -> balance at the quote.
--- An operator can still open the balance by hand (sq_open_balance, now
--- callable by the service role) for a contractor who never invoices.
+-- An operator can still open the balance by hand (sq_open_balance, callable
+-- by the service role) for a contractor who never invoices.
 -- ============================================================================
+
+-- ── What every sign-off route does once the status has moved ─────────────
+-- One place for the side effects, so the three routes (customer, auto,
+-- operator) can't drift again: the operator route had never asked the
+-- contractor for anything.
+create or replace function public.sq_after_sign_off(p_submission_id uuid)
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  v_js    job_submissions%rowtype;
+  v_email text;
+  v_owed  int;
+  v_type  text;
+begin
+  select * into v_js from job_submissions where id = p_submission_id;
+  if not found then return; end if;
+
+  -- The contractor's price on the accepted quote: a rate quote's figure is
+  -- what the customer booked at, which the invoice may legitimately differ
+  -- from (the upload asks).
+  select cq.contractor_price_pence, cq.quote_type into v_owed, v_type
+    from client_quotes clq join contractor_quotes cq on cq.id = clq.contractor_quote_id
+   where clq.id = v_js.accepted_client_quote_id;
+  select email into v_email from contractors where id = v_js.awarded_contractor_id;
+  if v_email is not null then
+    perform sq_notify_once(v_js.id, v_email, 'sq_completion_confirmed', v_email,
+      jsonb_build_object('contact_name', v_js.contact_name,
+                         'amount_pence', v_owed, 'quote_type', v_type));
+  end if;
+
+  perform sq_notify_once(v_js.id, coalesce(v_js.contact_email, 'unknown'),
+    'sq_rating_request', v_js.contact_email, jsonb_build_object(
+      'client_token', v_js.client_token,
+      'contractor_business_name',
+        (select business_name from contractors where id = v_js.awarded_contractor_id),
+      'contact_name', v_js.contact_name));
+end;
+$$;
+revoke all on function public.sq_after_sign_off(uuid) from public, anon, authenticated;
 
 -- ── Sign-off: ask the contractor for the invoice, not the customer for money
 create or replace function public.confirm_completion_by_client(p_submission_id uuid)
 returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
-  v_js    job_submissions%rowtype;
-  v_email text;
-  v_owed  int;
+  v_js job_submissions%rowtype;
 begin
   select * into v_js from job_submissions where id = p_submission_id for update;
   if not found then return jsonb_build_object('ok', false, 'reason', 'not_found'); end if;
@@ -41,21 +79,7 @@ begin
   -- Sign-off makes the rest of the money owed (terms 7.2), but it is asked
   -- for once the contractor has confirmed the total on their invoice
   -- (sq_record_invoice_amount), not here.
-  select cq.contractor_price_pence into v_owed
-    from client_quotes clq join contractor_quotes cq on cq.id = clq.contractor_quote_id
-   where clq.id = v_js.accepted_client_quote_id;
-  select email into v_email from contractors where id = v_js.awarded_contractor_id;
-  if v_email is not null then
-    perform sq_notify_once(v_js.id, v_email, 'sq_completion_confirmed', v_email,
-      jsonb_build_object('contact_name', v_js.contact_name, 'amount_pence', v_owed));
-  end if;
-
-  perform sq_notify_once(v_js.id, coalesce(v_js.contact_email, 'unknown'),
-    'sq_rating_request', v_js.contact_email, jsonb_build_object(
-      'client_token', v_js.client_token,
-      'contractor_business_name',
-        (select business_name from contractors where id = v_js.awarded_contractor_id),
-      'contact_name', v_js.contact_name));
+  perform sq_after_sign_off(v_js.id);
   return jsonb_build_object('ok', true, 'balance_pence', 0);
 end;
 $$;
@@ -64,10 +88,8 @@ create or replace function public.auto_confirm_due_completions()
 returns integer
 language plpgsql security definer set search_path = public as $$
 declare
-  r       record;
-  v_done  int := 0;
-  v_email text;
-  v_owed  int;
+  r      record;
+  v_done int := 0;
 begin
   for r in
     select * from job_submissions
@@ -80,29 +102,121 @@ begin
       update job_submissions set status = 'completed' where id = r.id;
       perform log_job_event(r.id, 'status_change', 'completed_by_contractor', 'completed',
         'system', null, 'auto-confirmed: 3 working days elapsed (terms 7.2)', '{}');
-
       -- The customer's silence is agreement by 7.2, including agreement to
       -- pay; the asking still waits for the contractor's invoice.
-      select cq.contractor_price_pence into v_owed
-        from client_quotes clq join contractor_quotes cq on cq.id = clq.contractor_quote_id
-       where clq.id = r.accepted_client_quote_id;
-      select email into v_email from contractors where id = r.awarded_contractor_id;
-      if v_email is not null then
-        perform sq_notify_once(r.id, v_email, 'sq_completion_confirmed', v_email,
-          jsonb_build_object('contact_name', r.contact_name, 'amount_pence', v_owed));
-      end if;
-      perform sq_notify_once(r.id, coalesce(r.contact_email, 'unknown'),
-        'sq_rating_request', r.contact_email, jsonb_build_object(
-          'client_token', r.client_token,
-          'contractor_business_name',
-            (select business_name from contractors where id = r.awarded_contractor_id),
-          'contact_name', r.contact_name));
+      perform sq_after_sign_off(r.id);
       v_done := v_done + 1;
     exception when others then
       raise warning 'auto-confirm failed for %: %', r.id, sqlerrm;
     end;
   end loop;
   return v_done;
+end;
+$$;
+
+create or replace function public.mark_submission_completed(
+  p_submission_id uuid, p_operator_id uuid, p_reason text
+) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare v_js job_submissions%rowtype;
+begin
+  if p_reason is null or trim(p_reason) = '' then
+    return jsonb_build_object('ok', false, 'reason', 'reason_required');
+  end if;
+  select * into v_js from job_submissions where id = p_submission_id for update;
+  if not found then return jsonb_build_object('ok', false, 'reason', 'not_found'); end if;
+  if v_js.status not in ('awarded','contacted','scheduled','in_progress','completed_by_contractor') then
+    return jsonb_build_object('ok', false, 'reason', 'bad_status', 'status', v_js.status);
+  end if;
+  update job_submissions set status = 'completed' where id = v_js.id;
+  perform log_job_event(v_js.id, 'status_change', v_js.status, 'completed', 'operator',
+    p_operator_id, p_reason, '{}');
+  perform sq_after_sign_off(v_js.id);
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+-- ── Opening the balance: say whether the invoice is in ──────────────────
+-- The request email reads differently when it follows the contractor's
+-- invoice (the normal path now) and when an operator asks without one.
+create or replace function public.sq_open_balance(p_submission_id uuid)
+returns integer
+language plpgsql security definer set search_path = public as $$
+declare
+  v_js      job_submissions%rowtype;
+  v_price   int;
+  v_basis   text;
+  v_paid    int;
+  v_balance int;
+  v_dep     job_payments%rowtype;
+  v_days    int;
+  v_auto    boolean := app_config_num('sq_balance_auto_charge', 0) >= 1;
+  v_due     timestamptz;
+begin
+  select * into v_js from job_submissions where id = p_submission_id;
+  if not found or v_js.accepted_client_quote_id is null then return 0; end if;
+
+  -- Already open (or already settled) — nothing to do.
+  if exists (select 1 from job_payments
+              where submission_id = p_submission_id and kind = 'balance'
+                and status in ('due', 'requested', 'failed', 'paid', 'pending')) then
+    return 0;
+  end if;
+
+  select client_price_pence, price_basis into v_price, v_basis
+    from client_quotes where id = v_js.accepted_client_quote_id;
+  if v_price is null then return 0; end if;
+
+  select coalesce(sum(amount_pence), 0) into v_paid
+    from job_payments
+   where submission_id = p_submission_id and kind = 'deposit' and status = 'paid';
+
+  v_balance := v_price - v_paid;
+  if v_balance <= 0 then return 0; end if;   -- rate 1.0: the flag-off path
+
+  -- Carry the saved card forward from the deposit. Without it the worker has
+  -- nothing to charge and every balance falls straight through to the link.
+  select * into v_dep from job_payments
+   where submission_id = p_submission_id and kind = 'deposit' and status = 'paid'
+   order by paid_at desc limit 1;
+
+  v_days := app_config_num('sq_balance_terms_days', 7)::int;
+  v_due  := now() + make_interval(days => v_days);
+
+  -- 'requested' = the customer pays (link or transfer); 'due' = the worker
+  -- charges the saved card. The worker claims only 'due'.
+  insert into job_payments (submission_id, client_quote_id, amount_pence, status, kind,
+                            expires_at, due_at, stripe_customer_id, stripe_payment_method_id)
+  values (p_submission_id, v_js.accepted_client_quote_id, v_balance,
+          case when v_auto then 'due' else 'requested' end, 'balance',
+          v_due, v_due, v_dep.stripe_customer_id, v_dep.stripe_payment_method_id);
+
+  perform log_job_event(p_submission_id, 'balance_due', null, null, 'system', null,
+    format('balance of %s pence %s, %s', v_balance,
+           case when v_auto then 'due' else 'requested' end,
+           case when v_days > 0 then format('within %s days of sign-off', v_days)
+                else 'on receipt' end),
+    jsonb_build_object('amount_pence', v_balance, 'total_pence', v_price,
+                       'deposit_pence', v_paid, 'terms_days', v_days, 'auto_charge', v_auto,
+                       'invoice_in', v_js.contractor_invoice_path is not null));
+
+  perform sq_notify_once(p_submission_id, coalesce(v_js.contact_email, 'unknown'),
+    case when v_auto then 'sq_balance_due' else 'sq_balance_request' end,
+    v_js.contact_email, jsonb_build_object(
+      'submission_id', p_submission_id,
+      'client_token', v_js.client_token,
+      'due_at', v_due,
+      'contact_name', v_js.contact_name,
+      'amount_pence', v_balance,
+      'total_pence', v_price,
+      'deposit_pence', v_paid,
+      'terms_days', v_days,
+      'price_basis', v_basis,
+      'invoice_in', v_js.contractor_invoice_path is not null,
+      'contractor_business_name',
+        (select business_name from contractors where id = v_js.awarded_contractor_id)));
+
+  return v_balance;
 end;
 $$;
 
@@ -172,7 +286,8 @@ begin
 
   -- The total is confirmed: ask the customer. A no-op where a balance is
   -- already open or settled (jobs signed off before this change, replacements).
-  if v_status = 'matches' and v_js.status in ('completed', 'paid') then
+  if v_status = 'matches' and v_js.status in ('completed', 'paid')
+     and not exists (select 1 from contractor_payouts where submission_id = p_submission_id) then
     v_opened := sq_open_balance(p_submission_id);
   end if;
 
@@ -183,14 +298,19 @@ end;
 $$;
 
 -- ── Operator pays the quote: the customer is asked for the quoted balance ─
+-- Same guards as the apply branch: a job paid out, or not finished, opens
+-- nothing.
 create or replace function public.sq_decline_invoice_amount(
   p_submission_id uuid, p_actor uuid, p_note text default null
 ) returns jsonb
 language plpgsql volatile security definer set search_path = public as $$
 declare
+  v_js     job_submissions%rowtype;
   v_inv    contractor_invoice_amounts%rowtype;
-  v_opened int;
+  v_opened int := 0;
 begin
+  select * into v_js from job_submissions where id = p_submission_id for update;
+  if not found then return jsonb_build_object('ok', false, 'reason', 'not_found'); end if;
   select * into v_inv from contractor_invoice_amounts where submission_id = p_submission_id for update;
   if not found or v_inv.status <> 'pending' then
     return jsonb_build_object('ok', false, 'reason', 'not_pending');
@@ -202,12 +322,15 @@ begin
   perform log_job_event(p_submission_id, 'invoice_amount_declined', null, null, 'operator', p_actor,
     coalesce(nullif(btrim(coalesce(p_note, '')), ''), 'paying the quoted amount, not the invoice'),
     jsonb_build_object('quoted_pence', v_inv.quoted_pence, 'invoiced_pence', v_inv.invoiced_pence));
-  v_opened := sq_open_balance(p_submission_id);
+  if v_js.status in ('completed', 'paid')
+     and not exists (select 1 from contractor_payouts where submission_id = p_submission_id) then
+    v_opened := sq_open_balance(p_submission_id);
+  end if;
   return jsonb_build_object('ok', true, 'balance_opened_pence', v_opened);
 end;
 $$;
 
 -- An operator's "Request the balance now", for a contractor who never
--- invoices. Service role only; the function was postgres-only before.
+-- invoices. Service role only.
 revoke all on function public.sq_open_balance(uuid) from public, anon, authenticated;
 grant execute on function public.sq_open_balance(uuid) to service_role;

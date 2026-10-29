@@ -676,7 +676,9 @@ export async function decideInvoiceAmountAction(_prev: FormState, formData: Form
     { p_submission_id: submissionId, p_actor: user.id, p_note: note },
   );
   if (error) return { error: error.message };
-  const res = data as { ok?: boolean; reason?: string; due_pence?: number; refund_pence?: number } | null;
+  const res = data as
+    | { ok?: boolean; reason?: string; due_pence?: number; refund_pence?: number; balance_opened_pence?: number }
+    | null;
   if (!res?.ok) {
     if (res?.reason === 'not_pending') return { error: 'This has already been decided. Refresh the page.' };
     if (res?.reason === 'paid_out') return { error: 'The payout has already been recorded, so the price can’t change now.' };
@@ -684,7 +686,14 @@ export async function decideInvoiceAmountAction(_prev: FormState, formData: Form
   }
   refresh(submissionId);
   revalidatePath('/admin/money');
-  if (decision === 'decline') return { ok: true, message: 'Done. The payout stays at the quoted amount.' };
+  if (decision === 'decline') {
+    return {
+      ok: true,
+      message: res.balance_opened_pence
+        ? `Done. The payout stays at the quoted amount, and the customer has been asked for ${formatGBP(res.balance_opened_pence)}.`
+        : 'Done. The payout stays at the quoted amount. The customer already has, or has paid, their balance.',
+    };
+  }
   if (res.refund_pence) {
     return {
       ok: true,
@@ -714,14 +723,22 @@ export async function requestBalanceAction(_prev: FormState, formData: FormData)
   if (error) return { error: error.message };
   const pence = Number(data ?? 0);
   if (!pence) return { error: 'Nothing was opened: a balance is already open or settled, or the job has no accepted price.' };
-  await admin.from('job_events').insert({
-    job_id: submissionId,
-    event_type: 'balance_requested_by_operator',
-    actor_type: 'operator',
-    actor_id: user.id,
-    reason: 'balance requested without waiting for the invoice',
-    metadata: { amount_pence: pence },
+  // The customer has been emailed for money: that must be on the record.
+  const { error: logErr } = await admin.rpc('log_job_event', {
+    p_job_id: submissionId,
+    p_event_type: 'balance_requested_by_operator',
+    p_from: null,
+    p_to: null,
+    p_actor_type: 'operator',
+    p_actor_id: user.id,
+    p_reason: 'balance requested without waiting for the invoice',
+    p_metadata: { amount_pence: pence },
   });
+  if (logErr) {
+    console.error('[sq] balance request not logged:', logErr.message);
+    refresh(submissionId);
+    return { error: `The customer has been asked for ${formatGBP(pence)}, but it couldn’t be logged. Tell Tom.` };
+  }
   refresh(submissionId);
   revalidatePath('/admin/money');
   return { ok: true, message: `Done. The customer has been asked for ${formatGBP(pence)}.` };

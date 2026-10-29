@@ -463,7 +463,12 @@ export default async function SubmissionDetailPage({
                 who never sends one would leave the customer never asked. */}
             {['completed', 'paid'].includes(sub.status) &&
               !(payments ?? []).some((p) => p.kind === 'balance' && p.status !== 'expired') &&
-              invoiceAmount?.status !== 'pending' && (
+              invoiceAmount?.status !== 'pending' &&
+              !payout &&
+              // Something to open: the price less the deposits already paid.
+              (acceptedQuote?.client_price_pence ?? 0) -
+                (payments ?? []).filter((p) => p.kind === 'deposit' && p.status === 'paid').reduce((n, p) => n + p.amount_pence, 0) >
+                0 && (
                 <RequestBalanceButton submissionId={id} invoiceIn={Boolean(sub.contractor_invoice_path)} />
               )}
             {invoiceAmount && (

@@ -228,7 +228,7 @@ export async function uploadInvoiceAction(
   const admin = createServiceRoleClient();
   const { data: js } = await admin
     .from('job_submissions')
-    .select('id, status, awarded_contractor_id, contact_name, accepted_client_quote_id, service_verbatim, service:services(name)')
+    .select('id, status, awarded_contractor_id, contact_name, accepted_client_quote_id, service_verbatim, contractor_invoice_path, contractor_invoice_name, contractor_invoice_at, service:services(name)')
     .eq('id', submissionId)
     .maybeSingle();
   if (!js) return { error: 'We couldn’t find that job.' };
@@ -253,22 +253,6 @@ export async function uploadInvoiceAction(
     return { error: 'That didn’t upload. Please try again.' };
   }
 
-  // Before the job says the invoice is in: a stamp with no amount row
-  // would show "received" with nobody told what it comes to.
-  const { data: recorded, error: amtErr } = await admin.rpc('sq_record_invoice_amount', {
-    p_submission_id: submissionId,
-    p_contractor_id: user.id,
-    p_invoiced_pence: invoicedPence,
-    p_note: invoiceNote || null,
-  });
-  const amount = recorded as
-    | { ok: boolean; reason?: string; status?: string; quoted_pence?: number; invoiced_pence?: number }
-    | null;
-  if (amtErr || !amount?.ok) {
-    console.error('[sq] invoice amount not recorded:', amtErr?.message ?? amount?.reason);
-    return { error: 'Uploaded, but we couldn’t record the amount. Please tell us what it comes to.' };
-  }
-  const differs = amount.status === 'pending';
 
   const { error: updErr } = await admin
     .from('job_submissions')
@@ -282,6 +266,33 @@ export async function uploadInvoiceAction(
     console.error('[sq] invoice record failed:', updErr);
     return { error: 'Uploaded, but we couldn’t record it. Please tell us.' };
   }
+
+  // After the stamp: recording a matching total asks the customer for the
+  // balance (sq_record_invoice_amount -> sq_open_balance), and a job that
+  // says "no invoice" while its customer is being asked is the worse of the
+  // two failures. A failed record puts the stamp back as it was.
+  const { data: recorded, error: amtErr } = await admin.rpc('sq_record_invoice_amount', {
+    p_submission_id: submissionId,
+    p_contractor_id: user.id,
+    p_invoiced_pence: invoicedPence,
+    p_note: invoiceNote || null,
+  });
+  const amount = recorded as
+    | { ok: boolean; reason?: string; status?: string; quoted_pence?: number; invoiced_pence?: number }
+    | null;
+  if (amtErr || !amount?.ok) {
+    console.error('[sq] invoice amount not recorded:', amtErr?.message ?? amount?.reason);
+    await admin
+      .from('job_submissions')
+      .update({
+        contractor_invoice_path: js.contractor_invoice_path,
+        contractor_invoice_name: js.contractor_invoice_name,
+        contractor_invoice_at: js.contractor_invoice_at,
+      })
+      .eq('id', submissionId);
+    return { error: 'That didn’t go through. Please try again.' };
+  }
+  const differs = amount.status === 'pending';
 
 
   const { data: contractor } = await admin

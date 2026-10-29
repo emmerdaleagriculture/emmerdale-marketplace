@@ -357,8 +357,8 @@ export default async function ClientPortalPage({
                 {depositRate < 1 && (
                   <>
                     You pay {Math.round(depositRate * 100)}% now to book, and the rest
-                    from the same card once the work&rsquo;s done and you&rsquo;ve
-                    confirmed it.{' '}
+                    once the work&rsquo;s done, you&rsquo;ve confirmed it and your
+                    contractor has invoiced.{' '}
                   </>
                 )}
                 Accepting a price means agreeing to our{' '}

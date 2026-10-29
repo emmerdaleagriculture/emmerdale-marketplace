@@ -953,14 +953,19 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
     // is the ask: the invoice is what starts the money moving.
     case 'sq_completion_confirmed':
       return {
-        subject: `Job confirmed complete: send your invoice${p.amount_pence ? ` for ${gbp(p.amount_pence)}` : ''}`,
+        subject: `Job confirmed complete: send your invoice`,
         text:
           `${p.contact_name ?? 'The customer'} has confirmed the work is done.\n\n` +
-          `Send us your invoice${p.amount_pence ? ` for ${gbp(p.amount_pence)}` : ''} now. We ask the ` +
-          `customer for the balance once it's in, and pay you as soon as that has cleared. ` +
-          `A PDF or a photo of a paper one is fine. Upload it on the job:\n${SITE_URL}/won\n\n` +
-          `If the job came to a different figure from your quote, say so on the upload and ` +
-          `we'll sort it out with the customer before anyone is asked to pay.`,
+          `Send us your invoice now. We ask the customer for the balance once it's in, and ` +
+          `pay you as soon as that has cleared. A PDF or a photo of a paper one is fine. ` +
+          `Upload it on the job:\n${SITE_URL}/won\n\n` +
+          // A rate quote's figure was worked out from the mapped area, so the
+          // real job can honestly differ; a total is what they said it costs.
+          (p.amount_pence
+            ? `The customer booked at ${gbp(p.amount_pence)}${p.quote_type === 'rate' ? ', worked out from your rate and the mapped area' : ''}. `
+            : '') +
+          `If your invoice comes to a different figure, say so on the upload and we'll sort ` +
+          `it out with the customer before anyone is asked to pay.`,
       };
 
     // ── The balance (terms 7.2) ──────────────────────────────────────────────
@@ -987,8 +992,12 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         subject: `Balance to pay: ${gbp(p.amount_pence)}`,
         text:
           `Hi ${first},\n\n` +
-          `${p.contractor_business_name ?? 'Your contractor'} has sent us their invoice for ` +
-          `the job, so here's the balance.\n\n` +
+          // invoice_in comes from sq_open_balance: the normal path now follows
+          // the contractor's invoice, but an operator can ask without one.
+          (p.invoice_in
+            ? `${p.contractor_business_name ?? 'Your contractor'} has sent us their invoice for ` +
+              `the job, so here's the balance.\n\n`
+            : `Thanks for confirming the work is done.\n\n`) +
           `Job total:     ${gbp(p.total_pence)}${vatSuffix(p.price_basis)}\n` +
           `Deposit paid:  ${gbp(p.deposit_pence)}\n` +
           `Balance:       ${gbp(p.amount_pence)}\n\n` +
