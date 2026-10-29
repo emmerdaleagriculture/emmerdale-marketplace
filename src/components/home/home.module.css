@@ -747,7 +747,23 @@
   align-items: center;
   gap: 28px;
   margin-left: 32px;
-  flex: 1;
+  flex: none;
+}
+/* The job ticker fills whatever the row has left. Below 1024px the links
+   and CTAs are in the menu and it sits between the logo and the burger; on
+   a wide desktop it runs between the links and the social icons. Between
+   those widths the links, button and login leave it nothing worth having,
+   so it is put away rather than shown as a slot a few letters wide. */
+.navTicker {
+  flex: 1 1 0;
+  min-width: 0;
+}
+@media (min-width: 1024px) and (max-width: 1239px) {
+  /* Under .navInner to outrank the ticker's own display rule whatever
+     order the two stylesheets load in. */
+  .navInner .navTicker {
+    display: none;
+  }
 }
 .navLinks a {
   color: rgba(251, 250, 246, 0.92);
@@ -872,6 +888,9 @@
   }
   .navInner {
     justify-content: space-between;
+    /* Tighter than the desktop row: on a 390px phone every 12px between
+       the logo, the icons and the burger is 12px the ticker does without. */
+    gap: 14px;
   }
   /* Brand left, icons and burger right. */
   .navInner .navSocial {
