@@ -14,20 +14,24 @@ import styles from './JobTicker.module.css';
  * takes no room until there is something to show and the header's layout is
  * unchanged by its arrival (it fills the space the flex row already left).
  *
- * The motion is one CSS animation on a track holding the list repeated enough
- * times to cover the visible width plus one more copy, shifted by exactly one
- * copy's width so the loop joins seamlessly. Speed is constant — the duration
- * comes from the measured width, so eight short jobs and eight long ones scroll
- * at the same pace. A mouse hovering pauses it (never touch: a sticky :hover
- * froze it after navigation); prefers-reduced-motion stops it, leaving
- * the first few jobs standing still.
+ * The motion is one CSS animation on a track holding the list repeated an
+ * even number of times — enough copies to cover the visible width, twice —
+ * sliding left by exactly half its own width, so the loop joins seamlessly.
+ * Half the track, not a measured pixel value: Safari resolves a var() inside
+ * @keyframes once, when the animation starts, and never again. With the end
+ * keyframe set from a measurement it kept the placeholder it saw before the
+ * measure (a 36px shift over a minute), and on a phone the ticker stood
+ * still after a refresh. The measurement now only sets the number of copies
+ * and the duration, both of which it can change under a running animation.
+ *
+ * Speed is constant — the duration comes from the measured width, so eight
+ * short jobs and eight long ones scroll at the same pace. A mouse hovering
+ * pauses it (never touch: a sticky :hover froze it after navigation);
+ * prefers-reduced-motion stops it, leaving the first few jobs standing still.
  */
 
 /** Pixels per second. Slow enough to read, quick enough to notice. */
 const SPEED = 36;
-
-/** One copy's trailing gap, matching .list's padding-right in the CSS. */
-const GAP = 36;
 
 /**
  * One load per page, shared between the two headers: the customer header
@@ -75,8 +79,10 @@ export function JobTicker({ className }: { className?: string }) {
   const [items, setItems] = useState<TickerItem[]>([]);
   const outer = useRef<HTMLDivElement>(null);
   const first = useRef<HTMLUListElement>(null);
-  const [copies, setCopies] = useState(2);
-  const [shift, setShift] = useState(0);
+  /** Copies of the list in each half of the track: enough to fill the window. */
+  const [copies, setCopies] = useState(1);
+  /** One copy's width including its trailing gap; 0 until measured. */
+  const [width, setWidth] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -87,16 +93,17 @@ export function JobTicker({ className }: { className?: string }) {
   }, []);
 
   // Measure after paint and again whenever the header changes width: how
-  // wide one copy is (the distance one loop travels) and how many copies it
-  // takes to keep the visible window full while the first one scrolls out.
+  // wide one copy is (so one loop takes the same time per pixel as any other)
+  // and how many copies it takes to keep the visible window full while the
+  // first half scrolls out.
   useLayoutEffect(() => {
     if (items.length === 0 || !outer.current || !first.current) return;
     const measure = () => {
       const w = first.current?.getBoundingClientRect().width ?? 0;
       const box = outer.current?.getBoundingClientRect().width ?? 0;
       if (w === 0) return;
-      setShift(w);
-      setCopies(Math.max(2, Math.ceil(box / w) + 1));
+      setWidth(w);
+      setCopies(Math.max(1, Math.ceil(box / w)));
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -106,21 +113,19 @@ export function JobTicker({ className }: { className?: string }) {
 
   if (items.length === 0) return null;
 
-  const duration = shift > 0 ? (shift + GAP) / SPEED : 0;
+  // One loop travels half the track: `copies` lists, each `width` wide.
+  const duration = (copies * width) / SPEED;
 
   return (
     <div
       ref={outer}
       className={`${styles.ticker} ${className ?? ''}`}
       aria-label="Latest jobs"
-      data-ready={shift > 0 || undefined}
+      data-ready={width > 0 || undefined}
     >
-      <div
-        className={styles.track}
-        style={{ ['--shift' as string]: `${-(shift + GAP)}px`, ['--dur' as string]: `${duration}s` }}
-      >
+      <div className={styles.track} style={{ animationDuration: `${duration}s` }}>
         <List items={items} ref={first} />
-        {Array.from({ length: copies - 1 }, (_, i) => (
+        {Array.from({ length: copies * 2 - 1 }, (_, i) => (
           <List key={i} items={items} hidden />
         ))}
       </div>
