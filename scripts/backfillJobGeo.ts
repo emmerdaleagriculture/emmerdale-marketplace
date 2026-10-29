@@ -82,17 +82,31 @@ async function main() {
   // 2. distances on their invitations
   let distances = 0;
   if (fixed.length) {
+    const { data: coords, error: cErr } = await admin.from('job_submissions').select('id, lat, lng').in('id', fixed);
+    if (cErr) throw cErr;
+    const jobGeo = new Map((coords ?? []).map((j) => [j.id, j]));
     const { data: invs, error: invErr } = await admin
       .from('job_invitations')
-      .select('id, submission_id, contractor_id, job_submissions!inner(lat, lng), contractors!inner(base_lat, base_lng)')
+      .select('id, submission_id, contractor_id')
       .in('submission_id', fixed)
       .is('distance_miles', null);
     if (invErr) throw invErr;
+    const contractorIds = [...new Set((invs ?? []).map((i) => i.contractor_id))];
+    const { data: bases, error: bErr } = contractorIds.length
+      ? await admin.from('contractors').select('id, base_lat, base_lng').in('id', contractorIds)
+      : { data: [], error: null };
+    if (bErr) throw bErr;
+    const ctGeo = new Map((bases ?? []).map((c) => [c.id, c]));
     for (const inv of invs ?? []) {
-      const js = inv.job_submissions as unknown as { lat: number | null; lng: number | null };
-      const ct = inv.contractors as unknown as { base_lat: number | null; base_lng: number | null };
-      if (js.lat == null || js.lng == null || ct.base_lat == null || ct.base_lng == null) continue;
-      const miles = Math.round(haversineMiles(js.lat, js.lng, ct.base_lat, ct.base_lng) * 10) / 10;
+      const js = jobGeo.get(inv.submission_id);
+      const ct = ctGeo.get(inv.contractor_id);
+      if (!js || !ct) continue;
+      const { lat, lng } = js;
+      const { base_lat: bLat, base_lng: bLng } = ct;
+      if (lat == null || lng == null || bLat == null || bLng == null) continue;
+      const raw = haversineMiles(lat, lng, bLat, bLng);
+      if (raw === null) continue;
+      const miles = Math.round(raw * 10) / 10;
       const { error: dErr } = await admin.from('job_invitations').update({ distance_miles: miles }).eq('id', inv.id);
       if (dErr) throw dErr;
       distances++;
