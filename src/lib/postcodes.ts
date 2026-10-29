@@ -286,3 +286,17 @@ export async function resolveCounty(postcode: string): Promise<CountyResolution>
     error: `Could not resolve a county for “${unresolvedDistrict ?? pc}”. Pick one manually.`,
   };
 }
+
+/**
+ * The form a job's postcode is stored in: canonical and spaced, because the
+ * pre-award district redaction is split_part(postcode, ' ', 1) and an unspaced
+ * "SO249AA" would hand the FULL postcode to every invited contractor. Seven
+ * live jobs had done exactly that before every insert path went through here.
+ * Something that is not a postcode at all is kept as typed, upper-cased.
+ */
+export function storedPostcode(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const norm = normalisePostcode(trimmed);
+  return norm.full ?? norm.outcode ?? trimmed.toUpperCase();
+}

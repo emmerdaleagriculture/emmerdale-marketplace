@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { emailDeliveryError } from '@/lib/email/deliverable';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
-import { resolveCounty } from '@/lib/postcodes';
+import { resolveCounty, storedPostcode, type CountyResolution } from '@/lib/postcodes';
 import { attributionFromForm, type SubmissionAttribution } from '@/lib/attribution';
 import { conditionAnswers, describeConditions, requiredAnswered } from '@/lib/jobParse/conditions';
 import { ENQUIRY_CATEGORIES, isEnquiryCategory, type EnquiryCategory } from '@/lib/enquiryCategories';
@@ -182,7 +182,7 @@ async function autoConvertEnquiry(
   admin: ReturnType<typeof createServiceRoleClient>,
   leadId: string,
   d: { category: EnquiryCategory; name: string; phone: string; email: string; details: string; postcode: string },
-  geo: { county_id?: number | null; county_name?: string | null },
+  geo: Pick<CountyResolution, 'county_id' | 'county_name' | 'lat' | 'lng'>,
   attribution: SubmissionAttribution,
   spec_: { attributes: Record<string, string>; detailsText: string | null; complete: boolean },
 ): Promise<string | null> {
@@ -224,7 +224,12 @@ async function autoConvertEnquiry(
         // one, not a replacement for one: a contractor needs the district to
         // judge whether a job is worth pricing, and "somewhere in Surrey" is
         // not something anyone can price.
-        postcode: d.postcode || null,
+        postcode: storedPostcode(d.postcode),
+        // The postcode's centroid. Without it every invitation goes out with
+        // no "N miles from your base" line and the invite radius cannot be
+        // measured — 18 of the first 20 hay jobs went out like that.
+        lat: geo.lat ?? null,
+        lng: geo.lng ?? null,
         contact_name: d.name,
         contact_phone: d.phone,
         contact_email: d.email,
