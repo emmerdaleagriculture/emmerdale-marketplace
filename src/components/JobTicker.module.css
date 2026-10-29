@@ -1,8 +1,11 @@
 /*
  * The header's job ticker. A clipped window with the edges faded out, and
- * inside it a track that slides left by one copy's width (--shift, measured
- * in JobTicker.tsx) over --dur seconds, forever. Colours are inherited: the
- * header is white-on-green and the ticker follows whatever bar it sits in.
+ * inside it a track of two identical halves that slides left by half its own
+ * width, forever; the duration is set inline from the measured width in
+ * JobTicker.tsx. The keyframes hold no var(): Safari reads one once when the
+ * animation starts, so a measured end value left it crawling (see the TSX).
+ * Colours are inherited: the header is white-on-green and the ticker follows
+ * whatever bar it sits in.
  */
 .ticker {
   overflow: hidden;
@@ -21,8 +24,9 @@
   font-size: 13px;
   line-height: 1;
   white-space: nowrap;
-  /* Hidden until measured, so the first paint is not a track standing
-     still at the wrong offset. */
+  /* Hidden until measured, so the first paint is not a single copy standing
+     still at the wrong offset; the animation starts with the measurement,
+     so it is created with the real duration rather than told it later. */
   visibility: hidden;
 }
 .ticker[data-ready] {
@@ -32,7 +36,12 @@
   display: flex;
   width: max-content;
   will-change: transform;
-  animation: slide var(--dur, 20s) linear infinite;
+}
+.ticker[data-ready] .track {
+  /* No duration here: it is always set inline from the measured width. */
+  animation-name: slide;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 /* Pause under a mouse so a job can be read — and only a mouse. A touch
    screen keeps a :hover on whatever was last under the finger, and after a
@@ -48,7 +57,7 @@
     transform: translateX(0);
   }
   to {
-    transform: translateX(var(--shift, -100%));
+    transform: translateX(-50%);
   }
 }
 .list {
@@ -57,7 +66,8 @@
   gap: 36px;
   margin: 0;
   /* One item-gap after the last job, so the join between copies is the
-     same distance as the gap between any two jobs. Matches GAP in the TSX. */
+     same distance as the gap between any two jobs. The measured copy width
+     in the TSX includes it. */
   padding: 0 36px 0 0;
   list-style: none;
   flex: none;
@@ -89,7 +99,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .track {
+  /* Same selector as the rule that starts it, so this one wins. */
+  .ticker[data-ready] .track {
     animation: none;
   }
 }
