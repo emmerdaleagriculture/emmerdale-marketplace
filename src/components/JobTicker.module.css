@@ -34,8 +34,14 @@
   will-change: transform;
   animation: slide var(--dur, 20s) linear infinite;
 }
-.ticker:hover .track {
-  animation-play-state: paused;
+/* Pause under a mouse so a job can be read — and only a mouse. A touch
+   screen keeps a :hover on whatever was last under the finger, and after a
+   client-side navigation that can be the ticker on the new page: it then
+   stood still until the next tap, which read as broken. */
+@media (hover: hover) and (pointer: fine) {
+  .ticker:hover .track {
+    animation-play-state: paused;
+  }
 }
 @keyframes slide {
   from {
