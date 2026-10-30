@@ -658,6 +658,64 @@ export async function markBalanceTransferredAction(
 }
 
 /**
+ * Operator keys in the contractor's invoice figure: an invoice that came by
+ * email, or one uploaded before the contractor's own form existed. Same
+ * function as that form (sq_record_invoice_amount), with the operator named
+ * so the job's record never says the contractor confirmed something they
+ * did not type. A matching figure asks the customer for the quoted balance
+ * now; a different one waits for apply or decline. Only ever starts a
+ * record: the SQL refuses where a figure is already pending or decided.
+ */
+export async function recordInvoiceAmountAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await assertAdmin();
+  const submissionId = String(formData.get('submission_id') ?? '');
+  const invoicedPence = poundsInputToPence(String(formData.get('invoiced') ?? ''));
+  const note = String(formData.get('note') ?? '').trim().slice(0, 1000) || null;
+  if (!submissionId) return { error: 'Missing job.' };
+  if (invoicedPence === null) return { error: 'Enter the invoice total in pounds.' };
+
+  const admin = createServiceRoleClient();
+  const { data: js } = await admin
+    .from('job_submissions')
+    .select('awarded_contractor_id')
+    .eq('id', submissionId)
+    .maybeSingle();
+  if (!js?.awarded_contractor_id) return { error: 'No awarded contractor on this job.' };
+
+  const { data, error } = await admin.rpc('sq_record_invoice_amount', {
+    p_submission_id: submissionId,
+    p_contractor_id: js.awarded_contractor_id,
+    p_invoiced_pence: invoicedPence,
+    p_note: note,
+    p_operator_id: user.id,
+  });
+  if (error) return { error: error.message };
+  const res = data as
+    | { ok?: boolean; reason?: string; status?: string; quoted_pence?: number; balance_opened_pence?: number }
+    | null;
+  if (!res?.ok) {
+    if (res?.reason === 'no_reason') return { error: 'It differs from the quote, so say why in the note.' };
+    if (res?.reason === 'no_quote') return { error: 'This job has no accepted quote to compare with.' };
+    if (res?.reason?.startsWith('already_')) return { error: 'A figure is already recorded for this job. Refresh the page.' };
+    return { error: `Couldn’t record that (${res?.reason ?? 'unknown'}).` };
+  }
+  refresh(submissionId);
+  revalidatePath('/admin/money');
+  if (res.status === 'applied') {
+    return { ok: true, message: 'That figure is already the applied price. Nothing changed.' };
+  }
+  if (res.status === 'matches') {
+    return {
+      ok: true,
+      message: res.balance_opened_pence
+        ? `Recorded as matching the quote. The customer has been asked for the ${formatGBP(res.balance_opened_pence)} balance.`
+        : 'Recorded as matching the quote. The customer already has, or has paid, their balance.',
+    };
+  }
+  return { ok: true, message: `Recorded: ${formatGBP(invoicedPence)} against a ${formatGBP(res.quoted_pence ?? 0)} quote.` };
+}
+
+/**
  * Operator: the contractor's invoice came to a different figure from the
  * quote. "apply" makes it the price (sq_apply_invoice_amount: re-prices at
  * the quote's own markup, replaces any open balance request, asks the
