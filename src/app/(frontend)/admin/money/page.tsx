@@ -28,8 +28,8 @@ export const dynamic = 'force-dynamic';
  * no payout recorded yet.
  *
  * Membership revenue is the other income and lives only in Stripe (nothing
- * here records a subscription payment), so its tile is read from there on
- * each load and says so when Stripe cannot be reached.
+ * here records a subscription payment), so its tile is read from there,
+ * cached ten minutes, and says so when Stripe cannot be reached.
  */
 
 type Payment = {
@@ -124,13 +124,18 @@ function partLine(p: Payment | undefined, fallback: string): { text: string; sub
   }
 }
 
+/** Day, month and year: an all-time figure's start needs the year. */
+function longDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 /** Stripe's membership figures, or why they are missing; never throws. */
 async function loadMemberships(): Promise<{ rev: MembershipRevenue | null; problem: string | null }> {
   try {
     return { rev: await membershipRevenue(), problem: null };
   } catch (err) {
     console.error('[money] membership revenue:', err);
-    return { rev: null, problem: (err as Error).message };
+    return { rev: null, problem: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -206,9 +211,10 @@ export default async function MoneyPage() {
       ? 'No membership payments yet'
       : [
           `${rev.payments} payment${rev.payments === 1 ? '' : 's'} from ${rev.members} member${rev.members === 1 ? '' : 's'}` +
-            (rev.firstPaidAt ? ` since ${formatDate(rev.firstPaidAt)}` : ''),
+            (rev.firstPaidAt ? ` since ${longDate(rev.firstPaidAt)}` : ''),
           `${formatGBP(rev.byTier.premium)} Premium · ${formatGBP(rev.byTier.open)} Open`,
           rev.refundedPence > 0 ? `${formatGBP(rev.refundedPence)} refunded, already taken off` : null,
+          rev.disputedPence > 0 ? `${formatGBP(rev.disputedPence)} lost to disputes, already taken off` : null,
         ]
           .filter(Boolean)
           .join(' · ')
