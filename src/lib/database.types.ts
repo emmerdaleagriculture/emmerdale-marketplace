@@ -436,6 +436,7 @@ export type Database = {
           invoiced_pence: number
           note: string | null
           quoted_pence: number
+          recorded_by: string | null
           status: string
           submission_id: string
           updated_at: string
@@ -451,6 +452,7 @@ export type Database = {
           invoiced_pence: number
           note?: string | null
           quoted_pence: number
+          recorded_by?: string | null
           status: string
           submission_id: string
           updated_at?: string
@@ -466,6 +468,7 @@ export type Database = {
           invoiced_pence?: number
           note?: string | null
           quoted_pence?: number
+          recorded_by?: string | null
           status?: string
           submission_id?: string
           updated_at?: string
@@ -3747,7 +3750,7 @@ export type Database = {
         Returns: Json
       }
       sq_record_invoice_amount: {
-        Args: { p_contractor_id: string; p_invoiced_pence: number | null; p_note: string | null; p_submission_id: string }
+        Args: { p_contractor_id: string; p_invoiced_pence: number | null; p_note: string | null; p_operator_id?: string | null; p_submission_id: string }
         Returns: Json
       }
       sq_mark_balance_transferred: {

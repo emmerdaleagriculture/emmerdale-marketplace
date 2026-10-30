@@ -10,10 +10,11 @@ const EMPTY: FormState = {};
 /**
  * The contractor's invoice figure, keyed in by an operator. The contractor
  * records it themselves on upload; this is for the invoice that came in
- * before that existed, or the figure that arrived by email or phone. It goes
- * through the same function as theirs, so a different figure lands as a
- * decision to apply or decline, and a matching one asks the customer for the
- * quoted balance at once.
+ * before that existed, or the figure that arrived by email or phone. Same
+ * function as theirs, with the operator named: a different figure lands as a
+ * decision to apply or decline, a matching one asks the customer for the
+ * quoted balance at once. Shown only while nothing is recorded, and the page
+ * re-renders past it on success, so the success line is rarely seen.
  */
 export function RecordInvoiceAmount({ submissionId, quotedLabel }: { submissionId: string; quotedLabel: string }) {
   const [state, action, pending] = useActionState(recordInvoiceAmountAction, EMPTY);

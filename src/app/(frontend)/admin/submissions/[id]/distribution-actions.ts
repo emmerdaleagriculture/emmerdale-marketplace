@@ -658,12 +658,13 @@ export async function markBalanceTransferredAction(
 }
 
 /**
- * Operator keys in the contractor's invoice figure. Same function as the
- * contractor's own upload form (sq_record_invoice_amount, as the awarded
- * contractor), so the outcome is identical: a matching figure asks the
- * customer for the quoted balance now; a different one waits below for apply
- * or decline. Logged as the operator's entry, because the contractor did not
- * type it.
+ * Operator keys in the contractor's invoice figure: an invoice that came by
+ * email, or one uploaded before the contractor's own form existed. Same
+ * function as that form (sq_record_invoice_amount), with the operator named
+ * so the job's record never says the contractor confirmed something they
+ * did not type. A matching figure asks the customer for the quoted balance
+ * now; a different one waits for apply or decline. Only ever starts a
+ * record: the SQL refuses where a figure is already pending or decided.
  */
 export async function recordInvoiceAmountAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await assertAdmin();
@@ -671,22 +672,22 @@ export async function recordInvoiceAmountAction(_prev: FormState, formData: Form
   const invoicedPence = poundsInputToPence(String(formData.get('invoiced') ?? ''));
   const note = String(formData.get('note') ?? '').trim().slice(0, 1000) || null;
   if (!submissionId) return { error: 'Missing job.' };
-  if (invoicedPence === null || invoicedPence <= 0) return { error: 'Enter the invoice total in pounds.' };
+  if (invoicedPence === null) return { error: 'Enter the invoice total in pounds.' };
 
   const admin = createServiceRoleClient();
   const { data: js } = await admin
     .from('job_submissions')
-    .select('awarded_contractor_id, contractor_invoice_path')
+    .select('awarded_contractor_id')
     .eq('id', submissionId)
     .maybeSingle();
   if (!js?.awarded_contractor_id) return { error: 'No awarded contractor on this job.' };
-  if (!js.contractor_invoice_path) return { error: 'No invoice has been sent for this job yet.' };
 
   const { data, error } = await admin.rpc('sq_record_invoice_amount', {
     p_submission_id: submissionId,
     p_contractor_id: js.awarded_contractor_id,
     p_invoiced_pence: invoicedPence,
     p_note: note,
+    p_operator_id: user.id,
   });
   if (error) return { error: error.message };
   const res = data as
@@ -695,18 +696,9 @@ export async function recordInvoiceAmountAction(_prev: FormState, formData: Form
   if (!res?.ok) {
     if (res?.reason === 'no_reason') return { error: 'It differs from the quote, so say why in the note.' };
     if (res?.reason === 'no_quote') return { error: 'This job has no accepted quote to compare with.' };
+    if (res?.reason?.startsWith('already_')) return { error: 'A figure is already recorded for this job. Refresh the page.' };
     return { error: `Couldn’t record that (${res?.reason ?? 'unknown'}).` };
   }
-  await admin.rpc('log_job_event', {
-    p_job_id: submissionId,
-    p_event_type: 'invoice_amount_by_operator',
-    p_from: null,
-    p_to: null,
-    p_actor_type: 'operator',
-    p_actor_id: user.id,
-    p_reason: note ?? 'invoice figure entered by an operator',
-    p_metadata: { invoiced_pence: invoicedPence, quoted_pence: res.quoted_pence ?? null, status: res.status ?? null },
-  });
   refresh(submissionId);
   revalidatePath('/admin/money');
   if (res.status === 'applied') {
@@ -720,7 +712,7 @@ export async function recordInvoiceAmountAction(_prev: FormState, formData: Form
         : 'Recorded as matching the quote. The customer already has, or has paid, their balance.',
     };
   }
-  return { ok: true, message: `Recorded: ${formatGBP(invoicedPence)} against a ${formatGBP(res.quoted_pence ?? 0)} quote. Refresh to apply or decline it.` };
+  return { ok: true, message: `Recorded: ${formatGBP(invoicedPence)} against a ${formatGBP(res.quoted_pence ?? 0)} quote.` };
 }
 
 /**

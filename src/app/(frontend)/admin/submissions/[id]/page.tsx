@@ -279,7 +279,7 @@ export default async function SubmissionDetailPage({
     // What the contractor said their invoice comes to (sealed, like the payout).
     admin
       .from('contractor_invoice_amounts')
-      .select('quoted_pence, invoiced_pence, note, status, client_before_pence, client_after_pence, decided_at, decision_note')
+      .select('quoted_pence, invoiced_pence, note, status, client_before_pence, client_after_pence, decided_at, decision_note, recorded_by')
       .eq('submission_id', id)
       .maybeSingle(),
   ]);
@@ -473,8 +473,9 @@ export default async function SubmissionDetailPage({
                 <RequestBalanceButton submissionId={id} invoiceIn={Boolean(sub.contractor_invoice_path)} />
               )}
             {/* The figure the contractor records on upload, keyed in here
-                for an invoice that predates that form or came by email. */}
-            {invoiceUrl && !payout && acceptedCost != null && invoiceAmount?.status !== 'pending' && (
+                for an invoice that predates that form or came by email.
+                Only where nothing is recorded: a decided figure stays decided. */}
+            {!invoiceAmount && !payout && acceptedCost != null && (
               <RecordInvoiceAmount submissionId={id} quotedLabel={formatGBP(acceptedCost)} />
             )}
             {invoiceAmount && (
@@ -746,21 +747,24 @@ function InvoiceAmountLine({
     client_after_pence: number | null;
     decided_at: string | null;
     decision_note: string | null;
+    recorded_by: string | null;
   };
   markupRate: number;
   clientPricePence: number | null;
   /** A payout is recorded: the question is closed, whatever the invoice said. */
   paidOut: boolean;
 }) {
+  const who = row.recorded_by ? 'An operator recorded' : 'The contractor confirmed';
   if (row.status === 'matches') {
-    return <p>The contractor confirmed the invoice matches the quote ({formatGBP(row.quoted_pence)}).</p>;
+    return <p>{who} the invoice matches the quote ({formatGBP(row.quoted_pence)}).</p>;
   }
   const head = (
     <p>
       <strong>
-        Invoice is {formatGBP(row.invoiced_pence)}, quote was {formatGBP(row.quoted_pence)}.
+        Invoice is {formatGBP(row.invoiced_pence)}, quote was {formatGBP(row.quoted_pence)}
+        {row.recorded_by ? ' (recorded by an operator)' : ''}.
       </strong>
-      {row.note && <> Their reason: &ldquo;{row.note}&rdquo;</>}
+      {row.note && <> {row.recorded_by ? 'Reason given' : 'Their reason'}: &ldquo;{row.note}&rdquo;</>}
     </p>
   );
   if (row.status === 'applied') {
