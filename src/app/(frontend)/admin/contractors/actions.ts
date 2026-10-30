@@ -143,6 +143,7 @@ export async function deleteContractor(formData: FormData) {
   const { error: authErr } = await admin.auth.admin.deleteUser(id);
   if (authErr) throw new Error(`The contractor row is gone but their login could not be removed: ${authErr.message}`);
 
+  revalidateDirectory();
   revalidatePath('/admin/contractors');
   redirect('/admin/contractors');
 }
@@ -224,6 +225,8 @@ export async function setServicesOnly(formData: FormData) {
   const { error } = await admin.from('contractors').update({ services_only: on }).eq('id', id);
   if (error) throw new Error(error.message);
 
+  // Services-only contractors are left out of the county coverage counts.
+  revalidateDirectory();
   revalidatePath('/admin/contractors');
   revalidatePath(`/admin/contractors/${id}`);
 }
@@ -261,6 +264,7 @@ export async function coverWholeCountry(formData: FormData) {
     });
   if (ccErr) throw new Error(ccErr.message);
 
+  revalidateDirectory();
   revalidatePath('/admin/contractors');
   revalidatePath(`/admin/contractors/${id}`);
 }

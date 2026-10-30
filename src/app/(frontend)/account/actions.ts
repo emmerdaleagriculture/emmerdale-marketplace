@@ -2,7 +2,6 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { countySlug } from '@/lib/verticals';
 import { revalidateDirectory } from '@/lib/directory';
 import { createClient } from '@/lib/supabase/server';
 import { resolveCounty } from '@/lib/postcodes';
@@ -79,6 +78,8 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
     supabase.from('contractor_counties').select('county_id').eq('contractor_id', user.id),
   ]);
   const phoneChanged = before?.phone !== d.phone;
+  const was = new Set((beforeCounties ?? []).map((r) => r.county_id));
+  const countiesChanged = was.size !== d.county_ids.length || d.county_ids.some((id) => !was.has(id));
 
   // Update own profile (RLS: contractors_update_own; status is trigger-guarded).
   const { error: upErr } = await supabase
@@ -108,20 +109,10 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   }
 
   revalidatePath('/account');
-  if (directory) {
-    // Their listing changed: clear the directory, then ask for each of
-    // their county pages — the ones they cover now and the ones they just
-    // dropped — to be rebuilt rather than wait a day.
-    revalidateDirectory();
-    const ids = Array.from(new Set([...d.county_ids, ...(beforeCounties ?? []).map((r) => r.county_id!).filter(Boolean)]));
-    const { data: names } = await supabase.from('counties').select('name').in('id', ids);
-    for (const c of names ?? []) {
-      const slug = countySlug(c.name);
-      revalidatePath(`/paddock-maintenance/${slug}`);
-      revalidatePath(`/hay-bales/${slug}`);
-      revalidatePath(`/tractor-hire/${slug}`);
-    }
-  }
+  // Their counties or listing changed: the directory and every county page
+  // are rebuilt on their next visit rather than waiting out the cache. A
+  // phone or notification change leaves the month-long cache alone.
+  if (directory || countiesChanged) revalidateDirectory();
   return { ok: true, message: 'Your details have been saved.' };
 }
 

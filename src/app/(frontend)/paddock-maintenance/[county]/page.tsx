@@ -40,8 +40,12 @@ const SITE = siteUrl();
  * copies with the name swapped.
  */
 export const dynamicParams = false;
-// Daily, so coverage counts track the network without a redeploy.
-export const revalidate = 86400;
+// A month, not a day. Hundreds of county pages each see under a visit a day,
+// so a daily expiry meant most visitors waited for a fresh render (~750ms,
+// measured 2026-10-30). Coverage changes — a contractor approved, suspended,
+// deleted, or editing their counties — rebuild every county page through
+// revalidateDirectory(), so the long window costs nothing in freshness.
+export const revalidate = 2592000;
 
 export async function generateStaticParams() {
   const refs = await allCountyRefs();
