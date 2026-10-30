@@ -14,6 +14,7 @@ import { ExtraWorkForm } from './ExtraWorkForm';
 import { PayoutPanel } from './PayoutPanel';
 import { BalanceTransferButton } from './BalanceTransferButton';
 import { InvoiceAmountPanel } from './InvoiceAmountPanel';
+import { RecordInvoiceAmount } from './RecordInvoiceAmount';
 import { RequestBalanceButton } from './RequestBalanceButton';
 import { ModerateMessage } from './ModerateMessage';
 import { CloseCustomerButton } from './CloseCustomerButton';
@@ -471,6 +472,11 @@ export default async function SubmissionDetailPage({
                 0 && (
                 <RequestBalanceButton submissionId={id} invoiceIn={Boolean(sub.contractor_invoice_path)} />
               )}
+            {/* The figure the contractor records on upload, keyed in here
+                for an invoice that predates that form or came by email. */}
+            {invoiceUrl && !payout && acceptedCost != null && invoiceAmount?.status !== 'pending' && (
+              <RecordInvoiceAmount submissionId={id} quotedLabel={formatGBP(acceptedCost)} />
+            )}
             {invoiceAmount && (
               <InvoiceAmountLine
                 submissionId={id}
