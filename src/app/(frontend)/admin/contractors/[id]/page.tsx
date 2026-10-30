@@ -177,6 +177,7 @@ export default async function ContractorDetailPage({
           : c.invite_radius_miles >= 1000
             ? 'none (nationwide)'
             : `${c.invite_radius_miles} miles from base`}
+        . Hay, straw &amp; haylage jobs are offered nationwide whatever the limit: it is delivered, not driven to.
       </p>
       <div className={s.actions}>
         <form action={setServicesOnly}>

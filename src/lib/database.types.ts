@@ -2835,18 +2835,21 @@ export type Database = {
         Row: {
           area_priced: boolean
           id: number
+          invite_radius_miles: number | null
           listed: boolean
           name: string
         }
         Insert: {
           area_priced?: boolean
           id?: number
+          invite_radius_miles?: number | null
           listed?: boolean
           name: string
         }
         Update: {
           area_priced?: boolean
           id?: number
+          invite_radius_miles?: number | null
           listed?: boolean
           name?: string
         }
@@ -3766,6 +3769,10 @@ export type Database = {
       sq_invitation_label: {
         Args: { p_invitation_id: string }
         Returns: string
+      }
+      sq_invite_radius: {
+        Args: { p_ct_radius: number | null; p_service_id: number | null }
+        Returns: number
       }
       sq_invite_contractor: {
         Args: {
