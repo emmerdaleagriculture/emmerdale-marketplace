@@ -114,7 +114,7 @@ export async function syncSubscription(sub: Stripe.Subscription) {
 
   const { data: existing } = await admin
     .from('subscriptions')
-    .select('contractor_id, status')
+    .select('contractor_id, status, tier')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
   if (!existing) return; // unknown customer — nothing to update
@@ -177,7 +177,10 @@ export async function syncSubscription(sub: Stripe.Subscription) {
     );
   }
   // An Open membership starting or ending is a listing appearing or going.
-  revalidateDirectory();
+  // Only when something moved: this also runs for every member in the
+  // nightly sweep (premium-sync) and on every renewal webhook, and each call
+  // marks every county page stale.
+  if (status !== existing.status || tier !== existing.tier) revalidateDirectory();
 }
 
 /**

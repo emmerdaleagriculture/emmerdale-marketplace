@@ -140,10 +140,11 @@ export async function deleteContractor(formData: FormData) {
   // delete their own login), so both are removed here, row first.
   const { error: rowErr } = await admin.from('contractors').delete().eq('id', id);
   if (rowErr) throw new Error(rowErr.message);
+  // Coverage changed the moment the row went, whatever the login removal does.
+  revalidateDirectory();
   const { error: authErr } = await admin.auth.admin.deleteUser(id);
   if (authErr) throw new Error(`The contractor row is gone but their login could not be removed: ${authErr.message}`);
 
-  revalidateDirectory();
   revalidatePath('/admin/contractors');
   redirect('/admin/contractors');
 }

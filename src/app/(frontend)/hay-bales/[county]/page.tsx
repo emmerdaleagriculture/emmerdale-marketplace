@@ -5,12 +5,13 @@ import { allCountyRefs, resolveCountyBySlug, VERTICALS } from '@/lib/verticals';
 import { getCountyServiceCoverage } from '@/lib/reference';
 
 export const dynamicParams = false;
-// A month, not a day. Hundreds of county pages each see under a visit a day,
+// A week, not a day. Hundreds of county pages each see under a visit a day,
 // so a daily expiry meant most visitors waited for a fresh render (~750ms,
-// measured 2026-10-30). Coverage changes — a contractor approved, suspended,
-// deleted, or editing their counties — rebuild every county page through
-// revalidateDirectory(), so the long window costs nothing in freshness.
-export const revalidate = 2592000;
+// measured 2026-10-30). Coverage changes made through the app — a contractor
+// approved, suspended, deleted, or editing their counties or services —
+// rebuild every county page through revalidateDirectory(); the week is the
+// ceiling for changes made in SQL, which nothing in the app hears about.
+export const revalidate = 604800;
 
 export async function generateStaticParams() {
   const refs = await allCountyRefs();

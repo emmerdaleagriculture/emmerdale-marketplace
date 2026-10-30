@@ -11,8 +11,10 @@ const COUNTY_ROUTES = ['/paddock-maintenance', '/hay-bales', '/tractor-hire'] as
  * when we approve, vet, suspend, delete or comp a contractor. Every one of
  * those calls this: the cached directory is dropped, /contractors is
  * rebuilt, and every county page is marked stale so its next visitor gets
- * fresh counts. The county pages otherwise keep a month-long cache, so this
- * is the only thing that moves them between deploys.
+ * fresh counts (the coverage loaders sit under the same tag, so the rebuild
+ * reads fresh rows). The county pages otherwise keep a week-long cache, so
+ * this is what moves them between deploys; a change made in SQL waits for
+ * the week.
  */
 export function revalidateDirectory(): void {
   revalidateTag(COUNTY_DIRECTORY_TAG);

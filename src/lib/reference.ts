@@ -26,30 +26,40 @@ export const getServices = memoize<ServiceOption[]>(async () => {
   return data ?? [];
 }, REFERENCE_TTL_MS);
 
+/** The tag revalidateDirectory() clears: the directory and both coverage counts. */
+export const COUNTY_DIRECTORY_TAG = 'county-directory';
+
 /**
  * Approved-contractor count per county name, for the coverage map. Needs the
  * service role (contractor rows aren't world-readable) but stays cookie-less,
  * so ISR pages can call it without becoming dynamic.
  */
-// Memoised like the loaders above: every county page calls this twice (its
-// metadata and its body), and a build or a daily revalidation sweep walks
-// ~270 of them.
+// Cached under the directory tag, like getCountyDirectory below, not
+// memoised in the instance: revalidateDirectory() marks every county page
+// stale when coverage changes, and the rebuild must read fresh rows. An
+// in-memory copy would hand the re-render the counts from before the change
+// and bake them into a page that is then cached for days (the memo's ten
+// minutes were harmless while the pages expired daily).
 // Excludes services_only contractors (county_coverage view, 20261011100000):
 // "covered" means someone there takes general work. The hay and tractor-hire
 // pages ask getCountyServiceCoverage for their own service instead.
-export const getCountyCoverage = memoize<Record<string, number>>(async () => {
-  const supabase = createServiceRoleClient();
-  // Counted in SQL (county_coverage view). This used to pull every
-  // contractor-county row and count in here; the API caps a response at 1000
-  // rows, the table passed that, and 85 counties quietly lost contractors.
-  const { data } = await supabase.from('county_coverage').select('name, contractors');
+export const getCountyCoverage = unstable_cache(
+  async (): Promise<Record<string, number>> => {
+    const supabase = createServiceRoleClient();
+    // Counted in SQL (county_coverage view). This used to pull every
+    // contractor-county row and count in here; the API caps a response at 1000
+    // rows, the table passed that, and 85 counties quietly lost contractors.
+    const { data } = await supabase.from('county_coverage').select('name, contractors');
 
-  const counts: Record<string, number> = {};
-  for (const row of data ?? []) {
-    if (row.name && row.contractors) counts[row.name] = row.contractors;
-  }
-  return counts;
-}, REFERENCE_TTL_MS);
+    const counts: Record<string, number> = {};
+    for (const row of data ?? []) {
+      if (row.name && row.contractors) counts[row.name] = row.contractors;
+    }
+    return counts;
+  },
+  ['county-coverage'],
+  { tags: [COUNTY_DIRECTORY_TAG], revalidate: 600 },
+);
 
 /**
  * Approved contractors per county who offer one service, for the hay and
@@ -57,26 +67,24 @@ export const getCountyCoverage = memoize<Record<string, number>>(async () => {
  * count had every tractor-hire page in Northern Ireland claiming the one
  * contractor there, who sells straw. One memoised loader per service id.
  */
-const serviceCoverageLoaders = new Map<number, () => Promise<Record<string, number>>>();
-export function getCountyServiceCoverage(serviceId: number): Promise<Record<string, number>> {
-  let loader = serviceCoverageLoaders.get(serviceId);
-  if (!loader) {
-    loader = memoize<Record<string, number>>(async () => {
-      const supabase = createServiceRoleClient();
-      const { data } = await supabase
-        .from('county_service_coverage')
-        .select('name, contractors')
-        .eq('service_id', serviceId);
-      const counts: Record<string, number> = {};
-      for (const row of data ?? []) {
-        if (row.name && row.contractors) counts[row.name] = row.contractors;
-      }
-      return counts;
-    }, REFERENCE_TTL_MS);
-    serviceCoverageLoaders.set(serviceId, loader);
-  }
-  return loader();
-}
+// Under the directory tag for the same reason as getCountyCoverage; the
+// service id is part of the cache key.
+export const getCountyServiceCoverage = unstable_cache(
+  async (serviceId: number): Promise<Record<string, number>> => {
+    const supabase = createServiceRoleClient();
+    const { data } = await supabase
+      .from('county_service_coverage')
+      .select('name, contractors')
+      .eq('service_id', serviceId);
+    const counts: Record<string, number> = {};
+    for (const row of data ?? []) {
+      if (row.name && row.contractors) counts[row.name] = row.contractors;
+    }
+    return counts;
+  },
+  ['county-service-coverage'],
+  { tags: [COUNTY_DIRECTORY_TAG], revalidate: 600 },
+);
 
 /** One Open member's listing on a county page (county_directory view). */
 export type DirectoryEntry = {
@@ -89,9 +97,6 @@ export type DirectoryEntry = {
   ratingAvg: number | null;
   ratingCount: number;
 };
-
-/** The tag a listing change clears (account/actions.ts). */
-export const COUNTY_DIRECTORY_TAG = 'county-directory';
 
 /**
  * The Open members listed on each county page, keyed by county name

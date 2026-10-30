@@ -74,12 +74,20 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   // A number verified by text in the app stays marked as such only while it
   // is the number on the row.
   const [{ data: before }, { data: beforeCounties }] = await Promise.all([
-    supabase.from('contractors').select('phone, phone_verified_at').eq('id', user.id).maybeSingle(),
+    supabase.from('contractors').select('phone, phone_verified_at, services').eq('id', user.id).maybeSingle(),
     supabase.from('contractor_counties').select('county_id').eq('contractor_id', user.id),
   ]);
   const phoneChanged = before?.phone !== d.phone;
-  const was = new Set((beforeCounties ?? []).map((r) => r.county_id));
-  const countiesChanged = was.size !== d.county_ids.length || d.county_ids.some((id) => !was.has(id));
+  // Coverage counts are per county and per service (county_service_coverage),
+  // so either set changing is a change the county pages must see.
+  const sameSet = (a: number[], b: number[]) => {
+    const sa = new Set(a);
+    const sb = new Set(b);
+    return sa.size === sb.size && [...sa].every((x) => sb.has(x));
+  };
+  const coverageChanged =
+    !sameSet((beforeCounties ?? []).map((r) => r.county_id), d.county_ids) ||
+    !sameSet(before?.services ?? [], d.service_ids);
 
   // Update own profile (RLS: contractors_update_own; status is trigger-guarded).
   const { error: upErr } = await supabase
@@ -109,10 +117,10 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   }
 
   revalidatePath('/account');
-  // Their counties or listing changed: the directory and every county page
-  // are rebuilt on their next visit rather than waiting out the cache. A
-  // phone or notification change leaves the month-long cache alone.
-  if (directory || countiesChanged) revalidateDirectory();
+  // Their counties, services or listing changed: the directory and every
+  // county page are rebuilt on their next visit rather than waiting out the
+  // cache. A phone or notification change leaves the cache alone.
+  if (directory || coverageChanged) revalidateDirectory();
   return { ok: true, message: 'Your details have been saved.' };
 }
 
