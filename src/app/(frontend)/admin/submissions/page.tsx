@@ -263,7 +263,7 @@ function SubmissionRow({
       </div>
 
       <div className={p.rowMain}>
-        <Link href={`/admin/submissions/${r.id}`} className={p.title}>
+        <Link href={`/admin/submissions/${r.id}`} className={p.title} prefetch={false}>
           {title}
         </Link>
         {words && words !== title && <p className={p.words}>“{words}”</p>}
@@ -325,7 +325,7 @@ function SubmissionRow({
 
       <div className={p.rowWhen}>
         <span title={formatDateTime(r.created_at)}>{timeAgo(r.created_at)}</span>
-        <Link href={`/admin/submissions/${r.id}`} className={p.more} aria-label={`Details: ${title}`}>
+        <Link href={`/admin/submissions/${r.id}`} className={p.more} aria-label={`Details: ${title}`} prefetch={false}>
           Details →
         </Link>
       </div>

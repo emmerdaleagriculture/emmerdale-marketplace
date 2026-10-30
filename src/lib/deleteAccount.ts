@@ -1,4 +1,5 @@
 import type { User } from '@supabase/supabase-js';
+import { revalidateDirectory } from '@/lib/directory';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { closeCustomer } from '@/lib/closeCustomer';
 import { revokeAppleTokens } from '@/lib/apple/tokens';
@@ -70,6 +71,7 @@ async function closeContractor(contractorId: string, status: string): Promise<'r
   if (!(await contractorHasHistory(contractorId))) {
     const { error } = await admin.from('contractors').delete().eq('id', contractorId);
     if (error) throw new Error(`contractor row: ${error.message}`);
+    revalidateDirectory();
     return 'removed';
   }
 
@@ -97,6 +99,8 @@ async function closeContractor(contractorId: string, status: string): Promise<'r
     admin.from('contractor_counties').delete().eq('contractor_id', contractorId),
     admin.from('client_quotes').update({ status: 'closed' }).eq('contractor_id', contractorId).eq('status', 'active'),
   ]);
+  // Suspended and without counties: out of the coverage counts and the directory.
+  revalidateDirectory();
   return 'scrubbed';
 }
 
