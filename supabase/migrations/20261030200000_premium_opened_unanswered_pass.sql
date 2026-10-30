@@ -6,9 +6,9 @@
 -- (24) if none of them has priced or messaged, or for the week. A delivered
 -- text nobody taps for 2 hours already counts as a pass
 -- (sq_premium_text_untapped, 20261016200000) — but a member who DID open the
--- job and then did nothing was still holding it for the full day. Rebecca
--- Naylor's Derbyshire job (30 Oct) sat all afternoon on one member who had
--- opened it at 10:25 and never priced, passed or wrote.
+-- job and then did nothing was still holding it for the full day. A
+-- Derbyshire job (30 Oct) sat all afternoon on one member who had opened
+-- it at 10:25 and never priced, passed or wrote.
 --
 -- Now opening the job starts its own clock. A premium offer whose invitation
 -- has been opened (job_invitations.opened_at) sq_premium_opened_reply_hours
