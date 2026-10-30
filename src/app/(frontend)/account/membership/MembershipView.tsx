@@ -361,8 +361,9 @@ export function MembershipView({
           </li>
           <li className={s.step}>
             <b>Nobody bites, it opens up</b>
-            A text nobody taps in 2 hours counts as a pass; if nobody responds in 24 hours, the job
-            goes to everyone.
+            A text nobody taps in 2 hours counts as a pass, and so does a job opened and then left
+            for 6 hours without a price, a pass or a message; if nobody responds in 24 hours, the
+            job goes to everyone.
           </li>
         </ol>
       </section>

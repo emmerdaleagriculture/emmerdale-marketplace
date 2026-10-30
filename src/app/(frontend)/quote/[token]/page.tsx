@@ -129,6 +129,13 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   const replyBy = offer?.premium_started_at
     ? formatDateTime(new Date(new Date(offer.premium_started_at).getTime() + 24 * 3600_000).toISOString())
     : null;
+  // Opening the job starts its own clock (6 hours, sq_premium_opened_reply_hours):
+  // a member who has opened it and not priced, passed or written counts as
+  // passed for the hold. opened_at is null on the very first view (it is
+  // recorded after the response), so that view says "6 hours" plainly.
+  const openedBy = invitation.opened_at
+    ? formatDateTime(new Date(new Date(invitation.opened_at).getTime() + 6 * 3600_000).toISOString())
+    : null;
 
   const jobOpen =
     ['distributed', 'quotes_receiving', 'accepted_awaiting_payment'].includes(js.status) &&
@@ -309,7 +316,9 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                   <strong>Open members first.</strong> Only Open members have this job until{' '}
                   {formatDateTime(offer!.open_first_until!)}, when Premium members join, sooner
                   if every Open member has priced or passed. A text left untapped for 2 hours
-                  counts as a pass. It stays with members until{' '}
+                  counts as a pass, and so does opening the job and not pricing, passing or
+                  messaging the customer within 6 hours{openedBy ? ` (for you, by ${openedBy})` : ''}.
+                  It stays with members until{' '}
                   {formatDateTime(offer!.market_opens_at!)}, or until you&rsquo;ve all priced or
                   passed; if no member has priced or messaged the customer{' '}
                   {replyBy ? `by ${replyBy}` : 'within 24 hours'} it goes to other contractors in
@@ -321,8 +330,10 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                   Price it or message the customer {replyBy ? `by ${replyBy}` : 'within 24 hours'}{' '}
                   and it stays that way until {formatDateTime(offer!.market_opens_at!)}, or until
                   you&rsquo;ve all priced or passed. A text left untapped for 2 hours counts as a
-                  pass, and if no member has {replyBy ? 'by then' : 'within 24 hours'} it goes to
-                  other contractors in the area. The customer can accept a price at any time.
+                  pass, and so does opening the job and not pricing, passing or messaging the
+                  customer within 6 hours{openedBy ? ` (for you, by ${openedBy})` : ''}. If no
+                  member has {replyBy ? 'by then' : 'within 24 hours'} it goes to other
+                  contractors in the area. The customer can accept a price at any time.
                 </div>
               ) : directToYou && offer?.market_opens_at && new Date(offer.market_opens_at) > new Date() ? (
                 <div className={q.pricedPanel}>

@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.9, 24 October 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.10, 30 October 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -238,7 +238,9 @@ export default function TermsPage() {
             to has priced or passed, whichever comes first; then it goes to other
             contractors as usual. Where we text you the job and the text is delivered,
             not opening it within <strong>2 hours</strong> counts as passing for the
-            purpose of the hold (you can still price it). If no premium member has
+            purpose of the hold (you can still price it). Opening the job and then not
+            pricing it, passing or messaging the customer within <strong>6 hours</strong>{' '}
+            counts as passing in the same way. If no premium member has
             priced it or messaged the customer within <strong>24 hours</strong>, it
             goes to other contractors then. Within the hold, where both Open and Premium
             members are in range, Open members are sent the job first and Premium members
