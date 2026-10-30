@@ -351,3 +351,107 @@ export async function refundUnapprovedPremium(contractorId: string): Promise<num
   }
   return refunded;
 }
+
+/** What memberships have brought in, all time, read from Stripe. */
+export type MembershipRevenue = {
+  /** Every successful membership charge, before refunds. */
+  grossPence: number;
+  /** Refunded back to members: turned-down applicants, goodwill. */
+  refundedPence: number;
+  /** Gross less refunds: what we have actually kept. */
+  netPence: number;
+  /** Charges that succeeded (a refunded one still counts as a payment). */
+  payments: number;
+  /** Distinct Stripe customers who paid anything. */
+  members: number;
+  /** Net, by the tier each charge was for. */
+  byTier: Record<MembershipTier, number>;
+  /** When the first membership payment landed, ISO; null until one has. */
+  firstPaidAt: string | null;
+};
+
+/**
+ * Cumulative membership revenue. Nothing in our database records a
+ * subscription payment — the webhook and the nightly sync only track whether
+ * a membership is live — so the figure comes from Stripe's charges: every
+ * successful charge raised by a subscription invoice, less what was
+ * refunded. Job deposits and balances are Checkout payments with no invoice
+ * and are left out; the membership customers we hold are also matched by id,
+ * so a payment still counts after the contractor's account (and with it the
+ * subscriptions row) is gone.
+ *
+ * Returns null when Stripe is not configured. Throws when Stripe does not
+ * answer, so the caller can show that rather than a silent zero.
+ */
+export async function membershipRevenue(): Promise<MembershipRevenue | null> {
+  if (!stripeConfigured()) return null;
+  const admin = createServiceRoleClient();
+  const { data: subs } = await admin
+    .from('subscriptions')
+    .select('stripe_customer_id, tier')
+    .not('stripe_customer_id', 'is', null);
+  const tierByCustomer = new Map<string, MembershipTier>();
+  for (const s of subs ?? []) {
+    if (s.stripe_customer_id) tierByCustomer.set(s.stripe_customer_id, isMembershipTier(s.tier) ? s.tier : 'premium');
+  }
+
+  const stripe = getStripe();
+  // The invoice comes expanded so the tier can be read off the price the
+  // charge was for, not the tier the member holds today.
+  const charges = await stripe.charges
+    .list({ limit: 100, expand: ['data.invoice'] })
+    .autoPagingToArray({ limit: 5000 });
+
+  const out: MembershipRevenue = {
+    grossPence: 0,
+    refundedPence: 0,
+    netPence: 0,
+    payments: 0,
+    members: 0,
+    byTier: { premium: 0, open: 0 },
+    firstPaidAt: null,
+  };
+  const payers = new Set<string>();
+  for (const c of charges) {
+    if (!c.paid || c.status !== 'succeeded' || c.currency !== 'gbp') continue;
+    const customerId = typeof c.customer === 'string' ? c.customer : (c.customer?.id ?? null);
+    // `invoice` sits on the charge under the API version pinned in getStripe;
+    // the SDK's own types follow a later version that moved it, hence the cast.
+    const invoice = (c as unknown as { invoice?: string | InvoiceShape | null }).invoice ?? null;
+    const isMembership = invoice != null || (customerId != null && tierByCustomer.has(customerId));
+    if (!isMembership) continue;
+
+    const net = c.amount - c.amount_refunded;
+    out.grossPence += c.amount;
+    out.refundedPence += c.amount_refunded;
+    out.netPence += net;
+    out.payments += 1;
+    if (customerId) payers.add(customerId);
+    out.byTier[chargeTier(invoice, customerId ? tierByCustomer.get(customerId) : undefined)] += net;
+    const at = new Date(c.created * 1000).toISOString();
+    if (!out.firstPaidAt || at < out.firstPaidAt) out.firstPaidAt = at;
+  }
+  out.members = payers.size;
+  return out;
+}
+
+/** The parts of an expanded invoice the tier can be read from, either API shape. */
+type InvoiceShape = {
+  lines?: { data?: { price?: { lookup_key?: string | null } | null }[] };
+  subscription_details?: { metadata?: Record<string, string> | null } | null;
+  parent?: { subscription_details?: { metadata?: Record<string, string> | null } | null } | null;
+};
+
+/**
+ * Which tier a charge paid for: the price's lookup key first, then the tier
+ * stamped on the subscription at checkout, then the member's current tier.
+ */
+function chargeTier(invoice: string | InvoiceShape | null, fallback: MembershipTier | undefined): MembershipTier {
+  if (invoice && typeof invoice !== 'string') {
+    const key = invoice.lines?.data?.find((l) => l.price?.lookup_key)?.price?.lookup_key;
+    if (key) return tierOfLookupKey(key);
+    const meta = invoice.subscription_details?.metadata?.tier ?? invoice.parent?.subscription_details?.metadata?.tier;
+    if (isMembershipTier(meta)) return meta;
+  }
+  return fallback ?? 'premium';
+}

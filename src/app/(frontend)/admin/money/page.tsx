@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatGBP } from '@/lib/sealedQuotes/money';
+import { membershipRevenue, type MembershipRevenue } from '@/lib/stripe';
 import { balanceDueLabel, formatDate, formatDateTime } from '@/lib/time';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
@@ -25,6 +26,10 @@ export const dynamic = 'force-dynamic';
  * Contractor payouts are paid by hand and recorded on the job page
  * (contractor_payouts), so "owed to contractors" is every finished job with
  * no payout recorded yet.
+ *
+ * Membership revenue is the other income and lives only in Stripe (nothing
+ * here records a subscription payment), so its tile is read from there on
+ * each load and says so when Stripe cannot be reached.
  */
 
 type Payment = {
@@ -119,8 +124,21 @@ function partLine(p: Payment | undefined, fallback: string): { text: string; sub
   }
 }
 
+/** Stripe's membership figures, or why they are missing; never throws. */
+async function loadMemberships(): Promise<{ rev: MembershipRevenue | null; problem: string | null }> {
+  try {
+    return { rev: await membershipRevenue(), problem: null };
+  } catch (err) {
+    console.error('[money] membership revenue:', err);
+    return { rev: null, problem: (err as Error).message };
+  }
+}
+
 export default async function MoneyPage() {
   const admin = createServiceRoleClient();
+
+  // Stripe is slow next to the database, so it is asked first and awaited last.
+  const membershipsPromise = loadMemberships();
 
   // Every job that reached acceptance has a deposit row, so the payments
   // table is the universe; the job comes along with each of its rows.
@@ -182,6 +200,22 @@ export default async function MoneyPage() {
   const marginPence = figures.reduce((n, f) => n + f.margin, 0);
   const marginBanked = figures.filter((f) => f.left === 0 && !STOPPED.has(f.j.status)).reduce((n, f) => n + f.margin, 0);
 
+  const { rev, problem } = await membershipsPromise;
+  const membershipHint = rev
+    ? rev.payments === 0
+      ? 'No membership payments yet'
+      : [
+          `${rev.payments} payment${rev.payments === 1 ? '' : 's'} from ${rev.members} member${rev.members === 1 ? '' : 's'}` +
+            (rev.firstPaidAt ? ` since ${formatDate(rev.firstPaidAt)}` : ''),
+          `${formatGBP(rev.byTier.premium)} Premium · ${formatGBP(rev.byTier.open)} Open`,
+          rev.refundedPence > 0 ? `${formatGBP(rev.refundedPence)} refunded, already taken off` : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')
+    : problem
+      ? `Stripe didn’t answer: ${problem}`
+      : 'Stripe is not configured';
+
   return (
     <div>
       <h1 className={s.h1}>Money</h1>
@@ -228,6 +262,12 @@ export default async function MoneyPage() {
           value={formatGBP(marginBanked)}
           label="Our margin, fully collected"
           hint={<>{formatGBP(marginPence)} across every job that has paid anything</>}
+        />
+        <Tile
+          value={rev ? formatGBP(rev.netPence) : '—'}
+          label="Membership revenue, all time"
+          hint={membershipHint}
+          warn={!rev && Boolean(problem)}
         />
       </Tiles>
 
