@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { unstable_cache } from 'next/cache';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { revalidateDirectory } from '@/lib/directory';
@@ -350,4 +351,132 @@ export async function refundUnapprovedPremium(contractorId: string): Promise<num
     );
   }
   return refunded;
+}
+
+/** What memberships have brought in, all time, read from Stripe. */
+export type MembershipRevenue = {
+  /** Every successful membership charge, before refunds and disputes. */
+  grossPence: number;
+  /** Refunded back to members: turned-down applicants, goodwill. */
+  refundedPence: number;
+  /** Taken back by the card issuer: disputes we lost. */
+  disputedPence: number;
+  /** Gross less refunds and lost disputes: what we have actually kept. */
+  netPence: number;
+  /** Charges that succeeded (a refunded one still counts as a payment). */
+  payments: number;
+  /** Distinct Stripe customers whose payments we still hold any of. */
+  members: number;
+  /** Net, by the tier each charge was for. */
+  byTier: Record<MembershipTier, number>;
+  /** When the first membership payment landed, ISO; null until one has. */
+  firstPaidAt: string | null;
+};
+
+/**
+ * Cumulative membership revenue. Nothing in our database records a
+ * subscription payment — the webhook and the nightly sync only track whether
+ * a membership is live — so the figure comes from Stripe's charges: every
+ * successful charge raised by a subscription invoice, less what was refunded
+ * and what a lost dispute took back. Job deposits and balances are Checkout
+ * payments with no invoice and are left out. The invoice is on the charge
+ * whether or not we still hold the contractor's row, so a deleted account's
+ * payments still count.
+ *
+ * Cached for ten minutes: the read walks every charge on the account (a few
+ * hundred a year at today's volume), and an all-time figure does not need
+ * to be live. Null when Stripe is not configured; throws when Stripe or the
+ * database does not answer, so the caller shows that rather than a zero.
+ */
+export const membershipRevenue = unstable_cache(loadMembershipRevenue, ['membership-revenue'], {
+  revalidate: 600,
+});
+
+async function loadMembershipRevenue(): Promise<MembershipRevenue | null> {
+  if (!stripeConfigured()) return null;
+  const admin = createServiceRoleClient();
+  const { data: subs, error } = await admin
+    .from('subscriptions')
+    .select('stripe_customer_id, tier')
+    .not('stripe_customer_id', 'is', null);
+  if (error) throw new Error(`subscriptions: ${error.message}`);
+  // Only a fallback for the tier: a charge is a membership by its invoice.
+  const tierByCustomer = new Map<string, MembershipTier>();
+  for (const s of subs ?? []) {
+    if (s.stripe_customer_id) tierByCustomer.set(s.stripe_customer_id, isMembershipTier(s.tier) ? s.tier : 'premium');
+  }
+
+  const stripe = getStripe();
+  // The invoice comes expanded so the tier can be read off the price the
+  // charge was for, not the tier the member holds today; the dispute, so a
+  // lost one can be taken off. Bounded, so a slow Stripe cannot hold the
+  // admin page for the SDK's default 80 seconds a page.
+  const charges = await stripe.charges
+    .list({ limit: 100, expand: ['data.invoice', 'data.dispute'] }, { timeout: 20_000, maxNetworkRetries: 1 })
+    .autoPagingToArray({ limit: 5000 });
+
+  const out: MembershipRevenue = {
+    grossPence: 0,
+    refundedPence: 0,
+    disputedPence: 0,
+    netPence: 0,
+    payments: 0,
+    members: 0,
+    byTier: { premium: 0, open: 0 },
+    firstPaidAt: null,
+  };
+  const heldByCustomer = new Map<string, number>();
+  for (const c of charges) {
+    if (!c.paid || c.status !== 'succeeded' || c.currency !== 'gbp') continue;
+    // `invoice` sits on the charge under the API version pinned in getStripe;
+    // the SDK's own types follow a later version that moved it, hence the cast.
+    const invoice = (c as unknown as { invoice?: string | InvoiceShape | null }).invoice ?? null;
+    if (invoice == null) continue;
+
+    const customerId = typeof c.customer === 'string' ? c.customer : (c.customer?.id ?? null);
+    // Same cast as the invoice: `dispute` is on the charge under the pinned
+    // API version. Only a lost one is money gone; open and won are not.
+    const dispute = (c as unknown as { dispute?: string | { status?: string } | null }).dispute ?? null;
+    const lost = dispute && typeof dispute !== 'string' && dispute.status === 'lost' ? c.amount - c.amount_refunded : 0;
+    const net = c.amount - c.amount_refunded - lost;
+    out.grossPence += c.amount;
+    out.refundedPence += c.amount_refunded;
+    out.disputedPence += lost;
+    out.netPence += net;
+    out.payments += 1;
+    if (customerId) heldByCustomer.set(customerId, (heldByCustomer.get(customerId) ?? 0) + net);
+    out.byTier[chargeTier(invoice, customerId ? tierByCustomer.get(customerId) : undefined)] += net;
+    const at = new Date(c.created * 1000).toISOString();
+    if (!out.firstPaidAt || at < out.firstPaidAt) out.firstPaidAt = at;
+  }
+  // A turned-down applicant, paid and refunded in full, is not a member.
+  out.members = [...heldByCustomer.values()].filter((n) => n > 0).length;
+  return out;
+}
+
+/** The parts of an expanded invoice the tier can be read from, either API shape. */
+type InvoiceShape = {
+  lines?: { data?: { amount?: number; price?: { lookup_key?: string | null } | null }[] };
+  subscription_details?: { metadata?: Record<string, string> | null } | null;
+  parent?: { subscription_details?: { metadata?: Record<string, string> | null } | null } | null;
+};
+
+/**
+ * Which tier a charge paid for: the price on the line that carried the
+ * money, then the tier stamped on the subscription at checkout, then the
+ * member's current tier. The largest positive line, not the first: a tier
+ * change is invoiced with a credit for the old price ahead of the charge for
+ * the new one (changeMembershipTier prorates), and the credit line names the
+ * tier they left.
+ */
+function chargeTier(invoice: string | InvoiceShape | null, fallback: MembershipTier | undefined): MembershipTier {
+  if (invoice && typeof invoice !== 'string') {
+    const paid = (invoice.lines?.data ?? [])
+      .filter((l) => l.price?.lookup_key && (l.amount ?? 0) > 0)
+      .sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0))[0];
+    if (paid?.price?.lookup_key) return tierOfLookupKey(paid.price.lookup_key);
+    const meta = invoice.subscription_details?.metadata?.tier ?? invoice.parent?.subscription_details?.metadata?.tier;
+    if (isMembershipTier(meta)) return meta;
+  }
+  return fallback ?? 'premium';
 }
