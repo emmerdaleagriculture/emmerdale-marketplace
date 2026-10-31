@@ -8,7 +8,7 @@ import {
   countiesWithData,
   countyAverages,
   countyRates,
-  countyVar,
+  mapVars,
   pounds,
   range,
   rateBinsInUse,
@@ -50,21 +50,22 @@ export function CostExplorer({
   const [serviceId, setServiceId] = useState<number>(services[0]?.serviceId ?? 0);
   const [selected, setSelected] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+  // A tapped county with no figure for anything: named in the caption, not
+  // selected (the panel and the select only know counties with figures).
+  const [noticed, setNoticed] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const byCounty = useMemo(() => countyAverages(snapshot, serviceId), [snapshot, serviceId]);
   const service = services.find((s) => s.serviceId === serviceId);
   const bins = rateBinsInUse(byCounty);
 
-  // Colour the map: a fill per county with a figure, a stroke for the chosen
-  // one. Counties without a figure fall back to the path's neutral default.
+  // Colour the map (the page set the same variables for the first paint).
   useEffect(() => {
     const el = document.getElementById(MAP_ID);
     if (!el) return;
-    const vars: string[] = [];
-    for (const [name, r] of Object.entries(byCounty)) vars.push(`${countyVar(name)}:${rateFill(r.avg)}`);
-    if (selected) vars.push(`${countyVar(selected)}-s:#ffde00`, `${countyVar(selected)}-w:2.5`);
-    el.style.cssText = vars.join(';');
+    el.style.cssText = Object.entries(mapVars(byCounty, selected))
+      .map(([k, v]) => `${k}:${v}`)
+      .join(';');
   }, [byCounty, selected]);
 
   // Listen to the map: one delegated handler each for tap and hover.
@@ -76,9 +77,18 @@ export function CostExplorer({
     const onClick = (e: Event) => {
       const name = countyAt(e);
       if (!name) return;
+      if (!counties.includes(name)) {
+        setNoticed(name);
+        return;
+      }
+      setNoticed(null);
       setSelected(name);
-      // On a phone the panel is below the map: bring it up.
-      if (window.innerWidth <= 820) panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // When the panel is below the fold (a phone, where it stacks under the
+      // map), bring it up.
+      const panel = panelRef.current;
+      if (panel && panel.getBoundingClientRect().top > window.innerHeight * 0.8) {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     };
     const onOver = (e: Event) => setHovered(countyAt(e));
     const onLeave = () => setHovered(null);
@@ -90,14 +100,16 @@ export function CostExplorer({
       el.removeEventListener('pointerover', onOver);
       el.removeEventListener('pointerleave', onLeave);
     };
-  }, []);
+  }, [counties]);
 
   const captionFor = (name: string | null) => {
     if (!name) return 'Hover or tap a county.';
+    if (!counties.includes(name)) return `${name}: no prices yet.`;
     const r = byCounty[name];
     if (!r) return `${name}: no ${service?.service.toLowerCase() ?? ''} priced here yet.`;
     return `${name}: ${pounds(r.avg)} an acre on average.`;
   };
+  const caption = captionFor(hovered ?? noticed ?? selected);
 
   const selectedRates = selected ? countyRates(snapshot, selected) : [];
   const selectedRegion = selectedRates[0]?.region ?? null;
@@ -121,7 +133,7 @@ export function CostExplorer({
 
       <div className={css.areaCaption}>
         <p className={css.caption} aria-live="polite">
-          {captionFor(hovered ?? selected)}
+          {caption}
         </p>
         {bins.length > 0 && (
           <ul className={css.legend} aria-label="Map key">
@@ -147,7 +159,10 @@ export function CostExplorer({
           id="cpa-county"
           className={css.select}
           value={selected ?? ''}
-          onChange={(e) => setSelected(e.target.value || null)}
+          onChange={(e) => {
+            setNoticed(null);
+            setSelected(e.target.value || null);
+          }}
         >
           <option value="">Pick a county with a figure</option>
           {counties.map((c) => (

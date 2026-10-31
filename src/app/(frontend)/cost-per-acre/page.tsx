@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -8,8 +9,10 @@ import { getCostSnapshot } from '@/lib/costPerAcre/load';
 import {
   type Rate,
   NO_DATA_FILL,
+  countyAverages,
   countyVar,
   dayLabel,
+  mapVars,
   monthLabel,
   pounds,
   range,
@@ -19,6 +22,7 @@ import {
   totals,
 } from '@/lib/costPerAcre/model';
 import { UK_COUNTY_NAMES } from '@/lib/coverage';
+import { countySlug } from '@/lib/slug';
 import { UK_COUNTY_PATHS, UK_MAP_VIEWBOX } from '@/lib/ukCountyPaths';
 import { SERVICE_PAGES } from '@/lib/services';
 import { jsonLd } from '@/lib/jsonld';
@@ -196,10 +200,17 @@ export default async function CostPerAcrePage() {
               </p>
               {/* Grid areas: the explorer renders the chips, caption and
                   panel cells; the map is a server-rendered sibling it finds
-                  by id, so the outlines stay out of the JavaScript bundle. */}
+                  by id, so the outlines stay out of the JavaScript bundle.
+                  It is coloured for the explorer's default pick (the busiest
+                  service) here, so the first paint and a crawler see the
+                  shading the heading promises, not grey. */}
               <div className={css.explorer}>
                 <CostExplorer snapshot={snapshot} servicePaths={paths} />
-                <div id={MAP_ID} className={`${css.mapWrap} ${css.areaMap}`}>
+                <div
+                  id={MAP_ID}
+                  className={`${css.mapWrap} ${css.areaMap}`}
+                  style={mapVars(countyAverages(snapshot, services[0]?.serviceId ?? 0), null) as CSSProperties}
+                >
                   <CountyMap />
                 </div>
               </div>
@@ -330,7 +341,7 @@ function RegionBlock({
   const regional = regionRates(snapshot, region);
   return (
     <div className={css.region}>
-      <h3 className={css.regionTitle} id={`region-${countyVar(region).slice(4)}`}>
+      <h3 className={css.regionTitle} id={`region-${countySlug(region)}`}>
         {region}
       </h3>
       <div className={css.tableWrap}>

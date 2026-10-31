@@ -115,14 +115,10 @@ export const VERTICALS: Record<VerticalKey, VerticalConfig> = {
   },
 };
 
-/** URL-safe slug for a county name. "East Riding of Yorkshire" → "east-riding-of-yorkshire". */
-export function countySlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+// The slug rule lives in its own import-free module (the client-side cost
+// map needs it); re-exported here for the many callers that know it by this path.
+import { countySlug } from '@/lib/slug';
+export { countySlug };
 
 export type CountyRef = { name: string; slug: string; region: string };
 

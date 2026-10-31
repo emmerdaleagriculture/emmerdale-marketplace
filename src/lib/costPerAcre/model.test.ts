@@ -8,6 +8,7 @@ import {
   countyAverages,
   countyRates,
   countyVar,
+  mapVars,
   pounds,
   range,
   rateBinsInUse,
@@ -100,5 +101,14 @@ describe('map shading', () => {
   it('names a CSS variable per county', () => {
     expect(countyVar('East Riding of Yorkshire')).toBe('--c-east-riding-of-yorkshire');
     expect(countyVar('Hay & Straw')).toBe('--c-hay-and-straw');
+  });
+  it('builds the map variables: a fill per county with a figure, a stroke for the chosen one', () => {
+    expect(mapVars(countyAverages(snapshot, 11), 'Surrey')).toEqual({
+      '--c-surrey': RATE_BINS[3].fill,
+      '--c-aberdeenshire': RATE_BINS[4].fill,
+      '--c-surrey-s': '#ffde00',
+      '--c-surrey-w': '2.5',
+    });
+    expect(mapVars({}, null)).toEqual({});
   });
 });

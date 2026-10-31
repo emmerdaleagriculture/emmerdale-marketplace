@@ -1,4 +1,5 @@
 import { UK_COUNTY_PATHS } from '@/lib/ukCountyPaths';
+import { MAP_GREENS, MAP_NEUTRAL } from '@/lib/mapPalette';
 
 /**
  * The coverage choropleth's data layer: which counties exist, how each is
@@ -10,11 +11,11 @@ import { UK_COUNTY_PATHS } from '@/lib/ukCountyPaths';
 // Sequential brand-green ramp: neutral for zero, light → dark.
 // `label` is for the admin; `publicLabel` keeps contractor counts private.
 export const COVERAGE_BINS = [
-  { min: 10, fill: '#245018', label: '10+ contractors', publicLabel: 'Excellent coverage' },
-  { min: 6, fill: '#4f8638', label: '6–9 contractors', publicLabel: 'Strong coverage' },
-  { min: 4, fill: '#86b267', label: '4–5 contractors', publicLabel: 'Good coverage' },
-  { min: 1, fill: '#c3dcad', label: '1–3 contractors', publicLabel: 'Covered' },
-  { min: 0, fill: '#eceee9', label: 'No coverage yet', publicLabel: 'Not covered yet' },
+  { min: 10, fill: MAP_GREENS[3], label: '10+ contractors', publicLabel: 'Excellent coverage' },
+  { min: 6, fill: MAP_GREENS[2], label: '6–9 contractors', publicLabel: 'Strong coverage' },
+  { min: 4, fill: MAP_GREENS[1], label: '4–5 contractors', publicLabel: 'Good coverage' },
+  { min: 1, fill: MAP_GREENS[0], label: '1–3 contractors', publicLabel: 'Covered' },
+  { min: 0, fill: MAP_NEUTRAL, label: 'No coverage yet', publicLabel: 'Not covered yet' },
 ] as const;
 
 export const coverageFill = (n: number) => COVERAGE_BINS.find((b) => n >= b.min)!.fill;

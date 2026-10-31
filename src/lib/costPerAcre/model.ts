@@ -1,3 +1,6 @@
+import { countySlug } from '@/lib/slug';
+import { MAP_GREENS, MAP_NEUTRAL } from '@/lib/mapPalette';
+
 /**
  * The cost-per-acre snapshot as the page reads it: pure shaping and
  * formatting, no server imports, so the client explorer can use it too.
@@ -45,10 +48,6 @@ export function range(r: Pick<Rate, 'low' | 'high'>): string {
   const lo = Math.round(r.low / 100);
   const hi = Math.round(r.high / 100);
   return lo === hi ? pounds(r.low) : `${pounds(r.low)} to ${pounds(r.high)}`;
-}
-
-export function jobsLabel(n: number): string {
-  return `${n} ${n === 1 ? 'job' : 'jobs'}`;
 }
 
 /** "October 2026" for the "updated" line. */
@@ -117,14 +116,14 @@ export function totals(snapshot: CostSnapshot): { jobs: number; quotes: number; 
  * Brand-green ramp, neutral for no figure, as the coverage map.
  */
 export const RATE_BINS = [
-  { min: 60000, fill: '#17330d', label: '£600+ an acre' },
-  { min: 35000, fill: '#245018', label: '£350 to £599' },
-  { min: 20000, fill: '#4f8638', label: '£200 to £349' },
-  { min: 10000, fill: '#86b267', label: '£100 to £199' },
-  { min: 0, fill: '#c3dcad', label: 'Under £100' },
+  { min: 60000, fill: MAP_GREENS[4], label: '£600+ an acre' },
+  { min: 35000, fill: MAP_GREENS[3], label: '£350 to £599' },
+  { min: 20000, fill: MAP_GREENS[2], label: '£200 to £349' },
+  { min: 10000, fill: MAP_GREENS[1], label: '£100 to £199' },
+  { min: 0, fill: MAP_GREENS[0], label: 'Under £100' },
 ] as const;
 
-export const NO_DATA_FILL = '#eceee9';
+export const NO_DATA_FILL = MAP_NEUTRAL;
 
 export function rateFill(avgPence: number | undefined): string {
   if (avgPence === undefined) return NO_DATA_FILL;
@@ -139,5 +138,25 @@ export function rateBinsInUse(byCounty: Record<string, Rate>) {
 
 /** A CSS custom property name for a county's fill: "--c-east-riding-of-yorkshire". */
 export function countyVar(name: string): string {
-  return `--c-${name.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
+  return `--c-${countySlug(name)}`;
+}
+
+/** The stroke of the chosen county on the map. */
+export const SELECTED_STROKE = '#ffde00';
+
+/**
+ * The CSS variables that colour the map: a fill per county with a figure
+ * for the chosen service, and a stroke for the chosen county. The page sets
+ * these on the map wrapper for the first paint; the explorer sets the same
+ * on every change. Counties absent from the result keep the path's own
+ * neutral default.
+ */
+export function mapVars(byCounty: Record<string, Rate>, selected: string | null): Record<string, string> {
+  const vars: Record<string, string> = {};
+  for (const [name, r] of Object.entries(byCounty)) vars[countyVar(name)] = rateFill(r.avg);
+  if (selected) {
+    vars[`${countyVar(selected)}-s`] = SELECTED_STROKE;
+    vars[`${countyVar(selected)}-w`] = '2.5';
+  }
+  return vars;
 }
