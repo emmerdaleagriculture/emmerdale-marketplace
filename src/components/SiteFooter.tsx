@@ -48,6 +48,7 @@ export function SiteFooter() {
             <Link href="/hay-bales">Hay, straw &amp; haylage</Link>
             <Link href="/tractor-hire">Tractor hire</Link>
             <Link href="/contractors">Find a contractor</Link>
+            <Link href="/cost-per-acre">Cost per acre by county</Link>
           </nav>
 
           <nav className={styles.linkCol} aria-label="Company">
