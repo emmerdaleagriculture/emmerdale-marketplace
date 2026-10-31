@@ -125,19 +125,42 @@
   margin-left: 4px;
 }
 
+/* The chips span the top; the map sits left with its caption and key under
+   it; the panel takes the right column. On a phone everything stacks in that
+   order. The map is a server-rendered sibling of the client cells (see
+   CostExplorer), which is why this is a grid of named areas and not nesting. */
 .explorer {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 32px;
+  grid-template-areas:
+    'chips chips'
+    'map panel'
+    'caption panel';
+  gap: 0 32px;
   align-items: start;
 }
 @media (max-width: 820px) {
   .explorer {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      'chips'
+      'map'
+      'caption'
+      'panel';
   }
 }
-.mapCol {
-  position: relative;
+.areaChips {
+  grid-area: chips;
+}
+.areaMap {
+  grid-area: map;
+}
+.areaCaption {
+  grid-area: caption;
+  margin-bottom: 24px;
+}
+.areaPanel {
+  grid-area: panel;
 }
 .mapWrap {
   width: 100%;

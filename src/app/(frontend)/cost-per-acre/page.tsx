@@ -23,7 +23,7 @@ import { UK_COUNTY_PATHS, UK_MAP_VIEWBOX } from '@/lib/ukCountyPaths';
 import { SERVICE_PAGES } from '@/lib/services';
 import { jsonLd } from '@/lib/jsonld';
 import { COMPANY_LEGAL_NAME, ORG_ID, siteUrl } from '@/lib/site';
-import { CostExplorer } from './CostExplorer';
+import { CostExplorer, MAP_ID } from './CostExplorer';
 import a from '../auth.module.css';
 import s from '../landing.module.css';
 import css from './costPerAcre.module.css';
@@ -197,7 +197,15 @@ export default async function CostPerAcrePage() {
                 Shaded counties have at least one priced job for the chosen work. Tap one to see every job
                 priced there, beside the figures for its region.
               </p>
-              <CostExplorer snapshot={snapshot} map={<CountyMap />} servicePaths={paths} />
+              {/* Grid areas: the explorer renders the chips, caption and
+                  panel cells; the map is a server-rendered sibling it finds
+                  by id, so the outlines stay out of the JavaScript bundle. */}
+              <div className={css.explorer}>
+                <CostExplorer snapshot={snapshot} servicePaths={paths} />
+                <div id={MAP_ID} className={`${css.mapWrap} ${css.areaMap}`}>
+                  <CountyMap />
+                </div>
+              </div>
             </div>
           </section>
 
