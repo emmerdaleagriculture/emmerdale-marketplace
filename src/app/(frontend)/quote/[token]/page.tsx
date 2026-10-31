@@ -129,7 +129,6 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   const replyBy = offer?.premium_started_at
     ? formatDateTime(new Date(new Date(offer.premium_started_at).getTime() + 24 * 3600_000).toISOString())
     : null;
-
   const jobOpen =
     ['distributed', 'quotes_receiving', 'accepted_awaiting_payment'].includes(js.status) &&
     !['declined', 'closed_awarded', 'closed_stale'].includes(invitation.status);
@@ -142,14 +141,29 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   // assigned: sq_job_markup_rate stamps a split-test arm on first use, and
   // a page view must not do that, so a job with no stamp yet shows the
   // standard rate and the keypad says so.
-  const [stampRes, premRes, premRateRes, stdRateRes] = await Promise.all([
+  const [stampRes, premRes, premRateRes, stdRateRes, openedHoursRes] = await Promise.all([
     admin.from('job_submissions').select('markup_rate').eq('id', js.id).maybeSingle(),
     admin.rpc('contractor_is_premium', { p_contractor_id: invitation.contractor_id }),
     admin.rpc('app_config_num', { p_key: 'sq_premium_markup_rate', p_default: 0.05 }),
     admin.rpc('app_config_num', { p_key: 'sq_markup_rate', p_default: 0.15 }),
+    admin.rpc('app_config_num', { p_key: 'sq_premium_opened_reply_hours', p_default: 6 }),
   ]);
   const premiumRate = Number(premRateRes.data ?? 0.05);
   const isPremium = Boolean(premRes.data);
+  // Opening the job starts its own clock (sq_premium_opened_reply_hours): a
+  // member who has opened it and not priced, passed or written counts as
+  // passed for the hold (sq_premium_opened_unanswered). The banner names
+  // this member's own deadline only while it still applies: not on the very
+  // first view (opened_at is recorded after the response), not once they
+  // have messaged the customer, and not once it has gone by.
+  const openedHours = Number(openedHoursRes.data ?? 6);
+  const openedDeadline = invitation.opened_at
+    ? new Date(new Date(invitation.opened_at).getTime() + openedHours * 3600_000)
+    : null;
+  const openedBy =
+    openedDeadline && openedDeadline > new Date() && !messages.some((m) => m.sender === 'contractor')
+      ? formatDateTime(openedDeadline.toISOString())
+      : null;
 
   // An Open member sees the customer's details on every live invitation
   // (20261019120000). The RPC decides who and when — not Open, passed, or
@@ -309,7 +323,9 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                   <strong>Open members first.</strong> Only Open members have this job until{' '}
                   {formatDateTime(offer!.open_first_until!)}, when Premium members join, sooner
                   if every Open member has priced or passed. A text left untapped for 2 hours
-                  counts as a pass. It stays with members until{' '}
+                  counts as a pass, and so does opening the job and not pricing, passing or
+                  messaging the customer within {openedHours} hours
+                  {openedBy ? ` (for you, by ${openedBy})` : ''}. It stays with members until{' '}
                   {formatDateTime(offer!.market_opens_at!)}, or until you&rsquo;ve all priced or
                   passed; if no member has priced or messaged the customer{' '}
                   {replyBy ? `by ${replyBy}` : 'within 24 hours'} it goes to other contractors in
@@ -321,8 +337,11 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                   Price it or message the customer {replyBy ? `by ${replyBy}` : 'within 24 hours'}{' '}
                   and it stays that way until {formatDateTime(offer!.market_opens_at!)}, or until
                   you&rsquo;ve all priced or passed. A text left untapped for 2 hours counts as a
-                  pass, and if no member has {replyBy ? 'by then' : 'within 24 hours'} it goes to
-                  other contractors in the area. The customer can accept a price at any time.
+                  pass, and so does opening the job and not pricing, passing or messaging the
+                  customer within {openedHours} hours
+                  {openedBy ? ` (for you, by ${openedBy})` : ''}. If no
+                  member has {replyBy ? 'by then' : 'within 24 hours'} it goes to other
+                  contractors in the area. The customer can accept a price at any time.
                 </div>
               ) : directToYou && offer?.market_opens_at && new Date(offer.market_opens_at) > new Date() ? (
                 <div className={q.pricedPanel}>
