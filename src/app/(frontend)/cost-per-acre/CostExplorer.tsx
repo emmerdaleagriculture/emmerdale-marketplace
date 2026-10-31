@@ -9,7 +9,6 @@ import {
   countyAverages,
   countyRates,
   countyVar,
-  jobsLabel,
   pounds,
   range,
   rateBinsInUse,
@@ -97,7 +96,7 @@ export function CostExplorer({
     if (!name) return 'Hover or tap a county.';
     const r = byCounty[name];
     if (!r) return `${name}: no ${service?.service.toLowerCase() ?? ''} priced here yet.`;
-    return `${name}: ${pounds(r.avg)} an acre on average (${jobsLabel(r.jobs)}).`;
+    return `${name}: ${pounds(r.avg)} an acre on average.`;
   };
 
   const selectedRates = selected ? countyRates(snapshot, selected) : [];
@@ -116,7 +115,6 @@ export function CostExplorer({
             className={`${css.chip} ${s.serviceId === serviceId ? css.chipOn : ''}`}
           >
             {s.service}
-            <span className={css.chipN}>{s.jobs}</span>
           </button>
         ))}
       </div>
@@ -178,9 +176,8 @@ export function CostExplorer({
           <>
             <h3 className={css.panelTitle}>{service.service} across the UK</h3>
             <p className={css.panelSub}>
-              {pounds(service.avg)} an acre on average, {pounds(service.median)} typical, from{' '}
-              {jobsLabel(service.jobs)} in {Object.keys(byCounty).length}{' '}
-              {Object.keys(byCounty).length === 1 ? 'county' : 'counties'}.
+              {pounds(service.avg)} an acre on average, {pounds(service.median)} typical, across{' '}
+              {Object.keys(byCounty).length} {Object.keys(byCounty).length === 1 ? 'county' : 'counties'}.
             </p>
             <p className={css.empty}>
               Tap a shaded county on the map, or choose one above, to see every job priced there.
@@ -206,9 +203,6 @@ function RateTable({ rates, servicePaths }: { rates: Rate[]; servicePaths: Recor
           <th scope="col" className={css.num}>
             Range
           </th>
-          <th scope="col" className={css.num}>
-            Jobs
-          </th>
         </tr>
       </thead>
       <tbody>
@@ -217,7 +211,6 @@ function RateTable({ rates, servicePaths }: { rates: Rate[]; servicePaths: Recor
             <td>{servicePaths[r.service] ? <Link href={servicePaths[r.service]}>{r.service}</Link> : r.service}</td>
             <td className={`${css.num} ${css.avg}`}>{pounds(r.avg)}</td>
             <td className={`${css.num} ${css.muted}`}>{range(r)}</td>
-            <td className={css.num}>{r.jobs}</td>
           </tr>
         ))}
       </tbody>

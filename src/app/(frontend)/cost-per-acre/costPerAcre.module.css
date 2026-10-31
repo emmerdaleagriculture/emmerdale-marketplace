@@ -119,11 +119,6 @@
   border-color: var(--jd-green);
   color: #fff;
 }
-.chipN {
-  font-weight: 400;
-  opacity: 0.8;
-  margin-left: 4px;
-}
 
 /* The chips span the top; the map sits left with its caption and key under
    it; the panel takes the right column. On a phone everything stacks in that

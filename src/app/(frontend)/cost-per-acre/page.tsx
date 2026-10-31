@@ -93,7 +93,7 @@ function methodFaqs(since: string | null): Faq[] {
     },
     {
       q: 'Why is a small paddock so expensive per acre?',
-      a: 'Most contractors have a minimum charge, because getting a tractor to you costs the same whether you have half an acre or ten. A £200 minimum on a quarter-acre plot is £800 an acre. That is why the range beside each average is wide, and why a county with one job in it should be read as one job, not a going rate.',
+      a: 'Most contractors have a minimum charge, because getting a tractor to you costs the same whether you have half an acre or ten. A £200 minimum on a quarter-acre plot is £800 an acre. That is why the range beside each average can be wide, and why the acreage column matters: a high average over a small acreage is a minimum charge, not a going rate.',
     },
     {
       q: 'Do the prices include VAT?',
@@ -142,10 +142,6 @@ export default async function CostPerAcrePage() {
                   <span className={css.statL}>prices from contractors</span>
                 </li>
                 <li className={css.stat}>
-                  <span className={css.statN}>{t.jobs.toLocaleString('en-GB')}</span>
-                  <span className={css.statL}>jobs priced</span>
-                </li>
-                <li className={css.stat}>
                   <span className={css.statN}>{t.counties}</span>
                   <span className={css.statL}>counties with a figure</span>
                 </li>
@@ -176,13 +172,14 @@ export default async function CostPerAcrePage() {
               <p className={s.sectionLede}>
                 The average is what you would expect to be quoted; the typical figure is the middle job,
                 less swayed by a tiny paddock on a minimum charge. The range is the cheapest and dearest
-                job we have seen.
+                we have seen.
               </p>
               <UkTable rates={services} paths={paths} />
               <p className={css.fine}>
                 Per-acre figures are the average price for the job divided by its acreage. Where several
                 contractors priced one job, their prices are averaged first. Small plots carry minimum
-                charges, which is what stretches the ranges.
+                charges, which is what stretches the ranges; a range that is a single figure means the
+                prices so far agree.
               </p>
             </div>
           </section>
@@ -216,8 +213,8 @@ export default async function CostPerAcrePage() {
                 Cost per acre <em>in every county with a priced job.</em>
               </h2>
               <p className={s.sectionLede}>
-                Region by region, every county and every job with at least one price. One job is one
-                job: read the count before the figure.
+                Region by region, every county and every job with at least one price, with the figure
+                for the whole region beneath each county&rsquo;s.
               </p>
               {regions.map((region) => (
                 <RegionBlock key={region} region={region} snapshot={snapshot} paths={paths} />
@@ -296,9 +293,6 @@ function UkTable({ rates, paths }: { rates: Rate[]; paths: Record<string, string
               Range
             </th>
             <th scope="col" className={css.num}>
-              Jobs
-            </th>
-            <th scope="col" className={css.num}>
               Acres
             </th>
           </tr>
@@ -312,7 +306,6 @@ function UkTable({ rates, paths }: { rates: Rate[]; paths: Record<string, string
               <td className={`${css.num} ${css.avg}`}>{pounds(r.avg)}</td>
               <td className={css.num}>{pounds(r.median)}</td>
               <td className={`${css.num} ${css.muted}`}>{range(r)}</td>
-              <td className={css.num}>{r.jobs}</td>
               <td className={`${css.num} ${css.muted}`}>{r.acres.toLocaleString('en-GB', { maximumFractionDigits: 1 })}</td>
             </tr>
           ))}
@@ -353,9 +346,6 @@ function RegionBlock({
                 Range
               </th>
               <th scope="col" className={css.num}>
-                Jobs
-              </th>
-              <th scope="col" className={css.num}>
                 Acres
               </th>
             </tr>
@@ -367,7 +357,6 @@ function RegionBlock({
                 <td>{paths[r.service] ? <Link href={paths[r.service]}>{r.service}</Link> : r.service}</td>
                 <td className={`${css.num} ${css.avg}`}>{pounds(r.avg)}</td>
                 <td className={`${css.num} ${css.muted}`}>{range(r)}</td>
-                <td className={css.num}>{r.jobs}</td>
                 <td className={`${css.num} ${css.muted}`}>{r.acres.toLocaleString('en-GB', { maximumFractionDigits: 1 })}</td>
               </tr>
             ))}
@@ -377,7 +366,6 @@ function RegionBlock({
                 <td className={css.muted}>{r.service}</td>
                 <td className={`${css.num} ${css.avg}`}>{pounds(r.avg)}</td>
                 <td className={`${css.num} ${css.muted}`}>{range(r)}</td>
-                <td className={css.num}>{r.jobs}</td>
                 <td className={`${css.num} ${css.muted}`}>{r.acres.toLocaleString('en-GB', { maximumFractionDigits: 1 })}</td>
               </tr>
             ))}
