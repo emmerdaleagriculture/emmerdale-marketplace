@@ -3,6 +3,8 @@ import { allCountyRefs } from '@/lib/verticals';
 import { getCountyServiceCoverage, getCountyDirectory } from '@/lib/reference';
 import { VERTICALS } from '@/lib/verticals';
 import { getNotesData, countByTag } from '@/lib/notes/data';
+import { getCostSnapshot } from '@/lib/costPerAcre/load';
+import { EMPTY_SNAPSHOT } from '@/lib/costPerAcre/model';
 import { CURATED_TAGS, MIN_INDEXED_TAG_POSTS } from '@/lib/notes/tags';
 import { siteUrl } from '@/lib/site';
 import { SERVICE_PAGES } from '@/lib/services';
@@ -49,13 +51,29 @@ function latestDate(dates: (string | null)[]): Date | undefined {
 // login is noindex (no search value), so it's excluded here too. The homepage
 // uses the bare origin (no trailing slash) to match its rendered canonical.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [counties, hayCoverage, tractorCoverage, notes, directory] = await Promise.all([
+  const [counties, hayCoverage, tractorCoverage, notes, directory, costSnapshot] = await Promise.all([
     allCountyRefs(),
     getCountyServiceCoverage(VERTICALS['hay-bales'].serviceId),
     getCountyServiceCoverage(VERTICALS['tractor-hire'].serviceId),
     getNotesData(),
     getCountyDirectory(),
+    // The page itself should fail loudly if its table is unreadable; the
+    // sitemap should not lose 300 URLs over one. Left out instead.
+    getCostSnapshot().catch(() => EMPTY_SNAPSHOT),
   ]);
+  // The cost-per-acre page is noindex until its first snapshot has figures;
+  // after that its lastmod is the snapshot's date, which is when it changed.
+  const costPages: MetadataRoute.Sitemap =
+    costSnapshot.uk.length > 0
+      ? [
+          {
+            url: `${SITE}/cost-per-acre`,
+            lastModified: costSnapshot.computedAt ? new Date(costSnapshot.computedAt) : undefined,
+            changeFrequency: 'monthly' as const,
+            priority: 0.8,
+          },
+        ]
+      : [];
   // The directory is noindex while nobody is listed, so it is not submitted then either.
   const directoryListed = Object.values(directory).some((entries) => entries.length > 0);
   // Only list hay/tractor county pages a contractor of THAT service covers —
@@ -147,6 +165,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/customer-terms`, lastModified: DATES.legal, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE}/service-charter`, lastModified: DATES.legal, changeFrequency: 'yearly', priority: 0.2 },
     ...servicePages,
+    ...costPages,
     ...paddockCountyPages,
     ...countyPages,
     ...notePages,

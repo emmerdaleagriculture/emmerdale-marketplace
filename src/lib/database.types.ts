@@ -848,6 +848,63 @@ export type Database = {
         }
         Relationships: []
       }
+      cost_per_acre: {
+        Row: {
+          acres: number
+          avg_per_acre_pence: number
+          computed_at: string
+          county: string | null
+          county_id: number | null
+          high_per_acre_pence: number
+          id: number
+          jobs: number
+          low_per_acre_pence: number
+          median_per_acre_pence: number
+          quotes: number
+          region: string | null
+          scope: string
+          service: string
+          service_id: number
+          since: string
+        }
+        Insert: {
+          acres: number
+          avg_per_acre_pence: number
+          computed_at: string
+          county?: string | null
+          county_id?: number | null
+          high_per_acre_pence: number
+          id?: never
+          jobs: number
+          low_per_acre_pence: number
+          median_per_acre_pence: number
+          quotes: number
+          region?: string | null
+          scope: string
+          service: string
+          service_id: number
+          since: string
+        }
+        Update: {
+          acres?: number
+          avg_per_acre_pence?: number
+          computed_at?: string
+          county?: string | null
+          county_id?: number | null
+          high_per_acre_pence?: number
+          id?: never
+          jobs?: number
+          low_per_acre_pence?: number
+          median_per_acre_pence?: number
+          quotes?: number
+          region?: string | null
+          scope?: string
+          service?: string
+          service_id?: number
+          since?: string
+        }
+        Relationships: []
+      }
       counties: {
         Row: {
           country: string
@@ -3760,9 +3817,17 @@ export type Database = {
         Args: { p_actor: string; p_note?: string | null; p_payment_id: string }
         Returns: Json
       }
+      sq_cost_per_acre_refresh: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       sq_coverage_count: {
         Args: { p_county_id: number; p_lat?: number | null; p_lng?: number | null; p_service_name?: string | null }
         Returns: number
+      }
+      sq_is_internal_email: {
+        Args: { p_email: string }
+        Returns: boolean
       }
       sq_in_invite_range: {
         Args: { p_ct_lat: number; p_ct_lng: number; p_job_lat: number; p_job_lng: number }
