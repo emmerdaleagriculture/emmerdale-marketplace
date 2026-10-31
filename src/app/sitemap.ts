@@ -4,6 +4,7 @@ import { getCountyServiceCoverage, getCountyDirectory } from '@/lib/reference';
 import { VERTICALS } from '@/lib/verticals';
 import { getNotesData, countByTag } from '@/lib/notes/data';
 import { getCostSnapshot } from '@/lib/costPerAcre/load';
+import { EMPTY_SNAPSHOT } from '@/lib/costPerAcre/model';
 import { CURATED_TAGS, MIN_INDEXED_TAG_POSTS } from '@/lib/notes/tags';
 import { siteUrl } from '@/lib/site';
 import { SERVICE_PAGES } from '@/lib/services';
@@ -56,7 +57,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getCountyServiceCoverage(VERTICALS['tractor-hire'].serviceId),
     getNotesData(),
     getCountyDirectory(),
-    getCostSnapshot(),
+    // The page itself should fail loudly if its table is unreadable; the
+    // sitemap should not lose 300 URLs over one. Left out instead.
+    getCostSnapshot().catch(() => EMPTY_SNAPSHOT),
   ]);
   // The cost-per-acre page is noindex until its first snapshot has figures;
   // after that its lastmod is the snapshot's date, which is when it changed.

@@ -35,7 +35,7 @@ export const revalidate = 86400;
 const SITE = siteUrl();
 const TITLE = 'Cost Per Acre by County: Contractor Prices Across the UK';
 const DESCRIPTION =
-  'Average cost per acre for paddock topping, harrowing, weed control and more, county by county. Real prices customers were quoted by contractors, updated monthly.';
+  'Average cost per acre for paddock topping, harrowing, weed control and more, county by county. Real prices customers were quoted, updated monthly.';
 
 export async function generateMetadata(): Promise<Metadata> {
   const snapshot = await getCostSnapshot();
