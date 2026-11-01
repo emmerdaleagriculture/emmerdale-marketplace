@@ -28,6 +28,12 @@ type Props = {
   /** Null when the thread is read-only; the sentence says why. */
   action: SendAction | null;
   /**
+   * Whether to show a contractor the monitoring warning. Off for an Open
+   * member before award: they have the customer's details and may deal
+   * directly (contractor terms clause 8 does not apply to them).
+   */
+  monitored?: boolean;
+  /**
    * Marks the other side's messages read. Run from the browser once the
    * thread is on screen, never during the server render: mail scanners
    * fetch emailed links, and that fetch is not someone reading.
@@ -71,6 +77,7 @@ export function MessageThread({
   intro,
   notice,
   action,
+  monitored = true,
   closedNote,
   hidden,
   markRead,
@@ -101,7 +108,7 @@ export function MessageThread({
         {unread > 0 && <span className={s.badge}>{unread} new</span>}
       </div>
       {intro && <p className={s.intro}>{intro}</p>}
-      {action && me === 'contractor' && <p className={s.monitored}>{MONITORED}</p>}
+      {action && monitored && me === 'contractor' && <p className={s.monitored}>{MONITORED}</p>}
       {notice && (
         <p className={s.notice} role="note">
           {notice}

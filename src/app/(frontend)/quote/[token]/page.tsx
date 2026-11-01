@@ -466,9 +466,10 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 intro={
                   threadState === 'pre_award'
                     ? revealed
-                      ? `Ask about access, ground or timing. The customer sees you as ${
-                          invitation.display_label ?? 'a lettered contractor'
-                        } here until they accept a price. You have their details above if you would rather ring.`
+                      ? // An Open member has the customer's details above and may
+                        // contact them directly, so the anonymity rules and the
+                        // coaching that goes with them are not theirs.
+                        undefined
                       : `Ask about access, ground or timing, or suggest a site visit if you need to see it before pricing. The customer sees you as ${
                         invitation.display_label ?? 'a lettered contractor'
                       }, not by name, so leave out phone numbers, emails and amounts. Your details go to them when they accept your price or a visit.`
@@ -482,6 +483,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                     : undefined
                 }
                 action={threadState === 'closed' ? null : sendContractorMessageAction}
+                monitored={!revealed}
                 closedNote="This conversation has closed."
                 hidden={{ token }}
                 unread={unread}
