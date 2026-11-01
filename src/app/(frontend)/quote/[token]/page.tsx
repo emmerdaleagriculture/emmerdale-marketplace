@@ -142,14 +142,19 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   // assigned: sq_job_markup_rate stamps a split-test arm on first use, and
   // a page view must not do that, so a job with no stamp yet shows the
   // standard rate and the keypad says so.
-  const [stampRes, premRes, premRateRes, stdRateRes] = await Promise.all([
+  const [stampRes, premRes, openRes, premRateRes, stdRateRes] = await Promise.all([
     admin.from('job_submissions').select('markup_rate').eq('id', js.id).maybeSingle(),
     admin.rpc('contractor_is_premium', { p_contractor_id: invitation.contractor_id }),
+    admin.rpc('contractor_is_open', { p_contractor_id: invitation.contractor_id }),
     admin.rpc('app_config_num', { p_key: 'sq_premium_markup_rate', p_default: 0.05 }),
     admin.rpc('app_config_num', { p_key: 'sq_markup_rate', p_default: 0.15 }),
   ]);
   const premiumRate = Number(premRateRes.data ?? 0.05);
   const isPremium = Boolean(premRes.data);
+  // The same predicate the send action exempts with (messageRefusal open=true),
+  // so what the thread says and what it enforces come from one answer. Not
+  // `revealed`: that also fails on a closed job or a transient RPC error.
+  const isOpen = openRes.data === true;
 
   // An Open member sees the customer's details on every live invitation
   // (20261019120000). The RPC decides who and when — not Open, passed, or
@@ -452,7 +457,10 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
           {/* The thread with the customer. Before award they see this
               contractor only as a letter, so the rules are said up front
-              rather than discovered as a refusal. */}
+              rather than discovered as a refusal. An Open member is exempt
+              from those rules (contractor terms clause 8) and has the
+              customer's details above, so they get neither the coaching nor
+              the monitoring line, in any state. */}
           {(threadState !== 'closed' || messages.length > 0 || suspended) && (
             <>
               <div id="messages" className={a.groupTitle} style={{ marginTop: 28 }}>
@@ -465,11 +473,8 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 suspended={suspended}
                 intro={
                   threadState === 'pre_award'
-                    ? revealed
-                      ? // An Open member has the customer's details above and may
-                        // contact them directly, so the anonymity rules and the
-                        // coaching that goes with them are not theirs.
-                        undefined
+                    ? isOpen
+                      ? undefined
                       : `Ask about access, ground or timing, or suggest a site visit if you need to see it before pricing. The customer sees you as ${
                         invitation.display_label ?? 'a lettered contractor'
                       }, not by name, so leave out phone numbers, emails and amounts. Your details go to them when they accept your price or a visit.`
@@ -483,7 +488,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                     : undefined
                 }
                 action={threadState === 'closed' ? null : sendContractorMessageAction}
-                monitored={!revealed}
+                monitored={!isOpen}
                 closedNote="This conversation has closed."
                 hidden={{ token }}
                 unread={unread}

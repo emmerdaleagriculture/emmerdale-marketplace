@@ -29,8 +29,8 @@ type Props = {
   action: SendAction | null;
   /**
    * Whether to show a contractor the monitoring warning. Off for an Open
-   * member before award: they have the customer's details and may deal
-   * directly (contractor terms clause 8 does not apply to them).
+   * member: they may deal with the customer directly (contractor terms
+   * clause 8 does not apply to them), and the server never refuses them.
    */
   monitored?: boolean;
   /**
@@ -56,7 +56,8 @@ type Props = {
 };
 
 /**
- * Said on every open conversation a contractor sees: the platform reads
+ * Said on every open conversation a non-Open contractor sees (see the
+ * `monitored` prop): the platform reads
  * these, and what happens to anyone who uses them to take the work
  * elsewhere. Written after two jobs were arranged privately through the
  * messages in Sep 2026. Contractors only — customers aren't shown it.
