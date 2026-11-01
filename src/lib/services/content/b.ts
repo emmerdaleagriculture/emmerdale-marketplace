@@ -155,6 +155,10 @@ export const PART_B: ServiceContent[] = [
         a: 'Yes – a tractor flail will cut and shred brambles and young scrub up to finger or thumb thickness without trouble. Thicker, established stems may need a heavier flail or a forestry mulcher. Brambles regrow from the roots, so expect to cut again or treat regrowth.',
       },
       {
+        q: 'How much does it cost to flail an overgrown field?',
+        a: 'On real jobs posted through Emmerdale Agriculture in autumn 2026, about an acre with brambles drew prices mostly between £520 and £635, and a full day of flailing including travel was priced at about £550 to £685. Small, tight plots can cost as much as an open field four times the size, because the price follows time on site rather than acreage.',
+      },
+      {
         q: 'When is the best time to cut an overgrown field?',
         a: 'Late summer to autumn is usual, once ground-nesting birds have fledged and before the ground gets too wet. If weeds are the problem, cutting before they seed makes a real difference to next year.',
       },
@@ -218,10 +222,10 @@ export const PART_B: ServiceContent[] = [
     card: 'weed-control',
     path: 'weed-control-and-spraying',
     canonical: ['Weed control', 'Spraying'],
-    metaTitle: 'Weed Control and Spraying for Paddocks',
+    metaTitle: 'Paddock Spraying and Grassland Weed Control',
     metaDescription:
-      'Weed control and spraying for ragwort, docks, thistles, nettles and buttercups in paddocks and grassland. Get prices from local contractors.',
-    h1: 'Weed control and spraying for paddocks and grassland',
+      'Paddock spraying and grassland weed control for ragwort, docks, thistles, nettles and buttercups, with real prices. Get quotes from local contractors.',
+    h1: 'Paddock spraying and grassland weed control',
     intro:
       'For paddocks and fields being taken over by docks, thistles, nettles, buttercups or ragwort. The right treatment at the right time can clear most broad-leaved weeds from grassland without reseeding – and ragwort in particular needs dealing with because it is poisonous to horses and livestock.',
     involves: [
@@ -260,6 +264,10 @@ export const PART_B: ServiceContent[] = [
       {
         q: 'When should you spray docks and thistles?',
         a: 'When they are actively growing and leafy, before they flower – usually spring or early autumn. Leave them uncut for a few weeks beforehand so there is plenty of leaf. More than one year of treatment is often needed for big infestations.',
+      },
+      {
+        q: 'How much does paddock spraying cost?',
+        a: 'On real jobs posted through Emmerdale Agriculture in autumn 2026, about an acre drew prices of £200 to £495, two and a half to three acres mostly £385 to £635, and four to five and a half acres £565 to £715, or roughly £110 to £145 an acre. Below about three acres the contractor’s minimum charge sets the price.',
       },
       {
         q: 'How long do you keep horses off a sprayed field?',
