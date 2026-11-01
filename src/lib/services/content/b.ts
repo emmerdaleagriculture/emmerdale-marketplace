@@ -305,8 +305,8 @@ export const PART_B: ServiceContent[] = [
     ],
     faqs: [
       {
-        q: 'What does subsoiling do?',
-        a: 'It breaks up a compacted layer, or pan, below the surface by pulling steel legs through the soil. The cracks let water drain away and roots grow deeper. It does this without turning the topsoil over.',
+        q: 'What is subsoiling?',
+        a: 'Subsoiling is pulling heavy steel legs through the ground, around 30 to 45 cm deep, to break up a compacted layer, or pan, below the surface. The cracks let water drain away and roots grow deeper. It does this without turning the topsoil over.',
       },
       {
         q: 'When is the best time to subsoil?',

@@ -50,7 +50,7 @@ export async function generateMetadata({
   if (!post) return { title: 'Post not found' };
 
   const heroUrl = noteHeroUrl(post.hero_path);
-  const description = post.excerpt || 'Notes from the field · Emmerdale Agriculture.';
+  const description = metaDescription(post.excerpt) || 'Notes from the field · Emmerdale Agriculture.';
 
   return {
     // The headline alone, with no brand suffix: these are full sentences of
@@ -70,6 +70,20 @@ export async function generateMetadata({
     },
     alternates: { canonical: `/notes/${post.slug}` },
   };
+}
+
+// Excerpts are written for the article card and run 170–260 characters;
+// search results cut a description at about 155. Keep whole sentences
+// where they fit, otherwise stop at a word boundary with an ellipsis.
+const META_DESCRIPTION_MAX = 155;
+function metaDescription(excerpt: string | null): string {
+  const text = (excerpt ?? '').replace(/\s+/g, ' ').trim();
+  if (text.length <= META_DESCRIPTION_MAX) return text;
+  const head = text.slice(0, META_DESCRIPTION_MAX);
+  const sentenceEnd = Math.max(head.lastIndexOf('. '), head.lastIndexOf('? '), head.lastIndexOf('! '));
+  if (sentenceEnd >= 80) return head.slice(0, sentenceEnd + 1);
+  const cut = head.slice(0, META_DESCRIPTION_MAX - 1);
+  return `${cut.slice(0, cut.lastIndexOf(' ')).replace(/[\s,;:–—-]+$/, '')}…`;
 }
 
 function rankRelated(post: { id: string; tags: string[] }, all: NoteCard[]): NoteCard[] {

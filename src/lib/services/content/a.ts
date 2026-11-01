@@ -36,6 +36,10 @@ export const PART_A: ServiceContent[] = [
     ],
     faqs: [
       {
+        q: 'What is topping a field?',
+        a: 'Topping is cutting the long grass and weeds in a grazed field down to an even height, usually around 7–10 cm, with a tractor-mounted topper. The cuttings are left to rot down. It stops weeds seeding and makes the field regrow evenly with fresh, leafy grass.',
+      },
+      {
         q: 'When should you top a paddock?',
         a: 'From late spring through summer, when grasses and weeds are starting to set seed, typically May to September. Choose a dry day on firm ground. Topping before seed heads ripen stops weeds spreading and encourages leafy regrowth.',
       },
