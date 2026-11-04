@@ -2,36 +2,48 @@
 -- Push first, text second.
 --
 -- Someone with the app on their phone used to get the push and the text for
--- the same thing at the same moment. Now the text waits: until the push has
--- gone, then sq_push_first_minutes more. If the push is tapped in that time,
--- or (for an invitation) the job page is opened by any route, the text is
--- skipped. If the push fails, or has no device left, the text goes at once.
--- Nobody without the app is affected: queue_push only makes a pending_push
--- row for a user with a live device token.
+-- the same thing at the same moment. Now the text waits for its push: until
+-- the push has gone, then sq_push_first_minutes more. If the push is tapped
+-- in that time, or (for an invitation) the job page is opened by any route,
+-- the text is skipped. If the push fails, or has no device left, the text
+-- goes at once. Nobody without the app is affected: queue_push only makes a
+-- pending_push row for a user with a live device token.
 --
--- How the hold is carried: pending_sms.hold_until.
---   queue_contractor_sms   a push row exists for this email (queue_push runs
---                          first: AFTER triggers fire in name order, and
---                          pending_emails_queue_push < pending_emails_queue_sms)
---                          → hold_until = now() + 30 minutes, a backstop so
---                          a stuck push can't hold the text for good
---   sq_sms_after_push      called by the send-emails push drain on a push's
---                          final outcome: sent → hold_until = now() + the
---                          minutes; failed/skipped → hold_until = null
---   drainSms               sends only rows whose hold has passed, and skips a
---                          held text whose push was tapped or job opened.
---                          With no FIREBASE_SERVICE_ACCOUNT set it ignores
---                          hold_until entirely, so nothing waits on a push
---                          that cannot be sent.
+-- How the wait is carried on pending_sms:
+--   awaiting_push   set by queue_contractor_sms when a push row exists for
+--                   the same email (queue_push runs first: AFTER triggers
+--                   fire in name order, pending_emails_queue_push <
+--                   pending_emails_queue_sms). The text is not due while set.
+--   hold_until      set when the push settles, by the trigger below on
+--                   pending_push leaving 'pending': sent → now() + the
+--                   minutes, anything else → now(). Non-null means "this
+--                   text had a push", which is when drainSms checks for a
+--                   tap before sending.
+--
+-- The settling is a trigger rather than a call from the push drain so that
+-- every way a push row leaves 'pending' (the drain, an admin fix, a future
+-- second sender) releases its text, in the same transaction.
+--
+-- No fixed backstop: a text waits exactly as long as its own push. The push
+-- drain gives up on a row after 3 attempts or 18 hours, and drainSms ignores
+-- awaiting_push entirely in any run where the push drain could not run
+-- (no FIREBASE_SERVICE_ACCOUNT, an unreadable one, a failed Google token),
+-- so a broken push channel never holds texts.
+--
+-- Quiet hours: a push sent in the last minutes before 21:00 London releases
+-- its text at once, rather than letting the wait carry it into the night and
+-- out the next morning.
 --
 -- The premium two-hour rule (sq_premium_text_untapped) is unchanged: a tap on
 -- the push opens the job page, which sets job_invitations.opened_at, which
--- the rule already reads; a text skipped for that reason was never needed.
+-- the rule already reads.
 --
 -- Off switch: app_config.sq_push_first_minutes = 0 holds nothing.
 -- ============================================================================
 
-alter table public.pending_sms add column if not exists hold_until timestamptz;
+alter table public.pending_sms
+  add column if not exists awaiting_push boolean not null default false,
+  add column if not exists hold_until timestamptz;
 
 insert into public.app_config (key, value)
 values ('sq_push_first_minutes', '10'::jsonb)
@@ -46,7 +58,7 @@ as $function$
 declare
   v_contractor record;
   v_job record;
-  v_hold timestamptz;
+  v_await boolean;
 begin
   if new.retry_of is not null then
     return new;
@@ -56,10 +68,8 @@ begin
   end if;
 
   -- A push for this same email: the text waits for it (see the header).
-  if app_config_num('sq_push_first_minutes', 10) > 0
-     and exists (select 1 from pending_push where email_id = new.id) then
-    v_hold := now() + interval '30 minutes';
-  end if;
+  v_await := app_config_num('sq_push_first_minutes', 10) > 0
+             and exists (select 1 from pending_push where email_id = new.id and status = 'pending');
 
   if new.kind in ('sq_first_quote', 'sq_new_quotes', 'sq_message_to_client') then
     -- A customer email: the job is found by the portal token it links to.
@@ -73,8 +83,8 @@ begin
     if not found then
       return new;
     end if;
-    insert into pending_sms (email_id, submission_id, kind, to_phone, payload, hold_until)
-    values (new.id, v_job.id, new.kind, v_job.sms_phone, new.payload, v_hold)
+    insert into pending_sms (email_id, submission_id, kind, to_phone, payload, awaiting_push)
+    values (new.id, v_job.id, new.kind, v_job.sms_phone, new.payload, v_await)
     on conflict (email_id) do nothing;
     return new;
   end if;
@@ -90,8 +100,8 @@ begin
     return new;
   end if;
 
-  insert into pending_sms (email_id, contractor_id, kind, to_phone, payload, hold_until)
-  values (new.id, v_contractor.id, new.kind, v_contractor.phone, new.payload, v_hold)
+  insert into pending_sms (email_id, contractor_id, kind, to_phone, payload, awaiting_push)
+  values (new.id, v_contractor.id, new.kind, v_contractor.phone, new.payload, v_await)
   on conflict (email_id) do nothing;
   return new;
 exception when others then
@@ -100,23 +110,49 @@ exception when others then
 end;
 $function$;
 
--- The push drain reports a push's final outcome. Sent: the text waits the
--- configured minutes from now. Not sent: the text is released at once.
-create or replace function public.sq_sms_after_push(p_email_id uuid, p_sent boolean)
- returns void
- language sql
+-- A push has left 'pending': release the text that waited for it.
+create or replace function public.pending_push_settle_sms()
+ returns trigger
+ language plpgsql
  security definer
  set search_path to 'public'
 as $function$
+declare
+  v_until timestamptz := now();
+  v_local timestamp;
+  v_now_local timestamp := now() at time zone 'Europe/London';
+begin
+  if new.email_id is null then
+    return new;
+  end if;
+  if new.status = 'sent' then
+    v_until := now() + make_interval(mins => greatest(app_config_num('sq_push_first_minutes', 10), 0)::int);
+    v_local := v_until at time zone 'Europe/London';
+    -- Sent in the day but the wait would end in quiet hours (21:00–07:59):
+    -- the text goes now, not tomorrow.
+    if extract(hour from v_now_local) between 8 and 20
+       and (extract(hour from v_local) not between 8 and 20 or v_local::date <> v_now_local::date) then
+      v_until := now();
+    end if;
+  end if;
   update pending_sms
-     set hold_until = case
-           when p_sent then now() + make_interval(mins => app_config_num('sq_push_first_minutes', 10)::int)
-           else null
-         end
-   where email_id = p_email_id
+     set awaiting_push = false,
+         hold_until = v_until
+   where email_id = new.email_id
      and status = 'pending'
-     and hold_until is not null;
+     and awaiting_push;
+  return new;
+end;
 $function$;
 
-revoke all on function public.sq_sms_after_push(uuid, boolean) from public, anon, authenticated;
-grant execute on function public.sq_sms_after_push(uuid, boolean) to service_role;
+revoke all on function public.pending_push_settle_sms() from public, anon, authenticated;
+
+drop trigger if exists pending_push_settle_sms on public.pending_push;
+create trigger pending_push_settle_sms
+  after update of status on public.pending_push
+  for each row
+  when (old.status = 'pending' and new.status <> 'pending')
+  execute function public.pending_push_settle_sms();
+
+create index if not exists pending_sms_awaiting_push_idx
+  on public.pending_sms (email_id) where awaiting_push;

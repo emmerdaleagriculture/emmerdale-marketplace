@@ -18,10 +18,15 @@ const MAX_AGE_MS = 18 * 3600 * 1000;
 const FIRST_HOUR = 8;
 const LAST_HOUR = 20;
 const SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
+/**
+ * Stop starting new pushes after this long. Texts drain after pushes (a text
+ * for an app user waits for its push), so a slow Firebase must not use up
+ * the run and leave everyone's texts behind it. What is left goes next run.
+ */
+const TIME_BUDGET_MS = 25_000;
 
 type PendingPush = {
   id: string;
-  email_id: string | null;
   kind: string;
   user_id: string;
   to_email: string;
@@ -261,7 +266,7 @@ export async function drainPush(
   // the batch would fill it and starve a message behind them.
   let query = supabase
     .from('pending_push')
-    .select('id, email_id, kind, user_id, to_email, payload, attempts, created_at')
+    .select('id, kind, user_id, to_email, payload, attempts, created_at')
     .eq('status', 'pending')
     .order('created_at')
     .limit(BATCH);
@@ -276,23 +281,15 @@ export async function drainPush(
   if (error) return { error: error.message };
   const rows = (data ?? []) as PendingPush[];
   if (rows.length === 0) return { processed: 0 };
-  // A push's final outcome also settles the text held for it (migration
-  // 20261104120000_push_first_texts): sent, the text waits a few minutes for
-  // a tap; anything else, the text goes now. A retry settles nothing yet.
-  const finish = async (id: string, fields: Record<string, unknown>) => {
-    const result = await supabase.from('pending_push').update(fields).eq('id', id);
-    const outcome = fields.status;
-    const m = rows.find((r) => r.id === id);
-    if (!result.error && m?.email_id && (outcome === 'sent' || outcome === 'failed' || outcome === 'skipped')) {
-      await supabase.rpc('sq_sms_after_push', { p_email_id: m.email_id, p_sent: outcome === 'sent' });
-    }
-    return result;
-  };
+  const finish = (id: string, fields: Record<string, unknown>) =>
+    supabase.from('pending_push').update(fields).eq('id', id);
 
   let bearer: string | null = null;
   let sent = 0, skipped = 0, failed = 0, retried = 0, held = 0;
 
+  const started = Date.now();
   for (const m of rows) {
+    if (Date.now() - started > TIME_BUDGET_MS) { held++; continue; }
     const p = m.payload ?? {};
     if (!daytime && !isUrgent(m.kind, p)) { held++; continue; }
 

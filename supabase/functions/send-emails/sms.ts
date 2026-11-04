@@ -140,32 +140,50 @@ function londonHour(now: Date): number {
   }).format(now));
 }
 
+type HeldText = Pick<PendingSms, 'id' | 'email_id' | 'kind' | 'contractor_id' | 'payload'>;
+
 /**
- * A text held for a push (migration 20261104120000_push_first_texts) that is
+ * Texts that had a push (migration 20261104120000_push_first_texts) and are
  * no longer needed: the push was tapped, or the invitation it is about has
- * been opened since, by any route. Null when the text should still go.
+ * been opened since, by any route. Answers id → reason, two queries for the
+ * whole batch.
  */
-export async function pushMadeTextRedundant(
-  supabase: Supabase,
-  m: Pick<PendingSms, 'email_id' | 'kind' | 'contractor_id' | 'payload'>,
-): Promise<string | null> {
-  if (!m.email_id) return null;
-  const { data: push } = await supabase
-    .from('pending_push').select('clicked_at').eq('email_id', m.email_id).maybeSingle();
-  if (push?.clicked_at) return 'push opened';
-  const submission = m.payload?.submission_id;
-  if (m.kind === 'sq_invitation' && m.contractor_id && typeof submission === 'string') {
-    const { data: inv } = await supabase
-      .from('job_invitations').select('opened_at')
-      .eq('contractor_id', m.contractor_id).eq('submission_id', submission).maybeSingle();
-    if (inv?.opened_at) return 'job already opened';
+export async function redundantTexts(supabase: Supabase, held: HeldText[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (held.length === 0) return out;
+
+  const emailIds = held.map((m) => m.email_id).filter((x): x is string => Boolean(x));
+  const tapped = new Set<string>();
+  if (emailIds.length) {
+    const { data } = await supabase
+      .from('pending_push').select('email_id, clicked_at').in('email_id', emailIds);
+    for (const r of (data ?? []) as { email_id: string; clicked_at: string | null }[]) {
+      if (r.clicked_at) tapped.add(r.email_id);
+    }
   }
-  return null;
+
+  const sub = (m: HeldText) => (typeof m.payload?.submission_id === 'string' ? m.payload.submission_id : null);
+  const invites = held.filter((m) => m.kind === 'sq_invitation' && m.contractor_id && sub(m));
+  const opened = new Set<string>();
+  if (invites.length) {
+    const { data } = await supabase
+      .from('job_invitations').select('contractor_id, submission_id, opened_at')
+      .in('submission_id', [...new Set(invites.map(sub))]).not('opened_at', 'is', null);
+    for (const r of (data ?? []) as { contractor_id: string; submission_id: string }[]) {
+      opened.add(`${r.contractor_id}/${r.submission_id}`);
+    }
+  }
+
+  for (const m of held) {
+    if (m.email_id && tapped.has(m.email_id)) out.set(m.id, 'push opened');
+    else if (m.kind === 'sq_invitation' && opened.has(`${m.contractor_id}/${sub(m)}`)) out.set(m.id, 'job already opened');
+  }
+  return out;
 }
 
 /**
- * `pushLive`: the push channel can actually send (FIREBASE_SERVICE_ACCOUNT
- * is set). Without it a text never waits for a push.
+ * `pushLive`: the push drain ran cleanly this time (configured, no error).
+ * Otherwise no text waits for a push: a broken push channel holds nothing.
  */
 export async function drainSms(
   supabase: Supabase,
@@ -200,15 +218,22 @@ export async function drainSms(
     .eq('status', 'pending')
     .order('created_at')
     .limit(BATCH);
-  if (pushLive) query = query.or(`hold_until.is.null,hold_until.lte.${now.toISOString()}`);
+  if (pushLive) {
+    query = query.eq('awaiting_push', false)
+      .or(`hold_until.is.null,hold_until.lte.${now.toISOString()}`);
+  }
   const { data, error } = await query;
   if (error) return { error: error.message };
+  const rowsDue = (data ?? []) as PendingSms[];
+  const redundant = pushLive
+    ? await redundantTexts(supabase, rowsDue.filter((m) => m.hold_until))
+    : new Map<string, string>();
 
   let sent = 0, skipped = 0, failed = 0, retried = 0;
   const finish = (id: string, fields: Record<string, unknown>) =>
     supabase.from('pending_sms').update(fields).eq('id', id);
 
-  for (const m of (data ?? []) as PendingSms[]) {
+  for (const m of rowsDue) {
     // Re-checked at send time: they may have opted out since it was queued.
     // In test mode a customer is held to the allowlist too, by the job's email.
     const who = m.contractor_id
@@ -219,8 +244,7 @@ export async function drainSms(
       : allowlist.length > 0 && !allowlist.includes(String(who.email ?? '').toLowerCase())
         ? 'test mode: not on the allowlist'
       : now.getTime() - new Date(m.created_at).getTime() > MAX_AGE_MS ? 'too old to send'
-      : pushLive && m.hold_until ? await pushMadeTextRedundant(supabase, m)
-      : null;
+      : redundant.get(m.id) ?? null;
     if (skipReason) {
       await finish(m.id, { status: 'skipped', detail: skipReason });
       skipped++;

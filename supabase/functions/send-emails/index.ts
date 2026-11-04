@@ -1793,8 +1793,9 @@ Deno.serve(async (req) => {
   // Pushes after the emails, so a Firebase problem can't hold mail up; and
   // before the texts, because a text for someone with the app waits for its
   // push to go (migration 20261104120000_push_first_texts). At 08:00 a
-  // night-held push and its text are both due: this order sends the push
-  // and re-holds the text, rather than the text going first.
+  // night-held push and its text are both due: the push goes and its
+  // text is released only then (pending_push_settle_sms), and the drain's
+  // answer says whether the push channel is working at all.
   let push: Record<string, unknown>;
   try {
     push = await drainPush(supabase, SITE_URL, sqAllowlist, SQ_CONTRACTOR_KINDS);
@@ -1805,7 +1806,10 @@ Deno.serve(async (req) => {
 
   let sms: Record<string, unknown>;
   try {
-    sms = await drainSms(supabase, SITE_URL, sqAllowlist, Boolean(Deno.env.get('FIREBASE_SERVICE_ACCOUNT')));
+    // Texts wait for pushes only when the push drain actually worked this
+    // run; drainPush has a time budget, so it can't leave no time for this.
+    const pushLive = push.configured !== false && !('error' in push);
+    sms = await drainSms(supabase, SITE_URL, sqAllowlist, pushLive);
   } catch (err) {
     console.error('[send-emails] sms drain failed:', err);
     sms = { error: String(err).slice(0, 300) };
