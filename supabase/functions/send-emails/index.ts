@@ -1807,7 +1807,8 @@ Deno.serve(async (req) => {
   let sms: Record<string, unknown>;
   try {
     // Texts wait for pushes only when the push drain actually worked this
-    // run; drainPush has a time budget, so it can't leave no time for this.
+    // run. drainPush stops starting pushes after 25s and caps each request
+    // at 8s, so a slow Firebase delays texts by seconds, not the whole run.
     const pushLive = push.configured !== false && !('error' in push);
     sms = await drainSms(supabase, SITE_URL, sqAllowlist, pushLive);
   } catch (err) {

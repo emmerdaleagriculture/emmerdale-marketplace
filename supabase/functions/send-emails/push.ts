@@ -24,6 +24,8 @@ const SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
  * the run and leave everyone's texts behind it. What is left goes next run.
  */
 const TIME_BUDGET_MS = 25_000;
+/** And no single request may hang past this, or the budget means nothing. */
+const REQUEST_TIMEOUT_MS = 8_000;
 
 type PendingPush = {
   id: string;
@@ -226,6 +228,7 @@ async function accessToken(sa: ServiceAccount): Promise<string> {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   const j = await r.json();
   if (!r.ok || !j.access_token) throw new Error(`google token: HTTP ${r.status} ${JSON.stringify(j).slice(0, 200)}`);
@@ -285,11 +288,12 @@ export async function drainPush(
     supabase.from('pending_push').update(fields).eq('id', id);
 
   let bearer: string | null = null;
-  let sent = 0, skipped = 0, failed = 0, retried = 0, held = 0;
+  // held: night-held non-urgent; deferred: out of time budget this run.
+  let sent = 0, skipped = 0, failed = 0, retried = 0, held = 0, deferred = 0;
 
   const started = Date.now();
   for (const m of rows) {
-    if (Date.now() - started > TIME_BUDGET_MS) { held++; continue; }
+    if (Date.now() - started > TIME_BUDGET_MS) { deferred++; continue; }
     const p = m.payload ?? {};
     if (!daytime && !isUrgent(m.kind, p)) { held++; continue; }
 
@@ -319,7 +323,7 @@ export async function drainPush(
     try {
       bearer ??= await accessToken(sa);
     } catch (err) {
-      return { error: String(err).slice(0, 300), sent, skipped, failed, retried, held };
+      return { error: String(err).slice(0, 300), sent, skipped, failed, retried, held, deferred };
     }
 
     let delivered = 0;
@@ -333,6 +337,7 @@ export async function drainPush(
         const sendOnce = async () => fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
           body: JSON.stringify({
             message: {
               token: d.token,
@@ -380,5 +385,5 @@ export async function drainPush(
     }
   }
 
-  return { processed: rows.length, sent, skipped, retried, failed, held };
+  return { processed: rows.length, sent, skipped, retried, failed, held, deferred };
 }

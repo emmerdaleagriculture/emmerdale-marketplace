@@ -155,8 +155,9 @@ export async function redundantTexts(supabase: Supabase, held: HeldText[]): Prom
   const emailIds = held.map((m) => m.email_id).filter((x): x is string => Boolean(x));
   const tapped = new Set<string>();
   if (emailIds.length) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('pending_push').select('email_id, clicked_at').in('email_id', emailIds);
+    if (error) console.error('[send-emails] push-tap lookup failed; held texts will send:', error.message);
     for (const r of (data ?? []) as { email_id: string; clicked_at: string | null }[]) {
       if (r.clicked_at) tapped.add(r.email_id);
     }
@@ -166,9 +167,14 @@ export async function redundantTexts(supabase: Supabase, held: HeldText[]): Prom
   const invites = held.filter((m) => m.kind === 'sq_invitation' && m.contractor_id && sub(m));
   const opened = new Set<string>();
   if (invites.length) {
-    const { data } = await supabase
+    // Exact pairs aren't expressible in one filter; both lists bound it to at
+    // most (contractors × jobs) in this batch, far under the 1000-row cap.
+    const { data, error } = await supabase
       .from('job_invitations').select('contractor_id, submission_id, opened_at')
-      .in('submission_id', [...new Set(invites.map(sub))]).not('opened_at', 'is', null);
+      .in('submission_id', [...new Set(invites.map(sub))])
+      .in('contractor_id', [...new Set(invites.map((m) => m.contractor_id))])
+      .not('opened_at', 'is', null);
+    if (error) console.error('[send-emails] opened-invitation lookup failed; held texts will send:', error.message);
     for (const r of (data ?? []) as { contractor_id: string; submission_id: string }[]) {
       opened.add(`${r.contractor_id}/${r.submission_id}`);
     }
@@ -218,16 +224,23 @@ export async function drainSms(
     .eq('status', 'pending')
     .order('created_at')
     .limit(BATCH);
-  if (pushLive) {
-    query = query.eq('awaiting_push', false)
-      .or(`hold_until.is.null,hold_until.lte.${now.toISOString()}`);
-  }
+  // A text still waiting for its push is held only while the push drain
+  // works; a hold that has already settled (hold_until), and the tap check
+  // below, apply either way.
+  query = query.or(`hold_until.is.null,hold_until.lte.${now.toISOString()}`);
+  if (pushLive) query = query.eq('awaiting_push', false);
   const { data, error } = await query;
   if (error) return { error: error.message };
+  // A text whose push row was deleted (a deleted job, a deleted account)
+  // never settles. The query above can't see it, so it is aged out here.
+  if (pushLive) {
+    await supabase.from('pending_sms')
+      .update({ status: 'skipped', detail: 'too old to send' })
+      .eq('status', 'pending').eq('awaiting_push', true)
+      .lt('created_at', new Date(now.getTime() - MAX_AGE_MS).toISOString());
+  }
   const rowsDue = (data ?? []) as PendingSms[];
-  const redundant = pushLive
-    ? await redundantTexts(supabase, rowsDue.filter((m) => m.hold_until))
-    : new Map<string, string>();
+  const redundant = await redundantTexts(supabase, rowsDue.filter((m) => m.hold_until));
 
   let sent = 0, skipped = 0, failed = 0, retried = 0;
   const finish = (id: string, fields: Record<string, unknown>) =>

@@ -10,10 +10,10 @@
 -- pending_push row for a user with a live device token.
 --
 -- How the wait is carried on pending_sms:
---   awaiting_push   set by queue_contractor_sms when a push row exists for
---                   the same email (queue_push runs first: AFTER triggers
---                   fire in name order, pending_emails_queue_push <
---                   pending_emails_queue_sms). The text is not due while set.
+--   awaiting_push   the text is not due while set. Set from whichever of the
+--                   two pending_emails triggers runs second: queue_contractor_sms
+--                   when the push row already exists, queue_push when the
+--                   text row already exists. Neither relies on trigger order.
 --   hold_until      set when the push settles, by the trigger below on
 --                   pending_push leaving 'pending': sent → now() + the
 --                   minutes, anything else → now(). Non-null means "this
@@ -22,7 +22,9 @@
 --
 -- The settling is a trigger rather than a call from the push drain so that
 -- every way a push row leaves 'pending' (the drain, an admin fix, a future
--- second sender) releases its text, in the same transaction.
+-- second sender, a delete) releases its text, in the same transaction. A
+-- text whose link to its push is lost (pending_emails deleted, both
+-- email_id columns set null) is aged out by drainSms after 18 hours.
 --
 -- No fixed backstop: a text waits exactly as long as its own push. The push
 -- drain gives up on a row after 3 attempts or 18 hours, and drainSms ignores
@@ -30,7 +32,8 @@
 -- (no FIREBASE_SERVICE_ACCOUNT, an unreadable one, a failed Google token),
 -- so a broken push channel never holds texts.
 --
--- Quiet hours: a push sent in the last minutes before 21:00 London releases
+-- Quiet hours (08:00–20:59, the FIRST_HOUR/LAST_HOUR of sms.ts and push.ts;
+-- change all three together): a push sent in the last minutes before 21:00 London releases
 -- its text at once, rather than letting the wait carry it into the night and
 -- out the next morning.
 --
@@ -154,5 +157,85 @@ create trigger pending_push_settle_sms
   when (old.status = 'pending' and new.status <> 'pending')
   execute function public.pending_push_settle_sms();
 
-create index if not exists pending_sms_awaiting_push_idx
-  on public.pending_sms (email_id) where awaiting_push;
+-- A push row deleted while pending (its user's account deleted) releases
+-- its text too.
+create or replace function public.pending_push_release_sms()
+ returns trigger
+ language plpgsql
+ security definer
+ set search_path to 'public'
+as $function$
+begin
+  if old.status = 'pending' and old.email_id is not null then
+    update pending_sms
+       set awaiting_push = false, hold_until = now()
+     where email_id = old.email_id and status = 'pending' and awaiting_push;
+  end if;
+  return old;
+end;
+$function$;
+
+revoke all on function public.pending_push_release_sms() from public, anon, authenticated;
+
+drop trigger if exists pending_push_release_sms on public.pending_push;
+create trigger pending_push_release_sms
+  after delete on public.pending_push
+  for each row
+  execute function public.pending_push_release_sms();
+
+-- queue_push, unchanged but for the last statement: if the text row is
+-- already there (its trigger ran first), mark it as waiting.
+create or replace function public.queue_push()
+ returns trigger
+ language plpgsql
+ security definer
+ set search_path to 'public'
+as $function$
+declare
+  v_user uuid;
+begin
+  if new.retry_of is not null then
+    return new;
+  end if;
+  if coalesce((select value::text from app_config where key = 'sq_push_enabled'), '1') <> '1' then
+    return new;
+  end if;
+
+  if new.kind in ('sq_first_quote', 'sq_new_quotes', 'sq_message_to_client',
+                  'sq_completion_confirm', 'sq_quotes_nudge_1', 'sq_quotes_nudge_2') then
+    select js.customer_id into v_user
+      from job_submissions js
+     where js.client_token = new.payload->>'client_token'
+       and js.client_token_revoked_at is null
+       and js.customer_id is not null
+     limit 1;
+  else
+    select c.id into v_user
+      from contractors c
+     where lower(c.email) = lower(new.to_email)
+     order by c.created_at
+     limit 1;
+  end if;
+  if v_user is null then
+    return new;
+  end if;
+
+  -- Only for someone with a phone to push to.
+  if not exists (select 1 from device_tokens where user_id = v_user and revoked_at is null) then
+    return new;
+  end if;
+
+  insert into pending_push (email_id, user_id, to_email, kind, payload)
+  values (new.id, v_user, new.to_email, new.kind, new.payload)
+  on conflict (email_id) do nothing;
+
+  if app_config_num('sq_push_first_minutes', 10) > 0 then
+    update pending_sms set awaiting_push = true
+     where email_id = new.id and status = 'pending' and hold_until is null;
+  end if;
+  return new;
+exception when others then
+  raise warning 'queue_push failed for email %: %', new.id, sqlerrm;
+  return new;
+end;
+$function$;
