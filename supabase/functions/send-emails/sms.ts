@@ -25,6 +25,8 @@ const UNSUBSCRIBED = 21610;
 
 type PendingSms = {
   id: string;
+  email_id: string | null;
+  hold_until: string | null;
   kind: string;
   to_phone: string;
   payload: Record<string, unknown>;
@@ -138,10 +140,38 @@ function londonHour(now: Date): number {
   }).format(now));
 }
 
+/**
+ * A text held for a push (migration 20261104120000_push_first_texts) that is
+ * no longer needed: the push was tapped, or the invitation it is about has
+ * been opened since, by any route. Null when the text should still go.
+ */
+export async function pushMadeTextRedundant(
+  supabase: Supabase,
+  m: Pick<PendingSms, 'email_id' | 'kind' | 'contractor_id' | 'payload'>,
+): Promise<string | null> {
+  if (!m.email_id) return null;
+  const { data: push } = await supabase
+    .from('pending_push').select('clicked_at').eq('email_id', m.email_id).maybeSingle();
+  if (push?.clicked_at) return 'push opened';
+  const submission = m.payload?.submission_id;
+  if (m.kind === 'sq_invitation' && m.contractor_id && typeof submission === 'string') {
+    const { data: inv } = await supabase
+      .from('job_invitations').select('opened_at')
+      .eq('contractor_id', m.contractor_id).eq('submission_id', submission).maybeSingle();
+    if (inv?.opened_at) return 'job already opened';
+  }
+  return null;
+}
+
+/**
+ * `pushLive`: the push channel can actually send (FIREBASE_SERVICE_ACCOUNT
+ * is set). Without it a text never waits for a push.
+ */
 export async function drainSms(
   supabase: Supabase,
   site: string,
   allowlist: string[],
+  pushLive = false,
 ): Promise<Record<string, unknown>> {
   const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
   // An API key is preferred: it can be revoked without touching the
@@ -161,13 +191,17 @@ export async function drainSms(
   const hour = londonHour(now);
   if (hour < FIRST_HOUR || hour > LAST_HOUR) return { held: 'quiet hours' };
 
-  const { data, error } = await supabase
+  // Texts still waiting on their push are left out of the batch altogether,
+  // so they can't fill it and starve the texts behind them.
+  let query = supabase
     .from('pending_sms')
-    .select('id, kind, to_phone, payload, attempts, created_at, contractor_id, submission_id, ' +
+    .select('id, email_id, hold_until, kind, to_phone, payload, attempts, created_at, contractor_id, submission_id, ' +
       'contractors(email, notify_sms), job_submissions(contact_email, notify_sms)')
     .eq('status', 'pending')
     .order('created_at')
     .limit(BATCH);
+  if (pushLive) query = query.or(`hold_until.is.null,hold_until.lte.${now.toISOString()}`);
+  const { data, error } = await query;
   if (error) return { error: error.message };
 
   let sent = 0, skipped = 0, failed = 0, retried = 0;
@@ -185,6 +219,7 @@ export async function drainSms(
       : allowlist.length > 0 && !allowlist.includes(String(who.email ?? '').toLowerCase())
         ? 'test mode: not on the allowlist'
       : now.getTime() - new Date(m.created_at).getTime() > MAX_AGE_MS ? 'too old to send'
+      : pushLive && m.hold_until ? await pushMadeTextRedundant(supabase, m)
       : null;
     if (skipReason) {
       await finish(m.id, { status: 'skipped', detail: skipReason });
