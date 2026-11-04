@@ -1790,22 +1790,30 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Texts go after the emails, so a Twilio problem can't hold mail up.
-  let sms: Record<string, unknown>;
-  try {
-    sms = await drainSms(supabase, SITE_URL, sqAllowlist);
-  } catch (err) {
-    console.error('[send-emails] sms drain failed:', err);
-    sms = { error: String(err).slice(0, 300) };
-  }
-
-  // Pushes after the texts, for the same reason.
+  // Pushes after the emails, so a Firebase problem can't hold mail up; and
+  // before the texts, because a text for someone with the app waits for its
+  // push to go (migration 20261104120000_push_first_texts). At 08:00 a
+  // night-held push and its text are both due: the push goes and its
+  // text is released only then (pending_push_settle_sms), and the drain's
+  // answer says whether the push channel is working at all.
   let push: Record<string, unknown>;
   try {
     push = await drainPush(supabase, SITE_URL, sqAllowlist, SQ_CONTRACTOR_KINDS);
   } catch (err) {
     console.error('[send-emails] push drain failed:', err);
     push = { error: String(err).slice(0, 300) };
+  }
+
+  let sms: Record<string, unknown>;
+  try {
+    // Texts wait for pushes only when the push drain actually worked this
+    // run. drainPush stops starting pushes after 25s and caps each request
+    // at 8s, so a slow Firebase delays texts by seconds, not the whole run.
+    const pushLive = push.configured !== false && !('error' in push);
+    sms = await drainSms(supabase, SITE_URL, sqAllowlist, pushLive);
+  } catch (err) {
+    console.error('[send-emails] sms drain failed:', err);
+    sms = { error: String(err).slice(0, 300) };
   }
 
   return new Response(
