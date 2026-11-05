@@ -23,6 +23,10 @@ export function OnboardingForm({
 }) {
   const [state, action, pending] = useActionState(completeOnboardingAction, emptyFormState);
   const [membership, setMembership] = useState<Choice>('free');
+  /** Services start unticked, and a checkbox group can't be `required`, so
+   *  the form stops here rather than sending the server's error to the top
+   *  of a long page. */
+  const [noServices, setNoServices] = useState(false);
   const tier = tierOf(membership);
   /** Clicking a card picks its monthly plan — unless it is already the pick,
    *  when a click on the blurb must not undo a yearly choice. */
@@ -46,7 +50,17 @@ export function OnboardingForm({
   );
 
   return (
-    <form action={action}>
+    <form
+      action={action}
+      onSubmit={(e) => {
+        const none = !e.currentTarget.querySelector('input[name="service_ids"]:checked');
+        setNoServices(none);
+        if (none) {
+          e.preventDefault();
+          document.getElementById('onboarding-services')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }}
+    >
       {state.error && <p className={f.error}>{state.error}</p>}
 
       <div className={a.groupTitle}>Your business</div>
@@ -77,15 +91,22 @@ export function OnboardingForm({
         </label>
       </div>
 
-      <div className={a.groupTitle}>What work do you do?</div>
+      <div className={a.groupTitle} id="onboarding-services">What work do you do?</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>
-        Everything starts ticked. Untick anything you don&rsquo;t do. You can
-        change them any time.
+        Tick the work you do. You can change them any time.
       </p>
-      {/* All on by default (2026-09-23): jobs reach every contractor in the
-          county regardless, and a narrow first pick mostly meant work a
-          contractor does, like fencing, was simply never ticked. */}
-      <ServicePicker services={services} selected={services.map((s) => s.id)} />
+      {/* Nothing ticked to start (2026-11-05; all-on since 2026-09-23 had
+          every new contractor claiming every service). Routing is still by
+          county for everyone but services-only contractors
+          (sq_contractor_wants_job), so a short pick doesn't cost them jobs. */}
+      {noServices && (
+        <p className={f.error} role="alert" style={{ marginBottom: 12 }}>
+          Pick at least one service.
+        </p>
+      )}
+      <div onChange={() => setNoServices(false)}>
+        <ServicePicker services={services} selected={[]} />
+      </div>
 
       <div className={a.groupTitle}>Counties you cover</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>
