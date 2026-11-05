@@ -917,8 +917,11 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `Thanks. We have your invoice${p.invoice_name ? ` (${p.invoice_name})` : ''} for the ` +
           `${p.service ? `${p.service} ` : ''}job${p.contact_name ? ` for ${p.contact_name}` : ''}.\n\n` +
-          `${p.amount_pence ? `The ${gbp(p.amount_pence)} is` : 'It’s'} paid as soon as the customer’s ` +
-          `funds have cleared into our account, typically 7 days or less from now. ` +
+          (p.member
+            ? `As a member, ${p.amount_pence ? `the ${gbp(p.amount_pence)} is` : 'it’s'} paid as soon as the ` +
+              `customer’s payment has gone through, without waiting for the funds to reach our account. `
+            : `${p.amount_pence ? `The ${gbp(p.amount_pence)} is` : 'It’s'} paid as soon as the customer’s ` +
+              `funds have cleared into our account, typically 7 days or less from now. `) +
           `You’ll get a note from us when it has been sent.\n\n` +
           `Your won jobs: ${SITE_URL}/won`,
       };

@@ -259,7 +259,7 @@ export function MembershipView({
             <div className={s.planMeta}>{meta}</div>
           </div>
           <div className={s.planBody}>
-            <Benefits flush items={tier === 'open' ? [...OPEN_BENEFITS, ...PREMIUM_BENEFITS.slice(0, 2)] : PREMIUM_BENEFITS.slice(0, 2)} />
+            <Benefits flush items={tier === 'open' ? [...OPEN_BENEFITS, ...PREMIUM_BENEFITS.slice(0, 3)] : PREMIUM_BENEFITS.slice(0, 3)} />
             {active && (
               <div className={s.planActions}>
                 <Pay action="portal" returnPath={returnPath} className={f.btnGhost}>
