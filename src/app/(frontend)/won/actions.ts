@@ -316,7 +316,8 @@ export async function uploadInvoiceAction(
     (accepted?.cq as { contractor_price_pence: number } | null)?.contractor_price_pence ?? null;
   // Members are paid once the customer's balance payment goes through, not
   // once Stripe's payout reaches our bank (terms clause 12, expedited payouts).
-  const { data: member } = await admin.rpc('contractor_is_premium', { p_contractor_id: user.id });
+  const { data: member, error: memberErr } = await admin.rpc('contractor_is_premium', { p_contractor_id: user.id });
+  if (memberErr) console.error('[sq] membership check failed, invoice treated as non-member:', memberErr);
   if (contractor?.email) {
     const { error: mailErr } = await admin.from('pending_emails').insert({
       kind: 'sq_invoice_received',
@@ -338,7 +339,7 @@ export async function uploadInvoiceAction(
     `${differs ? 'Invoice differs from the quote' : 'Invoice to pay'}: ${contractor?.business_name ?? 'a contractor'}`,
     [
       `${contractor?.business_name ?? 'A contractor'} has sent their invoice for the job for ${js.contact_name ?? 'a customer'}. ` +
-      (member
+      (member && !differs
         ? `They're a member, so pay it as soon as the customer's balance shows as paid on /admin/money (expedited payout).`
         : `Pay it once the customer's balance shows as cleared on /admin/money.`),
       ...(differs

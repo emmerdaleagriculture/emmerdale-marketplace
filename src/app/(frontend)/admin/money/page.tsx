@@ -207,12 +207,17 @@ export default async function MoneyPage() {
   const owedContractors = [...new Set(owed.map((f) => f.j.contractor?.id).filter((x): x is string => !!x))];
   const memberChecks = await Promise.all(
     owedContractors.map(async (id) => {
-      const { data } = await admin.rpc('contractor_is_premium', { p_contractor_id: id });
+      const { data, error: memberErr } = await admin.rpc('contractor_is_premium', { p_contractor_id: id });
+      if (memberErr) console.error('[money] membership check failed:', id, memberErr);
       return [id, data === true] as const;
     }),
   );
   const members = new Set(memberChecks.filter(([, m]) => m).map(([id]) => id));
-  const owedToMembers = owed.filter((f) => f.j.contractor && members.has(f.j.contractor.id)).length;
+  // Only once the balance has actually been paid: a completed job whose
+  // balance is still requested or failed is owed nothing early.
+  const payNow = (f: (typeof figures)[number]) =>
+    f.balance?.status === 'paid' && !!f.j.contractor && members.has(f.j.contractor.id);
+  const owedToMembers = owed.filter(payNow).length;
   const marginPence = figures.reduce((n, f) => n + f.margin, 0);
   const marginBanked = figures.filter((f) => f.left === 0 && !STOPPED.has(f.j.status)).reduce((n, f) => n + f.margin, 0);
 
@@ -333,7 +338,7 @@ export default async function MoneyPage() {
                     FINISHED.has(j.status) && (
                       <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
                         not paid yet
-                        {j.contractor && members.has(j.contractor.id) && (
+                        {payNow({ j, balance } as (typeof figures)[number]) && (
                           <span style={{ color: '#8a6d00' }}> · ★ member, pay without waiting for clearance</span>
                         )}
                       </div>
