@@ -209,11 +209,10 @@ export async function sendContractorWarning(formData: FormData) {
 }
 
 /**
- * Only the work they ticked. With services_only on, every market invitation
- * path (distribution, late joins, the premium window, reminders — see
- * 20261009120000) skips this contractor for jobs whose service is not in
- * contractors.services. Off is how every other contractor works: county and
- * distance only. Switching it on does not withdraw invitations already sent.
+ * Strict. Every contractor is only invited to jobs for the services they tick
+ * (sq_contractor_wants_job, 20261105120000); services_only also skips jobs
+ * that can't be matched to any service. Switching it on does not withdraw
+ * invitations already sent.
  */
 export async function setServicesOnly(formData: FormData) {
   await assertAdmin();

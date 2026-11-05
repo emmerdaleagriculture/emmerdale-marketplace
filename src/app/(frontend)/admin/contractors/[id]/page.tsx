@@ -155,16 +155,17 @@ export default async function ContractorDetailPage({
         )}
       </div>
 
-      {/* What they are invited to. Routing is county + distance; the service
-          is only consulted when services_only is on (20261009120000). */}
+      {/* What they are invited to: county + distance + the services ticked
+          (20261105120000). services_only makes it strict: jobs that can't be
+          matched to a service are skipped too. */}
       <div className={s.sectionLabel}>Work wanted</div>
       <p className={s.dValue}>
         {c.services_only ? (
           <>
-            <b>Only the services ticked</b>: a job for anything else is not sent to them, even in their counties.
+            <b>Strict</b>: only jobs for the services ticked. A job that can&rsquo;t be matched to a service isn&rsquo;t sent to them either.
           </>
         ) : (
-          <>Any job in their counties within range; the service is not checked.</>
+          <>Jobs for the services ticked, in their counties within range. A job that can&rsquo;t be matched to a service is sent to them too.</>
         )}
       </p>
       <p className={s.dValue}>
@@ -184,7 +185,7 @@ export default async function ContractorDetailPage({
           <input type="hidden" name="id" value={c.id} />
           <input type="hidden" name="services_only" value={c.services_only ? '0' : '1'} />
           <button type="submit" className={c.services_only ? s.btnSuspend : s.btnApprove}>
-            {c.services_only ? 'Send them any job in their counties' : 'Only send jobs for the services ticked'}
+            {c.services_only ? 'Also send jobs with no matched service' : 'Strict: skip jobs with no matched service'}
           </button>
         </form>
         {/* Only offered once the service filter is on: without it, this
@@ -202,7 +203,7 @@ export default async function ContractorDetailPage({
         <p className={s.dValue}>
           {c.services_only
             ? 'Covering the whole country ticks every county and removes the distance limit, and invites them at once to every open job of the services ticked.'
-            : 'To cover the whole country, switch on “only the services ticked” first: with the service not checked, every county would mean every open job in the country.'}
+            : 'To cover the whole country, switch on “strict” first: otherwise every job in the country that can’t be matched to a service would reach them.'}
         </p>
       )}
 

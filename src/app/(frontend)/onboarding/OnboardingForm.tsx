@@ -112,12 +112,13 @@ export function OnboardingForm({
 
       <div className={a.groupTitle} id="onboarding-services">What work do you do?</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>
-        Tick the work you do. You can change them any time.
+        Tick the work you do: you&rsquo;ll only be sent jobs for these. You can
+        change them any time.
       </p>
       {/* Nothing ticked to start (2026-11-05; all-on since 2026-09-23 had
-          every new contractor claiming every service). Routing is still by
-          county for everyone but services-only contractors
-          (sq_contractor_wants_job), so a short pick doesn't cost them jobs. */}
+          every new contractor claiming every service). Ticks route jobs for
+          everyone since 20261105120000 (sq_contractor_wants_job); a job that
+          can't be matched to a service still goes to them. */}
       {noServices && (
         <p className={f.error} role="alert" style={{ marginBottom: 12 }}>
           Pick at least one service.
