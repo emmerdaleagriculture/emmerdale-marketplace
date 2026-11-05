@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './forms.module.css';
 
 export type ServiceOption = {
@@ -27,6 +27,19 @@ export function ServicePicker({
   selected?: number[];
 }) {
   const [on, setOn] = useState<Set<number>>(new Set(selected));
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // React 19 resets a form after its action returns, which puts every
+  // checkbox back to its default (unticked unless `selected`) while `on`
+  // still shows the chips ticked. Re-render once the reset is done so the
+  // boxes match the chips again: what is submitted is what is shown.
+  useEffect(() => {
+    const form = rootRef.current?.closest('form');
+    if (!form) return;
+    const resync = () => setTimeout(() => setOn((prev) => new Set(prev)), 0);
+    form.addEventListener('reset', resync);
+    return () => form.removeEventListener('reset', resync);
+  }, []);
 
   function toggle(id: number) {
     setOn((prev) => {
@@ -38,7 +51,7 @@ export function ServicePicker({
   }
 
   return (
-    <div className={styles.chips}>
+    <div className={styles.chips} ref={rootRef}>
       {services.map((s) => (
         <label
           key={s.id}
