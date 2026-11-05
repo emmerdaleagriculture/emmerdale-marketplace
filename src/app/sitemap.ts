@@ -27,8 +27,8 @@ const DATES = {
   verticalCounty: new Date('2026-10-21'),
   /** Contractor recruiting page: title and description trimmed. */
   contractors: new Date('2026-10-11'),
-  /** Service pages: muck spreading and muck heap removal added (2026-10-21). */
-  services: new Date('2026-10-21'),
+  /** Service pages: paddock sweeping added (2026-11-03). */
+  services: new Date('2026-11-03'),
   /** Customer terms v2.1 and the charter (insurance wording). */
   legal: new Date('2026-09-23'),
   /** The directory of Open members taking direct enquiries. */

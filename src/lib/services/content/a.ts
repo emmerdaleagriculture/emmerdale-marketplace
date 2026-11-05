@@ -227,7 +227,7 @@ export const PART_A: ServiceContent[] = [
     involves: [
       'A sweeper is towed behind a quad or compact tractor. Rotating brushes flick droppings into a collection hopper; a paddock vacuum sucks them up instead. The hopper is emptied at your muck heap or wherever you choose.',
       'Picking up droppings is the most effective way to cut the worm burden on a paddock, because worm eggs pass out in the droppings and the larvae move onto the surrounding grass. It also reduces the sour, ungrazed “roughs” horses leave, so more of the field gets grazed.',
-      'Sweepers also pick up leaves, twigs and fallen seeds. That makes them useful in autumn for reducing acorns and sycamore seeds in a paddock, though they won’t clear every last one.',
+      'Sweepers also pick up leaves, twigs and fallen seeds. If that is the main job, clearing acorns, sycamore seeds or leaf fall in autumn, ask for paddock sweeping instead.',
     ],
     when: [
       'All year, as often as needed. Droppings are ideally cleared at least once or twice a week in a grazed paddock; a contractor visit suits people who can’t manage that or who have let it build up.',
@@ -264,7 +264,7 @@ export const PART_A: ServiceContent[] = [
         a: 'Sweepers and vacuums pick up a good proportion of fallen acorns and sycamore seeds along with leaves, which helps in autumn. They won’t get every one, so fencing off trees is still worth doing where possible.',
       },
     ],
-    related: ['harrowing', 'topping', 'overseeding', 'trailer-work'],
+    related: ['paddock-sweeping', 'harrowing', 'topping', 'trailer-work'],
   },
 
   // 6. Overseeding
@@ -587,5 +587,60 @@ export const PART_A: ServiceContent[] = [
       },
     ],
     related: ['muck-spreading', 'trailer-work', 'muck-sweeping', 'general-tractor-work'],
+  },
+
+  // 12. Paddock sweeping
+  {
+    card: 'paddock-sweeping',
+    path: 'paddock-sweeping',
+    canonical: ['Paddock sweeping'],
+    metaTitle: 'Paddock Sweeping: Acorns, Sycamore Seeds and Leaves',
+    metaDescription:
+      'Paddock sweeping: a towed sweeper or vacuum clears fallen acorns, sycamore seeds and leaves from horse paddocks. Find local contractors and get prices.',
+    h1: 'Paddock sweeping for acorns, sycamore seeds and leaves',
+    intro:
+      'Paddock sweeping clears what falls from the trees onto your grazing: acorns, sycamore seeds, leaves and twigs. Acorns and sycamore seeds are poisonous to horses, so a sweep in autumn is one of the simplest ways to cut the risk in paddocks with oaks or sycamores along the edge.',
+    involves: [
+      'A sweeper is towed behind a quad or compact tractor. Rotating brushes lift leaves, seeds and acorns into a collection hopper; a paddock vacuum sucks them up instead. The hopper is emptied in a pile wherever you choose, or loaded for taking away.',
+      'Most of the fall lies under and around the trees, so the contractor usually concentrates on the tree line and fence edges rather than the whole field. Say how many trees there are and how far the fall spreads.',
+      'The same machine picks up droppings as it goes. If clearing droppings is the main job, ask for muck sweeping instead.',
+    ],
+    when: [
+      'Autumn, from when the acorns and sycamore seeds start to drop (often September) until the leaves are down, usually into November. A heavy mast year can need more than one visit.',
+      'Sycamore seedlings come up in the spring and are poisonous too, so a sweep before the seeds settle into the grass over winter helps. Sweepers work best when the ground and leaves are fairly dry; wet leaves mat down and are slow to lift.',
+    ],
+    priceFactors: [
+      'How much of the paddock needs sweeping: just the tree line, or the whole field',
+      'How many trees there are and how heavy the fall is',
+      'How often the hopper has to be emptied, and how far away the pile is',
+      'Whether the sweepings stay on site or have to be taken away',
+      'One visit or several through the autumn',
+      'Ground conditions, slopes and access for the machine',
+      'Travel distance',
+    ],
+    goodToKnow: [
+      'A sweeper picks up most of what has fallen, not every last acorn or seed. Fencing horses off the worst areas under the trees is still worth doing in a heavy year.',
+      'Decide where the sweepings go. Leaves and seeds make a pile that can be left to rot down out of the horses’ reach; acorns and sycamore seeds should not go anywhere horses can get at them.',
+      'Your vet can advise on the signs of acorn poisoning and atypical myopathy (the illness sycamore seeds cause). Sweeping lowers the risk but does not remove it.',
+    ],
+    faqs: [
+      {
+        q: 'Why do acorns and sycamore seeds need clearing from a paddock?',
+        a: 'Both are poisonous to horses. Acorns can cause colic and kidney damage, and sycamore seeds and seedlings cause atypical myopathy, which is often fatal. Some horses seek them out, so clearing them from grazing lowers the risk.',
+      },
+      {
+        q: 'When should I have my paddock swept?',
+        a: 'Through the autumn as the acorns, seeds and leaves come down, usually September to November. In a heavy year more than one visit may be needed to keep on top of the fall.',
+      },
+      {
+        q: 'Can a paddock sweeper pick up wet leaves?',
+        a: 'Not well. Wet leaves mat down and stick to the grass, and soft ground can be marked by the machine. Sweepers work best on a dry or fairly dry day.',
+      },
+      {
+        q: 'Will a sweeper pick up droppings at the same time?',
+        a: 'Yes. A sweeper or vacuum collects droppings along with leaves and seeds. If you want the whole paddock cleared of droppings as well, say so when you ask for prices.',
+      },
+    ],
+    related: ['muck-sweeping', 'topping', 'harrowing', 'trailer-work'],
   },
 ];
