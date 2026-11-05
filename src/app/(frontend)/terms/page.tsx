@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.9, 24 October 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.11, 5 November 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -114,7 +114,7 @@ export default function TermsPage() {
           </p>
           <p>
             You are paid your full quoted price once that balance has cleared and we have
-            your invoice. If the customer&rsquo;s balance fails and cannot be recovered,
+            your invoice (members are paid sooner: clause 12). If the customer&rsquo;s balance fails and cannot be recovered,
             we will tell you and agree what happens next: we will not simply leave it
             outstanding.
           </p>
@@ -253,6 +253,15 @@ export default function TermsPage() {
             each price you give is <strong>5%</strong> instead of our standard rate
             (currently 15%). You still keep the price you quote (clause 4); the customer
             simply sees a lower total. The rate is fixed when you send the price.
+          </p>
+          <p>
+            <strong>Expedited payouts.</strong> For other contractors we pay the price in
+            clause 4 once the customer&rsquo;s funds have cleared into our bank account.
+            While you are a member, we pay you once the customer&rsquo;s balance payment has
+            gone through and we have your invoice, without waiting for those funds to reach
+            us, which is typically up to <strong>3 days</strong> sooner. Whether you are a
+            member is judged on the day we pay. Clauses 4 and 5 still apply, including
+            what happens when the customer raises a problem or their balance fails.
           </p>
           <p>
             <strong>Open: the customer&rsquo;s details.</strong> Open includes everything in

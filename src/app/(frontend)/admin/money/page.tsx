@@ -54,7 +54,7 @@ type Job = {
   awarded_at: string | null;
   contractor_invoice_at: string | null;
   service: { name: string } | null;
-  contractor: { business_name: string } | null;
+  contractor: { id: string; business_name: string } | null;
   quote: { client_price_pence: number; contractor_quote: { contractor_price_pence: number } | null } | null;
   payments: Payment[];
 };
@@ -154,7 +154,7 @@ export default async function MoneyPage() {
        submission:job_submissions!job_payments_submission_id_fkey(
          id, status, contact_name, service_verbatim, awarded_at, contractor_invoice_at,
          service:services(name),
-         contractor:contractors!job_submissions_awarded_contractor_id_fkey(business_name),
+         contractor:contractors!job_submissions_awarded_contractor_id_fkey(id, business_name),
          quote:client_quotes!job_submissions_accepted_quote_fk(
            client_price_pence, contractor_quote:contractor_quotes(contractor_price_pence)))`,
     )
@@ -202,6 +202,22 @@ export default async function MoneyPage() {
   const paidOutPence = figures.reduce((n, f) => n + (f.payout?.amount_pence ?? 0), 0);
   const paidOutJobs = figures.filter((f) => f.payout).length;
   const owedNoInvoice = owed.filter((f) => !f.j.contractor_invoice_at).length;
+  // Expedited payouts (terms clause 12): a member is paid once the customer's
+  // balance has gone through, not once Stripe's payout lands. Judged today.
+  const owedContractors = [...new Set(owed.map((f) => f.j.contractor?.id).filter((x): x is string => !!x))];
+  const memberChecks = await Promise.all(
+    owedContractors.map(async (id) => {
+      const { data, error: memberErr } = await admin.rpc('contractor_is_premium', { p_contractor_id: id });
+      if (memberErr) console.error('[money] membership check failed:', id, memberErr);
+      return [id, data === true] as const;
+    }),
+  );
+  const members = new Set(memberChecks.filter(([, m]) => m).map(([id]) => id));
+  // Only once the balance has actually been paid: a completed job whose
+  // balance is still requested or failed is owed nothing early.
+  const payNow = (f: (typeof figures)[number]) =>
+    f.balance?.status === 'paid' && !!f.j.contractor && members.has(f.j.contractor.id);
+  const owedToMembers = owed.filter(payNow).length;
   const marginPence = figures.reduce((n, f) => n + f.margin, 0);
   const marginBanked = figures.filter((f) => f.left === 0 && !STOPPED.has(f.j.status)).reduce((n, f) => n + f.margin, 0);
 
@@ -260,6 +276,7 @@ export default async function MoneyPage() {
                 ? 'Nothing unpaid'
                 : `${owed.length} finished job${owed.length === 1 ? '' : 's'} not paid yet`}
               {owedNoInvoice > 0 ? ` · ${owedNoInvoice} without an invoice yet` : ''}
+              {owedToMembers > 0 ? ` · ${owedToMembers} to members, pay now` : ''}
               {paidOutJobs > 0 ? ` · ${formatGBP(paidOutPence)} paid out on ${paidOutJobs}` : ''}
             </>
           }
@@ -318,7 +335,14 @@ export default async function MoneyPage() {
                       paid {formatGBP(payout.amount_pence)} {formatDate(payout.paid_on)}
                     </div>
                   ) : (
-                    FINISHED.has(j.status) && <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>not paid yet</div>
+                    FINISHED.has(j.status) && (
+                      <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+                        not paid yet
+                        {payNow({ j, balance } as (typeof figures)[number]) && (
+                          <span style={{ color: '#8a6d00' }}> · ★ member, pay without waiting for clearance</span>
+                        )}
+                      </div>
+                    )
                   )}
                 </td>
                 <td>{formatGBP(margin)}</td>

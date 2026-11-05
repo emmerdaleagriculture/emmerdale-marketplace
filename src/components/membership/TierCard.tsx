@@ -17,6 +17,7 @@ export const gbp = (n: number) => `£${n}`;
 export const PREMIUM_BENEFITS: ReactNode[] = [
   <><b>First refusal on new jobs</b> in your area, for up to 7 days before the rest of the market sees them.</>,
   <><b>5% commission instead of 15%.</b> Price a job at £400 and the customer sees £420, not £460.</>,
+  <><b>Expedited payouts.</b> We pay you as soon as the customer’s payment goes through, up to 3 days sooner than other accounts.</>,
   <><b>Cancel any time.</b> You keep it to the end of the period you’ve paid for.</>,
 ];
 export const OPEN_BENEFITS: ReactNode[] = [
