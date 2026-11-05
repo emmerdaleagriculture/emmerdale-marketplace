@@ -23,10 +23,20 @@ export function OnboardingForm({
 }) {
   const [state, action, pending] = useActionState(completeOnboardingAction, emptyFormState);
   const [membership, setMembership] = useState<Choice>('free');
-  /** Services start unticked, and a checkbox group can't be `required`, so
-   *  the form stops here rather than sending the server's error to the top
-   *  of a long page. */
+  /** Services start unticked and counties too, and a checkbox group can't be
+   *  `required`, so the form checks both here rather than sending the
+   *  server's error to the top of a long page (and React's post-action
+   *  reset clearing everything typed). Once a submit has been tried, each
+   *  message follows the boxes as they change, unticking included. */
+  const [tried, setTried] = useState(false);
   const [noServices, setNoServices] = useState(false);
+  const [noCounties, setNoCounties] = useState(false);
+  const none = (root: ParentNode, name: string) => !root.querySelector(`input[name="${name}"]:checked`);
+  const goTo = (id: string, name: string) => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.getElementById(id)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    document.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.focus({ preventScroll: true });
+  };
   const tier = tierOf(membership);
   /** Clicking a card picks its monthly plan — unless it is already the pick,
    *  when a click on the blurb must not undo a yearly choice. */
@@ -53,12 +63,21 @@ export function OnboardingForm({
     <form
       action={action}
       onSubmit={(e) => {
-        const none = !e.currentTarget.querySelector('input[name="service_ids"]:checked');
-        setNoServices(none);
-        if (none) {
+        const services = none(e.currentTarget, 'service_ids');
+        const counties = none(e.currentTarget, 'county_ids');
+        setTried(true);
+        setNoServices(services);
+        setNoCounties(counties);
+        if (services || counties) {
           e.preventDefault();
-          document.getElementById('onboarding-services')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (services) goTo('onboarding-services', 'service_ids');
+          else goTo('onboarding-counties', 'county_ids');
         }
+      }}
+      onChange={(e) => {
+        if (!tried) return;
+        setNoServices(none(e.currentTarget, 'service_ids'));
+        setNoCounties(none(e.currentTarget, 'county_ids'));
       }}
     >
       {state.error && <p className={f.error}>{state.error}</p>}
@@ -104,16 +123,20 @@ export function OnboardingForm({
           Pick at least one service.
         </p>
       )}
-      <div onChange={() => setNoServices(false)}>
-        <ServicePicker services={services} selected={[]} />
-      </div>
+      <ServicePicker services={services} selected={[]} />
 
-      <div className={a.groupTitle}>Counties you cover</div>
+      <div className={a.groupTitle} id="onboarding-counties">Counties you cover</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>
         You’ll be notified about jobs in the counties you select. Use “Select all”
         to add a whole region at once.
       </p>
-      <CountyPicker counties={counties} />
+      {noCounties && (
+        <p className={f.error} role="alert" style={{ marginBottom: 12 }}>
+          Select at least one county.
+        </p>
+      )}
+      {/* "Select all" ticks boxes without a change event, so it reports here. */}
+      <CountyPicker counties={counties} onSelectAll={() => tried && setNoCounties(none(document, 'county_ids'))} />
 
       <div className={a.groupTitle}>Choose your membership</div>
       <p className={f.hint} style={{ marginBottom: 16 }}>
