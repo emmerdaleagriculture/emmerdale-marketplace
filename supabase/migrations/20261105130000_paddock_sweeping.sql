@@ -7,8 +7,10 @@
 -- Droppings alone stay Manure sweeping.
 --
 -- Priced by the acre (area_priced), like Manure sweeping, and listed.
--- Ticked for every contractor by APPENDING the id (the 20261011180000
--- pattern); services_only contractors are skipped, their ticks are a filter.
+-- Ticked through sq_backfill_new_services (20261105120000): only for
+-- contractors who tick every other service, or who tick Manure sweeping
+-- (the same towed sweeper or vacuum). Ticks route jobs for everyone since
+-- 20261105120000, so a blanket append would claim work nobody chose.
 --
 -- The keyword labeller learns sweeping phrases ahead of the bare 'muck'.
 -- Re-states the 20261021190000 body with those lines added.
@@ -18,15 +20,7 @@ insert into services (name, area_priced, listed) values
   ('Paddock sweeping', true, true)
 on conflict (name) do nothing;
 
-update contractors k
-   set services = (
-     select array_agg(distinct id order by id)
-       from unnest(coalesce(k.services, '{}'::int[]) ||
-            (select array_agg(id) from services where name = 'Paddock sweeping')) as t(id)
-   )
- where not coalesce(k.services_only, false)
-   and not (coalesce(k.services, '{}'::int[]) @>
-            (select array_agg(id) from services where name = 'Paddock sweeping'));
+select sq_backfill_new_services(array['Paddock sweeping'], 'Manure sweeping');
 
 create or replace function service_label_from_text(p_text text) returns text
 language sql immutable set search_path = public as $$
@@ -95,7 +89,7 @@ language sql immutable set search_path = public as $$
     ('muck heap',       'Muck spreading'),
     ('muckheap',        'Muck spreading'),
     ('manure heap',     'Muck spreading'),
-    -- 20261103120000. Leaf, acorn and sycamore-seed clearing ahead of the
+    -- 20261105130000. Leaf, acorn and sycamore-seed clearing ahead of the
     -- bare 'muck': "sweep the acorns, and the muck too" is a paddock sweep.
     -- Not bare 'sycamore' ("fell two sycamores" is felling) and not bare
     -- 'leaves' ("the topper leaves clumps").
