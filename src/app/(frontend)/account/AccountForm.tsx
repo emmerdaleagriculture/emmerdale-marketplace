@@ -157,8 +157,8 @@ export function AccountForm({
         </summary>
         <div className={ac.sectionBody}>
           <p className={f.hint} style={{ marginBottom: 12 }}>
-            Fewer services means fewer irrelevant invitations: keep this accurate and
-            you&rsquo;ll only hear about work you actually want.
+            You&rsquo;re only sent jobs for the services ticked here, so keep it
+            accurate: tick everything you&rsquo;d price, untick what you don&rsquo;t do.
           </p>
           <ServicePicker services={services} selected={contractor.services ?? []} />
         </div>

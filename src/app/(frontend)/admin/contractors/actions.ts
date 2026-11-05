@@ -209,11 +209,10 @@ export async function sendContractorWarning(formData: FormData) {
 }
 
 /**
- * Only the work they ticked. With services_only on, every market invitation
- * path (distribution, late joins, the premium window, reminders — see
- * 20261009120000) skips this contractor for jobs whose service is not in
- * contractors.services. Off is how every other contractor works: county and
- * distance only. Switching it on does not withdraw invitations already sent.
+ * Strict. Every contractor is only invited to jobs for the services they tick
+ * (sq_contractor_wants_job, 20261105120000); services_only also skips jobs
+ * that can't be matched to any service. Switching it on does not withdraw
+ * invitations already sent.
  */
 export async function setServicesOnly(formData: FormData) {
   await assertAdmin();
@@ -239,8 +238,9 @@ const NATIONWIDE_RADIUS_MILES = 1000;
  * Cover the whole country: every county, and a per-contractor radius no UK
  * job can exceed (the default is sq_invite_radius_miles, 40). Ticking the
  * counties fires contractor_counties_invite, which catches them up on every
- * open job they qualify for — so for anyone not on services_only this is
- * every open job in the country, and the page says so before the button.
+ * open job they qualify for. Without services_only (strict) that includes
+ * every open job in the country with no service set, so the page asks for
+ * strict first and says why.
  */
 export async function coverWholeCountry(formData: FormData) {
   await assertAdmin();

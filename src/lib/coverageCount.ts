@@ -8,15 +8,15 @@ import type { CoverageAnswer } from '@/lib/coverageLine';
  * and the confirm page show as soon as a postcode goes in.
  *
  * Postcode → county and point through the same resolver the parse pipeline
- * uses, then sq_coverage_count, which applies the invitation rule itself —
- * county, approved and vetted, inside each contractor's own radius, and not
- * a services-only supplier unless the card they picked is what it supplies.
- * One source of truth: if distribution changes who it invites, this changes
- * with it, and the page never promises contractors the job will not get.
+ * uses, then sq_coverage_count, which applies the invitation rule itself
+ * (sq_contractor_wants_service) — county, approved and vetted, inside each
+ * contractor's own radius, and ticking the card's service (or everyone, if
+ * nobody in the county ticks it). One source of truth: if distribution
+ * changes who it invites, this changes with it.
  *
- * `service` is a front-page card slug, or nothing. A free-text job gets the
- * general count; the one services-only supplier on the books today is hay,
- * and hay is only ever asked for by name.
+ * `service` is a front-page card slug, or nothing. A free-text job has no
+ * service yet, so it gets the count a job with no service would reach; once
+ * classified it may reach fewer (only those who tick its service).
  */
 export async function coverageForPostcode(
   raw: string,
