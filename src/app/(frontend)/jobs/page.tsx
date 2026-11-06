@@ -11,6 +11,7 @@ import a from '../auth.module.css';
 import f from '@/components/forms/forms.module.css';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import j from './jobs.module.css';
+import { isAppRequest } from '@/lib/appMode.server';
 
 export const metadata: Metadata = { title: 'Jobs' };
 
@@ -49,6 +50,33 @@ export default async function JobsBoardPage() {
   // Jobs the contractor has already opened live under "Jobs you've opened";
   // the top list is what's new to them.
   const newJobs = (liveJobs ?? []).filter((job) => !job.opened_at);
+  const opened = openedJobs ?? [];
+  // In the app the opened list folds into a closed drawer so new work stays
+  // on the first screen; on the website it stays laid out in full.
+  const inApp = await isAppRequest();
+
+  const openedGrid = (
+    <div className={j.grid}>
+      {opened.map((job) => (
+        <Link key={job.id} href={`/jobs/${job.id}`} prefetch={false} className={j.card}>
+          <div className={j.cardTop}>
+            <span className={j.cardTitle}>{job.title}</span>
+            <span className={j.closes}>
+              {job.status === 'completed'
+                ? 'filled'
+                : job.status === 'withdrawn'
+                  ? 'withdrawn'
+                  : `opened ${timeAgo(job.opened_at!)}`}
+            </span>
+          </div>
+          <div className={j.meta}>{jobLocation(job)}</div>
+          <div className={j.cardFoot}>
+            <span>Contact details available</span>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
 
   return (
     <div className={a.wrap}>
@@ -123,35 +151,31 @@ export default async function JobsBoardPage() {
                 </div>
               )}
 
-              {(openedJobs ?? []).length > 0 && (
-                <>
-                  <div className={a.groupTitle}>Jobs you’ve opened</div>
-                  <p className={a.sub}>
-                    You’ve seen the customer’s details for these. Get in touch if
-                    you haven’t already.
-                  </p>
-                  <div className={j.grid}>
-                    {(openedJobs ?? []).map((job) => (
-                      <Link key={job.id} href={`/jobs/${job.id}`} prefetch={false} className={j.card}>
-                        <div className={j.cardTop}>
-                          <span className={j.cardTitle}>{job.title}</span>
-                          <span className={j.closes}>
-                            {job.status === 'completed'
-                              ? 'filled'
-                              : job.status === 'withdrawn'
-                                ? 'withdrawn'
-                                : `opened ${timeAgo(job.opened_at!)}`}
-                          </span>
-                        </div>
-                        <div className={j.meta}>{jobLocation(job)}</div>
-                        <div className={j.cardFoot}>
-                          <span>Contact details available</span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </>
-              )}
+              {opened.length > 0 &&
+                (inApp ? (
+                  <details className={j.drawer}>
+                    <summary className={j.drawerHead}>
+                      Jobs you’ve opened
+                      <span className={j.drawerCount}>{opened.length}</span>
+                    </summary>
+                    <div className={j.drawerBody}>
+                      <p className={a.sub}>
+                        You’ve seen the customer’s details for these. Get in touch if
+                        you haven’t already.
+                      </p>
+                      {openedGrid}
+                    </div>
+                  </details>
+                ) : (
+                  <>
+                    <div className={a.groupTitle}>Jobs you’ve opened</div>
+                    <p className={a.sub}>
+                      You’ve seen the customer’s details for these. Get in touch if
+                      you haven’t already.
+                    </p>
+                    {openedGrid}
+                  </>
+                ))}
             </>
           )}
         </div>
