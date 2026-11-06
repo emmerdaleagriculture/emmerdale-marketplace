@@ -150,6 +150,10 @@ const faqs = [
     a: 'The customer pays us for arranging the work and standing behind it. It does not come out of your price.',
   },
   {
+    q: 'Is there an app?',
+    a: 'Yes, for iPhone: search for Emmerdale Agriculture on the App Store. New jobs arrive as notifications, and you can price, message customers and send invoices from it. On any other phone the website does the same, and jobs reach you by email and text.',
+  },
+  {
     q: 'How much work will I get?',
     a: 'It depends on your county and the time of year: topping in high summer and hedge cutting after the nesting season are the busy stretches. We would rather tell you straight than promise a number we cannot stand behind.',
   },

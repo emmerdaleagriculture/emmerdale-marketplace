@@ -10,6 +10,7 @@
 
 // deno-lint-ignore-file no-explicit-any
 import { smsCallbackKey, smsCallbackUrl } from '../_shared/smsCallback.ts';
+import { smsAppLine } from './appline.ts';
 
 type Supabase = any;
 
@@ -128,6 +129,24 @@ export function renderSms(
   }
 }
 
+/** GSM-7 segments: 160 characters alone, 153 a part once it splits. */
+export function segments(body: string): number {
+  return body.length <= 160 ? 1 : Math.ceil(body.length / 153);
+}
+
+/**
+ * The body with the iPhone app line: always when it costs nothing (no extra
+ * segment), otherwise only when `due` (this phone hasn't had it for 30 days).
+ * Every body here is GSM-7 (gsm() above), so length is the measure.
+ */
+export function withSmsAppLine(body: string, site: string, due = false): string {
+  const longer = body + smsAppLine(site);
+  return due || segments(longer) === segments(body) ? longer : body;
+}
+
+/** How long a phone goes between app lines that cost a segment. */
+const APP_LINE_GAP_MS = 30 * 24 * 3600_000;
+
 /** 7 characters of base62: 3.5 trillion codes, so a guess finds nothing. */
 function linkCode(): string {
   const abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -241,6 +260,21 @@ export async function drainSms(
   }
   const rowsDue = (data ?? []) as PendingSms[];
   const redundant = await redundantTexts(supabase, rowsDue.filter((m) => m.hold_until));
+  // Contractors already signed in on the app aren't told about it.
+  const contractorIds = [...new Set(rowsDue.map((m) => m.contractor_id).filter((x): x is string => !!x))];
+  const { data: devices } = contractorIds.length
+    ? await supabase.from('device_tokens').select('user_id').in('user_id', contractorIds).is('revoked_at', null)
+    : { data: [] };
+  const hasApp = new Set((devices ?? []).map((d: { user_id: string }) => d.user_id));
+  // Phones that have had the app line in the last 30 days. Before the
+  // 20261106120000 migration the column is missing: the query errors, and
+  // then every phone counts as recent, so only free lines go out.
+  const phones = [...new Set(rowsDue.map((m) => m.to_phone))];
+  const { data: lined, error: linedErr } = phones.length
+    ? await supabase.from('pending_sms').select('to_phone').in('to_phone', phones).eq('app_line', true)
+        .gte('sent_at', new Date(now.getTime() - APP_LINE_GAP_MS).toISOString())
+    : { data: [], error: null };
+  const recentLine = new Set((lined ?? []).map((r: { to_phone: string }) => r.to_phone));
 
   let sent = 0, skipped = 0, failed = 0, retried = 0;
   const finish = (id: string, fields: Record<string, unknown>) =>
@@ -273,10 +307,16 @@ export async function drainSms(
     // can never arrive ahead of the row that answers it.
     const code = linkCode();
     let target: string | null = null;
-    const body = renderSms(m.kind, m.payload ?? {}, site, (url) => {
+    const rendered = renderSms(m.kind, m.payload ?? {}, site, (url) => {
       target = url;
       return `${site}/t/${code}`;
     });
+    const body = rendered && !(m.contractor_id && hasApp.has(m.contractor_id))
+      ? withSmsAppLine(rendered, site, !linedErr && !recentLine.has(m.to_phone))
+      : rendered;
+    const appLine = body !== rendered;
+    // One per phone per run too: a batch can hold several texts to one phone.
+    if (appLine) recentLine.add(m.to_phone);
     if (!body) {
       await finish(m.id, { status: 'failed', detail: 'nothing to render' });
       failed++;
@@ -312,7 +352,8 @@ export async function drainSms(
 
     if (status >= 200 && status < 300) {
       await finish(m.id, { status: 'sent', sent_at: new Date().toISOString(),
-                           provider_message_id: res.sid ?? null, attempts: m.attempts + 1 });
+                           provider_message_id: res.sid ?? null, attempts: m.attempts + 1,
+                           ...(appLine && !linedErr ? { app_line: true } : {}) });
       sent++;
     } else if (res.code === UNSUBSCRIBED) {
       // They texted STOP. Record it where /account or the job page can show

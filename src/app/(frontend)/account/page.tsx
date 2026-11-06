@@ -9,7 +9,8 @@ import { MembershipCard } from './MembershipCard';
 import { isLiveSub, membershipOf, MEMBERSHIP_GLYPHS, MEMBERSHIP_NAMES } from '@/lib/membership';
 import { contractorEmailHealth } from '@/lib/contractors/emailConfirm';
 import { ContactUsButton } from '@/components/ContactUsButton';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
+import { GetTheApp } from '@/components/GetTheApp';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { isAppRequest } from '@/lib/appMode.server';
 import { getCounties, getServices } from '@/lib/reference';
@@ -86,7 +87,7 @@ export default async function AccountPage({
   // No profile: a customer (→ their jobs) or a contractor mid-onboarding.
   if (!contractor) redirect(await nonContractorPath(user.id));
 
-  const [emailHealth, counties, services, ccRows, invQ, wonQ, quoteQ, subQ] = await Promise.all([
+  const [emailHealth, counties, services, ccRows, invQ, wonQ, quoteQ, subQ, deviceQ] = await Promise.all([
     contractorEmailHealth(contractor.id, contractor.email),
     getCounties(),
     getServices(),
@@ -111,7 +112,14 @@ export default async function AccountPage({
       .select('status, plan, tier, current_period_end, cancel_at_period_end')
       .eq('contractor_id', user.id)
       .maybeSingle(),
+    // Signed in on the app at least once (a push token): no need to sell it.
+    createServiceRoleClient()
+      .from('device_tokens')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .is('revoked_at', null),
   ]);
+  const hasApp = (deviceQ.count ?? 0) > 0;
   const selectedCounties = (ccRows.data ?? []).map((r) => r.county_id!).filter(Boolean);
 
   const now = Date.now();
@@ -292,6 +300,8 @@ export default async function AccountPage({
               suspended
             />
           )}
+
+          {status !== 'suspended' && !app && !hasApp && <GetTheApp />}
 
           {status === 'approved' && (
             <>

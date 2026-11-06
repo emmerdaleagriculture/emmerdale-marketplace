@@ -20,6 +20,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { drainSms } from './sms.ts';
 import { drainPush } from './push.ts';
 import { withReference } from './reline.ts';
+import { withAppLine } from './appline.ts';
 
 const MAX_ATTEMPTS = 5;
 const BATCH = 50;
@@ -1688,7 +1689,7 @@ Deno.serve(async (req) => {
     // "Re: <the job>" above every job email (20261009180000): the queue
     // stamps job_title as the row is inserted; the digest and announcements
     // have none and open as before.
-    const text = withReference(rendered.text, e.payload ?? {});
+    const text = withAppLine(withReference(rendered.text, e.payload ?? {}), e.kind, e.to_email, SITE_URL);
 
     // TEST MODE redirect (sealed-quote contractor kinds only).
     if (
