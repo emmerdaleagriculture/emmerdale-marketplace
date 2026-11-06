@@ -86,6 +86,14 @@ const nextConfig = {
 
   async redirects() {
     return [
+      // The short App Store link texts and emails carry (send-emails APP_LINK),
+      // so a text stays inside its 160 characters. Temporary, so the target
+      // can change (an Android listing, a store page with tracking).
+      {
+        source: '/iphone',
+        destination: 'https://apps.apple.com/gb/app/emmerdale-agriculture/id6824264882',
+        permanent: false,
+      },
       // iOS, mail clients and bookmark fetchers probe /apple-touch-icon.png
       // and its -precomposed and -120x120 variants without reading the page's
       // <link rel="apple-touch-icon">. The plain name is a file in /public;

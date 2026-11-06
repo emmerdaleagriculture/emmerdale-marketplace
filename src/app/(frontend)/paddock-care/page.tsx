@@ -106,6 +106,10 @@ const faqs = [
     a: 'Yes, though it is a light one. Registration is free and subject to approval: we check who you are and that you are a working contracting business, and we speak to you before any job reaches you.',
   },
   {
+    q: 'Is there an app?',
+    a: 'Yes, for iPhone: search for Emmerdale Agriculture on the App Store. New jobs arrive as notifications, and you can price, message customers and send invoices from it. On any other phone the website does the same, and jobs reach you by email and text.',
+  },
+  {
     q: 'How much work will I get?',
     a: 'It depends on your county and the time of year: topping in high summer and hedge cutting after the nesting season are the busy stretches. We would rather tell you straight than promise a number we cannot stand behind.',
   },
