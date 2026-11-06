@@ -130,3 +130,8 @@ export const BANK_ACCOUNT_NUMBER = '65856946';
 export function paymentReference(submissionId: string): string {
   return `EA-${submissionId.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
 }
+
+// The iPhone app, live on the App Store since 2026-11-06. The id feeds the
+// Smart App Banner (root layout); the URL is what links point at.
+export const IOS_APP_ID = '6824264882';
+export const IOS_APP_URL = `https://apps.apple.com/gb/app/emmerdale-agriculture/id${IOS_APP_ID}`;

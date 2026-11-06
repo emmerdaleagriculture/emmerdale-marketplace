@@ -7,6 +7,7 @@ import {
   COMPANY_REG_LINE,
   HPM_URL,
   SITE_LOCATION_LINE,
+  IOS_APP_URL,
 } from '@/lib/site';
 
 /**
@@ -38,6 +39,7 @@ export function SiteFooter() {
             <div className={styles.colTitle}>The network</div>
             <Link href="/#how-it-works">How it works</Link>
             <Link href="/notes">Notes from the field</Link>
+            <a href={IOS_APP_URL}>iPhone app</a>
             <FooterAccountLinks />
           </nav>
 

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Tenor_Sans, DM_Sans, Inter } from 'next/font/google';
 import './globals.css';
-import { COMPANY_LEGAL_NAME, SITE_NAME, SITE_STRAPLINE, siteUrl } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, IOS_APP_ID, SITE_NAME, SITE_STRAPLINE, siteUrl } from '@/lib/site';
 import { Suspense } from 'react';
 import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
 import { AbroadPrompt } from '@/components/abroad/AbroadPrompt';
@@ -78,6 +78,9 @@ export const metadata: Metadata = {
   // <meta name="facebook-domain-verification" content="…"> on every page;
   // Meta only reads it on the root, but it costs nothing to carry site-wide
   // and survives someone pointing the verification at a different path.
+  // Safari on an iPhone shows its "Open in the App Store" banner. Other
+  // browsers, and the app's own web view, ignore the tag.
+  itunes: { appId: IOS_APP_ID },
   verification: {
     other: {
       'facebook-domain-verification': 'tz4e89ngu5xtoh3brsykbwgr1i5yp0',
