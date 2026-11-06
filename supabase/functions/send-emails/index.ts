@@ -919,8 +919,11 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `Thanks. We have your invoice${p.invoice_name ? ` (${p.invoice_name})` : ''} for the ` +
           `${p.service ? `${p.service} ` : ''}job${p.contact_name ? ` for ${p.contact_name}` : ''}.\n\n` +
-          `${p.amount_pence ? `The ${gbp(p.amount_pence)} is` : 'It’s'} paid as soon as the customer’s ` +
-          `funds have cleared into our account, typically 7 days or less from now. ` +
+          (p.member
+            ? `As a member, ${p.amount_pence ? `the ${gbp(p.amount_pence)} is` : 'it’s'} paid as soon as the ` +
+              `customer’s payment has gone through, without waiting for the funds to reach our account. `
+            : `${p.amount_pence ? `The ${gbp(p.amount_pence)} is` : 'It’s'} paid as soon as the customer’s ` +
+              `funds have cleared into our account, typically 7 days or less from now. `) +
           `You’ll get a note from us when it has been sent.\n\n` +
           `Your won jobs: ${SITE_URL}/won`,
       };
@@ -1792,22 +1795,30 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Texts go after the emails, so a Twilio problem can't hold mail up.
-  let sms: Record<string, unknown>;
-  try {
-    sms = await drainSms(supabase, SITE_URL, sqAllowlist);
-  } catch (err) {
-    console.error('[send-emails] sms drain failed:', err);
-    sms = { error: String(err).slice(0, 300) };
-  }
-
-  // Pushes after the texts, for the same reason.
+  // Pushes after the emails, so a Firebase problem can't hold mail up; and
+  // before the texts, because a text for someone with the app waits for its
+  // push to go (migration 20261104120000_push_first_texts). At 08:00 a
+  // night-held push and its text are both due: the push goes and its
+  // text is released only then (pending_push_settle_sms), and the drain's
+  // answer says whether the push channel is working at all.
   let push: Record<string, unknown>;
   try {
     push = await drainPush(supabase, SITE_URL, sqAllowlist, SQ_CONTRACTOR_KINDS);
   } catch (err) {
     console.error('[send-emails] push drain failed:', err);
     push = { error: String(err).slice(0, 300) };
+  }
+
+  let sms: Record<string, unknown>;
+  try {
+    // Texts wait for pushes only when the push drain actually worked this
+    // run. drainPush stops starting pushes after 25s and caps each request
+    // at 8s, so a slow Firebase delays texts by seconds, not the whole run.
+    const pushLive = push.configured !== false && !('error' in push);
+    sms = await drainSms(supabase, SITE_URL, sqAllowlist, pushLive);
+  } catch (err) {
+    console.error('[send-emails] sms drain failed:', err);
+    sms = { error: String(err).slice(0, 300) };
   }
 
   return new Response(

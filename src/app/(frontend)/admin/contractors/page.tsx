@@ -47,7 +47,7 @@ function Row({ c }: { c: ContractorRow }) {
   return (
     <tr>
       <td>
-        <Link href={`/admin/contractors/${c.id}`}>{c.business_name}</Link>
+        <Link href={`/admin/contractors/${c.id}`} prefetch={false}>{c.business_name}</Link>
         {c.premium && (
           <b style={{ fontSize: 12, marginLeft: 6, color: '#8a6d00' }}>{c.open ? '◆ Open' : '★ Premium'}</b>
         )}

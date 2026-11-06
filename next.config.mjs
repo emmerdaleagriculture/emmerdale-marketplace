@@ -86,6 +86,16 @@ const nextConfig = {
 
   async redirects() {
     return [
+      // iOS, mail clients and bookmark fetchers probe /apple-touch-icon.png
+      // and its -precomposed and -120x120 variants without reading the page's
+      // <link rel="apple-touch-icon">. The plain name is a file in /public;
+      // every variant lands on it here, at the edge, instead of running the
+      // 404 page as a function (~450 times a week, measured 2026-10-30).
+      {
+        source: '/apple-touch-icon-:variant.png',
+        destination: '/apple-touch-icon.png',
+        permanent: true,
+      },
       // The two imported notes shipped with slugs hard-truncated at 80 chars,
       // mid-word. Renamed to readable, keyword-bearing URLs; these keep the
       // originals alive for anything already shared.

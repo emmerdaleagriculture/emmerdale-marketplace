@@ -140,6 +140,8 @@ export async function deleteContractor(formData: FormData) {
   // delete their own login), so both are removed here, row first.
   const { error: rowErr } = await admin.from('contractors').delete().eq('id', id);
   if (rowErr) throw new Error(rowErr.message);
+  // Coverage changed the moment the row went, whatever the login removal does.
+  revalidateDirectory();
   const { error: authErr } = await admin.auth.admin.deleteUser(id);
   if (authErr) throw new Error(`The contractor row is gone but their login could not be removed: ${authErr.message}`);
 
@@ -207,11 +209,10 @@ export async function sendContractorWarning(formData: FormData) {
 }
 
 /**
- * Only the work they ticked. With services_only on, every market invitation
- * path (distribution, late joins, the premium window, reminders — see
- * 20261009120000) skips this contractor for jobs whose service is not in
- * contractors.services. Off is how every other contractor works: county and
- * distance only. Switching it on does not withdraw invitations already sent.
+ * Strict. Every contractor is only invited to jobs for the services they tick
+ * (sq_contractor_wants_job, 20261105120000); services_only also skips jobs
+ * that can't be matched to any service. Switching it on does not withdraw
+ * invitations already sent.
  */
 export async function setServicesOnly(formData: FormData) {
   await assertAdmin();
@@ -224,6 +225,8 @@ export async function setServicesOnly(formData: FormData) {
   const { error } = await admin.from('contractors').update({ services_only: on }).eq('id', id);
   if (error) throw new Error(error.message);
 
+  // Services-only contractors are left out of the county coverage counts.
+  revalidateDirectory();
   revalidatePath('/admin/contractors');
   revalidatePath(`/admin/contractors/${id}`);
 }
@@ -235,8 +238,9 @@ const NATIONWIDE_RADIUS_MILES = 1000;
  * Cover the whole country: every county, and a per-contractor radius no UK
  * job can exceed (the default is sq_invite_radius_miles, 40). Ticking the
  * counties fires contractor_counties_invite, which catches them up on every
- * open job they qualify for — so for anyone not on services_only this is
- * every open job in the country, and the page says so before the button.
+ * open job they qualify for. Without services_only (strict) that includes
+ * every open job in the country with no service set, so the page asks for
+ * strict first and says why.
  */
 export async function coverWholeCountry(formData: FormData) {
   await assertAdmin();
@@ -261,6 +265,7 @@ export async function coverWholeCountry(formData: FormData) {
     });
   if (ccErr) throw new Error(ccErr.message);
 
+  revalidateDirectory();
   revalidatePath('/admin/contractors');
   revalidatePath(`/admin/contractors/${id}`);
 }

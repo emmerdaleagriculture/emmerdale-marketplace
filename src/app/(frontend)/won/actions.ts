@@ -314,6 +314,10 @@ export async function uploadInvoiceAction(
     : { data: null };
   const owedPence =
     (accepted?.cq as { contractor_price_pence: number } | null)?.contractor_price_pence ?? null;
+  // Members are paid once the customer's balance payment goes through, not
+  // once Stripe's payout reaches our bank (terms clause 12, expedited payouts).
+  const { data: member, error: memberErr } = await admin.rpc('contractor_is_premium', { p_contractor_id: user.id });
+  if (memberErr) console.error('[sq] membership check failed, invoice treated as non-member:', memberErr);
   if (contractor?.email) {
     const { error: mailErr } = await admin.from('pending_emails').insert({
       kind: 'sq_invoice_received',
@@ -325,6 +329,7 @@ export async function uploadInvoiceAction(
         // A different figure isn't owed until we've agreed it.
         amount_pence: differs ? null : owedPence,
         invoice_name: file.name.slice(0, 200),
+        member: member === true,
       },
     });
     if (mailErr) console.error('[sq] invoice-received email not queued:', mailErr);
@@ -334,7 +339,9 @@ export async function uploadInvoiceAction(
     `${differs ? 'Invoice differs from the quote' : 'Invoice to pay'}: ${contractor?.business_name ?? 'a contractor'}`,
     [
       `${contractor?.business_name ?? 'A contractor'} has sent their invoice for the job for ${js.contact_name ?? 'a customer'}. ` +
-      `Pay it once the customer's balance shows as cleared on /admin/money.`,
+      (member && !differs
+        ? `They're a member, so pay it as soon as the customer's balance shows as paid on /admin/money (expedited payout).`
+        : `Pay it once the customer's balance shows as cleared on /admin/money.`),
       ...(differs
         ? [
             '',
@@ -355,7 +362,9 @@ export async function uploadInvoiceAction(
       ? `Invoice received, thanks. It comes to ${formatGBP(amount.invoiced_pence ?? 0)} against your quote of ` +
         `${formatGBP(amount.quoted_pence ?? 0)}, so we’ll check the difference with you and the customer ` +
         'before it’s paid.'
-      : 'Invoice received, thanks. It’s paid once the customer’s funds have cleared into our account, typically 7 days or less.',
+      : member
+        ? 'Invoice received, thanks. As a member you’re paid as soon as the customer’s payment has gone through.'
+        : 'Invoice received, thanks. It’s paid once the customer’s funds have cleared into our account, typically 7 days or less.',
   };
 }
 

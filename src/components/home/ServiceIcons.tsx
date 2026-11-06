@@ -20,6 +20,7 @@ export type ServiceIconKey =
   | 'lime'
   | 'muck_spreading'
   | 'muck_heap'
+  | 'leaf_sweep'
   | 'tree'
   | 'stump'
   | 'logs'
@@ -203,6 +204,18 @@ const PATHS: Record<ServiceIconKey, ReactNode> = {
       <path d="M22 18 L30 10 L36 14" />
       <path d="M16 18 H24 L22 24 H17 Z" />
       <path d="M26 34 h.01 M30 32 h.01" />
+    </>
+  ),
+  // A leaf and an acorn above the sweeper's brush line.
+  leaf_sweep: (
+    <>
+      <path d="M6 22 C6 12 14 6 24 6 C24 16 16 22 6 22 Z" />
+      <path d="M6 22 L18 10" />
+      <path d="M27 17 H35" />
+      <path d="M28 17 C28 25 34 25 34 17" />
+      <path d="M31 17 V14" />
+      <path d="M4 30 H36" />
+      <path d="M8 34 V30 M14 34 V30 M20 34 V30 M26 34 V30 M32 34 V30" />
     </>
   ),
   // A tree and a felled log.

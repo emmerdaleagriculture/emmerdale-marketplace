@@ -68,6 +68,9 @@ export function HomeFooter() {
                 <Link href="/contractors">Find a contractor</Link>
               </li>
               <li>
+                <Link href="/cost-per-acre">Cost per acre by county</Link>
+              </li>
+              <li>
                 <Link href="/#how-it-works">How it works</Link>
               </li>
             </ul>

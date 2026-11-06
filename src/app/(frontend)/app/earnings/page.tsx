@@ -118,6 +118,10 @@ export default async function EarningsPage() {
             <span className={ui.tick} aria-hidden="true">✓</span>
             <span><strong>5% commission, not 15%.</strong> Customers see your price plus less on top.</span>
           </li>
+          <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
+            <span className={ui.tick} aria-hidden="true">✓</span>
+            <span><strong>Expedited payouts.</strong> Paid as soon as the customer pays, up to 3 days sooner.</span>
+          </li>
           {tier === 'open' && <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
             <span className={ui.tick} aria-hidden="true">✓</span>
             <span><strong>Open: the customer’s details on every job.</strong> Ring them and agree the work directly.</span>

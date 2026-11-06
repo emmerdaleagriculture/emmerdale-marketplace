@@ -51,6 +51,13 @@ export const HOME_SERVICES: HomeService[] = [
     icon: 'muck_sweeping',
   },
   {
+    slug: 'paddock-sweeping',
+    name: 'Paddock sweeping',
+    label: 'paddock sweeping',
+    blurb: 'Leaves, acorns and sycamore seeds swept up before they hurt a horse.',
+    icon: 'leaf_sweep',
+  },
+  {
     slug: 'overseeding',
     name: 'Overseeding',
     label: 'overseeding',

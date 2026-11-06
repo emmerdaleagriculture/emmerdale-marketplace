@@ -487,6 +487,75 @@ const MUCK_REMOVAL_QUESTIONS: ConditionQuestion[] = [
   },
 ];
 
+/**
+ * Paddock sweeping is priced on the area, but the time on site turns on what
+ * has fallen and where: a tree line along one fence is a fraction of a whole
+ * field under oaks, and the hopper empties more often in a heavy mast year.
+ * Where the sweepings go matters because acorns and sycamore seeds must not
+ * end up anywhere a horse can reach them.
+ */
+const SWEEP_QUESTIONS: ConditionQuestion[] = [
+  {
+    key: 'sweep_what',
+    label: 'What needs sweeping up?',
+    short: 'Sweeping',
+    hint: 'Tick all that apply.',
+    required: true,
+    multi: true,
+    options: [
+      { value: 'acorns', label: 'Acorns' },
+      { value: 'sycamore', label: 'Sycamore seeds' },
+      { value: 'leaves', label: 'Leaves' },
+      { value: 'droppings', label: 'Droppings as well' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+    exclusive: 'not_sure',
+  },
+  {
+    key: 'sweep_extent',
+    label: 'How much of the paddock needs doing?',
+    short: 'Area',
+    required: true,
+    options: [
+      { value: 'tree_line', label: 'Just under and around the trees' },
+      { value: 'most', label: 'Most of the paddock' },
+      { value: 'whole', label: 'The whole paddock' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'tree_count',
+    label: 'How many trees drop into the paddock?',
+    short: 'Trees',
+    options: [
+      { value: '1_3', label: 'One to three' },
+      { value: '4_10', label: 'Four to ten' },
+      { value: 'more', label: 'More than ten, or a whole tree line' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'sweepings_destination',
+    label: 'Where should the sweepings go?',
+    short: 'Goes to',
+    options: [
+      { value: 'on_site', label: 'A pile here, out of the horses’ reach' },
+      { value: 'off_site', label: 'Taken away' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'visits',
+    label: 'One visit or several?',
+    short: 'Visits',
+    options: [
+      { value: 'one_off', label: 'A one-off sweep' },
+      { value: 'regular', label: 'Regular visits through the autumn' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+];
+
 export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQuestion[]>> = {
   'Weed control': WEED_QUESTIONS,
   Spraying: WEED_QUESTIONS,
@@ -496,6 +565,7 @@ export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQues
   'Mobile log splitting': LOG_QUESTIONS,
   'Muck spreading': MUCK_QUESTIONS,
   'Muck heap removal': MUCK_REMOVAL_QUESTIONS,
+  'Paddock sweeping': SWEEP_QUESTIONS,
   'Paddock topping': [
     {
       key: 'last_cut',

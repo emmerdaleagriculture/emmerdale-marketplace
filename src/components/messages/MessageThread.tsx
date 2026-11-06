@@ -28,6 +28,12 @@ type Props = {
   /** Null when the thread is read-only; the sentence says why. */
   action: SendAction | null;
   /**
+   * Whether to show a contractor the monitoring warning. Off for an Open
+   * member: they may deal with the customer directly (contractor terms
+   * clause 8 does not apply to them), and the server never refuses them.
+   */
+  monitored?: boolean;
+  /**
    * Marks the other side's messages read. Run from the browser once the
    * thread is on screen, never during the server render: mail scanners
    * fetch emailed links, and that fetch is not someone reading.
@@ -50,7 +56,8 @@ type Props = {
 };
 
 /**
- * Said on every open conversation a contractor sees: the platform reads
+ * Said on every open conversation a non-Open contractor sees (see the
+ * `monitored` prop): the platform reads
  * these, and what happens to anyone who uses them to take the work
  * elsewhere. Written after two jobs were arranged privately through the
  * messages in Sep 2026. Contractors only — customers aren't shown it.
@@ -71,6 +78,7 @@ export function MessageThread({
   intro,
   notice,
   action,
+  monitored = true,
   closedNote,
   hidden,
   markRead,
@@ -101,7 +109,7 @@ export function MessageThread({
         {unread > 0 && <span className={s.badge}>{unread} new</span>}
       </div>
       {intro && <p className={s.intro}>{intro}</p>}
-      {action && me === 'contractor' && <p className={s.monitored}>{MONITORED}</p>}
+      {action && monitored && me === 'contractor' && <p className={s.monitored}>{MONITORED}</p>}
       {notice && (
         <p className={s.notice} role="note">
           {notice}

@@ -305,7 +305,7 @@ export default async function OpsPage() {
                     <div className={o.main}>
                       <div className={o.top}>
                         <span className={`${o.state} ${o[lane.tone]}`}>{label}</span>
-                        <Link href={`/admin/submissions/${j.id}`} className={o.title}>
+                        <Link href={`/admin/submissions/${j.id}`} className={o.title} prefetch={false}>
                           {title}
                         </Link>
                       </div>

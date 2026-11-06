@@ -23,6 +23,20 @@ export function OnboardingForm({
 }) {
   const [state, action, pending] = useActionState(completeOnboardingAction, emptyFormState);
   const [membership, setMembership] = useState<Choice>('free');
+  /** Services start unticked and counties too, and a checkbox group can't be
+   *  `required`, so the form checks both here rather than sending the
+   *  server's error to the top of a long page (and React's post-action
+   *  reset clearing everything typed). Once a submit has been tried, each
+   *  message follows the boxes as they change, unticking included. */
+  const [tried, setTried] = useState(false);
+  const [noServices, setNoServices] = useState(false);
+  const [noCounties, setNoCounties] = useState(false);
+  const none = (root: ParentNode, name: string) => !root.querySelector(`input[name="${name}"]:checked`);
+  const goTo = (id: string, name: string) => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.getElementById(id)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    document.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.focus({ preventScroll: true });
+  };
   const tier = tierOf(membership);
   /** Clicking a card picks its monthly plan — unless it is already the pick,
    *  when a click on the blurb must not undo a yearly choice. */
@@ -46,7 +60,26 @@ export function OnboardingForm({
   );
 
   return (
-    <form action={action}>
+    <form
+      action={action}
+      onSubmit={(e) => {
+        const services = none(e.currentTarget, 'service_ids');
+        const counties = none(e.currentTarget, 'county_ids');
+        setTried(true);
+        setNoServices(services);
+        setNoCounties(counties);
+        if (services || counties) {
+          e.preventDefault();
+          if (services) goTo('onboarding-services', 'service_ids');
+          else goTo('onboarding-counties', 'county_ids');
+        }
+      }}
+      onChange={(e) => {
+        if (!tried) return;
+        setNoServices(none(e.currentTarget, 'service_ids'));
+        setNoCounties(none(e.currentTarget, 'county_ids'));
+      }}
+    >
       {state.error && <p className={f.error}>{state.error}</p>}
 
       <div className={a.groupTitle}>Your business</div>
@@ -77,22 +110,34 @@ export function OnboardingForm({
         </label>
       </div>
 
-      <div className={a.groupTitle}>What work do you do?</div>
+      <div className={a.groupTitle} id="onboarding-services">What work do you do?</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>
-        Everything starts ticked. Untick anything you don&rsquo;t do. You can
+        Tick the work you do: you&rsquo;ll only be sent jobs for these. You can
         change them any time.
       </p>
-      {/* All on by default (2026-09-23): jobs reach every contractor in the
-          county regardless, and a narrow first pick mostly meant work a
-          contractor does, like fencing, was simply never ticked. */}
-      <ServicePicker services={services} selected={services.map((s) => s.id)} />
+      {/* Nothing ticked to start (2026-11-05; all-on since 2026-09-23 had
+          every new contractor claiming every service). Ticks route jobs for
+          everyone since 20261105120000 (sq_contractor_wants_job); a job that
+          can't be matched to a service still goes to them. */}
+      {noServices && (
+        <p className={f.error} role="alert" style={{ marginBottom: 12 }}>
+          Pick at least one service.
+        </p>
+      )}
+      <ServicePicker services={services} selected={[]} />
 
-      <div className={a.groupTitle}>Counties you cover</div>
+      <div className={a.groupTitle} id="onboarding-counties">Counties you cover</div>
       <p className={f.hint} style={{ marginBottom: 12 }}>
         You’ll be notified about jobs in the counties you select. Use “Select all”
         to add a whole region at once.
       </p>
-      <CountyPicker counties={counties} />
+      {noCounties && (
+        <p className={f.error} role="alert" style={{ marginBottom: 12 }}>
+          Select at least one county.
+        </p>
+      )}
+      {/* "Select all" ticks boxes without a change event, so it reports here. */}
+      <CountyPicker counties={counties} onSelectAll={() => tried && setNoCounties(none(document, 'county_ids'))} />
 
       <div className={a.groupTitle}>Choose your membership</div>
       <p className={f.hint} style={{ marginBottom: 16 }}>
