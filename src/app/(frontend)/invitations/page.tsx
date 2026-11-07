@@ -11,6 +11,8 @@ import { formatDateTime, timeLeft } from '@/lib/time';
 import a from '../auth.module.css';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import s from './invitations.module.css';
+import { AppFold } from '@/components/app/AppFold';
+import { isAppRequest } from '@/lib/appMode.server';
 
 /** Unclassified jobs carry the customer's own words as the title — keep a card a card. */
 function clip(text: string, n: number) {
@@ -52,6 +54,9 @@ export default async function InvitationsPage() {
     (i) => i.job_state === 'open' && ['sent', 'viewed', 'priced'].includes(i.status ?? ''),
   );
   const history = invitations.filter((i) => !open.includes(i));
+  // In the app the past list folds into a closed drawer (AppFold) so the
+  // invitations still waiting on an answer stay on the first screen.
+  const inApp = await isAppRequest();
 
   return (
     <div className={a.wrap}>
@@ -139,10 +144,7 @@ export default async function InvitationsPage() {
               )}
 
               {history.length > 0 && (
-                <>
-                  <div className={a.groupTitle} style={{ marginTop: 32 }}>
-                    Past invitations
-                  </div>
+                <AppFold inApp={inApp} title="Past invitations" count={history.length} titleStyle={{ marginTop: 32 }}>
                   <div className={s.historyList}>
                     {history.map((inv) => (
                       <div key={inv.id} className={s.historyRow}>
@@ -165,7 +167,7 @@ export default async function InvitationsPage() {
                       </div>
                     ))}
                   </div>
-                </>
+                </AppFold>
               )}
             </>
           )}
