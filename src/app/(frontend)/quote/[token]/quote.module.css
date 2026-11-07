@@ -135,7 +135,7 @@
   gap: 10px;
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
-/* A form is on screen: slide the bar away so the keypad and the form's own
+/* The forms are reached: slide the bar away so the keypad and the form's own
    buttons can be reached (InviteActions). */
 .inviteActionsAway {
   transform: translateY(110%);
