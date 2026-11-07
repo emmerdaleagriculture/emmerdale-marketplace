@@ -41,6 +41,10 @@ export function PullToRefresh({ onRefresh }: { onRefresh?: () => void }) {
   const [refreshing, setRefreshing] = useState(false);
   const [pending, startTransition] = useTransition();
   const spinStarted = useRef(0);
+  // True from release until the spinner is put away: no new pull starts
+  // while a refresh is still landing (on a slow connection that can be
+  // seconds), so the spinning icon is never dragged or a second refresh fired.
+  const busy = useRef(false);
   const ind = useRef<HTMLDivElement>(null);
 
   // Hide the spinner once the refresh has landed, but never sooner than
@@ -50,6 +54,7 @@ export function PullToRefresh({ onRefresh }: { onRefresh?: () => void }) {
     const wait = Math.max(0, MIN_SPIN_MS - (Date.now() - spinStarted.current));
     const t = setTimeout(() => {
       setRefreshing(false);
+      busy.current = false;
       place(0, false);
     }, wait);
     return () => clearTimeout(t);
@@ -61,13 +66,12 @@ export function PullToRefresh({ onRefresh }: { onRefresh?: () => void }) {
     let tracking = false; // a touch began somewhere a pull may start
     let pulling = false; // and it has turned into a pull
     let dist = 0;
-    let busy = false;
 
     const onStart = (e: TouchEvent) => {
       tracking = false;
       pulling = false;
       dist = 0;
-      if (busy || e.touches.length !== 1 || window.scrollY > 0) return;
+      if (busy.current || e.touches.length !== 1 || window.scrollY > 0) return;
       const target = e.target instanceof Element ? e.target : null;
       if (target?.closest(IGNORE) || insideScrolledBox(target)) return;
       startX = e.touches[0].clientX;
@@ -105,14 +109,12 @@ export function PullToRefresh({ onRefresh }: { onRefresh?: () => void }) {
       tracking = false;
       pulling = false;
       if (dist >= TRIGGER) {
-        busy = true;
+        busy.current = true;
         spinStarted.current = Date.now();
         setRefreshing(true);
         place(TRIGGER, false);
         onRefresh?.();
         startTransition(() => router.refresh());
-        // Allow the next pull once this one has had time to finish.
-        setTimeout(() => (busy = false), MIN_SPIN_MS);
       } else {
         place(0, false);
       }
