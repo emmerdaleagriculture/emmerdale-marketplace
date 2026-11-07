@@ -452,21 +452,22 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 />
               )}
 
-              <div id="price" />
-              <QuoteForm
-                token={token}
-                markupRate={effectiveRate}
-                premium={isPremium}
-                premiumRate={premiumRate}
-                summary={[service?.name ?? 'Land work', acres != null ? `${acres} acres` : null, spec.location ?? county ?? null].filter(Boolean).join(' · ')}
-                areaPriced={Boolean(service?.area_priced && acres)}
-                acres={acres}
-                revising={Boolean(live)}
-                defaultValidUntil={js.expires_at ? js.expires_at.slice(0, 10) : null}
-              />
+              <div id="price" className={q.anchor}>
+                <QuoteForm
+                  token={token}
+                  markupRate={effectiveRate}
+                  premium={isPremium}
+                  premiumRate={premiumRate}
+                  summary={[service?.name ?? 'Land work', acres != null ? `${acres} acres` : null, spec.location ?? county ?? null].filter(Boolean).join(' · ')}
+                  areaPriced={Boolean(service?.area_priced && acres)}
+                  acres={acres}
+                  revising={Boolean(live)}
+                  defaultValidUntil={js.expires_at ? js.expires_at.slice(0, 10) : null}
+                />
+              </div>
 
               {!live && (
-                <div id="pass">
+                <div id="pass" className={q.anchor}>
                   <DeclineForm token={token} />
                 </div>
               )}

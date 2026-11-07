@@ -133,6 +133,18 @@
 .inviteActions {
   display: flex;
   gap: 10px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+/* The forms are reached: slide the bar away so the keypad and the form's own
+   buttons can be reached (InviteActions). */
+.inviteActionsAway {
+  transform: translateY(110%);
+  opacity: 0;
+  pointer-events: none;
+}
+/* Scroll targets for the bar: land below the app's back bar, not under it. */
+:global(html[data-app]) .anchor {
+  scroll-margin-top: calc(var(--app-safe-top) + 60px);
 }
 .passBtn,
 .priceBtn {
