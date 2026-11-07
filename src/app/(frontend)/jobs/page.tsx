@@ -12,6 +12,7 @@ import f from '@/components/forms/forms.module.css';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import j from './jobs.module.css';
 import { isAppRequest } from '@/lib/appMode.server';
+import { AppFold } from '@/components/app/AppFold';
 
 export const metadata: Metadata = { title: 'Jobs' };
 
@@ -151,31 +152,15 @@ export default async function JobsBoardPage() {
                 </div>
               )}
 
-              {opened.length > 0 &&
-                (inApp ? (
-                  <details className={j.drawer}>
-                    <summary className={j.drawerHead}>
-                      Jobs you’ve opened
-                      <span className={j.drawerCount}>{opened.length}</span>
-                    </summary>
-                    <div className={j.drawerBody}>
-                      <p className={a.sub}>
-                        You’ve seen the customer’s details for these. Get in touch if
-                        you haven’t already.
-                      </p>
-                      {openedGrid}
-                    </div>
-                  </details>
-                ) : (
-                  <>
-                    <div className={a.groupTitle}>Jobs you’ve opened</div>
-                    <p className={a.sub}>
-                      You’ve seen the customer’s details for these. Get in touch if
-                      you haven’t already.
-                    </p>
-                    {openedGrid}
-                  </>
-                ))}
+              {opened.length > 0 && (
+                <AppFold inApp={inApp} title="Jobs you’ve opened" count={opened.length}>
+                  <p className={a.sub}>
+                    You’ve seen the customer’s details for these. Get in touch if
+                    you haven’t already.
+                  </p>
+                  {openedGrid}
+                </AppFold>
+              )}
             </>
           )}
         </div>
