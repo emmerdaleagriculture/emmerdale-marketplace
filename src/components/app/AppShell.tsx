@@ -9,6 +9,7 @@ import { activeTab, isTabRoot, tabsFor, type BadgeKey, type Tab } from './tabs';
 import { listenForPushTaps, registerPush } from '@/lib/app/push';
 import { listenForAppLinks } from '@/lib/app/links';
 import { BackChevron, TabIconSvg } from './AppIcons';
+import { PullToRefresh } from './PullToRefresh';
 import s from './AppShell.module.css';
 
 /**
@@ -173,6 +174,7 @@ export function AppShell() {
 
   return (
     <>
+      {!standalone && <PullToRefresh onRefresh={refreshBadges} />}
       {showBack && (
         <div className={s.backbar}>
           <button type="button" className={s.back} onClick={goBack} aria-label="Back">
