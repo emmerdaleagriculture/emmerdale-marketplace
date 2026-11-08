@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 
 /**
@@ -59,6 +60,38 @@ export function isGscOAuthConfigured(): boolean {
       process.env.GOOGLE_OAUTH_CLIENT_SECRET &&
       process.env.GSC_SITE_URL,
   );
+}
+
+/**
+ * OAuth `state`, signed by the server. The callback cannot check the admin
+ * session (Google's redirect doesn't reliably bring it), and a bare random
+ * state matched against a cookie proves nothing — anyone can set any cookie
+ * in their own browser and run the flow with their own Google account,
+ * overwriting the stored token. A signature only the admin-gated connect
+ * route can produce closes that. Keyed on the OAuth client secret: server-only
+ * and always set when this flow is configured.
+ */
+const STATE_TTL_MS = 10 * 60 * 1000;
+
+function stateMac(payload: string): string {
+  return crypto.createHmac('sha256', process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? '').update(payload).digest('hex');
+}
+
+export function signOAuthState(now = Date.now()): string {
+  const payload = `${now}.${crypto.randomBytes(16).toString('hex')}`;
+  return `${payload}.${stateMac(payload)}`;
+}
+
+export function verifyOAuthState(state: string, now = Date.now()): boolean {
+  if (!process.env.GOOGLE_OAUTH_CLIENT_SECRET) return false;
+  const i = state.lastIndexOf('.');
+  if (i < 0) return false;
+  const payload = state.slice(0, i);
+  const given = Buffer.from(state.slice(i + 1));
+  const want = Buffer.from(stateMac(payload));
+  if (given.length !== want.length || !crypto.timingSafeEqual(given, want)) return false;
+  const issued = Number(payload.split('.')[0]);
+  return Number.isFinite(issued) && now - issued >= 0 && now - issued < STATE_TTL_MS;
 }
 
 export function buildOAuthRedirectUri(origin: string): string {

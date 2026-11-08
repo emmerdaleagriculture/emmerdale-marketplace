@@ -6,6 +6,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { recordCronRun } from '@/lib/cron/record';
 import type { Json } from '@/lib/database.types';
 import { formatGBP } from '@/lib/sealedQuotes/money';
+import { cronAuthorised } from '@/lib/cronAuth';
 
 /**
  * POST|GET /api/cron/balances — charge the balances that sign-off made due.
@@ -29,15 +30,6 @@ import { formatGBP } from '@/lib/sealedQuotes/money';
 
 const BATCH = 20;
 
-/** Vercel Cron sends a bearer token; the SQL scheduler sends a header. */
-function authorised(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const auth = request.headers.get('authorization');
-  if (auth === `Bearer ${secret}`) return true;
-  return request.headers.get('x-cron-secret') === secret;
-}
-
 type Claim = {
   payment_id: string;
   submission_id: string;
@@ -52,7 +44,7 @@ type Claim = {
 };
 
 async function run(request: Request) {
-  if (!authorised(request)) {
+  if (!cronAuthorised(request)) {
     return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
   }
 
@@ -191,7 +183,7 @@ async function run(request: Request) {
  * step.
  */
 async function handle(request: Request) {
-  if (!authorised(request)) {
+  if (!cronAuthorised(request)) {
     return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
   }
   return recordCronRun('balances', async () => {
