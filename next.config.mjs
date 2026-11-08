@@ -64,14 +64,23 @@ const nextConfig = {
     // re-transforms every size and format a minute after the last request.
     // The photos are content-stable; a changed one gets a new name.
     minimumCacheTTL: 2592000,
-    // Notes hero/inline images live in the public notes-media bucket.
+    // The optimiser is billed per source image and per transformation, and
+    // anyone can call /_next/image with any URL these patterns allow. Until
+    // 2026-11-08 this was `*.supabase.co` — every public bucket of every
+    // Supabase project, so a stranger could host images on their own free
+    // project and have us resize them. Note heroes (noteHeroUrl) are the only
+    // remote images, so: our project, the notes-media bucket, nothing else.
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '*.supabase.co',
-        pathname: '/storage/v1/object/public/**',
+        hostname: 'wiipzjpqztqjtczeuodp.supabase.co',
+        pathname: '/storage/v1/object/public/notes-media/**',
       },
     ],
+    // Without a list, any q=1..100 is accepted and each is a separate
+    // transformation. These are the qualities the code uses (75 = default);
+    // add one here before using a new `quality` prop or it will 400.
+    qualities: [60, 65, 70, 75],
   },
 
   // The app-link files (PRD task 10) are route handlers, so the team id and
