@@ -4,7 +4,6 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { submitFeedbackAction } from './actions';
 import { useViewer } from '@/components/useViewer';
-import { isAppStandalonePath } from '@/lib/appMode';
 import type { FormState } from '@/lib/form';
 import s from './feedback.module.css';
 
@@ -40,6 +39,10 @@ export function openProblemReport() {
  * optional box, because a reply needs somewhere to go.
  *
  * Not on /admin: the people who read this are the only ones there.
+ *
+ * Not as a tab in the app either: it sat over the app's own bottom bars and
+ * buttons. The panel still opens there from the message thread's "Tell us"
+ * line (openProblemReport), so the one place it matters most keeps it.
  */
 export function FeedbackWidget() {
   const pathname = usePathname() ?? '';
@@ -48,16 +51,8 @@ export function FeedbackWidget() {
   const [state, act, pending] = useActionState(submitFeedbackAction, EMPTY);
   const [renderedAt, setRenderedAt] = useState(0);
   const box = useRef<HTMLTextAreaElement>(null);
-  const [appStandalone, setAppStandalone] = useState(false);
-  // Also off any app screen with its own fixed bottom button (.appFooterCta):
-  // the two would sit on top of each other.
-  useEffect(() => {
-    if (document.documentElement.dataset.app !== '1') return setAppStandalone(false);
-    const check = () => setAppStandalone(isAppStandalonePath(pathname) || !!document.querySelector('.appFooterCta'));
-    check();
-    const t = setTimeout(check, 400);
-    return () => clearTimeout(t);
-  }, [pathname]);
+  const [inApp, setInApp] = useState(false);
+  useEffect(() => setInApp(document.documentElement.dataset.app === '1'), []);
 
   // Set on open, not on mount: the bot trap measures how long the form was
   // in front of a human, and a tab left open for an hour is not a signal.
@@ -83,9 +78,9 @@ export function FeedbackWidget() {
   }, []);
 
   if (pathname.startsWith('/admin')) return null;
-  // Nor over the app's welcome, sign-in and role screens, whose one button
-  // sits exactly where this does.
-  if (appStandalone) return null;
+  // In the app there is no tab: the panel shows only when something on the
+  // page asked for it.
+  if (inApp && !open) return null;
 
   return (
     <div className={s.root}>
@@ -140,14 +135,16 @@ export function FeedbackWidget() {
         </div>
       )}
 
-      <button
-        type="button"
-        className={s.tab}
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-      >
-        {open ? 'Close' : 'Report a problem'}
-      </button>
+      {!inApp && (
+        <button
+          type="button"
+          className={s.tab}
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+        >
+          {open ? 'Close' : 'Report a problem'}
+        </button>
+      )}
     </div>
   );
 }
