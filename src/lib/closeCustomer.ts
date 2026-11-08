@@ -1,10 +1,13 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
 
 /**
- * Closes a customer: every open job withdrawn, their details scrubbed from
- * all of them (sq_close_customer, 20261002140000), then the two things SQL
- * cannot do — their photos out of storage, and their login gone. Used by
- * the customer's own "Close my account" and by the admin job page.
+ * Closes a customer by email: every open job under that address withdrawn,
+ * details scrubbed (sq_close_customer, 20261002140000), then the two things
+ * SQL cannot do — photos out of storage, and the logins of every account
+ * owning one of those jobs deleted. Admin only (the job page's Close
+ * customer), where a person has checked who is asking: contact_email is
+ * unverified, so this must never be reachable by the customer themselves —
+ * they go through closeCustomerAccount (since 2026-11-08).
  */
 export async function closeCustomer(email: string): Promise<{ jobs: number; withdrawn: number } | { error: string }> {
   const admin = createServiceRoleClient();
