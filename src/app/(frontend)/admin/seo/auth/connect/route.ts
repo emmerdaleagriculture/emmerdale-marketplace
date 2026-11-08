@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import crypto from 'node:crypto';
 import { getUser, isAdminEmail } from '@/lib/auth';
-import { buildAuthUrl, isGscOAuthConfigured } from '@/lib/gsc';
+import { buildAuthUrl, isGscOAuthConfigured, signOAuthState } from '@/lib/gsc';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +26,7 @@ export async function GET(req: Request) {
   }
 
   const origin = new URL(req.url).origin;
-  const state = crypto.randomBytes(24).toString('hex');
+  const state = signOAuthState();
   const target = buildAuthUrl(origin, state);
 
   const res = NextResponse.redirect(target);

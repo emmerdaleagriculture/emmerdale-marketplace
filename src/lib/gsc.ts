@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+import { secureEqual } from '@/lib/secureEqual';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 
 /**
@@ -59,6 +61,44 @@ export function isGscOAuthConfigured(): boolean {
       process.env.GOOGLE_OAUTH_CLIENT_SECRET &&
       process.env.GSC_SITE_URL,
   );
+}
+
+/**
+ * OAuth `state`, signed by the server. The callback cannot check the admin
+ * session (Google's redirect doesn't reliably bring it), and a bare random
+ * state matched against a cookie proves nothing — anyone can set any cookie
+ * in their own browser and run the flow with their own Google account,
+ * overwriting the stored token. A signature only the admin-gated connect
+ * route can produce closes that. The key is derived from the OAuth client
+ * secret (server-only, always set when this flow is configured) under its own
+ * label, so the HMAC key is never the raw client secret.
+ */
+const STATE_TTL_MS = 10 * 60 * 1000;
+/** Serverless instances' clocks can disagree by a little. */
+const STATE_SKEW_MS = 60 * 1000;
+
+function stateMac(payload: string): string {
+  const key = crypto
+    .createHmac('sha256', process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? '')
+    .update('emmerdale/gsc-oauth-state/v1')
+    .digest();
+  return crypto.createHmac('sha256', key).update(payload).digest('hex');
+}
+
+export function signOAuthState(now = Date.now()): string {
+  const payload = `${now}.${crypto.randomBytes(16).toString('hex')}`;
+  return `${payload}.${stateMac(payload)}`;
+}
+
+export function verifyOAuthState(state: string, now = Date.now()): boolean {
+  if (!process.env.GOOGLE_OAUTH_CLIENT_SECRET) return false;
+  const i = state.lastIndexOf('.');
+  if (i < 0) return false;
+  const payload = state.slice(0, i);
+  if (!secureEqual(state.slice(i + 1), stateMac(payload))) return false;
+  const issued = Number(payload.split('.')[0]);
+  const age = now - issued;
+  return Number.isFinite(issued) && age > -STATE_SKEW_MS && age < STATE_TTL_MS;
 }
 
 export function buildOAuthRedirectUri(origin: string): string {

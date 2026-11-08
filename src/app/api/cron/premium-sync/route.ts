@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { recordCronRun } from '@/lib/cron/record';
 import { getStripe, syncSubscription } from '@/lib/stripe';
+import { cronAuthorised } from '@/lib/cronAuth';
 
 /**
  * GET|POST /api/cron/premium-sync — re-read every premium membership from
@@ -18,15 +19,6 @@ import { getStripe, syncSubscription } from '@/lib/stripe';
 export const dynamic = 'force-dynamic';
 
 const LIVE = new Set(['active', 'trialing', 'past_due', 'unpaid']);
-
-/** Vercel Cron sends a bearer token; the SQL scheduler sends a header. */
-function authorised(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const auth = request.headers.get('authorization');
-  if (auth === `Bearer ${secret}`) return true;
-  return request.headers.get('x-cron-secret') === secret;
-}
 
 async function run() {
   if (!process.env.STRIPE_SECRET_KEY) return { skipped: 'stripe not configured' };
@@ -73,7 +65,7 @@ async function run() {
 }
 
 async function handle(request: Request) {
-  if (!authorised(request)) return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
+  if (!cronAuthorised(request)) return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
   const summary = await recordCronRun('premium-sync', async () => {
     const detail = await run();
     return { result: detail, detail };

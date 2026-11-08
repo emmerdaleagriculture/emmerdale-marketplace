@@ -1,4 +1,5 @@
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
+import { secureEqual } from '@/lib/secureEqual';
 
 /**
  * Sealed-quote link tokens: 48 lowercase hex chars (24 random bytes,
@@ -21,8 +22,5 @@ export function isTokenFormat(value: unknown): value is string {
 
 /** Constant-time compare for the rare compare-against-fetched-value case. */
 export function tokensEqual(a: string, b: string): boolean {
-  const ba = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return timingSafeEqual(ba, bb);
+  return secureEqual(a, b);
 }

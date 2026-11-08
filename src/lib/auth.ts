@@ -25,11 +25,19 @@ export { isAdminEmail };
  * Validate a post-login return path (`/login?next=…`). Only same-site relative
  * paths pass — anything else (absolute URLs, protocol-relative `//host`,
  * backslash tricks) would turn the login page into an open redirect.
+ *
+ * Control characters are refused too: browsers strip tab/CR/LF when parsing a
+ * URL, so `/\t/evil.com` passes the `//` test here and lands as `//evil.com`.
+ * The final check resolves the path the way a browser would and insists the
+ * origin doesn't move.
  */
 export function safeInternalPath(next: string | null | undefined): string | null {
   if (!next) return null;
   if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) return null;
-  return next;
+  // eslint-disable-next-line no-control-regex
+  if (/[\x00-\x1f\x7f]/.test(next)) return null;
+  const base = 'https://internal.invalid';
+  return new URL(next, base).origin === base ? next : null;
 }
 
 /** The current user's contractor profile row, or null if none exists yet. */

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { recordCronRun } from '@/lib/cron/record';
+import { cronAuthorised } from '@/lib/cronAuth';
 
 /**
  * POST|GET /api/cron/draft-chaser — one reminder to people who described a
@@ -34,15 +35,6 @@ const ABANDONED_AFTER_MINUTES = 120;
 /** Past this the job has moved on without us. */
 const TOO_OLD_AFTER_DAYS = 7;
 const BATCH = 25;
-
-/** Vercel Cron sends a bearer token; the SQL scheduler sends a header. */
-function authorised(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const auth = request.headers.get('authorization');
-  if (auth === `Bearer ${secret}`) return true;
-  return request.headers.get('x-cron-secret') === secret;
-}
 
 async function run() {
   const admin = createServiceRoleClient();
@@ -110,7 +102,7 @@ async function run() {
  * calls are NOT recorded — they are somebody knocking, not a run.
  */
 async function handle(request: Request) {
-  if (!authorised(request)) return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
+  if (!cronAuthorised(request)) return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
   const summary = await recordCronRun('draft-chaser', async () => {
     const detail = await run();
     return { result: detail, detail };
