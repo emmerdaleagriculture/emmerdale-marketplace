@@ -37,12 +37,7 @@ export function safeInternalPath(next: string | null | undefined): string | null
   // eslint-disable-next-line no-control-regex
   if (/[\x00-\x1f\x7f]/.test(next)) return null;
   const base = 'https://internal.invalid';
-  try {
-    if (new URL(next, base).origin !== base) return null;
-  } catch {
-    return null;
-  }
-  return next;
+  return new URL(next, base).origin === base ? next : null;
 }
 
 /** The current user's contractor profile row, or null if none exists yet. */

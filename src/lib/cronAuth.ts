@@ -1,11 +1,4 @@
-import { timingSafeEqual } from 'node:crypto';
-
-function same(given: string | null, secret: string): boolean {
-  if (given === null) return false;
-  const a = Buffer.from(given);
-  const b = Buffer.from(secret);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
+import { secureEqual } from '@/lib/secureEqual';
 
 /**
  * Cron route auth. Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`;
@@ -15,8 +8,7 @@ function same(given: string | null, secret: string): boolean {
 export function cronAuthorised(request: Request): boolean {
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
-  return (
-    same(request.headers.get('authorization'), `Bearer ${secret}`) ||
-    same(request.headers.get('x-cron-secret'), secret)
-  );
+  const auth = request.headers.get('authorization');
+  const header = request.headers.get('x-cron-secret');
+  return (auth !== null && secureEqual(auth, `Bearer ${secret}`)) || (header !== null && secureEqual(header, secret));
 }
