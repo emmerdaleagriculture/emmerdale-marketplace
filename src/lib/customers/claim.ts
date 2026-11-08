@@ -1,7 +1,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
 
 export type ClaimOutcome =
-  | { ok: true; alsoClaimed: number }
+  | { ok: true }
   | { ok: false; reason: 'already_claimed' | 'invalid' | 'failed' };
 
 /**
@@ -25,22 +25,28 @@ export async function claimJobForUser(
 
   const { data: js } = await admin
     .from('job_submissions')
-    .select('contact_name, contact_phone, contact_email')
+    .select('contact_name, contact_phone')
     .eq('client_token', token)
     .maybeSingle();
 
   const { data: existing } = await admin
     .from('customers')
-    .select('contact_name, phone')
+    .select('email, contact_name, phone')
     .eq('id', userId)
     .maybeSingle();
 
   // Fill gaps, never overwrite: claiming a second job whose contact fields are
   // blank must not wipe the name and phone the first one supplied.
+  //
+  // The email is the login's, never the job's: contact_email is whatever the
+  // submitter typed, and customers.email routes push notifications for mail
+  // sent to that address (queue triggers match on it). A phone-only login
+  // that claimed a job filed under a stranger's address would have received
+  // the stranger's job notifications.
   const { error: customerError } = await admin.from('customers').upsert(
     {
       id: userId,
-      email: userEmail ?? js?.contact_email ?? '',
+      email: userEmail ?? existing?.email ?? '',
       contact_name: existing?.contact_name ?? js?.contact_name ?? null,
       phone: existing?.phone ?? js?.contact_phone ?? null,
     },
@@ -62,16 +68,19 @@ export async function claimJobForUser(
     return { ok: false, reason: 'failed' };
   }
 
-  const res = data as { ok: boolean; reason?: string; also_claimed?: number };
+  const res = data as { ok: boolean; reason?: string };
   if (!res.ok) {
     return { ok: false, reason: res.reason === 'already_claimed' ? 'already_claimed' : 'invalid' };
   }
-  return { ok: true, alsoClaimed: res.also_claimed ?? 0 };
+  return { ok: true };
 }
 
-/** The line the customer reads after a successful claim. */
-export function claimMessage(alsoClaimed: number): string {
-  return alsoClaimed > 0
-    ? `Saved. ${alsoClaimed} earlier job${alsoClaimed === 1 ? '' : 's'} at this address came with it.`
-    : 'Saved to your account.';
+/**
+ * The line the customer reads after a successful claim. Until 2026-11-08 the
+ * claim also swept in every unclaimed job with the same contact email, but
+ * that email is unverified, so it let anyone take a stranger's jobs
+ * (migration 20261108120000). Each job is claimed by its own token now.
+ */
+export function claimMessage(): string {
+  return 'Saved to your account.';
 }

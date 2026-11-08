@@ -1,7 +1,7 @@
 import type { User } from '@supabase/supabase-js';
 import { revalidateDirectory } from '@/lib/directory';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { closeCustomer } from '@/lib/closeCustomer';
+import { closeCustomerAccount } from '@/lib/closeCustomer';
 import { revokeAppleTokens } from '@/lib/apple/tokens';
 import { getStripe, refundUnapprovedPremium, stripeConfigured } from '@/lib/stripe';
 
@@ -15,7 +15,7 @@ import { getStripe, refundUnapprovedPremium, stripeConfigured } from '@/lib/stri
  * contractor with such history keeps a scrubbed tombstone row
  * (contractors.id no longer cascades from auth.users, migration
  * 20261018170000); one without is removed outright. Customers go through
- * closeCustomer, which already withdraws and scrubs.
+ * closeCustomerAccount, which already withdraws and scrubs.
  */
 export async function contractorHasHistory(contractorId: string): Promise<boolean> {
   const admin = createServiceRoleClient();
@@ -118,24 +118,20 @@ export async function deleteOwnAccount(user: User): Promise<{ ok: true } | { err
     const { data: contractor } = await admin.from('contractors').select('id, status').eq('id', user.id).maybeSingle();
     if (contractor) await closeContractor(user.id, contractor.status);
 
-    // The customer side withdraws open jobs, scrubs their details from every
-    // job and deletes the login — by email, so every address they used on
-    // a job is covered, not only the login's.
+    // The customer side withdraws open jobs and scrubs their details — only
+    // the jobs this account owns. Until 2026-11-08 this closed by email (the
+    // login's and every contact_email on its jobs), but neither is verified:
+    // filing a job under a stranger's address, or signing up as them, then
+    // closing the account wiped their jobs and deleted their login.
     const { data: customer } = await admin.from('customers').select('id').eq('id', user.id).maybeSingle();
     if (customer) {
-      const { data: jobs } = await admin.from('job_submissions').select('contact_email').eq('customer_id', user.id);
-      const emails = new Set<string>();
-      if (user.email) emails.add(user.email.toLowerCase());
-      for (const j of jobs ?? []) if (j.contact_email) emails.add(j.contact_email.toLowerCase());
-      for (const email of emails) {
-        const res = await closeCustomer(email);
-        if ('error' in res) return res;
-      }
+      const res = await closeCustomerAccount(user.id);
+      if ('error' in res) return res;
     }
 
     await admin.from('device_tokens').update({ revoked_at: new Date().toISOString() }).eq('user_id', user.id).is('revoked_at', null);
-    // closeCustomer deletes the logins it finds on the jobs; a customer with
-    // no job yet, or a contractor, still has theirs. Gone already is fine.
+    // The login goes last, for customers and contractors alike. Gone already
+    // is fine.
     const { error } = await admin.auth.admin.deleteUser(user.id);
     if (error && !/not found/i.test(error.message)) throw new Error(`auth user: ${error.message}`);
     return { ok: true };
