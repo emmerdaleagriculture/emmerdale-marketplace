@@ -3932,6 +3932,7 @@ export type Database = {
         }[]
       }
       sq_close_customer: { Args: { p_email: string }; Returns: Json }
+      sq_close_customer_account: { Args: { p_customer_id: string }; Returns: Json }
       sq_pass_price: {
         Args: { p_client_quote_id: string; p_reason: string; p_submission_id: string }
         Returns: Json
