@@ -3,6 +3,15 @@ import { fileURLToPath } from 'url';
 // deprecated on v10 and stops working in v11.
 import { withSentryConfig } from '@sentry/nextjs/config';
 
+/** Our Supabase host, for the image optimiser's allow-list. */
+const SUPABASE_HOST = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').hostname || 'wiipzjpqztqjtczeuodp.supabase.co';
+  } catch {
+    return 'wiipzjpqztqjtczeuodp.supabase.co';
+  }
+})();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Pin file-tracing to this project. Without it, a stray lockfile in a parent
@@ -70,16 +79,19 @@ const nextConfig = {
     // Supabase project, so a stranger could host images on their own free
     // project and have us resize them. Note heroes (noteHeroUrl) are the only
     // remote images, so: our project, the notes-media bucket, nothing else.
+    // The host follows NEXT_PUBLIC_SUPABASE_URL, as noteHeroUrl does, so a
+    // project move or a local stack doesn't silently break every hero.
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'wiipzjpqztqjtczeuodp.supabase.co',
+        hostname: SUPABASE_HOST,
         pathname: '/storage/v1/object/public/notes-media/**',
       },
     ],
     // Without a list, any q=1..100 is accepted and each is a separate
     // transformation. These are the qualities the code uses (75 = default);
-    // add one here before using a new `quality` prop or it will 400.
+    // add one here before using a new `quality` prop — unlisted, it throws in
+    // dev and 400s in production. Keep it sorted (Next sorts it in place).
     qualities: [60, 65, 70, 75],
   },
 
