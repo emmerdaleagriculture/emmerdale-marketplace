@@ -69,9 +69,13 @@ export async function claimJobForUser(
   return { ok: true, alsoClaimed: res.also_claimed ?? 0 };
 }
 
-/** The line the customer reads after a successful claim. */
-export function claimMessage(alsoClaimed: number): string {
-  return alsoClaimed > 0
-    ? `Saved. ${alsoClaimed} earlier job${alsoClaimed === 1 ? '' : 's'} at this address came with it.`
-    : 'Saved to your account.';
+/**
+ * The line the customer reads after a successful claim. alsoClaimed is always
+ * 0 since 2026-11-08: the claim used to sweep in every unclaimed job with the
+ * same contact email, but that email is unverified, so it let anyone take a
+ * stranger's jobs (migration 20261108120000). Each job is claimed by its own
+ * token now.
+ */
+export function claimMessage(): string {
+  return 'Saved to your account.';
 }

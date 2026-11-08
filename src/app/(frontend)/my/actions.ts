@@ -46,7 +46,7 @@ export async function claimJobAction(_prev: FormState, formData: FormData): Prom
 
   revalidatePath('/my');
   revalidatePath(`/my/${token}`);
-  return { ok: true, message: claimMessage(outcome.alsoClaimed) };
+  return { ok: true, message: claimMessage() };
 }
 
 /** Repeat this job every N months until they stop it — with the same contractor or fresh prices. */
