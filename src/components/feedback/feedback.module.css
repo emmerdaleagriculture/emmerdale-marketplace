@@ -149,3 +149,9 @@
 :global(html[data-app][data-app-tabs]) .root {
   bottom: calc(var(--app-tabbar-h) + env(safe-area-inset-bottom, 0px) + 12px);
 }
+
+/* No tab in the app (FeedbackWidget). Hidden here too so it never flashes
+   up before hydration: html[data-app] is stamped before React runs. */
+:global(html[data-app]) .tab {
+  display: none;
+}
