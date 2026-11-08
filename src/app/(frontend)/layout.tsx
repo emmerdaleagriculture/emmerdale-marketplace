@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Tenor_Sans, DM_Sans, Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { COMPANY_LEGAL_NAME, IOS_APP_ID, SITE_NAME, SITE_STRAPLINE, siteUrl } from '@/lib/site';
 import { Suspense } from 'react';
@@ -14,14 +14,18 @@ const GA_ID = 'G-869MBRK9FD';
 const META_PIXEL_ID = '1714644666891790';
 
 // Typography stack copied from the HPM site so the two brands match.
+// The files live in src/fonts (latin subset, from Google Fonts, all OFL) and
+// are bundled from there: next/font/google fetched them from Google on every
+// build, and a bad response from Google failed our Vercel builds (2026-11-08).
+// DM Sans and Inter are variable fonts, so one file covers every weight.
 // Tenor Sans = display headings (gentle, editorial).
 // `display: 'optional'` prevents the FOUT-driven CLS on hero headings.
-const tenor = Tenor_Sans({
-  subsets: ['latin'],
+const tenor = localFont({
+  src: '../../fonts/TenorSans-400-latin.woff2',
   weight: '400',
   variable: '--font-display',
   display: 'optional',
-  adjustFontFallback: true,
+  adjustFontFallback: 'Arial',
 });
 
 // DM Sans = body. `swap` was meant to be safe because the metrics are close
@@ -29,13 +33,13 @@ const tenor = Tenor_Sans({
 // when it arrived (CLS 0.12, Lighthouse 2026-10-11): close is not identical
 // once the text wraps. `optional` ends the swap; a slow first visit keeps the
 // fallback, as the display face already does.
-const dm = DM_Sans({
-  subsets: ['latin'],
+const dm = localFont({
+  src: '../../fonts/DMSans-variable-latin.woff2',
   // 800 is the front page's display weight (H1 / big numbers).
-  weight: ['400', '500', '600', '700', '800'],
+  weight: '400 800',
   variable: '--font-body',
   display: 'optional',
-  adjustFontFallback: true,
+  adjustFontFallback: 'Arial',
 });
 
 // Inter = body on the front page, which pairs it with DM Sans headings.
@@ -45,12 +49,12 @@ const dm = DM_Sans({
 // for the same reason as Tenor above: a late swap reflowed the intro copy
 // (CLS 0.06), so the page paints in Inter if it arrives in time and otherwise
 // stays in the metric-matched fallback — never both.
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
+const inter = localFont({
+  src: '../../fonts/Inter-variable-latin.woff2',
+  weight: '400 600',
   variable: '--font-inter',
   display: 'optional',
-  adjustFontFallback: true,
+  adjustFontFallback: 'Arial',
   preload: false,
 });
 
