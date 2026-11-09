@@ -135,7 +135,7 @@ export function segments(body: string): number {
 }
 
 /**
- * The body with the iPhone app line: always when it costs nothing (no extra
+ * The body with the app line: always when it costs nothing (no extra
  * segment), otherwise only when `due` (this phone hasn't had it for 30 days).
  * Every body here is GSM-7 (gsm() above), so length is the measure.
  */

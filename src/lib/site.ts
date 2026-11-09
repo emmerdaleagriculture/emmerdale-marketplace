@@ -135,3 +135,11 @@ export function paymentReference(submissionId: string): string {
 // Smart App Banner (root layout); the URL is what links point at.
 export const IOS_APP_ID = '6824264882';
 export const IOS_APP_URL = `https://apps.apple.com/gb/app/emmerdale-agriculture/id${IOS_APP_ID}`;
+
+// The Android app, live on Google Play since 2026-11-09.
+export const ANDROID_APP_ID = 'com.emmerdaleagriculture.app';
+export const ANDROID_APP_URL = `https://play.google.com/store/apps/details?id=${ANDROID_APP_ID}`;
+
+// One link for both: /apps sends a phone to its own store and shows a
+// desktop both. Emails and texts carry this one.
+export const APPS_PATH = '/apps';

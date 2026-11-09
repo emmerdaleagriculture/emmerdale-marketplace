@@ -8,6 +8,7 @@ import {
   HPM_URL,
   SITE_LOCATION_LINE,
   IOS_APP_URL,
+  ANDROID_APP_URL,
 } from '@/lib/site';
 
 /**
@@ -40,6 +41,7 @@ export function SiteFooter() {
             <Link href="/#how-it-works">How it works</Link>
             <Link href="/notes">Notes from the field</Link>
             <a href={IOS_APP_URL}>iPhone app</a>
+            <a href={ANDROID_APP_URL}>Android app</a>
             <FooterAccountLinks />
           </nav>
 

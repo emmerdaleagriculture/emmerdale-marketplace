@@ -151,7 +151,7 @@ const faqs = [
   },
   {
     q: 'Is there an app?',
-    a: 'Yes, for iPhone: search for Emmerdale Agriculture on the App Store. New jobs arrive as notifications, and you can price, message customers and send invoices from it. On any other phone the website does the same, and jobs reach you by email and text.',
+    a: 'Yes, for iPhone and Android: search for Emmerdale Agriculture on the App Store or Google Play. You can see new jobs, price them, message customers and send invoices from it. On any other device the website does the same, and jobs reach you by email and text.',
   },
   {
     q: 'How much work will I get?',
