@@ -107,12 +107,17 @@ const nextConfig = {
 
   async redirects() {
     return [
-      // The short App Store link texts and emails carry (send-emails APP_LINK),
-      // so a text stays inside its 160 characters. Temporary, so the target
-      // can change (an Android listing, a store page with tracking).
+      // Short direct store links. Emails and texts now carry /apps (the
+      // (frontend)/apps page picks the store by device); these stay for
+      // links already sent. Temporary, so the target can change.
       {
         source: '/iphone',
         destination: 'https://apps.apple.com/gb/app/emmerdale-agriculture/id6824264882',
+        permanent: false,
+      },
+      {
+        source: '/android',
+        destination: 'https://play.google.com/store/apps/details?id=com.emmerdaleagriculture.app',
         permanent: false,
       },
       // iOS, mail clients and bookmark fetchers probe /apple-touch-icon.png

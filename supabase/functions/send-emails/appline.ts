@@ -1,8 +1,8 @@
 /**
- * The iPhone app line (live on the App Store 2026-11-06). Emails get it at
- * the foot; texts get a shorter one, rationed in sms.ts because it can push
- * a text into a second segment. The link is the site's /iphone redirect
- * (next.config.mjs), which keeps it short and lets the target change.
+ * The app line (iPhone since 2026-11-06, Android since 2026-11-09). Emails
+ * get it at the foot; texts get a shorter one, rationed in sms.ts because it
+ * can push a text into a second segment. The link is the site's /apps page,
+ * which sends a phone to its own store and shows a desktop both.
  */
 
 /** Emails to contractors that carry the line. Not the verify-your-address one. */
@@ -28,21 +28,21 @@ const CUSTOMER_KINDS = new Set([
 ]);
 
 export function appLink(site: string): string {
-  return `${site.replace(/\/$/, '')}/iphone`;
+  return `${site.replace(/\/$/, '')}/apps`;
 }
 
 /** The email body with the app line at its foot, or unchanged. Never to an admin. */
 export function withAppLine(text: string, kind: string, toEmail: string, site: string): string {
   if (toEmail === '__admin__') return text;
   const line = CONTRACTOR_KINDS.has(kind)
-    ? 'On an iPhone? Get new jobs as notifications, and price, message and invoice from your phone, with our app'
+    ? 'Get our app for iPhone and Android: see new jobs, and price, message and invoice from your phone'
     : CUSTOMER_KINDS.has(kind)
-      ? 'On an iPhone? Follow your job, compare prices and message your contractor in our app'
+      ? 'Get our app for iPhone and Android: follow your job and message your contractor from your phone'
       : null;
   return line ? `${text}\n\n---\n${line}: ${appLink(site)}` : text;
 }
 
 /** The text version: short, so a text stays near one segment. */
 export function smsAppLine(site: string): string {
-  return ` iPhone app: ${appLink(site).replace(/^https?:\/\//, '')}`;
+  return ` Our app: ${appLink(site).replace(/^https?:\/\//, '')}`;
 }

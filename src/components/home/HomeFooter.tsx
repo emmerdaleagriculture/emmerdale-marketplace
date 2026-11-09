@@ -3,7 +3,7 @@ import { AccountLink } from './AccountLink';
 import { BrandLockup } from './BrandMark';
 import { FOOTER_HOME_SERVICES } from '@/lib/home/services';
 import { servicePagePath } from '@/lib/services';
-import { COMPANY_LEGAL_NAME, COMPANY_REG_LINE, COMPANY_ADDRESS_LINES, IOS_APP_URL } from '@/lib/site';
+import { COMPANY_LEGAL_NAME, COMPANY_REG_LINE, COMPANY_ADDRESS_LINES, IOS_APP_URL, ANDROID_APP_URL } from '@/lib/site';
 import s from './home.module.css';
 
 /** Front-page footer: dark ink, brand column plus four link columns. */
@@ -84,6 +84,9 @@ export function HomeFooter() {
               </li>
               <li>
                 <a href={IOS_APP_URL}>iPhone app</a>
+              </li>
+              <li>
+                <a href={ANDROID_APP_URL}>Android app</a>
               </li>
               <li>
                 {/* Was a bare `#operators` fragment, which went nowhere from

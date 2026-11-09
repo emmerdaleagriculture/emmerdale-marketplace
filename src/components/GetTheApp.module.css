@@ -27,3 +27,4 @@
   white-space: nowrap;
 }
 .btn:hover { background: var(--jd-green-deep); }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }

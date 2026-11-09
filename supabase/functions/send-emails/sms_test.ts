@@ -38,7 +38,7 @@ Deno.test('the app line goes on only when it adds no segment', async () => {
   const { withSmsAppLine } = await import('./sms.ts');
   const site = 'https://www.emmerdaleagriculture.com';
   const short = 'Emmerdale Agriculture: new job to price - Topping, SO51. https://www.emmerdaleagriculture.com/t/AbCdEfG';
-  assertEquals(withSmsAppLine(short, site), short + ' iPhone app: www.emmerdaleagriculture.com/iphone');
+  assertEquals(withSmsAppLine(short, site), short + ' Our app: www.emmerdaleagriculture.com/apps');
   const full = 'x'.repeat(150);
   assertEquals(withSmsAppLine(full, site), full);
 });
@@ -46,5 +46,5 @@ Deno.test('the app line goes on only when it adds no segment', async () => {
 Deno.test('a due phone gets the line even when it costs a segment', async () => {
   const { withSmsAppLine } = await import('./sms.ts');
   const full = 'x'.repeat(150);
-  assertEquals(withSmsAppLine(full, 'https://www.emmerdaleagriculture.com', true).length, 198);
+  assertEquals(withSmsAppLine(full, 'https://www.emmerdaleagriculture.com', true).length, 193);
 });
