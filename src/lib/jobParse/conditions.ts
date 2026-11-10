@@ -556,6 +556,188 @@ const SWEEP_QUESTIONS: ConditionQuestion[] = [
   },
 ];
 
+/**
+ * What is under the line is most of the difference between two trenches of the
+ * same length: grass digs fast, a concrete yard has to be broken out first,
+ * and rock or old foundations can stop a mini digger altogether.
+ */
+const DIG_SURFACE: ChoiceQuestion = {
+  key: 'surface',
+  label: 'What is the ground along the line?',
+  short: 'Ground',
+  hint: 'Tick all that apply.',
+  multi: true,
+  exclusive: 'not_sure',
+  options: [
+    { value: 'grass', label: 'Grass or field' },
+    { value: 'hard', label: 'Concrete, tarmac or a stone yard' },
+    { value: 'rocky', label: 'Rocky or full of stones' },
+    { value: 'not_sure', label: 'Not sure' },
+  ],
+};
+
+/** Where the dug soil goes: spread here, or loaded and taken away. */
+const SPOIL: ChoiceQuestion = {
+  key: 'spoil',
+  label: 'What should happen to any spare soil?',
+  short: 'Spoil',
+  options: [
+    { value: 'on_site', label: 'Leave it or spread it here' },
+    { value: 'off_site', label: 'Take it away' },
+    { value: 'not_sure', label: 'Not sure' },
+  ],
+};
+
+/**
+ * Pipe laying is priced by the metre, and the metre turns on what the pipe is
+ * for (a trough supply goes in narrow and shallow, a land drain wants a fall
+ * and gravel), whether the trench is part of the job, and who buys the pipe.
+ */
+const PIPE_QUESTIONS: ConditionQuestion[] = [
+  {
+    kind: 'quantity',
+    key: 'quantity',
+    label: 'How many metres of pipe?',
+    unit: 'linear_m',
+    hint: 'The length of the run from end to end. A rough figure is fine. Pace it out if you can.',
+  },
+  {
+    key: 'pipe_for',
+    label: 'What is the pipe for?',
+    short: 'Pipe for',
+    required: true,
+    options: [
+      { value: 'water', label: 'Water supply to troughs or buildings' },
+      { value: 'drainage', label: 'Land drainage' },
+      { value: 'duct', label: 'A duct for a cable' },
+      { value: 'waste', label: 'Waste water or a septic tank' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'pipe_supply',
+    label: 'Who supplies the pipe?',
+    short: 'Pipe supplied by',
+    options: [
+      { value: 'contractor', label: 'The contractor' },
+      { value: 'me', label: 'I have it already' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'trench_needed',
+    label: 'Does the trench need digging too?',
+    short: 'Trench',
+    options: [
+      { value: 'yes', label: 'Yes, dig it and fill it back in' },
+      { value: 'dug', label: 'No, it is already dug' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  DIG_SURFACE,
+];
+
+/**
+ * Trenching is priced by the metre. Depth sets the machine and how much
+ * support the sides need; what it is for says how neat the bottom has to be;
+ * backfilling is a second pass that not every customer wants.
+ */
+const TRENCH_QUESTIONS: ConditionQuestion[] = [
+  {
+    kind: 'quantity',
+    key: 'quantity',
+    label: 'How many metres of trench?',
+    unit: 'linear_m',
+    hint: 'The length from end to end. A rough figure is fine. Pace it out if you can.',
+  },
+  {
+    key: 'trench_for',
+    label: 'What is the trench for?',
+    short: 'Trench for',
+    required: true,
+    options: [
+      { value: 'pipe', label: 'A water or drainage pipe' },
+      { value: 'cable', label: 'An electric cable or duct' },
+      { value: 'footings', label: 'Footings or a foundation' },
+      { value: 'drainage', label: 'An open drain' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'trench_depth',
+    label: 'How deep?',
+    short: 'Depth',
+    options: [
+      { value: 'under_600', label: 'Up to 2ft (600mm)' },
+      { value: '600_1m', label: '2–3ft (600mm–1m)' },
+      { value: 'over_1m', label: 'Deeper than 3ft (1m)' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'backfill',
+    label: 'Should it be filled back in?',
+    short: 'Backfill',
+    options: [
+      { value: 'yes', label: 'Yes, once the pipe or cable is in' },
+      { value: 'no', label: 'No, leave it open' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  DIG_SURFACE,
+  SPOIL,
+];
+
+/**
+ * Mini digger work is by the hour or day, so the price is the time: what the
+ * digging is and roughly how long. The gate width decides whether a mini or
+ * only a micro digger can get in, and that is the first thing they ask.
+ */
+const MINI_DIGGER_QUESTIONS: ConditionQuestion[] = [
+  {
+    key: 'digger_for',
+    label: 'What is the digger for?',
+    short: 'Work',
+    hint: 'Tick all that apply.',
+    required: true,
+    multi: true,
+    exclusive: 'not_sure',
+    options: [
+      { value: 'trenches', label: 'Trenches' },
+      { value: 'footings', label: 'Footings or a base' },
+      { value: 'levelling', label: 'Levelling or landscaping' },
+      { value: 'stumps', label: 'Stumps or roots' },
+      { value: 'pond', label: 'A small pond' },
+      { value: 'not_sure', label: 'Something else or not sure' },
+    ],
+  },
+  {
+    key: 'duration',
+    label: 'Roughly how long do you think it will take?',
+    short: 'Time',
+    options: [
+      { value: 'half_day', label: 'Half a day' },
+      { value: 'day', label: 'A day' },
+      { value: '2_3_days', label: 'Two or three days' },
+      { value: 'longer', label: 'Longer' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  {
+    key: 'access_width',
+    label: 'How wide is the narrowest way in?',
+    short: 'Access',
+    hint: 'A gate, a path or a gap between buildings.',
+    options: [
+      { value: 'under_1m', label: 'Under 1m (3ft)' },
+      { value: '1_1_5m', label: '1–1.5m (3–5ft)' },
+      { value: 'wider', label: 'Wider than that' },
+      { value: 'not_sure', label: 'Not sure' },
+    ],
+  },
+  SPOIL,
+];
+
 export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQuestion[]>> = {
   'Weed control': WEED_QUESTIONS,
   Spraying: WEED_QUESTIONS,
@@ -566,6 +748,9 @@ export const CONDITION_QUESTIONS: Partial<Record<CanonicalService, ConditionQues
   'Muck spreading': MUCK_QUESTIONS,
   'Muck heap removal': MUCK_REMOVAL_QUESTIONS,
   'Paddock sweeping': SWEEP_QUESTIONS,
+  'Pipe laying': PIPE_QUESTIONS,
+  Trenching: TRENCH_QUESTIONS,
+  'Mini digger work': MINI_DIGGER_QUESTIONS,
   'Paddock topping': [
     {
       key: 'last_cut',
@@ -727,6 +912,10 @@ const NON_AREA_PRICED: ReadonlySet<string> = new Set([
   'General tractor work',
   'Trailer work',
   'Excavator work',
+  'Mini digger work',
+  // Pipe and trench work: per metre, no field boundary to draw.
+  'Pipe laying',
+  'Trenching',
   // Priced by the job, not the acre.
   'Tree felling & chipping',
   // A count of stumps and a pile of timber: no field to draw.

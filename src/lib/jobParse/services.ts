@@ -49,6 +49,9 @@ export const CANONICAL_SERVICES = [
   'Muck spreading',
   'Muck heap removal',
   'Paddock sweeping',
+  'Pipe laying',
+  'Trenching',
+  'Mini digger work',
 ] as const;
 
 export type CanonicalService = (typeof CANONICAL_SERVICES)[number];
