@@ -4,7 +4,8 @@ import type { ViewerRole } from '@/components/useViewer';
  * The app's bottom tabs (PRD task 1).
  *
  *   Customers:    Home · My jobs · Messages · Account
- *   Contractors:  Jobs · Diary · Messages · Earnings
+ *   Contractors:  Earnings · Diary · Messages · Jobs   (Jobs at the right,
+ *                 beside the Back slot AppShell adds on inner screens)
  *
  * Each points at an existing page where one exists. "Diary" is the won-jobs
  * list and "Earnings" the contractor dashboard, which already carries the
@@ -34,10 +35,10 @@ export const CUSTOMER_TABS: Tab[] = [
 ];
 
 export const CONTRACTOR_TABS: Tab[] = [
-  { key: 'jobs', label: 'Jobs', href: '/invitations', icon: 'board', badge: 'invites', also: ['/jobs', '/quote'] },
+  { key: 'earnings', label: 'Earnings', href: '/app/earnings', icon: 'earnings', also: ['/account', '/onboarding'] },
   { key: 'diary', label: 'Diary', href: '/won', icon: 'diary' },
   { key: 'messages', label: 'Messages', href: '/messages', icon: 'messages', badge: 'messages' },
-  { key: 'earnings', label: 'Earnings', href: '/app/earnings', icon: 'earnings', also: ['/account', '/onboarding'] },
+  { key: 'jobs', label: 'Jobs', href: '/invitations', icon: 'board', badge: 'invites', also: ['/jobs', '/quote'] },
 ];
 
 /**
