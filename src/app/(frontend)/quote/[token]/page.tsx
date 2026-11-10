@@ -20,7 +20,6 @@ import { PricePosition } from './PricePosition';
 import { QuoteForm } from './QuoteForm';
 import { CustomerContact, type RevealedContact } from './CustomerContact';
 import { DeclineForm } from './DeclineForm';
-import { InviteActions } from './InviteActions';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { MessageThread } from '@/components/messages/MessageThread';
 import { getModeratedUntil, getThreadMessages, getThreadState } from '@/lib/sealedQuotes/messages';
@@ -471,7 +470,6 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                   <DeclineForm token={token} />
                 </div>
               )}
-              {jobOpen && <InviteActions canPass={!live} />}
             </>
           )}
 

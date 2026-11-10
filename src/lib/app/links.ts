@@ -27,6 +27,23 @@ function goIfOurs(url: string | null | undefined): void {
   } catch {}
 }
 
+const LAUNCH_KEY = 'ea_launch_url_followed';
+
+/**
+ * True when this app session has already followed `url` as its launch link;
+ * otherwise records it and returns false. If storage is unavailable it
+ * answers true: missing one deep link is better than a reload loop.
+ */
+export function launchAlreadyFollowed(url: string): boolean {
+  try {
+    if (window.sessionStorage.getItem(LAUNCH_KEY) === url) return true;
+    window.sessionStorage.setItem(LAUNCH_KEY, url);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 export async function listenForAppLinks(): Promise<void> {
   if (!isNativeApp() || listening) return;
   try {
@@ -38,9 +55,15 @@ export async function listenForAppLinks(): Promise<void> {
     const { App: app } = await import('@capacitor/app');
     await app.addListener('appUrlOpen', (event) => goIfOurs(event.url));
     listening = true;
-    // A cold start from a link: the system hands the URL over once.
+    // A cold start from a link. getLaunchUrl answers with the same URL for
+    // the life of the process, not once, and following it is a full page
+    // load that runs this again. A text's link is /t/<code>, which redirects
+    // elsewhere, so "already there" never matches: without a record that we
+    // followed it, every load sent the app back to it and the page reloaded
+    // forever (each pass counting another tap). sessionStorage outlives the
+    // page load but not the app, so a later cold start from a link still goes.
     const launch = await app.getLaunchUrl().catch(() => null);
-    goIfOurs(launch?.url);
+    if (launch?.url && !launchAlreadyFollowed(launch.url)) goIfOurs(launch.url);
   } catch (err) {
     console.error('[links] listener failed:', err);
   }

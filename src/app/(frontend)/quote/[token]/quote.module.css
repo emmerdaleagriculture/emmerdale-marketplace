@@ -129,40 +129,9 @@
   text-underline-offset: 3px;
 }
 
-/* App mode (PRD task 9): the two answers at the foot of the invitation. */
-.inviteActions {
-  display: flex;
-  gap: 10px;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-}
-/* The forms are reached: slide the bar away so the keypad and the form's own
-   buttons can be reached (InviteActions). */
-.inviteActionsAway {
-  transform: translateY(110%);
-  opacity: 0;
-  pointer-events: none;
-}
-/* Scroll targets for the bar: land below the app's back bar, not under it. */
+/* In-page links (#price, #pass) land below the app's back bar, not under it. */
 :global(html[data-app]) .anchor {
   scroll-margin-top: calc(var(--app-safe-top) + 60px);
-}
-.passBtn,
-.priceBtn {
-  flex: 1;
-  height: 52px;
-  border-radius: 14px;
-  font-weight: 600;
-  font-size: 16px;
-}
-.passBtn {
-  background: var(--white);
-  border: 1px solid var(--rule);
-  color: var(--jd-green-deep);
-  flex: 0 0 36%;
-}
-.priceBtn {
-  background: var(--jd-green-deep);
-  color: var(--white);
 }
 
 /* ── Open membership: the customer's details (20261019120000) ─────────── */
