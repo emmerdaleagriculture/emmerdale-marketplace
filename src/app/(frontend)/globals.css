@@ -106,8 +106,7 @@ html[data-app] body {
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
   /* The frame draws nothing above the page, so the page keeps clear of the
-     notch itself. Pages with their own top bar (the back bar, the welcome
-     hero) start at the very top and pad inside. */
+     notch itself. Pages with their own top bar (the welcome hero) start at the very top and pad inside. */
   padding-top: var(--app-safe-top);
 }
 /* The website's chrome: header, footer, breadcrumbs (components opt in with
@@ -121,13 +120,10 @@ html[data-app] [data-app-hide] {
 html:not([data-app]) [data-app-only] {
   display: none !important;
 }
-/* Room for the fixed tab bar / back bar, set by AppShell only on the pages
-   that show them. */
+/* Room for the fixed tab bar (Back is a slot in it), set by AppShell only
+   on the pages that show it. */
 html[data-app][data-app-tabs] body {
   padding-bottom: calc(var(--app-tabbar-h) + var(--app-safe-bottom));
-}
-html[data-app][data-app-back] body {
-  padding-top: calc(var(--app-safe-top) + 48px);
 }
 /* A utility for the screens' one fixed primary action (Tasks 5, 8, 9). */
 html[data-app] .appFooterCta {

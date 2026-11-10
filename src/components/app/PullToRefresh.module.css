@@ -18,10 +18,6 @@
   pointer-events: none;
   transition: transform 0.25s ease, opacity 0.25s ease;
 }
-/* Below the back bar on inner screens, not under it. */
-:global(html[data-app-back]) .ptr {
-  top: calc(var(--app-safe-top, 0px) + 56px);
-}
 .icon {
   transform: rotate(var(--ptr-turn, 0deg));
 }

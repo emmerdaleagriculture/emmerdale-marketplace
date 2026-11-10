@@ -1,11 +1,8 @@
-/* The app's chrome: a fixed tab bar at the foot, a back bar at the head of
-   inner screens. Both are hidden unless <html data-app>, which an inline
+/* The app's chrome: a fixed tab bar at the foot, with a Back slot at its
+   right on inner screens. Hidden unless <html data-app>, which an inline
    script sets before paint, so the website never sees them. */
 
 .tabbar {
-  display: none;
-}
-.backbar {
   display: none;
 }
 
@@ -16,7 +13,9 @@
   bottom: 0;
   z-index: 50;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* Four tabs, plus the Back slot once the role is known. */
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   height: calc(var(--app-tabbar-h) + var(--app-safe-bottom));
   padding: 6px 4px calc(var(--app-safe-bottom) + 2px);
   background: rgba(255, 255, 255, 0.96);
@@ -79,42 +78,14 @@
   visibility: hidden;
 }
 
-:global(html[data-app]) .backbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: calc(var(--app-safe-top) + 48px);
-  padding: var(--app-safe-top) 8px 0;
-  background: rgba(250, 250, 245, 0.94);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+.backTab {
+  background: none;
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
 }
-.back {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: var(--jd-green-deep);
-  flex: none;
-}
-.back:active {
-  background: var(--jd-green-pale);
-}
-.backTitle {
-  flex: 1;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ink);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  /* Balance the chevron so the title sits centred. */
-  margin-right: 44px;
+/* On a tab's own page there is nowhere to go back to: keep the slot so the
+   tabs stay put, show nothing in it. */
+.backTab:disabled {
+  visibility: hidden;
 }

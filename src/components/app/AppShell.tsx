@@ -31,7 +31,6 @@ import s from './AppShell.module.css';
 type Badges = Partial<Record<BadgeKey, number>>;
 
 const ROLE_KEY = 'ea_role';
-const SITE_TITLE_SUFFIX = / \| Emmerdale Agriculture$/;
 
 function rememberedRole(): ViewerRole | null {
   try {
@@ -57,7 +56,6 @@ export function AppShell() {
   const [app, setApp] = useState(false);
   const [role, setRole] = useState<ViewerRole | null>(null);
   const [badges, setBadges] = useState<Badges>({});
-  const [title, setTitle] = useState('');
 
   useEffect(() => {
     // Normally the layout's inline script has already marked <html>. Not on
@@ -115,19 +113,16 @@ export function AppShell() {
   const tabs = tabsFor(role);
   const standalone = isAppStandalonePath(pathname);
   const showTabs = app && !standalone && tabs !== null;
-  // No back bar until the role is known: a bar that flashes on a tab page
-  // and off again is worse than none for a moment.
-  const showBack = app && !standalone && tabs !== null && !isTabRoot(tabs, pathname);
+  // Back lives in the tab bar, in a slot at the far right that is always
+  // there once the role is known (so the tabs never shift), and live only
+  // on inner screens.
+  const showBack = showTabs && !isTabRoot(tabs, pathname);
 
   // Tell the stylesheet to make room (globals.css, html[data-app-tabs]).
   useEffect(() => {
     setHtmlFlag('data-app-tabs', showTabs);
-    setHtmlFlag('data-app-back', showBack);
-    return () => {
-      setHtmlFlag('data-app-tabs', false);
-      setHtmlFlag('data-app-back', false);
-    };
-  }, [showTabs, showBack]);
+    return () => setHtmlFlag('data-app-tabs', false);
+  }, [showTabs]);
 
   // Badge counts: on arrival, on every navigation, and when the app is
   // brought back to the front.
@@ -149,18 +144,6 @@ export function AppShell() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [showTabs, pathname, refreshBadges]);
 
-  // The back bar's title is the page's own <title>, minus the site suffix.
-  // Next sets it after navigation, so watch it rather than read it once.
-  useEffect(() => {
-    if (!showBack) return;
-    const read = () => setTitle(document.title.replace(SITE_TITLE_SUFFIX, '').trim());
-    read();
-    // Watch <head>, not the <title> node: Next may replace the node.
-    const mo = new MutationObserver(read);
-    mo.observe(document.head, { childList: true, characterData: true, subtree: true });
-    return () => mo.disconnect();
-  }, [showBack, pathname]);
-
   const goBack = () => {
     // A fresh WebView opened straight onto an inner screen (a push, a text
     // link) has nowhere to go back to; the tab it belongs to is the answer.
@@ -175,14 +158,6 @@ export function AppShell() {
   return (
     <>
       {!standalone && <PullToRefresh onRefresh={refreshBadges} />}
-      {showBack && (
-        <div className={s.backbar}>
-          <button type="button" className={s.back} onClick={goBack} aria-label="Back">
-            <BackChevron />
-          </button>
-          <span className={s.backTitle}>{title}</span>
-        </div>
-      )}
       {!standalone && (tabs || role === null) && (
         <nav className={`${s.tabbar} ${tabs ? '' : s.skeleton}`} aria-label="App">
           {(tabs ?? CUSTOMER_PLACEHOLDER).map((t) => {
@@ -207,16 +182,35 @@ export function AppShell() {
               </Link>
             );
           })}
+          {tabs && (
+            <button
+              type="button"
+              className={`${s.tab} ${s.backTab}`}
+              onClick={goBack}
+              disabled={!showBack}
+              aria-hidden={!showBack}
+              tabIndex={showBack ? 0 : -1}
+            >
+              <span className={s.iconWrap}>
+                <BackChevron />
+              </span>
+              Back
+            </button>
+          )}
         </nav>
       )}
     </>
   );
 }
 
-/** Four blank slots while the role is unknown: the bar's height, nothing in it. */
+/**
+ * Blank slots while the role is unknown: the bar's height, nothing in it.
+ * Five, matching four tabs plus the Back slot, so nothing shifts when it fills.
+ */
 const CUSTOMER_PLACEHOLDER: Tab[] = [
   { key: 'a', label: '', href: '#', icon: 'home' },
   { key: 'b', label: '', href: '#', icon: 'jobs' },
   { key: 'c', label: '', href: '#', icon: 'messages' },
   { key: 'd', label: '', href: '#', icon: 'account' },
+  { key: 'e', label: '', href: '#', icon: 'home' },
 ];
