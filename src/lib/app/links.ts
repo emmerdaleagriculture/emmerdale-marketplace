@@ -15,33 +15,67 @@ import { isNativeApp } from '@/lib/app/isApp';
  * the bridge was not ready.
  */
 let listening = false;
+/** Set once this page has started leaving for a link: nothing else may. */
+let leaving = false;
 
+const FOLLOWED_KEY = 'ea_app_link_followed';
+
+/** Notes `url` as followed for the life of the WebView. False if it could not. */
+export function recordFollowed(url: string): boolean {
+  try {
+    window.sessionStorage.setItem(FOLLOWED_KEY, url);
+    return true;
+  } catch (err) {
+    console.error('[links] could not record a followed link:', err);
+    return false;
+  }
+}
+
+/**
+ * Whether the link the app reports from getLaunchUrl still needs following.
+ *
+ * getLaunchUrl is not "the link that cold-started the app, once": it answers
+ * for the life of the process, and on iOS it is the last link opened at all,
+ * warm taps included. Following a link is a full page load that asks again,
+ * and a text's /t/<code> redirects elsewhere, so "already there" never
+ * matches. Without a record, every load went back to the link: the page
+ * reloaded forever, each pass counting another tap. So the launch URL is
+ * followed only when it is not the link this WebView last followed, by
+ * either path; sessionStorage outlives the page load but not the app.
+ * Unreadable storage answers no: missing one deep link beats a reload loop.
+ */
+export function launchNeedsFollowing(url: string): boolean {
+  let last: string | null;
+  try {
+    last = window.sessionStorage.getItem(FOLLOWED_KEY);
+  } catch {
+    return false;
+  }
+  return last !== url;
+}
+
+/**
+ * Go to `url` if it is ours and not where we are. A warm tap (appUrlOpen) is
+ * always a fresh request from the person, even for a link they followed
+ * before, so it is followed; the launch path checks launchNeedsFollowing
+ * first. Either way the URL is recorded, so the launch path does not follow
+ * it again after the reload, and `leaving` stops a second assign while this
+ * page unloads (iOS replays a cold start's appUrlOpen as the listener
+ * attaches, and getLaunchUrl reports the same link a moment later).
+ */
 function goIfOurs(url: string | null | undefined): void {
-  if (!url) return;
+  if (!url || leaving) return;
   try {
     const u = new URL(url, window.location.origin);
     if (u.origin !== window.location.origin) return;
+    recordFollowed(url);
     const here = window.location.pathname + window.location.search + window.location.hash;
     const there = u.pathname + u.search + u.hash;
-    if (there !== here) window.location.assign(u.toString());
+    if (there !== here) {
+      leaving = true;
+      window.location.assign(u.toString());
+    }
   } catch {}
-}
-
-const LAUNCH_KEY = 'ea_launch_url_followed';
-
-/**
- * True when this app session has already followed `url` as its launch link;
- * otherwise records it and returns false. If storage is unavailable it
- * answers true: missing one deep link is better than a reload loop.
- */
-export function launchAlreadyFollowed(url: string): boolean {
-  try {
-    if (window.sessionStorage.getItem(LAUNCH_KEY) === url) return true;
-    window.sessionStorage.setItem(LAUNCH_KEY, url);
-    return false;
-  } catch {
-    return true;
-  }
 }
 
 export async function listenForAppLinks(): Promise<void> {
@@ -55,15 +89,11 @@ export async function listenForAppLinks(): Promise<void> {
     const { App: app } = await import('@capacitor/app');
     await app.addListener('appUrlOpen', (event) => goIfOurs(event.url));
     listening = true;
-    // A cold start from a link. getLaunchUrl answers with the same URL for
-    // the life of the process, not once, and following it is a full page
-    // load that runs this again. A text's link is /t/<code>, which redirects
-    // elsewhere, so "already there" never matches: without a record that we
-    // followed it, every load sent the app back to it and the page reloaded
-    // forever (each pass counting another tap). sessionStorage outlives the
-    // page load but not the app, so a later cold start from a link still goes.
+    // A cold start from a link (see launchNeedsFollowing for why it is
+    // checked). Followed only once recorded: a link that cannot be noted
+    // would be followed again on the next load.
     const launch = await app.getLaunchUrl().catch(() => null);
-    if (launch?.url && !launchAlreadyFollowed(launch.url)) goIfOurs(launch.url);
+    if (launch?.url && launchNeedsFollowing(launch.url) && recordFollowed(launch.url)) goIfOurs(launch.url);
   } catch (err) {
     console.error('[links] listener failed:', err);
   }

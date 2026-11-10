@@ -129,11 +129,6 @@
   text-underline-offset: 3px;
 }
 
-/* In-page links (#price, #pass) land below the app's back bar, not under it. */
-:global(html[data-app]) .anchor {
-  scroll-margin-top: calc(var(--app-safe-top) + 60px);
-}
-
 /* ── Open membership: the customer's details (20261019120000) ─────────── */
 .contactPanel {
   padding: 14px 16px;

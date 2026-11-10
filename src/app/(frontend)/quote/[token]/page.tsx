@@ -451,7 +451,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 />
               )}
 
-              <div id="price" className={q.anchor}>
+              <div id="price">
                 <QuoteForm
                   token={token}
                   markupRate={effectiveRate}
@@ -466,7 +466,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
               </div>
 
               {!live && (
-                <div id="pass" className={q.anchor}>
+                <div id="pass">
                   <DeclineForm token={token} />
                 </div>
               )}
