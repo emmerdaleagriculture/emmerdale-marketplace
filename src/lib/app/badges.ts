@@ -3,8 +3,8 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 /**
  * The numbers on the app's tab bar (src/components/app/tabs.ts).
  *
- *   invites   contractor: invitations they have not opened yet, on jobs
- *             still taking prices
+ *   invites   contractor: invitations not yet priced or passed (opened or
+ *             not), on jobs still taking prices — the "To price" count
  *   prices    customer: prices in that they have not looked at yet
  *   messages  either side: the other side's messages not yet read, leaving
  *             out anything a moderator is still holding (the reader cannot
@@ -35,7 +35,7 @@ export async function getBadges(userId: string): Promise<Badges> {
         .from('job_invitations')
         .select('id, job_submissions!inner(status)', { count: 'exact', head: true })
         .eq('contractor_id', userId)
-        .eq('status', 'sent')
+        .in('status', ['sent', 'viewed'])
         .in('job_submissions.status', LIVE)
         .then(({ count }) => {
           out.invites += count ?? 0;

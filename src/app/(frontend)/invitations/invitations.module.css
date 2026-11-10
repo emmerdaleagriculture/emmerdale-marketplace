@@ -99,3 +99,107 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ── App layout (html[data-app]; the page renders these only in the app) ── */
+
+:global(html[data-app]) .appTitle {
+  font-size: 26px;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.appSub {
+  font-size: 14px;
+  color: var(--ink-2);
+  margin-bottom: 16px;
+}
+
+.appSection {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+  margin: 18px 0 8px;
+}
+
+.appSection:first-of-type {
+  margin-top: 0;
+}
+
+.appList {
+  display: grid;
+  gap: 10px;
+}
+
+.appCard {
+  padding: 14px;
+}
+
+.appCard:active {
+  border-color: var(--jd-green);
+  background: var(--cream);
+}
+
+.appHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.appService {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.chevron {
+  flex: none;
+  margin-top: 1px;
+  color: var(--ink-2);
+}
+
+.appFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.appTimes {
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.dueSoon {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.priceCta {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--jd-green);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.yourPrice {
+  flex: none;
+  font-size: 13px;
+  color: var(--ink-2);
+  text-align: right;
+}
+
+.yourPrice strong {
+  display: block;
+  font-size: 18px;
+  color: var(--jd-green-dark);
+}
