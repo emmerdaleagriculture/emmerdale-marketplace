@@ -192,7 +192,148 @@ export const PART_C: ServiceContent[] = [
         a: 'Often not for a small pond, but it depends on size, location and what happens to the spoil. Larger ponds, ones fed from a watercourse, or work that changes a ditch or stream may need consent. Check with your council before you start.',
       },
     ],
-    related: ['road-construction', 'mole-ploughing', 'fencing', 'mounding'],
+    related: ['mini-digger', 'trenching', 'road-construction', 'mounding'],
+  },
+  {
+    card: 'mini-digger',
+    path: 'mini-digger-hire-with-driver',
+    canonical: ['Mini digger work'],
+    metaTitle: 'Mini Digger Hire with Driver',
+    metaDescription:
+      'Mini digger hire with driver for trenches, footings, levelling and stumps where a big machine cannot reach. Describe the job and get local prices.',
+    h1: 'Mini digger hire with a driver',
+    intro:
+      'For the digging jobs too small, or too tucked away, for a full-size excavator: a trench across a garden, a base for a field shelter, a few stumps by a fence line, or levelling behind the stables. A contractor brings a mini or micro digger and an operator who uses one every day.',
+    involves: [
+      'A micro digger fits through a garden gate or a doorway-sized gap, and a mini digger through most pedestrian and field gates. Both are light on the ground and turn in their own length, so they work between buildings, along fence lines and across lawns that a bigger machine would ruin.',
+      'Typical jobs are trenches for water, drainage and cables, footings and bases for shelters, sheds and walls, digging out stumps and roots, levelling and landscaping, small ponds, and breaking out concrete with a hammer attachment.',
+      'Most work is by the hour, half day or day. The contractor will want to know the narrowest way in, what the digging is, and where any spare soil goes, so say all three when you describe the job.',
+    ],
+    when: [
+      'A mini digger works all year, and on light tracks it does less damage to wet ground than anything bigger. Even so, a dry spell makes for a neater finish on grass and a cleaner trench.',
+      'Book with other trades in mind: a trench is best dug the day the pipe or cable goes in, and footings shortly before the concrete arrives.',
+    ],
+    priceFactors: [
+      'How long the job takes: by the hour, half day or day.',
+      'Access, and whether only a micro digger will fit.',
+      'Attachments such as a breaker, auger or grading bucket.',
+      'What happens to the spoil: spread on site or loaded and taken away.',
+      'Travel and delivery of the machine to your site.',
+    ],
+    goodToKnow: [
+      'Measure the narrowest point on the way in, including gate posts and any step, before you ask. It decides which machine comes.',
+      'Mark any buried water pipes, cables, drains and septic tank pipes you know about. Old ones are rarely on any plan.',
+      'If the job grows past a couple of days or needs a deep or wide dig, a full-size excavator may be quicker and cheaper overall.',
+    ],
+    faqs: [
+      {
+        q: 'Will a mini digger fit through my gate?',
+        a: 'A micro digger fits through a gap of about 750mm to 1m, and a typical mini digger needs about 1 to 1.5m. Measure the narrowest point and say so in your description, and the contractor will bring the machine that fits.',
+      },
+      {
+        q: 'Is it better to hire a mini digger with a driver?',
+        a: 'For most people, yes. An experienced operator digs faster and neater, knows how to work round buried services, and the machine is their responsibility. Self-drive hire suits only simple jobs if you have used one before.',
+      },
+      {
+        q: 'Will it damage my lawn or paddock?',
+        a: 'Rubber tracks spread the weight, so damage on dry ground is light. On wet ground expect some marking where the machine turns, and ask for boards or track mats if the surface matters.',
+      },
+    ],
+    related: ['trenching', 'pipe-laying', 'excavator-work', 'stump-grinding'],
+  },
+  {
+    card: 'trenching',
+    path: 'trenching',
+    canonical: ['Trenching'],
+    metaTitle: 'Trenching Contractors for Pipes and Cables',
+    metaDescription:
+      'Trench digging for water pipes, cables, drainage and footings, backfilled and tidied. Describe the run and local contractors send you a price.',
+    h1: 'Trenching for pipes, cables and footings',
+    intro:
+      'For landowners who need a trench: a water supply out to a field trough, an electric cable to a stable block, a drain across a wet yard, or footings for a wall. A contractor digs it to the depth and line you need and fills it back in once whatever goes in it is in.',
+    involves: [
+      'The machine is matched to the trench. A mini digger with a narrow bucket suits most pipe and cable runs; a larger excavator handles deep or long trenches and footings; and on open fields a chain trencher can cut a narrow, even trench quickly.',
+      'The line is marked out first and the trench dug to the agreed depth, with the soil kept to one side. Once the pipe, cable or duct is in, the trench is backfilled in layers and firmed, topsoil goes back on top, and on grass the turf can be relaid or the line left to grow back.',
+      'Depth depends on what the trench is for. Water pipes need to sit deep enough to keep frost off, cables need warning tape above them, and drains need an even fall along their length. Say what is going in and the contractor will dig to suit.',
+    ],
+    when: [
+      'Late spring to early autumn, when the ground is dry and firm, gives the cleanest trench and the least mess on grass. Wet clay smears and sticky trenches can collapse.',
+      'If someone else is laying the pipe or cable, line the two up so the trench is open for as short a time as possible, especially where stock or people move around.',
+    ],
+    priceFactors: [
+      'The length and depth of the trench.',
+      'The ground: grass digs quickly, while concrete, tarmac, rock or old foundations must be broken out.',
+      'Backfilling and reinstatement, including turf or a hard surface on top.',
+      'What happens to spare soil: spread on site or taken away.',
+      'Access for the machine and the distance to travel.',
+    ],
+    goodToKnow: [
+      'Find out where existing pipes and cables run before digging. Old farm water pipes are rarely mapped, so mark whatever you know.',
+      'Electrical connections should be made by a qualified electrician. The contractor digs and backfills; the electrician connects.',
+      'Keep stock out of the area while a trench is open, and fence or cover it overnight if it cannot be filled the same day.',
+    ],
+    faqs: [
+      {
+        q: 'How deep does a water pipe trench need to be?',
+        a: 'A water supply pipe is usually laid with at least 750mm of cover so frost cannot reach it. Under a track or gateway where vehicles cross it may need to go deeper or be protected.',
+      },
+      {
+        q: 'Can you lay the pipe as well?',
+        a: 'Many contractors will dig, lay and backfill in one job. If you want the pipe supplied and laid too, ask for pipe laying instead and say what the pipe is for.',
+      },
+      {
+        q: 'Will the trench line show afterwards?',
+        a: 'On grass it usually shows for a season while the soil settles and the turf knits back. Firming the backfill in layers and relaying the turf keeps the dip to a minimum.',
+      },
+    ],
+    related: ['pipe-laying', 'mini-digger', 'excavator-work', 'land-clearance'],
+  },
+  {
+    card: 'pipe-laying',
+    path: 'pipe-laying',
+    canonical: ['Pipe laying'],
+    metaTitle: 'Pipe Laying: Water Pipe, Land Drains, Ducts',
+    metaDescription:
+      'Pipe laying for farms and paddocks: water pipe to troughs, land drains and cable ducts, trench dug and backfilled. Describe the run and get local prices.',
+    h1: 'Pipe laying for water, drainage and ducts',
+    intro:
+      'For getting water out to troughs and stables, draining a wet field or gateway, or running a duct for power to a building. A contractor digs the trench, lays the pipe to the right depth and fall, and backfills it, so you are left with water where you want it and a level field.',
+    involves: [
+      'Water supply pipe, usually blue polyethylene, is laid in a narrow trench deep enough to keep frost off, with joints and a stopcock where you need them and a connection to a trough at the end. On long runs across open ground some contractors pull the pipe in with a mole plough instead of an open trench.',
+      'Land drains are perforated pipe laid to an even fall, often bedded and covered in gravel, and led to a ditch or outfall. Getting the fall right is what makes a drain work, so the levels are set before the pipe goes in.',
+      'Ducts for electric or data cables go in with warning tape above them so anyone digging later finds the tape before the duct. The cable itself is pulled through and connected by an electrician.',
+    ],
+    when: [
+      'Dry ground in late spring to autumn makes for clean trenches, accurate falls and an easy reinstatement. Drainage is easiest to plan after a wet spell, when you have seen where the water sits.',
+      'Lay new water supplies before you need them: troughs fed in spring save carrying water all summer.',
+    ],
+    priceFactors: [
+      'The length of the run and the depth it needs.',
+      'What the pipe is for, and whether gravel, fittings, a trough connection or an outfall are part of the job.',
+      'Whether the contractor supplies the pipe or you have it already.',
+      'The ground: grass, a hard yard or a track to cross, rock or old drains in the way.',
+      'Reinstatement of turf or hard surfaces afterwards.',
+    ],
+    goodToKnow: [
+      'Know where the water will come from before you ask: a tap, an existing pipe or the meter, and how far it is from where the water is needed.',
+      'A new connection to the public water main, or to a public sewer, is arranged through the water company. The contractor lays the private side.',
+      'Keep a rough sketch of where the pipe runs once it is in. The next person to dig will thank you for it.',
+    ],
+    faqs: [
+      {
+        q: 'How deep should a water pipe to a field trough be?',
+        a: 'Usually at least 750mm of cover to keep it from freezing, and deeper or protected where vehicles cross it. The contractor will set the depth for your ground.',
+      },
+      {
+        q: 'Do land drains need gravel?',
+        a: 'Most do. Gravel over a perforated pipe lets water reach it quickly and stops soil clogging the holes. On heavy clay the gravel may be brought close to the surface so water can get down to it.',
+      },
+      {
+        q: 'Can a pipe be laid without digging a trench?',
+        a: 'On open fields a mole plough can pull water pipe in with only a narrow slot left on the surface, which is quick and tidy. It is not suited to stony ground, hard yards or drains that need a precise fall.',
+      },
+    ],
+    related: ['trenching', 'mini-digger', 'mole-ploughing', 'land-clearance'],
   },
   {
     card: 'road-grading',

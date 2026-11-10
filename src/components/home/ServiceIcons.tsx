@@ -32,6 +32,9 @@ export type ServiceIconKey =
   | 'grader'
   | 'mulcher'
   | 'excavator'
+  | 'mini_digger'
+  | 'trench'
+  | 'pipe'
   | 'road'
   | 'mounds';
 
@@ -309,6 +312,35 @@ const PATHS: Record<ServiceIconKey, ReactNode> = {
       <path d="M8 24 V18 H16 V24" />
       <path d="M16 19 L26 9 L32 18" />
       <path d="M32 18 L36 20 L33 25 L29 22 Z" />
+    </>
+  ),
+  // A small digger: short tracks, cab and a short arm.
+  mini_digger: (
+    <>
+      <rect x="6" y="28" width="14" height="5" rx="2.5" />
+      <path d="M9 28 V20 H17 V28" />
+      <path d="M17 22 L25 16 L29 23" />
+      <path d="M29 23 L32 25 L30 29 L27 26 Z" />
+      <path d="M4 36 H36" />
+    </>
+  ),
+  // A trench cut into the ground, spoil heaped beside it.
+  trench: (
+    <>
+      <path d="M4 18 H14 V32 H22 V18 H36" />
+      <path d="M24 18 C 26 12, 32 12, 34 18" />
+      <path d="M17 26 H19" />
+    </>
+  ),
+  // A pipe running underground, the ground line above it.
+  pipe: (
+    <>
+      <path d="M4 14 H36" />
+      <path d="M4 24 H30" />
+      <path d="M4 30 H30" />
+      <ellipse cx="30" cy="27" rx="2" ry="3" />
+      <path d="M12 24 V30 M22 24 V30" />
+      <path d="M10 8 L8 14 M20 8 L18 14 M30 8 L28 14" />
     </>
   ),
   // A road running into the distance, centre line dashed.

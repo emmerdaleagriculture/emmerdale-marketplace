@@ -12,7 +12,7 @@ import { LlmParseSchema, RECORD_JOB_PARSE_TOOL, type LlmParse } from './schema';
  */
 
 export const MODEL_VERSION = 'claude-haiku-4-5';
-export const PROMPT_VERSION = 'v7'; // v7: Paddock sweeping; v6: Muck spreading, Muck heap removal; v5: Stump grinding, Mobile log splitting; v4: Lime spreading, Tree felling & chipping, Sub-soiling, Scarifying; v3: Fencing, Ditch clearance, and seven machinery/forestry services; v2: Hedge cutting
+export const PROMPT_VERSION = 'v8'; // v8: Pipe laying, Trenching, Mini digger work; v7: Paddock sweeping; v6: Muck spreading, Muck heap removal; v5: Stump grinding, Mobile log splitting; v4: Lime spreading, Tree felling & chipping, Sub-soiling, Scarifying; v3: Fencing, Ditch clearance, and seven machinery/forestry services; v2: Hedge cutting
 
 /** Hard latency ceiling on the parse call (spec §4 step 2). */
 // 15 s, up from 8: Haiku averages ~2.7 s here, but one live customer hit the
@@ -48,7 +48,7 @@ Services (choose exactly one, or "unmatched"):
 - Trailer work — carting or hauling with a tractor and trailer: moving bales, muck, timber, spoil or materials (not muck heaps: taking one away is Muck heap removal, spreading it is Muck spreading); usually by the load, hour or day
 - Road grading — grading and re-levelling farm tracks, drives or unmade roads, filling potholes and restoring the camber; measured in metres of track
 - Fixed tooth mulching — forestry mulching with a fixed-tooth mulcher: grinding scrub, saplings, stumps or brash down to mulch; measured by area
-- Excavator work — digging with an excavator or digger: trenches, footings, ponds, spoil moving; usually by the hour or day
+- Excavator work — digging with a mid-size or large excavator: larger footings, ponds, spoil moving, stump removal, general digging (a trench on its own is Trenching; laying pipe is Pipe laying; a mini or micro digger is Mini digger work); usually by the hour or day
 - Road construction/repair — building or repairing farm tracks, drives or access roads: excavating, laying stone and surfacing; measured in metres of track
 - Lime spreading — spreading agricultural lime to correct soil pH on grassland or arable; measured by area
 - Tree felling & chipping — felling trees and chipping the brash, branches or whole trees (NOT grinding out the stumps afterwards — that is Stump grinding); priced by the job
@@ -60,6 +60,9 @@ Services (choose exactly one, or "unmatched"):
 - Muck spreading — spreading farmyard manure, horse muck or compost from a heap onto fields or paddocks with a muck spreader, whether the heap is on site or the muck is supplied too (taking a heap away is Muck heap removal); measured by area
 - Muck heap removal — loading a muck or manure heap and taking it away off site, or clearing it out of a yard or stable area; priced by the job
 - Paddock sweeping — sweeping or vacuuming fallen leaves, acorns, sycamore seeds, twigs or other debris off paddocks and grass with a towed sweeper or vacuum (droppings alone are Manure sweeping); measured by area
+- Pipe laying — laying water, drainage or duct pipe in the ground: a water supply to troughs or buildings, land drains, cable ducts, usually including the trench it goes in; measured in metres of pipe
+- Trenching — digging a measured run of trench for a cable, duct, a pipe someone else will lay, or drainage, and filling it back in (if the pipe is to be laid as well, that is Pipe laying); measured in metres of trench
+- Mini digger work — a mini or micro digger with a driver, asked for by the machine or by the hour or day rather than as a measured trench: tight access through a gate or garden, footings or a base, levelling, stumps, small odd digging jobs; usually by the hour or day
 
 Rules:
 - "unmatched" is a legitimate, first-class answer. Prefer it over a poor fit — a wrong confident classification is worse than an honest unmatched.
