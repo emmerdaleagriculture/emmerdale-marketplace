@@ -12,10 +12,9 @@
   right: 0;
   bottom: 0;
   z-index: 50;
-  display: grid;
-  /* Four tabs, plus the Back slot once the role is known. */
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
+  /* Four equal tabs; on inner screens Back grows in at the right and the
+     tabs slide across to make room (flex, so the widths can animate). */
+  display: flex;
   height: calc(var(--app-tabbar-h) + var(--app-safe-bottom));
   padding: 6px 4px calc(var(--app-safe-bottom) + 2px);
   background: rgba(255, 255, 255, 0.96);
@@ -30,6 +29,8 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
+  flex: 1 1 0;
+  min-width: 0;
   font-size: 11px;
   font-weight: 600;
   /* ink-2, not ink-3: inactive labels read outdoors (7.9:1 on white). */
@@ -84,8 +85,26 @@
   font-family: inherit;
   cursor: pointer;
 }
-/* On a tab's own page there is nowhere to go back to: keep the slot so the
-   tabs stay put, show nothing in it. */
-.backTab:disabled {
-  visibility: hidden;
+/* Closed on a tab's own page: no width, so the four tabs share the bar
+   equally. Opening it to a fifth share slides them left. */
+.backTab {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: max-width 0.25s ease, opacity 0.2s ease;
+}
+.backTabOn {
+  max-width: 20%;
+  opacity: 1;
+  pointer-events: auto;
+}
+.backTabOn:active {
+  opacity: 0.7;
+}
+@media (prefers-reduced-motion: reduce) {
+  .backTab {
+    transition: none;
+  }
 }

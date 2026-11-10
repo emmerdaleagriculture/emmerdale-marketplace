@@ -113,9 +113,9 @@ export function AppShell() {
   const tabs = tabsFor(role);
   const standalone = isAppStandalonePath(pathname);
   const showTabs = app && !standalone && tabs !== null;
-  // Back lives in the tab bar, in a slot at the far right that is always
-  // there once the role is known (so the tabs never shift), and live only
-  // on inner screens.
+  // Back lives in the tab bar at the far right. On a tab's own page it is
+  // closed to no width and the four tabs share the bar; on an inner screen it
+  // opens and the tabs slide across (AppShell.module.css, .backTabOn).
   const showBack = showTabs && !isTabRoot(tabs, pathname);
 
   // Tell the stylesheet to make room (globals.css, html[data-app-tabs]).
@@ -185,7 +185,7 @@ export function AppShell() {
           {tabs && (
             <button
               type="button"
-              className={`${s.tab} ${s.backTab}`}
+              className={`${s.tab} ${s.backTab} ${showBack ? s.backTabOn : ''}`}
               onClick={goBack}
               disabled={!showBack}
               aria-hidden={!showBack}
@@ -203,14 +203,10 @@ export function AppShell() {
   );
 }
 
-/**
- * Blank slots while the role is unknown: the bar's height, nothing in it.
- * Five, matching four tabs plus the Back slot, so nothing shifts when it fills.
- */
+/** Four blank slots while the role is unknown: the bar's height, nothing in it. */
 const CUSTOMER_PLACEHOLDER: Tab[] = [
   { key: 'a', label: '', href: '#', icon: 'home' },
   { key: 'b', label: '', href: '#', icon: 'jobs' },
   { key: 'c', label: '', href: '#', icon: 'messages' },
   { key: 'd', label: '', href: '#', icon: 'account' },
-  { key: 'e', label: '', href: '#', icon: 'home' },
 ];
