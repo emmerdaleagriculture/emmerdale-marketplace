@@ -196,11 +196,10 @@ export async function POST(request: Request) {
 
   // Suppression is Resend telling us the address is already known bad, which
   // is the same conclusion a hard bounce reaches, one step earlier. A soft
-  // bounce gets there too once its retries are spent: three refusals over
-  // four hours is an address that is not taking our mail, whatever the
-  // provider calls it. Marking it stops both email and job invitations until
-  // the contractor proves an address from /account.
-  if (isUndeliverable(status, event.data?.bounce, row.retry_count ?? 0)) {
+  // bounce never gets there, retries spent or not — see isUndeliverable for
+  // the Outlook episode that taught us. Marking it stops both email and job
+  // invitations until the contractor proves an address from /account.
+  if (isUndeliverable(status, event.data?.bounce)) {
     await admin.rpc('record_undeliverable_email', {
       p_email: row.to_email,
       p_kind: row.kind,

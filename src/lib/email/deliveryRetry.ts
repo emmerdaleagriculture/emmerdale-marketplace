@@ -79,16 +79,19 @@ export function retryDelayMs(attemptsSoFar: number): number | null {
  * Whether this report should put the address on undeliverable_emails, which
  * stops every email to it and every job invitation for a contractor using it.
  *
- * Suppression and a Permanent bounce say so outright. A soft bounce says so
- * only when it was the last attempt — the retries above exist because a full
- * mailbox or a provider blip usually clears, and blocking on the first one
- * would cut a contractor off over a minute's outage. `failed` never counts:
- * that is our provider failing to send, not the address refusing.
+ * Only suppression and a Permanent bounce do — the address itself is wrong.
+ * A Transient bounce never does, however many times it repeats: from 5 to
+ * 9 Nov 2026 Outlook/Hotmail refused about two thirds of our mail as
+ * "Transient · General", every retry failed the same way, and 26 vetted
+ * contractors were cut off from jobs over a problem that was Microsoft's and
+ * ours, not their addresses'. Delivery resumed on its own on 9 Nov. Missing
+ * one message to a full mailbox is cheap; silently losing a contractor is not.
+ * `failed` never counts either: that is our provider failing to send.
  */
-export function isUndeliverable(status: Delivery, bounce: BounceInfo, attemptsSoFar: number): boolean {
+export function isUndeliverable(status: Delivery, bounce: BounceInfo): boolean {
   if (status === 'suppressed') return true;
   if (status !== 'bounced') return false;
-  return isHardBounce(bounce) || retryDelayMs(attemptsSoFar) === null;
+  return isHardBounce(bounce);
 }
 
 /** "in 15 minutes" / "in 4 hours", for the admin alert. */
