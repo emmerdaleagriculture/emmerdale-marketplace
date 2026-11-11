@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { submitQuoteAction, type QuoteActionState } from './actions';
-import { MIN_JOB_PENCE, PriceKeypad } from './PriceKeypad';
+import { PriceKeypad } from './PriceKeypad';
 import { isApp } from '@/lib/app/isApp';
 import f from '@/components/forms/forms.module.css';
 import a from '@/app/(frontend)/auth.module.css';
@@ -40,7 +40,6 @@ export function QuoteForm({
   const [app, setApp] = useState(false);
   useEffect(() => setApp(isApp()), []);
   const [keyed, setKeyed] = useState('');
-  const keypadLow = app && quoteType === 'total' && keyed !== '' && Number(keyed) * 100 < MIN_JOB_PENCE;
 
   if (state.closed) {
     return <div className={q.closedPanel}>{state.message}</div>;
@@ -242,7 +241,7 @@ export function QuoteForm({
       </label>
 
       <div className={a.actions} data-thumb>
-        <button className={f.btnYellow} type="submit" disabled={pending || keypadLow || (app && quoteType === 'total' && !keyed)}>
+        <button className={f.btnYellow} type="submit" disabled={pending || (app && quoteType === 'total' && !Number(keyed))}>
           {pending ? 'Sending…' : revising ? 'Send new price' : 'Send my price'}
         </button>
       </div>
