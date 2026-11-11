@@ -82,7 +82,7 @@ export function retryDelayMs(attemptsSoFar: number): number | null {
  * Only suppression and a Permanent bounce do — the address itself is wrong.
  * A Transient bounce never does, however many times it repeats: from 5 to
  * 9 Nov 2026 Outlook/Hotmail refused about two thirds of our mail as
- * "Transient · General", every retry failed the same way, and 28 vetted
+ * "Transient · General", every retry failed the same way, and 26 vetted
  * contractors were cut off from jobs over a problem that was Microsoft's and
  * ours, not their addresses'. Delivery resumed on its own on 9 Nov. Missing
  * one message to a full mailbox is cheap; silently losing a contractor is not.

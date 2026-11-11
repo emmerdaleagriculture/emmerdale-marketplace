@@ -96,7 +96,7 @@ describe('isUndeliverable', () => {
 
   it('never blocks an address on a soft bounce', () => {
     // Outlook/Hotmail, 5–9 Nov 2026: every retry came back Transient · General
-    // and 28 vetted contractors were cut off from jobs.
+    // and 26 vetted contractors were cut off from jobs.
     expect(isUndeliverable('bounced', soft)).toBe(false);
     expect(isUndeliverable('bounced', { type: 'Transient', subType: 'MailboxFull' })).toBe(false);
   });
