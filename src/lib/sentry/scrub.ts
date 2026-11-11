@@ -103,7 +103,15 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
   if (event.user) event.user = { id: event.user.id };
 
   for (const crumb of event.breadcrumbs ?? []) {
-    if (crumb.data) crumb.data = redact(crumb.data) as typeof crumb.data;
+    if (crumb.data) {
+      const data = redact(crumb.data) as Record<string, unknown>;
+      // Navigation and fetch crumbs carry URLs in from/to/url: a /quote/<token>
+      // there is the same capability as in event.request.url (seen 2026-11-11).
+      for (const [k, v] of Object.entries(data)) {
+        if (typeof v === 'string') data[k] = redactPath(v);
+      }
+      crumb.data = data as typeof crumb.data;
+    }
     if (typeof crumb.message === 'string') crumb.message = redactPath(crumb.message);
   }
 
