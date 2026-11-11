@@ -55,7 +55,14 @@ export function BoundaryPreview({
       }
       if (cancelled || !containerRef.current) return;
 
-      map = L.map(containerRef.current, { zoomControl: true, dragging: true });
+      // On a phone a one-finger drag over the map should scroll the page,
+      // not pan the map: the map sits mid-page and catches the thumb. With
+      // dragging off, Leaflet's touch-action is `pan-x pan-y`, so the page
+      // scrolls through it, while a pinch still zooms (and moves with the
+      // two fingers) and the +/- buttons work. The view is already framed
+      // on the job, so panning is rarely needed.
+      const touch = window.matchMedia('(pointer: coarse)').matches;
+      map = L.map(containerRef.current, { zoomControl: true, dragging: !touch });
       const tiles = L.tileLayer(
         `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/512/{z}/{x}/{y}@2x?access_token=${MAPBOX_TOKEN}`,
         { attribution: '© Mapbox © OpenStreetMap © Maxar', tileSize: 512, zoomOffset: -1, maxZoom: 20 },
