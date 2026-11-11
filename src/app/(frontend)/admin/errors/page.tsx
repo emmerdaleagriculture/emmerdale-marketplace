@@ -76,10 +76,12 @@ export default async function ErrorsPage() {
           {sentry.issues.map((i) => (
             <tr key={i.id}>
               <td>
-                {i.permalink ? (
-                  <a href={i.permalink} target="_blank" rel="noreferrer">{i.title}</a>
-                ) : (
-                  i.title
+                <Link href={`/admin/errors/${i.id}`}>{i.title}</Link>
+                {i.permalink && (
+                  <>
+                    {' '}
+                    <a href={i.permalink} target="_blank" rel="noreferrer" className={s.metricHint}>Sentry ↗</a>
+                  </>
                 )}
                 {i.value && <div className={s.metricHint}>{i.value}</div>}
               </td>

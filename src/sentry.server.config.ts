@@ -7,6 +7,7 @@ import {
   TRACES_SAMPLE_RATE,
   warnIfDsnMissing,
 } from '@/lib/sentry/options';
+import { isNoise } from '@/lib/sentry/noise';
 import { scrubEvent } from '@/lib/sentry/scrub';
 
 warnIfDsnMissing('server');
@@ -32,5 +33,6 @@ Sentry.init({
   // once those call sites are known not to echo customer data.
   enableLogs: false,
 
-  beforeSend: scrubEvent,
+  // Stale-tab server actions after a deploy: see noise.ts.
+  beforeSend: (event) => (isNoise(event) ? null : scrubEvent(event)),
 });

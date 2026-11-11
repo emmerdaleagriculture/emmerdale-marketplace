@@ -73,6 +73,23 @@ type RawIssue = {
   metadata?: { type?: string; value?: string };
 };
 
+function shapeIssue(i: RawIssue): SentryIssue {
+  return {
+    id: String(i.id ?? ''),
+    shortId: i.shortId ?? '',
+    title: i.title ?? '(untitled)',
+    culprit: i.culprit ?? null,
+    type: i.metadata?.type ?? null,
+    value: i.metadata?.value ?? null,
+    level: i.level ?? null,
+    count: Number(i.count ?? 0),
+    userCount: Number(i.userCount ?? 0),
+    firstSeen: i.firstSeen ?? null,
+    lastSeen: i.lastSeen ?? null,
+    permalink: i.permalink ?? null,
+  };
+}
+
 export async function loadSentryIssues(limit = 25): Promise<SentryIssues> {
   const token = process.env.SENTRY_READ_TOKEN || process.env.SENTRY_AUTH_TOKEN;
   if (!token) return { configured: false };
@@ -118,20 +135,7 @@ export async function loadSentryIssues(limit = 25): Promise<SentryIssues> {
     return {
       configured: true,
       ok: true,
-      issues: raw.map((i) => ({
-        id: String(i.id ?? ''),
-        shortId: i.shortId ?? '',
-        title: i.title ?? '(untitled)',
-        culprit: i.culprit ?? null,
-        type: i.metadata?.type ?? null,
-        value: i.metadata?.value ?? null,
-        level: i.level ?? null,
-        count: Number(i.count ?? 0),
-        userCount: Number(i.userCount ?? 0),
-        firstSeen: i.firstSeen ?? null,
-        lastSeen: i.lastSeen ?? null,
-        permalink: i.permalink ?? null,
-      })),
+      issues: raw.map(shapeIssue),
     };
   } catch (err) {
     return {
@@ -139,5 +143,146 @@ export async function loadSentryIssues(limit = 25): Promise<SentryIssues> {
       ok: false,
       error: err instanceof Error ? err.message : 'could not reach Sentry',
     };
+  }
+}
+
+/** One issue's most recent event, cut down to what diagnoses it. */
+export type SentryFrame = {
+  file: string | null;
+  fn: string | null;
+  line: number | null;
+  col: number | null;
+  inApp: boolean;
+};
+export type SentryException = { type: string | null; value: string | null; frames: SentryFrame[] };
+export type SentryCrumb = { at: string | null; category: string | null; message: string | null; level: string | null };
+export type SentryTagCount = { key: string; values: { value: string; count: number }[] };
+export type SentryEventDetail = {
+  id: string;
+  at: string | null;
+  url: string | null;
+  release: string | null;
+  tags: { key: string; value: string }[];
+  exceptions: SentryException[];
+  breadcrumbs: SentryCrumb[];
+  /** contexts + extra, as sent (already scrubbed on the way in). */
+  raw: Record<string, unknown>;
+};
+export type SentryIssueDetail =
+  | { configured: false }
+  | { configured: true; ok: false; error: string }
+  | {
+      configured: true;
+      ok: true;
+      issue: SentryIssue;
+      event: SentryEventDetail | null;
+      /** Across every event of the issue: which pages, browsers, releases. */
+      spread: SentryTagCount[];
+    };
+
+const SPREAD_KEYS = ['url', 'browser', 'os', 'device', 'release', 'transaction'];
+
+async function sentryGet(path: string, token: string): Promise<unknown> {
+  const res = await fetch(`${apiBase()}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    next: { revalidate: 60 },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) throw new Error(`Sentry answered ${res.status} for ${path.split('?')[0]}`);
+  return res.json();
+}
+
+type RawFrame = { filename?: string; absPath?: string; function?: string; lineNo?: number; colNo?: number; inApp?: boolean };
+type RawEntry = { type?: string; data?: { values?: unknown[] } };
+type RawEvent = {
+  eventID?: string;
+  id?: string;
+  dateCreated?: string;
+  release?: { version?: string } | string | null;
+  tags?: { key?: string; value?: string }[];
+  entries?: RawEntry[];
+  contexts?: Record<string, unknown>;
+  context?: Record<string, unknown>;
+  extra?: Record<string, unknown>;
+};
+
+function shapeEvent(e: RawEvent): SentryEventDetail {
+  const tags = (e.tags ?? []).map((t) => ({ key: String(t.key ?? ''), value: String(t.value ?? '') }));
+  const entries = e.entries ?? [];
+  const exceptions: SentryException[] = [];
+  const breadcrumbs: SentryCrumb[] = [];
+  for (const entry of entries) {
+    if (entry.type === 'exception') {
+      for (const v of (entry.data?.values ?? []) as { type?: string; value?: string; stacktrace?: { frames?: RawFrame[] } }[]) {
+        exceptions.push({
+          type: v.type ?? null,
+          value: v.value ?? null,
+          // Sentry lists frames oldest first; the throw is the last one.
+          frames: (v.stacktrace?.frames ?? []).slice().reverse().map((f) => ({
+            file: f.absPath ?? f.filename ?? null,
+            fn: f.function ?? null,
+            line: f.lineNo ?? null,
+            col: f.colNo ?? null,
+            inApp: Boolean(f.inApp),
+          })),
+        });
+      }
+    } else if (entry.type === 'breadcrumbs') {
+      for (const b of (entry.data?.values ?? []) as { timestamp?: string; category?: string; message?: string; level?: string; data?: Record<string, unknown> }[]) {
+        breadcrumbs.push({
+          at: b.timestamp ?? null,
+          category: b.category ?? null,
+          message: b.message ?? (b.data ? JSON.stringify(b.data) : null),
+          level: b.level ?? null,
+        });
+      }
+    }
+  }
+  const release = typeof e.release === 'string' ? e.release : e.release?.version ?? null;
+  return {
+    id: String(e.eventID ?? e.id ?? ''),
+    at: e.dateCreated ?? null,
+    url: tags.find((t) => t.key === 'url')?.value ?? null,
+    release,
+    tags,
+    exceptions,
+    breadcrumbs: breadcrumbs.slice(-20),
+    raw: { contexts: e.contexts ?? {}, extra: e.extra ?? e.context ?? {} },
+  };
+}
+
+/**
+ * One issue in full for /admin/errors/[id]: the issue row, its latest event
+ * (stack, breadcrumbs, the page and browser it came from) and how its events
+ * spread across pages, browsers and releases. Needs the same event:read token
+ * as the list.
+ */
+export async function loadSentryIssueDetail(id: string): Promise<SentryIssueDetail> {
+  const token = process.env.SENTRY_READ_TOKEN || process.env.SENTRY_AUTH_TOKEN;
+  if (!token) return { configured: false };
+  if (!/^\d+$/.test(id)) return { configured: true, ok: false, error: 'not a Sentry issue id' };
+  const base = `/organizations/${ORG}/issues/${id}`;
+  try {
+    const [rawIssue, rawEvent, rawTags] = await Promise.all([
+      sentryGet(`${base}/`, token) as Promise<RawIssue>,
+      (sentryGet(`${base}/events/latest/`, token) as Promise<RawEvent>).catch(() => null),
+      (sentryGet(`${base}/tags/`, token) as Promise<{ key?: string; topValues?: { value?: string; count?: number }[] }[]>).catch(() => []),
+    ]);
+    const spread = (rawTags ?? [])
+      .filter((t) => t.key && SPREAD_KEYS.includes(t.key))
+      .sort((a, b) => SPREAD_KEYS.indexOf(a.key!) - SPREAD_KEYS.indexOf(b.key!))
+      .map((t) => ({
+        key: t.key!,
+        values: (t.topValues ?? []).slice(0, 8).map((v) => ({ value: String(v.value ?? ''), count: Number(v.count ?? 0) })),
+      }));
+    return {
+      configured: true,
+      ok: true,
+      issue: shapeIssue(rawIssue),
+      event: rawEvent ? shapeEvent(rawEvent) : null,
+      spread,
+    };
+  } catch (err) {
+    return { configured: true, ok: false, error: err instanceof Error ? err.message : 'could not reach Sentry' };
   }
 }
