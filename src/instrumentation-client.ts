@@ -6,6 +6,7 @@ import {
   SENTRY_RELEASE,
   warnIfDsnMissing,
 } from '@/lib/sentry/options';
+import { isNoise } from '@/lib/sentry/noise';
 import { scrubEvent } from '@/lib/sentry/scrub';
 
 /**
@@ -30,7 +31,8 @@ Sentry.init({
   tracesSampleRate: 0,
   dataCollection: DATA_COLLECTION,
   enableLogs: false,
-  beforeSend: scrubEvent,
+  // Third-party in-app-browser errors and stale-tab actions: see noise.ts.
+  beforeSend: (event) => (isNoise(event) ? null : scrubEvent(event)),
 });
 
 /** App Router navigations, so a client error carries the route it happened on. */
