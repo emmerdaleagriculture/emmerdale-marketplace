@@ -164,7 +164,7 @@ export function VisitProposer({
 
   if (!open) {
     return (
-      <button id={anchor} type="button" className={s.visitOpen} onClick={() => setOpen(true)}>
+      <button id={anchor} type="button" className={s.visitOpen} data-thumb="self" onClick={() => setOpen(true)}>
         {replacing ? 'Suggest a different time' : 'Suggest a site visit'}
       </button>
     );

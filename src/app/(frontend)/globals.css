@@ -141,6 +141,23 @@ html[data-app][data-app-tabs] .appFooterCta {
   padding-bottom: 14px;
 }
 
+/* Buttons sit on the right, under a right thumb. A flex row marked
+   data-thumb pushes its buttons to the right edge; "reverse" also puts the
+   first (primary) button rightmost, e.g. Send before Add photos; "self" is
+   for a lone button that is not in a row of its own. */
+html[data-app] [data-thumb] {
+  justify-content: flex-end;
+}
+html[data-app] [data-thumb='reverse'] {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+html[data-app] [data-thumb='self'] {
+  display: flex;
+  width: fit-content;
+  margin-left: auto;
+}
+
 /* Signed in: the parts of the header and footer that depend on who you are
    stay invisible until useViewer knows, so the signed-out version never
    shows and swaps. html[data-session] and [data-viewer-role] are set before

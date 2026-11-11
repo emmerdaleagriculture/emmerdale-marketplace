@@ -241,7 +241,7 @@ export function QuoteForm({
         <span className={f.hint}>Your price drops out of the customer&rsquo;s list after this date.</span>
       </label>
 
-      <div className={a.actions}>
+      <div className={a.actions} data-thumb>
         <button className={f.btnYellow} type="submit" disabled={pending || keypadLow || (app && quoteType === 'total' && !keyed)}>
           {pending ? 'Sending…' : revising ? 'Send new price' : 'Send my price'}
         </button>
