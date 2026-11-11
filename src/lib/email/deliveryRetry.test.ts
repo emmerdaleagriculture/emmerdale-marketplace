@@ -90,20 +90,20 @@ describe('isUndeliverable', () => {
   const soft = { type: 'Transient', subType: 'General' };
 
   it('blocks a hard bounce or a suppression straight away', () => {
-    expect(isUndeliverable('bounced', { type: 'Permanent', subType: 'General' }, 0)).toBe(true);
-    expect(isUndeliverable('suppressed', undefined, 0)).toBe(true);
+    expect(isUndeliverable('bounced', { type: 'Permanent', subType: 'General' })).toBe(true);
+    expect(isUndeliverable('suppressed', undefined)).toBe(true);
   });
 
-  it('gives a soft bounce its retries before blocking the address', () => {
-    for (let n = 0; n < MAX_DELIVERY_RETRIES; n++) {
-      expect(isUndeliverable('bounced', soft, n)).toBe(false);
-    }
-    expect(isUndeliverable('bounced', soft, MAX_DELIVERY_RETRIES)).toBe(true);
+  it('never blocks an address on a soft bounce', () => {
+    // Outlook/Hotmail, 5–9 Nov 2026: every retry came back Transient · General
+    // and 28 vetted contractors were cut off from jobs.
+    expect(isUndeliverable('bounced', soft)).toBe(false);
+    expect(isUndeliverable('bounced', { type: 'Transient', subType: 'MailboxFull' })).toBe(false);
   });
 
   it('never blames the address for our provider failing to send', () => {
-    expect(isUndeliverable('failed', undefined, MAX_DELIVERY_RETRIES)).toBe(false);
-    expect(isUndeliverable('delayed', undefined, MAX_DELIVERY_RETRIES)).toBe(false);
-    expect(isUndeliverable('delivered', undefined, 0)).toBe(false);
+    expect(isUndeliverable('failed', undefined)).toBe(false);
+    expect(isUndeliverable('delayed', undefined)).toBe(false);
+    expect(isUndeliverable('delivered', undefined)).toBe(false);
   });
 });
