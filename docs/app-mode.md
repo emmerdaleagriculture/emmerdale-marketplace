@@ -242,7 +242,7 @@ set `FIREBASE_SERVICE_ACCOUNT` with `supabase secrets set`. Migration
   buttons that scroll to the existing forms. **Price keypad** (`PriceKeypad`)
   replaces the total-price box in the app: the customer's figure at the
   job's stored rate (or premium's), the fee, what the contractor receives;
-  under £150 is refused in the keypad. The rate comes from
+  no minimum job value (the £150 floor was removed 2026-11-11). The rate comes from
   `sq_job_markup_rate` + `contractor_is_premium`, as the quote RPC decides it.
 - **Diary** `/won` in app mode: Directions and **Start job**
   (`sq_start_job`: awarded/contacted/scheduled → in_progress) on each booked
