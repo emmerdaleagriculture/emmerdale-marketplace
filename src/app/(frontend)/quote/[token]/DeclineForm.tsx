@@ -21,7 +21,7 @@ export const DECLINE_REASONS = [
  */
 export function ReasonChips({ disabled }: { disabled?: boolean }) {
   return (
-    <div className={f.chips}>
+    <div className={f.chips} data-thumb>
       {DECLINE_REASONS.map((r) => (
         <button key={r.value} type="submit" name="reason" value={r.value} className={f.chip} disabled={disabled}>
           {r.label}

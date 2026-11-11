@@ -28,7 +28,7 @@ export function ContactUsButton({
   const href = `mailto:${CONTACT_EMAIL}?${params.toString().replace(/\+/g, '%20')}`;
 
   return (
-    <aside className={className ? `${s.wrap} ${className}` : s.wrap} aria-label="Contact us">
+    <aside className={className ? `${s.wrap} ${className}` : s.wrap} aria-label="Contact us" data-thumb>
       <a className={s.button} href={href}>
         Contact us
       </a>

@@ -312,7 +312,7 @@ function Composer({
         </ul>
       )}
 
-      <div className={s.actions}>
+      <div className={s.actions} data-thumb="reverse">
         <button className={f.btnPrimary} type="submit" disabled={pending || shrinking}>
           {pending ? 'Sending…' : 'Send'}
         </button>
