@@ -26,7 +26,7 @@ export default async function EarningsPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/app');
-  const { data: me } = await supabase.from('contractors').select('id, business_name, status').eq('id', user.id).maybeSingle();
+  const { data: me } = await supabase.from('contractors').select('id, business_name, status, tenders_enabled').eq('id', user.id).maybeSingle();
   if (!me) redirect(await nonContractorPath(user.id));
 
   const admin = createServiceRoleClient();
@@ -58,6 +58,17 @@ export default async function EarningsPage() {
   const nextPayout = releasable.reduce((n, r) => n + (r.owed_pence ?? 0), 0);
   const held = owed.reduce((n, r) => n + (r.owed_pence ?? 0), 0) - nextPayout;
 
+  // Open tools: in the app these are reachable only from here (the website's
+  // dashboard links them). Members only, so nothing here is a sales pitch.
+  const openTools = tier === 'open' && me.status === 'approved';
+  const tendersOn = openTools && me.tenders_enabled;
+  let newTenders = 0;
+  if (tendersOn) {
+    const { data, error } = await admin.rpc('sq_tender_attention', { p_contractor_id: user.id });
+    if (error) console.error('sq_tender_attention failed', { contractor: user.id, error: error.message });
+    newTenders = data ?? 0;
+  }
+
   const label = (j: NonNullable<typeof won>[number]) =>
     j.paid_out_on ? 'Paid' : j.status === 'completed_by_contractor' ? 'Waiting for sign-off' : ['completed', 'paid'].includes(j.status ?? '') ? (j.contractor_invoice_at ? 'Payout due' : 'Send your invoice') : 'Booked';
 
@@ -73,6 +84,28 @@ export default async function EarningsPage() {
           {held > 0 ? `${formatGBP(held)} more held until sign-off, balance or invoice` : 'Payouts go once the customer has paid in full and your invoice is in'}
         </div>
       </div>
+
+      {openTools && (
+        <>
+          <div className={ui.sectionHead}>
+            <h2 className={ui.sectionTitle}>Your patch</h2>
+          </div>
+          <div className={ui.rows}>
+            {tendersOn && (
+              <Link href="/account/tenders" className={ui.row}>
+                Council tenders
+                <span className={ui.rowValue}>
+                  {newTenders > 0 ? `${newTenders} new ›` : '›'}
+                </span>
+              </Link>
+            )}
+            <Link href="/account/market" className={ui.row}>
+              Market data
+              <span className={ui.rowValue}>›</span>
+            </Link>
+          </div>
+        </>
+      )}
 
       <div className={ui.sectionHead}>
         <h2 className={ui.sectionTitle}>Recent jobs</h2>
