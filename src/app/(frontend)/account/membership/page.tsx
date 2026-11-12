@@ -92,7 +92,14 @@ export default async function MembershipPage({
             <span
               className={`${ac.badge} ${membership ? ac.premiumBadge : ''}`}
             >
-              {membership ? `${MEMBERSHIP_GLYPHS[membership]} ${MEMBERSHIP_NAMES[membership]}` : 'Free plan'}
+              {membership ? (
+                <>
+                  <span className={ac.badgeGlyph} aria-hidden="true">{MEMBERSHIP_GLYPHS[membership]}</span>{' '}
+                  {MEMBERSHIP_NAMES[membership]}
+                </>
+              ) : (
+                'Free plan'
+              )}
             </span>
             <span className={ac.email}>{user.email}</span>
           </div>
