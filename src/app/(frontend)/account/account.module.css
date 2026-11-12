@@ -44,7 +44,9 @@
 }
 .badge {
   display: inline-block;
-  padding: 3px 10px;
+  /* Letter-spacing also trails the last letter, so the text sat ~2px left of
+     centre with even padding: the right side gives that space back. */
+  padding: 3px calc(10px - 0.06em - 0.5px) 3px 10px;
   border: 1px solid;
   border-radius: 999px;
   font-size: 11px;
@@ -440,4 +442,10 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--jd-green-dark);
+}
+
+/* The tier glyph (◆ ★) hangs below the capitals beside it; lift it level. */
+.badgeGlyph {
+  display: inline-block;
+  transform: translateY(-0.1em);
 }

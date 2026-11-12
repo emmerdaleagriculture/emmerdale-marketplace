@@ -249,7 +249,10 @@ export default async function AccountPage({
           <div className={ac.statusRow}>
             <span className={`${ac.badge} ${ac[status] ?? ''}`}>{STATUS_LABELS[status] ?? status}</span>
             {isPremium && (
-              <span className={`${ac.badge} ${ac.premiumBadge}`}>{`${MEMBERSHIP_GLYPHS[membership!]} ${MEMBERSHIP_NAMES[membership!]}`}</span>
+              <span className={`${ac.badge} ${ac.premiumBadge}`}>
+                <span className={ac.badgeGlyph} aria-hidden="true">{MEMBERSHIP_GLYPHS[membership!]}</span>{' '}
+                {MEMBERSHIP_NAMES[membership!]}
+              </span>
             )}
             {(contractor.rating_count ?? 0) > 0 && contractor.rating_avg != null && (
               <span>
