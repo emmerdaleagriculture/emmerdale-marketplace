@@ -10,7 +10,9 @@ import { isLiveSub, membershipOf, MEMBERSHIP_GLYPHS, MEMBERSHIP_NAMES } from '@/
 import { contractorEmailHealth } from '@/lib/contractors/emailConfirm';
 import { ContactUsButton } from '@/components/ContactUsButton';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
-import { GetTheApp } from '@/components/GetTheApp';
+import { cookies } from 'next/headers';
+import { APP_BANNER_COOKIE, GetTheApp } from '@/components/GetTheApp';
+import { DismissAppBanner } from '@/components/DismissAppBanner';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { isAppRequest } from '@/lib/appMode.server';
 import { getCounties, getServices } from '@/lib/reference';
@@ -226,6 +228,15 @@ export default async function AccountPage({
   const membership = membershipOf(subQ.data, contractor);
   const isOpen = membership === 'open';
   const isPremium = membership !== null;
+  // Council tenders (Open): the count of live notices on their patch not yet seen.
+  const tendersOn = isOpen && status === 'approved' && contractor.tenders_enabled;
+  let tenderCount = 0;
+  if (tendersOn) {
+    const { data, error } = await createServiceRoleClient().rpc('sq_tender_attention', { p_contractor_id: user.id });
+    if (error) console.error('sq_tender_attention failed', { contractor: user.id, error: error.message });
+    tenderCount = data ?? 0;
+  }
+  const appBannerDismissed = (await cookies()).get(APP_BANNER_COOKIE)?.value === '1';
 
   return (
     <div className={a.wrap}>
@@ -301,7 +312,7 @@ export default async function AccountPage({
             />
           )}
 
-          {status !== 'suspended' && !app && !hasApp && <GetTheApp />}
+          {status !== 'suspended' && !app && !hasApp && !appBannerDismissed && <GetTheApp close={<DismissAppBanner />} />}
 
           {status === 'approved' && (
             <>
@@ -377,6 +388,11 @@ export default async function AccountPage({
                 <Link href="/invitations">All invitations &amp; history</Link>
                 <Link href="/won">Won jobs</Link>
                 {(isOpen || !app) && <Link href="/account/market">Market data</Link>}
+                {(tendersOn || (!isOpen && !app)) && (
+                  <Link href="/account/tenders">
+                    Council tenders{tenderCount > 0 && <span className={ac.countBadge}>{tenderCount} new</span>}
+                  </Link>
+                )}
               </div>
 
               {/* In the app, only members see a card (their own plan). Plans
@@ -401,6 +417,7 @@ export default async function AccountPage({
             counties={counties}
             selectedCounties={selectedCounties}
             listing={isOpen && status === 'approved'}
+            tenders={isOpen && status === 'approved' ? 'open' : app ? 'locked-app' : 'locked'}
             services={services}
           />
 

@@ -394,6 +394,48 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_tenders: {
+        Row: {
+          contractor_id: string
+          tender_id: string
+          status: string | null
+          notes: string | null
+          seen_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          contractor_id: string
+          tender_id: string
+          status?: string | null
+          notes?: string | null
+          seen_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string
+          tender_id?: string
+          status?: string | null
+          notes?: string | null
+          seen_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_tenders_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contractor_tenders_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_counties: {
         Row: {
           contractor_id: string
@@ -742,6 +784,7 @@ export type Database = {
       }
       contractors: {
         Row: {
+          tenders_enabled: boolean
           premium_comped_until: string | null
           open_comped_until: string | null
           premium_reinstated_at: string | null
@@ -777,6 +820,7 @@ export type Database = {
           directory_listed: boolean
         }
         Insert: {
+          tenders_enabled?: boolean
           premium_comped_until?: string | null
           open_comped_until?: string | null
           premium_reinstated_at?: string | null
@@ -812,6 +856,7 @@ export type Database = {
           directory_listed?: boolean
         }
         Update: {
+          tenders_enabled?: boolean
           premium_comped_until?: string | null
           open_comped_until?: string | null
           premium_reinstated_at?: string | null
@@ -3240,6 +3285,107 @@ export type Database = {
           },
         ]
       }
+      tenders: {
+        Row: {
+          id: string
+          source_key: string
+          source: string
+          notice_id: string | null
+          kind: string
+          fit: string
+          title: string
+          buyer: string
+          description: string
+          url: string
+          published_at: string | null
+          deadline: string | null
+          contract_start: string | null
+          contract_end: string | null
+          action_by: string | null
+          value_low: number | null
+          value_high: number | null
+          incumbent: string | null
+          postcode: string | null
+          county_id: number | null
+          lat: number | null
+          lng: number | null
+          cpv: string | null
+          matched: string | null
+          score: number
+          first_seen_at: string
+          last_seen_at: string
+          live_since: string | null
+        }
+        Insert: {
+          id?: string
+          source_key: string
+          source: string
+          notice_id?: string | null
+          kind: string
+          fit?: string
+          title: string
+          buyer?: string
+          description?: string
+          url: string
+          published_at?: string | null
+          deadline?: string | null
+          contract_start?: string | null
+          contract_end?: string | null
+          action_by?: string | null
+          value_low?: number | null
+          value_high?: number | null
+          incumbent?: string | null
+          postcode?: string | null
+          county_id?: number | null
+          lat?: number | null
+          lng?: number | null
+          cpv?: string | null
+          matched?: string | null
+          score?: number
+          first_seen_at?: string
+          last_seen_at?: string
+          live_since?: string | null
+        }
+        Update: {
+          id?: string
+          source_key?: string
+          source?: string
+          notice_id?: string | null
+          kind?: string
+          fit?: string
+          title?: string
+          buyer?: string
+          description?: string
+          url?: string
+          published_at?: string | null
+          deadline?: string | null
+          contract_start?: string | null
+          contract_end?: string | null
+          action_by?: string | null
+          value_low?: number | null
+          value_high?: number | null
+          incumbent?: string | null
+          postcode?: string | null
+          county_id?: number | null
+          lat?: number | null
+          lng?: number | null
+          cpv?: string | null
+          matched?: string | null
+          score?: number
+          first_seen_at?: string
+          last_seen_at?: string
+          live_since?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenders_county_id_fkey"
+            columns: ["county_id"]
+            isOneToOne: false
+            referencedRelation: "counties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       undeliverable_emails: {
         Row: {
           bounces: number
@@ -3533,6 +3679,37 @@ export type Database = {
           id: string
           service_id: number | null
         }[]
+      }
+      sq_tenders_for: {
+        Args: { p_contractor_id: string }
+        Returns: {
+          id: string
+          kind: string
+          fit: string
+          title: string
+          buyer: string
+          description: string
+          url: string
+          published_at: string | null
+          deadline: string | null
+          contract_start: string | null
+          contract_end: string | null
+          action_by: string | null
+          value_low: number | null
+          value_high: number | null
+          incumbent: string | null
+          postcode: string | null
+          county: string | null
+          distance_miles: number | null
+          source: string
+          status: string | null
+          notes: string | null
+          is_new: boolean
+        }[]
+      }
+      sq_tender_attention: {
+        Args: { p_contractor_id: string }
+        Returns: number
       }
       sq_market_data: {
         Args: { p_contractor_id: string }

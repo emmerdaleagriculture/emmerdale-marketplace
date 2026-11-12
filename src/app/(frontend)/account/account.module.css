@@ -409,3 +409,35 @@
   border-color: #d9b800;
   color: var(--jd-green-deep);
 }
+
+/* "3 new" beside a quick link (Council tenders). */
+.countBadge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--jd-green);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  vertical-align: 1px;
+}
+/* A setting a member's tier doesn't include: shown, greyed, linking to membership. */
+.locked {
+  display: block;
+  opacity: 0.55;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.locked input {
+  pointer-events: none;
+}
+.lockedNote {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--jd-green-dark);
+}

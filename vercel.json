@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/premium-sync",
       "schedule": "40 3 * * *"
+    },
+    {
+      "path": "/api/cron/tender-watch",
+      "schedule": "0 6 * * *"
     }
   ]
 }

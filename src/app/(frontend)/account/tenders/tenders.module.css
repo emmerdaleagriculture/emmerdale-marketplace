@@ -1,0 +1,197 @@
+/*
+ * Council tenders: one card per notice. Shares the market page's lead,
+ * pitch and headings (market.module.css); this file is the cards.
+ */
+.list {
+  display: grid;
+  gap: 14px;
+}
+.empty {
+  font-size: 15px;
+  color: var(--ink-3);
+  margin: 0;
+}
+
+.card {
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--white);
+  padding: 18px 20px;
+  min-width: 0;
+}
+.cardNew {
+  border-color: var(--jd-green);
+  box-shadow: inset 4px 0 0 var(--jd-green);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+.tag {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--jd-green-pale);
+  color: var(--jd-green-deep);
+}
+.tagNew {
+  background: var(--jd-green);
+  color: var(--white);
+}
+.tagRenewal {
+  background: var(--cream);
+  color: var(--ink-2);
+}
+.tagFit {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-3);
+}
+
+.title {
+  font-size: 18px;
+  line-height: 1.35;
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+.title a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.title a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.buyer {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.place {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin: 14px 0 0;
+}
+.facts dt {
+  font-size: 12px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.facts dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.muted {
+  color: var(--ink-3);
+}
+
+.desc {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.desc summary {
+  cursor: pointer;
+  color: var(--jd-green-dark);
+}
+.desc p {
+  margin: 8px 0 0;
+  line-height: 1.55;
+  white-space: pre-line;
+  max-height: 16em;
+  overflow: auto;
+}
+
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: flex-end;
+  margin: 14px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--rule);
+}
+.field {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.field select,
+.field textarea {
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--white);
+}
+.fieldWide {
+  flex: 1 1 260px;
+}
+.fieldWide textarea {
+  width: 100%;
+  resize: vertical;
+}
+.formFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  flex-basis: 100%;
+}
+.save {
+  font: inherit;
+  font-weight: 600;
+  font-size: 15px;
+  background: var(--ink);
+  color: var(--white);
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 18px;
+  cursor: pointer;
+}
+.save:disabled {
+  opacity: 0.6;
+}
+.saved {
+  font-size: 14px;
+  color: var(--jd-green-dark);
+}
+.error {
+  font-size: 14px;
+  color: #b42318;
+}
+.notice {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.hidden {
+  margin: 28px 0 0;
+}
+.hidden summary {
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--ink-2);
+  margin: 0 0 12px;
+}

@@ -103,6 +103,8 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
       notify_new_jobs: notify,
       notify_sms: notifySms,
       ...(directory ?? {}),
+      // Only on the form for Open members; absent, the switch is left alone.
+      ...(formData.has('tenders_section') ? { tenders_enabled: formData.get('tenders_enabled') === 'on' } : {}),
     })
     .eq('id', user.id);
   if (upErr) return { error: `Could not save: ${upErr.message}` };

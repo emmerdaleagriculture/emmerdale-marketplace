@@ -1,5 +1,9 @@
+import type { ReactNode } from 'react';
 import { ANDROID_APP_URL, IOS_APP_URL } from '@/lib/site';
 import s from './GetTheApp.module.css';
+
+/** Set by DismissAppBanner; a page that reads it can leave the banner out. */
+export const APP_BANNER_COOKIE = 'hide_app_banner';
 
 /**
  * "Get the app" for contractors, with a button per store. Hidden in app mode
@@ -10,13 +14,17 @@ export function GetTheApp({
   title = 'Get the app',
   body = 'For iPhone and Android. See new jobs, price them, message customers and send invoices from your phone.',
   hide = true,
+  close,
 }: {
   title?: string;
   body?: string;
   hide?: boolean;
+  /** A dismiss control (DismissAppBanner), shown in the corner. */
+  close?: ReactNode;
 }) {
   return (
-    <aside className={s.card} {...(hide ? { 'data-app-hide': true } : {})}>
+    <aside className={close ? `${s.card} ${s.closable}` : s.card} {...(hide ? { 'data-app-hide': true } : {})}>
+      {close}
       <span className={s.text}>
         <span className={s.title}>{title}</span>
         {body}

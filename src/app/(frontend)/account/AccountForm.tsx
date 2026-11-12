@@ -6,6 +6,7 @@ import { emptyFormState } from '@/lib/form';
 import { CountyPicker, type CountyOption } from '@/components/forms/CountyPicker';
 import { ServicePicker, type ServiceOption } from '@/components/forms/ServicePicker';
 import type { Contractor } from '@/lib/auth';
+import Link from 'next/link';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 import ac from './account.module.css';
@@ -32,6 +33,7 @@ export function AccountForm({
   selectedCounties,
   services,
   listing = false,
+  tenders = 'locked',
 }: {
   contractor: Contractor;
   counties: CountyOption[];
@@ -39,6 +41,9 @@ export function AccountForm({
   services: ServiceOption[];
   /** An Open member: show the county-page listing's fields. */
   listing?: boolean;
+  /** Council tenders switch: live for Open members; greyed for others,
+   *  linking to membership on the web and to nothing in the app (store rules). */
+  tenders?: 'open' | 'locked' | 'locked-app';
 }) {
   const [state, action, pending] = useActionState(updateProfileAction, emptyFormState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -208,6 +213,33 @@ export function AccountForm({
         </div>
       </details>
 
+
+      <details className={ac.section}>
+        <summary className={ac.sectionHead}>
+          Council tenders
+          <span className={ac.sectionMeta}>
+            {tenders !== 'open' ? 'Open members' : contractor.tenders_enabled ? 'On' : 'Off'}
+          </span>
+        </summary>
+        <div className={ac.sectionBody}>
+          {tenders === 'open' ? (
+            <>
+              <input type="hidden" name="tenders_section" value="1" />
+              <label className={f.checkRow}>
+                <input type="checkbox" name="tenders_enabled" defaultChecked={contractor.tenders_enabled} />
+                <span>Show me council contracts on my patch: open tenders and contracts coming up for renewal.</span>
+              </label>
+              <p className={f.hint} style={{ marginTop: 8 }}>
+                Turned off, Council tenders and its count leave your dashboard. Your notes and
+                statuses are kept.
+              </p>
+            </>
+          ) : (
+            <TendersLocked app={tenders === 'locked-app'} />
+          )}
+        </div>
+      </details>
+
       {listing && (
         <details className={ac.section}>
           <summary className={ac.sectionHead}>
@@ -270,5 +302,28 @@ export function AccountForm({
         </button>
       </div>
     </form>
+  );
+}
+
+/** The tenders switch for a non-Open account: greyed, off, and (on the web)
+ *  a link to the membership page wherever it is clicked. */
+function TendersLocked({ app }: { app: boolean }) {
+  const body = (
+    <>
+      <span className={f.checkRow}>
+        <input type="checkbox" disabled checked={false} readOnly aria-disabled="true" tabIndex={-1} />
+        <span>Show me council contracts on my patch: open tenders and contracts coming up for renewal.</span>
+      </span>
+      <span className={ac.lockedNote}>{app ? 'Part of Open membership.' : 'Part of Open membership. Upgrade to turn it on →'}</span>
+    </>
+  );
+  return app ? (
+    <div className={ac.locked} aria-disabled="true">
+      {body}
+    </div>
+  ) : (
+    <Link href="/account/membership" className={ac.locked}>
+      {body}
+    </Link>
   );
 }
