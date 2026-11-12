@@ -59,6 +59,10 @@ const MENTIONS: [CanonicalService, RegExp][] = [
   ['Paddock topping', /\b(?:topp(?:ing|ed)|top the)\b/i],
   ['Weed control', /\b(?:weeds?|ragwort|thistles?|docks|nettles|bracken|buttercups?|horsetail)\b/i],
   ['Spraying', /\bspray(?:s|ed|ing)?\b/i],
+  // Hay typed straight into /start had nothing to be offered, so it went out
+  // unclassified and missed the hay invite radius (12 Nov, EH23). "Cut and
+  // bale my hay" is grass work, not a purchase; offered, the customer says no.
+  ['Hay, straw & haylage', /\b(?:hay|haylage|straw|bales?)\b/i],
 ];
 
 /** In the order the customer mentioned them: the first thing they asked for leads. */
