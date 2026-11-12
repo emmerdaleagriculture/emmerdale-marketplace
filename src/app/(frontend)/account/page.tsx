@@ -236,7 +236,9 @@ export default async function AccountPage({
     if (error) console.error('sq_tender_attention failed', { contractor: user.id, error: error.message });
     tenderCount = data ?? 0;
   }
-  const appBannerDismissed = (await cookies()).get(APP_BANNER_COOKIE)?.value === '1';
+  // Closed here (cookie) or in any other browser (stamped on their row).
+  const appBannerDismissed =
+    contractor.app_banner_dismissed_at != null || (await cookies()).get(APP_BANNER_COOKIE)?.value === '1';
 
   return (
     <div className={a.wrap}>
