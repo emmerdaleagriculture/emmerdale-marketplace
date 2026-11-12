@@ -58,6 +58,18 @@ describe('servicesMentioned', () => {
     expect(servicesMentioned('topping, some thistles')).toEqual(['Paddock topping', 'Weed control']);
   });
 
+  it('offers hay, straw & haylage from the words customers type', () => {
+    expect(servicesMentioned('Hay small or round bales delivered if possible')).toEqual([
+      'Hay, straw & haylage',
+    ]);
+    expect(servicesMentioned('Straw needed for protecting plants over winter')).toEqual([
+      'Hay, straw & haylage',
+    ]);
+    expect(servicesMentioned('haylage for 2 mares')).toEqual(['Hay, straw & haylage']);
+    expect(servicesMentioned('need a hayfield harrowed')).toEqual([]);
+    expect(servicesMentioned('strawberry field topped')).toEqual(['Paddock topping']);
+  });
+
   it('offers topping first when a topping job mentions weeds', () => {
     expect(
       servicesMentioned('Orchard topping Spring, summer to control Bracken, creeping thistle, nettle'),
