@@ -1,13 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { openInAppBrowser } from '@/lib/app/browser';
 import s from './invitations.module.css';
 
 type Props = {
-  /** 'open': link to the list. 'upgrade-web': link to the tiers.
-   *  'upgrade-app': open the website's tiers page in the system browser. */
-  mode: 'open' | 'upgrade-web' | 'upgrade-app';
+  /** 'open': link to the list. 'upgrade-web': link to the tiers (website only). */
+  mode: 'open' | 'upgrade-web';
   fresh: number;
 };
 
@@ -22,7 +20,7 @@ const Body = ({ mode, fresh }: Props) => (
       </span>
     </span>
     <span className={s.tendersValue}>
-      {mode === 'open' && fresh > 0 ? `${fresh} new` : mode === 'upgrade-app' ? 'On the website' : null}
+      {mode === 'open' && fresh > 0 ? `${fresh} new` : null}
       <svg className={s.chevron} width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -39,21 +37,9 @@ export function TendersEntry(props: Props) {
       </Link>
     );
   }
-  if (props.mode === 'upgrade-web') {
-    return (
-      <Link href="/account/membership" className={`${s.card} ${s.tenders}`}>
-        <Body {...props} />
-      </Link>
-    );
-  }
-  // In the app: membership is bought on the website, so it opens there.
   return (
-    <button
-      type="button"
-      className={`${s.card} ${s.tenders}`}
-      onClick={() => void openInAppBrowser(`${window.location.origin}/account/membership`)}
-    >
+    <Link href="/account/membership" className={`${s.card} ${s.tenders}`}>
       <Body {...props} />
-    </button>
+    </Link>
   );
 }
