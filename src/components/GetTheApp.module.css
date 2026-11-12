@@ -28,3 +28,21 @@
 }
 .btn:hover { background: var(--jd-green-deep); }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Dismissible: room for the × in the corner. */
+.closable { position: relative; padding-right: 44px; }
+.close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.close:hover { background: rgba(0, 0, 0, 0.06); color: var(--ink); }
