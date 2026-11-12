@@ -168,9 +168,9 @@ export default async function InvitationsPage() {
   const inApp = await isAppRequest();
 
   // Council tenders (an Open benefit) head the list. Open members see the
-  // count of new ones; anyone else is pointed at the membership tiers, on
-  // the website (the app itself sells nothing).
-  let tenders: { mode: 'open' | 'upgrade-web' | 'upgrade-app'; fresh: number } | null = null;
+  // count of new ones; on the website anyone else is pointed at the
+  // membership tiers. In the app non-members see nothing (it sells nothing).
+  let tenders: { mode: 'open' | 'upgrade-web'; fresh: number } | null = null;
   if (contractor.status === 'approved') {
     const admin = createServiceRoleClient();
     const { data: tier } = await admin.rpc('contractor_tier', { p_contractor_id: user.id });
@@ -180,8 +180,9 @@ export default async function InvitationsPage() {
         if (error) console.error('sq_tender_attention failed', { contractor: user.id, error: error.message });
         tenders = { mode: 'open', fresh: data ?? 0 };
       }
-    } else {
-      tenders = { mode: inApp ? 'upgrade-app' : 'upgrade-web', fresh: 0 };
+    } else if (!inApp) {
+      // Store rules: the app never points at membership, so this is website-only.
+      tenders = { mode: 'upgrade-web', fresh: 0 };
     }
   }
 
