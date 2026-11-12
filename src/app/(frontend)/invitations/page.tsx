@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
+import { TendersEntry } from './TendersEntry';
 import { nonContractorPath } from '@/lib/auth';
 import { jobAcres } from '@/lib/jobParse/geometry';
 import { ContactUsButton } from '@/components/ContactUsButton';
@@ -152,7 +153,7 @@ export default async function InvitationsPage() {
 
   const { data: contractor } = await supabase
     .from('contractors')
-    .select('status')
+    .select('status, tenders_enabled')
     .eq('id', user.id)
     .maybeSingle();
   if (!contractor) redirect(await nonContractorPath(user.id));
@@ -165,6 +166,24 @@ export default async function InvitationsPage() {
   // In the app the past list folds into a closed drawer (AppFold) so the
   // invitations still waiting on an answer stay on the first screen.
   const inApp = await isAppRequest();
+
+  // Council tenders (an Open benefit) head the list. Open members see the
+  // count of new ones; anyone else is pointed at the membership tiers, on
+  // the website (the app itself sells nothing).
+  let tenders: { mode: 'open' | 'upgrade-web' | 'upgrade-app'; fresh: number } | null = null;
+  if (contractor.status === 'approved') {
+    const admin = createServiceRoleClient();
+    const { data: tier } = await admin.rpc('contractor_tier', { p_contractor_id: user.id });
+    if (tier === 'open') {
+      if (contractor.tenders_enabled) {
+        const { data, error } = await admin.rpc('sq_tender_attention', { p_contractor_id: user.id });
+        if (error) console.error('sq_tender_attention failed', { contractor: user.id, error: error.message });
+        tenders = { mode: 'open', fresh: data ?? 0 };
+      }
+    } else {
+      tenders = { mode: inApp ? 'upgrade-app' : 'upgrade-web', fresh: 0 };
+    }
+  }
 
   // App only: jobs still to price first, then the priced ones with the
   // contractor's own current price on the card (RLS: their quotes only).
@@ -213,6 +232,7 @@ export default async function InvitationsPage() {
             </div>
           ) : (
             <>
+              {tenders && <TendersEntry mode={tenders.mode} fresh={tenders.fresh} />}
               {open.length === 0 ? (
                 <div className={s.empty}>
                   Nothing to price right now. You&rsquo;ll get an email the moment a

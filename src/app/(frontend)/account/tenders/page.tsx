@@ -54,7 +54,7 @@ export default async function TendersPage() {
   const isOpen = membership === 'open' && contractor.status === 'approved';
   const app = await isAppRequest();
   // Store rules: the app never sells membership, so a non-member there goes home.
-  if (app && !isOpen) redirect('/account');
+  if (app && !isOpen) redirect('/invitations');
 
   let rows: TenderRow[] = [];
   let failed = false;
