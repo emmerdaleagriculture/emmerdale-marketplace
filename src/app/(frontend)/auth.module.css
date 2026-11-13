@@ -220,8 +220,10 @@
   font-size: 30px;
 }
 /* In the app the page heading, the kicker above it and the line straight
-   under it sit centred, like the prototype's screen titles. */
-:global(html[data-app]) .eyebrow,
+   under it sit centred, like the prototype's screen titles. The kicker only
+   when the title follows it directly: Open jobs wraps its title in a row
+   with a button, and the title stays left there. */
+:global(html[data-app]) .eyebrow:has(+ .title),
 :global(html[data-app]) .title,
 :global(html[data-app]) .title + p {
   text-align: center;
