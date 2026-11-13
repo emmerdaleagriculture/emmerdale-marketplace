@@ -106,9 +106,11 @@
   font-size: 26px;
   letter-spacing: -0.01em;
   margin-bottom: 4px;
+  text-align: center;
 }
 
 .appSub {
+  text-align: center;
   font-size: 14px;
   color: var(--ink-2);
   margin-bottom: 16px;
