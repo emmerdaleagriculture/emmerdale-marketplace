@@ -195,3 +195,56 @@
   color: var(--ink-2);
   margin: 0 0 12px;
 }
+
+/* ── The two feeds as switchable tabs ───────────────────────────────── */
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 24px 0 18px;
+  padding: 4px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--cream);
+}
+.tab {
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.tabOn {
+  background: var(--white);
+  color: var(--jd-green-deep);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.tabCount {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.tabNew {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--jd-green);
+  color: var(--white);
+}

@@ -13,6 +13,7 @@ export type TenderRow = {
   buyer: string;
   description: string;
   url: string;
+  published_at: string | null;
   deadline: string | null;
   contract_start: string | null;
   contract_end: string | null;
