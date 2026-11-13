@@ -9,6 +9,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { isAppRequest } from '@/lib/appMode.server';
 import { TenderCard, type TenderRow } from './TenderCard';
+import { TenderTabs } from './TenderTabs';
 import a from '../../auth.module.css';
 import m from '../market/market.module.css';
 import s from './tenders.module.css';
@@ -18,15 +19,47 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const by = (k: 'action_by' | 'deadline') => (x: TenderRow, y: TenderRow) =>
-  (x[k] ? Date.parse(x[k]!) : Infinity) - (y[k] ? Date.parse(y[k]!) : Infinity);
+type DateKey = 'deadline' | 'action_by' | 'contract_end' | 'published_at';
+const at = (r: TenderRow, k: DateKey) => (r[k] ? Date.parse(r[k]!) : NaN);
+/** By date, earliest (dir 1) or newest (dir -1) first; undated always last. */
+const byDate = (k: DateKey, dir: 1 | -1) => (x: TenderRow, y: TenderRow) => {
+  const a = at(x, k);
+  const b = at(y, k);
+  if (Number.isNaN(a) || Number.isNaN(b)) return Number.isNaN(a) ? (Number.isNaN(b) ? 0 : 1) : -1;
+  return (a - b) * dir;
+};
+const soonest = (k: DateKey) => byDate(k, 1);
+const newest = (k: DateKey) => byDate(k, -1);
+const chain =
+  (...fs: ((x: TenderRow, y: TenderRow) => number)[]) =>
+  (x: TenderRow, y: TenderRow) => {
+    for (const f of fs) {
+      const d = f(x, y);
+      if (d) return d;
+    }
+    return 0;
+  };
+const liveRank = (r: TenderRow) => (r.kind === 'open' ? 0 : 1);
+
+/**
+ * Open tenders and early notices: biddable tenders first, soonest deadline
+ * first, then early notices by when the tender is expected; undated ones
+ * after their group, newest notice first.
+ */
+const liveOrder = chain((x, y) => liveRank(x) - liveRank(y), soonest('deadline'), newest('published_at'));
+/**
+ * Renewals: by the date to approach the buyer. Ones already past it are
+ * contracts ending within four months, the most pressing, so they lead;
+ * ties go to the contract that ends first.
+ */
+const renewalOrder = chain(soonest('action_by'), soonest('contract_end'));
 
 /**
  * An Open member's council tenders: public-sector land contracts on their
  * patch, from Contracts Finder and Find a Tender, gathered daily by
- * /api/cron/tender-watch. Live tenders first (by deadline), then contracts
- * coming up for renewal (by when to approach the buyer), then the ones the
- * member marked "Not for me". Opening the page marks everything seen.
+ * /api/cron/tender-watch, in two switchable tabs: open tenders and early
+ * notices, and contracts coming up for renewal. Each tab keeps its own
+ * "Not for me" pile at the bottom. Opening the page marks everything seen.
  */
 export default async function TendersPage() {
   const supabase = await createClient();
@@ -78,11 +111,29 @@ export default async function TendersPage() {
     }
   }
 
-  const notForMe = rows.filter((r) => r.status === 'no_bid');
-  const mine = rows.filter((r) => r.status !== 'no_bid');
-  const live = mine.filter((r) => r.kind !== 'renewal').sort(by('deadline'));
-  const renewals = mine.filter((r) => r.kind === 'renewal').sort(by('action_by'));
+  const isLive = (r: TenderRow) => r.kind !== 'renewal';
+  const liveAll = rows.filter(isLive).sort(liveOrder);
+  const renewalAll = rows.filter((r) => !isLive(r)).sort(renewalOrder);
+  const live = liveAll.filter((r) => r.status !== 'no_bid');
+  const renewals = renewalAll.filter((r) => r.status !== 'no_bid');
   const fresh = live.filter((r) => r.is_new).length;
+
+  const cards = (list: TenderRow[]) => (
+    <div className={s.list}>
+      {list.map((t) => (
+        <TenderCard key={t.id} t={t} />
+      ))}
+    </div>
+  );
+  const notForMe = (list: TenderRow[]) => {
+    const hidden = list.filter((r) => r.status === 'no_bid');
+    return hidden.length > 0 ? (
+      <details className={s.hidden}>
+        <summary>Not for me ({hidden.length})</summary>
+        {cards(hidden)}
+      </details>
+    ) : null;
+  };
 
   return (
     <div className={a.wrap}>
@@ -137,47 +188,55 @@ export default async function TendersPage() {
                 ) : null}
               </p>
 
-              <h2 className={m.h2}>Open tenders and early notices</h2>
-              <p className={m.sub}>
-                Live now, soonest deadline first. The documents and the bid itself are on the
-                buyer’s own portal: open the notice to get there.
-              </p>
-              {live.length === 0 ? (
-                <p className={s.empty}>Nothing open on your patch right now. New notices land here each morning.</p>
-              ) : (
-                <div className={s.list}>
-                  {live.map((t) => (
-                    <TenderCard key={t.id} t={t} />
-                  ))}
-                </div>
-              )}
-
-              <h2 className={m.h2}>Coming up for renewal</h2>
-              <p className={m.sub}>
-                Contracts already let and still running. The date to approach the buyer is four
-                months before the contract ends, ahead of the re-tender. When one is re-let it
-                moves up to the open list and shows as new.
-              </p>
-              {renewals.length === 0 ? (
-                <p className={s.empty}>No running contracts found on your patch yet.</p>
-              ) : (
-                <div className={s.list}>
-                  {renewals.map((t) => (
-                    <TenderCard key={t.id} t={t} />
-                  ))}
-                </div>
-              )}
-
-              {notForMe.length > 0 && (
-                <details className={s.hidden}>
-                  <summary>Not for me ({notForMe.length})</summary>
-                  <div className={s.list}>
-                    {notForMe.map((t) => (
-                      <TenderCard key={t.id} t={t} />
-                    ))}
-                  </div>
-                </details>
-              )}
+              <TenderTabs
+                initial={live.length === 0 && renewals.length > 0 ? 'renewals' : 'live'}
+                tabs={[
+                  {
+                    key: 'live',
+                    label: 'Open tenders and early notices',
+                    count: live.length,
+                    fresh,
+                    body: (
+                      <>
+                        <p className={m.sub}>
+                          Open tenders first, soonest deadline at the top, then early notices of
+                          tenders still to come. The documents and the bid itself are on the
+                          buyer’s own portal: open the notice to get there.
+                        </p>
+                        {live.length === 0 ? (
+                          <p className={s.empty}>
+                            Nothing open on your patch right now. New notices land here each morning.
+                          </p>
+                        ) : (
+                          cards(live)
+                        )}
+                        {notForMe(liveAll)}
+                      </>
+                    ),
+                  },
+                  {
+                    key: 'renewals',
+                    label: 'Renewals',
+                    count: renewals.length,
+                    body: (
+                      <>
+                        <p className={m.sub}>
+                          Contracts already let and still running, the most pressing first. The
+                          date to approach the buyer is four months before the contract ends,
+                          ahead of the re-tender. When one is re-let it moves to open tenders and
+                          shows as new.
+                        </p>
+                        {renewals.length === 0 ? (
+                          <p className={s.empty}>No running contracts found on your patch yet.</p>
+                        ) : (
+                          cards(renewals)
+                        )}
+                        {notForMe(renewalAll)}
+                      </>
+                    ),
+                  },
+                ]}
+              />
 
               <p className={m.fine}>
                 From Contracts Finder and Find a Tender, matched on the words and contract codes
