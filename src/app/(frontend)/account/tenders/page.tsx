@@ -21,20 +21,15 @@ export const metadata: Metadata = {
 
 type DateKey = 'deadline' | 'action_by' | 'contract_end' | 'published_at';
 const at = (r: TenderRow, k: DateKey) => (r[k] ? Date.parse(r[k]!) : NaN);
-/** Earliest first, undated last. */
-const soonest = (k: DateKey) => (x: TenderRow, y: TenderRow) => {
+/** By date, earliest (dir 1) or newest (dir -1) first; undated always last. */
+const byDate = (k: DateKey, dir: 1 | -1) => (x: TenderRow, y: TenderRow) => {
   const a = at(x, k);
   const b = at(y, k);
   if (Number.isNaN(a) || Number.isNaN(b)) return Number.isNaN(a) ? (Number.isNaN(b) ? 0 : 1) : -1;
-  return a - b;
+  return (a - b) * dir;
 };
-/** Newest first, undated last. */
-const newest = (k: DateKey) => (x: TenderRow, y: TenderRow) => {
-  const a = at(x, k);
-  const b = at(y, k);
-  if (Number.isNaN(a) || Number.isNaN(b)) return Number.isNaN(a) ? (Number.isNaN(b) ? 0 : 1) : -1;
-  return b - a;
-};
+const soonest = (k: DateKey) => byDate(k, 1);
+const newest = (k: DateKey) => byDate(k, -1);
 const chain =
   (...fs: ((x: TenderRow, y: TenderRow) => number)[]) =>
   (x: TenderRow, y: TenderRow) => {

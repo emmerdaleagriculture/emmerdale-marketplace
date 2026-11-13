@@ -14,10 +14,11 @@ export type TenderTab = { key: 'live' | 'renewals'; label: string; count: number
 export function TenderTabs({ tabs, initial }: { tabs: TenderTab[]; initial: TenderTab['key'] }) {
   const [active, setActive] = useState<TenderTab['key']>(initial);
 
+  // Once, after hydration: a #renewals in the URL picks that tab.
   useEffect(() => {
     const h = window.location.hash.slice(1);
-    if (tabs.some((t) => t.key === h)) setActive(h as TenderTab['key']);
-  }, [tabs]);
+    if (h === 'live' || h === 'renewals') setActive(h);
+  }, []);
 
   const pick = (key: TenderTab['key']) => {
     setActive(key);
