@@ -219,6 +219,13 @@
 :global(html[data-app]) .title {
   font-size: 30px;
 }
+/* In the app the page heading, the kicker above it and the line straight
+   under it sit centred, like the prototype's screen titles. */
+:global(html[data-app]) .eyebrow,
+:global(html[data-app]) .title,
+:global(html[data-app]) .title + p {
+  text-align: center;
+}
 :global(html[data-app]) .card {
   border-radius: 20px;
   padding: 18px 16px;
