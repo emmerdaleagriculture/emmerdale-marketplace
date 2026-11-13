@@ -69,6 +69,16 @@ export default async function EarningsPage() {
     <main className={ui.screen}>
       <h1 className={ui.title}>Earnings</h1>
 
+      {/* The website's dashboard (/account) is app-aware already: membership
+          shown, never sold. This is its only way in from the tab bar, and
+          the Earnings tab stays lit there (tabs.ts `also`). */}
+      <div className={ui.rows} style={{ marginBottom: 14 }}>
+        <Link href="/account" className={ui.row}>
+          Your dashboard
+          <span className={ui.rowValue}>›</span>
+        </Link>
+      </div>
+
       <div className={ui.card} style={{ background: 'var(--jd-green-deep)', color: '#fff', border: 0 }}>
         <div style={{ fontSize: 14, opacity: 0.85 }}>{nextPayout > 0 ? 'Ready to pay out' : 'Nothing ready to pay out yet'}</div>
         <div style={{ fontFamily: 'var(--font-display-stack)', fontSize: 40, lineHeight: 1.1, margin: '4px 0' }}>{formatGBP(nextPayout)}</div>

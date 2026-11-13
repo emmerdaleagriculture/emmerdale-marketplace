@@ -47,6 +47,11 @@
   color: var(--jd-green-deep);
   margin: 10px 0 16px;
 }
+/* App screen titles sit centred, with the line straight under them. */
+:global(html[data-app]) .title,
+:global(html[data-app]) .title + p {
+  text-align: center;
+}
 
 /* The big photo card with one yellow button. */
 .ctaCard {

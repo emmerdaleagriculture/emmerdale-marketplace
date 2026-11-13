@@ -42,6 +42,10 @@
   color: var(--ink-2);
   margin-bottom: 24px;
 }
+/* Under the app's centred page title, the badges and email centre too. */
+:global(html[data-app]) .statusRow {
+  justify-content: center;
+}
 .badge {
   display: inline-block;
   /* Letter-spacing also trails the last letter, so the text sat ~2px left of
