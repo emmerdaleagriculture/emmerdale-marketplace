@@ -2939,6 +2939,90 @@ export type Database = {
           },
         ]
       }
+      seo_opportunities: {
+        Row: {
+          agent_run_id: string | null
+          clicks: number | null
+          competing_pages: Json | null
+          created_at: string
+          ctr: number | null
+          decided_at: string | null
+          deferred: boolean
+          draft_content: Json | null
+          expected_ctr: number | null
+          id: number
+          impressions: number | null
+          intent: string | null
+          position: number | null
+          query: string
+          rationale: string
+          related_note_id: string | null
+          related_queries: Json | null
+          review_notes: string | null
+          status: string
+          target_url: string | null
+          type: string
+          updated_at: string
+          week_identified: string
+        }
+        Insert: {
+          agent_run_id?: string | null
+          clicks?: number | null
+          competing_pages?: Json | null
+          created_at?: string
+          ctr?: number | null
+          decided_at?: string | null
+          deferred?: boolean
+          draft_content?: Json | null
+          expected_ctr?: number | null
+          impressions?: number | null
+          intent?: string | null
+          position?: number | null
+          query: string
+          rationale?: string
+          related_note_id?: string | null
+          related_queries?: Json | null
+          review_notes?: string | null
+          status?: string
+          target_url?: string | null
+          type: string
+          updated_at?: string
+          week_identified: string
+        }
+        Update: {
+          agent_run_id?: string | null
+          clicks?: number | null
+          competing_pages?: Json | null
+          created_at?: string
+          ctr?: number | null
+          decided_at?: string | null
+          deferred?: boolean
+          draft_content?: Json | null
+          expected_ctr?: number | null
+          impressions?: number | null
+          intent?: string | null
+          position?: number | null
+          query?: string
+          rationale?: string
+          related_note_id?: string | null
+          related_queries?: Json | null
+          review_notes?: string | null
+          status?: string
+          target_url?: string | null
+          type?: string
+          updated_at?: string
+          week_identified?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_opportunities_related_note_id_fkey"
+            columns: ["related_note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           area_priced: boolean

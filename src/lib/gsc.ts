@@ -53,6 +53,8 @@ export type GscQueryArgs = {
   endDate: string;
   dimensions?: GscDimension[];
   rowLimit?: number;
+  /** Exact-match filters, e.g. [{ dimension: 'query', expression: 'paddock topping' }]. */
+  filters?: Array<{ dimension: GscDimension; expression: string }>;
 };
 
 export function isGscOAuthConfigured(): boolean {
@@ -261,6 +263,19 @@ export async function gscQuery(args: GscQueryArgs): Promise<GscRow[]> {
       endDate: args.endDate,
       dimensions: args.dimensions ?? [],
       rowLimit: args.rowLimit ?? 25,
+      ...(args.filters?.length
+        ? {
+            dimensionFilterGroups: [
+              {
+                filters: args.filters.map((f) => ({
+                  dimension: f.dimension,
+                  operator: 'equals',
+                  expression: f.expression,
+                })),
+              },
+            ],
+          }
+        : {}),
     }),
     signal: AbortSignal.timeout(30_000),
   });

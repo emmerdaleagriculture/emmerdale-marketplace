@@ -51,6 +51,13 @@ export const HTTP_CRONS: CronJob[] = [
     everyMinutes: 24 * 60,
     what: 'Pulls council land contracts from Contracts Finder and Find a Tender into the pool Open members see on Council tenders.',
   },
+  {
+    name: 'seo-agent',
+    path: '/api/cron/seo-agent',
+    schedule: '0 7 1 * *',
+    everyMinutes: 31 * 24 * 60,
+    what: 'Monthly Search Console review: drafts SEO opportunities with Claude for /admin/seo/opportunities and emails the digest.',
+  },
 ];
 
 /**
