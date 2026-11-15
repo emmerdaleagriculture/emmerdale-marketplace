@@ -19,6 +19,8 @@ import {
 import { allCountyRefs, resolveCountyBySlug, regionPhrase, type CountyRef } from '@/lib/verticals';
 import { getServices, getCountyCoverage } from '@/lib/reference';
 import { paddockNote } from '@/lib/paddockRegions';
+import { PADDOCK_COUNTY_EXTRAS } from '@/lib/countyExtras';
+import { CountyExtraSection } from '@/components/CountyExtraSection';
 import { COMPANY_LEGAL_NAME, ORG_ID, siteUrl } from '@/lib/site';
 import a from '../../auth.module.css';
 import s from '../../landing.module.css';
@@ -67,8 +69,12 @@ export async function generateMetadata({
   // "paddock maintenance <place>", and a title that named only paddocks was
   // being skipped by the people searching for contractors. The brand suffix
   // is what gets truncated on long county names, which is the right loss.
-  const title = `Agricultural Contractors & Paddock Maintenance in ${name}`;
-  const description = `Agricultural contractors in ${name}: topping, harrowing, spraying, hedges, fencing. Describe the job, contractors near you send prices. No obligation.`;
+  const extra = PADDOCK_COUNTY_EXTRAS[county];
+  const coverage = extra?.metaTitle ? ((await getCountyCoverage())[name] ?? 0) : 0;
+  const title = extra?.metaTitle?.(coverage) ?? `Agricultural Contractors & Paddock Maintenance in ${name}`;
+  const description =
+    extra?.metaDescription ??
+    `Agricultural contractors in ${name}: topping, harrowing, spraying, hedges, fencing. Describe the job, contractors near you send prices. No obligation.`;
   return {
     title,
     description,
@@ -124,7 +130,8 @@ export default async function PaddockCountyPage({
   const name = ref.name;
   const coverage = coverageMap[name] ?? 0;
   const note = paddockNote(name, ref.region);
-  const faqs = countyFaqs(name, ref.region, coverage);
+  const extra = PADDOCK_COUNTY_EXTRAS[county];
+  const faqs = [...countyFaqs(name, ref.region, coverage), ...(extra?.faqs ?? [])];
 
   const serviceJsonLd = {
     '@context': 'https://schema.org',
@@ -212,6 +219,8 @@ export default async function PaddockCountyPage({
           </div>
         </div>
       </section>
+
+      {extra?.section && <CountyExtraSection section={extra.section} alt />}
 
       <ServicesSection
         services={services}

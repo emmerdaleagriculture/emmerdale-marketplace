@@ -21,6 +21,13 @@ export const PART_A: ServiceContent[] = [
       'Most topping happens from late spring through summer, roughly May to September, once grasses and weeds start throwing up seed heads. One cut in early summer and another later on is common; heavily grazed horse paddocks may need more.',
       'Pick a dry spell. Cutting wet grass leaves clumps that smother the sward underneath, and a tractor on soft ground leaves ruts. Topping just before seed heads ripen does the most good for weed control.',
     ],
+    extra: {
+      h2: 'Topping, flailing or finish mowing: which job you need',
+      body: [
+        '“Topping” gets used for almost any grass cutting, but contractors will want to know which machine suits your field. Routine topping of a grazed paddock is usually done with a rotary topper or a flail. Both cut to an even height and leave the grass lying. If the field has gone well past rank grass into nettles, brambles and scrub, that is [flailing](/services/flailing), a heavier job with a flail mower that chops tougher growth more finely. If the cuttings need taking away rather than left to rot, for example in a meadow, where the grass is very thick, or in a paddock that already has too much thatch, flail collecting does both in one pass. For lawns, orchards and amenity grass where the finish matters more than grazing, [finish mowing](/services/finish-mowing) gives a neater, closer cut than a topper.',
+        'You don’t need to know the machinery names. Say what is growing, how tall it is, roughly how many acres, and whether the cuttings can stay. Mention gateway width and any slopes, jumps or troughs. That is enough for contractors to price the right job. If you want a sense of cost first, [real paddock topping prices from 28 UK jobs](/notes/paddock-topping-cost) shows what past work came to. When you’re ready, [describe your field and get prices](/start) from contractors near you.',
+      ],
+    },
     priceFactors: [
       'Acreage, and whether it’s one open field or several small paddocks with gates between them',
       'How long and dense the growth is: a first cut of neglected grass is slower than routine topping',
@@ -54,6 +61,14 @@ export const PART_A: ServiceContent[] = [
       {
         q: 'Should I top ragwort?',
         a: 'Topping alone won’t get rid of ragwort, and wilted ragwort left in a grazed field is a risk to horses. It is better pulled out by the root and taken away. Topping can stop it seeding if it can’t be dealt with straight away, but the cut plants should be cleared up.',
+      },
+      {
+        q: 'What should I say when I ask for paddock topping prices?',
+        a: 'Give the rough acreage and how many separate paddocks there are. Describe what is growing and how long it is, and whether the cuttings can be left. Include the gateway width and any slopes, ditches, jumps or troughs. A couple of photos help. With that, contractors can tell whether it is routine topping, a heavier flailing job, or one where the cuttings need collecting.',
+      },
+      {
+        q: 'Is paddock topping booked through Emmerdale Agriculture insured?',
+        a: 'Yes. Work booked through the service is covered by Emmerdale Agriculture’s own public liability policy. Before any job reaches a contractor, we confirm who they are and that they run a working contracting business, and we speak with them.',
       },
     ],
     related: ['harrowing', 'weed-control', 'muck-sweeping', 'flail-collecting'],

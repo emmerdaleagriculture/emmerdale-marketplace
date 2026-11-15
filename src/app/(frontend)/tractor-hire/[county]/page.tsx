@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { CountyVerticalPage } from '@/components/verticals/CountyVerticalPage';
 import { allCountyRefs, resolveCountyBySlug, VERTICALS } from '@/lib/verticals';
 import { getCountyServiceCoverage } from '@/lib/reference';
+import { TRACTOR_HIRE_COUNTY_EXTRAS } from '@/lib/countyExtras';
 
 export const dynamicParams = false;
 // A week, not a day. Hundreds of county pages each see under a visit a day,
@@ -28,9 +29,10 @@ export async function generateMetadata({
   if (!resolved) return {};
   const v = VERTICALS['tractor-hire'];
   const coverage = (await getCountyServiceCoverage(v.serviceId))[resolved.county.name] ?? 0;
+  const extra = TRACTOR_HIRE_COUNTY_EXTRAS[county];
   return {
-    title: v.metaTitle(resolved.county.name),
-    description: v.metaDescription(resolved.county.name),
+    title: extra?.metaTitle?.(coverage) ?? v.metaTitle(resolved.county.name),
+    description: extra?.metaDescription ?? v.metaDescription(resolved.county.name),
     alternates: { canonical: `/tractor-hire/${county}` },
     // Only ask Google to index counties we actually cover — keeps thin,
     // no-coverage pages out of the index while still capturing enquiries.
@@ -53,6 +55,7 @@ export default async function TractorHireCountyPage({
       county={resolved.county}
       siblings={resolved.siblings}
       coverage={coverage}
+      extra={TRACTOR_HIRE_COUNTY_EXTRAS[county]}
     />
   );
 }

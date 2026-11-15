@@ -7,6 +7,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { FaqSection, faqSchema } from '@/components/paddock/PaddockSections';
 import { ServicePostcodeForm } from '@/components/services/ServicePostcodeForm';
+import { InlineMd } from '@/components/InlineMd';
 import { jsonLd } from '@/lib/jsonld';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { SERVICE_PAGES, servicePageByPath, cardFor, servicePagePath } from '@/lib/services';
@@ -119,6 +120,16 @@ export default async function ServicePage({ params }: { params: Promise<Params> 
           {page.when.map((p) => (
             <p key={p} className={t.prose}>{p}</p>
           ))}
+          {page.extra && (
+            <>
+              <h2 className={s.sectionTitle}>{page.extra.h2}</h2>
+              {page.extra.body.map((p) => (
+                <p key={p} className={t.prose}>
+                  <InlineMd text={p} />
+                </p>
+              ))}
+            </>
+          )}
         </div>
       </section>
 
