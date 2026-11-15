@@ -9,6 +9,9 @@ import { CountyDirectory } from '@/components/directory/CountyDirectory';
 import { COMPANY_LEGAL_NAME, ORG_ID, siteUrl } from '@/lib/site';
 import { VERTICALS, regionPhrase, type VerticalKey, type CountyRef } from '@/lib/verticals';
 import { verticalNote, verticalNoteHeading } from '@/lib/verticalRegions';
+import type { CountyExtra } from '@/lib/countyExtras';
+import { CountyExtraSection } from '@/components/CountyExtraSection';
+import { InlineMd, stripInlineMd } from '@/components/InlineMd';
 import a from '@/app/(frontend)/auth.module.css';
 import s from '@/app/(frontend)/landing.module.css';
 
@@ -25,16 +28,19 @@ export async function CountyVerticalPage({
   county,
   siblings,
   coverage,
+  extra,
 }: {
   vertical: VerticalKey;
   county: CountyRef;
   siblings: CountyRef[];
   /** Approved contractors covering this county — real per-county signal. */
   coverage: number;
+  /** Hand-written per-county section and FAQs (countyExtras.ts). */
+  extra?: CountyExtra;
 }) {
   const v = VERTICALS[vertical];
   const name = county.name;
-  const faqs = v.faqs(name);
+  const faqs = [...v.faqs(name), ...(extra?.faqs ?? [])];
   // Real per-county substance. Without it these 148 pages were the template
   // with a proper noun swapped in — see verticalRegions.ts.
   const note = verticalNote(vertical, name, county.region);
@@ -62,7 +68,7 @@ export async function CountyVerticalPage({
     mainEntity: faqs.map((f) => ({
       '@type': 'Question',
       name: f.q,
-      acceptedAnswer: { '@type': 'Answer', text: f.a },
+      acceptedAnswer: { '@type': 'Answer', text: stripInlineMd(f.a) },
     })),
   };
 
@@ -114,6 +120,8 @@ export async function CountyVerticalPage({
 
       <CountyDirectory county={name} serviceId={v.serviceId} />
 
+      {extra?.section && <CountyExtraSection section={extra.section} alt />}
+
       <section className={s.section}>
         <div className={s.sectionInner}>
           <div className={s.kicker}>{noteHeading.kicker}</div>
@@ -140,7 +148,9 @@ export async function CountyVerticalPage({
                   <dt style={{ fontFamily: 'var(--font-display-stack)', fontSize: 19, color: 'var(--jd-green-deep)', marginBottom: 8 }}>
                     {f.q}
                   </dt>
-                  <dd style={{ margin: 0, color: 'var(--ink-2)', lineHeight: 1.6 }}>{f.a}</dd>
+                  <dd style={{ margin: 0, color: 'var(--ink-2)', lineHeight: 1.6 }}>
+                    <InlineMd text={f.a} />
+                  </dd>
                 </div>
               ))}
             </dl>

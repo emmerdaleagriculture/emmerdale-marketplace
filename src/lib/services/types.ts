@@ -28,6 +28,12 @@ export type ServiceContent = {
   involves: string[];
   /** "When to do it": 1–2 paragraphs on season, timing and conditions. */
   when: string[];
+  /**
+   * Optional extra section after "When to do it", for a gap Search Console
+   * shows the page missing. Paragraphs may use `[anchor](/path)` and `**bold**`
+   * (InlineMd); so may FAQ answers.
+   */
+  extra?: { h2: string; body: string[] };
   /** "What affects the price": 4–6 short bullet points. */
   priceFactors: string[];
   /** "Good to know": 2–4 practical tips or warnings. */

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { ServiceOption } from '@/components/forms/ServicePicker';
 import { COMPANY_REG_LINE, HPM_URL } from '@/lib/site';
 import s from '@/app/(frontend)/landing.module.css';
+import { InlineMd, stripInlineMd } from '@/components/InlineMd';
 
 /**
  * The sections shared by the paddock front page and every per-county page.
@@ -18,7 +19,7 @@ export function faqSchema(faqs: Faq[]) {
     mainEntity: faqs.map((f) => ({
       '@type': 'Question',
       name: f.q,
-      acceptedAnswer: { '@type': 'Answer', text: f.a },
+      acceptedAnswer: { '@type': 'Answer', text: stripInlineMd(f.a) },
     })),
   };
 }
@@ -146,7 +147,9 @@ export function FaqSection({
           {faqs.map((f) => (
             <div key={f.q} className={s.faqItem}>
               <dt className={s.faqQ}>{f.q}</dt>
-              <dd className={s.faqA}>{f.a}</dd>
+              <dd className={s.faqA}>
+                <InlineMd text={f.a} />
+              </dd>
             </div>
           ))}
         </dl>

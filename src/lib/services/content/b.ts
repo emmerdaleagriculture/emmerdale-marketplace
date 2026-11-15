@@ -238,6 +238,13 @@ export const PART_B: ServiceContent[] = [
       'Most grassland weeds are best sprayed when they are actively growing and at the rosette or leafy stage, before they flower: typically spring for buttercups and ragwort rosettes, and spring or early autumn for docks and thistles. Spraying weeds that have already flowered or been topped recently gives poor results, because there is too little leaf to take up the chemical.',
       'Spraying needs a dry, still day with no rain forecast for several hours. Wind causes drift onto hedges, gardens and watercourses, and rain soon after can wash the product off.',
     ],
+    extra: {
+      h2: 'Keeping weeds out of grassland once they are gone',
+      body: [
+        'Spraying clears the weeds that are there now. Whether they come back depends on how the field is managed afterwards. Weeds take hold where the grass is thin, poached or overgrazed, so the longer-term part of grassland weed control is getting a dense sward back and keeping it. In practice that means resting and [overseeding](/services/overseeding) bare patches, sorting out wet or compacted ground, and not letting horses or stock graze the grass down to the soil. [Harrowing](/services/paddock-harrowing) in spring pulls out dead material and opens the sward up for new growth. Buttercups in particular do well on wet, acidic, tired ground, so a soil test and [lime](/services/lime-spreading) where it is needed is often worth doing alongside the spray.',
+        'Topping also helps, but timing matters. Cutting thistles, docks and nettles before they flower stops them seeding across the field, and repeated cutting over a season or two weakens them. Topping shortly before spraying works against you, though, because the weeds need plenty of leaf to take up the product. A common pattern is to spray when the weeds are leafy, then top later in the season once the product has had time to work. If you want spraying, topping and reseeding done as one plan, [put it all in a single job description](/start) and contractors can price it together.',
+      ],
+    },
     priceFactors: [
       'Area to treat, and whether it is a full boom spray or spot treatment',
       'Which weeds, and how thick they are – one product may not cover everything',
@@ -267,7 +274,7 @@ export const PART_B: ServiceContent[] = [
       },
       {
         q: 'How much does paddock spraying cost?',
-        a: 'On real jobs posted through Emmerdale Agriculture in autumn 2026, about an acre drew prices of £200 to £495, two and a half to three acres mostly £385 to £635, and four to five and a half acres £565 to £715, or roughly £110 to £145 an acre. Below about three acres the contractor’s minimum charge sets the price.',
+        a: 'On real jobs posted through Emmerdale Agriculture in autumn 2026, about an acre drew prices of £200 to £495, two and a half to three acres mostly £385 to £635, and four to five and a half acres £565 to £715, or roughly £110 to £145 an acre. Below about three acres the contractor’s minimum charge sets the price. More detail in [real prices from 10 UK paddock spraying jobs](/notes/paddock-spraying-cost).',
       },
       {
         q: 'How long do you keep horses off a sprayed field?',
@@ -297,6 +304,13 @@ export const PART_B: ServiceContent[] = [
       'Subsoiling only works when the soil is dry enough at working depth to crack and shatter. In wet soil the leg just cuts a slot and smears the sides, which can make drainage worse. That usually means late summer or early autumn after a dry spell, before the winter rain.',
       'On grassland, allow time for the grass to recover before heavy use or winter grazing, and ideally follow on with rolling to firm the surface.',
     ],
+    extra: {
+      h2: 'Subsoiling, ripping, mole ploughing and aerating: how they differ',
+      body: [
+        'Subsoiling goes by a few names. Farmers often call it **ripping** or **pan busting**, and on grassland the low-disturbance version is usually called **sward lifting**. They all do the same thing: steel legs run below a compacted layer and crack it, leaving the topsoil where it is. That is what separates it from ploughing and [rotavating](/services/rotavating), which turn over or churn the top few inches and leave you with a seedbed rather than a working field or paddock.',
+        'It is also easy to confuse with two other jobs. [Mole ploughing](/services/mole-ploughing) pulls a bullet-shaped mole behind a single leg to form a lasting drainage channel in clay. It is for moving water away, not for shattering a pan. Spike or slit aeration only works the top few inches, so it can help a capped surface but won’t reach compaction lower down. If a spade test shows a hard layer well below the surface, subsoiling is the job. If the ground is heavy clay with nowhere for water to go, mole ploughing may suit it better. Describe what you are seeing when you [post the job](/start) and contractors can say which suits your ground.',
+      ],
+    },
     priceFactors: [
       'Area of the field and the working depth needed',
       'Soil type – heavy clay and stony ground need more power and time',
@@ -323,6 +337,10 @@ export const PART_B: ServiceContent[] = [
       {
         q: 'How do I know if my field is compacted?',
         a: 'Look for standing water after rain, shallow-rooted or patchy grass, and ground that is hard to push a spade into. Dig a hole: a dense layer where roots grow sideways, often with a grey or mottled colour, is a sign of a pan.',
+      },
+      {
+        q: 'Do I need to subsoil the whole field?',
+        a: 'Not always. Compaction is often worst in gateways, along tracks, around feeders and where vehicles turn. Dig spade holes in several places, including a spot that isn’t heavily used, and compare them. If the pan only shows in certain areas, tell the contractor so they can quote for just those parts.',
       },
     ],
     related: ['mole-ploughing', 'overseeding', 'rolling', 'harrowing'],
