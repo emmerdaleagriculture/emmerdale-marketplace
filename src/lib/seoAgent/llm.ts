@@ -26,9 +26,20 @@ const PRICE_PER_M: Record<string, { input: number; output: number }> = {
   [DRAFT_MODEL]: { input: 4, output: 20 },
 };
 
+/**
+ * Per-run limits: Claude spend, and wall clock. stopAt is when every call
+ * must have returned so the run can persist and record itself inside the
+ * function's 300s; draft timeouts are clamped to it.
+ */
 export class SpendBudget {
   private spent = 0;
-  constructor(private readonly capUsd = 2.5) {}
+  constructor(
+    private readonly capUsd = 2.5,
+    private readonly stopAt = Number.POSITIVE_INFINITY,
+  ) {}
+  msLeft() {
+    return this.stopAt - Date.now();
+  }
   add(model: string, usage: { input_tokens: number; output_tokens: number }) {
     // A fallback can answer on another model; price unknowns at the draft rate.
     const p = PRICE_PER_M[model] ?? PRICE_PER_M[DRAFT_MODEL];
@@ -83,6 +94,10 @@ export async function draftJson<S extends z.ZodType>(args: {
   schema: S;
   budget: SpendBudget;
 }): Promise<z.infer<S> | null> {
+  // No retry, and never past the run's stop time: a 120s call retried once
+  // could outlive the function and lose the run record.
+  const timeout = Math.min(120_000, args.budget.msLeft());
+  if (timeout < 20_000) return null;
   try {
     const res = await anthropic().beta.messages.parse(
       {
@@ -94,7 +109,7 @@ export async function draftJson<S extends z.ZodType>(args: {
         messages: [{ role: 'user', content: args.user }],
         output_config: { effort: 'medium', format: betaZodOutputFormat(args.schema) },
       },
-      { timeout: 120_000 },
+      { timeout, maxRetries: 0 },
     );
     args.budget.add(res.model, res.usage);
     if (res.stop_reason === 'refusal' || res.stop_reason === 'max_tokens') return null;

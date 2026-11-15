@@ -54,7 +54,7 @@ create index seo_opportunities_status_idx on public.seo_opportunities (status);
 create index seo_opportunities_decided_at_idx on public.seo_opportunities (decided_at);
 
 create or replace function public.seo_opportunities_touch()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql set search_path = '' as $$
 begin
   new.updated_at := now();
   return new;

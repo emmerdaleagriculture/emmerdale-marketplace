@@ -84,7 +84,7 @@ export async function runAgent(db: Db, opts: RunOptions = {}): Promise<AgentRunS
   const dryRun = Boolean(opts.dryRun);
   const runId = `run_${started}`;
   const weekIdentified = isoWeekLabel(now);
-  const budget = new SpendBudget(opts.budgetUsd ?? 2.5);
+  const budget = new SpendBudget(opts.budgetUsd ?? 2.5, started + 270_000);
   const articleCap = opts.articleCap ?? 2;
   const draftDeadline = started + (opts.draftDeadlineMs ?? 200_000);
   const errors: string[] = [];
@@ -166,8 +166,11 @@ export async function runAgent(db: Db, opts: RunOptions = {}): Promise<AgentRunS
       continue;
     }
     const hit = findCollision(w.row.query, docs);
-    if (hit) others.push({ ...w, type: 'on_page_tweak', row: { ...w.row, page: absoluteUrl(origin, hit.path) } });
-    else articles.push(w);
+    if (hit) {
+      const page = absoluteUrl(origin, hit.path);
+      const otherPages = w.row.otherPages?.filter((p) => p.page !== page);
+      others.push({ ...w, type: 'on_page_tweak', row: { ...w.row, page, otherPages: otherPages?.length ? otherPages : undefined } });
+    } else articles.push(w);
   }
   articles.sort((a, b) => articleScore(b.row) - articleScore(a.row));
   const work: WorkItem[] = [
@@ -257,7 +260,18 @@ export async function runAgent(db: Db, opts: RunOptions = {}): Promise<AgentRunS
           errors.push(`Draft note for "${opp.query}" failed: ${msg(err)}`);
         }
       }
-      leadId = await insertOpportunity(db, opp, { runId, status: 'pending', relatedNoteId });
+      // Nothing to review without a draft. Saved as superseded with no
+      // decision, so it doesn't hold the query and comes back next month
+      // (as pending it would block the query forever).
+      leadId = draft
+        ? await insertOpportunity(db, opp, { runId, status: 'pending', relatedNoteId })
+        : await insertOpportunity(db, opp, {
+            runId,
+            status: 'superseded',
+            reviewNotes: item.deferred
+              ? 'Deferred: over the per-run article cap. Not held back; raised again next run.'
+              : 'No draft (budget, time limit, or no usable model output). Not held back; raised again next run.',
+          });
     } catch (err) {
       errors.push(`Persist "${opp.query}" failed: ${msg(err)}`);
       return;
