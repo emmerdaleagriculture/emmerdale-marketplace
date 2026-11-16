@@ -13,6 +13,9 @@ on:
 
 permissions:
   contents: read
+  # Lets the job prove to Google which repo and workflow it is (Workload
+  # Identity Federation), so no Play service-account key is stored anywhere.
+  id-token: write
 
 concurrency:
   group: android-play-upload
@@ -21,9 +24,6 @@ concurrency:
 jobs:
   release:
     if: inputs.confirm_upload && vars.MOBILE_STORE_UPLOADS_ENABLED == 'true'
-    # The environment's required reviewer approves each run before the store
-    # secrets are released to it. See app-shell/README.md.
-    environment: store-uploads
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
@@ -46,7 +46,8 @@ jobs:
           packages: 'platform-tools'
       - run: npm ci
       - run: npx cap sync android
-      - run: npm run check -- android
+      - run: npx cap sync ios
+      - run: npm run check
       - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Build signed Android bundle
         env:
@@ -72,10 +73,20 @@ jobs:
           name: android-signed-bundle
           path: app-shell/android/app/build/outputs/bundle/release/*.aab
           retention-days: 7
+      # Keyless sign-in to Google Cloud project emmerdale-agriculture-apps.
+      # The pool only trusts emmerdaleagriculture/emmerdale-marketplace, and the
+      # play-upload service account can only release this app to testing tracks.
+      - name: Sign in to Google (keyless)
+        id: google-auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/866926854479/locations/global/workloadIdentityPools/github/providers/github-actions
+          service_account: play-upload@emmerdale-agriculture-apps.iam.gserviceaccount.com
+          create_credentials_file: true
       - name: Upload draft to internal testing only
         uses: r0adkll/upload-google-play@v1
         with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          serviceAccountJson: ${{ steps.google-auth.outputs.credentials_file_path }}
           packageName: com.emmerdaleagriculture.app
           releaseFiles: app-shell/android/app/build/outputs/bundle/release/app-release.aab
           track: internal
