@@ -84,7 +84,11 @@ the live website, so test submissions can contact real operators.
 - Android back button: verify useful history and exit behaviour.
 - Network: first launch offline, lost connection, resume and retry.
 - Accessibility: large text, VoiceOver/TalkBack, safe areas, rotation and small screens.
-- Notifications: push is not implemented. Do not promise it in store copy.
+- Notifications: push uses @capacitor-firebase/messaging with Firebase project
+  `emmerdale-agriculture-apps` (from version 1.0.1). Sending also needs the APNs key
+  uploaded to Firebase and `FIREBASE_SERVICE_ACCOUNT` set for `send-emails`. Test
+  permission prompt, token registration, a received push and a tapped push on a
+  real iPhone and Android phone before promising notifications in store copy.
 
 ## Store and privacy blockers
 

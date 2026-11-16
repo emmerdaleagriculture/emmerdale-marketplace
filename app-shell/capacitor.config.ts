@@ -53,6 +53,19 @@ const config: CapacitorConfig = {
     },
   },
 
+  // The Firebase plugins share one SwiftPM package identity; the plugin's
+  // README asks for a symlinked package to avoid the collision (needs
+  // Capacitor CLI 8.4+).
+  experimental: {
+    ios: {
+      spm: {
+        packageOptions: {
+          '@capacitor-firebase/messaging': { symlink: true },
+        },
+      },
+    },
+  },
+
   ios: {
     // 'never': the website already keeps clear of the notch and home bar
     // itself (globals.css, html[data-app], env(safe-area-inset-*)). With
