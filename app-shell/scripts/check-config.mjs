@@ -56,4 +56,12 @@ assert.ok(read('android/app/build.gradle').includes('versionName = new groovy.js
 for (const filename of platforms.map((name) => ({ ios: 'ios/App/App/capacitor.config.json', android: 'android/app/src/main/assets/capacitor.config.json' })[name])) {
   assert.equal(JSON.parse(read(filename)).server.url, config.server.url, `${filename}: run cap sync`);
 }
+// Push: the Firebase config files must ship (the plugin configures Firebase at
+// launch and a missing GoogleService-Info.plist crashes the app), and iOS
+// needs the production APNs entitlement.
+assert.ok(fs.existsSync(path.join(root, 'ios/App/App/GoogleService-Info.plist')), 'Missing GoogleService-Info.plist');
+assert.ok(read('ios/App/App.xcodeproj/project.pbxproj').includes('GoogleService-Info.plist in Resources'), 'GoogleService-Info.plist not in the app bundle');
+assert.ok(read('ios/App/App/GoogleService-Info.plist').includes(`<string>${config.appId}</string>`), 'GoogleService-Info.plist is for another bundle ID');
+assert.ok(read('ios/App/App/App.entitlements').includes('<key>aps-environment</key>'), 'Missing aps-environment entitlement');
+assert.equal(JSON.parse(read('android/app/google-services.json')).client.find((c) => c.client_info.android_client_info.package_name === config.appId) !== undefined, true, 'google-services.json is for another package');
 console.log(`PASS: app ID, pinned dependencies, canonical origin, navigation scope, permissions, version and native sync (${platforms.join(', ') || 'no platforms'}).`);
