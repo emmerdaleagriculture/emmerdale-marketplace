@@ -1,21 +1,23 @@
+import Image, { type StaticImageData } from 'next/image';
 import s from './featurePreview.module.css';
 
 /**
  * A real screenshot of a Premium page, shown to contractors who don't have
  * it yet, so the pitch below it is about something they have seen. The
- * images are captures of Hampshire Paddock Management's own view (our test
- * account), so no other contractor's figures are on show; retake them with
- * the membership switch on /account when the page changes.
+ * captures are Hampshire Paddock Management's own view (our test account),
+ * cropped so they show what the page is like without giving away the paid
+ * part (market data stops before the price table). Retake them with the
+ * membership switch on /account when the page changes.
  */
-export function FeaturePreview({ src, alt, caption }: { src: string; alt: string; caption: string }) {
+export function FeaturePreview({ image, alt, caption }: { image: StaticImageData; alt: string; caption: string }) {
   return (
     <figure className={s.figure}>
       <div className={s.frame}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt} width={1200} height={1742} loading="lazy" className={s.img} />
-        <span className={s.badge}>Example</span>
+        <Image src={image} alt={alt} sizes="(max-width: 800px) 100vw, 760px" className={s.img} />
       </div>
-      <figcaption className={s.caption}>{caption}</figcaption>
+      <figcaption className={s.caption}>
+        <span className={s.badge}>Example</span> {caption}
+      </figcaption>
     </figure>
   );
 }

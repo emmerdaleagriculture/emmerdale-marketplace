@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { FeaturePreview } from '@/components/membership/FeaturePreview';
+import tendersExample from '@/components/membership/examples/council-tenders.webp';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -160,7 +161,7 @@ export default async function TendersPage() {
                 approach the buyer before they re-let.
               </p>
               <FeaturePreview
-                src="/images/examples/council-tenders.webp"
+                image={tendersExample}
                 alt="Example of the Council tenders page: open tenders and renewals on your patch, each with the buyer, location, distance, deadline and value, and your own status and notes."
                 caption="What a Premium member sees: live council contracts near their base, checked every morning."
               />

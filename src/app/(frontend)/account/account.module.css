@@ -563,10 +563,9 @@
 .heroAvatar {
   position: relative;
   flex-shrink: 0;
-  /* A block exactly the picture's size: as an inline link its box took the
+  /* A box exactly the picture's size: as an inline link its box took the
      line height, and the round outline drawn on it came out egg-shaped. */
   display: flex;
-  line-height: 0;
   border-radius: 50%;
   outline: 3px solid rgba(255, 255, 255, 0.18);
   outline-offset: 2px;
