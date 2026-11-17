@@ -4033,6 +4033,10 @@ export type Database = {
         Args: { p_submission_id: string; p_contractor_id: string }
         Returns: Json
       }
+      pro_offer_link_hit: {
+        Args: { p_id: string; p_count: boolean }
+        Returns: undefined
+      }
       sms_link_hit: {
         Args: { p_code: string; p_count?: boolean }
         Returns: string

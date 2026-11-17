@@ -80,7 +80,7 @@ const SQ_CONTRACTOR_KINDS = new Set([
   'sq_job_amended', 'sq_message_to_contractor',
   'sq_visit_reminder', 'sq_visit_accepted', 'sq_visit_declined',
   'sq_weekly_digest', 'sq_thread_visit_to_contractor', 'sq_job_withdrawn', 'sq_price_passed',
-  'sq_contact_warning', 'directory_enquiry', 'sq_members_first_notice',
+  'sq_contact_warning', 'directory_enquiry', 'sq_members_first_notice', 'sq_pro_offer',
 ]);
 
 /** The customer's reason for passing on a price, in the contractor's email. */
@@ -205,6 +205,17 @@ function openOfferClose(billedPremium: boolean): string {
     `\n\n` +
     `${billedPremium ? 'Move up to Premium' : 'Join Premium'}: ${SITE_URL}/account/membership`
   );
+}
+
+/** A head start in plain words: "40 minutes", "6 hours", "3 days". */
+function headStart(hours: number): string {
+  if (!Number.isFinite(hours) || hours <= 0) return 'a while';
+  if (hours < 1) return `${Math.max(1, Math.round(hours * 60))} minutes`;
+  if (hours < 48) {
+    const h = Math.round(hours);
+    return `${h} hour${h === 1 ? '' : 's'}`;
+  }
+  return `${Math.round(hours / 24)} days`;
 }
 
 function render(kind: string, p: Record<string, unknown>): { subject: string; text: string } | null {
@@ -532,6 +543,51 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
      * date it opens by if it does, and the membership that would have had
      * it. sq_job_facts carries nothing about the customer.
      */
+    /**
+     * The standalone Pro offer (20261117150000), and the only email that is
+     * about membership and nothing else. It lists the jobs this contractor
+     * got after Pro members already had them, with the gap in hours. The
+     * figures are from their own invitations, so every line is checkable.
+     * The link goes through /go/pro/<offer id> so taps are counted per send.
+     * A preview has no offer row, so it links straight to the page.
+     */
+    case 'sq_pro_offer': {
+      const jobs = Array.isArray(p.jobs) ? (p.jobs as Record<string, unknown>[]) : [];
+      const n = Number(p.job_count ?? jobs.length);
+      const hi = p.contact_name ? `Hi ${String(p.contact_name).split(/\s+/)[0]},` : 'Hello,';
+      const lines = jobs.map((j, i) => {
+        const when = j.sent_at
+          ? new Date(String(j.sent_at)).toLocaleDateString('en-GB', {
+              weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/London',
+            })
+          : null;
+        return (
+          `${i + 1}. ${j.service ?? 'Land work'}: ${[j.postcode_district, j.county].filter(Boolean).join(', ')}\n` +
+          `   Reached you ${headStart(Number(j.hours_behind))} after members${when ? ` (${when})` : ''}`
+        );
+      });
+      const link = p.preview || !p.offer_id
+        ? `${SITE_URL}/account/membership`
+        : `${SITE_URL}/go/pro/${p.offer_id}`;
+      const subject = `${n} job${n === 1 ? '' : 's'} reached members before you this month`;
+      const text =
+        `${hi}\n\n` +
+        `In the last 30 days you were invited to price ${n} job${n === 1 ? '' : 's'} that ` +
+        `members of the network had already been sent. ${n === 1 ? 'They had it' : 'Typically they had each one'} ` +
+        `${headStart(Number(p.median_hours))} before you did.\n\n` +
+        `${lines.join('\n\n')}\n` +
+        (n > jobs.length ? `   …and ${n - jobs.length} more.\n` : '') +
+        `\n` +
+        `Pro members are sent new jobs in their area before contractors who aren’t members, and pay 5% ` +
+        `commission instead of 15% on work they win. It’s £20 a month or £199 a year, and you ` +
+        `can cancel from your account whenever you like.\n\n` +
+        `See Pro: ${link}\n\n` +
+        `We send this at most once every two months, and only when there’s something to show. ` +
+        `It comes with your job emails, so turning those off in your account stops this too.`;
+      return p.preview
+        ? { subject: `[Preview for ${p.business_name ?? 'a contractor'}] ${subject}`, text }
+        : { subject, text };
+    }
     case 'sq_members_first_notice': {
       const n = Number(p.members_invited ?? 1);
       const opens = p.market_opens_at
