@@ -18,15 +18,15 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--ink);
-  color: var(--white);
+  background: var(--fill-ink);
+  color: var(--on-fill);
   border-radius: 8px;
   padding: 10px 16px;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
 }
-.btn:hover { background: var(--jd-green-deep); }
+.btn:hover { background: var(--fill-green-deep); }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* Dismissible: room for the × in the corner. */

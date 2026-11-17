@@ -36,7 +36,7 @@
 .progress span {
   display: block;
   height: 100%;
-  background: var(--jd-green);
+  background: var(--fill-green);
   border-radius: 2px;
   transition: width 0.3s;
 }
@@ -53,7 +53,7 @@
 }
 .tile {
   background: var(--white);
-  border: 1.5px solid #e6e9e1;
+  border: 1.5px solid var(--app-line);
   border-radius: 16px;
   padding: 16px 6px 14px;
   font-size: 13.5px;
@@ -66,7 +66,7 @@
 }
 .tileOn {
   border-color: var(--jd-green);
-  background: #f6faf3;
+  background: var(--green-wash);
   box-shadow: inset 0 0 0 1px var(--jd-green);
 }
 .q {
@@ -132,7 +132,7 @@
 }
 .chipOn {
   border-color: var(--jd-green);
-  background: #f6faf3;
+  background: var(--green-wash);
   box-shadow: inset 0 0 0 1px var(--jd-green);
   color: var(--jd-green-deep);
   font-weight: 600;
@@ -199,7 +199,7 @@
 }
 .rows {
   background: var(--white);
-  border: 1px solid #e6e9e1;
+  border: 1px solid var(--app-line);
   border-radius: 20px;
   overflow: hidden;
 }
@@ -208,7 +208,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border-bottom: 1px solid #eef0ea;
+  border-bottom: 1px solid var(--app-line-soft);
   font-size: 15.5px;
 }
 .row:last-child {
@@ -238,7 +238,7 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
   display: grid;
   place-items: center;

@@ -3,8 +3,8 @@
   z-index: 20;
 }
 .solid {
-  background: var(--jd-green-deep);
-  color: var(--white);
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
 }
 /* On the landing pages, in place of their own sticky 68px bar: the same
    footprint, so the swap on hydration moves nothing below it. */
@@ -24,7 +24,7 @@
   top: 0;
   left: 0;
   background: transparent;
-  color: var(--white);
+  color: var(--on-fill);
 }
 .inner {
   max-width: 1200px;
@@ -46,7 +46,7 @@
      has a link in it: without this, a signed-in visitor with no membership
      link (an applicant, an admin) had the burger centred. */
   margin-right: auto;
-  color: var(--white);
+  color: var(--on-fill);
 }
 /* The ticker takes whatever the row leaves between the logo and the rest,
    and can shrink to nothing: it is a window onto a moving strip, not a
@@ -72,7 +72,7 @@
   text-transform: uppercase;
 }
 .bar a {
-  color: var(--white);
+  color: var(--on-fill);
   opacity: 0.9;
 }
 .bar a:hover {
@@ -81,13 +81,13 @@
 /* Under .inner so the header's placement outranks the component's own
    rules whatever order the stylesheets load in. */
 .inner .social {
-  color: var(--white);
+  color: var(--on-fill);
 }
 .linkButton {
   font-size: 13px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--white);
+  color: var(--on-fill);
   opacity: 0.9;
 }
 .linkButton:hover {
@@ -98,7 +98,7 @@
 }
 .cta {
   background: var(--jd-yellow);
-  color: var(--jd-green-deep) !important;
+  color: var(--on-yellow) !important;
   padding: 9px 16px;
   border-radius: 8px;
   font-weight: 600;
@@ -121,7 +121,7 @@
   padding: 8px 14px;
   border-radius: 999px;
   background: var(--jd-yellow);
-  color: var(--jd-green-deep) !important;
+  color: var(--on-yellow) !important;
   font-weight: 700;
   opacity: 1 !important;
   box-shadow: 0 6px 16px -8px rgba(255, 222, 0, 0.7);
@@ -156,7 +156,7 @@
   border: 0;
   padding: 6px;
   margin: -6px;
-  color: var(--white);
+  color: var(--on-fill);
   cursor: pointer;
   line-height: 0;
   border-radius: 8px;
@@ -214,7 +214,7 @@
   min-height: 48px;
   padding: 10px 10px;
   border-radius: 10px;
-  color: var(--white);
+  color: var(--on-fill);
   font-weight: 500;
   transition: background 0.15s ease;
 }
@@ -252,7 +252,7 @@
   padding: 2px 7px;
   border-radius: 999px;
   background: var(--jd-yellow);
-  color: var(--jd-green-deep);
+  color: var(--on-yellow);
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -323,7 +323,7 @@
   cursor: pointer;
 }
 .menuFoot .linkButton:hover {
-  color: var(--white);
+  color: var(--on-fill);
 }
 /* The join CTA keeps its button shape rather than becoming another row. */
 .menuFoot .cta {

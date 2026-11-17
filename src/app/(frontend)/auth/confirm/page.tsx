@@ -43,12 +43,12 @@ export default async function ConfirmLinkPage({
 
   return (
     <div className={a.wrap}>
-      <header style={{ background: 'var(--jd-green-deep)', padding: '18px 24px' }}>
+      <header style={{ background: 'var(--fill-green-deep)', padding: '18px 24px' }}>
         <Link
           href="/"
           style={{
             fontFamily: 'var(--font-display-stack)',
-            color: 'var(--white)',
+            color: 'var(--on-fill)',
             fontSize: 18,
             letterSpacing: '0.03em',
           }}

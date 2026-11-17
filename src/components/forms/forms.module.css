@@ -40,7 +40,7 @@
 
 /* Buttons */
 .btnPrimary {
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
   padding: 14px 28px;
   font-weight: 600;
@@ -54,7 +54,7 @@
   transition: background 0.15s, transform 0.1s;
 }
 .btnPrimary:hover {
-  background: var(--jd-green-dark);
+  background: var(--fill-green-dark);
 }
 .btnPrimary:active {
   transform: translateY(1px);
@@ -65,7 +65,7 @@
 }
 .btnYellow {
   background: var(--jd-yellow);
-  color: var(--jd-green-deep);
+  color: var(--on-yellow);
   padding: 14px 28px;
   font-weight: 600;
   font-size: 13px;
@@ -102,7 +102,7 @@
   border-radius: 8px;
 }
 .btnDanger:hover {
-  background: var(--error);
+  background: var(--fill-error);
   color: #fff;
 }
 
@@ -180,7 +180,7 @@
   height: 0;
 }
 .chipOn {
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
   border-color: var(--jd-green);
 }

@@ -26,6 +26,7 @@
   color: #fff;
 }
 .google {
+  /* Google's button is white on any ground (its brand rules). */
   background: #fff;
   color: #1f1f1f;
   border: 1px solid #c9ccc4;
@@ -49,4 +50,15 @@
   flex: 1;
   height: 1px;
   background: var(--rule);
+}
+
+/* Apple's rules: on a dark ground the button turns white. */
+@media (prefers-color-scheme: dark) {
+  :global(html[data-app]) .apple {
+    background: #fff;
+    color: #000;
+  }
+  :global(html[data-app]) .google {
+    border-color: #fff;
+  }
 }

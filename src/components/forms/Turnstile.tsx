@@ -75,7 +75,8 @@ export function Turnstile({
         if (cancelled || !containerRef.current || widgetIdRef.current !== null) return;
         widgetIdRef.current = window.turnstile!.render(containerRef.current, {
           sitekey: siteKey,
-          theme: 'light',
+          // The website is light only; the app follows the phone (globals.css).
+          theme: document.documentElement.dataset.app === '1' ? 'auto' : 'light',
           // Auto re-solve when the token times out mid-form; the callbacks keep
           // the form's view of the token in sync either way.
           'refresh-expired': 'auto',

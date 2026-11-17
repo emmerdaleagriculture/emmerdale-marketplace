@@ -15,7 +15,7 @@
   position: absolute;
   inset: auto 0 0 0;
   height: 48px;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), var(--white));
+  background: linear-gradient(to bottom, transparent, var(--white));
   pointer-events: none;
 }
 .img {
@@ -30,8 +30,8 @@
   margin-right: 4px;
   padding: 2px 8px;
   border-radius: 999px;
-  background: var(--jd-green-deep);
-  color: var(--white);
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;

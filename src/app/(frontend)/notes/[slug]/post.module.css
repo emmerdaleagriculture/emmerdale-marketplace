@@ -7,7 +7,7 @@
   position: relative;
   height: 56vh;
   min-height: 420px;
-  background: var(--jd-green-dark);
+  background: var(--fill-green-dark);
 }
 .postHeroPhoto {
   position: absolute;
@@ -63,7 +63,7 @@
 }
 .postHeroTag {
   background: var(--jd-yellow);
-  color: var(--jd-green-deep);
+  color: var(--on-yellow);
   padding: 5px 12px;
   border-radius: 100px;
   font-size: 11px;
@@ -183,7 +183,7 @@
   padding: 0 48px;
 }
 .serviceCtaInner {
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   color: #fff;
   padding: 40px;
   border-radius: 2px;
@@ -219,7 +219,7 @@
 }
 .serviceCtaBtn {
   background: var(--jd-yellow);
-  color: var(--jd-green-deep);
+  color: var(--on-yellow);
   padding: 14px 24px;
   font-weight: 600;
   font-size: 12px;

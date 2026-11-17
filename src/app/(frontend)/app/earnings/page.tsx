@@ -79,7 +79,7 @@ export default async function EarningsPage() {
         </Link>
       </div>
 
-      <div className={ui.card} style={{ background: 'var(--jd-green-deep)', color: '#fff', border: 0 }}>
+      <div className={ui.card} style={{ background: 'var(--fill-green-deep)', color: '#fff', border: 0 }}>
         <div style={{ fontSize: 14, opacity: 0.85 }}>{nextPayout > 0 ? 'Ready to pay out' : 'Nothing ready to pay out yet'}</div>
         <div style={{ fontFamily: 'var(--font-display-stack)', fontSize: 40, lineHeight: 1.1, margin: '4px 0' }}>{formatGBP(nextPayout)}</div>
         <div style={{ fontSize: 14, opacity: 0.85 }}>
@@ -133,8 +133,8 @@ export default async function EarningsPage() {
       {/* Members see their own plan. Nothing about plans for anyone else:
           they are only offered on the website, like Spotify. */}
       {tier && (
-      <div className={ui.card} style={{ marginTop: 22, background: '#fff8d6', border: '1px solid #f2e39a' }}>
-        <div className={ui.cardTitle} style={{ color: '#6b5a00' }}>
+      <div className={ui.card} style={{ marginTop: 22, background: 'var(--member-bg)', border: '1px solid var(--member-line)' }}>
+        <div className={ui.cardTitle} style={{ color: 'var(--member-ink)' }}>
           {`✦ Emmerdale ${tier === 'open' ? 'Premium' : 'Pro'} · you’re a member`}
         </div>
                 <ul className={ui.promises} style={{ marginTop: 10 }}>

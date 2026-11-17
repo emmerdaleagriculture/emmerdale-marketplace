@@ -28,7 +28,7 @@ export function VisitPanel({
   const error = confirmed.error ?? revised.error;
 
   return (
-    <div style={{ marginTop: 14, padding: '14px 16px', border: '1px solid #f0d98a', background: '#fff9e8', borderRadius: 8 }}>
+    <div style={{ marginTop: 14, padding: '14px 16px', border: '1px solid var(--warn-line)', background: 'var(--warn-bg)', borderRadius: 8 }}>
       <p style={{ margin: '0 0 10px', fontSize: 14 }}>
         <strong>Booked subject to your site visit.</strong> Once you&rsquo;ve seen it, confirm your
         price of {priceLabel} or revise it.

@@ -50,11 +50,11 @@
 .brand {
   font-family: var(--font-display-stack);
   font-size: 15px;
-  color: var(--white);
+  color: var(--on-fill);
 }
 .loginLink {
   font-size: 13px;
-  color: var(--white);
+  color: var(--on-fill);
   text-decoration: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.55);
   padding-bottom: 1px;
@@ -79,7 +79,7 @@
   font-weight: 400;
   font-size: 28px;
   line-height: 1.14;
-  color: var(--white);
+  color: var(--on-fill);
   margin: 0 0 8px;
 }
 .title em {
@@ -94,7 +94,7 @@
   max-width: 40ch;
 }
 .sub strong {
-  color: var(--white);
+  color: var(--on-fill);
   font-weight: 700;
 }
 
@@ -108,8 +108,8 @@
 }
 .cta {
   display: block;
-  background: var(--jd-green-dark);
-  color: var(--white);
+  background: var(--fill-green-dark);
+  color: var(--on-fill);
   font-size: 17px;
   font-weight: 700;
   text-align: center;
@@ -118,7 +118,7 @@
   border-radius: 4px;
 }
 .cta:active {
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
 }
 .cta:focus-visible {
   outline: 2px solid var(--jd-green-deep);

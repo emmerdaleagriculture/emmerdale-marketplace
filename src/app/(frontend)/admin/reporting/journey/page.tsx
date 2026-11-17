@@ -280,7 +280,7 @@ export default async function JourneyPage({
                         display: 'block',
                         height: 8,
                         width: `${share}%`,
-                        background: 'var(--jd-green-deep)',
+                        background: 'var(--fill-green-deep)',
                         minWidth: share > 0 ? 2 : 0,
                       }}
                     />

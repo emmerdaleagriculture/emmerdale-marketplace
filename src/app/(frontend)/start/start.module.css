@@ -120,7 +120,7 @@
   height: auto;
   aspect-ratio: 8 / 5;
   border-radius: 4px;
-  background: #eef3e8;
+  background: var(--green-wash);
 }
 
 /* A field the parse is unsure about, or couldn't fill: draw the eye without
@@ -188,7 +188,7 @@
   padding: 16px;
   border: 1px solid var(--jd-yellow-dark);
   border-radius: 8px;
-  background: #fdf7dd;
+  background: var(--warn-bg);
   margin-bottom: 20px;
 }
 
@@ -248,7 +248,7 @@
   height: 24px;
   margin-top: 1px;
   border-radius: 50%;
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -369,6 +369,11 @@
 .page {
   background: linear-gradient(180deg, #dce6dc 0, #e8efe3 520px, var(--jd-green-pale) 100%);
 }
+@media (prefers-color-scheme: dark) {
+  :global(html[data-app]) .page {
+    background: linear-gradient(180deg, #17210f 0, var(--cream) 520px);
+  }
+}
 .chips {
   list-style: none;
   margin: -6px 0 16px;
@@ -385,7 +390,7 @@
   margin-right: 6px;
 }
 .card.card {
-  background: #fff;
+  background: var(--white);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(23, 51, 13, 0.12);
 }
@@ -439,7 +444,7 @@
     bottom: 0;
     z-index: 40;
     padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
-    background: #fff;
+    background: var(--white);
     box-shadow: 0 -6px 18px rgba(23, 51, 13, 0.14);
     transform: translateY(110%);
     transition: transform 0.2s ease;

@@ -26,7 +26,7 @@
   color: var(--ink);
 }
 .chipOn {
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   border-color: var(--jd-green-deep);
   color: #fff;
 }
@@ -69,12 +69,12 @@
   text-transform: uppercase;
   border: 1px solid var(--jd-green-deep);
   border-radius: 8px;
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   color: #fff;
   cursor: pointer;
 }
 .searchButton:hover {
-  background: var(--jd-green-dark);
+  background: var(--fill-green-dark);
   border-color: var(--jd-green-dark);
 }
 @media (max-width: 480px) {
@@ -509,7 +509,7 @@
   overflow: hidden;
 }
 .barOpened { background: #9cc58f; }
-.barResponded { background: var(--jd-green-dark); }
+.barResponded { background: var(--fill-green-dark); }
 
 .note {
   font-size: 12.5px;
