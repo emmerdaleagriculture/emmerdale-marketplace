@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ContractorAvatar } from '@/components/ContractorAvatar';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
@@ -388,6 +389,14 @@ export default async function ClientPortalPage({
           {['awarded', 'contacted', 'scheduled', 'in_progress'].includes(js.status) && (
             <div className={m.awardPanel}>
               <p>
+                {accepted?.contractor_avatar_url && (
+                  <ContractorAvatar
+                    url={accepted.contractor_avatar_url}
+                    name={accepted.contractor_real_name}
+                    size={44}
+                    className={m.awardPic}
+                  />
+                )}
                 <strong>{accepted?.contractor_real_name ?? 'Your contractor'}</strong> has
                 your job
                 {accepted

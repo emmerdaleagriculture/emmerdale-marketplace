@@ -58,6 +58,15 @@
   font-family: var(--font-display-stack);
   font-size: 17px;
 }
+/* The contractor's picture, when they have one (web and app). */
+.quotePic {
+  vertical-align: middle;
+  margin-right: 10px;
+}
+.awardPic {
+  vertical-align: middle;
+  margin-right: 12px;
+}
 
 .quotePrice {
   font-size: 22px;

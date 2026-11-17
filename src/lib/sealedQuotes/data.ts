@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { avatarUrl } from '@/lib/avatars';
 import { memoize } from '@/lib/memo';
 import { isTokenFormat } from './tokens';
 import type { JobSpecPhoto } from '@/components/job/JobSpecCard';
@@ -72,15 +73,37 @@ export async function getSubmissionByClientToken(token: string) {
 }
 
 /**
- * The prices a client may see — columns picked explicitly; contractor_id and
- * contractor_quote_id never leave the server (§22 criterion 1 by construction).
+ * Swaps each quote's contractor_id for the public URL of their profile
+ * picture (20261117120000), so the id still never leaves the server. A
+ * failed lookup means no pictures, never no prices: the letter shows instead.
+ */
+async function withAvatars<T extends { contractor_id: string | null }>(
+  admin: ReturnType<typeof createServiceRoleClient>,
+  rows: T[],
+): Promise<Array<Omit<T, 'contractor_id'> & { contractor_avatar_url: string | null }>> {
+  const ids = [...new Set(rows.map((r) => r.contractor_id).filter((x): x is string => Boolean(x)))];
+  const paths = new Map<string, string | null>();
+  if (ids.length) {
+    const { data, error } = await admin.from('contractors').select('id, avatar_path').in('id', ids);
+    if (error) console.error('[sq] quote avatars lookup failed:', error.message);
+    for (const c of data ?? []) paths.set(c.id, c.avatar_path);
+  }
+  return rows.map(({ contractor_id, ...rest }) => ({
+    ...rest,
+    contractor_avatar_url: avatarUrl(contractor_id ? paths.get(contractor_id) : null),
+  }));
+}
+
+/**
+ * The prices a client may see — columns picked explicitly; contractor_id (swapped for
+ * a picture URL by withAvatars) and contractor_quote_id never leave the server (§22 criterion 1 by construction).
  */
 export async function getClientQuotes(submissionId: string) {
   const admin = createServiceRoleClient();
   const { data, error } = await admin
     .from('client_quotes')
     .select(
-      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status, contractor_note, unit_label, unit_quantity, premium',
+      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status, contractor_note, unit_label, unit_quantity, premium, contractor_id',
     )
     .eq('submission_id', submissionId)
     .in('status', ['active', 'accepted'])
@@ -96,7 +119,7 @@ export async function getClientQuotes(submissionId: string) {
     console.error('[sq] getClientQuotes failed:', error);
     throw new Error(`Could not load prices for submission ${submissionId}: ${error.message}`);
   }
-  return data ?? [];
+  return withAvatars(admin, data ?? []);
 }
 
 /**
@@ -109,7 +132,7 @@ export async function getClientQuoteById(id: string) {
   const { data, error } = await admin
     .from('client_quotes')
     .select(
-      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status, contractor_note, unit_label, unit_quantity, premium',
+      'id, client_price_pence, client_rate_value_pence, client_rate_minimum_pence, price_basis, contractor_display_label, contractor_real_name, contractor_rating_avg, contractor_rating_count, distance_miles, site_visit_required, valid_until, status, contractor_note, unit_label, unit_quantity, premium, contractor_id',
     )
     .eq('id', id)
     .maybeSingle();
@@ -119,7 +142,7 @@ export async function getClientQuoteById(id: string) {
     console.error('[sq] getClientQuoteById failed:', error);
     throw new Error(`Could not load client quote ${id}: ${error.message}`);
   }
-  return data ?? null;
+  return data ? (await withAvatars(admin, [data]))[0] : null;
 }
 
 const PHOTO_LABELS: Record<string, string> = {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
+import { ContractorAvatar } from '@/components/ContractorAvatar';
 import { useRouter } from 'next/navigation';
 import { isNativeApp } from '@/lib/app/isApp';
 import { openInAppBrowser } from '@/lib/app/browser';
@@ -36,6 +37,8 @@ export type ClientQuoteView = {
   contractor_note: string | null;
   /** Sent by a premium member of the network. */
   premium?: boolean;
+  /** The contractor's profile picture, if they have one (never their id). */
+  contractor_avatar_url?: string | null;
 };
 
 const SORT_LABELS: [SortMode, string][] = [
@@ -145,9 +148,13 @@ export function PriceList({
           <div key={q.id} className={m.quoteCard}>
             <div className={m.quoteHead}>
               <span className={m.quoteLabel}>
-                <span className={m.quoteAvatar} aria-hidden="true" data-app-only>
-                  {q.contractor_display_label.replace(/^(Operator|Contractor)\s+/i, '').slice(0, 1)}
-                </span>
+                {q.contractor_avatar_url ? (
+                  <ContractorAvatar url={q.contractor_avatar_url} name={q.contractor_display_label} size={36} className={m.quotePic} />
+                ) : (
+                  <span className={m.quoteAvatar} aria-hidden="true" data-app-only>
+                    {q.contractor_display_label.replace(/^(Operator|Contractor)\s+/i, '').slice(0, 1)}
+                  </span>
+                )}
                 {q.contractor_display_label}
                 {lowest === q.client_price_pence && q.client_rate_value_pence == null && (
                   <span className={m.bestPrice} data-app-only>Best price</span>

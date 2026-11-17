@@ -118,7 +118,7 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
     if (ccErr) return { error: `Could not save counties: ${ccErr.message}` };
   }
 
-  revalidatePath('/account');
+  revalidatePath('/account', 'layout');
   // Their counties, services or listing changed: the directory and every
   // county page are rebuilt on their next visit rather than waiting out the
   // cache. A phone or notification change leaves the cache alone.
@@ -141,7 +141,7 @@ export async function requestEmailConfirmAction(_prev: FormState, formData: Form
   const res = await sendEmailConfirmation(user.id, email);
   if (!res.ok) return { error: res.error };
 
-  revalidatePath('/account');
+  revalidatePath('/account', 'layout');
   return {
     ok: true,
     message: `We’ve sent a link to ${email.trim().toLowerCase()}. Open it and press Confirm. If it hasn’t arrived in ten minutes, check spam or try a different address.`,

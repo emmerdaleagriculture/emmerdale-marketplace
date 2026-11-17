@@ -1,0 +1,35 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  margin: 0 0 16px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--white);
+}
+.body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.title {
+  font-size: 15px;
+  color: var(--ink);
+}
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.remove {
+  border: 0;
+  background: none;
+  padding: 6px 0;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink-3);
+  text-decoration: underline;
+  cursor: pointer;
+}
