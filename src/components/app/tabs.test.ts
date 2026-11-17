@@ -18,6 +18,8 @@ describe('activeTab', () => {
     expect(activeTab(CONTRACTOR_TABS, '/quote/tok')?.key).toBe('jobs');
     expect(activeTab(CONTRACTOR_TABS, '/jobs/new')?.key).toBe('jobs');
     expect(activeTab(CONTRACTOR_TABS, '/privacy')).toBeNull();
+    expect(activeTab(CONTRACTOR_TABS, '/app/diary')?.key).toBe('diary');
+    expect(activeTab(CONTRACTOR_TABS, '/won/abc/photos')?.key).toBe('diary');
   });
   it('does not confuse /my with /messages', () => {
     expect(activeTab(CUSTOMER_TABS, '/messages')?.key).toBe('messages');

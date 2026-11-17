@@ -1109,6 +1109,42 @@ export type Database = {
         }
         Relationships: []
       }
+      diary_entries: {
+        Row: {
+          created_at: string
+          details: string | null
+          done: boolean
+          entry_date: string
+          id: string
+          start_time: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          done?: boolean
+          entry_date: string
+          id?: string
+          start_time?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          done?: boolean
+          entry_date?: string
+          id?: string
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       district_county_map: {
         Row: {
           admin_district: string
