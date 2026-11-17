@@ -7,10 +7,10 @@ import type { ViewerRole } from '@/components/useViewer';
  *   Contractors:  Earnings · Diary · Messages · Jobs   (Jobs at the right,
  *                 beside the Back slot AppShell adds on inner screens)
  *
- * Each points at an existing page where one exists. "Diary" is the won-jobs
- * list and "Earnings" the contractor dashboard, which already carries the
- * money numbers; the dedicated diary and earnings screens are task 9 and
- * will take these slots over without the tab bar changing shape.
+ * Each points at an existing page where one exists. "Diary" is the user's
+ * own diary (/app/diary, 2026-11-17); the won-jobs list it used to open is a
+ * row at the top of it and keeps the tab lit. "Earnings" is the contractor
+ * dashboard, which carries the money numbers.
  *
  * `badge` names the count from /api/app/badges that sits on the icon.
  */
@@ -36,7 +36,7 @@ export const CUSTOMER_TABS: Tab[] = [
 
 export const CONTRACTOR_TABS: Tab[] = [
   { key: 'earnings', label: 'Earnings', href: '/app/earnings', icon: 'earnings', also: ['/account', '/onboarding'] },
-  { key: 'diary', label: 'Diary', href: '/won', icon: 'diary' },
+  { key: 'diary', label: 'Diary', href: '/app/diary', icon: 'diary', also: ['/won'] },
   { key: 'messages', label: 'Messages', href: '/messages', icon: 'messages', badge: 'messages' },
   { key: 'jobs', label: 'Jobs', href: '/invitations', icon: 'board', badge: 'invites', also: ['/jobs', '/quote'] },
 ];

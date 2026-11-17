@@ -104,7 +104,7 @@ export default async function EarningsPage() {
 
       <div className={ui.sectionHead}>
         <h2 className={ui.sectionTitle}>Recent jobs</h2>
-        <Link href="/won" className={ui.sectionLink}>Diary</Link>
+        <Link href="/won" className={ui.sectionLink}>Won jobs</Link>
       </div>
       {(won ?? []).length === 0 ? (
         <div className={ui.card} style={{ color: 'var(--ink-2)' }}>No won jobs yet. Price the jobs that come in and they&rsquo;ll appear here.</div>
