@@ -101,3 +101,37 @@ export function sortDay(entries: DiaryEntry[]): DiaryEntry[] {
     return 0;
   });
 }
+
+/** "2026-11-17" + 7 → "2026-11-24". */
+export function addDays(day: string, n: number): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return dayOf(y, m - 1, d + n);
+}
+
+/** The Monday-to-Sunday week a day falls in. */
+export function weekOf(day: string): string[] {
+  const [y, m, d] = day.split('-').map(Number);
+  const back = (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7;
+  return Array.from({ length: 7 }, (_, i) => addDays(day, i - back));
+}
+
+/** ISO 8601 week number (weeks start Monday; week 1 holds the first Thursday). */
+export function isoWeek(day: string): number {
+  const [y, m, d] = day.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + 3 - ((dt.getUTCDay() + 6) % 7)); // that week's Thursday
+  const jan1 = Date.UTC(dt.getUTCFullYear(), 0, 1);
+  return 1 + Math.floor((dt.getTime() - jan1) / (7 * 86400000));
+}
+
+/** "16 – 22 Nov", "27 Oct – 2 Nov", "29 Dec 2026 – 4 Jan 2027". */
+export function weekLabel(week: string[]): string {
+  const fmt = (day: string, opts: Intl.DateTimeFormatOptions) => {
+    const [y, m, d] = day.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-GB', { ...opts, timeZone: 'UTC' });
+  };
+  const [a, b] = [week[0], week[6]];
+  if (a.slice(0, 4) !== b.slice(0, 4)) return `${fmt(a, { day: 'numeric', month: 'short', year: 'numeric' })} – ${fmt(b, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  if (a.slice(0, 7) !== b.slice(0, 7)) return `${fmt(a, { day: 'numeric', month: 'short' })} – ${fmt(b, { day: 'numeric', month: 'short' })}`;
+  return `${Number(a.slice(8))} – ${fmt(b, { day: 'numeric', month: 'short' })}`;
+}

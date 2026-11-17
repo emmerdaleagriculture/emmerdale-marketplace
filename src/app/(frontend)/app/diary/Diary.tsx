@@ -1,30 +1,39 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useEffect, useMemo, useOptimistic, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { useActionState, useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from 'react';
 import type { FormState } from '@/lib/form';
 import ui from '../app-ui.module.css';
 import { deleteDiaryEntryAction, saveDiaryEntryAction, setDiaryEntryDoneAction } from './actions';
 import {
   DETAILS_MAX,
   TITLE_MAX,
+  addDays,
   dayLabel,
+  isoWeek,
   monthGrid,
   monthLabel,
   shiftMonth,
   shortTime,
   sortDay,
+  weekLabel,
+  weekOf,
   type DiaryEntry,
 } from './diary';
 import s from './diary.module.css';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const EMPTY: FormState = {};
+const VIEW_KEY = 'diary-view';
 
-type Props = { month: string; today: string; initialDay: string; entries: DiaryEntry[] };
+export type DiaryView = 'month' | 'week';
+type Props = { month: string; today: string; initialDay: string; initialView: DiaryView | null; entries: DiaryEntry[] };
 
-export function Diary({ month, today, initialDay, entries }: Props) {
+export function Diary({ month, today, initialDay, initialView, entries }: Props) {
+  const router = useRouter();
   const [day, setDay] = useState(initialDay);
+  const [view, setView] = useState<DiaryView>(initialView ?? 'month');
   // null = no form open; 'new' = adding; otherwise the id being edited.
   const [editing, setEditing] = useState<string | null>(null);
   const [optimistic, setDone] = useOptimistic(entries, (cur, { id, done }: { id: string; done: boolean }) =>
@@ -32,22 +41,52 @@ export function Diary({ month, today, initialDay, entries }: Props) {
   );
   const [, startTransition] = useTransition();
   const [problem, setProblem] = useState<string | null>(null);
+  const panel = useRef<HTMLDivElement>(null);
+
+  // No ?v= in the link: open the view this person last chose on this device.
+  useEffect(() => {
+    if (initialView) return;
+    try {
+      if (window.localStorage.getItem(VIEW_KEY) === 'week') setView('week');
+    } catch {}
+  }, [initialView]);
 
   const grid = useMemo(() => monthGrid(month), [month]);
+  const week = useMemo(() => weekOf(day), [day]);
   const byDay = useMemo(() => {
     const m = new Map<string, DiaryEntry[]>();
     for (const e of optimistic) m.set(e.entry_date, [...(m.get(e.entry_date) ?? []), e]);
     return m;
   }, [optimistic]);
   const todays = sortDay(byDay.get(day) ?? []);
+  const href = (d: string, v: DiaryView = view) => `/app/diary?m=${d.slice(0, 7)}&d=${d}${v === 'week' ? '&v=week' : ''}`;
 
-  function pick(d: string) {
-    setDay(d);
+  // Keep the day and view across a refresh or a pull-to-refresh, without a round trip.
+  function remember(d: string, v: DiaryView) {
+    try {
+      window.history.replaceState(null, '', href(d, v));
+    } catch {}
+  }
+
+  function pick(d: string, scroll = false) {
     setEditing(null);
     setProblem(null);
-    // Keep the day across a refresh or a pull-to-refresh, without a round trip.
+    // Entries are loaded a month (in whole weeks) at a time, which always
+    // covers the selected day's week; another month is a fetch.
+    if (!monthGrid(month).some((c) => c.day === d) || (view === 'month' && !d.startsWith(month))) {
+      router.replace(href(d));
+      return;
+    }
+    setDay(d);
+    remember(d, view);
+    if (scroll) panel.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function switchView(v: DiaryView) {
+    setView(v);
+    remember(day, v);
     try {
-      window.history.replaceState(null, '', `/app/diary?m=${month}&d=${d}`);
+      window.localStorage.setItem(VIEW_KEY, v);
     } catch {}
   }
 
@@ -60,63 +99,112 @@ export function Diary({ month, today, initialDay, entries }: Props) {
     });
   }
 
+  const backToToday = view === 'week' ? !week.includes(today) : !today.startsWith(month);
+
   return (
     <>
-      <div className={s.cal}>
-        <div className={s.calHead}>
-          <Link href={`/app/diary?m=${shiftMonth(month, -1)}`} className={s.nav} aria-label="Previous month" replace>
-            ‹
-          </Link>
-          <div className={s.month}>{monthLabel(month)}</div>
-          <Link href={`/app/diary?m=${shiftMonth(month, 1)}`} className={s.nav} aria-label="Next month" replace>
-            ›
-          </Link>
-        </div>
-        <div className={s.grid} role="grid" aria-label={monthLabel(month)}>
-          {WEEKDAYS.map((w, i) => (
-            <div key={i} className={s.wd} aria-hidden="true">
-              {w}
-            </div>
-          ))}
-          {grid.map((c) => {
-            const items = byDay.get(c.day) ?? [];
-            const open = items.filter((e) => !e.done).length;
-            const cls = [
-              s.cell,
-              c.inMonth ? '' : s.out,
-              c.day === today ? s.today : '',
-              c.day === day ? s.selected : '',
-            ]
-              .filter(Boolean)
-              .join(' ');
-            const label = `${dayLabel(c.day, today)}${items.length ? `, ${items.length} ${items.length === 1 ? 'entry' : 'entries'}` : ''}`;
-            return c.inMonth ? (
-              <button key={c.day} type="button" className={cls} onClick={() => pick(c.day)} aria-label={label} aria-pressed={c.day === day}>
-                <span>{Number(c.day.slice(8))}</span>
-                {items.length > 0 && <span className={open ? s.dot : `${s.dot} ${s.dotDone}`} aria-hidden="true" />}
-              </button>
-            ) : (
-              <Link
-                key={c.day}
-                className={cls}
-                href={`/app/diary?m=${c.day.slice(0, 7)}&d=${c.day}`}
-                aria-label={label}
-                replace
-              >
-                <span>{Number(c.day.slice(8))}</span>
-                {items.length > 0 && <span className={s.dot} aria-hidden="true" />}
-              </Link>
-            );
-          })}
-        </div>
-        {!today.startsWith(month) && (
-          <Link href={`/app/diary?m=${today.slice(0, 7)}&d=${today}`} className={s.todayLink} replace>
-            Back to today
-          </Link>
-        )}
+      <div className={s.switcher} role="tablist" aria-label="Diary view">
+        {(['month', 'week'] as const).map((v) => (
+          <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? `${s.seg} ${s.segOn}` : s.seg} onClick={() => switchView(v)}>
+            {v === 'month' ? 'Month' : 'Week'}
+          </button>
+        ))}
       </div>
 
-      <div className={ui.sectionHead}>
+      {view === 'month' ? (
+        <div className={s.cal}>
+          <div className={s.calHead}>
+            <Link href={`/app/diary?m=${shiftMonth(month, -1)}`} className={s.nav} aria-label="Previous month" replace>
+              ‹
+            </Link>
+            <div className={s.month}>{monthLabel(month)}</div>
+            <Link href={`/app/diary?m=${shiftMonth(month, 1)}`} className={s.nav} aria-label="Next month" replace>
+              ›
+            </Link>
+          </div>
+          <div className={s.grid} role="grid" aria-label={monthLabel(month)}>
+            {WEEKDAYS.map((w, i) => (
+              <div key={i} className={s.wd} aria-hidden="true">
+                {w}
+              </div>
+            ))}
+            {grid.map((c) => {
+              const items = byDay.get(c.day) ?? [];
+              const open = items.filter((e) => !e.done).length;
+              const cls = [s.cell, c.inMonth ? '' : s.out, c.day === today ? s.today : '', c.day === day ? s.selected : '']
+                .filter(Boolean)
+                .join(' ');
+              const label = `${dayLabel(c.day, today)}${items.length ? `, ${items.length} ${items.length === 1 ? 'entry' : 'entries'}` : ''}`;
+              return (
+                <button key={c.day} type="button" className={cls} onClick={() => pick(c.day)} aria-label={label} aria-pressed={c.day === day}>
+                  <span>{Number(c.day.slice(8))}</span>
+                  {items.length > 0 && <span className={open ? s.dot : `${s.dot} ${s.dotDone}`} aria-hidden="true" />}
+                </button>
+              );
+            })}
+          </div>
+          {backToToday && (
+            <Link href={href(today)} className={s.todayLink} replace>
+              Back to today
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className={s.weekWrap}>
+          <div className={s.calHead}>
+            <button type="button" className={s.nav} aria-label="Previous week" onClick={() => pick(addDays(day, -7))}>
+              ‹
+            </button>
+            <div style={{ textAlign: 'center' }}>
+              <div className={s.month}>{weekLabel(week)}</div>
+              <div className={s.weekNo}>Week {isoWeek(day)}</div>
+            </div>
+            <button type="button" className={s.nav} aria-label="Next week" onClick={() => pick(addDays(day, 7))}>
+              ›
+            </button>
+          </div>
+          {/* A week to view: Monday to Wednesday down the left, Thursday
+              and Friday on the right, the weekend sharing the last slot. */}
+          <div className={s.week}>
+            {week.map((d, i) => {
+              const items = sortDay(byDay.get(d) ?? []);
+              const [, , dd] = d.split('-');
+              const cls = [s.wday, i >= 5 ? s.wkend : '', d === today ? s.wToday : '', d === day ? s.wSel : ''].filter(Boolean).join(' ');
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  className={cls}
+                  style={{ gridArea: ['mo', 'tu', 'we', 'th', 'fr', 'sa', 'su'][i] }}
+                  onClick={() => pick(d, true)}
+                  aria-label={`${dayLabel(d, today)}${items.length ? `, ${items.length} ${items.length === 1 ? 'entry' : 'entries'}` : ''}`}
+                  aria-pressed={d === day}
+                >
+                  <span className={s.wHead}>
+                    <span className={s.wName}>{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}</span>
+                    <span className={s.wNum}>{Number(dd)}</span>
+                  </span>
+                  <span className={s.wLines}>
+                    {items.map((e) => (
+                      <span key={e.id} className={e.done ? `${s.wItem} ${s.struck}` : s.wItem}>
+                        {e.start_time && <span className={s.time}>{shortTime(e.start_time)}</span>}
+                        {e.title}
+                      </span>
+                    ))}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {backToToday && (
+            <button type="button" className={s.todayLink} onClick={() => pick(today)}>
+              Back to this week
+            </button>
+          )}
+        </div>
+      )}
+
+      <div ref={panel} className={ui.sectionHead} style={{ scrollMarginTop: 12 }}>
         <h2 className={ui.sectionTitle}>{day === today ? `Today · ${dayLabel(day, today)}` : dayLabel(day, today)}</h2>
       </div>
 

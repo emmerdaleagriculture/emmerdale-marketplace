@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isDay, isMonth, isTime, monthGrid, shiftMonth, sortDay, todayInLondon, type DiaryEntry } from './diary';
+import { addDays, isDay, isMonth, isTime, isoWeek, monthGrid, shiftMonth, sortDay, todayInLondon, weekLabel, weekOf, type DiaryEntry } from './diary';
 
 describe('monthGrid', () => {
   it('runs Monday to Sunday in whole weeks', () => {
@@ -46,5 +46,23 @@ describe('sortDay', () => {
   const e = (id: string, start_time: string | null): DiaryEntry => ({ id, start_time, entry_date: '2026-11-17', title: id, details: null, done: false });
   it('puts timed entries first, in time order', () => {
     expect(sortDay([e('a', null), e('b', '14:00:00'), e('c', '08:00:00')]).map((x) => x.id)).toEqual(['c', 'b', 'a']);
+  });
+});
+
+describe('weeks', () => {
+  it('runs Monday to Sunday, across a month end', () => {
+    expect(weekOf('2026-11-01')).toEqual(['2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01']);
+    expect(weekOf('2026-11-16')[0]).toBe('2026-11-16');
+    expect(addDays('2026-12-30', 7)).toBe('2027-01-06');
+  });
+  it('numbers weeks the ISO way', () => {
+    expect(isoWeek('2026-11-17')).toBe(47);
+    expect(isoWeek('2027-01-01')).toBe(53); // Friday: still 2026's last week
+    expect(isoWeek('2026-01-01')).toBe(1);
+    expect(isoWeek('2024-12-30')).toBe(1);
+  });
+  it('labels the span compactly', () => {
+    expect(weekLabel(weekOf('2026-11-17'))).toBe('16 – 22 Nov');
+    expect(weekLabel(weekOf('2026-11-01'))).toBe('26 Oct – 1 Nov');
   });
 });
