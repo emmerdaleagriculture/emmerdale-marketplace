@@ -6,9 +6,10 @@ import s from './featurePreview.module.css';
  * it yet, so the pitch below it is about something they have seen. The
  * captures are Hampshire Paddock Management's own view (our test account),
  * cropped so they show what the page is like without giving away the paid
- * part (market data stops before the price table). The market capture
- * carries illustrative figures set in the browser before capture (the real
- * network was three months old), and its caption says so. Retake with the
+ * part (market data stops before the price table). Both captures carry
+ * illustrative content set in the browser before capture: market figures
+ * (the real network was three months old) and two tenders from fictional
+ * councils (real ones dated within weeks). Their captions say so. Retake with the
  * membership switch on /account when the page changes.
  */
 export function FeaturePreview({ image, alt, caption }: { image: StaticImageData; alt: string; caption: string }) {

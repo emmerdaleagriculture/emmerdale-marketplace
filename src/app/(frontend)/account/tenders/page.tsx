@@ -163,7 +163,7 @@ export default async function TendersPage() {
               <FeaturePreview
                 image={tendersExample}
                 alt="Example of the Council tenders page: open tenders and renewals on your patch, each with the buyer, location, distance, deadline and value, and your own status and notes."
-                caption="What a Premium member sees: live council contracts near their base, checked every morning."
+                caption="Illustrative tenders: how live council contracts near a Premium member’s base look, checked every morning."
               />
               <div className={m.pitch}>
                 <h2>Part of Premium membership</h2>
