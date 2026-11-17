@@ -56,7 +56,7 @@ export const HTTP_CRONS: CronJob[] = [
     path: '/api/cron/seo-agent',
     schedule: '0 7 1 * *',
     everyMinutes: 31 * 24 * 60,
-    what: 'Monthly Search Console review: drafts SEO opportunities with Claude for /admin/seo/opportunities and emails the digest.',
+    what: 'Cheatcode, the monthly Search Console review: drafts SEO opportunities with Claude for /admin/seo/opportunities and emails the digest.',
   },
 ];
 

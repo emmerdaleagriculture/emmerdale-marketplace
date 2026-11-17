@@ -8,7 +8,7 @@ import styles from '../seo.module.css';
 import { decideOpportunityAction } from './actions';
 
 export const metadata: Metadata = {
-  title: 'SEO opportunities · Admin',
+  title: 'Cheatcode · Admin',
   robots: { index: false, follow: false },
 };
 
@@ -123,9 +123,9 @@ export default async function OpportunitiesPage({
     <main className={styles.page}>
       <header className={styles.head}>
         <div>
-          <h1>SEO opportunities</h1>
+          <h1>Cheatcode</h1>
           <p className={styles.range}>
-            Raised by the monthly agent (1st of the month, 07:00 UTC) from Search Console. Each decision starts a
+            Raised by Cheatcode, the monthly SEO run (1st of the month, 07:00 UTC) from Search Console. Each decision starts a
             120-day cooldown on that query; done items are re-measured in the digest after 6 weeks.
           </p>
         </div>
