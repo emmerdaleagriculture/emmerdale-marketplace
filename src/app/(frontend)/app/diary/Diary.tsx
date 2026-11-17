@@ -40,6 +40,9 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
     cur.map((e) => (e.id === id ? { ...e, done } : e)),
   );
   const [, startTransition] = useTransition();
+  // A fetch for another month: the arrows wait for it, or a quick second tap
+  // would step from the old week.
+  const [navigating, startNav] = useTransition();
   const [problem, setProblem] = useState<string | null>(null);
   const panel = useRef<HTMLDivElement>(null);
 
@@ -74,7 +77,7 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
     // Entries are loaded a month (in whole weeks) at a time, which always
     // covers the selected day's week; another month is a fetch.
     if (!monthGrid(month).some((c) => c.day === d) || (view === 'month' && !d.startsWith(month))) {
-      router.replace(href(d));
+      startNav(() => router.replace(href(d)));
       return;
     }
     setDay(d);
@@ -114,11 +117,11 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
       {view === 'month' ? (
         <div className={s.cal}>
           <div className={s.calHead}>
-            <Link href={`/app/diary?m=${shiftMonth(month, -1)}`} className={s.nav} aria-label="Previous month" replace>
+            <Link href={`/app/diary?m=${shiftMonth(month, -1)}&v=month`} className={s.nav} aria-label="Previous month" replace>
               ‹
             </Link>
             <div className={s.month}>{monthLabel(month)}</div>
-            <Link href={`/app/diary?m=${shiftMonth(month, 1)}`} className={s.nav} aria-label="Next month" replace>
+            <Link href={`/app/diary?m=${shiftMonth(month, 1)}&v=month`} className={s.nav} aria-label="Next month" replace>
               ›
             </Link>
           </div>
@@ -152,14 +155,14 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
       ) : (
         <div className={s.weekWrap}>
           <div className={s.calHead}>
-            <button type="button" className={s.nav} aria-label="Previous week" onClick={() => pick(addDays(day, -7))}>
+            <button type="button" className={s.nav} aria-label="Previous week" disabled={navigating} onClick={() => pick(addDays(day, -7))}>
               ‹
             </button>
             <div style={{ textAlign: 'center' }}>
               <div className={s.month}>{weekLabel(week)}</div>
               <div className={s.weekNo}>Week {isoWeek(day)}</div>
             </div>
-            <button type="button" className={s.nav} aria-label="Next week" onClick={() => pick(addDays(day, 7))}>
+            <button type="button" className={s.nav} aria-label="Next week" disabled={navigating} onClick={() => pick(addDays(day, 7))}>
               ›
             </button>
           </div>
@@ -197,7 +200,7 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
             })}
           </div>
           {backToToday && (
-            <button type="button" className={s.todayLink} onClick={() => pick(today)}>
+            <button type="button" className={s.todayLink} disabled={navigating} onClick={() => pick(today)}>
               Back to this week
             </button>
           )}

@@ -27,6 +27,9 @@
   line-height: 1;
   color: var(--jd-green-deep);
 }
+.nav:disabled {
+  opacity: 0.35;
+}
 .nav:active {
   background: var(--jd-green-pale);
 }
