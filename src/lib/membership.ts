@@ -59,7 +59,7 @@ export const MEMBERSHIP_PRICES: Record<MembershipTier, Record<MembershipPlan, nu
   premium: { monthly: 20, annual: 199 },
   open: { monthly: 49, annual: 399 },
 };
-export const MEMBERSHIP_NAMES: Record<MembershipTier, string> = { premium: 'Premium', open: 'Open' };
+export const MEMBERSHIP_NAMES: Record<MembershipTier, string> = { premium: 'Pro', open: 'Premium' };
 /** The tier's mark, wherever its name is shown: a star for Premium, a diamond for Open. */
 export const MEMBERSHIP_GLYPHS: Record<MembershipTier, string> = { premium: '★', open: '◆' };
 

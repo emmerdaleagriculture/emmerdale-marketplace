@@ -129,7 +129,7 @@ export async function loadOutreach(id: string): Promise<Outreach> {
     const q = latestQuote.get(inv.id);
     // An Open member was shown the customer's details (20261019120000): the
     // likeliest "response" is a phone call we never see, so say so.
-    const saw = inv.contact_revealed_at ? ' · saw customer details (Open)' : '';
+    const saw = inv.contact_revealed_at ? ' · saw customer details (Premium)' : '';
     if (q) return `Priced ${formatGBP(q.contractor_price_pence)}${q.quote_type === 'rate' ? ' (rate)' : ''}${saw}`;
     if (passed(inv)) return `Passed${inv.decline_reason ? `: ${inv.decline_reason.replace(/_/g, ' ')}` : ''}${saw}`;
     return inv.opened_at ? `Opened${inApp.has(inv.id) ? ' in the app' : ''}, no response yet${saw}` : 'Not opened';

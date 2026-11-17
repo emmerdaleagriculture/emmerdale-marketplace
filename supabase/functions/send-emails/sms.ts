@@ -79,7 +79,7 @@ export function renderSms(
       if (p.open_first) {
         // The Open head start (migration 20261021100000): theirs before
         // Premium members, and the same 2-hour tap rule.
-        return `Emmerdale Agriculture: Open members first - ${job}${dist}. Premium members see it in ${p.open_first_hours ?? 2}h. Tap within 2h or it counts as a pass: ${url}`;
+        return `Emmerdale Agriculture: Premium members first - ${job}${dist}. Pro members see it in ${p.open_first_hours ?? 2}h. Tap within 2h or it counts as a pass: ${url}`;
       }
       if (p.premium) {
         // Premium first look: an untapped text is a pass after 2 hours

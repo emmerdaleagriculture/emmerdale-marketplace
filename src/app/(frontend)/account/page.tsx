@@ -304,7 +304,7 @@ export default async function AccountPage({
                   manage billing below, but only we can lift the suspension;
                   an application we turned down has to talk to us. */}
               {contractor.vetted_at && !isPremium && !app
-                ? 'You can come back by taking out premium membership below: your account is restored as soon as you join.'
+                ? 'You can come back by taking out a membership below: your account is restored as soon as you join.'
                 : 'Please get in touch if you think this is a mistake.'}
             </div>
           )}

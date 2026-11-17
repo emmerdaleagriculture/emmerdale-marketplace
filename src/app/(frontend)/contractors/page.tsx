@@ -94,7 +94,7 @@ export default async function ContractorsPage() {
 
           <p className={s.cta}>
             {DIRECT_DISCLAIMER} A contractor who wants to be listed here takes{' '}
-            <Link href="/agriculturalcontractors">Open membership</Link>.
+            <Link href="/agriculturalcontractors">Premium membership</Link>.
           </p>
         </div>
       </main>

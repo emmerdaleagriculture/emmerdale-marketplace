@@ -42,7 +42,7 @@ export default function PrivacyPage() {
           <Breadcrumb tone="light" items={[{ label: 'Privacy policy' }]} />
           <h1>Privacy policy</h1>
           <p className={l.updated}>
-            <strong>Version 2.1, 19 October 2026</strong>
+            <strong>Version 2.2, 17 November 2026</strong>
           </p>
 
           <h2>Who we are</h2>
@@ -110,11 +110,11 @@ export default function PrivacyPage() {
             shown to them as you wrote it.
           </p>
           <p>
-            <strong>Open members are the exception.</strong> Contractors who pay for our Open
+            <strong>Premium members are the exception.</strong> Contractors who pay for our Premium
             membership have agreed to our terms on handling customer details, and when we
             invite one of them to your job they see your name, phone number, email address
             and full postcode as soon as they open it, so they can contact you directly about
-            the work. We record which Open members have seen your details, and they must use
+            the work. We record which Premium members have seen your details, and they must use
             them only for your job and delete them afterwards. Your customer terms (clause
             2.6) say what applies if you agree work with one of them directly.
           </p>

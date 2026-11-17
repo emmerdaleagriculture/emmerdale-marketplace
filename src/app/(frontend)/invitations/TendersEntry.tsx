@@ -16,7 +16,7 @@ const Body = ({ mode, fresh }: Props) => (
       <span className={s.meta}>
         {mode === 'open'
           ? 'Public contracts for land work on your patch, checked every morning.'
-          : 'Public contracts for land work on your patch. Part of Open membership.'}
+          : 'Public contracts for land work on your patch. Part of Premium membership.'}
       </span>
     </span>
     <span className={s.tendersValue}>

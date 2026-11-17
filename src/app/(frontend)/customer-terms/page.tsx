@@ -40,7 +40,7 @@ export default function CustomerTermsPage() {
             as Emmerdale Agriculture at emmerdaleagriculture.com (<strong>we</strong>,{' '}
             <strong>us</strong>, <strong>Emmerdale Agriculture</strong>).
             <br />
-            <strong>Version 2.5, 24 October 2026</strong>
+            <strong>Version 2.6, 17 November 2026</strong>
           </p>
 
           <p>
@@ -109,8 +109,8 @@ export default function CustomerTermsPage() {
             change the Price or the Job: extras and changes go through us (clauses 5.5 and 6).
           </p>
           <p>
-            2.6 <strong>Open members.</strong> Some Contractors hold an Open membership with us.
-            An Open member invited to your Job can see your name, phone number, email address
+            2.6 <strong>Premium members.</strong> Some Contractors hold a Premium membership with us.
+            A Premium member invited to your Job can see your name, phone number, email address
             and postcode as soon as they open it, and may contact you directly to discuss the
             work. You are free to agree work with them directly. Work you agree directly is a
             contract between you and that Contractor alone: clauses 3 to 9 do not apply to it,
@@ -339,7 +339,7 @@ export default function CustomerTermsPage() {
             12.1 We use your details to provide the service, to pay Contractors, to keep
             records and to contact you about your Job. We share with the assigned Contractor
             only what they need to do the work: your name, contact details, the site address
-            and access details, the Job description and your photographs. Open members
+            and access details, the Job description and your photographs. Premium members
             invited to your Job (clause 2.6) see your name, contact details and postcode when
             they open it. Contractors must keep this confidential, use it only for your Job
             and delete it after the Job; we record which Contractors have seen it.

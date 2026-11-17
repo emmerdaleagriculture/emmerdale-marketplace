@@ -87,7 +87,7 @@ export function renderPush(kind: string, p: Record<string, unknown>, site: strin
       const where = place ? ` near ${place}` : '';
       const sz = size(p);
       if (p.open_first) {
-        return { title: `Open members first: ${service}${where}`, body: `Yours before anyone else; Premium members see it in ${p.open_first_hours ?? 2} hours. Tap within 2 hours or it counts as a pass.`, url };
+        return { title: `Premium members first: ${service}${where}`, body: `Yours before anyone else; Pro members see it in ${p.open_first_hours ?? 2} hours. Tap within 2 hours or it counts as a pass.`, url };
       }
       if (p.premium) {
         // The text says the same: an untapped offer is a pass after 2 hours.

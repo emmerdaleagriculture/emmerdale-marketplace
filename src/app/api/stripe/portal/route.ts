@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       // invoices, and cancel at the end of the period already paid for.
       console.error('[stripe] portal session failed, creating a configuration:', err);
       const config = await stripe.billingPortal.configurations.create({
-        business_profile: { headline: 'Emmerdale Agriculture premium membership' },
+        business_profile: { headline: 'Emmerdale Agriculture membership' },
         features: {
           payment_method_update: { enabled: true },
           invoice_history: { enabled: true },

@@ -30,12 +30,12 @@ export function stripeConfigured(): boolean {
  */
 export const MEMBERSHIP_PLANS = {
   premium: {
-    product: 'Premium membership',
+    product: 'Pro membership',
     monthly: { lookupKey: 'premium_monthly_2000', amountPence: 2000, interval: 'month' },
     annual: { lookupKey: 'premium_annual_19900', amountPence: 19900, interval: 'year' },
   },
   open: {
-    product: 'Open membership',
+    product: 'Premium membership',
     monthly: { lookupKey: 'open_monthly_4900', amountPence: 4900, interval: 'month' },
     annual: { lookupKey: 'open_annual_39900', amountPence: 39900, interval: 'year' },
   },
@@ -172,7 +172,7 @@ export async function syncSubscription(sub: Stripe.Subscription) {
       `${ct?.business_name ?? 'A contractor'} has started a ${interval === 'year' ? 'yearly' : 'monthly'} ` +
         `${tier} membership.` +
         (tier === 'open'
-          ? ' As an Open member they see customer contact details on every job they are invited to.'
+          ? ' As a Premium member they see customer contact details on every job they are invited to.'
           : '') +
         `\n\n${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/admin/contractors/${existing.contractor_id}`,
     );
@@ -295,7 +295,7 @@ export async function changeMembershipTier(
     `Membership changed to ${tier}: ${ct?.business_name ?? contractorId}`,
     `${ct?.business_name ?? 'A contractor'} moved their membership to ${tier} (${plan}).` +
       (tier === 'open'
-        ? ' As an Open member they now see customer contact details on every job they are invited to.'
+        ? ' As a Premium member they now see customer contact details on every job they are invited to.'
         : ' They no longer see customer contact details before a job is booked.') +
       `\n\n${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/admin/contractors/${contractorId}`,
   );
@@ -348,8 +348,8 @@ export async function refundUnapprovedPremium(contractorId: string): Promise<num
     .eq('contractor_id', contractorId);
   if (refunded) {
     await notifyAdmins(
-      `Premium refunded: ${ct.business_name}`,
-      `${ct.business_name} paid for premium at sign-up and was not approved. The membership is ` +
+      `Pro refunded: ${ct.business_name}`,
+      `${ct.business_name} paid for Pro at sign-up and was not approved. The membership is ` +
         `cancelled and £${(refunded / 100).toFixed(2)} refunded to their card.`,
     );
   }

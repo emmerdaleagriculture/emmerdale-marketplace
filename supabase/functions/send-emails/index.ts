@@ -191,19 +191,19 @@ function visitWhen(iso: unknown): string {
  * (stripe.ts holds the real prices: premium_monthly_2000 / premium_annual_19900).
  */
 const PREMIUM_PITCH =
-  `Premium members see every new job the moment it arrives, ahead of the rest of the ` +
+  `Pro members see every new job the moment it arrives, ahead of the rest of the ` +
   `network, and pay 5% commission instead of 15%. It’s £20 a month or £199 a year: ` +
   `${SITE_URL}/account/membership`;
 
 function openOfferClose(billedPremium: boolean): string {
   return (
     (billedPremium
-      ? `You’re on Premium now, so it’s a move up to £49 a month or £399 a year, prorated ` +
+      ? `You’re on Pro now, so it’s a move up to £49 a month or £399 a year, prorated ` +
         `against what you’ve already paid.`
-      : `It’s £49 a month or £399 a year, and it includes everything in Premium: first ` +
+      : `It’s £49 a month or £399 a year, and it includes everything in Pro: first ` +
         `refusal on new jobs and 5% commission instead of 15%.`) +
     `\n\n` +
-    `${billedPremium ? 'Move up to Open' : 'Join Open'}: ${SITE_URL}/account/membership`
+    `${billedPremium ? 'Move up to Premium' : 'Join Premium'}: ${SITE_URL}/account/membership`
   );
 }
 
@@ -302,7 +302,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `take a few hours to arrive.\n\n` +
           `We do it because the customer pays us, we carry the insurance on every job and we ` +
           `chase the balance, and none of that works for a job arranged privately.\n\n` +
-          `If you'd rather ring customers and agree the work directly, that's exactly what Open ` +
+          `If you'd rather ring customers and agree the work directly, that's exactly what Premium ` +
           `membership is for: the customer's name, phone and email on every job you're invited ` +
           `to, the moment it arrives, and you can agree the work with them directly with ` +
           `nothing added on top, or send a price through us at 5% as usual. ` +
@@ -323,10 +323,10 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       const offer =
         p.open_offer === true
           ? `\n\n` +
-            `One more thing. Open membership puts the customer’s name, phone and email on ` +
+            `One more thing. Premium membership puts the customer’s name, phone and email on ` +
             `every job you’re invited to, the moment it arrives, so you can ring them and agree ` +
             `the work directly with nothing added on top, or send a price through us at 5% as ` +
-            `usual. Open members see new jobs first, ahead of Premium, and get market data for ` +
+            `usual. Premium members see new jobs first, ahead of Pro, and get market data for ` +
             `their area. They’re also listed on our county pages with a link to their own ` +
             `website, which helps their site show up in Google as well as sending customers’ ` +
             `enquiries straight to them. ` +
@@ -410,9 +410,9 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         : null;
       return {
         subject: p.open_first
-          ? `Open members first: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
+          ? `Premium members first: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
           : p.premium
-          ? `Premium first look: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
+          ? `Members’ first look: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
           : p.first_refusal
           ? `New job, offered to you first: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`
           : p.direct
@@ -420,11 +420,11 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             : `Job to price: ${p.service ?? 'land work'}, ${p.county ?? ''}${dist}`,
         text:
           (p.open_first
-            ? `A job in your area needs pricing. As an Open member you see it before ` +
-              `anyone else: Premium members in ${p.open_first_hours ?? 2} hours, everyone ` +
+            ? `A job in your area needs pricing. As a Premium member you see it before ` +
+              `anyone else: Pro members in ${p.open_first_hours ?? 2} hours, everyone ` +
               `else after that.\n\n`
             : p.premium
-            ? `A job in your area needs pricing. As a premium member you see it before ` +
+            ? `A job in your area needs pricing. As a Pro member you see it before ` +
               `the rest of the market.\n\n`
             : p.first_refusal
             ? `A new job in your area needs pricing, and it’s offered to you before anyone else.\n\n`
@@ -484,8 +484,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           (p.access_notes ? `Notes:     ${p.access_notes}\n` : '') +
           (p.obstacles ? `Obstacles: ${p.obstacles}\n` : '') +
           (p.open_first
-            ? `\nOnly Open members have it for the next ${p.open_first_hours ?? 2} hours, ` +
-              `then Premium members join, sooner if every Open member has priced or passed. ` +
+            ? `\nOnly Premium members have it for the next ${p.open_first_hours ?? 2} hours, ` +
+              `then Pro members join, sooner if every Premium member has priced or passed. ` +
               `Price it or message the customer ${replyBy} and it stays with members ` +
               `until ${opens}, or until you’ve all priced or passed. A text left untapped for ` +
               `2 hours counts as a pass, and so does opening the job and not pricing, passing ` +
@@ -507,7 +507,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           // Open members: the details are on the page, so say so before the
           // link — the point of the membership is to pick up the phone.
           (p.open_member
-            ? `As an Open member you have the customer’s contact details on the job page, so ` +
+            ? `As a Premium member you have the customer’s contact details on the job page, so ` +
               `you can get in touch and agree the work with them directly.\n\n`
             : '') +
           `Price it: ${SITE_URL}/quote/${p.token}\n\n` +

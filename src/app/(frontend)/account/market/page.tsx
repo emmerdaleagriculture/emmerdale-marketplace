@@ -125,20 +125,20 @@ export default async function MarketDataPage() {
           {!isOpen ? (
             <>
               <p className={s.lead}>
-                <b>Open members see their patch in numbers.</b> How many jobs came in each
+                <b>Premium members see their patch in numbers.</b> How many jobs came in each
                 month across the counties you cover, what each kind of work went for, and how
                 often your prices win against everyone else’s.
               </p>
               {app ? (
                 <div className={s.pitch}>
-                  <h2>Part of Open membership</h2>
-                  <p>Open members see this page. Yours is a {membershipOf(sub, contractor) === 'premium' ? 'Premium' : 'Free'} account.</p>
+                  <h2>Part of Premium membership</h2>
+                  <p>Premium members see this page. Yours is a {membershipOf(sub, contractor) === 'premium' ? 'Pro' : 'Free'} account.</p>
                 </div>
               ) : (
                 <div className={s.pitch}>
-                  <h2>Part of Open membership</h2>
+                  <h2>Part of Premium membership</h2>
                   <p>
-                    Open is £49 a month or £399 a year, and includes first look at every new job,
+                    Premium is £49 a month or £399 a year, and includes first look at every new job,
                     the customer’s contact details on every invitation, 5% commission and a listing
                     in Find a contractor.
                   </p>

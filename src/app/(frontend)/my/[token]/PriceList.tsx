@@ -153,8 +153,8 @@ export function PriceList({
                   <span className={m.bestPrice} data-app-only>Best price</span>
                 )}
                 {q.premium && (
-                  <span className={m.premiumTag} title="A premium member of the Emmerdale Agriculture network">
-                    ★ Premium member
+                  <span className={m.premiumTag} title="A Pro member of the Emmerdale Agriculture network">
+                    ★ Pro member
                   </span>
                 )}
                 {newSincePass.includes(q.id) && <span className={m.newPrice}>New price</span>}

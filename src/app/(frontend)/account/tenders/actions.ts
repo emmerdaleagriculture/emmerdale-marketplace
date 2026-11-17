@@ -38,7 +38,7 @@ export async function saveTenderAction(_prev: TenderSaveState, formData: FormDat
     supabase.from('subscriptions').select('status, plan, tier, current_period_end').eq('contractor_id', user.id).maybeSingle(),
   ]);
   if (!contractor || contractor.status !== 'approved' || membershipOf(sub, contractor) !== 'open') {
-    return { error: 'Council tenders are part of Open membership.' };
+    return { error: 'Council tenders are part of Premium membership.' };
   }
 
   const admin = createServiceRoleClient();

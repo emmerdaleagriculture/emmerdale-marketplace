@@ -533,13 +533,13 @@ export default async function AdminDashboard() {
             />
             <Tile
               value={n((pm.open ?? 0) + (pm.open_comped ?? 0))}
-              label="Open members"
+              label="Premium members"
               hint={`${n(pm.open ?? 0)} paying${pm.open_comped ? ` · ${n(pm.open_comped)} comped` : ''} · see customer details on every job`}
             />
             <Tile
               value={n(pm.reveals_30d?.reveals ?? 0)}
               label="Customer details shown, 30 days"
-              hint={`${n(pm.reveals_30d?.jobs ?? 0)} jobs · ${n(pm.reveals_30d?.members ?? 0)} Open members`}
+              hint={`${n(pm.reveals_30d?.jobs ?? 0)} jobs · ${n(pm.reveals_30d?.members ?? 0)} Premium members`}
             />
             <Tile value={gbp(pm.mrr_pence)} label="Monthly recurring" hint="Yearly plans spread over 12 months" />
             <Tile
@@ -554,7 +554,7 @@ export default async function AdminDashboard() {
             />
             <Tile
               value={`${n(pm.prices_30d.booked)} / ${n(pm.prices_30d.prices)}`}
-              label="Premium prices booked, 30 days"
+              label="Pro prices booked, 30 days"
               hint={`${gbp(pm.prices_30d.margin_pence)} our margin at 5%`}
             />
           </Tiles>
@@ -568,7 +568,7 @@ export default async function AdminDashboard() {
           {pm.past_due > 0 && (
             <p className={s.sub}>
               {n(pm.past_due)} member{pm.past_due === 1 ? '' : 's'} with a failed payment. Stripe is retrying;
-              they keep premium for 3 days past the period end.
+              they keep their membership for 3 days past the period end.
             </p>
           )}
           {pm.members.length > 0 ? (

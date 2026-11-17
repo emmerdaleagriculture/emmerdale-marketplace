@@ -180,10 +180,10 @@ function Icon({ name }: { name: IconName }) {
 
 function membershipItem(membership: Membership): Item {
   if (membership === 'open') {
-    return { href: '/account/membership', label: 'Open membership', icon: 'star', hint: 'Your plan', tag: 'Open' };
+    return { href: '/account/membership', label: 'Premium membership', icon: 'star', hint: 'Your plan', tag: 'Premium' };
   }
   if (membership === 'premium') {
-    return { href: '/account/membership', label: 'Premium membership', icon: 'star', hint: 'Your plan', tag: 'Premium' };
+    return { href: '/account/membership', label: 'Pro membership', icon: 'star', hint: 'Your plan', tag: 'Pro' };
   }
   return {
     href: '/account/membership',

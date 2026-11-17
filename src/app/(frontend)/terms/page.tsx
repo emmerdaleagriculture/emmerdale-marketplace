@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.12, 6 November 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.13, 17 November 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -187,8 +187,8 @@ export default function TermsPage() {
             record, and no protection for either of you.
           </p>
           <p>
-            This clause does not apply to an Open member (clause 12) for a job they were
-            invited to while a member: Open exists so that you can deal with the customer
+            This clause does not apply to a Premium member (clause 12) for a job they were
+            invited to while a member: Premium exists so that you can deal with the customer
             directly. Clause 7 still does, and so does the last sentence above: work you
             agree directly is between you and the customer, and nothing in clauses 4 to 6
             applies to it.
@@ -218,35 +218,35 @@ export default function TermsPage() {
             Questions: <a href="mailto:tom@emmerdaleagriculture.com">tom@emmerdaleagriculture.com</a>.
           </p>
 
-          <h2>12. Premium and Open membership</h2>
+          <h2>12. Pro and Premium membership</h2>
           <p>
-            Membership is optional. Premium costs <strong>£20 a month</strong> or{' '}
-            <strong>£199 a year</strong>; Open costs <strong>£49 a month</strong> or{' '}
+            Membership is optional. Pro costs <strong>£20 a month</strong> or{' '}
+            <strong>£199 a year</strong>; Premium costs <strong>£49 a month</strong> or{' '}
             <strong>£399 a year</strong>, paid by card through Stripe. It renews
             automatically until you cancel. You can cancel at any time from your
             dashboard; membership then runs to the end of the period you have paid for,
             and we do not refund part-periods. You can join when you apply: membership then
             starts working once we approve you, and if we do not approve your application
             we cancel the membership and refund what you paid in full. You can move between
-            Premium and Open from your dashboard; the difference is worked out from the day
+            Pro and Premium from your dashboard; the difference is worked out from the day
             you move.
           </p>
           <p>
             <strong>First refusal.</strong> A new job in a county you cover, and within
-            reach of your base, goes to premium members before anyone else. It is held
-            for up to <strong>7 days</strong>, or until every premium member it was sent
+            reach of your base, goes to members before anyone else. It is held
+            for up to <strong>7 days</strong>, or until every member it was sent
             to has priced or passed, whichever comes first; then it goes to other
             contractors as usual. Where we text you the job and the text is delivered,
             not opening it within <strong>2 hours</strong> counts as passing for the
             purpose of the hold (you can still price it). Opening the job and then not
             pricing it, passing or messaging the customer within <strong>6 hours</strong>{' '}
-            counts as passing in the same way. If no premium member has
+            counts as passing in the same way. If no member has
             priced it or messaged the customer within <strong>24 hours</strong>, it
-            goes to other contractors then. Within the hold, where both Open and Premium
-            members are in range, Open members are sent the job first and Premium members
-            follow up to <strong>2 hours</strong> later, or sooner if every Open member has
+            goes to other contractors then. Within the hold, where both Premium and Pro
+            members are in range, Premium members are sent the job first and Pro members
+            follow up to <strong>2 hours</strong> later, or sooner if every Premium member has
             priced or passed; the 24 hours above still run from the start of the hold. Where another contractor already has first refusal in an
-            area by separate agreement, that comes first and premium follows it. Repeat
+            area by separate agreement, that comes first and membership follows it. Repeat
             jobs a customer has asked a named contractor for are not included. The
             customer can accept any price at any time, including during the window.
           </p>
@@ -266,20 +266,20 @@ export default function TermsPage() {
             what happens when the customer raises a problem or their balance fails.
           </p>
           <p>
-            <strong>Open: the customer&rsquo;s details.</strong> Open includes everything in
-            Premium. In addition, every job you are invited to while an Open member shows you
+            <strong>Premium: the customer&rsquo;s details.</strong> Premium includes everything in
+            Pro. In addition, every job you are invited to while a Premium member shows you
             the customer&rsquo;s name, phone number, email address and postcode as soon as you
             open it, before any price is sent. You may contact the customer and agree the work
             and its price with them directly; clause 8 does not apply to that job, and we add
             nothing to what you agree. Work agreed directly is a contract between you and the
             customer alone: we are not party to it, take no deposit or payment for it, and our
             insurance cover, guarantee and payment protection do not apply. You may instead send
-            a price through us as usual, at the Premium rate. Clause 7 applies to every detail
+            a price through us as usual, at the member rate. Clause 7 applies to every detail
             you are shown: use them only for that job, do not pass them on, and delete them
             when it is done. We record which jobs&rsquo; details each member has seen, and may
-            end an Open membership, without refund of the current period, if the details are
+            end a Premium membership, without refund of the current period, if the details are
             misused. The details stop showing once the customer has accepted another price or
-            you have passed on the job. While you are an Open member we also list your business
+            you have passed on the job. While you are a Premium member we also list your business
             name, the services you offer and, if you give one, your website on our public pages
             for the counties you cover, with a form customers use to write to you alone; you can
             turn the listing off from your dashboard. What a customer sends through it is between

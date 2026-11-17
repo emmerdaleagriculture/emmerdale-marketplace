@@ -42,14 +42,14 @@ export const HTTP_CRONS: CronJob[] = [
     path: '/api/cron/premium-sync',
     schedule: '40 3 * * *',
     everyMinutes: 24 * 60,
-    what: 'Re-reads every premium membership from Stripe, so renewals and cancellations land even if the webhook missed them.',
+    what: 'Re-reads every membership from Stripe, so renewals and cancellations land even if the webhook missed them.',
   },
   {
     name: 'tender-watch',
     path: '/api/cron/tender-watch',
     schedule: '0 6 * * *',
     everyMinutes: 24 * 60,
-    what: 'Pulls council land contracts from Contracts Finder and Find a Tender into the pool Open members see on Council tenders.',
+    what: 'Pulls council land contracts from Contracts Finder and Find a Tender into the pool Premium members see on Council tenders.',
   },
   {
     name: 'seo-agent',

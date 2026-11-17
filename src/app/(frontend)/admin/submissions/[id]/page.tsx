@@ -589,7 +589,7 @@ export default async function SubmissionDetailPage({
                   <td>{cq.contractor_display_label}</td>
                   <td>
                     <ContractorLink id={inner?.contractor?.id}>{inner?.contractor?.business_name ?? '—'}</ContractorLink>
-                    {cq.premium && <span style={{ color: '#8a6d00' }}> ★ Premium</span>}
+                    {cq.premium && <span style={{ color: '#8a6d00' }}> ★ Pro</span>}
                   </td>
                   <td>
                     {inner ? formatGBP(inner.contractor_price_pence) : '—'}

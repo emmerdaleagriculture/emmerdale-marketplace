@@ -135,7 +135,7 @@ export default async function EarningsPage() {
       {tier && (
       <div className={ui.card} style={{ marginTop: 22, background: '#fff8d6', border: '1px solid #f2e39a' }}>
         <div className={ui.cardTitle} style={{ color: '#6b5a00' }}>
-          {`✦ Emmerdale ${tier === 'open' ? 'Open' : 'Premium'} · you’re a member`}
+          {`✦ Emmerdale ${tier === 'open' ? 'Premium' : 'Pro'} · you’re a member`}
         </div>
                 <ul className={ui.promises} style={{ marginTop: 10 }}>
           <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
@@ -152,7 +152,7 @@ export default async function EarningsPage() {
           </li>
           {tier === 'open' && <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
             <span className={ui.tick} aria-hidden="true">✓</span>
-            <span><strong>Open: the customer’s details on every job.</strong> Ring them and agree the work directly.</span>
+            <span><strong>Premium: the customer’s details on every job.</strong> Ring them and agree the work directly.</span>
           </li>}
         </ul>
       </div>
