@@ -176,6 +176,77 @@
   }
 }
 
+/* A job to price with a Dismiss (pass) button beside the row. */
+.dismissable {
+  display: grid;
+  gap: 8px;
+}
+.dismissRow {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.dismissRow > .action {
+  flex: 1;
+  min-width: 0;
+}
+.dismissButton {
+  flex-shrink: 0;
+  min-width: 76px;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dismissButton:hover {
+  border-color: var(--ink-3);
+  color: var(--ink);
+}
+.dismissForm {
+  display: grid;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px dashed var(--rule);
+  border-radius: 8px;
+  background: var(--cream);
+}
+.dismissed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  min-height: 56px;
+  padding: 12px 14px;
+  border: 1px dashed var(--rule);
+  border-radius: 8px;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+.dismissLink {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--jd-green);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.switcher {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px dashed var(--rule);
+  border-radius: 8px;
+}
+
 .caughtUp {
   padding: 16px 18px;
   border: 1px solid var(--rule);
