@@ -5,6 +5,9 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
 import { EmailBanner } from './EmailBanner';
+import { DismissableJob } from './DismissableJob';
+import { MembershipSwitcher } from './MembershipSwitcher';
+import { canSwitchMembership } from '@/lib/membershipSwitch';
 import { MembershipCard } from './MembershipCard';
 import { isLiveSub, membershipOf, MEMBERSHIP_GLYPHS, MEMBERSHIP_NAMES } from '@/lib/membership';
 import { contractorEmailHealth } from '@/lib/contractors/emailConfirm';
@@ -57,6 +60,8 @@ type Action = {
   detail: string;
   cta: string;
   urgent?: boolean;
+  /** A job to price: shown with a Dismiss (pass) button. */
+  token?: string;
 };
 
 function clip(text: string, n: number) {
@@ -179,6 +184,7 @@ export default async function AccountPage({
     ...toPrice.slice(0, 5).map((i) => ({
       key: `price-${i.id}`,
       href: `/quote/${i.token}`,
+      token: i.token ?? undefined,
       title: clip(i.service ?? 'Job', 60),
       detail: [
         place(i),
@@ -319,6 +325,10 @@ export default async function AccountPage({
 
           {status !== 'suspended' && !app && !hasApp && !appBannerDismissed && <GetTheApp close={<DismissAppBanner />} />}
 
+          {canSwitchMembership(user.email) && (
+            <MembershipSwitcher current={membership} billed={isLiveSub(subQ.data)} />
+          )}
+
           {status === 'approved' && (
             <>
               <div className={ac.tiles}>
@@ -341,6 +351,15 @@ export default async function AccountPage({
                 <ul className={ac.actions}>
                   {actions.map((x) => (
                     <li key={x.key}>
+                      {x.token ? (
+                        <DismissableJob
+                          token={x.token}
+                          title={x.title}
+                          detail={x.detail}
+                          cta={x.cta}
+                          urgent={x.urgent}
+                        />
+                      ) : (
                       <Link
                         href={x.href}
                         prefetch={false}
@@ -352,6 +371,7 @@ export default async function AccountPage({
                         </span>
                         <span className={ac.actionCta}>{x.cta} →</span>
                       </Link>
+                      )}
                     </li>
                   ))}
                 </ul>
