@@ -2,7 +2,7 @@
   padding: 14px 16px;
   border: 1px solid var(--jd-yellow-dark);
   border-radius: 8px;
-  background: #fdf7dd;
+  background: var(--warn-bg);
   font-size: 15px;
   margin-bottom: 20px;
 }
@@ -39,7 +39,7 @@
   border-radius: 8px;
   padding: 14px 16px 12px;
   margin-bottom: 20px;
-  background: #fff;
+  background: var(--white);
 }
 .posHead {
   display: flex;
@@ -134,7 +134,7 @@
   padding: 14px 16px;
   border: 1px solid #d9b800;
   border-radius: 8px;
-  background: #fff8d6;
+  background: var(--member-bg);
   font-size: 15px;
   margin-bottom: 20px;
 }

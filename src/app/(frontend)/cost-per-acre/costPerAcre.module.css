@@ -115,7 +115,7 @@
   border-color: var(--jd-green);
 }
 .chipOn {
-  background: var(--jd-green);
+  background: var(--fill-green);
   border-color: var(--jd-green);
   color: #fff;
 }
@@ -274,7 +274,7 @@
 .cta {
   display: inline-block;
   margin-top: 18px;
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
   border-radius: 999px;
   padding: 11px 20px;
@@ -282,7 +282,7 @@
   text-decoration: none;
 }
 .cta:hover {
-  background: var(--jd-green-dark);
+  background: var(--fill-green-dark);
 }
 
 /* Every county with a figure */

@@ -78,14 +78,14 @@
   padding: 8px 16px;
   border: 1px solid var(--jd-green);
   border-radius: 6px;
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
 }
 .contact:hover {
-  background: var(--jd-green-dark);
+  background: var(--fill-green-dark);
 }
 .form {
   margin-top: 6px;
@@ -152,7 +152,7 @@
   border-color: var(--jd-green);
 }
 .chipOn {
-  background: var(--jd-green);
+  background: var(--fill-green);
   border-color: var(--jd-green);
   color: #fff;
 }

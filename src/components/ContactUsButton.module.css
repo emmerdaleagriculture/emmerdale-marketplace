@@ -27,7 +27,7 @@
   white-space: nowrap;
 }
 .button:hover {
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
 }
 .note {

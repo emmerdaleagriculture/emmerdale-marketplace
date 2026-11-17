@@ -290,7 +290,7 @@ export default async function ReportingPage() {
               </td>
               <td style={{ width: '30%' }}>
                 <span style={{ display: 'block', height: 8, width: `${share}%`,
-                  background: 'var(--jd-green-deep)', minWidth: share > 0 ? 2 : 0 }} />
+                  background: 'var(--fill-green-deep)', minWidth: share > 0 ? 2 : 0 }} />
               </td>
             </tr>
           );

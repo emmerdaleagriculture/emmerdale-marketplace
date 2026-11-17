@@ -23,13 +23,13 @@
   font-size: 15px;
   line-height: 1.5;
   background: var(--jd-green-pale);
-  border: 1px solid #c9dcc0;
+  border: 1px solid var(--green-line);
   color: var(--jd-green-dark);
 }
 .noticeWarn {
-  background: #fff7e0;
-  border-color: #efd98a;
-  color: #6b5200;
+  background: var(--warn-bg);
+  border-color: var(--warn-line);
+  color: var(--warn-ink);
 }
 
 /* ── How first refusal works ──────────────────────────────────────────── */
@@ -69,7 +69,7 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -94,7 +94,7 @@
 .plan {
   border: 1px solid var(--rule);
   border-radius: 14px;
-  background: #fff;
+  background: var(--white);
   overflow: hidden;
   margin: 0 0 24px;
 }
@@ -105,7 +105,7 @@
   gap: 16px;
   flex-wrap: wrap;
   padding: 22px 26px;
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   color: #fff;
 }
 .planName {

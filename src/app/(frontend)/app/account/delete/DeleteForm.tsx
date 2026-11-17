@@ -34,7 +34,7 @@ export function DeleteForm({ side, keeps }: { side: 'customer' | 'contractor' | 
         <span>I understand this can&rsquo;t be undone.</span>
       </label>
       <div className="appFooterCta">
-        <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} style={{ background: 'var(--error)' }} disabled={pending}>
+        <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} style={{ background: 'var(--fill-error)' }} disabled={pending}>
           {pending ? 'Deleting…' : 'Delete my account'}
         </button>
       </div>

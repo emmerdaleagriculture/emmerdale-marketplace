@@ -12,7 +12,7 @@
   position: relative;
   height: 38vh;
   min-height: 300px;
-  background: var(--jd-green-dark);
+  background: var(--fill-green-dark);
 }
 .heroPhoto {
   position: absolute;
@@ -209,7 +209,7 @@
   color: var(--jd-green-dark);
 }
 .chipActive {
-  background: var(--jd-green-dark);
+  background: var(--fill-green-dark);
   border-color: var(--jd-green-dark);
   color: #fff;
 }
@@ -359,7 +359,7 @@
 
 /* ===== CTA BAND ===== */
 .ctaBand {
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   padding: 80px 48px;
   text-align: center;
   color: #fff;
@@ -390,7 +390,7 @@
 .btnPrimary {
   display: inline-block;
   background: var(--jd-yellow);
-  color: var(--jd-green-deep);
+  color: var(--on-yellow);
   padding: 16px 32px;
   font-weight: 600;
   font-size: 13px;

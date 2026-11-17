@@ -29,6 +29,40 @@
   --grey-pale: #e4e7df;
   --error: #c63b1f;
 
+  /* Fills and the text that sits on them. A token above can be a text
+     colour in one rule and a background in another; dark mode (below)
+     needs the two apart, so a solid green background uses a fill token and
+     text on a fill uses an on- token. In light mode they are the same
+     colours as before. */
+  --fill-green: var(--jd-green);
+  --fill-green-dark: var(--jd-green-dark);
+  --fill-green-deep: var(--jd-green-deep);
+  --fill-error: var(--error);
+  --fill-ink: var(--ink);
+  --on-fill: #ffffff;
+  --on-yellow: #17330d;
+  /* Neutral app greys that were hard-coded in the app's own screens. */
+  --app-line: #e6e9e1;
+  --app-line-soft: #eef0ea;
+  --app-muted-fill: #d8dcd2;
+  --app-off: #b8bdb2;
+  /* The members' cream-yellow panel and its ink. */
+  --member-bg: #fff8d6;
+  --member-line: #f2e39a;
+  --member-ink: #6b5a00;
+  --chip-yellow-bg: #fff6b8;
+  /* Notice panels: a warning (pale yellow) and an error (pale red). */
+  --warn-bg: #fff9e0;
+  --warn-line: #e8d98a;
+  --warn-ink: #5c4d00;
+  --danger-bg: #fdecea;
+  --danger-line: #f0b4ab;
+  --danger-ink: #a3261b;
+  /* A pale green wash for selected tiles and their edge. */
+  --green-wash: #f6faf3;
+  --green-wash-strong: #dfe8d4;
+  --green-line: #b5d3a8;
+
   /* Typography (next/font sets --font-display / --font-body at the html root) */
   --font-display-stack: var(--font-display), 'Tenor Sans', Georgia, serif;
   --font-body-stack: var(--font-body), 'DM Sans', -apple-system, system-ui, sans-serif;
@@ -109,6 +143,61 @@ html[data-app] body {
      notch itself. Pages with their own top bar (the welcome hero) start at the very top and pad inside. */
   padding-top: var(--app-safe-top);
 }
+/* Dark mode, app only (2026-11-17): follows the phone's own setting. No
+   in-app switch, deliberately: the native frames draw the status bar in the
+   system's style, so a page darker or lighter than the phone would hide the
+   clock until the shell gets a status-bar plugin. The website never
+   carries html[data-app], so it is untouched. */
+@media (prefers-color-scheme: dark) {
+  html[data-app] {
+    color-scheme: dark;
+    --cream: #0f130d;
+    --white: #181d15;
+    --grey-pale: #262c22;
+    --rule: #323a2c;
+    --rule-strong: #434c3c;
+    --ink: #e8ebe3;
+    --ink-2: #c0c6b9;
+    --ink-3: #9aa092;
+    --error: #ff8a6e;
+
+    /* Greens as text, links and borders: lifted to read on dark. */
+    --jd-green: #7fc76c;
+    --jd-green-light: #93d681;
+    --jd-green-dark: #9fd58f;
+    --jd-green-deep: #cfe9c4;
+    --jd-green-pale: #1d2a18;
+
+    /* Greens as fills: dark enough for white text, light enough to stand
+       off the page. */
+    --fill-green: #3d8530;
+    --fill-green-dark: #2f6b24;
+    --fill-green-deep: #2a5e20;
+    --fill-error: #c8432a;
+    --fill-ink: #3a4434;
+
+    --app-line: #2a3125;
+    --app-line-soft: #232920;
+    --app-muted-fill: #3a4234;
+    --app-off: #5c6456;
+    --member-bg: #2b2712;
+    --member-line: #4a4220;
+    --member-ink: #f2dc6a;
+    --chip-yellow-bg: #3a3415;
+    --warn-bg: #2b2611;
+    --warn-line: #574b1d;
+    --warn-ink: #f0d878;
+    --danger-bg: #331813;
+    --danger-line: #6e3025;
+    --danger-ink: #ff9d87;
+    --green-wash: #1a2516;
+    --green-wash-strong: #24331e;
+    --green-line: #3f5a35;
+    /* Fallback-only variables some modules read. */
+    --accent: #9fd58f;
+    --muted: #9aa092;
+  }
+}
 /* The website's chrome: header, footer, breadcrumbs (components opt in with
    the attribute). Gone from the first paint — the <html> attribute is set by
    an inline script before the body renders. */
@@ -133,7 +222,7 @@ html[data-app] .appFooterCta {
   bottom: 0;
   z-index: 40;
   padding: 12px 16px calc(var(--app-safe-bottom) + 16px);
-  background: linear-gradient(180deg, rgba(250, 250, 245, 0) 0%, var(--cream) 28%);
+  background: linear-gradient(180deg, transparent 0%, var(--cream) 28%);
 }
 /* On a screen that also has the tab bar, the button sits just above it. */
 html[data-app][data-app-tabs] .appFooterCta {

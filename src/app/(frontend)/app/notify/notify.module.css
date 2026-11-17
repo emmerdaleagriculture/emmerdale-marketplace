@@ -21,7 +21,7 @@
   height: 22px;
   padding: 0 6px;
   border-radius: 11px;
-  background: var(--error);
+  background: var(--fill-error);
   color: #fff;
   font-size: 12px;
   font-weight: 700;

@@ -31,7 +31,7 @@
 .tab {
   border: 0;
   border-radius: 999px;
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   color: #fff;
   font: inherit;
   font-size: 13px;
@@ -43,7 +43,7 @@
   box-shadow: 0 2px 10px rgba(20, 30, 20, 0.25);
 }
 .tab:hover {
-  background: var(--jd-green-dark);
+  background: var(--fill-green-dark);
 }
 .panel {
   width: min(360px, calc(100vw - 32px));
@@ -102,7 +102,7 @@
 .send {
   border: 0;
   border-radius: 8px;
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
   font: inherit;
   font-size: 14px;
@@ -111,7 +111,7 @@
   min-height: 40px;
   cursor: pointer;
 }
-.send:hover { background: var(--jd-green-dark); }
+.send:hover { background: var(--fill-green-dark); }
 .send:disabled { opacity: 0.6; cursor: not-allowed; }
 .note {
   margin: 8px 0 0;

@@ -1,5 +1,5 @@
 .footer {
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   color: rgba(255, 255, 255, 0.72);
   padding: 64px 24px 32px;
   border-top: 4px solid var(--jd-yellow);
@@ -21,7 +21,7 @@
 }
 .brand {
   font-family: var(--font-display-stack);
-  color: var(--white);
+  color: var(--on-fill);
   font-size: 20px;
   letter-spacing: 0.02em;
 }
@@ -39,7 +39,7 @@
   max-width: 42ch;
 }
 .link {
-  color: var(--white);
+  color: var(--on-fill);
   border-bottom: 1px solid rgba(255, 255, 255, 0.4);
 }
 .link:hover {

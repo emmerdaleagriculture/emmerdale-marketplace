@@ -8,7 +8,7 @@
 .progress span {
   display: block;
   height: 100%;
-  background: var(--jd-green);
+  background: var(--fill-green);
   border-radius: 2px;
 }
 .lede {

@@ -36,7 +36,7 @@
 .progress span {
   display: block;
   height: 100%;
-  background: var(--jd-green);
+  background: var(--fill-green);
   border-radius: 2px;
   transition: width 0.3s;
 }
@@ -72,7 +72,7 @@
   border-radius: 20px;
   overflow: hidden;
   margin: 14px 0;
-  background: #dfe8d4;
+  background: var(--green-wash-strong);
 }
 .slider {
   width: 100%;
@@ -121,7 +121,7 @@
 }
 .checkOn {
   border-color: var(--jd-green);
-  background: #f6faf3;
+  background: var(--green-wash);
 }
 .checkIcon {
   width: 56px;
@@ -133,7 +133,7 @@
   place-items: center;
 }
 .checkOn .checkIcon {
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
 }
 .check b {

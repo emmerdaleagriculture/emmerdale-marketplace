@@ -29,7 +29,7 @@
   border-right: 0;
 }
 .radiusOn {
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   color: #fff;
 }
 
@@ -95,7 +95,7 @@
   text-decoration: none;
 }
 .viewOn {
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   border-color: var(--jd-green-deep);
   color: #fff;
 }

@@ -7,7 +7,7 @@
 .card {
   border: 1px solid var(--rule);
   border-radius: 6px;
-  background: #fff;
+  background: var(--white);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -93,7 +93,7 @@
 }
 .contact {
   background: var(--jd-green-pale);
-  border-color: #b5d3a8;
+  border-color: var(--green-line);
 }
 .contactRow {
   display: flex;
@@ -116,7 +116,7 @@
 }
 .won {
   background: var(--jd-green-pale);
-  border: 1px solid #b5d3a8;
+  border: 1px solid var(--green-line);
   color: var(--jd-green-dark);
 }
 .lost {
@@ -125,9 +125,9 @@
   color: var(--ink-2);
 }
 .gate {
-  background: #fff9e0;
-  border: 1px solid #e8d98a;
-  color: #5c4d00;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  color: var(--warn-ink);
   border-radius: 6px;
   padding: 20px;
 }

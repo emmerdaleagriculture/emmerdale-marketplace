@@ -40,8 +40,8 @@
   color: var(--jd-green-deep);
 }
 .tagNew {
-  background: var(--jd-green);
-  color: var(--white);
+  background: var(--fill-green);
+  color: var(--on-fill);
 }
 .tagRenewal {
   background: var(--cream);
@@ -160,8 +160,8 @@
   font: inherit;
   font-weight: 600;
   font-size: 15px;
-  background: var(--ink);
-  color: var(--white);
+  background: var(--fill-ink);
+  color: var(--on-fill);
   border: 0;
   border-radius: 8px;
   padding: 9px 18px;
@@ -176,7 +176,7 @@
 }
 .error {
   font-size: 14px;
-  color: #b42318;
+  color: var(--danger-ink);
 }
 .notice {
   margin-left: auto;
@@ -245,6 +245,6 @@
   font-weight: 600;
   padding: 1px 7px;
   border-radius: 999px;
-  background: var(--jd-green);
-  color: var(--white);
+  background: var(--fill-green);
+  color: var(--on-fill);
 }

@@ -24,8 +24,8 @@
 }
 
 .stepCurrent {
-  background: var(--jd-green-deep);
-  color: var(--white);
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
   border-color: var(--jd-green-deep);
 }
 
@@ -206,7 +206,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--jd-green-deep);
+  color: var(--on-yellow);
   background: var(--jd-yellow);
   border-radius: 999px;
   padding: 2px 8px;
@@ -221,9 +221,9 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #6b5400;
-  background: #fff6c2;
-  border: 1px solid #e8d77a;
+  color: var(--warn-ink);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
   border-radius: 999px;
   padding: 1px 8px;
   vertical-align: middle;
@@ -249,7 +249,7 @@
 /* ── App mode (PRD task 8): the prototype's compare-prices look ─────────── */
 .range {
   background: var(--white);
-  border: 1px solid #e6e9e1;
+  border: 1px solid var(--app-line);
   border-radius: 20px;
   padding: 16px;
   margin-bottom: 18px;
@@ -297,7 +297,7 @@
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   color: var(--jd-yellow);
   font-family: var(--font-display-stack);
   font-size: 18px;
@@ -318,7 +318,7 @@
 }
 :global(html[data-app]) .quoteCard {
   border-radius: 20px;
-  border-color: #e6e9e1;
+  border-color: var(--app-line);
 }
 :global(html[data-app]) .quoteLabel {
   font-family: var(--font-body-stack);
@@ -345,5 +345,5 @@
   font-size: 15px;
 }
 :global(html[data-app]) .acceptButtons :global(button[class*='btnPrimary']) {
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
 }

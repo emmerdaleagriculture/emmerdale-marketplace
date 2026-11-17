@@ -9,7 +9,7 @@
   display: block;
   height: 100%;
   width: 90%;
-  background: var(--jd-green);
+  background: var(--fill-green);
   border-radius: 2px;
 }
 .lede {
@@ -50,7 +50,7 @@
   margin: 18px 0 12px;
   border-radius: 20px;
   overflow: hidden;
-  background: #dfe8d4;
+  background: var(--green-wash-strong);
   aspect-ratio: 16 / 9;
 }
 .map svg {
@@ -68,13 +68,13 @@
   padding: 16px;
 }
 .resultNone {
-  background: #fff6b8;
+  background: var(--chip-yellow-bg);
 }
 .resultIcon {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
   display: grid;
   place-items: center;

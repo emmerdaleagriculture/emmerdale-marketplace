@@ -3,7 +3,7 @@
   background: var(--cream);
 }
 .bar {
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   color: #fff;
   padding: 14px 24px 0;
   display: flex;
@@ -220,7 +220,7 @@
   flex-wrap: wrap;
 }
 .btnApprove {
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
   padding: 7px 14px;
   border-radius: 2px;
@@ -230,7 +230,7 @@
   font-weight: 600;
 }
 .btnApprove:hover {
-  background: var(--jd-green-dark);
+  background: var(--fill-green-dark);
 }
 .btnSuspend {
   border: 1px solid var(--error);
@@ -242,7 +242,7 @@
   text-transform: uppercase;
 }
 .btnSuspend:hover {
-  background: var(--error);
+  background: var(--fill-error);
   color: #fff;
 }
 
@@ -500,7 +500,7 @@
 .funnelBar > span {
   display: block;
   height: 100%;
-  background: var(--jd-green-dark);
+  background: var(--fill-green-dark);
 }
 
 /* Twelve weeks of bars, pure CSS; heights are inline percentages. */
@@ -530,7 +530,7 @@
   border-radius: 2px 2px 0 0;
 }
 .weekJobs { background: var(--jd-green-pale); }
-.weekPaid { background: var(--jd-green-dark); }
+.weekPaid { background: var(--fill-green-dark); }
 .weekLabel {
   position: absolute;
   bottom: -20px;

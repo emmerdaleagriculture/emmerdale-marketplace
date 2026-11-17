@@ -52,7 +52,7 @@
 }
 
 .pillOpen {
-  background: #fdf7dd;
+  background: var(--warn-bg);
   border: 1px solid var(--jd-yellow-dark);
 }
 
@@ -184,7 +184,7 @@
   flex: none;
   padding: 8px 14px;
   border-radius: 8px;
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
   font-size: 14px;
   font-weight: 600;

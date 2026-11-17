@@ -14,11 +14,11 @@
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #eef0ea;
+  background: var(--app-line-soft);
   color: var(--ink-2);
 }
 .pillReq {
-  background: #fbe6e1;
+  background: var(--danger-bg);
   color: var(--error);
 }
 .pillOk {
@@ -35,7 +35,7 @@
   aspect-ratio: 1;
   border-radius: 16px;
   overflow: hidden;
-  background: #e6e9e1;
+  background: var(--app-line);
 }
 .shot img {
   width: 100%;
@@ -70,6 +70,6 @@
 }
 .addLocked {
   border-color: var(--rule);
-  color: #b8bcb3;
+  color: var(--app-off);
   background: var(--cream);
 }

@@ -54,7 +54,7 @@
   height: 54px;
   border-radius: 12px;
   background: var(--white);
-  border: 1px solid #e6e9e1;
+  border: 1px solid var(--app-line);
   font-size: 24px;
   color: var(--ink);
 }

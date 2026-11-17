@@ -7,8 +7,8 @@
 .hero {
   position: relative;
   padding: 150px 24px 110px;
-  background: var(--jd-green-deep); /* fallback before the image paints */
-  color: var(--white);
+  background: var(--fill-green-deep); /* fallback before the image paints */
+  color: var(--on-fill);
   overflow: hidden;
 }
 .heroImg {
@@ -141,7 +141,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--jd-green);
+  background: var(--fill-green);
   color: #fff;
   font-family: var(--font-display-stack);
   font-size: 20px;
@@ -176,7 +176,7 @@
 
 /* Credibility */
 .cred {
-  background: var(--jd-green-deep);
+  background: var(--fill-green-deep);
   color: rgba(255, 255, 255, 0.85);
   padding: 84px 24px;
   text-align: center;
@@ -188,7 +188,7 @@
 .credTitle {
   font-family: var(--font-display-stack);
   font-size: clamp(26px, 3.4vw, 38px);
-  color: var(--white);
+  color: var(--on-fill);
   line-height: 1.15;
   margin-bottom: 18px;
 }

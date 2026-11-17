@@ -11,19 +11,19 @@
   margin-bottom: 4px;
 }
 .pending {
-  background: #fff9e0;
-  border-color: #e8d98a;
-  color: #5c4d00;
+  background: var(--warn-bg);
+  border-color: var(--warn-line);
+  color: var(--warn-ink);
 }
 .approved {
   background: var(--jd-green-pale);
-  border-color: #b5d3a8;
+  border-color: var(--green-line);
   color: var(--jd-green-dark);
 }
 .suspended {
-  background: #fdecea;
-  border-color: #f0b4ab;
-  color: #7a1c0e;
+  background: var(--danger-bg);
+  border-color: var(--danger-line);
+  color: var(--danger-ink);
 }
 .metaRow {
   font-size: 13px;
@@ -135,7 +135,7 @@
 }
 .actionUrgent {
   border-left-color: #c63b1f;
-  background: #fffaf8;
+  background: var(--danger-bg);
 }
 .actionText {
   flex: 1;
@@ -163,7 +163,7 @@
   white-space: nowrap;
 }
 .actionUrgent .actionCta {
-  color: #a02a2a;
+  color: var(--danger-ink);
 }
 @media (max-width: 420px) {
   .action {
@@ -382,7 +382,7 @@
   border: 1px solid var(--rule);
   border-top: 4px solid var(--jd-yellow);
   border-radius: 6px;
-  background: #fff;
+  background: var(--white);
   padding: 22px 24px;
   margin-bottom: 28px;
 }
@@ -484,7 +484,7 @@
 .premiumBadge {
   background: var(--jd-yellow);
   border-color: #d9b800;
-  color: var(--jd-green-deep);
+  color: var(--on-yellow);
 }
 
 /* "3 new" beside a quick link (Council tenders). */
@@ -493,8 +493,8 @@
   margin-left: 6px;
   padding: 1px 7px;
   border-radius: 999px;
-  background: var(--jd-green);
-  color: var(--white);
+  background: var(--fill-green);
+  color: var(--on-fill);
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
@@ -535,8 +535,8 @@
   padding-bottom: 64px;
 }
 .hero {
-  background: var(--jd-green-deep);
-  color: var(--white);
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
   padding: 36px 24px 28px;
   border-bottom: 4px solid var(--jd-yellow);
 }
@@ -582,7 +582,7 @@
   height: 24px;
   border-radius: 50%;
   background: var(--jd-yellow);
-  color: var(--jd-green-deep);
+  color: var(--on-yellow);
   font-weight: 700;
   font-size: 16px;
   line-height: 24px;
@@ -601,7 +601,7 @@
   font-weight: 400;
   font-size: clamp(28px, 4vw, 42px);
   line-height: 1.1;
-  color: var(--white);
+  color: var(--on-fill);
   margin: 0 0 12px;
   overflow-wrap: anywhere;
 }
@@ -625,11 +625,11 @@
   border-color: var(--jd-yellow);
 }
 .heroTiles .tileValue {
-  color: var(--white);
+  color: var(--on-fill);
   font-size: 34px;
 }
 .heroTiles .tileLabel {
-  color: var(--white);
+  color: var(--on-fill);
 }
 .heroTiles .tileHint {
   color: rgba(255, 255, 255, 0.6);
