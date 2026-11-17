@@ -18,7 +18,7 @@ export function CustomerContact({ contact }: { contact: RevealedContact }) {
   return (
     <div className={q.contactPanel} id="customer">
       <div className={q.contactHead}>
-        <strong>The customer&rsquo;s details.</strong> As an Open member you can get in touch and
+        <strong>The customer&rsquo;s details.</strong> As a Premium member you can get in touch and
         agree the work with them directly, or send a price through us below at 5%.
       </div>
       <div className={q.contactGrid}>

@@ -70,7 +70,7 @@ function deadline(inv: Invitation): { text: string; urgent: boolean } | null {
   const now = Date.now();
   const soon = (iso: string) => new Date(iso).getTime() - now < 48 * 3600_000;
   if (inv.offered_until && new Date(inv.offered_until).getTime() > now) {
-    const who = inv.premium_offer ? 'Premium first look' : 'Yours alone';
+    const who = inv.premium_offer ? 'Members’ first look' : 'Yours alone';
     return { text: `${who} until ${formatDateTime(inv.offered_until)}`, urgent: soon(inv.offered_until) };
   }
   if (inv.offered_until && !inv.premium_offer) return { text: 'Yours alone', urgent: false };
@@ -300,7 +300,7 @@ export default async function InvitationsPage() {
                       <div className={s.deadline}>
                         {inv.offered_until && inv.premium_offer
                           ? new Date(inv.offered_until) > new Date()
-                            ? `Premium first look until ${formatDateTime(inv.offered_until)}`
+                            ? `Members’ first look until ${formatDateTime(inv.offered_until)}`
                             : inv.expires_at
                               ? timeLeft(inv.expires_at)
                               : ''

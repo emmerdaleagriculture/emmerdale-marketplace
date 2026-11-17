@@ -5,8 +5,8 @@ import ac from './account.module.css';
 
 const OPTIONS = [
   { value: 'none', label: 'Free' },
-  { value: 'premium', label: 'Premium' },
-  { value: 'open', label: 'Open' },
+  { value: 'premium', label: 'Pro' },
+  { value: 'open', label: 'Premium' },
 ] as const;
 
 /** The tier switch for accounts in MEMBERSHIP_SWITCHERS. Plain form, no JS needed. */

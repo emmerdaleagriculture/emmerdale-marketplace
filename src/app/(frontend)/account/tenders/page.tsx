@@ -152,16 +152,16 @@ export default async function TendersPage() {
           {!isOpen ? (
             <>
               <p className={m.lead}>
-                <b>Open members see the council work on their patch.</b> Grass cutting, verges,
+                <b>Premium members see the council work on their patch.</b> Grass cutting, verges,
                 hedges, ditches, rights of way and grounds maintenance contracts from parish,
                 district and county councils, gathered every morning from Contracts Finder and
                 Find a Tender, and the running contracts coming up for renewal, so you can
                 approach the buyer before they re-let.
               </p>
               <div className={m.pitch}>
-                <h2>Part of Open membership</h2>
+                <h2>Part of Premium membership</h2>
                 <p>
-                  Open is £49 a month or £399 a year, and includes first look at every new job,
+                  Premium is £49 a month or £399 a year, and includes first look at every new job,
                   the customer’s contact details on every invitation, market data and council
                   tenders for your area.
                 </p>

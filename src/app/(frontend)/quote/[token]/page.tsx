@@ -324,9 +324,9 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
               {revealed && <CustomerContact contact={revealed} />}
               {openFirst ? (
                 <div className={q.pricedPanel}>
-                  <strong>Open members first.</strong> Only Open members have this job until{' '}
-                  {formatDateTime(offer!.open_first_until!)}, when Premium members join, sooner
-                  if every Open member has priced or passed. A text left untapped for 2 hours
+                  <strong>Premium members first.</strong> Only Premium members have this job until{' '}
+                  {formatDateTime(offer!.open_first_until!)}, when Pro members join, sooner
+                  if every Premium member has priced or passed. A text left untapped for 2 hours
                   counts as a pass, and so does opening the job and not pricing, passing or
                   messaging the customer within {openedHours} hours
                   {openedBy ? ` (for you, by ${openedBy})` : ''}. It stays with members until{' '}
@@ -337,7 +337,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 </div>
               ) : premiumFirst ? (
                 <div className={q.pricedPanel}>
-                  <strong>Premium first look.</strong> Only members have this job.
+                  <strong>Members’ first look.</strong> Only members have this job.
                   Price it or message the customer {replyBy ? `by ${replyBy}` : 'within 24 hours'}{' '}
                   and it stays that way until {formatDateTime(offer!.market_opens_at!)}, or until
                   you&rsquo;ve all priced or passed. A text left untapped for 2 hours counts as a
@@ -475,7 +475,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
           {/* The thread with the customer. Before award they see this
               contractor only as a letter, so the rules are said up front
-              rather than discovered as a refusal. An Open member is exempt
+              rather than discovered as a refusal. A Premium member is exempt
               from those rules (contractor terms clause 8) and has the
               customer's details above, so they get neither the coaching nor
               the monitoring line, in any state. */}

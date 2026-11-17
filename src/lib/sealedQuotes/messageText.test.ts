@@ -137,7 +137,7 @@ describe('the 5 Oct 2026 messages (West Sussex land services)', () => {
     }
   });
 
-  it('lets an Open member say anything but the empty or over-long (20261019120000)', () => {
+  it('lets a Premium member say anything but the empty or over-long (20261019120000)', () => {
     const open = (t: string, sender: 'client' | 'contractor' = 'contractor') =>
       messageRefusal(t, sender, 'pre_award', false, [], true);
     expect(open('Ring me on 07123 456 789')).toBeNull();

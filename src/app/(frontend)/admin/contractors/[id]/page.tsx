@@ -101,7 +101,7 @@ export default async function ContractorDetailPage({
         {c.business_name}
         {tier && (
           <span style={{ color: '#8a6d00', fontSize: '0.6em', marginLeft: 10 }}>
-            {tier === 'open' ? '◆ Open' : '★ Premium'}
+            {tier === 'open' ? '◆ Premium' : '★ Pro'}
           </span>
         )}
       </h1>
@@ -209,7 +209,7 @@ export default async function ContractorDetailPage({
 
       <div className={s.sectionLabel}>Membership</div>
       <p className={s.dValue}>
-        {tier === 'open' ? <b>Open</b> : tier === 'premium' ? <b>Premium</b> : 'Not a member'}
+        {tier === 'open' ? <b>Premium</b> : tier === 'premium' ? <b>Pro</b> : 'Not a member'}
         {sub && sub.status !== 'none'
           ? ` · Stripe: ${sub.status}${sub.tier ? `, ${sub.tier}` : ''}${sub.plan ? `, ${sub.plan}` : ''}` +
             (sub.current_period_end
@@ -220,13 +220,13 @@ export default async function ContractorDetailPage({
           : ''}
         {compedUntil
           ? new Date(compedUntil).getFullYear() >= 2099
-            ? ' · premium comped, no end date'
-            : ` · premium comped until ${day(compedUntil)}`
+            ? ' · Pro comped, no end date'
+            : ` · Pro comped until ${day(compedUntil)}`
           : ''}
         {openCompedUntil
           ? new Date(openCompedUntil).getFullYear() >= 2099
-            ? ' · Open comped, no end date'
-            : ` · Open comped until ${day(openCompedUntil)}`
+            ? ' · Premium comped, no end date'
+            : ` · Premium comped until ${day(openCompedUntil)}`
           : ''}
         {revealCount ? ` · shown customer details on ${revealCount} job${revealCount === 1 ? '' : 's'}` : ''}
       </p>
@@ -235,7 +235,7 @@ export default async function ContractorDetailPage({
           <input type="hidden" name="id" value={c.id} />
           <input type="hidden" name="months" value="12" />
           <button type="submit" className={s.btnApprove}>
-            {compedUntil ? 'Extend premium comp to 12 months from today' : 'Comp premium for 12 months'}
+            {compedUntil ? 'Extend Pro comp to 12 months from today' : 'Comp Pro for 12 months'}
           </button>
         </form>
         {compedUntil && (
@@ -243,7 +243,7 @@ export default async function ContractorDetailPage({
             <input type="hidden" name="id" value={c.id} />
             <input type="hidden" name="months" value="0" />
             <button type="submit" className={s.btnSuspend}>
-              Remove premium comp
+              Remove Pro comp
             </button>
           </form>
         )}
@@ -252,7 +252,7 @@ export default async function ContractorDetailPage({
           <input type="hidden" name="tier" value="open" />
           <input type="hidden" name="months" value="12" />
           <button type="submit" className={s.btnApprove}>
-            {openCompedUntil ? 'Extend Open comp to 12 months from today' : 'Comp Open for 12 months'}
+            {openCompedUntil ? 'Extend Premium comp to 12 months from today' : 'Comp Premium for 12 months'}
           </button>
         </form>
         {openCompedUntil && (
@@ -261,7 +261,7 @@ export default async function ContractorDetailPage({
             <input type="hidden" name="tier" value="open" />
             <input type="hidden" name="months" value="0" />
             <button type="submit" className={s.btnSuspend}>
-              Remove Open comp
+              Remove Premium comp
             </button>
           </form>
         )}

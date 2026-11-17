@@ -218,7 +218,7 @@ export function AccountForm({
         <summary className={ac.sectionHead}>
           Council tenders
           <span className={ac.sectionMeta}>
-            {tenders !== 'open' ? 'Open members' : contractor.tenders_enabled ? 'On' : 'Off'}
+            {tenders !== 'open' ? 'Premium members' : contractor.tenders_enabled ? 'On' : 'Off'}
           </span>
         </summary>
         <div className={ac.sectionBody}>
@@ -251,7 +251,7 @@ export function AccountForm({
           <div className={ac.sectionBody}>
             <input type="hidden" name="directory_section" value="1" />
             <p className={f.hint}>
-              As an Open member you’re named in Find a contractor and on our public pages for
+              As a Premium member you’re named in Find a contractor and on our public pages for
               each county you cover, with a link to your website and a button customers use to
               write to you directly.
               {!contractor.vetted_at && ' The listing goes live once we’ve vetted your account.'}
@@ -314,7 +314,7 @@ function TendersLocked({ app }: { app: boolean }) {
         <input type="checkbox" disabled checked={false} readOnly aria-disabled="true" tabIndex={-1} />
         <span>Show me council contracts on my patch: open tenders and contracts coming up for renewal.</span>
       </span>
-      <span className={ac.lockedNote}>{app ? 'Part of Open membership.' : 'Part of Open membership. Upgrade to turn it on →'}</span>
+      <span className={ac.lockedNote}>{app ? 'Part of Premium membership.' : 'Part of Premium membership. Upgrade to turn it on →'}</span>
     </>
   );
   return app ? (

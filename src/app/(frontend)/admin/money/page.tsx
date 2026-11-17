@@ -228,7 +228,7 @@ export default async function MoneyPage() {
       : [
           `${rev.payments} payment${rev.payments === 1 ? '' : 's'} from ${rev.members} member${rev.members === 1 ? '' : 's'}` +
             (rev.firstPaidAt ? ` since ${longDate(rev.firstPaidAt)}` : ''),
-          `${formatGBP(rev.byTier.premium)} Premium · ${formatGBP(rev.byTier.open)} Open`,
+          `${formatGBP(rev.byTier.premium)} Pro · ${formatGBP(rev.byTier.open)} Premium`,
           rev.refundedPence > 0 ? `${formatGBP(rev.refundedPence)} refunded, already taken off` : null,
           rev.disputedPence > 0 ? `${formatGBP(rev.disputedPence)} lost to disputes, already taken off` : null,
         ]

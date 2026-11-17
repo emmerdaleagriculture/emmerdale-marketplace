@@ -61,7 +61,7 @@ export function PriceKeypad({
         <div className={`${s.line} ${s.total}`}><span>You receive</span><span>{pence ? formatGBP(pence) : '—'}</span></div>
       </div>
       {withPremium != null && (
-        <p className={s.sub}>With Premium the customer would see {formatGBP(withPremium)} instead, for the same {formatGBP(pence)} to you.</p>
+        <p className={s.sub}>With Pro the customer would see {formatGBP(withPremium)} instead, for the same {formatGBP(pence)} to you.</p>
       )}
       <div className={s.keys}>
         {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'].map((k, i) => (

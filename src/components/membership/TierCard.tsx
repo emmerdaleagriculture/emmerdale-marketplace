@@ -21,7 +21,7 @@ export const PREMIUM_BENEFITS: ReactNode[] = [
   <><b>Cancel any time.</b> You keep it to the end of the period you’ve paid for.</>,
 ];
 export const OPEN_BENEFITS: ReactNode[] = [
-  <><b>First look ahead of Premium.</b> New jobs reach Open members up to 2 hours before Premium members in the same area.</>,
+  <><b>First look ahead of Pro.</b> New jobs reach Premium members up to 2 hours before Pro members in the same area.</>,
   <><b>The customer’s name, phone and email</b> on every job you’re invited to, the moment it arrives.</>,
   <><b>Agree the work directly</b> with nothing added on top, or send a price through us at 5% as usual.</>,
   <><b>A listing in Find a contractor</b> and on our county pages, with a link to your website and customers’ enquiries sent straight to you.</>,
@@ -37,7 +37,7 @@ export const FREE_BENEFITS: ReactNode[] = [
 const BLURB: Record<CardTier, string> = {
   free: 'Every job in your area for the work you do, after members have seen it, at our standard commission.',
   premium: 'Every job in your area for the work you do, ahead of the market, and 5% commission instead of 15%.',
-  open: 'Everything in Premium, plus first look, the customer’s details, a county-page listing, market data and council tenders.',
+  open: 'Everything in Pro, plus first look, the customer’s details, a county-page listing, market data and council tenders.',
 };
 const GLYPH: Record<CardTier, string> = { free: '', ...MEMBERSHIP_GLYPHS };
 /** A page that centres everything on a phone puts this on a wrapper round the grid. */
@@ -132,7 +132,7 @@ export function TierCard({
         </p>
       )}
       {tier === 'open' ? (
-        <Benefits plus="Everything in Premium, plus" items={OPEN_BENEFITS} />
+        <Benefits plus="Everything in Pro, plus" items={OPEN_BENEFITS} />
       ) : (
         <Benefits items={tier === 'premium' ? PREMIUM_BENEFITS : FREE_BENEFITS} />
       )}
