@@ -39,8 +39,8 @@ function oppLine(o: Opportunity): string {
 export function composeDigest(s: AgentRunSummary, origin: string): { subject: string; text: string; html: string } {
   const open = s.opportunities.filter((o) => !o.deferred);
   const subject = open.length
-    ? `SEO agent: ${open.length} opportunit${open.length === 1 ? 'y' : 'ies'} to review (${s.weekIdentified})`
-    : `SEO agent: quiet month, nothing new (${s.weekIdentified})`;
+    ? `Cheatcode: ${open.length} opportunit${open.length === 1 ? 'y' : 'ies'} to review (${s.weekIdentified})`
+    : `Cheatcode: quiet month, nothing new (${s.weekIdentified})`;
   const reviewUrl = `${origin.replace(/\/+$/, '')}/admin/seo/opportunities`;
 
   const groups: Array<[string, Opportunity[]]> = [
@@ -54,7 +54,7 @@ export function composeDigest(s: AgentRunSummary, origin: string): { subject: st
   lines.push(
     open.length
       ? `${open.length} new opportunit${open.length === 1 ? 'y' : 'ies'} from ${s.counts.rowsFromGsc} Search Console rows (${s.gscRange.start} → ${s.gscRange.end}).`
-      : `The agent ran but found nothing new in ${s.counts.rowsFromGsc} Search Console rows. Queries raised in the last 120 days are held back while their changes get recrawled, so quiet months are expected.`,
+      : `Cheatcode ran but found nothing new in ${s.counts.rowsFromGsc} Search Console rows. Queries raised in the last 120 days are held back while their changes get recrawled, so quiet months are expected.`,
   );
   for (const [label, items] of groups) {
     if (items.length) lines.push(`\n${label} (${items.length}):\n${items.map(oppLine).join('\n')}`);
