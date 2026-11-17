@@ -172,7 +172,7 @@ export default async function TendersPage() {
             <div className={m.pitch}>
               <h2>Council tenders are turned off</h2>
               <p>Turn them back on in your settings to see the council contracts on your patch.</p>
-              <Link href="/account#settings">Go to your settings →</Link>
+              <Link href="/account/settings">Go to your settings →</Link>
             </div>
           ) : failed ? (
             <p className={m.lead}>The tenders aren’t available just now. Please try again in a few minutes.</p>

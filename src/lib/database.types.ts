@@ -784,6 +784,7 @@ export type Database = {
       }
       contractors: {
         Row: {
+          avatar_path: string | null
           app_banner_dismissed_at: string | null
           tenders_enabled: boolean
           premium_comped_until: string | null
@@ -821,6 +822,7 @@ export type Database = {
           directory_listed: boolean
         }
         Insert: {
+          avatar_path?: string | null
           app_banner_dismissed_at?: string | null
           tenders_enabled?: boolean
           premium_comped_until?: string | null
@@ -858,6 +860,7 @@ export type Database = {
           directory_listed?: boolean
         }
         Update: {
+          avatar_path?: string | null
           app_banner_dismissed_at?: string | null
           tenders_enabled?: boolean
           premium_comped_until?: string | null
@@ -3546,6 +3549,7 @@ export type Database = {
       }
       county_directory: {
         Row: {
+          avatar_path: string | null
           business_name: string | null
           contractor_id: string | null
           county: string | null

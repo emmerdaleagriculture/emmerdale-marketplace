@@ -524,3 +524,243 @@
   display: inline-block;
   transform: translateY(-0.1em);
 }
+
+/* ── Dashboard (approved contractors) ───────────────────────────────────
+   A deep-green band with who they are and the four numbers, then the work
+   on the left and the account on the right; one column on a phone, work
+   first. */
+.dash {
+  flex: 1;
+  background: var(--cream);
+  padding-bottom: 64px;
+}
+.hero {
+  background: var(--jd-green-deep);
+  color: var(--white);
+  padding: 36px 24px 28px;
+  border-bottom: 4px solid var(--jd-yellow);
+}
+.heroInner {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+/* Same content width as the band: 1120px plus its own side padding. */
+.dashBody {
+  max-width: calc(1120px + 48px);
+  margin: 0 auto;
+}
+.dashBody {
+  padding: 28px 24px 0;
+}
+.heroHead {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.heroHeadText {
+  min-width: 0;
+}
+.heroAvatar {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 50%;
+  outline: 3px solid rgba(255, 255, 255, 0.18);
+  outline-offset: 2px;
+  margin-bottom: 22px;
+}
+.heroAvatar:hover {
+  outline-color: var(--jd-yellow);
+}
+.heroAvatarAdd {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--jd-yellow);
+  color: var(--jd-green-deep);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+}
+.heroEyebrow {
+  font-family: var(--font-display-stack);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--jd-yellow);
+  margin-bottom: 10px;
+}
+.heroTitle {
+  font-family: var(--font-display-stack);
+  font-weight: 400;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.1;
+  color: var(--white);
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+.hero .statusRow {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 22px;
+}
+.hero .email {
+  color: rgba(255, 255, 255, 0.65);
+}
+.heroTiles {
+  margin-bottom: 0;
+}
+.heroTiles .tile {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.16);
+  padding: 16px 16px 14px;
+}
+.heroTiles .tile:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--jd-yellow);
+}
+.heroTiles .tileValue {
+  color: var(--white);
+  font-size: 34px;
+}
+.heroTiles .tileLabel {
+  color: var(--white);
+}
+.heroTiles .tileHint {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.dashGrid {
+  display: grid;
+  gap: 28px;
+}
+@media (min-width: 960px) {
+  .dashGrid {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 36px;
+    align-items: start;
+  }
+  .dashSide {
+    position: sticky;
+    top: 24px;
+  }
+}
+.dashWork,
+.dashSide {
+  min-width: 0;
+}
+.dashSide {
+  display: grid;
+  gap: 16px;
+}
+.dashSide > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.sectionTitle {
+  font-family: var(--font-display-stack);
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--jd-green-deep);
+  margin: 0 0 12px;
+}
+.sectionTitle:not(:first-child) {
+  margin-top: 32px;
+}
+.dashWork .action,
+.dashWork .dismissButton {
+  box-shadow: 0 1px 2px rgba(23, 51, 13, 0.06);
+}
+/* Already priced: the ball is in the customer's court, so a quieter row. */
+.actionQuiet {
+  border-left-color: var(--rule);
+  background: transparent;
+  box-shadow: none !important;
+}
+.actionQuiet:hover {
+  background: var(--white);
+}
+
+.sidePanel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--white);
+  overflow: hidden;
+}
+.sidePanelTitle {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 600;
+  margin: 0;
+  padding: 14px 16px 8px;
+}
+.sideLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--rule);
+  color: var(--jd-green-deep);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+}
+.sideLink:hover {
+  background: var(--jd-green-pale);
+}
+.sideLink > span[aria-hidden] {
+  color: var(--ink-3);
+  font-size: 20px;
+  line-height: 1;
+}
+.sideHint {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+/* App: the band becomes a rounded card inside the phone's gutters. */
+:global(html[data-app]) .hero {
+  margin: 8px 16px 0;
+  padding: 20px 16px;
+  border-radius: 20px;
+  border-bottom: 0;
+  text-align: center;
+}
+:global(html[data-app]) .heroHead {
+  flex-direction: column;
+  gap: 12px;
+}
+:global(html[data-app]) .heroAvatar {
+  margin-bottom: 0;
+}
+:global(html[data-app]) .heroTiles .tile {
+  text-align: left;
+}
+:global(html[data-app]) .dashBody {
+  padding: 20px 16px 0;
+}
+@media (max-width: 640px) {
+  .hero {
+    padding: 28px 16px 22px;
+  }
+  .heroHead {
+    gap: 14px;
+  }
+  .heroAvatar :is(img, span:first-child) {
+    width: 56px !important;
+    height: 56px !important;
+  }
+  .dashBody {
+    padding: 22px 16px 0;
+  }
+}

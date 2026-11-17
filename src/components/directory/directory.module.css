@@ -22,9 +22,13 @@
 .head {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 6px 12px;
+}
+.head > h3 {
+  flex: 1;
+  min-width: 0;
 }
 .name {
   font-family: var(--font-display-stack);

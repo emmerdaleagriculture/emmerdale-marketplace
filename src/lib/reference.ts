@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache';
+import { avatarUrl } from '@/lib/avatars';
 import { createStaticClient } from '@/lib/supabase/static';
 import { memoize, REFERENCE_TTL_MS } from '@/lib/memo';
 import { createServiceRoleClient } from '@/lib/supabase/server';
@@ -96,6 +97,8 @@ export type DirectoryEntry = {
   servicesOnly: boolean;
   ratingAvg: number | null;
   ratingCount: number;
+  /** Public URL of their profile picture, or null (20261117120000). */
+  avatarUrl: string | null;
 };
 
 /**
@@ -111,7 +114,7 @@ export const getCountyDirectory = unstable_cache(
     const supabase = createServiceRoleClient();
     const { data } = await supabase
       .from('county_directory')
-      .select('county, contractor_id, business_name, website, directory_blurb, services, services_only, rating_avg, rating_count')
+      .select('county, contractor_id, business_name, website, directory_blurb, services, services_only, rating_avg, rating_count, avatar_path')
       .order('business_name');
     const byCounty: Record<string, DirectoryEntry[]> = {};
     for (const row of data ?? []) {
@@ -125,6 +128,7 @@ export const getCountyDirectory = unstable_cache(
         servicesOnly: row.services_only ?? false,
         ratingAvg: row.rating_avg,
         ratingCount: row.rating_count ?? 0,
+        avatarUrl: avatarUrl(row.avatar_path),
       });
     }
     return byCounty;

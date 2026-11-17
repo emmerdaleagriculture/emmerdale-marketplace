@@ -6,6 +6,9 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
 import { EmailBanner } from './EmailBanner';
 import { DismissableJob } from './DismissableJob';
+import { SettingsHashRedirect } from './SettingsHashRedirect';
+import { ContractorAvatar } from '@/components/ContractorAvatar';
+import { avatarUrl } from '@/lib/avatars';
 import { MembershipSwitcher } from './MembershipSwitcher';
 import { canSwitchMembership } from '@/lib/membershipSwitch';
 import { MembershipCard } from './MembershipCard';
@@ -246,30 +249,221 @@ export default async function AccountPage({
   const appBannerDismissed =
     contractor.app_banner_dismissed_at != null || (await cookies()).get(APP_BANNER_COOKIE)?.value === '1';
 
+  const statusRow = (
+    <div className={ac.statusRow}>
+      {/* Approved is the normal state: only a status worth knowing is shown. */}
+      {status !== 'approved' && (
+        <span className={`${ac.badge} ${ac[status] ?? ''}`}>{STATUS_LABELS[status] ?? status}</span>
+      )}
+      {isPremium && (
+        <span className={`${ac.badge} ${ac.premiumBadge}`}>
+          <span className={ac.badgeGlyph} aria-hidden="true">{MEMBERSHIP_GLYPHS[membership!]}</span>{' '}
+          {MEMBERSHIP_NAMES[membership!]}
+        </span>
+      )}
+      {(contractor.rating_count ?? 0) > 0 && contractor.rating_avg != null && (
+        <span>
+          ★ {Number(contractor.rating_avg).toFixed(1)} · {contractor.rating_count} rating
+          {contractor.rating_count === 1 ? '' : 's'}
+        </span>
+      )}
+    </div>
+  );
+
+  const contact = (
+    <ContactUsButton
+      subject={`Contractor enquiry: ${contractor.business_name}`}
+      body={`\n\n${contractor.business_name} · ${user.email ?? ''}`}
+    />
+  );
+
+  // Approved: the dashboard. A green band with who they are and the four
+  // numbers, then the work on the left and everything else on the right
+  // (stacked on a phone, work first). Settings have their own page.
+  if (status === 'approved') {
+    return (
+      <div className={a.wrap}>
+        <SiteHeader />
+        <SettingsHashRedirect />
+        <main className={ac.dash}>
+          <section className={ac.hero}>
+            <div className={ac.heroInner}>
+              <div className={ac.heroHead}>
+                <Link
+                  href="/account/settings"
+                  prefetch={false}
+                  className={ac.heroAvatar}
+                  title={contractor.avatar_path ? 'Change your picture' : 'Add a profile picture'}
+                >
+                  <ContractorAvatar url={avatarUrl(contractor.avatar_path)} name={contractor.business_name} size={72} />
+                  {!contractor.avatar_path && <span className={ac.heroAvatarAdd} aria-hidden="true">+</span>}
+                </Link>
+                <div className={ac.heroHeadText}>
+                  <div className={ac.heroEyebrow}>Your dashboard</div>
+                  <h1 className={ac.heroTitle}>{contractor.business_name}</h1>
+                  {statusRow}
+                </div>
+              </div>
+              <div className={`${ac.tiles} ${ac.heroTiles}`}>
+                {tiles.map((t) => (
+                  <Link key={t.label} href={t.href} prefetch={false} className={ac.tile}>
+                    <span className={ac.tileValue}>{t.value}</span>
+                    <span className={ac.tileLabel}>{t.label}</span>
+                    <span className={ac.tileHint}>{t.hint}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <div className={ac.dashBody}>
+            {emailHealth.undeliverable && (
+              <EmailBanner email={emailHealth.email} pending={emailHealth.pending} />
+            )}
+            {!app && !hasApp && !appBannerDismissed && <GetTheApp close={<DismissAppBanner />} />}
+            {canSwitchMembership(user.email) && (
+              <MembershipSwitcher current={membership} billed={isLiveSub(subQ.data)} />
+            )}
+
+            <div className={ac.dashGrid}>
+              <div className={ac.dashWork}>
+                <h2 className={ac.sectionTitle}>Needs you now</h2>
+                {actions.length === 0 ? (
+                  <div className={ac.caughtUp}>
+                    You’re all caught up. We’ll email you the moment a job comes in for
+                    your counties.
+                  </div>
+                ) : (
+                  <ul className={ac.actions}>
+                    {actions.map((x) => (
+                      <li key={x.key}>
+                        {x.token ? (
+                          <DismissableJob
+                            token={x.token}
+                            title={x.title}
+                            detail={x.detail}
+                            cta={x.cta}
+                            urgent={x.urgent}
+                          />
+                        ) : (
+                          <Link
+                            href={x.href}
+                            prefetch={false}
+                            className={`${ac.action} ${x.urgent ? ac.actionUrgent : ''}`}
+                          >
+                            <span className={ac.actionText}>
+                              <span className={ac.actionTitle}>{x.title}</span>
+                              <span className={ac.actionDetail}>{x.detail}</span>
+                            </span>
+                            <span className={ac.actionCta}>{x.cta} →</span>
+                          </Link>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {toPrice.length > 5 && (
+                  <Link href="/invitations" className={ac.more}>
+                    See all {toPrice.length} jobs to price →
+                  </Link>
+                )}
+
+                {awaiting.length > 0 && (
+                  <>
+                    <h2 className={ac.sectionTitle}>Priced, waiting on the customer</h2>
+                    <ul className={ac.actions}>
+                      {awaiting.map((i) => (
+                        <li key={i.id}>
+                          <Link href={`/quote/${i.token}`} prefetch={false} className={`${ac.action} ${ac.actionQuiet}`}>
+                            <span className={ac.actionText}>
+                              <span className={ac.actionTitle}>{clip(i.service ?? 'Job', 60)}</span>
+                              <span className={ac.actionDetail}>
+                                {[
+                                  place(i),
+                                  yourPrice(i.submission_id) ? `Your price ${yourPrice(i.submission_id)}` : null,
+                                  i.expires_at ? timeLeft(i.expires_at) : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(' · ')}
+                              </span>
+                            </span>
+                            <span className={ac.actionCta}>View →</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+
+              <aside className={ac.dashSide}>
+                {/* In the app, only members see a card (their own plan). Plans
+                    are not offered there at all: the website is the only
+                    place to see or buy one, like Spotify. */}
+                {(!app || isPremium) && (
+                  <MembershipCard
+                    membership={membership}
+                    sub={subQ.data ?? null}
+                    compedUntil={contractor.premium_comped_until ?? null}
+                    openCompedUntil={contractor.open_comped_until ?? null}
+                    notice={subNotice}
+                    app={app}
+                  />
+                )}
+
+                <nav className={ac.sidePanel} aria-label="Your account">
+                  <h2 className={ac.sidePanelTitle}>Your account</h2>
+                  <Link href="/invitations" className={ac.sideLink}>
+                    All invitations &amp; history <span aria-hidden="true">›</span>
+                  </Link>
+                  <Link href="/won" className={ac.sideLink}>
+                    Won jobs <span aria-hidden="true">›</span>
+                  </Link>
+                  {(isOpen || !app) && (
+                    <Link href="/account/market" className={ac.sideLink}>
+                      Market data <span aria-hidden="true">›</span>
+                    </Link>
+                  )}
+                  {(tendersOn || (!isOpen && !app)) && (
+                    <Link href="/account/tenders" className={ac.sideLink}>
+                      <span>
+                        Council tenders
+                        {tenderCount > 0 && <span className={ac.countBadge}>{tenderCount} new</span>}
+                      </span>
+                      <span aria-hidden="true">›</span>
+                    </Link>
+                  )}
+                  <Link href="/account/settings" className={ac.sideLink}>
+                    <span>
+                      Settings
+                      <span className={ac.sideHint}>
+                        {selectedCounties.length} counties · {(contractor.services ?? []).length} services
+                      </span>
+                    </span>
+                    <span aria-hidden="true">›</span>
+                  </Link>
+                </nav>
+
+                {contact}
+              </aside>
+            </div>
+          </div>
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
+
+  // Pending or suspended: no dashboard yet (or any more), so the page is the
+  // status, the membership card where it can help, and their settings.
   return (
     <div className={a.wrap}>
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
           <Breadcrumb tone="light" jsonLd={false} skipHome items={[{ label: 'Dashboard' }]} />
-          <div className={a.eyebrow}>Your dashboard</div>
           <h1 className={a.title}>{contractor.business_name}</h1>
-          <div className={ac.statusRow}>
-            <span className={`${ac.badge} ${ac[status] ?? ''}`}>{STATUS_LABELS[status] ?? status}</span>
-            {isPremium && (
-              <span className={`${ac.badge} ${ac.premiumBadge}`}>
-                <span className={ac.badgeGlyph} aria-hidden="true">{MEMBERSHIP_GLYPHS[membership!]}</span>{' '}
-                {MEMBERSHIP_NAMES[membership!]}
-              </span>
-            )}
-            {(contractor.rating_count ?? 0) > 0 && contractor.rating_avg != null && (
-              <span>
-                ★ {Number(contractor.rating_avg).toFixed(1)} · {contractor.rating_count} rating
-                {contractor.rating_count === 1 ? '' : 's'}
-              </span>
-            )}
-            <span className={ac.email}>{user.email}</span>
-          </div>
+          {statusRow}
 
           {emailHealth.undeliverable && (
             <EmailBanner email={emailHealth.email} pending={emailHealth.pending} />
@@ -329,120 +523,13 @@ export default async function AccountPage({
             <MembershipSwitcher current={membership} billed={isLiveSub(subQ.data)} />
           )}
 
-          {status === 'approved' && (
-            <>
-              <div className={ac.tiles}>
-                {tiles.map((t) => (
-                  <Link key={t.label} href={t.href} prefetch={false} className={ac.tile}>
-                    <span className={ac.tileValue}>{t.value}</span>
-                    <span className={ac.tileLabel}>{t.label}</span>
-                    <span className={ac.tileHint}>{t.hint}</span>
-                  </Link>
-                ))}
-              </div>
-
-              <h2 className={a.groupTitle}>Needs you now</h2>
-              {actions.length === 0 ? (
-                <div className={ac.caughtUp}>
-                  You’re all caught up. We’ll email you the moment a job comes in for
-                  your counties.
-                </div>
-              ) : (
-                <ul className={ac.actions}>
-                  {actions.map((x) => (
-                    <li key={x.key}>
-                      {x.token ? (
-                        <DismissableJob
-                          token={x.token}
-                          title={x.title}
-                          detail={x.detail}
-                          cta={x.cta}
-                          urgent={x.urgent}
-                        />
-                      ) : (
-                      <Link
-                        href={x.href}
-                        prefetch={false}
-                        className={`${ac.action} ${x.urgent ? ac.actionUrgent : ''}`}
-                      >
-                        <span className={ac.actionText}>
-                          <span className={ac.actionTitle}>{x.title}</span>
-                          <span className={ac.actionDetail}>{x.detail}</span>
-                        </span>
-                        <span className={ac.actionCta}>{x.cta} →</span>
-                      </Link>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {toPrice.length > 5 && (
-                <Link href="/invitations" className={ac.more}>
-                  See all {toPrice.length} jobs to price →
-                </Link>
-              )}
-
-              {awaiting.length > 0 && (
-                <>
-                  <h2 className={a.groupTitle}>Priced, waiting on the customer</h2>
-                  <ul className={ac.actions}>
-                    {awaiting.map((i) => (
-                      <li key={i.id}>
-                        <Link href={`/quote/${i.token}`} prefetch={false} className={ac.action}>
-                          <span className={ac.actionText}>
-                            <span className={ac.actionTitle}>{clip(i.service ?? 'Job', 60)}</span>
-                            <span className={ac.actionDetail}>
-                              {[
-                                place(i),
-                                yourPrice(i.submission_id) ? `Your price ${yourPrice(i.submission_id)}` : null,
-                                i.expires_at ? timeLeft(i.expires_at) : null,
-                              ]
-                                .filter(Boolean)
-                                .join(' · ')}
-                            </span>
-                          </span>
-                          <span className={ac.actionCta}>View →</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-
-              <div className={ac.quickLinks}>
-                <Link href="/invitations">All invitations &amp; history</Link>
-                <Link href="/won">Won jobs</Link>
-                {(isOpen || !app) && <Link href="/account/market">Market data</Link>}
-                {(tendersOn || (!isOpen && !app)) && (
-                  <Link href="/account/tenders">
-                    Council tenders{tenderCount > 0 && <span className={ac.countBadge}>{tenderCount} new</span>}
-                  </Link>
-                )}
-              </div>
-
-              {/* In the app, only members see a card (their own plan). Plans
-                  are not offered there at all: the website is the only
-                  place to see or buy one, like Spotify. */}
-              {(!app || isPremium) && (
-                <MembershipCard
-                  membership={membership}
-                  sub={subQ.data ?? null}
-                  compedUntil={contractor.premium_comped_until ?? null}
-                  openCompedUntil={contractor.open_comped_until ?? null}
-                  notice={subNotice}
-                  app={app}
-                />
-              )}
-            </>
-          )}
-
           <h2 id="settings" className={a.groupTitle}>Your settings</h2>
           <AccountForm
             contractor={contractor}
             counties={counties}
             selectedCounties={selectedCounties}
-            listing={isOpen && status === 'approved'}
-            tenders={isOpen && status === 'approved' ? 'open' : app ? 'locked-app' : 'locked'}
+            listing={false}
+            tenders={app ? 'locked-app' : 'locked'}
             services={services}
           />
 
@@ -460,10 +547,7 @@ export default async function AccountPage({
             </div>
           </div>
 
-          <ContactUsButton
-            subject={`Contractor enquiry: ${contractor.business_name}`}
-            body={`\n\n${contractor.business_name} · ${user.email ?? ''}`}
-          />
+          {contact}
         </div>
       </main>
       <SiteFooter />

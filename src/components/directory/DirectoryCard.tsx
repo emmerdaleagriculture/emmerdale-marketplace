@@ -1,4 +1,5 @@
 import { RatingStars } from '@/components/RatingStars';
+import { ContractorAvatar } from '@/components/ContractorAvatar';
 import { DirectEnquiryForm } from './DirectEnquiryForm';
 import { isNationwide } from './copy';
 import type { DirectoryEntry } from '@/lib/reference';
@@ -37,6 +38,7 @@ export function DirectoryCard({
   return (
     <article className={s.card} aria-label={entry.businessName}>
       <div className={s.head}>
+        <ContractorAvatar url={entry.avatarUrl} name={entry.businessName} size={48} />
         <h3 className={s.name}>{entry.businessName}</h3>
         <RatingStars avg={entry.ratingAvg} count={entry.ratingCount} />
       </div>
