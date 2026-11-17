@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { FeaturePreview } from '@/components/membership/FeaturePreview';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -129,6 +130,11 @@ export default async function MarketDataPage() {
                 month across the counties you cover, what each kind of work went for, and how
                 often your prices win against everyone else’s.
               </p>
+              <FeaturePreview
+                src="/images/examples/market-data.webp"
+                alt="Example of the Market data page: jobs on your patch, prices sent and won, a month-by-month chart of jobs, and the typical price for each kind of work."
+                caption="What a Premium member sees: their own patch in numbers, updated as jobs come in."
+              />
               {app ? (
                 <div className={s.pitch}>
                   <h2>Part of Premium membership</h2>
