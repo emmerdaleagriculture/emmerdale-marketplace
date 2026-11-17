@@ -134,7 +134,7 @@ export default async function MarketDataPage() {
               <FeaturePreview
                 image={marketExample}
                 alt="Example of the Market data page: jobs on your patch, prices sent and won, a month-by-month chart of jobs, and the typical price for each kind of work."
-                caption="What a Premium member sees: their own patch in numbers, updated as jobs come in."
+                caption="Illustrative figures: how a Premium member’s patch looks in numbers, updated as jobs come in."
               />
               {app ? (
                 <div className={s.pitch}>
