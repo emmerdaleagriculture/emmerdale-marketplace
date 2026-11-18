@@ -41,7 +41,7 @@ const IN_MS = 240;
  * A turn in progress: where the next page comes in from. Module-level, as a
  * new month remounts the Diary (page.tsx keys it by month).
  */
-let turning: { from: number; timer: ReturnType<typeof setTimeout> } | null = null;
+let turning: { to: string; from: number; timer: ReturnType<typeof setTimeout> } | null = null;
 
 /**
  * Turn the calendar like a page: swipe the card sideways (or tap an arrow)
@@ -50,11 +50,12 @@ let turning: { from: number; timer: ReturnType<typeof setTimeout> } | null = nul
  * out. The card carries data-no-swipe so the app's tab swipe leaves it
  * alone; vertical drags are left to the page.
  *
- * `page` names what is showing (a month, or a week's Monday): when it
- * changes after a turn, the new one slides in. A month is a fetch, so the
+ * `page` names what is showing (a month, or a week's Monday), and
+ * `pageAfter` the one a turn will show: when that arrives, it slides in.
+ * Anything else (the Diary left and opened again) just shows. A month is a fetch, so the
  * pane waits off to the side until it arrives.
  */
-function useCalendarPager(page: string, onStep: (dir: -1 | 1) => void) {
+function useCalendarPager(page: string, pageAfter: (dir: -1 | 1) => string, onStep: (dir: -1 | 1) => void) {
   const step = useRef(onStep);
   step.current = onStep;
   const pane = useRef<HTMLDivElement>(null);
@@ -75,7 +76,7 @@ function useCalendarPager(page: string, onStep: (dir: -1 | 1) => void) {
     clearTimeout(t.timer);
     turning = null;
     const n = pane.current;
-    if (!n) return;
+    if (!n || page !== t.to) return;
     set(t.from, 0);
     void n.offsetWidth;
     set(0, IN_MS);
@@ -92,7 +93,7 @@ function useCalendarPager(page: string, onStep: (dir: -1 | 1) => void) {
         set(0, OUT_MS);
       }
     }, 12000);
-    turning = { from: dir * w, timer };
+    turning = { to: pageAfter(dir), from: dir * w, timer };
     // Change what is showing once it is off the side, not while it leaves.
     setTimeout(() => step.current(dir), OUT_MS);
   }
@@ -235,10 +236,14 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
     router.prefetch(nextMonth);
   }, [router, prevMonth, nextMonth]);
 
-  const pager = useCalendarPager(view === 'week' ? week[0] : month, (dir) => {
-    if (view === 'week') pick(addDays(day, dir * 7));
-    else startNav(() => router.replace(dir < 0 ? prevMonth : nextMonth));
-  });
+  const pager = useCalendarPager(
+    view === 'week' ? week[0] : month,
+    (dir) => (view === 'week' ? addDays(week[0], dir * 7) : shiftMonth(month, dir)),
+    (dir) => {
+      if (view === 'week') pick(addDays(day, dir * 7));
+      else startNav(() => router.replace(dir < 0 ? prevMonth : nextMonth));
+    },
+  );
 
   const backToToday = view === 'week' ? !week.includes(today) : !today.startsWith(month);
 
