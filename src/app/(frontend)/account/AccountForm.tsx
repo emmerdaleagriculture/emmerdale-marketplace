@@ -7,6 +7,7 @@ import { CountyPicker, type CountyOption } from '@/components/forms/CountyPicker
 import { ServicePicker, type ServiceOption } from '@/components/forms/ServicePicker';
 import type { Contractor } from '@/lib/auth';
 import Link from 'next/link';
+import { PushToggleRow } from '@/components/app/PushControls';
 import f from '@/components/forms/forms.module.css';
 import a from '../auth.module.css';
 import ac from './account.module.css';
@@ -210,6 +211,7 @@ export function AccountForm({
           <p className={f.hint} style={{ marginTop: 8 }}>
             Texts go out between 8am and 9pm. You can also reply STOP to any of them.
           </p>
+          <PushToggleRow boxed />
         </div>
       </details>
 

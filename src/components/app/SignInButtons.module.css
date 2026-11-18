@@ -53,12 +53,10 @@
 }
 
 /* Apple's rules: on a dark ground the button turns white. */
-@media (prefers-color-scheme: dark) {
-  :global(html[data-app]) .apple {
-    background: #fff;
-    color: #000;
-  }
-  :global(html[data-app]) .google {
-    border-color: #fff;
-  }
+:global(html[data-app][data-theme='dark']) .apple {
+  background: #fff;
+  color: #000;
+}
+:global(html[data-app][data-theme='dark']) .google {
+  border-color: #fff;
 }

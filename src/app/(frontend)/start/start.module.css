@@ -369,10 +369,8 @@
 .page {
   background: linear-gradient(180deg, #dce6dc 0, #e8efe3 520px, var(--jd-green-pale) 100%);
 }
-@media (prefers-color-scheme: dark) {
-  :global(html[data-app]) .page {
-    background: linear-gradient(180deg, #17210f 0, var(--cream) 520px);
-  }
+:global(html[data-app][data-theme='dark']) .page {
+  background: linear-gradient(180deg, #17210f 0, var(--cream) 520px);
 }
 .chips {
   list-style: none;
