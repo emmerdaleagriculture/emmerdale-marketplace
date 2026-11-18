@@ -17,9 +17,10 @@
   display: flex;
   height: calc(var(--app-tabbar-h) + var(--app-safe-bottom));
   padding: 6px 4px calc(var(--app-safe-bottom) + 2px);
-  background: color-mix(in srgb, var(--white) 96%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  /* Solid, no backdrop blur: a blurred fixed bar is re-composited on every
+     scroll frame, which WebViews (Android's most) feel as scroll lag, and
+     at 96% opacity the blur was barely visible anyway. */
+  background: var(--white);
   border-top: 1px solid var(--app-line);
 }
 .tab {
@@ -106,5 +107,44 @@
 @media (prefers-reduced-motion: reduce) {
   .backTab {
     transition: none;
+  }
+}
+
+/* Navigation feedback: a link tapped in the app shows this at once, while
+   the server renders the next screen (no screen has a loading state). */
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--app-safe-top) + 3px);
+  z-index: 1001;
+  pointer-events: none;
+  overflow: hidden;
+}
+.progress::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 40%;
+  background: var(--fill-green);
+  border-radius: 0 2px 2px 0;
+  animation: progress 1.1s ease-in-out infinite;
+}
+@keyframes progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(260%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress::after {
+    animation: none;
+    width: 100%;
+    opacity: 0.6;
   }
 }

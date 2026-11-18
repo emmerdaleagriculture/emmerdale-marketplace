@@ -144,6 +144,40 @@ export function AppShell() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [showTabs, pathname, refreshBadges]);
 
+  // A tapped link answers at once: the tab lights up and a bar runs along
+  // the top until the new screen arrives. Without it a tap did nothing
+  // visible for the whole server round trip, which read as lag.
+  const [pending, setPending] = useState<{ path: string; tab: string | null } | null>(null);
+  useEffect(() => setPending(null), [pathname]);
+  useEffect(() => {
+    if (!pending) return;
+    // A navigation that never lands (offline, an error page) must not leave it running.
+    const t = setTimeout(() => setPending(null), 12000);
+    return () => clearTimeout(t);
+  }, [pending]);
+  useEffect(() => {
+    if (!app) return;
+    const onClick = (e: MouseEvent) => {
+      // No defaultPrevented check: next/link prevents every click it routes.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element | null)?.closest?.('a');
+      if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+      let url: URL;
+      try {
+        url = new URL(a.href, window.location.href);
+      } catch {
+        return;
+      }
+      // Same screen (a hash, or only the query: the diary's month arrows)
+      // keeps its own feedback; pathname would not change to clear the bar.
+      if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
+      const tab = tabsFor(role)?.find((t) => t.href === url.pathname)?.key ?? null;
+      setPending({ path: url.pathname, tab });
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [app, role]);
+
   const goBack = () => {
     // A fresh WebView opened straight onto an inner screen (a push, a text
     // link) has nowhere to go back to; the tab it belongs to is the answer.
@@ -154,15 +188,17 @@ export function AppShell() {
   if (!app) return null;
 
   const current = tabs ? activeTab(tabs, pathname) : null;
+  const shownTab = pending?.tab ?? current?.key;
 
   return (
     <>
+      {pending && <div className={s.progress} role="progressbar" aria-label="Loading" />}
       {!standalone && <PullToRefresh onRefresh={refreshBadges} />}
       {!standalone && (tabs || role === null) && (
         <nav className={`${s.tabbar} ${tabs ? '' : s.skeleton}`} aria-label="App">
           {(tabs ?? CUSTOMER_PLACEHOLDER).map((t) => {
             const n = t.badge ? badges[t.badge] ?? 0 : 0;
-            const on = current?.key === t.key;
+            const on = shownTab === t.key;
             return (
               <Link
                 key={t.key}
