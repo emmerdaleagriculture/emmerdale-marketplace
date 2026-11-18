@@ -37,16 +37,16 @@
   /* ink-2, not ink-3: inactive labels read outdoors (7.9:1 on white). */
   color: var(--ink-2);
   padding: 2px 0;
-  white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
 }
-/* Five tabs and Back on the narrowest phones: "Dashboard" must clear its
-   neighbour. */
-@media (max-width: 359px) {
-  .tab {
-    font-size: 10px;
-    letter-spacing: -0.1px;
-  }
+/* The tabs are icons only; their names are kept for screen readers. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 .tab:active {
   opacity: 0.7;
