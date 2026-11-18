@@ -28,6 +28,74 @@ const EMPTY: FormState = {};
 const VIEW_KEY = 'diary-view';
 
 export type DiaryView = 'month' | 'week';
+
+/** How far a sideways swipe on the calendar must travel to step. */
+const STEP_AT = 50;
+
+/**
+ * Swipe the calendar card sideways to step a month (or week): right to left
+ * for the next, left to right for the one before. The card carries
+ * data-no-swipe so the app's tab swipe leaves it alone, and follows the
+ * finger a little. Vertical drags are left to the page.
+ */
+function useCalendarSwipe(onStep: (dir: -1 | 1) => void) {
+  const step = useRef(onStep);
+  step.current = onStep;
+  const st = useRef({ x: 0, y: 0, tracking: false, swiping: false, dx: 0 });
+  const el = useRef<HTMLDivElement>(null);
+
+  const shift = (d: number, dragging: boolean) => {
+    const n = el.current;
+    if (!n) return;
+    n.style.transition = dragging ? 'none' : 'transform 0.2s ease';
+    n.style.transform = d ? `translateX(${d * 0.3}px)` : '';
+  };
+
+  return {
+    ref: el,
+    'data-no-swipe': '',
+    onTouchStart: (e: React.TouchEvent) => {
+      const s = st.current;
+      s.tracking = e.touches.length === 1;
+      s.swiping = false;
+      s.dx = 0;
+      if (!s.tracking) return;
+      s.x = e.touches[0].clientX;
+      s.y = e.touches[0].clientY;
+    },
+    onTouchMove: (e: React.TouchEvent) => {
+      const s = st.current;
+      if (!s.tracking) return;
+      const mx = e.touches[0].clientX - s.x;
+      const my = e.touches[0].clientY - s.y;
+      if (!s.swiping) {
+        if (Math.abs(my) > 10 && Math.abs(my) * 1.2 > Math.abs(mx)) {
+          s.tracking = false;
+          return;
+        }
+        if (Math.abs(mx) < 12 || Math.abs(mx) < Math.abs(my) * 1.5) return;
+        s.swiping = true;
+      }
+      s.dx = mx;
+      shift(mx, true);
+    },
+    onTouchEnd: () => {
+      const s = st.current;
+      const dx = s.dx;
+      const was = s.swiping;
+      s.tracking = s.swiping = false;
+      s.dx = 0;
+      if (!was) return;
+      shift(0, false);
+      if (dx <= -STEP_AT) step.current(1);
+      else if (dx >= STEP_AT) step.current(-1);
+    },
+    onTouchCancel: () => {
+      st.current.tracking = st.current.swiping = false;
+      shift(0, false);
+    },
+  };
+}
 type Props = { month: string; today: string; initialDay: string; initialView: DiaryView | null; entries: DiaryEntry[] };
 
 export function Diary({ month, today, initialDay, initialView, entries }: Props) {
@@ -105,6 +173,12 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
     });
   }
 
+  const swipe = useCalendarSwipe((dir) => {
+    if (navigating) return;
+    if (view === 'week') pick(addDays(day, dir * 7));
+    else startNav(() => router.replace(`/app/diary?m=${shiftMonth(month, dir)}&v=month`));
+  });
+
   const backToToday = view === 'week' ? !week.includes(today) : !today.startsWith(month);
 
   return (
@@ -118,7 +192,7 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
       </div>
 
       {view === 'month' ? (
-        <div className={s.cal}>
+        <div className={s.cal} {...swipe}>
           <div className={s.calHead}>
             <Link href={`/app/diary?m=${shiftMonth(month, -1)}&v=month`} className={s.nav} aria-label="Previous month" replace>
               ‹
@@ -156,7 +230,7 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
           )}
         </div>
       ) : (
-        <div className={s.weekWrap}>
+        <div className={s.weekWrap} {...swipe}>
           <div className={s.calHead}>
             <button type="button" className={s.nav} aria-label="Previous week" disabled={navigating} onClick={() => pick(addDays(day, -7))}>
               ‹
