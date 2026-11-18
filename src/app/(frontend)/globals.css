@@ -133,11 +133,14 @@ html[data-app] {
   /* A WebView rubber-bands white past the edge; cream matches the screens. */
   background: var(--cream);
   scroll-behavior: auto;
+  /* A screen sliding off sideways (SwipeTabs) must not widen the page. */
+  overflow-x: clip;
 }
 html[data-app] body {
   background: var(--cream);
   /* No pull-to-refresh or overscroll bounce fighting the tab bar. */
   overscroll-behavior-y: none;
+  overflow-x: clip;
   -webkit-tap-highlight-color: transparent;
   /* The frame draws nothing above the page, so the page keeps clear of the
      notch itself. Pages with their own top bar (the welcome hero) start at the very top and pad inside. */

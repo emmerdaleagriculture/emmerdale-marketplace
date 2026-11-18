@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useActionState, useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from 'react';
+import { useActionState, useEffect, useLayoutEffect, useMemo, useOptimistic, useRef, useState, useTransition } from 'react';
 import type { FormState } from '@/lib/form';
 import ui from '../app-ui.module.css';
 import { deleteDiaryEntryAction, saveDiaryEntryAction, setDiaryEntryDoneAction } from './actions';
@@ -29,44 +29,91 @@ const VIEW_KEY = 'diary-view';
 
 export type DiaryView = 'month' | 'week';
 
-/** How far a sideways swipe on the calendar must travel to step. */
+/** How far a sideways swipe on the calendar must travel to turn the page. */
 const STEP_AT = 50;
+/** A quick flick this fast (px/ms) turns it even short of that. */
+const FLICK = 0.45;
+const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+const OUT_MS = 170;
+const IN_MS = 240;
 
 /**
- * Swipe the calendar card sideways to step a month (or week): right to left
- * for the next, left to right for the one before. The card carries
- * data-no-swipe so the app's tab swipe leaves it alone, and follows the
- * finger a little. Vertical drags are left to the page.
+ * A turn in progress: where the next page comes in from. Module-level, as a
+ * new month remounts the Diary (page.tsx keys it by month).
  */
-function useCalendarSwipe(onStep: (dir: -1 | 1) => void) {
+let turning: { from: number; timer: ReturnType<typeof setTimeout> } | null = null;
+
+/**
+ * Turn the calendar like a page: swipe the card sideways (or tap an arrow)
+ * and the month or week inside slides off that side, then the next one
+ * slides in from the other. Right to left is forward, as the arrows are laid
+ * out. The card carries data-no-swipe so the app's tab swipe leaves it
+ * alone; vertical drags are left to the page.
+ *
+ * `page` names what is showing (a month, or a week's Monday): when it
+ * changes after a turn, the new one slides in. A month is a fetch, so the
+ * pane waits off to the side until it arrives.
+ */
+function useCalendarPager(page: string, onStep: (dir: -1 | 1) => void) {
   const step = useRef(onStep);
   step.current = onStep;
-  const st = useRef({ x: 0, y: 0, tracking: false, swiping: false, dx: 0 });
-  const el = useRef<HTMLDivElement>(null);
+  const pane = useRef<HTMLDivElement>(null);
+  const st = useRef({ x: 0, y: 0, lastX: 0, lastT: 0, v: 0, tracking: false, swiping: false, dx: 0 });
 
-  const shift = (d: number, dragging: boolean) => {
-    const n = el.current;
+  const set = (x: number, ms: number) => {
+    const n = pane.current;
     if (!n) return;
-    n.style.transition = dragging ? 'none' : 'transform 0.2s ease';
-    n.style.transform = d ? `translateX(${d * 0.3}px)` : '';
+    n.style.transition = ms ? `transform ${ms}ms ${EASE}` : 'none';
+    n.style.transform = x ? `translateX(${x}px)` : '';
   };
 
-  return {
-    ref: el,
+  // The next page is showing (or this Diary is the new month): bring it in
+  // from the side, placed there before it is painted.
+  useLayoutEffect(() => {
+    const t = turning;
+    if (!t) return;
+    clearTimeout(t.timer);
+    turning = null;
+    const n = pane.current;
+    if (!n) return;
+    set(t.from, 0);
+    void n.offsetWidth;
+    set(0, IN_MS);
+  }, [page]);
+
+  function turn(dir: -1 | 1) {
+    if (turning) return;
+    const w = pane.current?.parentElement?.clientWidth ?? window.innerWidth;
+    set(-dir * w, OUT_MS);
+    const timer = setTimeout(() => {
+      // Nothing came (offline, an error): put this page back.
+      if (turning?.timer === timer) {
+        turning = null;
+        set(0, OUT_MS);
+      }
+    }, 12000);
+    turning = { from: dir * w, timer };
+    // Change what is showing once it is off the side, not while it leaves.
+    setTimeout(() => step.current(dir), OUT_MS);
+  }
+
+  const bind = {
     'data-no-swipe': '',
     onTouchStart: (e: React.TouchEvent) => {
       const s = st.current;
-      s.tracking = e.touches.length === 1;
+      s.tracking = e.touches.length === 1 && !turning;
       s.swiping = false;
-      s.dx = 0;
+      s.dx = s.v = 0;
       if (!s.tracking) return;
-      s.x = e.touches[0].clientX;
+      s.x = s.lastX = e.touches[0].clientX;
       s.y = e.touches[0].clientY;
+      s.lastT = e.timeStamp;
     },
     onTouchMove: (e: React.TouchEvent) => {
       const s = st.current;
       if (!s.tracking) return;
-      const mx = e.touches[0].clientX - s.x;
+      const x = e.touches[0].clientX;
+      const mx = x - s.x;
       const my = e.touches[0].clientY - s.y;
       if (!s.swiping) {
         if (Math.abs(my) > 10 && Math.abs(my) * 1.2 > Math.abs(mx)) {
@@ -76,26 +123,33 @@ function useCalendarSwipe(onStep: (dir: -1 | 1) => void) {
         if (Math.abs(mx) < 12 || Math.abs(mx) < Math.abs(my) * 1.5) return;
         s.swiping = true;
       }
+      const dt = e.timeStamp - s.lastT;
+      if (dt > 0) s.v = (x - s.lastX) / dt;
+      s.lastX = x;
+      s.lastT = e.timeStamp;
       s.dx = mx;
-      shift(mx, true);
+      set(mx, 0);
     },
     onTouchEnd: () => {
       const s = st.current;
-      const dx = s.dx;
-      const was = s.swiping;
+      const { dx, v, swiping } = s;
       s.tracking = s.swiping = false;
       s.dx = 0;
-      if (!was) return;
-      shift(0, false);
-      if (dx <= -STEP_AT) step.current(1);
-      else if (dx >= STEP_AT) step.current(-1);
+      if (!swiping) return;
+      const flick = Math.abs(dx) > 20 && Math.abs(v) > FLICK && Math.sign(v) === Math.sign(dx);
+      if (dx <= -STEP_AT || (flick && dx < 0)) turn(1);
+      else if (dx >= STEP_AT || (flick && dx > 0)) turn(-1);
+      else set(0, OUT_MS);
     },
     onTouchCancel: () => {
       st.current.tracking = st.current.swiping = false;
-      shift(0, false);
+      if (!turning) set(0, OUT_MS);
     },
   };
+
+  return { bind, pane, turn };
 }
+
 type Props = { month: string; today: string; initialDay: string; initialView: DiaryView | null; entries: DiaryEntry[] };
 
 export function Diary({ month, today, initialDay, initialView, entries }: Props) {
@@ -173,10 +227,17 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
     });
   }
 
-  const swipe = useCalendarSwipe((dir) => {
-    if (navigating) return;
+  const prevMonth = `/app/diary?m=${shiftMonth(month, -1)}&v=month`;
+  const nextMonth = `/app/diary?m=${shiftMonth(month, 1)}&v=month`;
+  // Months are fetched: ask for the neighbours early so a turn is quick.
+  useEffect(() => {
+    router.prefetch(prevMonth);
+    router.prefetch(nextMonth);
+  }, [router, prevMonth, nextMonth]);
+
+  const pager = useCalendarPager(view === 'week' ? week[0] : month, (dir) => {
     if (view === 'week') pick(addDays(day, dir * 7));
-    else startNav(() => router.replace(`/app/diary?m=${shiftMonth(month, dir)}&v=month`));
+    else startNav(() => router.replace(dir < 0 ? prevMonth : nextMonth));
   });
 
   const backToToday = view === 'week' ? !week.includes(today) : !today.startsWith(month);
@@ -192,15 +253,16 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
       </div>
 
       {view === 'month' ? (
-        <div className={s.cal} {...swipe}>
+        <div className={s.cal} {...pager.bind}>
+          <div ref={pager.pane}>
           <div className={s.calHead}>
-            <Link href={`/app/diary?m=${shiftMonth(month, -1)}&v=month`} className={s.nav} aria-label="Previous month" replace>
+            <button type="button" className={s.nav} aria-label="Previous month" disabled={navigating} onClick={() => pager.turn(-1)}>
               ‹
-            </Link>
+            </button>
             <div className={s.month}>{monthLabel(month)}</div>
-            <Link href={`/app/diary?m=${shiftMonth(month, 1)}&v=month`} className={s.nav} aria-label="Next month" replace>
+            <button type="button" className={s.nav} aria-label="Next month" disabled={navigating} onClick={() => pager.turn(1)}>
               ›
-            </Link>
+            </button>
           </div>
           <div className={s.grid} role="grid" aria-label={monthLabel(month)}>
             {WEEKDAYS.map((w, i) => (
@@ -228,18 +290,20 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
               Back to today
             </Link>
           )}
+          </div>
         </div>
       ) : (
-        <div className={s.weekWrap} {...swipe}>
+        <div className={s.weekWrap} {...pager.bind}>
+          <div ref={pager.pane}>
           <div className={s.calHead}>
-            <button type="button" className={s.nav} aria-label="Previous week" disabled={navigating} onClick={() => pick(addDays(day, -7))}>
+            <button type="button" className={s.nav} aria-label="Previous week" disabled={navigating} onClick={() => pager.turn(-1)}>
               ‹
             </button>
             <div style={{ textAlign: 'center' }}>
               <div className={s.month}>{weekLabel(week)}</div>
               <div className={s.weekNo}>Week {isoWeek(day)}</div>
             </div>
-            <button type="button" className={s.nav} aria-label="Next week" disabled={navigating} onClick={() => pick(addDays(day, 7))}>
+            <button type="button" className={s.nav} aria-label="Next week" disabled={navigating} onClick={() => pager.turn(1)}>
               ›
             </button>
           </div>
@@ -281,6 +345,7 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
               Back to this week
             </button>
           )}
+          </div>
         </div>
       )}
 

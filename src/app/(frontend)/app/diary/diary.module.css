@@ -5,6 +5,9 @@
   border: 1px solid var(--app-line);
   border-radius: 20px;
   padding: 12px 10px 14px;
+  /* The month slides off and on inside the card (useCalendarPager). */
+  overflow: hidden;
+  touch-action: pan-y;
 }
 .calHead {
   display: flex;
@@ -286,6 +289,8 @@
   border: 1px solid var(--app-line);
   border-radius: 20px;
   padding: 12px 10px 12px;
+  overflow: hidden;
+  touch-action: pan-y;
 }
 .weekNo {
   font-size: 12.5px;
