@@ -27,7 +27,7 @@ import { timeAgo, timeLeft } from '@/lib/time';
 import a from '../auth.module.css';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import ac from './account.module.css';
-import { LogoutButton, PushToggleRow } from '@/components/app/PushControls';
+import { LogoutButton, ThemeRow } from '@/components/app/PushControls';
 import ui from '../app/app-ui.module.css';
 
 export const metadata: Metadata = {
@@ -536,7 +536,7 @@ export default async function AccountPage({
           {/* App only: the site header carried log-out, and it is hidden there. */}
           <div data-app-only style={{ margin: '24px 0' }}>
             <div className={ui.rows}>
-              <PushToggleRow />
+              <ThemeRow />
               <Link href="/app/account/delete" className={`${ui.row} ${ui.rowDanger}`}>
                 Delete my account
                 <span className={ui.rowValue}>›</span>

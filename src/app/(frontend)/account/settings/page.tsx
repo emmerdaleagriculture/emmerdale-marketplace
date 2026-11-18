@@ -13,7 +13,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { isAppRequest } from '@/lib/appMode.server';
 import { getCounties, getServices } from '@/lib/reference';
-import { LogoutButton, PushToggleRow } from '@/components/app/PushControls';
+import { LogoutButton, ThemeRow } from '@/components/app/PushControls';
 import a from '../../auth.module.css';
 import ui from '../../app/app-ui.module.css';
 
@@ -80,7 +80,7 @@ export default async function SettingsPage() {
           {/* App only: the site header carried log-out, and it is hidden there. */}
           <div data-app-only style={{ margin: '24px 0' }}>
             <div className={ui.rows}>
-              <PushToggleRow />
+              <ThemeRow />
               <Link href="/app/account/delete" className={`${ui.row} ${ui.rowDanger}`}>
                 Delete my account
                 <span className={ui.rowValue}>›</span>

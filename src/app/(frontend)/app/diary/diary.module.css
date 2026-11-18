@@ -383,3 +383,12 @@ button.todayLink {
   color: var(--jd-green);
   cursor: pointer;
 }
+/* The add bar's label, for screen readers while the bar is folded. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

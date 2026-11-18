@@ -9,6 +9,7 @@ import { Analytics } from '@/components/Analytics';
 import { FirstTouchCapture } from '@/components/FirstTouch';
 import { AppShell } from '@/components/app/AppShell';
 import { APP_COOKIE, APP_UA_TOKEN } from '@/lib/appMode';
+import { THEME_KEY } from '@/lib/app/theme';
 
 const GA_ID = 'G-869MBRK9FD';
 const META_PIXEL_ID = '1714644666891790';
@@ -105,6 +106,14 @@ export const viewport: Viewport = {
 };
 
 /**
+ * The app's light/dark theme (src/lib/app/theme.ts), inside the app-mode
+ * branch so the website never gets one. data-sys is the phone's own scheme,
+ * data-theme the one shown: the person's pick from Settings, else the
+ * phone's. Re-run when the phone switches (sunset) and by setThemePref.
+ */
+const THEME_SCRIPT = `var h=document.documentElement,m=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)'),t=function(){var p=null;try{p=localStorage.getItem('${THEME_KEY}')}catch(e){}var s=m&&m.matches?'dark':'light';h.setAttribute('data-sys',s);h.setAttribute('data-theme',p==='light'||p==='dark'?p:s)};t();window.__eaTheme=t;if(m&&m.addEventListener)m.addEventListener('change',t);`;
+
+/**
  * Runs before anything in <body> paints. The root layout is static, so it
  * cannot ask the server whether this is the app; the user agent is right
  * there in the browser, and marking <html> from it means the website header
@@ -112,7 +121,7 @@ export const viewport: Viewport = {
  * preview switch (src/lib/appMode.ts). Kept tiny and dependency-free on
  * purpose: it is inlined into every page.
  */
-const APP_MODE_SCRIPT = `(function(){try{var ua=navigator.userAgent||'';if(ua.indexOf('${APP_UA_TOKEN}')>-1||/(^|; )${APP_COOKIE}=1(;|$)/.test(document.cookie)){document.documentElement.setAttribute('data-app','1');document.documentElement.setAttribute('data-platform',/iPhone|iPad|iPod/i.test(ua)?'ios':/Android/i.test(ua)?'android':'web');}}catch(e){}})();`;
+const APP_MODE_SCRIPT = `(function(){try{var ua=navigator.userAgent||'';if(ua.indexOf('${APP_UA_TOKEN}')>-1||/(^|; )${APP_COOKIE}=1(;|$)/.test(document.cookie)){document.documentElement.setAttribute('data-app','1');document.documentElement.setAttribute('data-platform',/iPhone|iPad|iPod/i.test(ua)?'ios':/Android/i.test(ua)?'android':'web');${THEME_SCRIPT}}}catch(e){}})();`;
 
 /**
  * Same moment, same reason: when there is a session cookie and a viewer

@@ -1,6 +1,6 @@
 import { appPlatform, isNativeApp } from '@/lib/app/isApp';
 import { appVersionFromUserAgent } from '@/lib/appMode';
-import { registerPlugin } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import type { FirebaseMessagingPlugin } from '@capacitor-firebase/messaging';
 
 /**
@@ -30,8 +30,22 @@ function plugin(): FirebaseMessagingPlugin {
   return (registered ??= registerPlugin<FirebaseMessagingPlugin>('FirebaseMessaging'));
 }
 
+/**
+ * Whether this build of the app carries the push plugin at all. It arrived
+ * with app 1.0.1; on 1.0.0 every call rejects "not implemented", which
+ * used to read as a switch that silently flicked back off.
+ */
+export function pushSupported(): boolean {
+  if (!isNativeApp()) return false;
+  try {
+    return Capacitor.isPluginAvailable('FirebaseMessaging');
+  } catch {
+    return false;
+  }
+}
+
 export async function pushPermission(): Promise<PushPermission> {
-  if (!isNativeApp()) return 'unavailable';
+  if (!pushSupported()) return 'unavailable';
   try {
     const { receive } = await plugin().checkPermissions();
     return receive === 'granted' ? 'granted' : receive === 'denied' ? 'denied' : 'prompt';
@@ -77,7 +91,7 @@ function rememberOff(off: boolean) {
 }
 
 export async function registerPush({ ask }: { ask: boolean }): Promise<PushPermission> {
-  if (!isNativeApp()) return 'unavailable';
+  if (!pushSupported()) return 'unavailable';
   // Turned off on this device: the silent re-register on app open stays
   // silent. Asking (the switch, the explainer) turns it back on.
   if (!ask && pushTurnedOff()) return 'prompt';
@@ -103,7 +117,7 @@ export async function registerPush({ ask }: { ask: boolean }): Promise<PushPermi
 
 /** Forget this device: on sign-out, or when the person turns pushes off. */
 export async function revokePush({ remember = false }: { remember?: boolean } = {}): Promise<void> {
-  if (!isNativeApp()) return;
+  if (!pushSupported()) return;
   if (remember) rememberOff(true);
   try {
     const fm = plugin();
@@ -124,7 +138,7 @@ let listening = false;
  * Firebase rotates the token.
  */
 export async function listenForPushTaps(): Promise<void> {
-  if (!isNativeApp() || listening) return;
+  if (!pushSupported() || listening) return;
   try {
     const fm = plugin();
     await fm.addListener('notificationActionPerformed', (event) => {

@@ -143,60 +143,57 @@ html[data-app] body {
      notch itself. Pages with their own top bar (the welcome hero) start at the very top and pad inside. */
   padding-top: var(--app-safe-top);
 }
-/* Dark mode, app only (2026-11-17): follows the phone's own setting. No
-   in-app switch, deliberately: the native frames draw the status bar in the
-   system's style, so a page darker or lighter than the phone would hide the
-   clock until the shell gets a status-bar plugin. The website never
+/* Dark mode, app only. html[data-theme] is stamped before paint by the
+   inline script in layout.tsx: the phone's setting unless the person picked
+   Light or Dark in Settings (src/lib/app/theme.ts). The website never
    carries html[data-app], so it is untouched. */
-@media (prefers-color-scheme: dark) {
-  html[data-app] {
-    color-scheme: dark;
-    --cream: #0f130d;
-    --white: #181d15;
-    --grey-pale: #262c22;
-    --rule: #323a2c;
-    --rule-strong: #434c3c;
-    --ink: #e8ebe3;
-    --ink-2: #c0c6b9;
-    --ink-3: #9aa092;
-    --error: #ff8a6e;
+html[data-app][data-theme='dark'] {
+  color-scheme: dark;
+  --cream: #0f130d;
+  --white: #181d15;
+  --grey-pale: #262c22;
+  --rule: #323a2c;
+  --rule-strong: #434c3c;
+  --ink: #e8ebe3;
+  --ink-2: #c0c6b9;
+  --ink-3: #9aa092;
+  --error: #ff8a6e;
 
-    /* Greens as text, links and borders: lifted to read on dark. */
-    --jd-green: #7fc76c;
-    --jd-green-light: #93d681;
-    --jd-green-dark: #9fd58f;
-    --jd-green-deep: #cfe9c4;
-    --jd-green-pale: #1d2a18;
+  /* Greens as text, links and borders: lifted to read on dark. */
+  --jd-green: #7fc76c;
+  --jd-green-light: #93d681;
+  --jd-green-dark: #9fd58f;
+  --jd-green-deep: #cfe9c4;
+  --jd-green-pale: #1d2a18;
 
-    /* Greens as fills: dark enough for white text, light enough to stand
-       off the page. */
-    --fill-green: #3d8530;
-    --fill-green-dark: #2f6b24;
-    --fill-green-deep: #2a5e20;
-    --fill-error: #c8432a;
-    --fill-ink: #3a4434;
+  /* Greens as fills: dark enough for white text, light enough to stand
+     off the page. */
+  --fill-green: #3d8530;
+  --fill-green-dark: #2f6b24;
+  --fill-green-deep: #2a5e20;
+  --fill-error: #c8432a;
+  --fill-ink: #3a4434;
 
-    --app-line: #2a3125;
-    --app-line-soft: #232920;
-    --app-muted-fill: #3a4234;
-    --app-off: #5c6456;
-    --member-bg: #2b2712;
-    --member-line: #4a4220;
-    --member-ink: #f2dc6a;
-    --chip-yellow-bg: #3a3415;
-    --warn-bg: #2b2611;
-    --warn-line: #574b1d;
-    --warn-ink: #f0d878;
-    --danger-bg: #331813;
-    --danger-line: #6e3025;
-    --danger-ink: #ff9d87;
-    --green-wash: #1a2516;
-    --green-wash-strong: #24331e;
-    --green-line: #3f5a35;
-    /* Fallback-only variables some modules read. */
-    --accent: #9fd58f;
-    --muted: #9aa092;
-  }
+  --app-line: #2a3125;
+  --app-line-soft: #232920;
+  --app-muted-fill: #3a4234;
+  --app-off: #5c6456;
+  --member-bg: #2b2712;
+  --member-line: #4a4220;
+  --member-ink: #f2dc6a;
+  --chip-yellow-bg: #3a3415;
+  --warn-bg: #2b2611;
+  --warn-line: #574b1d;
+  --warn-ink: #f0d878;
+  --danger-bg: #331813;
+  --danger-line: #6e3025;
+  --danger-ink: #ff9d87;
+  --green-wash: #1a2516;
+  --green-wash-strong: #24331e;
+  --green-line: #3f5a35;
+  /* Fallback-only variables some modules read. */
+  --accent: #9fd58f;
+  --muted: #9aa092;
 }
 /* The website's chrome: header, footer, breadcrumbs (components opt in with
    the attribute). Gone from the first paint — the <html> attribute is set by
@@ -211,6 +208,26 @@ html:not([data-app]) [data-app-only] {
 }
 /* Room for the fixed tab bar (Back is a slot in it), set by AppShell only
    on the pages that show it. */
+/* A chosen theme that disagrees with the phone: the native frame still
+   draws the clock and battery in the phone's style, so the strip behind
+   them keeps the phone's colour or they would vanish (dark on dark). */
+html[data-app][data-theme='dark'][data-sys='light']::before,
+html[data-app][data-theme='light'][data-sys='dark']::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--app-safe-top);
+  z-index: 1000;
+  pointer-events: none;
+}
+html[data-app][data-theme='dark'][data-sys='light']::before {
+  background: #fafaf5;
+}
+html[data-app][data-theme='light'][data-sys='dark']::before {
+  background: #0f130d;
+}
 html[data-app][data-app-tabs] body {
   padding-bottom: calc(var(--app-tabbar-h) + var(--app-safe-bottom));
 }

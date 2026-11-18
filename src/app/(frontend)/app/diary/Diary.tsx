@@ -34,8 +34,11 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
   const router = useRouter();
   const [day, setDay] = useState(initialDay);
   const [view, setView] = useState<DiaryView>(initialView ?? 'month');
-  // null = no form open; 'new' = adding; otherwise the id being edited.
+  // The id of the entry being edited, if any. Adding needs no switch: the
+  // add bar is always there, and tapping into it is enough.
   const [editing, setEditing] = useState<string | null>(null);
+  // Bumped after an add (or Cancel) to give the add bar a fresh, folded form.
+  const [addKey, setAddKey] = useState(0);
   const [optimistic, setDone] = useOptimistic(entries, (cur, { id, done }: { id: string; done: boolean }) =>
     cur.map((e) => (e.id === id ? { ...e, done } : e)),
   );
@@ -213,7 +216,7 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
 
       {problem && <p className={s.error}>{problem}</p>}
 
-      {todays.length === 0 && editing !== 'new' && (
+      {todays.length === 0 && (
         <div className={ui.card} style={{ color: 'var(--ink-3)', fontSize: 14.5 }}>
           Nothing written for this day.
         </div>
@@ -250,23 +253,15 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
         </div>
       )}
 
-      {editing === 'new' ? (
-        <div className={ui.card} style={{ marginTop: 12 }}>
-          <EntryForm day={day} onDone={() => setEditing(null)} />
-        </div>
-      ) : (
-        <button
-          type="button"
-          className={`${ui.btn} ${ui.btnPrimary}`}
-          style={{ marginTop: 14 }}
-          onClick={() => {
-            setEditing('new');
-            setProblem(null);
-          }}
-        >
-          + Add to {day === today ? 'today' : dayLabel(day, today).replace(/ \d{4}$/, '')}
-        </button>
-      )}
+      <div className={ui.card} style={{ marginTop: 12 }}>
+        <EntryForm
+          key={`${day}:${addKey}`}
+          day={day}
+          addLabel={day === today ? 'today' : dayLabel(day, today).replace(/ \d{4}$/, '')}
+          onDone={() => setAddKey((k) => k + 1)}
+          onOpen={() => setProblem(null)}
+        />
+      </div>
 
       <p className={ui.note} style={{ textAlign: 'center' }}>
         Your diary is private to you. Write anything: jobs, servicing, reminders.
@@ -275,9 +270,26 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
   );
 }
 
-/** Add (no entry) or edit (entry) one diary entry. The date can be changed to move it. */
-function EntryForm({ entry, day, onDone }: { entry?: DiaryEntry; day: string; onDone: () => void }) {
+/**
+ * Add (no entry) or edit (entry) one diary entry. Editing can change the
+ * date to move it. Adding starts folded to the one text bar, always on the
+ * day panel: tapping into it opens time and notes, and Enter alone adds.
+ */
+function EntryForm({
+  entry,
+  day,
+  addLabel,
+  onDone,
+  onOpen,
+}: {
+  entry?: DiaryEntry;
+  day: string;
+  addLabel?: string;
+  onDone: () => void;
+  onOpen?: () => void;
+}) {
   const [state, action, pending] = useActionState(saveDiaryEntryAction, EMPTY);
+  const [open, setOpen] = useState(Boolean(entry));
   const [deleting, startDelete] = useTransition();
   const [delError, setDelError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -287,53 +299,69 @@ function EntryForm({ entry, day, onDone }: { entry?: DiaryEntry; day: string; on
   }, [state, onDone]);
 
   return (
-    <form action={action} className={s.form}>
+    <form
+      action={action}
+      className={s.form}
+      onFocus={() => {
+        if (open) return;
+        setOpen(true);
+        onOpen?.();
+      }}
+    >
       {entry && <input type="hidden" name="id" value={entry.id} />}
+      {!entry && <input type="hidden" name="entry_date" value={day} />}
       <label className={s.field}>
-        <span className={s.label}>What</span>
+        <span className={open ? s.label : s.srOnly}>What</span>
         <input
           className={s.input}
           name="title"
           defaultValue={entry?.title ?? ''}
           maxLength={TITLE_MAX}
           required
-          autoFocus={!entry}
-          placeholder="e.g. Top 6 acres for Mrs Hughes"
+          placeholder={entry ? 'e.g. Top 6 acres for Mrs Hughes' : `Add to ${addLabel ?? 'this day'}…`}
           autoComplete="off"
         />
       </label>
-      <div className={s.pair}>
-        <label className={s.field}>
-          <span className={s.label}>Day</span>
-          <input className={s.input} type="date" name="entry_date" defaultValue={entry?.entry_date ?? day} required />
-        </label>
-        <label className={s.field}>
-          <span className={s.label}>Time (optional)</span>
-          <input className={s.input} type="time" name="start_time" defaultValue={shortTime(entry?.start_time ?? null) ?? ''} />
-        </label>
-      </div>
-      <label className={s.field}>
-        <span className={s.label}>Notes (optional)</span>
-        <textarea
-          className={s.textarea}
-          name="details"
-          defaultValue={entry?.details ?? ''}
-          maxLength={DETAILS_MAX}
-          rows={3}
-          placeholder="Anything else: gate code, what to bring, who to ring"
-        />
-      </label>
+      {open && (
+        <>
+          <div className={entry ? s.pair : undefined}>
+            {entry && (
+              <label className={s.field}>
+                <span className={s.label}>Day</span>
+                <input className={s.input} type="date" name="entry_date" defaultValue={entry.entry_date} required />
+              </label>
+            )}
+            <label className={s.field}>
+              <span className={s.label}>Time (optional)</span>
+              <input className={s.input} type="time" name="start_time" defaultValue={shortTime(entry?.start_time ?? null) ?? ''} />
+            </label>
+          </div>
+          <label className={s.field}>
+            <span className={s.label}>Notes (optional)</span>
+            <textarea
+              className={s.textarea}
+              name="details"
+              defaultValue={entry?.details ?? ''}
+              maxLength={DETAILS_MAX}
+              rows={3}
+              placeholder="Anything else: gate code, what to bring, who to ring"
+            />
+          </label>
+        </>
+      )}
 
       {(state.error || delError) && <p className={s.error}>{state.error ?? delError}</p>}
 
-      <div className={s.actions}>
-        <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} disabled={pending || deleting}>
-          {pending ? 'Saving…' : entry ? 'Save' : 'Add'}
-        </button>
-        <button type="button" className={`${ui.btn} ${ui.btnGhost}`} onClick={onDone} disabled={pending || deleting}>
-          Cancel
-        </button>
-      </div>
+      {open && (
+        <div className={s.actions}>
+          <button type="submit" className={`${ui.btn} ${ui.btnPrimary}`} disabled={pending || deleting}>
+            {pending ? 'Saving…' : entry ? 'Save' : 'Add'}
+          </button>
+          <button type="button" className={`${ui.btn} ${ui.btnGhost}`} onClick={onDone} disabled={pending || deleting}>
+            Cancel
+          </button>
+        </div>
+      )}
       {entry &&
         (confirming ? (
           <div className={s.confirm}>

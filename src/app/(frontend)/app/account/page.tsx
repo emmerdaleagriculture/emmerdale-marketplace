@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { CONTACT_EMAIL } from '@/lib/site';
-import { LogoutButton, PushToggleRow } from '@/components/app/PushControls';
+import { LogoutButton, PushToggleRow, ThemeRow } from '@/components/app/PushControls';
 import { listSites } from '@/lib/customers/sites';
 import ui from '../app-ui.module.css';
 
@@ -118,6 +118,7 @@ export default async function AppAccountPage() {
       <div className={ui.kicker}>Settings</div>
       <div className={ui.rows}>
         <PushToggleRow />
+        <ThemeRow />
         <Link href="/my#details" className={ui.row}>
           Text updates
           <span className={ui.rowValue}>Per job ›</span>

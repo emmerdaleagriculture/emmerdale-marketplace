@@ -359,3 +359,28 @@
   font-size: 13px;
   font-weight: 600;
 }
+
+/* A segmented choice in a row (Settings › Appearance). */
+.seg {
+  margin-left: auto;
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--app-muted-fill);
+}
+.segBtn {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.segOn {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
