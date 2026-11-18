@@ -37,7 +37,16 @@
   /* ink-2, not ink-3: inactive labels read outdoors (7.9:1 on white). */
   color: var(--ink-2);
   padding: 2px 0;
+  white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
+}
+/* Five tabs and Back on the narrowest phones: "Dashboard" must clear its
+   neighbour. */
+@media (max-width: 359px) {
+  .tab {
+    font-size: 10px;
+    letter-spacing: -0.1px;
+  }
 }
 .tab:active {
   opacity: 0.7;
@@ -97,7 +106,8 @@
   transition: max-width 0.25s ease, opacity 0.2s ease;
 }
 .backTabOn {
-  max-width: 20%;
+  /* A sixth share beside five tabs (contractors); the icon carries it. */
+  max-width: 16%;
   opacity: 1;
   pointer-events: auto;
 }
