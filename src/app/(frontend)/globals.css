@@ -127,7 +127,7 @@ html[data-app] {
   --app-r-sm: 10px;
   --app-r: 14px;
   --app-r-lg: 20px;
-  --app-tabbar-h: 58px;
+  --app-tabbar-h: 50px;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-safe-bottom: env(safe-area-inset-bottom, 0px);
   /* A WebView rubber-bands white past the edge; cream matches the screens. */

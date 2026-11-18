@@ -220,7 +220,8 @@ export function AppShell() {
                 <span className={s.iconWrap}>
                   <TabIconSvg name={t.icon} />
                 </span>
-                {t.label}
+                {/* Icons only, by choice (2026-11-18); the name stays for screen readers. */}
+                <span className={s.srOnly}>{t.label}</span>
                 {n > 0 && (
                   <span className={s.badge} aria-label={`${n} new`}>
                     {n > 99 ? '99+' : n}
@@ -241,7 +242,7 @@ export function AppShell() {
               <span className={s.iconWrap}>
                 <BackChevron />
               </span>
-              Back
+              <span className={s.srOnly}>Back</span>
             </button>
           )}
         </nav>

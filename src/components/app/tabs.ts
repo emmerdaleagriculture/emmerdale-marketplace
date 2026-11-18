@@ -15,7 +15,7 @@ import type { ViewerRole } from '@/components/useViewer';
  * `badge` names the count from /api/app/badges that sits on the icon.
  */
 export type BadgeKey = 'invites' | 'prices' | 'messages';
-export type TabIcon = 'home' | 'jobs' | 'messages' | 'account' | 'board' | 'diary' | 'earnings';
+export type TabIcon = 'home' | 'jobs' | 'messages' | 'account' | 'board' | 'diary' | 'earnings' | 'dashboard';
 
 export type Tab = {
   key: string;
@@ -35,7 +35,10 @@ export const CUSTOMER_TABS: Tab[] = [
 ];
 
 export const CONTRACTOR_TABS: Tab[] = [
-  { key: 'earnings', label: 'Earnings', href: '/app/earnings', icon: 'earnings', also: ['/account', '/onboarding'] },
+  // The website's dashboard, app-aware already; its settings and market
+  // screens sit under it.
+  { key: 'dashboard', label: 'Dashboard', href: '/account', icon: 'dashboard' },
+  { key: 'earnings', label: 'Earnings', href: '/app/earnings', icon: 'earnings', also: ['/onboarding'] },
   { key: 'diary', label: 'Diary', href: '/app/diary', icon: 'diary', also: ['/won'] },
   { key: 'messages', label: 'Messages', href: '/messages', icon: 'messages', badge: 'messages' },
   { key: 'jobs', label: 'Jobs', href: '/invitations', icon: 'board', badge: 'invites', also: ['/jobs', '/quote'] },

@@ -20,6 +20,9 @@ describe('activeTab', () => {
     expect(activeTab(CONTRACTOR_TABS, '/privacy')).toBeNull();
     expect(activeTab(CONTRACTOR_TABS, '/app/diary')?.key).toBe('diary');
     expect(activeTab(CONTRACTOR_TABS, '/won/abc/photos')?.key).toBe('diary');
+    expect(activeTab(CONTRACTOR_TABS, '/account')?.key).toBe('dashboard');
+    expect(activeTab(CONTRACTOR_TABS, '/account/settings')?.key).toBe('dashboard');
+    expect(activeTab(CONTRACTOR_TABS, '/app/earnings')?.key).toBe('earnings');
   });
   it('does not confuse /my with /messages', () => {
     expect(activeTab(CUSTOMER_TABS, '/messages')?.key).toBe('messages');
@@ -30,5 +33,7 @@ describe('isTabRoot', () => {
   it('is only the tab pages themselves', () => {
     expect(isTabRoot(CUSTOMER_TABS, '/my')).toBe(true);
     expect(isTabRoot(CUSTOMER_TABS, '/my/abc')).toBe(false);
+    expect(isTabRoot(CONTRACTOR_TABS, '/account')).toBe(true);
+    expect(isTabRoot(CONTRACTOR_TABS, '/account/settings')).toBe(false);
   });
 });

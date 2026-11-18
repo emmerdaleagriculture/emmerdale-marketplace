@@ -39,6 +39,15 @@
   padding: 2px 0;
   -webkit-tap-highlight-color: transparent;
 }
+/* The tabs are icons only; their names are kept for screen readers. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 .tab:active {
   opacity: 0.7;
 }
@@ -97,7 +106,8 @@
   transition: max-width 0.25s ease, opacity 0.2s ease;
 }
 .backTabOn {
-  max-width: 20%;
+  /* A sixth share beside five tabs (contractors); the icon carries it. */
+  max-width: 16%;
   opacity: 1;
   pointer-events: auto;
 }
