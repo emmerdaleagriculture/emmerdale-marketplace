@@ -9,7 +9,7 @@ import { activeTab, isTabRoot, tabsFor, type BadgeKey, type Tab } from './tabs';
 import { listenForPushTaps, registerPush } from '@/lib/app/push';
 import { listenForAppLinks } from '@/lib/app/links';
 import { BackChevron, TabIconSvg } from './AppIcons';
-import { SwipeBack } from './SwipeBack';
+import { SwipeTabs } from './SwipeTabs';
 import { PullToRefresh } from './PullToRefresh';
 import s from './AppShell.module.css';
 
@@ -194,7 +194,16 @@ export function AppShell() {
   return (
     <>
       {pending && <div className={s.progress} role="progressbar" aria-label="Loading" />}
-      <SwipeBack enabled={showBack} onBack={goBack} />
+      {showTabs && (
+        <SwipeTabs
+          tabs={tabs}
+          currentKey={current?.key ?? null}
+          onGo={(t) => {
+            setPending({ path: t.href, tab: t.key });
+            router.push(t.href);
+          }}
+        />
+      )}
       {!standalone && <PullToRefresh onRefresh={refreshBadges} />}
       {!standalone && (tabs || role === null) && (
         <nav className={`${s.tabbar} ${tabs ? '' : s.skeleton}`} aria-label="App">
