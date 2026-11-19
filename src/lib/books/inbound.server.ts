@@ -27,9 +27,14 @@ type EventData = {
   subject?: string;
 };
 
+/**
+ * Reading inbound mail needs a Resend key that can do more than send (a
+ * "sending access" key is refused with restricted_api_key). Use a separate
+ * full-access key for this if the main one is send-only.
+ */
 function resend() {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) throw new Error('RESEND_API_KEY is not set');
+  const key = process.env.RESEND_INBOUND_API_KEY || process.env.RESEND_API_KEY;
+  if (!key) throw new Error('RESEND_INBOUND_API_KEY / RESEND_API_KEY is not set');
   return new Resend(key);
 }
 

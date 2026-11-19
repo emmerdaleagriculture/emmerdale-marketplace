@@ -47,6 +47,15 @@ const EVENTS: Record<string, Delivery> = {
   'email.suppressed': 'suppressed',
 };
 
+/** Delivery outcomes recorded on a Books invoice (a delay is not news). */
+const BOOKS_EVENT: Partial<Record<Delivery, string>> = {
+  delivered: 'delivered',
+  bounced: 'bounced',
+  suppressed: 'bounced',
+  complained: 'spam',
+  failed: 'failed',
+};
+
 /**
  * The one delivery failure worth an email to the admins.
  *
@@ -189,6 +198,39 @@ export async function POST(request: Request) {
     .eq('provider_message_id', messageId)
     .select('id, kind, to_email, payload, retry_count')
     .maybeSingle();
+
+  // Not a queued email: perhaps an invoice a contractor sent from Books.
+  // Record what happened to it on the invoice's own delivery history.
+  if (!row) {
+    const kind = BOOKS_EVENT[status];
+    if (kind) {
+      const { data: sent } = await admin
+        .from('books_invoice_events')
+        .select('invoice_id, recipient')
+        .eq('message_id', messageId)
+        .eq('kind', 'sent')
+        .maybeSingle();
+      if (sent) {
+        const { data: dup } = await admin
+          .from('books_invoice_events')
+          .select('id')
+          .eq('message_id', messageId)
+          .eq('kind', kind)
+          .limit(1);
+        if (!dup?.length) {
+          await admin.from('books_invoice_events').insert({
+            invoice_id: sent.invoice_id,
+            kind,
+            at,
+            message_id: messageId,
+            recipient: sent.recipient,
+            detail,
+          });
+        }
+        return NextResponse.json({ received: true, matched: 'books_invoice' });
+      }
+    }
+  }
 
   // A message we have no row for is not an error: test sends from the Resend
   // dashboard, and anything sent before this webhook existed.
