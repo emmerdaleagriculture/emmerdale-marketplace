@@ -5,6 +5,7 @@ import { cronAuthorised } from '@/lib/cronAuth';
 import { stripeConfigured } from '@/lib/stripe';
 import { syncLedgerStripe } from '@/lib/books/stripeSync';
 import type { Ledger } from '@/lib/books/server';
+import { booksAllowed } from '@/lib/books/access';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -25,8 +26,11 @@ async function run() {
   if (error) throw new Error(error.message);
   let posted = 0;
   const failed: string[] = [];
+  const admin = createServiceRoleClient();
   for (const l of (data ?? []) as Ledger[]) {
     try {
+      const { data: owner } = await admin.auth.admin.getUserById(l.contractor_id);
+      if (!(await booksAllowed(owner.user?.email))) continue;
       posted += (await syncLedgerStripe(l)).posted;
     } catch (err) {
       failed.push(l.id);

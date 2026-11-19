@@ -12,6 +12,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { storeReceipt } from './receipts.server';
 import { MAX_ATTACHMENTS, MIN_IMAGE_BYTES, attachmentType, bareAddress, findInboundCode } from './inbound';
 import { MAX_RECEIPT_BYTES } from './receipts.server';
+import { booksAllowed } from './access';
 
 export type InboundOutcome =
   | { kind: 'ignored'; reason: string }
@@ -99,6 +100,7 @@ export async function handleInboundEmail(data: EventData): Promise<InboundOutcom
   // Allowed senders: the contractor's own account email and their list.
   const sender = bareAddress(email.from || data.from || '');
   const { data: owner } = await admin.auth.admin.getUserById(ledger.contractor_id);
+  if (!(await booksAllowed(owner.user?.email))) return { kind: 'ignored', reason: 'books not released to this account' };
   const allowed = new Set([...(ledger.inbound_senders ?? []), owner.user?.email?.toLowerCase()].filter(Boolean) as string[]);
   const trusted = allowed.has(sender);
 

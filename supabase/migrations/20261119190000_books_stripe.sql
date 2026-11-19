@@ -13,3 +13,11 @@ alter table public.books_ledgers
 
 create unique index if not exists books_ledgers_stripe_account_uniq
   on public.books_ledgers (stripe_account_id) where stripe_account_id is not null;
+
+-- Who may use Books while it is being trialled. A JSON array of account
+-- emails, or the string "all" to open it to every Premium member. Missing =
+-- nobody. Read by the app (src/lib/books/access.ts) on every Books page,
+-- action, inbound email and Stripe sync.
+insert into public.app_config (key, value)
+values ('books_allowlist', '["tom@hampshirepaddockmanagement.com"]'::jsonb)
+on conflict (key) do nothing;

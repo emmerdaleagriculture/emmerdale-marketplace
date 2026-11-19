@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { booksAllowed } from '@/lib/books/access';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { AccountForm } from './AccountForm';
@@ -236,6 +237,8 @@ export default async function AccountPage({
   // One reading of the tier, shared with the header (membershipOf).
   const membership = membershipOf(subQ.data, contractor);
   const isOpen = membership === 'open';
+  // Books is released account by account while it's trialled.
+  const booksOn = await booksAllowed(user.email);
   const isPremium = membership !== null;
   // Council tenders (Open): the count of live notices on their patch not yet seen.
   const tendersOn = isOpen && status === 'approved' && contractor.tenders_enabled;
@@ -433,7 +436,7 @@ export default async function AccountPage({
                       <span aria-hidden="true">›</span>
                     </Link>
                   )}
-                  {(isOpen || !app) && (
+                  {booksOn && (isOpen || !app) && (
                     <Link href="/account/books" className={ac.sideLink}>
                       Books <span aria-hidden="true">›</span>
                     </Link>
