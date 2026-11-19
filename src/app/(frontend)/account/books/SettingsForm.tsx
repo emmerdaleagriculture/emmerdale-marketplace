@@ -26,6 +26,8 @@ export type SettingsValues = {
   invoice_terms_days: number;
   invoice_footer: string | null;
   inbound_senders: string[];
+  marketplace_auto: boolean;
+  marketplace_from: string | null;
 };
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -193,7 +195,7 @@ export function SettingsForm({
       {!setup && (
         <fieldset className={s.fieldset}>
           <legend>Invoices</legend>
-          <p className={f.hint}>Shown on the invoices you send from Books (coming soon).</p>
+          <p className={f.hint}>Shown on the invoices you send from Books.</p>
           <label className={f.field}>
             <span className={f.label}>Trading name</span>
             <input className={f.input} name="trading_name" defaultValue={values.trading_name ?? ''} maxLength={200} />
@@ -228,6 +230,26 @@ export function SettingsForm({
           </label>
         </fieldset>
       )}
+
+      <fieldset className={s.fieldset}>
+        <legend>Emmerdale jobs</legend>
+        <label className={f.checkRow}>
+          <input type="checkbox" name="marketplace_auto" defaultChecked={values.marketplace_auto} />
+          <span>Book the jobs I do through Emmerdale automatically</span>
+        </label>
+        <p className={f.hint}>
+          When a customer signs off a job, it goes in as a sale to Emmerdale Agriculture Online Ltd at your
+          price, and our payment to you clears it. Our fee is never your cost, so it doesn’t appear.
+        </p>
+        <label className={f.field}>
+          <span className={f.label}>Book jobs finished on or after</span>
+          <input className={f.input} name="marketplace_from" type="date" defaultValue={values.marketplace_from ?? ''} style={{ maxWidth: 220 }} />
+          <span className={f.hint}>
+            Leave blank to start {setup ? 'today' : 'from the day you set up your books'}. Choose an earlier date
+            to bring in jobs already done this year, unless they’re already in your figures.
+          </span>
+        </label>
+      </fieldset>
 
       {state.error && <p className={f.error}>{state.error}</p>}
       {state.ok && state.message && <p className={f.success}>{state.message}</p>}

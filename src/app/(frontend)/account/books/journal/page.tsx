@@ -6,6 +6,7 @@ import m from '../../market/market.module.css';
 import s from '../books.module.css';
 import { BooksFrame } from '../BooksFrame';
 import { voidEntryAction } from '../actions';
+import { VOIDABLE_SOURCES } from '@/lib/books/server';
 
 export const metadata: Metadata = { title: 'Journal', robots: { index: false, follow: false } };
 
@@ -31,7 +32,7 @@ export default async function JournalPage() {
             </span>
             <span className={s.muted}>
               #{e.id} · {e.vat_code}
-              {access.canEdit && (e.source === 'manual' || e.source === 'mileage' || e.source === 'receipt') && (
+              {access.canEdit && (VOIDABLE_SOURCES as readonly string[]).includes(e.source) && (
                 <form action={voidEntryAction} style={{ display: 'inline', marginLeft: 10 }}>
                   <input type="hidden" name="entry_id" value={e.id} />
                   <button className={s.voidBtn} type="submit">

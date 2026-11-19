@@ -165,7 +165,7 @@ export async function voidInvoice(inv: InvoiceFull): Promise<string | null> {
 export async function recordPayment(
   ledger: Ledger,
   inv: InvoiceFull,
-  p: { paid_on: string; amount_pence: number; method: PaymentMethod; reference: string | null; external_id: string | null },
+  p: { paid_on: string; amount_pence: number; method: PaymentMethod; reference: string | null; external_id: string | null; into?: string },
 ): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
   const posting = paymentPosting(
     { id: inv.id, number: inv.number, customer_name: inv.customer.organisation || inv.customer.name },

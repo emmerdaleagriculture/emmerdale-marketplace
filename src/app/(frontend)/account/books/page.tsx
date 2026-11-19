@@ -11,6 +11,7 @@ import s from './books.module.css';
 import { BooksFrame } from './BooksFrame';
 import { SettingsForm } from './SettingsForm';
 import { createLedgerAction } from './actions';
+import { syncLedgerMarketplace } from '@/lib/books/marketplace.server';
 
 export const metadata: Metadata = { title: 'Books', robots: { index: false, follow: false } };
 
@@ -81,6 +82,8 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
             invoice_terms_days: 7,
             invoice_footer: null,
             inbound_senders: [],
+            marketplace_auto: true,
+            marketplace_from: null,
           }}
         />
       </BooksFrame>
@@ -88,6 +91,14 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   }
 
   const ledger = access.ledger;
+  // Signed-off Emmerdale jobs and our payouts, booked as they happen (the nightly cron catches the rest).
+  if (access.canEdit && ledger.marketplace_auto) {
+    try {
+      await syncLedgerMarketplace(ledger);
+    } catch (err) {
+      console.error('[books] marketplace sync on visit failed', { ledger: ledger.id, error: err instanceof Error ? err.message : err });
+    }
+  }
   const today = todayUk();
   const year = accountingYear(ledger.year_end, today);
   const [all, yearTb, entries, { count: toReview }] = await Promise.all([
@@ -158,6 +169,9 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
           <Link className={f.btnGhost} href="/account/books/mileage">
             Claim mileage
           </Link>
+          <Link className={f.btnGhost} href="/account/books/bank">
+            Upload bank statement
+          </Link>
         </div>
       )}
 
@@ -180,7 +194,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
               {entries.map((e) => (
                 <tr key={e.id}>
                   <td>{ukDate(e.entry_date)}</td>
-                  <td>{e.source === 'mileage' ? 'Mileage' : e.kind === 'sale' ? 'Sale' : e.kind === 'purchase' ? 'Expense' : 'Journal'}</td>
+                  <td>{e.source === 'mileage' ? 'Mileage' : e.source === 'marketplace' && e.kind === 'sale' ? 'Emmerdale job' : e.kind === 'sale' ? 'Sale' : e.kind === 'purchase' ? 'Expense' : 'Journal'}</td>
                   <td>{e.counterparty ?? ''}</td>
                   <td style={{ whiteSpace: 'normal' }}>{e.description ?? ''}</td>
                   <td className={m.num}>{formatPence(e.kind === 'purchase' ? -e.gross_pence : e.gross_pence)}</td>

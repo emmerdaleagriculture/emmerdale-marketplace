@@ -267,3 +267,8 @@
 .meter .meterOver {
   background: #b3261e;
 }
+
+/* Bank statement rows: a guessed account to check. */
+.flagged td:first-child {
+  box-shadow: inset 4px 0 0 var(--jd-yellow, #e8b400);
+}
