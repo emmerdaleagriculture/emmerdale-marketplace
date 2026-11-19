@@ -7,7 +7,7 @@ export function CountyExtraSection({
   section,
   alt = false,
 }: {
-  section: NonNullable<CountyExtra['section']>;
+  section: NonNullable<CountyExtra['sections']>[number];
   alt?: boolean;
 }) {
   return (

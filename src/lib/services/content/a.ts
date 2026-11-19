@@ -144,6 +144,15 @@ export const PART_A: ServiceContent[] = [
       'The main harrowing is in early spring, roughly February to April, once the ground is dry enough to carry a tractor without cutting up and before the grass is growing strongly. It levels winter damage and molehills and gets the field ready for the season.',
       'Summer harrowing, after a paddock has been grazed, spreads droppings. Do it in hot, dry weather, when sun and drying help kill worm eggs and larvae. In warm, wet weather, spreading droppings can spread parasites across the whole field, so rest it from grazing afterwards.',
     ],
+    // GSC 2026-11 (Cheatcode): "harrowing is harming this ground" at 8.4.
+    extra: {
+      h2: 'Is harrowing harming your ground?',
+      body: [
+        'A freshly harrowed field always looks rough, so the first job is telling normal mess from real damage. Normal is flattened molehills, scattered droppings, loose dead grass lying on the surface and a scratched, brownish look that greens up within a couple of weeks of growing weather. Damage looks different: **live grass pulled out by the roots, bare soil showing in strips, mud smeared across the sward, or deep tine marks** that are still there weeks later when the rest of the field has recovered.',
+        'The usual causes are easy to put right. Harrowing on ground that is too wet smears mud and pulls out grass instead of dead material, so wait until you can walk the field without sinking. Tined grass harrows on a thin or short sward rip out healthy plants along with the moss, so a field that only needs levelling and droppings spread is better with chain harrows or lighter-set tines; there is more on [which harrow suits which job](/notes/harrowing-grass-which-harrow-and-hiring-a-contractor). Harrowing too often, or in warm, wet weather after grazing, wears the sward and spreads worm larvae; once or twice a year in the right conditions is plenty.',
+        'If the grass is already thin, bare patches will need [overseeding](/services/overseeding), and rolling afterwards firms it back down. Harrowing only works the surface, so if the field stays wet and poached however you harrow it, the problem may be compaction underneath, which [subsoiling](/services/subsoiling) is meant to address. When you [post the job](/start), say what went wrong last time and how the ground looks now, so the contractor can bring the right harrow.',
+      ],
+    },
     priceFactors: [
       'Field size and the number of separate paddocks',
       'How much work the surface needs: heavy poaching or lots of molehills take more passes',
@@ -173,6 +182,10 @@ export const PART_A: ServiceContent[] = [
       {
         q: 'Should you harrow or roll a field first?',
         a: 'Harrow first, then roll. Harrowing levels molehills and pulls out dead material; rolling then firms the surface and presses stones and hoof prints back down.',
+      },
+      {
+        q: 'Will grass grow back after harrowing has torn it out?',
+        a: 'Usually, where the roots are still in the ground and there’s growing weather to follow. Where harrows have left bare soil, overseeding the patches and rolling them in is the quicker route back to a full sward.',
       },
     ],
     related: ['rolling', 'overseeding', 'muck-sweeping', 'scarifying'],

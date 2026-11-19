@@ -510,6 +510,8 @@ export const COUNTY_NOTES: Record<string, Partial<RegionNote>> = {
   Oxfordshire: {
     ground:
       'Cotswold limestone brash in the west (thin, stony and free-draining), giving way to the heavy clay vales and Thames gravels further east. The brash dries out quickly in a hot summer, while the clay vale paddocks hold wet.',
+    timing:
+      'The Cotswold brash and the Thames gravels dry early, so harrowing and rolling can start sooner there. Topping runs through summer, and paddocks on the clay vales are best left until they will carry a tractor without rutting.',
   },
   Cornwall: {
     ground:

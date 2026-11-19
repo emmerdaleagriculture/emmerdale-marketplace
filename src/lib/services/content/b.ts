@@ -304,13 +304,24 @@ export const PART_B: ServiceContent[] = [
       'Subsoiling only works when the soil is dry enough at working depth to crack and shatter. In wet soil the leg just cuts a slot and smears the sides, which can make drainage worse. That usually means late summer or early autumn after a dry spell, before the winter rain.',
       'On grassland, allow time for the grass to recover before heavy use or winter grazing, and ideally follow on with rolling to firm the surface.',
     ],
-    extra: {
-      h2: 'Subsoiling, ripping, mole ploughing and aerating: how they differ',
-      body: [
-        'Subsoiling goes by a few names. Farmers often call it **ripping** or **pan busting**, and on grassland the low-disturbance version is usually called **sward lifting**. They all do the same thing: steel legs run below a compacted layer and crack it, leaving the topsoil where it is. That is what separates it from ploughing and [rotavating](/services/rotavating), which turn over or churn the top few inches and leave you with a seedbed rather than a working field or paddock.',
-        'It is also easy to confuse with two other jobs. [Mole ploughing](/services/mole-ploughing) pulls a bullet-shaped mole behind a single leg to form a lasting drainage channel in clay. It is for moving water away, not for shattering a pan. Spike or slit aeration only works the top few inches, so it can help a capped surface but won’t reach compaction lower down. If a spade test shows a hard layer well below the surface, subsoiling is the job. If the ground is heavy clay with nowhere for water to go, mole ploughing may suit it better. Describe what you are seeing when you [post the job](/start) and contractors can say which suits your ground.',
-      ],
-    },
+    extra: [
+      {
+        h2: 'Subsoiling, ripping, mole ploughing and aerating: how they differ',
+        body: [
+          'Subsoiling goes by a few names. Farmers often call it **ripping** or **pan busting**, and on grassland the low-disturbance version is usually called **sward lifting**. They all do the same thing: steel legs run below a compacted layer and crack it, leaving the topsoil where it is. That is what separates it from ploughing and [rotavating](/services/rotavating), which turn over or churn the top few inches and leave you with a seedbed rather than a working field or paddock.',
+          'It is also easy to confuse with two other jobs. [Mole ploughing](/services/mole-ploughing) pulls a bullet-shaped mole behind a single leg to form a lasting drainage channel in clay. It is for moving water away, not for shattering a pan. Spike or slit aeration only works the top few inches, so it can help a capped surface but won’t reach compaction lower down. If a spade test shows a hard layer well below the surface, subsoiling is the job. If the ground is heavy clay with nowhere for water to go, mole ploughing may suit it better. Describe what you are seeing when you [post the job](/start) and contractors can say which suits your ground.',
+        ],
+      },
+      // GSC 2026-11 (Cheatcode): bare "subsoiling" at 15.4; the page explained
+      // the job but not how to brief a contractor on it.
+      {
+        h2: 'What to tell a contractor when you post a subsoiling job',
+        body: [
+          'Most of what decides the price and the right machine is something only you can see, so put it in the job description. Say whether it is grassland, a horse paddock or arable ground, and roughly how big the area is. If you have dug spade holes, say how far down the hard layer sits and whether it shows across the whole field or only in gateways, tracks and around feeders. Mention the soil type if you know it, especially heavy clay or stony ground, and any slopes, trees, troughs or awkward gateways a tractor has to get through. A couple of photos of the spade holes and the wettest spots help contractors judge the job before they arrive.',
+          'Mark anything buried: land drains, water pipes to troughs, and electric or other cables. Subsoiler legs run deep enough to break them, and some contractors will want to walk the field first. Say when the field can be cleared of stock and when you need it back, and whether you want rolling or overseeding done in the same visit. Because the work depends on the ground being dry at depth, give a window rather than a fixed date. Contractors who can do it reply with prices, and you can [compare them](/notes/compare-the-market-for-paddock-work) before booking anything.',
+        ],
+      },
+    ],
     priceFactors: [
       'Area of the field and the working depth needed',
       'Soil type – heavy clay and stony ground need more power and time',
@@ -341,6 +352,14 @@ export const PART_B: ServiceContent[] = [
       {
         q: 'Do I need to subsoil the whole field?',
         a: 'Not always. Compaction is often worst in gateways, along tracks, around feeders and where vehicles turn. Dig spade holes in several places, including a spot that isn’t heavily used, and compare them. If the pan only shows in certain areas, tell the contractor so they can quote for just those parts.',
+      },
+      {
+        q: 'Will subsoiling damage my grass?',
+        a: 'On grassland a low-disturbance subsoiler or sward lifter is used, with narrow legs and a roller behind, so the turf is barely marked. Give the grass time to recover before heavy use or winter grazing. A heavier arable subsoiler is more aggressive and isn’t the right machine for a paddock you want to keep using.',
+      },
+      {
+        q: 'How long does subsoiling last?',
+        a: 'It depends on whether the cause of the compaction is dealt with. Subsoiling breaks the pan but doesn’t stop it re-forming. If machinery and horses keep going onto saturated ground, the compaction will come back. Keeping traffic off wet ground is what makes the work last.',
       },
     ],
     related: ['mole-ploughing', 'overseeding', 'rolling', 'harrowing'],

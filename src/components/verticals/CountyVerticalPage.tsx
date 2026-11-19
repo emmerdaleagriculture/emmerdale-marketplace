@@ -120,7 +120,9 @@ export async function CountyVerticalPage({
 
       <CountyDirectory county={name} serviceId={v.serviceId} />
 
-      {extra?.section && <CountyExtraSection section={extra.section} alt />}
+      {extra?.sections?.map((sec, i) => (
+        <CountyExtraSection key={sec.h2} section={sec} alt={i % 2 === 0} />
+      ))}
 
       <section className={s.section}>
         <div className={s.sectionInner}>

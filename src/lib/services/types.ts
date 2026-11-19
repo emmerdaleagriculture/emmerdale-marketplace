@@ -8,6 +8,7 @@
  * real booked prices from recent_work instead, when there are any).
  */
 export type ServiceFaq = { q: string; a: string };
+export type ServiceExtra = { h2: string; body: string[] };
 
 export type ServiceContent = {
   /** The HOME_SERVICES card slug this page belongs to. */
@@ -29,11 +30,11 @@ export type ServiceContent = {
   /** "When to do it": 1–2 paragraphs on season, timing and conditions. */
   when: string[];
   /**
-   * Optional extra section after "When to do it", for a gap Search Console
+   * Optional extra section(s) after "When to do it", for a gap Search Console
    * shows the page missing. Paragraphs may use `[anchor](/path)` and `**bold**`
    * (InlineMd); so may FAQ answers.
    */
-  extra?: { h2: string; body: string[] };
+  extra?: ServiceExtra | ServiceExtra[];
   /** "What affects the price": 4–6 short bullet points. */
   priceFactors: string[];
   /** "Good to know": 2–4 practical tips or warnings. */
