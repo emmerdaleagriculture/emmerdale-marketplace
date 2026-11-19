@@ -1,4 +1,265 @@
-/* Books: shared bits for every /account/books page. Tables use market.module.css. */
+/* Books: shared bits for every /account/books page. Tables use market.module.css.
+   Clean sans-serif throughout Books, forest greens from the site tokens (warm
+   off-white in light mode, the app's dark palette in dark mode). */
+.booksMain {
+  font-family: var(--font-body-stack);
+}
+.booksMain h2 {
+  font-family: var(--font-body-stack);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+:global(html[data-app]) .booksMain {
+  padding-top: 0;
+}
+
+/* The header: a field at dusk, drawn rather than photographed, kept short. */
+.hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 20px;
+  padding: 18px 16px 30px;
+  margin: 0 0 14px;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(180deg, #06100a 0%, #0c1d10 45%, #1c3519 100%);
+}
+.heroArt {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+}
+.heroMark {
+  display: block;
+  margin: 0 auto 6px;
+  height: 25px;
+  width: auto;
+}
+.heroName {
+  font-size: 11.5px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  opacity: 0.88;
+}
+.heroTitle {
+  font-family: var(--font-body-stack);
+  font-weight: 700;
+  font-size: clamp(28px, 6vw, 38px);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 4px 0 0;
+  color: #fff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+}
+:global(html[data-app]) .hero {
+  margin: 0 -16px 14px;
+  border-radius: 0 0 22px 22px;
+  padding-top: 14px;
+}
+
+/* One primary bar. */
+.primary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--white);
+}
+.primary a {
+  text-align: center;
+  padding: 9px 4px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.primary a[aria-current='page'] {
+  background: linear-gradient(180deg, var(--jd-green-light), var(--fill-green));
+  color: var(--on-fill);
+  box-shadow: 0 2px 10px rgba(54, 124, 43, 0.35);
+}
+
+/* Reports and settings as icon shortcuts. */
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  margin: 0 0 18px;
+}
+.shortcuts a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 2px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.shortcuts a[aria-current='page'] {
+  color: var(--jd-green);
+  background: var(--green-wash-strong);
+  font-weight: 600;
+}
+
+/* Overview: things that need doing. */
+.attention {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+.attention a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--warn-line);
+  border-left: 4px solid var(--jd-yellow, #e8b400);
+  border-radius: 12px;
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  font-size: 14.5px;
+  text-decoration: none;
+}
+
+/* Overview: actions. Record sale / expense lead; the rest sit under them. */
+.actionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 24px;
+}
+.actionGrid a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 15.5px;
+  font-weight: 600;
+  text-decoration: none;
+  min-width: 0;
+}
+.actionGrid a span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .actionGrid a {
+    gap: 8px;
+    padding: 10px 12px;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .tileLabel {
+    font-size: 12.5px;
+  }
+  .tileHead {
+    gap: 6px;
+  }
+  .tile {
+    padding: 12px 13px 14px;
+  }
+}
+.actionMain {
+  background: linear-gradient(180deg, var(--jd-green-light), var(--fill-green));
+  color: var(--on-fill);
+  border: 1px solid var(--fill-green);
+  box-shadow: 0 4px 14px rgba(54, 124, 43, 0.3);
+}
+.actionSecond {
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+}
+.actionThird {
+  background: transparent;
+  color: var(--ink-2);
+  border: 1px solid var(--rule);
+  min-height: 44px !important;
+  font-size: 14.5px !important;
+}
+
+/* Overview: latest entries as a list that suits a phone. */
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+}
+.sectionHead h2 {
+  margin: 0;
+  font-size: 22px;
+}
+.sectionHead a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--jd-green);
+  font-weight: 600;
+  font-size: 14.5px;
+  text-decoration: none;
+}
+.entryList {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--white);
+  overflow: hidden;
+}
+.entryList li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  padding: 11px 14px;
+  border-top: 1px solid var(--app-line-soft, var(--rule));
+}
+.entryList li:first-child {
+  border-top: 0;
+}
+.entryWho {
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entryAmount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  text-align: right;
+  white-space: nowrap;
+}
+.entryAmount[data-in] {
+  color: var(--jd-green);
+}
+.entryMeta {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .nav {
   display: flex;
@@ -49,31 +310,80 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
-  margin: 0 0 28px;
+  margin: 0 0 22px;
+}
+@media (max-width: 560px) {
+  .tiles {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
 }
 .tile {
+  position: relative;
+  overflow: hidden;
   border: 1px solid var(--rule);
-  border-radius: 14px;
-  background: var(--white);
-  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(165deg, var(--white) 55%, var(--green-wash));
+  padding: 14px 16px 16px;
+  min-width: 0;
+}
+.tileHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tileIcon {
+  display: inline-flex;
+  color: var(--jd-green);
 }
 .tileLabel {
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .tileValue {
-  font-size: 24px;
+  font-family: var(--font-body-stack);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
-  margin-top: 4px;
+  margin-top: 6px;
+  white-space: nowrap;
+}
+@media (max-width: 560px) {
+  .tileValue {
+    font-size: 22px;
+  }
 }
 .tileHint {
+  position: relative;
+  z-index: 1;
   font-size: 12.5px;
   color: var(--ink-3);
-  margin-top: 2px;
+  margin-top: 4px;
+}
+/* The curve in the corner, coloured by what the figure is. */
+.tileWave {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 62%;
+  height: 46%;
+  pointer-events: none;
+  color: transparent;
+}
+.tile[data-tone='teal'] .tileWave {
+  color: #1c9aa0;
+}
+.tile[data-tone='green'] .tileWave {
+  color: #45a83a;
+}
+.tile[data-tone='amber'] .tileWave {
+  color: #d9a21b;
+}
+.tile[data-tone='red'] .tileWave {
+  color: #d2493a;
 }
 
 .actions {
