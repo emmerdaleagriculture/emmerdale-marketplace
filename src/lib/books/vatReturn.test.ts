@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boxesFor, computeReturn, preRegCandidates, quarters, taxableTurnover, thresholdState, type VatEntry } from './vatReturn';
+import { boxesFor, computeReturn, preRegCandidates, quarters, taxableTurnover, thresholdState, vatNotPosted, type VatEntry } from './vatReturn';
 
 const e = (over: Partial<VatEntry>): VatEntry => ({
   id: 1,
@@ -42,6 +42,17 @@ describe('VAT return boxes', () => {
     );
     expect(r.boxes).toEqual({ 1: 2010, 2: 0, 3: 2010, 4: 1020, 5: 990, 6: 10000, 7: 5000, 8: 0, 9: 0 });
     expect(r.detail).toHaveLength(2);
+  });
+});
+
+describe('return agrees with the ledger', () => {
+  it('uses the VAT actually posted, and flags entries that posted none', () => {
+    const before = e({ kind: 'purchase', vat_code: 'RED', vat_pence: 2100, net_pence: 42000, gross_pence: 44100, input_vat_pence: 0, output_vat_pence: 0 });
+    const after = e({ id: 2, kind: 'purchase', input_vat_pence: 2000, output_vat_pence: 0 });
+    const r = computeReturn([before, after], std);
+    expect(r.boxes[4]).toBe(2000);
+    expect(r.boxes[7]).toBe(52000);
+    expect(vatNotPosted([before, after], std).map((x) => x.id)).toEqual([1]);
   });
 });
 

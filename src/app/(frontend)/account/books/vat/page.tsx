@@ -11,6 +11,7 @@ import {
   quarters,
   taxableTurnover,
   thresholdState,
+  vatNotPosted,
   type Boxes,
 } from '@/lib/books/vatReturn';
 import { preRegEntry, purchasesWithAccount, unpostedReceiptCount, vatEntries } from '@/lib/books/vat.server';
@@ -91,7 +92,9 @@ export default async function VatPage({ searchParams }: { searchParams: Promise<
   const clipped = Boolean(reg && from < reg);
   if (reg && from < reg) from = reg;
   const [entries, unposted, prereg] = await Promise.all([vatEntries(l.id, from, to), unpostedReceiptCount(l.id, from, to), preRegEntry(l.id)]);
-  const { boxes, detail } = computeReturn(entries, { vat_scheme: l.vat_scheme as 'standard', flat_rate_percent: l.flat_rate_percent == null ? null : Number(l.flat_rate_percent) });
+  const scheme = { vat_scheme: l.vat_scheme as 'standard', flat_rate_percent: l.flat_rate_percent == null ? null : Number(l.flat_rate_percent) };
+  const { boxes, detail } = computeReturn(entries, scheme);
+  const notPosted = vatNotPosted(entries, scheme);
   const q = `from=${from}&to=${to}`;
   const wholePounds = (k: keyof Boxes) => k >= 6;
 
@@ -124,6 +127,21 @@ export default async function VatPage({ searchParams }: { searchParams: Promise<
           <b>{unposted} receipt{unposted === 1 ? '' : 's'} not posted yet</b> may belong in this period.{' '}
           <Link href="/account/books/receipts">Check them first →</Link>
         </p>
+      )}
+      {notPosted.length > 0 && (
+        <div className={s.readOnly}>
+          <b>
+            {notPosted.length} entr{notPosted.length === 1 ? 'y' : 'ies'} in this period {notPosted.length === 1 ? 'was' : 'were'} recorded before
+            you switched VAT registration on
+          </b>
+          , so {notPosted.length === 1 ? 'its' : 'their'} VAT isn’t in these figures:{' '}
+          {notPosted
+            .slice(0, 5)
+            .map((e) => `${e.counterparty ?? e.description ?? `#${e.id}`} (${ukDate(e.entry_date)}, VAT ${formatPence(e.vat_pence)})`)
+            .join('; ')}
+          {notPosted.length > 5 ? '…' : ''}. Void {notPosted.length === 1 ? 'it' : 'them'} in the{' '}
+          <Link href="/account/books/journal">journal</Link> and post again to include the VAT.
+        </div>
       )}
       <div className={m.tableWrap}>
         <table className={m.table}>

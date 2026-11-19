@@ -22,6 +22,14 @@ export type VatEntry = {
   is_capital: boolean;
   counterparty: string | null;
   description: string | null;
+  /**
+   * VAT actually posted: debits less credits on 2202 (input) and credits less
+   * debits on 2201 (output). Boxes 1 and 4 use these when given, so the
+   * return always agrees with the ledger: an entry posted before VAT
+   * registration was ticked carries vat_pence but reclaimed nothing.
+   */
+  input_vat_pence?: number;
+  output_vat_pence?: number;
 };
 
 export type Boxes = { 1: number; 2: number; 3: number; 4: number; 5: number; 6: number; 7: number; 8: number; 9: number };
@@ -45,7 +53,9 @@ export type Scheme = { vat_scheme: 'standard' | 'cash' | 'flat_rate'; flat_rate_
 export function boxesFor(e: VatEntry, s: Scheme): BoxContribution {
   const flat = s.vat_scheme === 'flat_rate';
   const c = e.vat_code;
-  if (e.kind === 'journal') return c === 'PREREG' ? { 4: e.vat_pence } : {};
+  const input = e.input_vat_pence ?? e.vat_pence;
+  const output = e.output_vat_pence ?? e.vat_pence;
+  if (e.kind === 'journal') return c === 'PREREG' ? { 4: input } : {};
   if (c === 'OUTSIDE' || c === 'NOVAT') return {};
   if (e.kind === 'sale') {
     if (flat) {
@@ -53,17 +63,17 @@ export function boxesFor(e: VatEntry, s: Scheme): BoxContribution {
       const bp = Math.round((s.flat_rate_percent ?? 0) * 100);
       return { 1: roundDiv(e.gross_pence * bp, 10_000), 6: e.gross_pence };
     }
-    if (c === 'STD' || c === 'RED') return { 1: e.vat_pence, 6: e.net_pence };
+    if (c === 'STD' || c === 'RED') return { 1: output, 6: e.net_pence };
     if (c === 'ZERO' || c === 'EXEMPT') return { 6: e.net_pence };
     return {};
   }
   if (e.kind === 'purchase') {
-    if (c === 'RC') return flat ? { 7: e.net_pence } : { 1: e.vat_pence, 4: e.vat_pence, 6: e.net_pence, 7: e.net_pence };
+    if (c === 'RC') return flat ? { 7: e.net_pence } : { 1: output, 4: input, 6: e.net_pence, 7: e.net_pence };
     if (flat) {
       const capital = e.is_capital && e.gross_pence >= FLAT_RATE_CAPITAL_THRESHOLD_PENCE && (c === 'STD' || c === 'RED');
-      return capital ? { 4: e.vat_pence, 7: e.net_pence } : { 7: e.net_pence };
+      return capital ? { 4: input, 7: e.net_pence } : { 7: e.net_pence };
     }
-    if (c === 'STD' || c === 'RED') return { 4: e.vat_pence, 7: e.net_pence };
+    if (c === 'STD' || c === 'RED') return { 4: input, 7: e.net_pence };
     if (c === 'ZERO' || c === 'EXEMPT' || c === 'BLOCKED') return { 7: e.net_pence };
   }
   return {};
@@ -86,6 +96,21 @@ export function computeReturn(entries: VatEntry[], s: Scheme): { boxes: Boxes; d
     boxes: { 1: t[1], 2: t[2], 3: box3, 4: t[4], 5: box3 - t[4], 6: wholePounds(t[6]), 7: wholePounds(t[7]), 8: 0, 9: 0 },
     detail,
   };
+}
+
+/**
+ * Entries in a registered period whose VAT wasn't posted to the VAT accounts:
+ * recorded before VAT registration was switched on (with a registration date
+ * set earlier). Voiding and posting them again reclaims or charges the VAT.
+ */
+export function vatNotPosted(entries: VatEntry[], s: Scheme): VatEntry[] {
+  if (s.vat_scheme === 'flat_rate') return [];
+  return entries.filter((e) => {
+    if (!(e.vat_code === 'STD' || e.vat_code === 'RED') || e.vat_pence <= 0) return false;
+    if (e.kind === 'purchase') return (e.input_vat_pence ?? e.vat_pence) === 0;
+    if (e.kind === 'sale') return (e.output_vat_pence ?? e.vat_pence) === 0;
+    return false;
+  });
 }
 
 // ── Quarters ────────────────────────────────────────────────────────────────
