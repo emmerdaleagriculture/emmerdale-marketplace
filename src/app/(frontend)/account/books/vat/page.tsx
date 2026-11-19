@@ -17,6 +17,7 @@ import {
 import { preRegEntry, purchasesWithAccount, unpostedReceiptCount, vatEntries } from '@/lib/books/vat.server';
 import f from '@/components/forms/forms.module.css';
 import m from '../../market/market.module.css';
+import kit from '@/components/app/appKit.module.css';
 import s from '../books.module.css';
 import { BooksFrame } from '../BooksFrame';
 import { PreRegForm } from './PreRegForm';
@@ -53,13 +54,13 @@ export default async function VatPage({ searchParams }: { searchParams: Promise<
           You’re not VAT registered, so your sales don’t charge VAT. You must register if your taxable turnover in
           any 12 months goes over {formatPence(VAT_THRESHOLD_PENCE).replace('.00', '')}.
         </p>
-        <div className={s.tile} style={{ marginBottom: 24 }}>
-          <div className={s.tileLabel}>Taxable turnover, 12 months to {ukDate(today)}</div>
-          <div className={s.tileValue}>{formatPence(turnover)}</div>
+        <div className={kit.tile} style={{ marginBottom: 24 }}>
+          <div className={kit.tileLabel}>Taxable turnover, 12 months to {ukDate(today)}</div>
+          <div className={kit.tileValue}>{formatPence(turnover)}</div>
           <div className={s.meter} aria-hidden="true">
             <span style={{ width: `${pct}%` }} className={state === 'over' ? s.meterOver : state === 'near' ? s.meterNear : undefined} />
           </div>
-          <div className={s.tileHint}>
+          <div className={kit.tileHint}>
             {pct}% of the threshold.{' '}
             {state === 'over'
               ? 'You’re over: you must register within 30 days of the end of the month you went over.'

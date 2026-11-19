@@ -13,51 +13,6 @@
   padding-top: 0;
 }
 
-/* The header: the sunset field from the site banner (cropped below the logo,
-   public/images/books-hero.jpg), darkened at the top so the title reads. */
-.hero {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  border-radius: 20px;
-  padding: 18px 16px 30px;
-  margin: 0 0 14px;
-  text-align: center;
-  color: #fff;
-  background:
-    linear-gradient(180deg, rgba(4, 12, 6, 0.5) 0%, rgba(4, 12, 6, 0.18) 45%, rgba(4, 12, 6, 0) 75%),
-    url('/images/books-hero.jpg') center 14% / cover no-repeat,
-    #1c3519;
-}
-.heroMark {
-  display: block;
-  margin: 0 auto 6px;
-  height: 25px;
-  width: auto;
-}
-.heroName {
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-  font-size: 11.5px;
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
-  opacity: 0.88;
-}
-.heroTitle {
-  font-family: var(--font-body-stack);
-  font-weight: 700;
-  font-size: clamp(28px, 6vw, 38px);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  margin: 4px 0 0;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 2px 18px rgba(0, 0, 0, 0.5);
-}
-:global(html[data-app]) .hero {
-  margin: 0 -16px 14px;
-  border-radius: 0 0 22px 22px;
-  padding-top: 14px;
-}
-
 /* One primary bar. */
 .primary {
   display: grid;
@@ -162,15 +117,6 @@
     padding: 10px 12px;
     font-size: 15px;
     letter-spacing: -0.01em;
-  }
-  .tileLabel {
-    font-size: 12.5px;
-  }
-  .tileHead {
-    gap: 6px;
-  }
-  .tile {
-    padding: 12px 13px 14px;
   }
 }
 .actionMain {
@@ -302,86 +248,6 @@
   padding: 10px 14px;
   margin: 0 0 20px;
   font-size: 14.5px;
-}
-
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin: 0 0 22px;
-}
-@media (max-width: 560px) {
-  .tiles {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-}
-.tile {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--rule);
-  border-radius: 16px;
-  background: linear-gradient(165deg, var(--white) 55%, var(--green-wash));
-  padding: 14px 16px 16px;
-  min-width: 0;
-}
-.tileHead {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.tileIcon {
-  display: inline-grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  flex: none;
-  color: var(--tone);
-  background: color-mix(in srgb, var(--tone) 14%, transparent);
-}
-/* What the figure is, by colour: the icon's square carries it. */
-.tile {
-  --tone: var(--jd-green);
-}
-.tile[data-tone='teal'] {
-  --tone: #138a8f;
-}
-.tile[data-tone='green'] {
-  --tone: #3a8f30;
-}
-.tile[data-tone='amber'] {
-  --tone: #b7790f;
-}
-.tile[data-tone='red'] {
-  --tone: #c23b2c;
-}
-.tileLabel {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--ink-2);
-}
-.tileValue {
-  font-family: var(--font-body-stack);
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-  margin-top: 6px;
-  white-space: nowrap;
-}
-@media (max-width: 560px) {
-  .tileValue {
-    font-size: 22px;
-  }
-}
-.tileHint {
-  position: relative;
-  z-index: 1;
-  font-size: 12.5px;
-  color: var(--ink-3);
-  margin-top: 4px;
 }
 
 .actions {

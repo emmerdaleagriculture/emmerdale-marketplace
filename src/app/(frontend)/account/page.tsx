@@ -30,6 +30,7 @@ import { Breadcrumb } from '@/components/Breadcrumb';
 import ac from './account.module.css';
 import { LogoutButton, ThemeRow } from '@/components/app/PushControls';
 import ui from '../app/app-ui.module.css';
+import { AppHero, Shortcuts, Tile, Tiles, type IconName, type TileTone } from '@/components/app/AppKit';
 
 export const metadata: Metadata = {
   title: 'Your dashboard',
@@ -205,24 +206,32 @@ export default async function AccountPage({
   const tiles = [
     {
       label: 'To price',
+      icon: 'tag' as IconName,
+      tone: 'teal' as TileTone,
       value: toPrice.length,
       hint: toPrice[0]?.expires_at ? `Next: ${timeLeft(toPrice[0].expires_at)}` : 'Nothing waiting',
       href: '/invitations',
     },
     {
       label: 'Customer deciding',
+      icon: 'clock' as IconName,
+      tone: 'amber' as TileTone,
       value: awaiting.length,
       hint: quoteBySub.size ? `${quoteBySub.size} priced in total` : 'No prices sent yet',
       href: '/invitations',
     },
     {
       label: 'Won jobs on the go',
+      icon: 'check' as IconName,
+      tone: 'green' as TileTone,
       value: wonActive.length,
       hint: toContact.length ? `${toContact.length} to call` : `${won.length} won in total`,
       href: '/won',
     },
     {
       label: 'Earned',
+      icon: 'pound' as IconName,
+      tone: 'green' as TileTone,
       value: formatGBP(earned),
       hint: inProgress ? `${formatGBP(inProgress)} in progress` : 'From completed jobs',
       href: '/won',
@@ -253,6 +262,10 @@ export default async function AccountPage({
   // Closed here (cookie) or in any other browser (stamped on their row).
   const appBannerDismissed =
     contractor.app_banner_dismissed_at != null || (await cookies()).get(APP_BANNER_COOKIE)?.value === '1';
+
+  // The app header greets by the time of day in the UK.
+  const hour = Number(new Date().toLocaleString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', hour12: false }));
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   const statusRow = (
     <div className={ac.statusRow}>
@@ -291,35 +304,57 @@ export default async function AccountPage({
         <SiteHeader />
         <SettingsHashRedirect />
         <main className={ac.dash}>
-          <section className={ac.hero}>
-            <div className={ac.heroInner}>
-              <div className={ac.heroHead}>
-                <Link
-                  href="/account/settings"
-                  prefetch={false}
-                  className={ac.heroAvatar}
-                  title={contractor.avatar_path ? 'Change your picture' : 'Add a profile picture'}
-                >
-                  <ContractorAvatar url={avatarUrl(contractor.avatar_path)} name={contractor.business_name} size={72} />
-                  {!contractor.avatar_path && <span className={ac.heroAvatarAdd} aria-hidden="true">+</span>}
-                </Link>
-                <div className={ac.heroHeadText}>
-                  <div className={ac.heroEyebrow}>Your dashboard</div>
-                  <h1 className={ac.heroTitle}>{contractor.business_name}</h1>
-                  {statusRow}
+          {app ? (
+            <div className={ac.appTop}>
+              <AppHero photo="dashboard" tall name={greeting} title={contractor.business_name}>
+                <div className={ac.appStatus}>{statusRow}</div>
+              </AppHero>
+              <Tiles>
+                {tiles.map((t) => (
+                  <Tile key={t.label} href={t.href} icon={t.icon} tone={t.tone} label={t.label} value={t.value} hint={t.hint} />
+                ))}
+              </Tiles>
+              <Shortcuts
+                label="More"
+                items={[
+                  { href: '/won', label: 'Won jobs', icon: 'check' },
+                  ...(isOpen ? [{ href: '/account/market', label: 'Market data', icon: 'trend' as IconName }] : []),
+                  ...(tendersOn ? [{ href: '/account/tenders', label: 'Tenders', icon: 'tenders' as IconName, badge: tenderCount }] : []),
+                  { href: '/account/settings', label: 'Settings', icon: 'settings' },
+                ]}
+              />
+            </div>
+          ) : (
+            <section className={ac.hero}>
+              <div className={ac.heroInner}>
+                <div className={ac.heroHead}>
+                  <Link
+                    href="/account/settings"
+                    prefetch={false}
+                    className={ac.heroAvatar}
+                    title={contractor.avatar_path ? 'Change your picture' : 'Add a profile picture'}
+                  >
+                    <ContractorAvatar url={avatarUrl(contractor.avatar_path)} name={contractor.business_name} size={72} />
+                    {!contractor.avatar_path && <span className={ac.heroAvatarAdd} aria-hidden="true">+</span>}
+                  </Link>
+                  <div className={ac.heroHeadText}>
+                    <div className={ac.heroEyebrow}>Your dashboard</div>
+                    <h1 className={ac.heroTitle}>{contractor.business_name}</h1>
+                    {statusRow}
+                  </div>
+                </div>
+                <div className={`${ac.tiles} ${ac.heroTiles}`}>
+                  {tiles.map((t) => (
+                    <Link key={t.label} href={t.href} prefetch={false} className={ac.tile}>
+                      <span className={ac.tileValue}>{t.value}</span>
+                      <span className={ac.tileLabel}>{t.label}</span>
+                      <span className={ac.tileHint}>{t.hint}</span>
+                    </Link>
+                  ))}
                 </div>
               </div>
-              <div className={`${ac.tiles} ${ac.heroTiles}`}>
-                {tiles.map((t) => (
-                  <Link key={t.label} href={t.href} prefetch={false} className={ac.tile}>
-                    <span className={ac.tileValue}>{t.value}</span>
-                    <span className={ac.tileLabel}>{t.label}</span>
-                    <span className={ac.tileHint}>{t.hint}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           <div className={ac.dashBody}>
             {emailHealth.undeliverable && (
@@ -419,7 +454,9 @@ export default async function AccountPage({
                 {/* Premium tools sit under the membership card (2026-11-19).
                     Market data is Premium; on the website non-members see its
                     upgrade page, in the app only members see the link. */}
-                {(isOpen || !app) && (
+                {/* In the app the shortcuts under the header and the tab bar
+                    cover these two panels. */}
+                {!app && (
                   <nav className={ac.sidePanel} aria-label="Premium">
                     <h2 className={ac.sidePanelTitle}>Premium</h2>
                     <Link href="/account/market" className={ac.sideLink}>
@@ -428,38 +465,40 @@ export default async function AccountPage({
                   </nav>
                 )}
 
-                <nav className={ac.sidePanel} aria-label="Your account">
-                  <h2 className={ac.sidePanelTitle}>Your account</h2>
-                  <Link href="/invitations" className={ac.sideLink}>
-                    All invitations &amp; history <span aria-hidden="true">›</span>
-                  </Link>
-                  <Link href="/won" className={ac.sideLink}>
-                    Won jobs <span aria-hidden="true">›</span>
-                  </Link>
-                  {(tendersOn || (!isOpen && !app)) && (
-                    <Link href="/account/tenders" className={ac.sideLink}>
+                {!app && (
+                  <nav className={ac.sidePanel} aria-label="Your account">
+                    <h2 className={ac.sidePanelTitle}>Your account</h2>
+                    <Link href="/invitations" className={ac.sideLink}>
+                      All invitations &amp; history <span aria-hidden="true">›</span>
+                    </Link>
+                    <Link href="/won" className={ac.sideLink}>
+                      Won jobs <span aria-hidden="true">›</span>
+                    </Link>
+                    {(tendersOn || (!isOpen && !app)) && (
+                      <Link href="/account/tenders" className={ac.sideLink}>
+                        <span>
+                          Council tenders
+                          {tenderCount > 0 && <span className={ac.countBadge}>{tenderCount} new</span>}
+                        </span>
+                        <span aria-hidden="true">›</span>
+                      </Link>
+                    )}
+                    {booksOn && (isOpen || !app) && (
+                      <Link href="/account/books" className={ac.sideLink}>
+                        Books <span aria-hidden="true">›</span>
+                      </Link>
+                    )}
+                    <Link href="/account/settings" className={ac.sideLink}>
                       <span>
-                        Council tenders
-                        {tenderCount > 0 && <span className={ac.countBadge}>{tenderCount} new</span>}
+                        Settings
+                        <span className={ac.sideHint}>
+                          {selectedCounties.length} counties · {(contractor.services ?? []).length} services
+                        </span>
                       </span>
                       <span aria-hidden="true">›</span>
                     </Link>
-                  )}
-                  {booksOn && (isOpen || !app) && (
-                    <Link href="/account/books" className={ac.sideLink}>
-                      Books <span aria-hidden="true">›</span>
-                    </Link>
-                  )}
-                  <Link href="/account/settings" className={ac.sideLink}>
-                    <span>
-                      Settings
-                      <span className={ac.sideHint}>
-                        {selectedCounties.length} counties · {(contractor.services ?? []).length} services
-                      </span>
-                    </span>
-                    <span aria-hidden="true">›</span>
-                  </Link>
-                </nav>
+                  </nav>
+                )}
 
                 {contact}
               </aside>

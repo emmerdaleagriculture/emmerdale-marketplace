@@ -6,6 +6,7 @@ import { statementAccounts } from '@/lib/books/bank.server';
 import { formatPence } from '@/lib/books/money';
 import { ukDate } from '@/lib/books/period';
 import m from '../../market/market.module.css';
+import kit from '@/components/app/appKit.module.css';
 import s from '../books.module.css';
 import { BooksFrame } from '../BooksFrame';
 import { UploadForm } from './UploadForm';
@@ -44,14 +45,14 @@ export default async function BankPage() {
       </p>
 
       {covered.size > 0 && (
-        <div className={s.tiles}>
+        <div className={kit.tiles}>
           {[...covered].map(([code, end]) => (
-            <div className={s.tile} key={code}>
-              <div className={s.tileLabel}>
+            <div className={kit.tile} key={code}>
+              <div className={kit.tileLabel}>
                 {code} {name.get(code) ?? ''}
               </div>
-              <div className={s.tileValue}>{ukDate(end)}</div>
-              <div className={s.tileHint}>Statements uploaded up to</div>
+              <div className={kit.tileValue}>{ukDate(end)}</div>
+              <div className={kit.tileHint}>Statements uploaded up to</div>
             </div>
           ))}
         </div>

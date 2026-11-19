@@ -8,6 +8,7 @@ import a from '../../auth.module.css';
 import m from '../market/market.module.css';
 import s from './books.module.css';
 import { Icon, type BooksIconName } from './BooksUi';
+import { AppHero } from '@/components/app/AppKit';
 
 /** The four places people go most, as one bar. */
 const PRIMARY = [
@@ -57,12 +58,7 @@ export function BooksFrame({
       <main className={`${a.main} ${s.booksMain}`}>
         <div className={a.wide}>
           <Breadcrumb tone="light" jsonLd={false} skipHome items={items} />
-          <header className={s.hero}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- a 2KB mark, no need for the optimiser */}
-            <img className={s.heroMark} src="/images/brand/ea-mark-white.png" alt="" width={52} height={25} />
-            <div className={s.heroName}>{name}</div>
-            <h1 className={s.heroTitle}>{title}</h1>
-          </header>
+          <AppHero photo="books" name={name} title={title} />
           {access.ledger && (
             <>
               <nav className={s.primary} aria-label="Books">

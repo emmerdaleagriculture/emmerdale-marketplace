@@ -17,6 +17,7 @@ import { Breadcrumb } from '@/components/Breadcrumb';
 import s from './invitations.module.css';
 import { AppFold } from '@/components/app/AppFold';
 import { isAppRequest } from '@/lib/appMode.server';
+import { AppHero } from '@/components/app/AppKit';
 
 /** Unclassified jobs carry the customer's own words as the title — keep a card a card. */
 function clip(text: string, n: number) {
@@ -216,7 +217,11 @@ export default async function InvitationsPage() {
             items={[{ label: 'Dashboard', href: '/account' }, { label: 'Jobs to price' }]}
           />
           <div className={a.eyebrow} data-app-hide>The network</div>
-          <h1 className={`${a.title} ${s.appTitle}`}>Jobs to price</h1>
+          {inApp ? (
+            <AppHero photo="jobs" name={toPrice.length > 0 ? `${toPrice.length} waiting for your price` : 'Nothing waiting'} title="Jobs to price" />
+          ) : (
+            <h1 className={`${a.title} ${s.appTitle}`}>Jobs to price</h1>
+          )}
           {inApp ? (
             <p className={s.appSub}>Customers can accept the first good price. Price early.</p>
           ) : (

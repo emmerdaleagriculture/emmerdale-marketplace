@@ -5,6 +5,8 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { createClient } from '@/lib/supabase/server';
 import { getInbox } from '@/lib/app/inbox';
+import { isAppRequest } from '@/lib/appMode.server';
+import { AppHero } from '@/components/app/AppKit';
 import a from '../auth.module.css';
 import s from './messages.module.css';
 
@@ -38,13 +40,19 @@ export default async function MessagesPage() {
     customer.data ? getInbox(user.id, 'customer') : Promise.resolve([]),
   ]);
   const threads = [...asContractor, ...asCustomer];
+  const unread = threads.filter((t) => t.unread > 0).length;
+  const app = await isAppRequest();
 
   return (
     <div className={a.wrap}>
       <SiteHeader />
       <main className={a.main}>
         <div className={a.wide}>
-          <h1 className={a.title}>Messages</h1>
+          {app ? (
+            <AppHero photo="messages" name={unread > 0 ? `${unread} unread` : 'All caught up'} title="Messages" />
+          ) : (
+            <h1 className={a.title}>Messages</h1>
+          )}
           {threads.length === 0 ? (
             <div className={s.empty}>
               {contractor.data

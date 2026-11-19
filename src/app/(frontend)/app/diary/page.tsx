@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { AppHero } from '@/components/app/AppKit';
 import ui from '../app-ui.module.css';
 import { Diary } from './Diary';
 import { isDay, isMonth, monthGrid, todayInLondon } from './diary';
@@ -48,7 +49,11 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className={ui.screen}>
-      <h1 className={ui.title}>Diary</h1>
+      <AppHero
+        photo="diary"
+        name={new Date(`${today}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/London' })}
+        title="Diary"
+      />
 
       {contractor && (
         <div className={ui.rows} style={{ marginBottom: 14 }}>
