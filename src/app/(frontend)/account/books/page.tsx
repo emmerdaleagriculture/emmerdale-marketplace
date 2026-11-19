@@ -80,6 +80,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
             bank_details: null,
             invoice_terms_days: 7,
             invoice_footer: null,
+            inbound_senders: [],
           }}
         />
       </BooksFrame>

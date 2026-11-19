@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { loadLedger } from '@/lib/books/server';
 import { MONTHLY_AI_READS } from '@/lib/books/receipts.server';
+import { receiptsAddress } from '@/lib/books/inbound';
 import { formatPence } from '@/lib/books/money';
 import { ukDate } from '@/lib/books/period';
 import m from '../../market/market.module.css';
@@ -91,6 +92,12 @@ export default async function ReceiptsPage({ searchParams }: { searchParams: Pro
       <AutoRefresh active={reading.length > 0} />
       {posted && <p className={s.notice}>Receipt posted to your books.</p>}
       {access.canEdit && <ReceiptUploader />}
+      {access.canEdit && (
+        <p className={m.sub}>
+          Or email them to <b>{receiptsAddress(access.ledger.inbound_code)}</b> from your own address. Other senders can
+          be added in <Link className={s.link} href="/account/books/settings">Settings</Link>.
+        </p>
+      )}
 
       {reading.length > 0 && (
         <>

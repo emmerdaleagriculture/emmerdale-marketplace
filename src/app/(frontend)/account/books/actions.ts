@@ -10,6 +10,7 @@ import { parsePounds } from '@/lib/books/money';
 import { buildPosting, validateDoc, type Posting } from '@/lib/books/posting';
 import { buildMileagePosting, taxYearOf } from '@/lib/books/mileage';
 import { cleanVatNumber, isVatCode } from '@/lib/books/vat';
+import { parseSenders } from '@/lib/books/inbound';
 import { isIsoDate, todayUk } from '@/lib/books/period';
 import { accountMap, businessTypeOf, getAccounts, ledgerForPosting, requireBooksWriter, voidEntry } from '@/lib/books/server';
 import type { Json } from '@/lib/database.types';
@@ -63,6 +64,7 @@ const SettingsSchema = z
     bank_details: z.string().max(500),
     invoice_terms_days: z.coerce.number().int().min(0).max(120),
     invoice_footer: z.string().max(1000),
+    inbound_senders: z.array(z.string()),
   })
   .superRefine((v, ctx) => {
     if (v.vat_registered && !v.vat_number) ctx.addIssue({ code: 'custom', message: 'Enter the VAT number.', path: ['vat_number'] });
@@ -98,6 +100,7 @@ function readSettings(fd: FormData) {
     bank_details: str(fd, 'bank_details'),
     invoice_terms_days: str(fd, 'invoice_terms_days') || '7',
     invoice_footer: str(fd, 'invoice_footer'),
+    inbound_senders: parseSenders(str(fd, 'inbound_senders')),
   });
 }
 
@@ -121,6 +124,7 @@ function settingsRow(v: z.infer<typeof SettingsSchema>) {
     bank_details: optional(v.bank_details),
     invoice_terms_days: v.invoice_terms_days,
     invoice_footer: optional(v.invoice_footer),
+    inbound_senders: v.inbound_senders,
   };
 }
 
