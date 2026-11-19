@@ -13,6 +13,7 @@ import { issuePosting, paymentPosting, voidPosting, type InvoiceLine, type Payme
 import type { Line } from './posting';
 import { personalAccountCode, type BusinessType } from './chart';
 import { todayUk } from './period';
+import { registeredOn } from './vat';
 import type { Ledger } from './server';
 
 export type Invoice = Database['public']['Tables']['books_invoices']['Row'];
@@ -74,6 +75,14 @@ export async function issueInvoice(inv: InvoiceFull): Promise<string | null> {
   if (inv.status !== 'draft') return null;
   if (!inv.lines.length || inv.gross_pence <= 0) return 'Add at least one line with an amount before issuing.';
   const admin = createServiceRoleClient();
+  // VAT was worked out when the draft was saved. If registration has changed
+  // since (for the issue date), the lines are wrong: make them save again.
+  const { data: l } = await admin.from('books_ledgers').select('vat_registered, vat_registration_date, vat_scheme').eq('id', inv.ledger_id).single();
+  const registeredNow = Boolean(l && registeredOn({ vat_registered: l.vat_registered, vat_registration_date: l.vat_registration_date, vat_scheme: l.vat_scheme as 'standard' }, inv.issue_date));
+  const pricedRegistered = inv.lines.some((x) => x.vat_code !== 'NOVAT');
+  if (registeredNow !== pricedRegistered) {
+    return 'Your VAT registration has changed since this draft was saved. Open it with Edit and save it again to update the VAT.';
+  }
   const p = issuePosting({
     id: inv.id,
     ledger_id: inv.ledger_id,
@@ -109,6 +118,18 @@ export async function voidInvoice(inv: InvoiceFull): Promise<string | null> {
   }
   if (inv.status === 'void') return null;
   if (inv.paid_pence > 0 || inv.payments.length) return 'An invoice with payments can’t be voided.';
+  // Claim it first: only an issued invoice with nothing paid can be voided,
+  // and a payment recorded meanwhile (books_record_invoice_payment refuses a
+  // void invoice) can't land on it afterwards.
+  const { data: claimed } = await admin
+    .from('books_invoices')
+    .update({ status: 'void' })
+    .eq('id', inv.id)
+    .eq('status', 'issued')
+    .eq('paid_pence', 0)
+    .select('id');
+  if (!claimed?.length) return 'This invoice has just been paid or changed. Refresh and try again.';
+  const undo = () => admin.from('books_invoices').update({ status: 'issued' }).eq('id', inv.id).eq('status', 'void');
   const { data: issueLines } = await admin
     .from('books_lines')
     .select('debit_pence, credit_pence, memo, books_accounts(code)')
@@ -119,7 +140,10 @@ export async function voidInvoice(inv: InvoiceFull): Promise<string | null> {
     credit: l.credit_pence,
     memo: l.memo ?? undefined,
   }));
-  if (!lines.length) return 'The invoice’s ledger entry is missing, so it can’t be reversed.';
+  if (!lines.length) {
+    await undo();
+    return 'The invoice’s ledger entry is missing, so it can’t be reversed.';
+  }
   const p = voidPosting(
     { id: inv.id, ledger_id: inv.ledger_id, number: inv.number, issue_date: inv.issue_date, customer_name: inv.customer.organisation || inv.customer.name, lines: asLines(inv.lines) },
     lines,
@@ -130,8 +154,10 @@ export async function voidInvoice(inv: InvoiceFull): Promise<string | null> {
     p_entry: p.entry as unknown as Json,
     p_lines: p.lines as unknown as Json,
   });
-  if (error) return 'The invoice couldn’t be voided. Please try again.';
-  await admin.from('books_invoices').update({ status: 'void' }).eq('id', inv.id);
+  if (error) {
+    await undo();
+    return 'The invoice couldn’t be voided. Please try again.';
+  }
   return null;
 }
 

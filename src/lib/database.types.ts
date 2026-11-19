@@ -1466,6 +1466,27 @@ export type Database = {
         }
         Relationships: []
       }
+      books_ai_reads: {
+        Row: {
+          at: string
+          id: number
+          ledger_id: string
+          receipt_id: number | null
+        }
+        Insert: {
+          at?: string
+          id?: number
+          ledger_id: string
+          receipt_id?: number | null
+        }
+        Update: {
+          at?: string
+          id?: number
+          ledger_id?: string
+          receipt_id?: number | null
+        }
+        Relationships: []
+      }
       books_customers: {
         Row: {
           address: string | null

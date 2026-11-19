@@ -238,7 +238,9 @@ export default async function AccountPage({
   const membership = membershipOf(subQ.data, contractor);
   const isOpen = membership === 'open';
   // Books is released account by account while it's trialled.
-  const booksOn = await booksAllowed(user.email);
+  const booksOn =
+    (await booksAllowed(user.email)) ||
+    Boolean((await createServiceRoleClient().from('books_ledgers').select('id').eq('contractor_id', user.id).maybeSingle()).data);
   const isPremium = membership !== null;
   // Council tenders (Open): the count of live notices on their patch not yet seen.
   const tendersOn = isOpen && status === 'approved' && contractor.tenders_enabled;

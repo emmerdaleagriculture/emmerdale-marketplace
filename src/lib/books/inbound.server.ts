@@ -9,7 +9,7 @@
 
 import { Resend } from 'resend';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { storeReceipt } from './receipts.server';
+import { RECEIPTS_BUCKET, storeReceipt } from './receipts.server';
 import { MAX_ATTACHMENTS, MIN_IMAGE_BYTES, attachmentType, bareAddress, findInboundCode } from './inbound';
 import { MAX_RECEIPT_BYTES } from './receipts.server';
 import { booksAllowed } from './access';
@@ -128,10 +128,26 @@ export async function handleInboundEmail(data: EventData): Promise<InboundOutcom
     else if (!trusted) held += 1;
   };
 
+  // If anything below fails, take back what this email stored so Resend's
+  // retry starts clean instead of finding the Message-ID and stopping.
+  const rollback = async () => {
+    const { data: rows } = await admin.from('books_receipts').delete().eq('ledger_id', ledger.id).eq('message_id', messageId).select('file_path');
+    const paths = (rows ?? []).map((r) => r.file_path).filter((p): p is string => Boolean(p));
+    if (paths.length) {
+      // Only files no other receipt still points at.
+      const { data: still } = await admin.from('books_receipts').select('file_path').eq('ledger_id', ledger.id).in('file_path', paths);
+      const keep = new Set((still ?? []).map((r) => r.file_path));
+      const gone = paths.filter((p) => !keep.has(p));
+      if (gone.length) await admin.storage.from(RECEIPTS_BUCKET).remove(gone);
+    }
+  };
+
+  try {
   // Attachments first.
   let stored = 0;
   if (email.attachments.length) {
-    const { data: list } = await resend().emails.receiving.attachments.list({ emailId: data.email_id });
+    const { data: list, error: listErr } = await resend().emails.receiving.attachments.list({ emailId: data.email_id });
+    if (listErr) throw new Error(`attachments list failed: ${listErr.message}`);
     for (const a of (list?.data ?? []).slice(0, MAX_ATTACHMENTS * 2)) {
       if (stored >= MAX_ATTACHMENTS) break;
       const mime = attachmentType(a.content_type, a.filename);
@@ -139,8 +155,10 @@ export async function handleInboundEmail(data: EventData): Promise<InboundOutcom
       if (mime.startsWith('image/') && a.size < MIN_IMAGE_BYTES) continue;
       if (a.content_disposition === 'inline' && mime.startsWith('image/') && a.size < 50_000) continue;
       const buf = await download(a.download_url);
-      if (!buf) continue;
-      keep(await storeReceipt(ledger.id, { buf, mime, name: a.filename ?? null }, extra));
+      if (!buf) throw new Error(`attachment ${a.id} didn't download`);
+      const r = await storeReceipt(ledger.id, { buf, mime, name: a.filename ?? null }, extra);
+      if ('error' in r) throw new Error(r.error);
+      keep(r);
       stored += 1;
     }
   }
@@ -151,16 +169,16 @@ export async function handleInboundEmail(data: EventData): Promise<InboundOutcom
     if (!body) return { kind: 'ignored', reason: 'empty email' };
     // Inline images arrive as data: URIs in the HTML; drop them, they are kept nowhere and only add size.
     const cleaned = body.text.replace(/src="data:[^"]{200,}"/g, 'src=""').slice(0, 2_000_000);
-    keep(
-      await storeReceipt(
-        ledger.id,
-        { buf: Buffer.from(cleaned, 'utf8'), mime: body.mime, name: (email.subject || 'Email').slice(0, 120) },
-        extra,
-      ),
-    );
+    const r = await storeReceipt(ledger.id, { buf: Buffer.from(cleaned, 'utf8'), mime: body.mime, name: (email.subject || 'Email').slice(0, 120) }, extra);
+    if ('error' in r) throw new Error(r.error);
+    keep(r);
   }
 
   return { kind: 'stored', ledgerId: ledger.id, toRead, held };
+  } catch (err) {
+    await rollback();
+    throw err;
+  }
 }
 
 function receiptsTo(to: string[]): string | null {

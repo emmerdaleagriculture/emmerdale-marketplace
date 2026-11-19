@@ -49,3 +49,22 @@ describe('Stripe sync postings', () => {
     expect(postingsFor(t({ currency: 'eur' }), reg)).toEqual([]);
   });
 });
+
+describe('refund basis', () => {
+  it('a refund of a zero-rated invoice takes back no VAT, to the invoice’s income account', () => {
+    const r = postingsFor(t({ type: 'refund', amount: -12000, fee: 0 }), reg, { vatNum: 0, vatDen: 12000, account: '4110', label: 'invoice 0000001' })[0];
+    expect(r.lines).toEqual([
+      { code: '4110', debit: 12000, credit: 0 },
+      { code: '1220', debit: 0, credit: 12000 },
+    ]);
+    expect(r.entry.vat_code).toBe('ZERO');
+  });
+  it('a 5% invoice refund takes back its own VAT share', () => {
+    const r = postingsFor(t({ type: 'refund', amount: -10500, fee: 0 }), reg, { vatNum: 500, vatDen: 10500, account: '4000' })[0];
+    expect(r.lines).toEqual([
+      { code: '4000', debit: 10000, credit: 0 },
+      { code: '2201', debit: 500, credit: 0 },
+      { code: '1220', debit: 0, credit: 10500 },
+    ]);
+  });
+});

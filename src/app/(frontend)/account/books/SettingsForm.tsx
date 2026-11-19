@@ -147,7 +147,6 @@ export function SettingsForm({
                 <span className={f.label}>Scheme</span>
                 <select className={f.input} name="vat_scheme" value={scheme} onChange={(e) => setScheme(e.target.value)}>
                   <option value="standard">Standard (accrual)</option>
-                  <option value="cash">Cash accounting</option>
                   <option value="flat_rate">Flat rate</option>
                 </select>
               </label>

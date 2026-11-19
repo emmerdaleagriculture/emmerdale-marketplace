@@ -5,7 +5,7 @@ import { cronAuthorised } from '@/lib/cronAuth';
 import { stripeConfigured } from '@/lib/stripe';
 import { syncLedgerStripe } from '@/lib/books/stripeSync';
 import type { Ledger } from '@/lib/books/server';
-import { booksAllowed } from '@/lib/books/access';
+import { booksAllowList } from '@/lib/books/access';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -21,16 +21,20 @@ async function run() {
     .from('books_ledgers')
     .select('*')
     .not('stripe_account_id', 'is', null)
-    .eq('stripe_charges_enabled', true)
     .limit(1000);
   if (error) throw new Error(error.message);
   let posted = 0;
   const failed: string[] = [];
-  const admin = createServiceRoleClient();
-  for (const l of (data ?? []) as Ledger[]) {
+  const ledgers = (data ?? []) as Ledger[];
+  const allowed = await booksAllowList();
+  const { data: owners } = await createServiceRoleClient()
+    .from('contractors')
+    .select('id, email')
+    .in('id', ledgers.map((l) => l.contractor_id));
+  const emailOf = new Map((owners ?? []).map((o) => [o.id, o.email]));
+  for (const l of ledgers) {
     try {
-      const { data: owner } = await admin.auth.admin.getUserById(l.contractor_id);
-      if (!(await booksAllowed(owner.user?.email))) continue;
+      if (!allowed(emailOf.get(l.contractor_id))) continue;
       posted += (await syncLedgerStripe(l)).posted;
     } catch (err) {
       failed.push(l.id);

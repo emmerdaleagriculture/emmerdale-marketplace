@@ -18,6 +18,8 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { Json } from '@/lib/database.types';
 import { roundDiv } from './money';
 import { registeredOn } from './vat';
+import { todayUk } from './period';
+import { fetchAll } from '@/lib/supabase/fetchAll';
 import type { Line } from './posting';
 import type { Ledger } from './server';
 
@@ -35,10 +37,17 @@ type Entry = {
   external_id: string;
 };
 
-const ukDay = (unix: number) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date(unix * 1000));
+const ukDay = (unix: number) => todayUk(new Date(unix * 1000));
+
+/** How a refund is split: the VAT share of the original sale, and its income account. */
+export type RefundBasis = { vatNum: number; vatDen: number; account: string; label?: string };
 
 /** Entries for one balance transaction (pure). */
-export function postingsFor(t: Stripe.BalanceTransaction, ledger: Pick<Ledger, 'vat_registered' | 'vat_registration_date' | 'vat_scheme'>): { entry: Entry; lines: Line[] }[] {
+export function postingsFor(
+  t: Stripe.BalanceTransaction,
+  ledger: Pick<Ledger, 'vat_registered' | 'vat_registration_date' | 'vat_scheme'>,
+  refund?: RefundBasis,
+): { entry: Entry; lines: Line[] }[] {
   if (t.currency !== 'gbp') return [];
   const date = ukDay(t.created);
   const base = { entry_date: date, source: 'stripe' as const, counterparty: 'Stripe', reference: t.id };
@@ -72,11 +81,23 @@ export function postingsFor(t: Stripe.BalanceTransaction, ledger: Pick<Ledger, '
     case 'refund':
     case 'payment_refund': {
       const gross = t.amount; // negative
-      const vat = registered && !flat ? -roundDiv(-gross, 6) : 0;
+      // The VAT share of the sale being refunded: the invoice's own rate, or
+      // 1/6 for a plain card sale booked by this sync when registered.
+      const basis = refund ?? { vatNum: registered && !flat ? 1 : 0, vatDen: 6, account: '4000' };
+      const vat = basis.vatNum ? -roundDiv(-gross * basis.vatNum, basis.vatDen) : 0;
       out.push({
-        entry: { ...base, kind: 'sale', description: 'Card refund', vat_code: registered ? 'STD' : 'NOVAT', net_pence: gross - vat, vat_pence: vat, gross_pence: gross, external_id: `stripe:${t.id}` },
+        entry: {
+          ...base,
+          kind: 'sale',
+          description: `Card refund${basis.label ? ` (${basis.label})` : ''}`,
+          vat_code: vat !== 0 ? 'STD' : registered ? 'ZERO' : 'NOVAT',
+          net_pence: gross - vat,
+          vat_pence: vat,
+          gross_pence: gross,
+          external_id: `stripe:${t.id}`,
+        },
         lines: [
-          { code: '4000', debit: -gross + vat, credit: 0 },
+          { code: basis.account, debit: -gross + vat, credit: 0 },
           { code: '2201', debit: -vat, credit: 0 },
           { code: '1220', debit: 0, credit: -gross },
         ].filter((l) => l.debit > 0 || l.credit > 0),
@@ -129,30 +150,72 @@ export function postingsFor(t: Stripe.BalanceTransaction, ledger: Pick<Ledger, '
 
 /** Sync one ledger's connected account since its last sync (3 days' overlap). */
 export async function syncLedgerStripe(ledger: Ledger): Promise<{ posted: number; seen: number }> {
-  if (!ledger.stripe_account_id || !ledger.stripe_charges_enabled) return { posted: 0, seen: 0 };
+  // Not gated on charges being enabled: a restricted account still pays out,
+  // refunds and has disputes, and those must reach the books.
+  if (!ledger.stripe_account_id) return { posted: 0, seen: 0 };
   const admin = createServiceRoleClient();
+  const stripe = getStripe();
+  const acct = { stripeAccount: ledger.stripe_account_id };
   const since = ledger.stripe_synced_at ?? ledger.stripe_connected_at ?? new Date().toISOString();
-  const gte = Math.floor((Date.parse(since) - 3 * 86_400_000) / 1000);
+  const fromMs = Date.parse(since) - 3 * 86_400_000;
+  const gte = Math.floor(fromMs / 1000);
+
+  // What's already booked in the window, in one query.
+  const booked = new Set(
+    (
+      await fetchAll<{ external_id: string | null }>((a, b) =>
+        admin
+          .from('books_entries')
+          .select('external_id')
+          .eq('ledger_id', ledger.id)
+          .eq('source', 'stripe')
+          .gte('entry_date', todayUk(new Date(fromMs - 86_400_000)))
+          .order('id')
+          .range(a, b),
+      )
+    ).map((r) => r.external_id),
+  );
+
   let posted = 0;
   let seen = 0;
-  const list = getStripe().balanceTransactions.list(
-    { created: { gte }, limit: 100, expand: ['data.source'] },
-    { stripeAccount: ledger.stripe_account_id },
-  );
-  for await (const t of list) {
+  for await (const t of stripe.balanceTransactions.list({ created: { gte }, limit: 100, expand: ['data.source'] }, acct)) {
     seen += 1;
-    for (const p of postingsFor(t, ledger)) {
-      const { data: existing } = await admin.from('books_entries').select('id').eq('ledger_id', ledger.id).eq('external_id', p.entry.external_id).maybeSingle();
-      if (existing) continue;
+    let refund: RefundBasis | undefined;
+    if ((t.type === 'refund' || t.type === 'payment_refund') && t.source && typeof t.source === 'object') {
+      refund = await refundBasis(ledger, (t.source as Stripe.Refund).charge, acct);
+    }
+    for (const p of postingsFor(t, ledger, refund)) {
+      if (booked.has(p.entry.external_id)) continue;
       const { error } = await admin.rpc('books_post_entry', {
         p_ledger_id: ledger.id,
         p_entry: p.entry as unknown as Json,
         p_lines: p.lines as unknown as Json,
       });
       if (error) console.error('[books] stripe sync post failed', { ledger: ledger.id, txn: t.id, error: error.message });
-      else posted += 1;
+      else {
+        posted += 1;
+        booked.add(p.entry.external_id);
+      }
     }
   }
   await admin.from('books_ledgers').update({ stripe_synced_at: new Date().toISOString() }).eq('id', ledger.id);
   return { posted, seen };
+}
+
+/** For a refund of an invoice's card payment: that invoice's VAT share and income account. */
+async function refundBasis(ledger: Ledger, charge: string | Stripe.Charge | null, acct: { stripeAccount: string }): Promise<RefundBasis | undefined> {
+  try {
+    if (!charge) return undefined;
+    const ch = typeof charge === 'string' ? await getStripe().charges.retrieve(charge, {}, acct) : charge;
+    const [ledgerId, invoiceId] = String(ch.metadata?.books_invoice ?? '').split(':');
+    if (ledgerId !== ledger.id) return undefined;
+    const admin = createServiceRoleClient();
+    const { data: inv } = await admin.from('books_invoices').select('number, vat_pence, gross_pence').eq('id', Number(invoiceId)).eq('ledger_id', ledger.id).maybeSingle();
+    if (!inv || inv.gross_pence <= 0) return undefined;
+    const { data: line } = await admin.from('books_invoice_lines').select('account_code').eq('invoice_id', Number(invoiceId)).order('position').limit(1).maybeSingle();
+    return { vatNum: inv.vat_pence, vatDen: inv.gross_pence, account: line?.account_code ?? '4000', label: `invoice ${inv.number}` };
+  } catch (err) {
+    console.error('[books] refund basis lookup failed', err instanceof Error ? err.message : err);
+    return undefined;
+  }
 }

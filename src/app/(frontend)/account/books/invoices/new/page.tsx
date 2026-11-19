@@ -4,15 +4,12 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getAccounts, loadLedger } from '@/lib/books/server';
 import { invoiceNumbers } from '@/lib/books/invoices.server';
 import { nextInvoiceNumber } from '@/lib/books/invoice';
-import { todayUk } from '@/lib/books/period';
+import { addDays, todayUk } from '@/lib/books/period';
 import { BooksFrame } from '../../BooksFrame';
 import { InvoiceForm } from '../InvoiceForm';
 
 export const metadata: Metadata = { title: 'New invoice', robots: { index: false, follow: false } };
 
-function addDays(iso: string, n: number) {
-  return new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
-}
 
 export default async function NewInvoicePage({ searchParams }: { searchParams: Promise<{ customer?: string }> }) {
   const access = await loadLedger('/account/books/invoices/new');

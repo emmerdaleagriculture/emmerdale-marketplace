@@ -17,3 +17,16 @@ export async function booksAllowed(email: string | null | undefined): Promise<bo
     return false;
   }
 }
+
+/** The allowlist read once, as a test, for jobs that check many accounts. */
+export async function booksAllowList(): Promise<(email: string | null | undefined) => boolean> {
+  let v: unknown = null;
+  try {
+    const { data } = await createServiceRoleClient().from('app_config').select('value').eq('key', 'books_allowlist').maybeSingle();
+    v = data?.value ?? null;
+  } catch {
+    v = null;
+  }
+  const list = Array.isArray(v) ? new Set(v.filter((x): x is string => typeof x === 'string').map((x) => x.trim().toLowerCase())) : null;
+  return (email) => Boolean(email) && (v === 'all' || Boolean(list?.has(email!.trim().toLowerCase())));
+}

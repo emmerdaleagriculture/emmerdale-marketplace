@@ -59,14 +59,16 @@ async function resolve(): Promise<
       .maybeSingle(),
   ]);
   if (!contractor) return { kind: 'not-contractor', userId: user.id, email: user.email ?? null };
-  // Released account by account while it's trialled.
-  if (!(await booksAllowed(user.email))) return { kind: 'not-released' };
-  const canEdit = contractor.status === 'approved' && membershipOf(sub, contractor) === 'open';
   const { data: ledger } = await createServiceRoleClient()
     .from('books_ledgers')
     .select('*')
     .eq('contractor_id', user.id)
     .maybeSingle();
+  // Released account by account while it's trialled. Someone taken off the
+  // list keeps read-only access to books they already have (their records).
+  const released = await booksAllowed(user.email);
+  if (!released && !ledger) return { kind: 'not-released' };
+  const canEdit = released && contractor.status === 'approved' && membershipOf(sub, contractor) === 'open';
   return {
     kind: 'ok',
     userId: user.id,
