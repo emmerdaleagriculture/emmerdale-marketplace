@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { loadBooks, recentEntries, trialBalance } from '@/lib/books/server';
 import { formatPence } from '@/lib/books/money';
 import { accountingYear, todayUk, ukDate } from '@/lib/books/period';
@@ -35,8 +36,8 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
         <BooksFrame access={access} title="Books" tab={null}>
           <p className={m.lead}>
             <b>Premium members keep their books here.</b> Record sales and expenses, claim mileage at the
-            HMRC rate, and see your profit and loss and trial balance at any time. Receipts read by AI,
-            invoices customers can pay by card, VAT returns and bank statement matching are on the way.
+            HMRC rate, and see your profit and loss and trial balance at any time. Send in receipts and AI reads them into
+            your books. Invoices customers can pay by card, VAT returns and bank statement matching are on the way.
           </p>
           <div className={m.pitch}>
             <h2>Part of Premium membership</h2>
@@ -87,10 +88,15 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   const ledger = access.ledger;
   const today = todayUk();
   const year = accountingYear(ledger.year_end, today);
-  const [all, yearTb, entries] = await Promise.all([
+  const [all, yearTb, entries, { count: toReview }] = await Promise.all([
     trialBalance(ledger.id),
     trialBalance(ledger.id, year.from, year.to),
     recentEntries(ledger.id, 25),
+    createServiceRoleClient()
+      .from('books_receipts')
+      .select('id', { count: 'exact', head: true })
+      .eq('ledger_id', ledger.id)
+      .eq('status', 'needs_review'),
   ]);
   const bal = (code: string) => {
     const r = all.find((a) => a.code === code);
@@ -102,6 +108,12 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   return (
     <BooksFrame access={access} title="Books" tab="home">
       {posted && POSTED[posted] && <p className={s.notice}>{POSTED[posted]}</p>}
+      {(toReview ?? 0) > 0 && (
+        <p className={s.readOnly}>
+          <b>{toReview} receipt{toReview === 1 ? '' : 's'} waiting for you.</b>{' '}
+          <Link href="/account/books/receipts">Check {toReview === 1 ? 'it' : 'them'} →</Link>
+        </p>
+      )}
 
       <div className={s.tiles}>
         <div className={s.tile}>
@@ -134,6 +146,9 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
           </Link>
           <Link className={f.btnPrimary} href="/account/books/new?kind=purchase">
             Record expense
+          </Link>
+          <Link className={f.btnPrimary} href="/account/books/receipts">
+            Add receipts
           </Link>
           <Link className={f.btnGhost} href="/account/books/mileage">
             Claim mileage

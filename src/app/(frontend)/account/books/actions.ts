@@ -249,19 +249,30 @@ export async function postMileageAction(_prev: FormState, fd: FormData): Promise
   redirect('/account/books?posted=mileage');
 }
 
-/** Void a hand-entered entry or mileage claim: it is removed from the books. */
+/** Void a hand-entered entry, mileage claim or receipt's entry: it is removed from the books. */
 export async function voidEntryAction(fd: FormData): Promise<void> {
   const gate = await requireBooksWriter();
   if (!gate.ok || !gate.ledger) return;
   const id = Number(fd.get('entry_id'));
   if (!Number.isSafeInteger(id)) return;
-  const { error } = await createServiceRoleClient()
+  const admin = createServiceRoleClient();
+  const { data: gone, error } = await admin
     .from('books_entries')
     .delete()
     .eq('id', id)
     .eq('ledger_id', gate.ledger.id)
-    .in('source', ['manual', 'mileage']);
+    .in('source', ['manual', 'mileage', 'receipt'])
+    .select('receipt_id');
   if (error) console.error('books void failed', { ledger: gate.ledger.id, id, error: error.message });
+  // A receipt's entry: the receipt goes back to review.
+  const receiptId = gone?.[0]?.receipt_id;
+  if (receiptId) {
+    await admin
+      .from('books_receipts')
+      .update({ status: 'needs_review', entry_id: null, review_reasons: 'Entry voided. Correct the details and post again.' })
+      .eq('id', receiptId)
+      .eq('ledger_id', gate.ledger.id);
+  }
   revalidateBooks();
 }
 

@@ -10,6 +10,7 @@ import s from './books.module.css';
 
 const TABS = [
   { key: 'home', href: '/account/books', label: 'Overview' },
+  { key: 'receipts', href: '/account/books/receipts', label: 'Receipts' },
   { key: 'ledger', href: '/account/books/ledger', label: 'Trial balance' },
   { key: 'pnl', href: '/account/books/pnl', label: 'Profit & loss' },
   { key: 'journal', href: '/account/books/journal', label: 'Journal' },
