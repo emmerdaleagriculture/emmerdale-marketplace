@@ -29,6 +29,7 @@ export const ReceiptReadSchema = z.object({
   vat_amount: z.number().nullable(),
   gross_amount: z.number().nullable(),
   vat_code: z.enum(['STD', 'RED', 'ZERO', 'EXEMPT', 'OUTSIDE', 'RC', 'BLOCKED']).nullable(),
+  is_paid: z.boolean().describe('True if the document shows it has been paid; false for an invoice still to be paid'),
   account_code: z.string().nullable(),
   mileage_miles: z.number().nullable().describe('Only for a mileage claim: business miles driven'),
   description: z.string().describe('One line: what was bought or sold'),
@@ -75,6 +76,7 @@ Rules the owner has set:
 - UK dates are day/month/year. document_date is the invoice or payment date as YYYY-MM-DD.
 - vat_code: STD 20%; RED 5% (e.g. domestic fuel, some energy); ZERO zero rated (most food, books, children's clothes); EXEMPT (insurance, postage stamps, financial services); OUTSIDE when the supplier is not VAT registered or it is outside the scope (no VAT number and no VAT shown usually means OUTSIDE); RC reverse charge for services bought from an overseas supplier with no UK VAT (e.g. software from abroad); BLOCKED when VAT was charged but can't be reclaimed (client entertaining, cars). Red diesel is usually RED.
 - account_code: choose the best account from the chart provided, using the hints. A single item of equipment, machinery or a vehicle that lasts over a year and costs over about £500 goes to a fixed asset account. For a sale use an income account.
+- is_paid: true for a receipt, a card or online payment, or anything marked paid; false for an invoice still due (it shows a due date or payment terms, or asks for payment). A sale invoice this business issued is usually unpaid.
 - Mileage: if the document is a note of business miles driven in a personal vehicle, set mileage_miles, document_type "purchase", and leave the amounts empty; the app applies the HMRC rate.
 - confidence: below 0.85 if anything is blurry, cut off, ambiguous or guessed.
 - notes: only things the owner must act on, under 40 words; otherwise null.`;

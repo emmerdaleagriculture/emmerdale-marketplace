@@ -95,6 +95,37 @@ $$;
 revoke execute on function public.books_ai_reads_this_month(uuid) from public, anon, authenticated;
 grant execute on function public.books_ai_reads_this_month(uuid) to service_role;
 
+-- Reserve one AI read for a receipt before calling the API: 'ok', 'cap' (the
+-- ledger has used its month's reads) or 'stale' (the receipt was rejected,
+-- re-queued or finished since this read started; p_started_at is the
+-- processing_started_at the reader saw). The ledger row lock makes the count
+-- and the increment one step, so a burst of uploads can't all pass the cap.
+create or replace function public.books_reserve_ai_read(p_receipt_id bigint, p_started_at timestamptz, p_cap int)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_ledger uuid;
+begin
+  select ledger_id into v_ledger
+  from books_receipts
+  where id = p_receipt_id and status = 'processing' and processing_started_at = p_started_at;
+  if not found then
+    return 'stale';
+  end if;
+  perform 1 from books_ledgers where id = v_ledger for update;
+  if books_ai_reads_this_month(v_ledger) >= p_cap then
+    return 'cap';
+  end if;
+  update books_receipts set ai_reads = ai_reads + 1 where id = p_receipt_id;
+  return 'ok';
+end;
+$$;
+revoke execute on function public.books_reserve_ai_read(bigint, timestamptz, int) from public, anon, authenticated;
+grant execute on function public.books_reserve_ai_read(bigint, timestamptz, int) to service_role;
+
 -- Private bucket; no storage policies, so only the service role reads or writes.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (

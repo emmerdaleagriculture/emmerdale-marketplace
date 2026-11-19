@@ -171,3 +171,34 @@ export async function allLines(ledgerId: string, opts: { code?: string; from?: s
     { max: 200_000 },
   );
 }
+
+/** Entries a person may void: hand-entered ones, mileage claims, and receipts' entries. */
+export const VOIDABLE_SOURCES = ['manual', 'mileage', 'receipt'] as const;
+
+/**
+ * Void an entry: it is removed from the books. If it came from a receipt,
+ * the receipt goes back to review to be corrected and posted again.
+ */
+export async function voidEntry(ledgerId: string, entryId: number): Promise<boolean> {
+  const admin = createServiceRoleClient();
+  const { data: gone, error } = await admin
+    .from('books_entries')
+    .delete()
+    .eq('id', entryId)
+    .eq('ledger_id', ledgerId)
+    .in('source', [...VOIDABLE_SOURCES])
+    .select('receipt_id');
+  if (error) {
+    console.error('[books] void failed', { ledgerId, entryId, error: error.message });
+    return false;
+  }
+  const receiptId = gone?.[0]?.receipt_id;
+  if (receiptId) {
+    await admin
+      .from('books_receipts')
+      .update({ status: 'needs_review', entry_id: null, review_reasons: 'Entry voided. Correct the details and post again.' })
+      .eq('id', receiptId)
+      .eq('ledger_id', ledgerId);
+  }
+  return Boolean(gone?.length);
+}

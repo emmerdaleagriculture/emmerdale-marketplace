@@ -11,7 +11,7 @@ import { buildPosting, validateDoc, type Posting } from '@/lib/books/posting';
 import { buildMileagePosting, taxYearOf } from '@/lib/books/mileage';
 import { cleanVatNumber, isVatCode } from '@/lib/books/vat';
 import { isIsoDate, todayUk } from '@/lib/books/period';
-import { accountMap, businessTypeOf, getAccounts, ledgerForPosting, requireBooksWriter } from '@/lib/books/server';
+import { accountMap, businessTypeOf, getAccounts, ledgerForPosting, requireBooksWriter, voidEntry } from '@/lib/books/server';
 import type { Json } from '@/lib/database.types';
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
@@ -260,24 +260,7 @@ export async function voidEntryAction(fd: FormData): Promise<void> {
   if (!gate.ok || !gate.ledger) return;
   const id = Number(fd.get('entry_id'));
   if (!Number.isSafeInteger(id)) return;
-  const admin = createServiceRoleClient();
-  const { data: gone, error } = await admin
-    .from('books_entries')
-    .delete()
-    .eq('id', id)
-    .eq('ledger_id', gate.ledger.id)
-    .in('source', ['manual', 'mileage', 'receipt'])
-    .select('receipt_id');
-  if (error) console.error('books void failed', { ledger: gate.ledger.id, id, error: error.message });
-  // A receipt's entry: the receipt goes back to review.
-  const receiptId = gone?.[0]?.receipt_id;
-  if (receiptId) {
-    await admin
-      .from('books_receipts')
-      .update({ status: 'needs_review', entry_id: null, review_reasons: 'Entry voided. Correct the details and post again.' })
-      .eq('id', receiptId)
-      .eq('ledger_id', gate.ledger.id);
-  }
+  await voidEntry(gate.ledger.id, id);
   revalidateBooks();
 }
 

@@ -78,8 +78,14 @@ export function fieldsFromRead(
     gross_pence: amounts.gross,
     vat_code: vatCode,
     account_code: account,
-    payment_account_code: defaultPayment,
+    // Not paid yet: owed to us (debtors) or by us (creditors), not the bank.
+    payment_account_code: r.is_paid === false ? (docType === 'sale' ? '1100' : '2100') : defaultPayment,
   };
+}
+
+/** The AI's confidence as 0–1; anything else (a percentage, NaN) counts as unsure. */
+export function cleanConfidence(c: unknown): number {
+  return typeof c === 'number' && Number.isFinite(c) && c >= 0 && c <= 1 ? c : 0;
 }
 
 export function docFromFields(f: ReceiptFields): PostableDoc {
@@ -117,8 +123,9 @@ export function blockingReasons(
     reasons.push(e);
   }
   const threshold = opts.threshold ?? AUTO_POST_CONFIDENCE;
-  if (!(read.confidence >= threshold)) {
-    reasons.push(`The AI was only ${Math.round(Math.max(0, read.confidence) * 100)}% sure of what it read.`);
+  const confidence = cleanConfidence(read.confidence);
+  if (confidence < threshold) {
+    reasons.push(`The AI was only ${Math.round(confidence * 100)}% sure of what it read.`);
   }
   if (opts.sameEntryExists) reasons.push('An entry with the same date, total and type is already in your books. Is this a duplicate?');
   return reasons;

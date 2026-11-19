@@ -4134,6 +4134,10 @@ export type Database = {
         Args: { p_ledger_id: string }
         Returns: number
       }
+      books_reserve_ai_read: {
+        Args: { p_receipt_id: number; p_started_at: string; p_cap: number }
+        Returns: string
+      }
       books_account_opening: {
         Args: { p_ledger_id: string; p_code: string; p_before: string }
         Returns: number

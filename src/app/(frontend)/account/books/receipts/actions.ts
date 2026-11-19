@@ -6,9 +6,10 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { FormState } from '@/lib/form';
-import { requireBooksWriter, type Ledger } from '@/lib/books/server';
+import { requireBooksWriter, voidEntry, type Ledger } from '@/lib/books/server';
 import {
   MAX_RECEIPT_BYTES,
+  STUCK_AFTER_MS,
   RECEIPTS_BUCKET,
   RECEIPT_TYPES,
   postReceiptFields,
@@ -102,6 +103,10 @@ async function ownReceipt(ledger: Ledger, id: number) {
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
 
+function midRead(r: { status: string; processing_started_at: string | null }): boolean {
+  return r.status === 'processing' && Boolean(r.processing_started_at) && Date.now() - Date.parse(r.processing_started_at!) < STUCK_AFTER_MS;
+}
+
 function fieldsFromForm(fd: FormData): ReceiptFields {
   const gross = parsePounds(str(fd, 'gross'));
   const vat = parsePounds(str(fd, 'vat')) ?? 0;
@@ -172,7 +177,8 @@ export async function rereadReceiptAction(fd: FormData): Promise<void> {
   if (!gate.ok || !gate.ledger) return;
   const id = Number(fd.get('receipt_id'));
   const r = Number.isSafeInteger(id) ? await ownReceipt(gate.ledger, id) : null;
-  if (!r || r.status === 'posted') return;
+  if (!r || r.status === 'posted' || midRead(r)) return;
+  // A new start time: a dead read that wakes up can no longer write.
   await createServiceRoleClient()
     .from('books_receipts')
     .update({ status: 'processing', processing_started_at: new Date().toISOString(), review_reasons: null })
@@ -186,7 +192,7 @@ export async function rejectReceiptAction(fd: FormData): Promise<void> {
   if (!gate.ok || !gate.ledger) return;
   const id = Number(fd.get('receipt_id'));
   const r = Number.isSafeInteger(id) ? await ownReceipt(gate.ledger, id) : null;
-  if (!r || r.status === 'posted') return;
+  if (!r || r.status === 'posted' || midRead(r)) return;
   await createServiceRoleClient().from('books_receipts').update({ status: 'rejected' }).eq('id', id);
   revalidate();
   const next = await nextForReview(gate.ledger.id, id);
@@ -200,12 +206,6 @@ export async function voidReceiptEntryAction(fd: FormData): Promise<void> {
   const id = Number(fd.get('receipt_id'));
   const r = Number.isSafeInteger(id) ? await ownReceipt(gate.ledger, id) : null;
   if (!r || r.status !== 'posted' || !r.entry_id) return;
-  const admin = createServiceRoleClient();
-  const { error } = await admin.from('books_entries').delete().eq('id', r.entry_id).eq('ledger_id', gate.ledger.id);
-  if (error) {
-    console.error('[books] receipt void failed', { id, error: error.message });
-    return;
-  }
-  await admin.from('books_receipts').update({ status: 'needs_review', entry_id: null, review_reasons: 'Entry voided. Correct the details and post again.' }).eq('id', id);
+  await voidEntry(gate.ledger.id, r.entry_id);
   revalidate();
 }

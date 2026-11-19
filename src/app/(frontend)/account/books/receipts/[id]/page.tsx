@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getAccounts, loadLedger } from '@/lib/books/server';
-import { RECEIPTS_BUCKET, htmlToText } from '@/lib/books/receipts.server';
-import { isPaymentAccount, isPurchaseCategory, isSaleCategory } from '@/lib/books/chart';
+import { RECEIPTS_BUCKET, STUCK_AFTER_MS, htmlToText } from '@/lib/books/receipts.server';
+import { isPaymentAccount, isPurchaseCategory, isSaleCategory, type BusinessType } from '@/lib/books/chart';
 import { PICKABLE_VAT_CODES } from '@/lib/books/vat';
 import { formatPence, penceToDecimal } from '@/lib/books/money';
 import { ukDate } from '@/lib/books/period';
@@ -56,7 +56,7 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
       url = data?.signedUrl ?? null;
     }
   }
-  const stuck = r.status === 'processing' && r.processing_started_at && Date.now() - Date.parse(r.processing_started_at) > 5 * 60_000;
+  const stuck = r.status === 'processing' && r.processing_started_at && Date.now() - Date.parse(r.processing_started_at) > STUCK_AFTER_MS;
   const editable = access.canEdit && (r.status === 'needs_review' || r.status === 'rejected' || r.status === 'duplicate');
 
   return (
@@ -138,7 +138,7 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
               }}
               purchaseAccounts={accounts.filter(isPurchaseCategory).map(({ code, name }) => ({ code, name }))}
               saleAccounts={accounts.filter(isSaleCategory).map(({ code, name }) => ({ code, name }))}
-              paymentAccounts={accounts.filter(isPaymentAccount).map(({ code, name }) => ({ code, name }))}
+              paymentAccounts={accounts.filter((a) => isPaymentAccount(a, access.ledger.business_type as BusinessType)).map(({ code, name }) => ({ code, name }))}
               vatCodes={PICKABLE_VAT_CODES}
             />
           ) : (
@@ -155,7 +155,7 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
                   </button>
                 </form>
               )}
-              {r.status !== 'rejected' && r.status !== 'processing' && (
+              {r.status !== 'rejected' && (r.status !== 'processing' || stuck) && (
                 <form action={rejectReceiptAction}>
                   <input type="hidden" name="receipt_id" value={r.id} />
                   <button className={f.btnGhost} type="submit">

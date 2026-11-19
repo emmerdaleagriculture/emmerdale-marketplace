@@ -10,8 +10,8 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { Database, Json } from '@/lib/database.types';
 import { accountMap, getAccounts, ledgerForPosting, type Ledger } from './server';
 import { readReceipt, type ReadInput } from './receiptAi';
-import { blockingReasons, docFromFields, fieldsFromRead, type ReceiptFields } from './receiptRules';
-import { buildPosting, validateDoc } from './posting';
+import { blockingReasons, cleanConfidence, docFromFields, fieldsFromRead, type ReceiptFields } from './receiptRules';
+import { buildPosting, validateDoc, type AccountInfo } from './posting';
 import { convertPence, gbpRate } from './fx';
 import { penceToDecimal } from './money';
 
@@ -19,6 +19,8 @@ export const RECEIPTS_BUCKET = 'books-receipts';
 /** AI reads per set of books per calendar month; past it, receipts wait for hand entry. */
 export const MONTHLY_AI_READS = 200;
 export const MAX_RECEIPT_BYTES = 20 * 1024 * 1024;
+/** A read that started over 5 minutes ago has died (the function's own limit is 300s). */
+export const STUCK_AFTER_MS = 5 * 60_000;
 
 export const RECEIPT_TYPES: Record<string, string> = {
   'application/pdf': 'pdf',
@@ -130,9 +132,29 @@ async function loadFile(r: Receipt): Promise<ReadInput | null> {
   return null;
 }
 
-async function update(id: number, patch: Database['public']['Tables']['books_receipts']['Update']) {
+type ReceiptPatch = Database['public']['Tables']['books_receipts']['Update'];
+
+async function update(id: number, patch: ReceiptPatch): Promise<boolean> {
   const { error } = await createServiceRoleClient().from('books_receipts').update(patch).eq('id', id);
   if (error) console.error('[books] receipt update failed', { id, error: error.message });
+  return !error;
+}
+
+/**
+ * Write only if this read still owns the receipt: still processing, from the
+ * same start. A reject or a fresh "read again" since then wins, and this
+ * read's results are dropped. Returns whether the write landed.
+ */
+async function updateIfOurs(id: number, startedAt: string, patch: ReceiptPatch): Promise<boolean> {
+  const { data, error } = await createServiceRoleClient()
+    .from('books_receipts')
+    .update(patch)
+    .eq('id', id)
+    .eq('status', 'processing')
+    .eq('processing_started_at', startedAt)
+    .select('id');
+  if (error) console.error('[books] receipt update failed', { id, error: error.message });
+  return Boolean(data?.length);
 }
 
 async function sameEntryExists(ledgerId: string, f: ReceiptFields): Promise<boolean> {
@@ -152,12 +174,17 @@ async function sameEntryExists(ledgerId: string, f: ReceiptFields): Promise<bool
  * Post a receipt's reviewed fields to the ledger. Returns the reasons it
  * can't, or null when posted.
  */
-export async function postReceiptFields(ledger: Ledger, receiptId: number, f: ReceiptFields): Promise<string[] | null> {
-  const accounts = accountMap(await getAccounts(ledger.id));
+export async function postReceiptFields(
+  ledger: Ledger,
+  receiptId: number,
+  f: ReceiptFields,
+  accounts?: Map<string, AccountInfo>,
+): Promise<string[] | null> {
+  const acc = accounts ?? accountMap(await getAccounts(ledger.id));
   const doc = docFromFields(f);
-  const errs = validateDoc(doc, ledgerForPosting(ledger), accounts);
+  const errs = validateDoc(doc, ledgerForPosting(ledger), acc);
   if (errs.length) return errs;
-  const p = buildPosting(doc, ledgerForPosting(ledger), accounts, 'receipt');
+  const p = buildPosting(doc, ledgerForPosting(ledger), acc, 'receipt');
   const admin = createServiceRoleClient();
   const { data: entryId, error } = await admin.rpc('books_post_entry', {
     p_ledger_id: ledger.id,
@@ -175,24 +202,32 @@ export async function postReceiptFields(ledger: Ledger, receiptId: number, f: Re
 /** Read one receipt with AI and post it or hold it for review. Never throws. */
 export async function processReceipt(receiptId: number): Promise<void> {
   const admin = createServiceRoleClient();
+  let token: string | null = null;
+  const toReview = (reasons: string, patch: ReceiptPatch = {}) =>
+    token ? updateIfOurs(receiptId, token, { ...patch, status: 'needs_review', review_reasons: reasons }) : Promise.resolve(false);
   try {
     const { data: r } = await admin.from('books_receipts').select('*').eq('id', receiptId).maybeSingle();
-    if (!r || r.status !== 'processing') return;
-    const { data: ledger } = await admin.from('books_ledgers').select('*').eq('id', r.ledger_id).maybeSingle();
-    if (!ledger) return;
+    if (!r || r.status !== 'processing' || !r.processing_started_at) return;
+    token = r.processing_started_at;
+    const { data: ledgerRow } = await admin.from('books_ledgers').select('*').eq('id', r.ledger_id).maybeSingle();
+    if (!ledgerRow) return;
+    const ledger = ledgerRow as Ledger;
 
-    const { data: used } = await admin.rpc('books_ai_reads_this_month', { p_ledger_id: ledger.id });
-    if ((used ?? 0) >= MONTHLY_AI_READS) {
-      await update(receiptId, {
-        status: 'needs_review',
-        review_reasons: `You’ve used this month’s ${MONTHLY_AI_READS} AI reads. Enter the details by hand.`,
-      });
+    // Count the read before making it; the cap holds under a burst of uploads.
+    const { data: slot, error: slotErr } = await admin.rpc('books_reserve_ai_read', {
+      p_receipt_id: receiptId,
+      p_started_at: token,
+      p_cap: MONTHLY_AI_READS,
+    });
+    if (slotErr || slot === 'stale') return;
+    if (slot !== 'ok') {
+      await toReview(`You’ve used this month’s ${MONTHLY_AI_READS} AI reads. Enter the details by hand.`);
       return;
     }
 
     const input = await loadFile(r);
     if (!input) {
-      await update(receiptId, { status: 'needs_review', review_reasons: 'The file couldn’t be opened. Enter the details by hand.' });
+      await toReview('The file couldn’t be opened. Enter the details by hand.');
       return;
     }
     const accountRows = await getAccounts(ledger.id);
@@ -206,38 +241,34 @@ export async function processReceipt(receiptId: number): Promise<void> {
       emailSubject: r.email_subject,
       emailFrom: r.email_from,
     });
-    const usage = {
-      ai_reads: r.ai_reads + 1,
+    // Tokens and cost are recorded whatever happens next (the read itself was counted above).
+    await update(receiptId, {
       ai_input_tokens: r.ai_input_tokens + res.inputTokens,
       ai_output_tokens: r.ai_output_tokens + res.outputTokens,
       ai_cost_usd: Number(r.ai_cost_usd) + res.costUsd,
-    };
+    });
     if (!res.read) {
-      await update(receiptId, {
-        ...usage,
-        status: 'needs_review',
-        extraction_error: res.error,
-        review_reasons: `${res.error ?? 'The AI couldn’t read this.'} Enter the details by hand.`,
-      });
+      await toReview(`${res.error ?? 'The AI couldn’t read this.'} Enter the details by hand.`, { extraction_error: res.error });
       return;
     }
     const read = res.read;
+    const confidence = cleanConfidence(read.confidence);
     const accounts = accountMap(accountRows);
     const lp = ledgerForPosting(ledger);
     let f = fieldsFromRead(read, lp, accounts, ledger.default_payment_account);
     const notes: string[] = [];
     if (read.notes) notes.push(read.notes);
+    if (read.is_paid === false && f.doc_type) {
+      notes.push(f.doc_type === 'sale' ? 'Not paid yet: recorded as owed to you (1100 Trade debtors).' : 'Not paid yet: recorded as owed by you (2100 Trade creditors).');
+    }
     const reasons: string[] = [];
+    const base = { extracted: read as unknown as Json, confidence, extraction_error: null };
 
     if (read.mileage_miles && read.mileage_miles > 0) {
-      await update(receiptId, {
-        ...usage,
-        ...f,
-        extracted: read as unknown as Json,
-        confidence: read.confidence,
-        status: 'needs_review',
-        review_reasons: `This looks like a note of ${read.mileage_miles} business miles. Claim it on the Mileage page, then reject this receipt.`,
-      });
+      await toReview(
+        `This looks like a note of ${read.mileage_miles} business miles. Claim it on the Mileage page, then reject this receipt.`,
+        { ...base, ...f },
+      );
       return;
     }
 
@@ -262,23 +293,18 @@ export async function processReceipt(receiptId: number): Promise<void> {
     }
 
     reasons.push(...blockingReasons(f, read, lp, accounts, { sameEntryExists: await sameEntryExists(ledger.id, f) }));
-    await update(receiptId, {
-      ...usage,
-      ...f,
-      extracted: read as unknown as Json,
-      confidence: read.confidence,
-      notes: notes.join('\n') || null,
-      extraction_error: null,
-    });
+    // Save what was read. If this doesn't land (rejected meanwhile, or a write
+    // error), stop: nothing posts without its read on record.
+    const saved = await updateIfOurs(receiptId, token, { ...base, ...f, notes: notes.join('\n') || null });
+    if (!saved) return;
     if (reasons.length) {
-      await update(receiptId, { status: 'needs_review', review_reasons: reasons.join('\n') });
+      await toReview(reasons.join('\n'));
       return;
     }
-    const failed = await postReceiptFields(ledger as Ledger, receiptId, f);
+    const failed = await postReceiptFields(ledger, receiptId, f, accounts);
     if (failed) await update(receiptId, { status: 'needs_review', review_reasons: failed.join('\n') });
   } catch (err) {
     console.error('[books] processReceipt crashed', { receiptId, error: err instanceof Error ? err.message : err });
-    await update(receiptId, { status: 'needs_review', review_reasons: 'Something went wrong reading this. Enter the details by hand.' });
+    await toReview('Something went wrong reading this. Enter the details by hand.');
   }
 }
-

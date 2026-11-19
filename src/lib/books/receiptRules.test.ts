@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blockingReasons, completeAmounts, fieldsFromRead, toPence } from './receiptRules';
+import { blockingReasons, cleanConfidence, completeAmounts, fieldsFromRead, toPence } from './receiptRules';
 import { chartFor } from './chart';
 import type { AccountInfo, LedgerForPosting } from './posting';
 import type { ReceiptRead } from './receiptAi';
@@ -23,6 +23,7 @@ const read = (over: Partial<ReceiptRead> = {}): ReceiptRead => ({
   vat_amount: 5,
   gross_amount: 105,
   vat_code: 'RED',
+  is_paid: true,
   account_code: '5160',
   mileage_miles: null,
   description: 'Red diesel',
@@ -73,6 +74,22 @@ describe('receipt rules', () => {
   it('not a financial document goes to review with one reason', () => {
     const r = read({ is_financial_document: false, document_type: 'other' });
     expect(blockingReasons(fieldsFromRead(r, registered, accounts, '1200'), r, registered, accounts, { sameEntryExists: false })).toHaveLength(1);
+  });
+
+  it('unpaid invoices go to debtors or creditors, not the bank', () => {
+    expect(fieldsFromRead(read({ is_paid: false }), registered, accounts, '1200').payment_account_code).toBe('2100');
+    const sale = read({ is_paid: false, document_type: 'sale', account_code: '4000', vat_code: 'STD', net_amount: 100, vat_amount: 20, gross_amount: 120 });
+    const f = fieldsFromRead(sale, registered, accounts, '1200');
+    expect(f.payment_account_code).toBe('1100');
+    expect(blockingReasons(f, sale, registered, accounts, { sameEntryExists: false })).toEqual([]);
+  });
+
+  it('a confidence outside 0–1 counts as unsure', () => {
+    expect(cleanConfidence(85)).toBe(0);
+    expect(cleanConfidence(Number.NaN)).toBe(0);
+    expect(cleanConfidence(0.9)).toBe(0.9);
+    const r = read({ confidence: 85 });
+    expect(blockingReasons(fieldsFromRead(r, registered, accounts, '1200'), r, registered, accounts, { sameEntryExists: false })[0]).toContain('0% sure');
   });
 
   it('foreign currency blocks until converted', () => {
