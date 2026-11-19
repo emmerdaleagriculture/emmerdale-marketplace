@@ -331,8 +331,30 @@
   gap: 8px;
 }
 .tileIcon {
-  display: inline-flex;
-  color: var(--jd-green);
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  flex: none;
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+}
+/* What the figure is, by colour: the icon's square carries it. */
+.tile {
+  --tone: var(--jd-green);
+}
+.tile[data-tone='teal'] {
+  --tone: #138a8f;
+}
+.tile[data-tone='green'] {
+  --tone: #3a8f30;
+}
+.tile[data-tone='amber'] {
+  --tone: #b7790f;
+}
+.tile[data-tone='red'] {
+  --tone: #c23b2c;
 }
 .tileLabel {
   font-size: 13.5px;
@@ -360,28 +382,6 @@
   font-size: 12.5px;
   color: var(--ink-3);
   margin-top: 4px;
-}
-/* The curve in the corner, coloured by what the figure is. */
-.tileWave {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 62%;
-  height: 46%;
-  pointer-events: none;
-  color: transparent;
-}
-.tile[data-tone='teal'] .tileWave {
-  color: #1c9aa0;
-}
-.tile[data-tone='green'] .tileWave {
-  color: #45a83a;
-}
-.tile[data-tone='amber'] .tileWave {
-  color: #d9a21b;
-}
-.tile[data-tone='red'] .tileWave {
-  color: #d2493a;
 }
 
 .actions {

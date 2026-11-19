@@ -37,7 +37,7 @@ export function Icon({ name, size = 22 }: { name: BooksIconName; size?: number }
 
 export type TileTone = 'teal' | 'green' | 'amber' | 'red';
 
-/** A figure: icon and label, the amount, a hint, and a coloured curve in the corner. */
+/** A figure: icon and label (the icon coloured by tone), the amount and a hint. */
 export function Tile({ icon, label, value, hint, tone }: { icon: BooksIconName; label: string; value: string; hint?: ReactNode; tone: TileTone }) {
   return (
     <div className={s.tile} data-tone={tone}>
@@ -49,10 +49,6 @@ export function Tile({ icon, label, value, hint, tone }: { icon: BooksIconName; 
       </div>
       <div className={s.tileValue}>{value}</div>
       {hint && <div className={s.tileHint}>{hint}</div>}
-      <svg className={s.tileWave} viewBox="0 0 160 60" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 58 C 60 58, 95 40, 160 6" fill="none" stroke="currentColor" strokeWidth="2.5" />
-        <path d="M0 58 C 60 58, 95 40, 160 6 L160 60 L0 60 Z" fill="currentColor" opacity="0.12" />
-      </svg>
     </div>
   );
 }
