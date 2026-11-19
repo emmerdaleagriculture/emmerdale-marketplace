@@ -1268,6 +1268,8 @@ export type Database = {
           legal_name: string
           marketplace_auto: boolean
           marketplace_from: string | null
+          tax_done: Json
+          tax_profile: Json
           phone: string | null
           stripe_account_id: string | null
           stripe_charges_enabled: boolean
@@ -1303,6 +1305,8 @@ export type Database = {
           legal_name: string
           marketplace_auto?: boolean
           marketplace_from?: string | null
+          tax_done?: Json
+          tax_profile?: Json
           phone?: string | null
           stripe_account_id?: string | null
           stripe_charges_enabled?: boolean
@@ -1338,6 +1342,8 @@ export type Database = {
           legal_name?: string
           marketplace_auto?: boolean
           marketplace_from?: string | null
+          tax_done?: Json
+          tax_profile?: Json
           phone?: string | null
           stripe_account_id?: string | null
           stripe_charges_enabled?: boolean
