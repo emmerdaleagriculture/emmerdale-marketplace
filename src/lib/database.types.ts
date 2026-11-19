@@ -1451,6 +1451,234 @@ export type Database = {
         }
         Relationships: []
       }
+      books_customers: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          external_id: string | null
+          id: number
+          ledger_id: string
+          name: string
+          notes: string | null
+          organisation: string | null
+          phone: string | null
+          updated_at: string
+          vat_number: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          id?: number
+          ledger_id: string
+          name: string
+          notes?: string | null
+          organisation?: string | null
+          phone?: string | null
+          updated_at?: string
+          vat_number?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          id?: number
+          ledger_id?: string
+          name?: string
+          notes?: string | null
+          organisation?: string | null
+          phone?: string | null
+          updated_at?: string
+          vat_number?: string | null
+        }
+        Relationships: []
+      }
+      books_invoice_events: {
+        Row: {
+          at: string
+          created_at: string
+          detail: string | null
+          id: number
+          invoice_id: number
+          kind: string
+          message_id: string | null
+          recipient: string | null
+        }
+        Insert: {
+          at?: string
+          created_at?: string
+          detail?: string | null
+          id?: number
+          invoice_id: number
+          kind: string
+          message_id?: string | null
+          recipient?: string | null
+        }
+        Update: {
+          at?: string
+          created_at?: string
+          detail?: string | null
+          id?: number
+          invoice_id?: number
+          kind?: string
+          message_id?: string | null
+          recipient?: string | null
+        }
+        Relationships: []
+      }
+      books_invoice_lines: {
+        Row: {
+          account_code: string
+          description: string
+          id: number
+          invoice_id: number
+          net_pence: number
+          position: number
+          quantity: number
+          unit_pence: number
+          vat_code: string
+          vat_pence: number
+        }
+        Insert: {
+          account_code?: string
+          description: string
+          id?: number
+          invoice_id: number
+          net_pence: number
+          position: number
+          quantity: number
+          unit_pence: number
+          vat_code?: string
+          vat_pence: number
+        }
+        Update: {
+          account_code?: string
+          description?: string
+          id?: number
+          invoice_id?: number
+          net_pence?: number
+          position?: number
+          quantity?: number
+          unit_pence?: number
+          vat_code?: string
+          vat_pence?: number
+        }
+        Relationships: []
+      }
+      books_invoice_payments: {
+        Row: {
+          amount_pence: number
+          created_at: string
+          entry_id: number | null
+          external_id: string | null
+          id: number
+          invoice_id: number
+          method: string
+          paid_on: string
+          reference: string | null
+        }
+        Insert: {
+          amount_pence: number
+          created_at?: string
+          entry_id?: number | null
+          external_id?: string | null
+          id?: number
+          invoice_id: number
+          method: string
+          paid_on: string
+          reference?: string | null
+        }
+        Update: {
+          amount_pence?: number
+          created_at?: string
+          entry_id?: number | null
+          external_id?: string | null
+          id?: number
+          invoice_id?: number
+          method?: string
+          paid_on?: string
+          reference?: string | null
+        }
+        Relationships: []
+      }
+      books_invoices: {
+        Row: {
+          created_at: string
+          customer_id: number
+          due_date: string
+          entry_id: number | null
+          external_id: string | null
+          gross_pence: number
+          id: number
+          issue_date: string
+          ledger_id: string
+          net_pence: number
+          notes: string | null
+          number: string
+          paid_at: string | null
+          paid_pence: number
+          public_token: string
+          sent_at: string | null
+          sent_to: string | null
+          status: string
+          stripe_session_id: string | null
+          updated_at: string
+          vat_pence: number
+          viewed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id: number
+          due_date: string
+          entry_id?: number | null
+          external_id?: string | null
+          gross_pence?: number
+          id?: number
+          issue_date: string
+          ledger_id: string
+          net_pence?: number
+          notes?: string | null
+          number: string
+          paid_at?: string | null
+          paid_pence?: number
+          public_token: string
+          sent_at?: string | null
+          sent_to?: string | null
+          status?: string
+          stripe_session_id?: string | null
+          updated_at?: string
+          vat_pence?: number
+          viewed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: number
+          due_date?: string
+          entry_id?: number | null
+          external_id?: string | null
+          gross_pence?: number
+          id?: number
+          issue_date?: string
+          ledger_id?: string
+          net_pence?: number
+          notes?: string | null
+          number?: string
+          paid_at?: string | null
+          paid_pence?: number
+          public_token?: string
+          sent_at?: string | null
+          sent_to?: string | null
+          status?: string
+          stripe_session_id?: string | null
+          updated_at?: string
+          vat_pence?: number
+          viewed_at?: string | null
+        }
+        Relationships: []
+      }
       diary_entries: {
         Row: {
           created_at: string
@@ -4139,6 +4367,19 @@ export type Database = {
       }
     }
     Functions: {
+      books_record_invoice_payment: {
+        Args: {
+          p_invoice_id: number
+          p_paid_on: string
+          p_amount_pence: number
+          p_method: string
+          p_reference: string
+          p_external_id: string
+          p_entry: Json
+          p_lines: Json
+        }
+        Returns: number
+      }
       books_ai_reads_this_month: {
         Args: { p_ledger_id: string }
         Returns: number

@@ -152,6 +152,9 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
           <Link className={f.btnPrimary} href="/account/books/receipts">
             Add receipts
           </Link>
+          <Link className={f.btnPrimary} href="/account/books/invoices/new">
+            New invoice
+          </Link>
           <Link className={f.btnGhost} href="/account/books/mileage">
             Claim mileage
           </Link>

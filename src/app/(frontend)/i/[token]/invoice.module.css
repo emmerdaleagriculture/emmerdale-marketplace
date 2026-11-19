@@ -1,0 +1,67 @@
+.wrap {
+  min-height: 100vh;
+  background: var(--cream);
+  padding: 32px 16px 48px;
+}
+.card {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 28px 24px;
+  color: var(--ink);
+}
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.business {
+  font-family: var(--font-display-stack);
+  font-size: 24px;
+  color: var(--jd-green-deep);
+}
+.title {
+  font-size: 20px;
+  font-weight: 600;
+}
+.right {
+  text-align: right;
+}
+.muted {
+  color: var(--ink-3);
+  font-size: 14px;
+  white-space: pre-line;
+}
+.total td {
+  font-weight: 600;
+  background: var(--cream);
+}
+.pay {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+.pay p {
+  margin: 0 0 8px;
+}
+.link {
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+}
+.footer {
+  max-width: 760px;
+  margin: 16px auto 0;
+  font-size: 13px;
+  color: var(--ink-3);
+  text-align: center;
+}
+@media (max-width: 520px) {
+  .right {
+    text-align: left;
+  }
+}
