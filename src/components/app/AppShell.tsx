@@ -32,6 +32,16 @@ import s from './AppShell.module.css';
 type Badges = Partial<Record<BadgeKey, number>>;
 
 const ROLE_KEY = 'ea_role';
+// Whether the bar carries Books, remembered like the role so it draws at once.
+const BOOKS_KEY = 'ea_books';
+
+function rememberedBooks(): boolean {
+  try {
+    return localStorage.getItem(BOOKS_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 function rememberedRole(): ViewerRole | null {
   try {
@@ -57,6 +67,7 @@ export function AppShell() {
   const [app, setApp] = useState(false);
   const [role, setRole] = useState<ViewerRole | null>(null);
   const [badges, setBadges] = useState<Badges>({});
+  const [books, setBooks] = useState(false);
 
   useEffect(() => {
     // Normally the layout's inline script has already marked <html>. Not on
@@ -71,6 +82,7 @@ export function AppShell() {
     if (on && el.dataset.app !== '1') el.setAttribute('data-app', '1');
     setApp(on);
     setRole(rememberedRole());
+    setBooks(rememberedBooks());
   }, []);
 
   // The real answer replaces the remembered one. Signed out clears it, so a
@@ -91,8 +103,10 @@ export function AppShell() {
     // signed-out state (no session cookie at all) should clear the memory.
     if (!viewer.signedIn && !/(^|;\s*)sb-[^=]+=/.test(document.cookie)) {
       setRole(null);
+      setBooks(false);
       try {
         localStorage.removeItem(ROLE_KEY);
+        localStorage.removeItem(BOOKS_KEY);
       } catch {}
     }
   }, [app, viewer]);
@@ -111,7 +125,7 @@ export function AppShell() {
     listenForAppLinks();
   }, [app]);
 
-  const tabs = tabsFor(role);
+  const tabs = tabsFor(role, { books });
   const standalone = isAppStandalonePath(pathname);
   const showTabs = app && !standalone && tabs !== null;
   // Back lives in the tab bar at the far right. On a tab's own page it is
@@ -130,8 +144,15 @@ export function AppShell() {
   const refreshBadges = useCallback(() => {
     fetch('/api/app/badges', { cache: 'no-store', credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((b: Badges | null) => {
-        if (b) setBadges(b);
+      .then((b: (Badges & { books?: boolean }) | null) => {
+        if (!b) return;
+        const { books: hasBooks, ...counts } = b;
+        setBadges(counts);
+        setBooks(Boolean(hasBooks));
+        try {
+          if (hasBooks) localStorage.setItem(BOOKS_KEY, '1');
+          else localStorage.removeItem(BOOKS_KEY);
+        } catch {}
       })
       .catch(() => {});
   }, []);
@@ -172,12 +193,12 @@ export function AppShell() {
       // Same screen (a hash, or only the query: the diary's month arrows)
       // keeps its own feedback; pathname would not change to clear the bar.
       if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
-      const tab = tabsFor(role)?.find((t) => t.href === url.pathname)?.key ?? null;
+      const tab = tabsFor(role, { books })?.find((t) => t.href === url.pathname)?.key ?? null;
       setPending({ path: url.pathname, tab });
     };
     document.addEventListener('click', onClick, true);
     return () => document.removeEventListener('click', onClick, true);
-  }, [app, role]);
+  }, [app, role, books]);
 
   const goBack = () => {
     // A fresh WebView opened straight onto an inner screen (a push, a text

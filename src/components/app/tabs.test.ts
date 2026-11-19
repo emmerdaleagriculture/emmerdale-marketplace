@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeTab, CONTRACTOR_TABS, CUSTOMER_TABS, isTabRoot, tabsFor } from './tabs';
+import { activeTab, BOOKS_TAB, CONTRACTOR_TABS, CUSTOMER_TABS, isTabRoot, tabsFor } from './tabs';
 
 describe('tabsFor', () => {
   it('gives each side its bar and nobody else one', () => {
@@ -35,5 +35,22 @@ describe('isTabRoot', () => {
     expect(isTabRoot(CUSTOMER_TABS, '/my/abc')).toBe(false);
     expect(isTabRoot(CONTRACTOR_TABS, '/account')).toBe(true);
     expect(isTabRoot(CONTRACTOR_TABS, '/account/settings')).toBe(false);
+  });
+});
+
+describe('Books tab', () => {
+  it('only contractors with Books get it, after Earnings', () => {
+    const withBooks = tabsFor('contractor', { books: true })!;
+    expect(withBooks.map((t) => t.key)).toEqual(['dashboard', 'earnings', 'books', 'diary', 'messages', 'jobs']);
+    expect(tabsFor('contractor')).toBe(CONTRACTOR_TABS);
+    expect(tabsFor('customer', { books: true })).toBe(CUSTOMER_TABS);
+    expect(CONTRACTOR_TABS).not.toContain(BOOKS_TAB);
+  });
+  it('lights Books, not Dashboard, on its pages', () => {
+    const tabs = tabsFor('contractor', { books: true })!;
+    expect(activeTab(tabs, '/account/books')?.key).toBe('books');
+    expect(activeTab(tabs, '/account/books/bank/3')?.key).toBe('books');
+    expect(activeTab(tabs, '/account/settings')?.key).toBe('dashboard');
+    expect(isTabRoot(tabs, '/account/books')).toBe(true);
   });
 });

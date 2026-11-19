@@ -4,7 +4,8 @@ import type { ViewerRole } from '@/components/useViewer';
  * The app's bottom tabs (PRD task 1).
  *
  *   Customers:    Home · My jobs · Messages · Account
- *   Contractors:  Earnings · Diary · Messages · Jobs   (Jobs at the right,
+ *   Contractors:  Dashboard · Earnings · [Books] · Diary · Messages · Jobs
+ *                 (Books only where they have it; Jobs at the right,
  *                 beside the Back slot AppShell adds on inner screens)
  *
  * Each points at an existing page where one exists. "Diary" is the user's
@@ -15,7 +16,7 @@ import type { ViewerRole } from '@/components/useViewer';
  * `badge` names the count from /api/app/badges that sits on the icon.
  */
 export type BadgeKey = 'invites' | 'prices' | 'messages';
-export type TabIcon = 'home' | 'jobs' | 'messages' | 'account' | 'board' | 'diary' | 'earnings' | 'dashboard';
+export type TabIcon = 'home' | 'jobs' | 'messages' | 'account' | 'board' | 'diary' | 'earnings' | 'dashboard' | 'books';
 
 export type Tab = {
   key: string;
@@ -45,14 +46,23 @@ export const CONTRACTOR_TABS: Tab[] = [
 ];
 
 /**
+ * Books, beside Earnings, for contractors who can use it in the app
+ * (2026-11-19): released to them and on Premium, the same test the
+ * dashboard's Books link uses in the app. Its pages sit under /account, so
+ * it is the longer match there and lights up instead of Dashboard.
+ */
+export const BOOKS_TAB: Tab = { key: 'books', label: 'Books', href: '/account/books', icon: 'books' };
+const CONTRACTOR_TABS_WITH_BOOKS: Tab[] = CONTRACTOR_TABS.flatMap((t) => (t.key === 'earnings' ? [t, BOOKS_TAB] : [t]));
+
+/**
  * Which set a viewer gets. Someone who is both (a contractor who has booked
  * work through the site) gets the contractor bar; their customer side is a
  * link from the dashboard, as on the website. 'account' — signed in with
  * neither row, a contractor part-way through signing up — gets no bar.
  */
-export function tabsFor(role: ViewerRole | null): Tab[] | null {
+export function tabsFor(role: ViewerRole | null, opts: { books?: boolean } = {}): Tab[] | null {
   if (role === 'customer') return CUSTOMER_TABS;
-  if (role === 'contractor' || role === 'both') return CONTRACTOR_TABS;
+  if (role === 'contractor' || role === 'both') return opts.books ? CONTRACTOR_TABS_WITH_BOOKS : CONTRACTOR_TABS;
   return null;
 }
 
