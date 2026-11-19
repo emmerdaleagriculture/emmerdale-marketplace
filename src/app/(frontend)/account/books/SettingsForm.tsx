@@ -12,6 +12,7 @@ export type SettingsValues = {
   vat_registered: boolean;
   vat_number: string | null;
   vat_scheme: string;
+  vat_quarter_stagger: number;
   flat_rate_percent: number | null;
   vat_registration_date: string | null;
   year_end: string | null;
@@ -143,6 +144,14 @@ export function SettingsForm({
                   <option value="standard">Standard (accrual)</option>
                   <option value="cash">Cash accounting</option>
                   <option value="flat_rate">Flat rate</option>
+                </select>
+              </label>
+              <label className={f.field}>
+                <span className={f.label}>VAT quarters end in</span>
+                <select className={f.input} name="vat_quarter_stagger" defaultValue={values.vat_quarter_stagger}>
+                  <option value={0}>Mar, Jun, Sep, Dec</option>
+                  <option value={1}>Jan, Apr, Jul, Oct</option>
+                  <option value={2}>Feb, May, Aug, Nov</option>
                 </select>
               </label>
               {scheme === 'flat_rate' && (

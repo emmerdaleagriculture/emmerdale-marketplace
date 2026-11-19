@@ -67,6 +67,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
             vat_registered: false,
             vat_number: null,
             vat_scheme: 'standard',
+            vat_quarter_stagger: 0,
             flat_rate_percent: null,
             vat_registration_date: null,
             year_end: '04-05',
