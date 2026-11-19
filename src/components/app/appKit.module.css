@@ -239,3 +239,57 @@
   color: var(--ink);
   border: 1px solid var(--rule-strong);
 }
+
+/* The switcher bar (the same as Books' primary bar). */
+.seg {
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--white);
+  font-family: var(--font-body-stack);
+}
+.seg a {
+  text-align: center;
+  padding: 9px 4px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.seg a[aria-current='page'] {
+  background: linear-gradient(180deg, var(--jd-green-light), var(--fill-green));
+  color: var(--on-fill);
+  box-shadow: 0 2px 10px rgba(54, 124, 43, 0.35);
+}
+
+/* Something to do. */
+.attention {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  margin: 0 0 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #d9a21b 55%, transparent);
+  background: color-mix(in srgb, #ffde00 14%, var(--white));
+  color: var(--ink);
+  font-family: var(--font-body-stack);
+  font-size: 14.5px;
+  line-height: 1.35;
+  text-decoration: none;
+}
+.attention > span {
+  flex: 1;
+  min-width: 0;
+}
+.attention > svg:first-child {
+  color: #b7790f;
+  flex: none;
+}

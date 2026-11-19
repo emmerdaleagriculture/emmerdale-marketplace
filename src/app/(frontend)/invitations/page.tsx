@@ -17,7 +17,7 @@ import { Breadcrumb } from '@/components/Breadcrumb';
 import s from './invitations.module.css';
 import { AppFold } from '@/components/app/AppFold';
 import { isAppRequest } from '@/lib/appMode.server';
-import { AppHero } from '@/components/app/AppKit';
+import { AppHero, Seg } from '@/components/app/AppKit';
 
 /** Unclassified jobs carry the customer's own words as the title — keep a card a card. */
 function clip(text: string, n: number) {
@@ -135,6 +135,68 @@ function AppCard({ inv, price }: { inv: Invitation; price: string | null }) {
   );
 }
 
+/**
+ * The newest job to price, opened out (app): the figures that decide it in
+ * three boxes, the customer's access note, and Price / Pass on the card.
+ */
+function FeaturedCard({ inv }: { inv: Invitation }) {
+  const dl = deadline(inv);
+  const gate = gateWidthLabel(inv.gate_width ?? null);
+  const acres = jobAcres(inv);
+  const area =
+    acres !== null && inv.area_unit !== 'linear_m'
+      ? `${acres} acres`
+      : inv.area_value
+        ? `${inv.area_value} ${inv.area_unit === 'linear_m' ? 'm' : inv.area_unit}`
+        : '—';
+  const when = inv.target_date
+    ? formatDate(inv.target_date)
+    : inv.urgency === 'asap'
+      ? 'ASAP'
+      : inv.urgency && inv.urgency !== 'dated'
+        ? (URGENCY_LABELS[inv.urgency] ?? '—')
+        : '—';
+  const place = [inv.postcode_district, inv.county].filter(Boolean).join(', ');
+  return (
+    <article className={s.featured}>
+      <div className={s.featChips}>
+        <span className={s.chipNew}>New</span>
+        {dl && <span className={dl.urgent ? s.chipSoon : s.chipQuiet}>{dl.text}</span>}
+      </div>
+      <h2 className={s.featTitle}>{clip(inv.service ?? 'Land work', 70)}</h2>
+      {(inv.also_services?.length ?? 0) > 0 && <div className={s.meta}>Also wanted: {inv.also_services!.join(', ')}</div>}
+      <div className={s.meta}>
+        {[place, inv.distance_miles != null ? `${Math.round(Number(inv.distance_miles))} mi away` : null, inv.sent_at ? `sent ${timeAgo(inv.sent_at)}` : null]
+          .filter(Boolean)
+          .join(' · ')}
+      </div>
+      <div className={s.featFacts}>
+        <div>
+          <span>Area</span>
+          <strong>{area}</strong>
+        </div>
+        <div>
+          <span>When</span>
+          <strong>{when}</strong>
+        </div>
+        <div>
+          <span>Access</span>
+          <strong>{gate ? gate.split(' (')[0] : '—'}</strong>
+        </div>
+      </div>
+      {inv.access_notes && <p className={s.featNote}>“{clip(inv.access_notes, 220)}”</p>}
+      <div className={s.featActions}>
+        <Link href={`/quote/${inv.token}`} prefetch={false} className={s.featPrice}>
+          Price this job
+        </Link>
+        <Link href={`/quote/${inv.token}/pass`} prefetch={false} className={s.featPass}>
+          Pass
+        </Link>
+      </div>
+    </article>
+  );
+}
+
 export const metadata: Metadata = {
   title: 'Invitations',
   robots: { index: false, follow: false },
@@ -145,7 +207,8 @@ export const metadata: Metadata = {
  * tokenised price page — one write path. Queries go through the RLS-backed
  * my_sq_invitations view: a contractor can structurally only see their own.
  */
-export default async function InvitationsPage() {
+export default async function InvitationsPage({ searchParams }: { searchParams: Promise<{ v?: string }> }) {
+  const view = (await searchParams).v === 'priced' ? 'priced' : 'new';
   const supabase = await createClient();
   const {
     data: { user },
@@ -238,35 +301,52 @@ export default async function InvitationsPage() {
             </div>
           ) : (
             <>
-              {tenders && <TendersEntry mode={tenders.mode} fresh={tenders.fresh} />}
-              {open.length === 0 ? (
+              {inApp && (
+                <Seg
+                  label="Jobs"
+                  items={[
+                    { href: '/invitations', label: `New · ${toPrice.length}`, current: view === 'new' },
+                    { href: '/invitations?v=priced', label: `Priced · ${priced.length}`, current: view === 'priced' },
+                    { href: '/won', label: 'Won' },
+                  ]}
+                />
+              )}
+              {tenders && (!inApp || view === 'new') && <TendersEntry mode={tenders.mode} fresh={tenders.fresh} />}
+              {inApp ? (
+                view === 'new' ? (
+                  toPrice.length === 0 ? (
+                    <div className={s.empty}>
+                      Nothing new to price. We&rsquo;ll tell you the moment a matching job comes in.
+                    </div>
+                  ) : (
+                    <>
+                      <FeaturedCard inv={toPrice[0]} />
+                      {toPrice.length > 1 && (
+                        <>
+                          <h2 className={s.appSection}>Also new ({toPrice.length - 1})</h2>
+                          <div className={s.appList}>
+                            {toPrice.slice(1).map((inv) => (
+                              <AppCard key={inv.id} inv={inv} price={null} />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )
+                ) : priced.length === 0 ? (
+                  <div className={s.empty}>No prices waiting on a customer. Jobs you price show here until they decide.</div>
+                ) : (
+                  <div className={s.appList}>
+                    {priced.map((inv) => (
+                      <AppCard key={inv.id} inv={inv} price={prices.get(inv.submission_id!) ?? null} />
+                    ))}
+                  </div>
+                )
+              ) : open.length === 0 ? (
                 <div className={s.empty}>
                   Nothing to price right now. You&rsquo;ll get an email the moment a
                   matching job comes in.
                 </div>
-              ) : inApp ? (
-                <>
-                  {toPrice.length > 0 && (
-                    <>
-                      <h2 className={s.appSection}>To price ({toPrice.length})</h2>
-                      <div className={s.appList}>
-                        {toPrice.map((inv) => (
-                          <AppCard key={inv.id} inv={inv} price={null} />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                  {priced.length > 0 && (
-                    <>
-                      <h2 className={s.appSection}>Priced ({priced.length})</h2>
-                      <div className={s.appList}>
-                        {priced.map((inv) => (
-                          <AppCard key={inv.id} inv={inv} price={prices.get(inv.submission_id!) ?? null} />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </>
               ) : (
                 <div className={s.grid}>
                   {open.map((inv) => (

@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { AppHero } from '@/components/app/AppKit';
+import { Actions, AppHero } from '@/components/app/AppKit';
 import ui from '../app-ui.module.css';
 import { Diary } from './Diary';
 import { isDay, isMonth, monthGrid, todayInLondon } from './diary';
@@ -55,21 +54,19 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
         title="Diary"
       />
 
-      {contractor && (
-        <div className={ui.rows} style={{ marginBottom: 14 }}>
-          <Link href="/won" className={ui.row}>
-            Won jobs
-            <span className={ui.rowValue}>›</span>
-          </Link>
-        </div>
-      )}
+      <Actions
+        items={[
+          { href: '#diary-add', label: 'Add to diary', icon: 'plus' },
+          ...(contractor ? [{ href: '/won', label: 'Won jobs', icon: 'check' as const }] : []),
+        ]}
+      />
 
       <Diary
         key={month}
         month={month}
         today={today}
         initialDay={selected}
-        initialView={sp.v === 'week' ? 'week' : sp.v === 'month' ? 'month' : null}
+        initialView={sp.v === 'week' || sp.v === 'day' || sp.v === 'month' ? sp.v : null}
         entries={entries ?? []}
       />
     </main>

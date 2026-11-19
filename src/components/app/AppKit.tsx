@@ -141,3 +141,29 @@ export function Actions({ items }: { items: { href: string; label: string; icon:
     </div>
   );
 }
+
+/** One switcher bar per screen: links, the current one filled green. */
+export function Seg({ label, items }: { label: string; items: { href: string; label: ReactNode; current?: boolean }[] }) {
+  return (
+    <nav className={k.seg} style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }} aria-label={label}>
+      {items.map((t) => (
+        <Link key={t.href} href={t.href} prefetch={false} replace scroll={false} aria-current={t.current ? 'page' : undefined}>
+          {t.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+/** A strip for what needs doing, with an arrow: tap to go there. */
+export function Attention({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} prefetch={false} className={k.attention}>
+      <svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+      </svg>
+      <span>{children}</span>
+      <Icon name="arrow" size={18} />
+    </Link>
+  );
+}

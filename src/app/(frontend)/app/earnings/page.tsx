@@ -5,7 +5,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { nonContractorPath } from '@/lib/auth';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { formatDate } from '@/lib/time';
-import { AppHero, Tile, Tiles } from '@/components/app/AppKit';
+import { AppHero, Seg, Tile, Tiles } from '@/components/app/AppKit';
 import { taxYearOf } from '@/lib/books/taxRates';
 import ui from '../app-ui.module.css';
 import { todayInLondon } from '../diary/diary';
@@ -21,7 +21,9 @@ export const dynamic = 'force-dynamic';
  * dashboard shows a member their plan); never a price, button or pointer to
  * buying one in the app (Apple 3.1.1).
  */
-export default async function EarningsPage() {
+export default async function EarningsPage({ searchParams }: { searchParams: Promise<{ v?: string }> }) {
+  const v = (await searchParams).v;
+  const view = v === 'payouts' || v === 'invoices' ? v : 'all';
   const supabase = await createClient();
   const {
     data: { user },
@@ -69,6 +71,12 @@ export default async function EarningsPage() {
   const label = (j: NonNullable<typeof won>[number]) =>
     j.paid_out_on ? 'Paid' : j.status === 'completed_by_contractor' ? 'Waiting for sign-off' : ['completed', 'paid'].includes(j.status ?? '') ? (j.contractor_invoice_at ? 'Payout due' : 'Send your invoice') : 'Booked';
 
+  // Payouts: what we have sent. Invoices: finished jobs not yet paid out,
+  // whether the invoice is still to send or in and waiting.
+  const list = (won ?? []).filter((j) =>
+    view === 'payouts' ? !!j.paid_out_on : view === 'invoices' ? !j.paid_out_on && ['completed', 'paid'].includes(j.status ?? '') : true,
+  );
+
   return (
     <main className={ui.screen}>
       <AppHero photo="earnings" name={bank?.account_number ? `Paid to •••• ${bank.account_number.slice(-4)}` : 'Your money'} title="Earnings" />
@@ -81,15 +89,30 @@ export default async function EarningsPage() {
         <Tile icon="check" tone="teal" label="Jobs won" value={wonThisYear} hint="Since 6 April" />
       </Tiles>
 
+      <Seg
+        label="Earnings"
+        items={[
+          { href: '/app/earnings', label: 'Overview', current: view === 'all' },
+          { href: '/app/earnings?v=payouts', label: 'Payouts', current: view === 'payouts' },
+          { href: '/app/earnings?v=invoices', label: 'Invoices', current: view === 'invoices' },
+        ]}
+      />
+
       <div className={ui.sectionHead}>
-        <h2 className={ui.sectionTitle}>Recent jobs</h2>
+        <h2 className={ui.sectionTitle}>{view === 'payouts' ? 'Paid to you' : view === 'invoices' ? 'Done, not yet paid out' : 'Recent jobs'}</h2>
         <Link href="/won" className={ui.sectionLink}>Won jobs</Link>
       </div>
-      {(won ?? []).length === 0 ? (
-        <div className={ui.card} style={{ color: 'var(--ink-2)' }}>No won jobs yet. Price the jobs that come in and they&rsquo;ll appear here.</div>
+      {list.length === 0 ? (
+        <div className={ui.card} style={{ color: 'var(--ink-2)' }}>
+          {view === 'payouts'
+            ? 'No payouts yet. Once a customer has paid in full and your invoice is in, we pay you and it shows here.'
+            : view === 'invoices'
+              ? 'Nothing waiting on an invoice or a payout.'
+              : 'No won jobs yet. Price the jobs that come in and they’ll appear here.'}
+        </div>
       ) : (
         <div className={ui.rows}>
-          {(won ?? []).map((j) => {
+          {list.map((j) => {
             const g = j.id ? gross.get(j.id) : undefined;
             const net = j.contractor_price_pence ?? 0;
             const fee = g != null && net > 0 ? g - net : null;

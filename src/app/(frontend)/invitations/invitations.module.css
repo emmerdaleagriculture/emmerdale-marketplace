@@ -236,3 +236,103 @@
   color: var(--jd-green-dark);
   white-space: nowrap;
 }
+
+/* App: the newest job opened out, with Price and Pass on it. */
+.featured {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  padding: 14px;
+  margin: 0 0 6px;
+  font-family: var(--font-body-stack);
+}
+.featChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.chipNew,
+.chipSoon,
+.chipQuiet {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.chipNew {
+  background: color-mix(in srgb, #3a8f30 16%, transparent);
+  color: var(--jd-green);
+}
+.chipQuiet {
+  background: color-mix(in srgb, #138a8f 14%, transparent);
+  color: var(--ink-2);
+}
+.chipSoon {
+  background: color-mix(in srgb, #c23b2c 14%, transparent);
+  color: var(--error);
+}
+.featTitle {
+  font-family: var(--font-body-stack);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 4px 0 2px;
+  color: var(--ink);
+}
+.featFacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.featFacts div {
+  background: var(--cream);
+  border-radius: 12px;
+  padding: 8px 10px;
+  min-width: 0;
+}
+.featFacts span {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.featFacts strong {
+  display: block;
+  font-size: 14.5px;
+  color: var(--ink);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.featNote {
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+  margin: 0 0 12px;
+}
+.featActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.featActions a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border-radius: 14px;
+  font-size: 15.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.featPrice {
+  background: linear-gradient(180deg, var(--jd-green-light), var(--fill-green));
+  color: var(--on-fill);
+  border: 1px solid var(--fill-green);
+  box-shadow: 0 4px 14px rgba(54, 124, 43, 0.3);
+}
+.featPass {
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+}
