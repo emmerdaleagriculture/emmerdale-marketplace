@@ -7,7 +7,7 @@ import type { BooksAccess } from '@/lib/books/server';
 import a from '../../auth.module.css';
 import m from '../market/market.module.css';
 import s from './books.module.css';
-import { HeroArt, Icon, type BooksIconName } from './BooksUi';
+import { Icon, type BooksIconName } from './BooksUi';
 
 /** The four places people go most, as one bar. */
 const PRIMARY = [
@@ -30,7 +30,7 @@ const SHORTCUTS: { key: string; href: string; label: string; icon: BooksIconName
 export type BooksTab = (typeof PRIMARY)[number]['key'] | 'ledger' | 'pnl' | 'vat' | 'tax' | 'journal' | 'settings' | null;
 
 /**
- * The page shell for every Books page: a small farm-at-dusk header with the
+ * The page shell for every Books page: a short sunset-field header with the
  * business name and page title, one primary bar (Overview, Receipts,
  * Invoices, Bank), a row of icon shortcuts to the reports and settings, and
  * the read-only notice. Colours come from the site tokens, so the app's dark
@@ -58,7 +58,6 @@ export function BooksFrame({
         <div className={a.wide}>
           <Breadcrumb tone="light" jsonLd={false} skipHome items={items} />
           <header className={s.hero}>
-            <HeroArt />
             {/* eslint-disable-next-line @next/next/no-img-element -- a 2KB mark, no need for the optimiser */}
             <img className={s.heroMark} src="/images/brand/ea-mark-white.png" alt="" width={52} height={25} />
             <div className={s.heroName}>{name}</div>
