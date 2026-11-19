@@ -27,8 +27,11 @@ const EVENT: Record<string, string> = {
 const fmtTime = (iso: string) =>
   new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London' });
 
-export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
+const DONE: Record<string, string> = { issued: 'Invoice issued and posted to your books.', paid: 'Payment recorded.', voided: 'Invoice voided: its sale is reversed in your books.' };
+
+export default async function InvoicePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ done?: string }> }) {
   const { id: raw } = await params;
+  const { done } = await searchParams;
   const access = await loadLedger(`/account/books/invoices/${raw}`);
   const inv = await loadInvoice(access.ledger.id, Number(raw));
   if (!inv) notFound();
@@ -39,6 +42,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
   return (
     <BooksFrame access={access} title={`Invoice ${inv.number}`} tab="invoices" crumb={`Invoice ${inv.number}`}>
+      {done && DONE[done] && <p className={s.notice}>{DONE[done]}</p>}
       <p className={m.sub}>
         <b>{overdue ? 'Overdue' : inv.status[0].toUpperCase() + inv.status.slice(1)}</b> ·{' '}
         <Link className={s.link} href={`/account/books/customers/${inv.customer.id}`}>

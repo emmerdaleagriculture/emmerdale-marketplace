@@ -1,16 +1,24 @@
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 
+/** Who is looking, read during the request (cookies can't be read inside after()). */
+export async function viewerId(): Promise<string | null> {
+  try {
+    const {
+      data: { user },
+    } = await (await createClient()).auth.getUser();
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Count a customer opening their invoice link: not when the contractor who
  * owns it is signed in, and repeat opens within 30 minutes count once.
  */
-export async function recordInvoiceView(inv: { id: number; ledger_id: string; viewed_at: string | null }, ownerId: string) {
+export async function recordInvoiceView(inv: { id: number; ledger_id: string; viewed_at: string | null }, ownerId: string, viewer: string | null) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user?.id === ownerId) return;
+    if (viewer && viewer === ownerId) return;
     const admin = createServiceRoleClient();
     const since = new Date(Date.now() - 30 * 60_000).toISOString();
     const { data: recent } = await admin

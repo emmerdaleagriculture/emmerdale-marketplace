@@ -32,7 +32,7 @@ function ActionButton({
       }}
     >
       <input type="hidden" name="invoice_id" value={invoiceId} />
-      <button className={ghost ? f.btnGhost : f.btnPrimary} type="submit" disabled={pending}>
+      <button className={ghost ? f.btnGhost : f.btnPrimary} type="submit" disabled={pending} style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', textAlign: 'left' }}>
         {pending ? busy : label}
       </button>
       {state.error && <p className={f.error}>{state.error}</p>}

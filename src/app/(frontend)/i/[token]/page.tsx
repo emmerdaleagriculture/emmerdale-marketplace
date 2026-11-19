@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { after } from 'next/server';
 import { loadInvoiceByToken } from '@/lib/books/invoices.server';
-import { recordInvoiceView } from '@/lib/books/invoiceViews';
+import { recordInvoiceView, viewerId } from '@/lib/books/invoiceViews';
 import { amountDue } from '@/lib/books/invoice';
 import { formatPence } from '@/lib/books/money';
 import { ukDate } from '@/lib/books/period';
@@ -24,7 +24,8 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
   const { token } = await params;
   const inv = await loadInvoiceByToken(token);
   if (!inv) notFound();
-  after(() => recordInvoiceView(inv, inv.ledger.contractor_id));
+  const viewer = await viewerId();
+  after(() => recordInvoiceView(inv, inv.ledger.contractor_id, viewer));
   const l = inv.ledger;
   const name = l.trading_name || l.legal_name;
   const due = amountDue(inv);

@@ -181,7 +181,7 @@ export async function issueInvoiceAction(_prev: FormState, fd: FormData): Promis
   const err = await issueInvoice(r.inv);
   if (err) return { error: err };
   revalidate();
-  return { ok: true, message: `Invoice ${r.inv.number} issued.` };
+  redirect(`/account/books/invoices/${r.inv.id}?done=issued`);
 }
 
 export async function sendInvoiceAction(_prev: FormState, fd: FormData): Promise<FormState> {
@@ -218,7 +218,7 @@ export async function recordPaymentAction(_prev: FormState, fd: FormData): Promi
   const res = await recordPayment(r.ledger, r.inv, { paid_on: paidOn, amount_pence: amount, method, reference: optional(str(fd, 'reference')), external_id: null });
   if (!res.ok) return { error: res.error };
   revalidate();
-  return { ok: true, message: 'Payment recorded.' };
+  redirect(`/account/books/invoices/${r.inv.id}?done=paid`);
 }
 
 export async function voidInvoiceAction(_prev: FormState, fd: FormData): Promise<FormState> {
@@ -229,5 +229,5 @@ export async function voidInvoiceAction(_prev: FormState, fd: FormData): Promise
   if (err) return { error: err };
   revalidate();
   if (wasDraft) redirect('/account/books/invoices');
-  return { ok: true, message: 'Invoice voided.' };
+  redirect(`/account/books/invoices/${r.inv.id}?done=voided`);
 }
