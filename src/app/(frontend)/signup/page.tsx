@@ -133,6 +133,16 @@ export default async function SignupPage({
                   </span>
                 </div>
               </li>
+              <li>
+                <div>
+                  <strong>Council contracts, new and up for renewal</strong>
+                  <span>
+                    With Premium, tenders from the councils in your area come straight to
+                    your phone: new contracts as they&rsquo;re published, and existing ones
+                    as they come up for renewal.
+                  </span>
+                </div>
+              </li>
             </ul>
             </>
           )}
