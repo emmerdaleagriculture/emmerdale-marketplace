@@ -11,7 +11,7 @@ import { buildPosting, validateDoc, type Posting } from '@/lib/books/posting';
 import { buildMileagePosting, taxYearOf } from '@/lib/books/mileage';
 import { cleanVatNumber, isVatCode } from '@/lib/books/vat';
 import { isIsoDate, todayUk } from '@/lib/books/period';
-import { accountMap, businessTypeOf, getAccounts, ledgerForPosting, requireBooksWriter } from '@/lib/books/server';
+import { accountMap, businessTypeOf, getAccounts, ledgerForPosting, requireBooksWriter, voidEntry } from '@/lib/books/server';
 import type { Json } from '@/lib/database.types';
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
@@ -254,19 +254,13 @@ export async function postMileageAction(_prev: FormState, fd: FormData): Promise
   redirect('/account/books?posted=mileage');
 }
 
-/** Void a hand-entered entry or mileage claim: it is removed from the books. */
+/** Void a hand-entered entry, mileage claim or receipt's entry: it is removed from the books. */
 export async function voidEntryAction(fd: FormData): Promise<void> {
   const gate = await requireBooksWriter();
   if (!gate.ok || !gate.ledger) return;
   const id = Number(fd.get('entry_id'));
   if (!Number.isSafeInteger(id)) return;
-  const { error } = await createServiceRoleClient()
-    .from('books_entries')
-    .delete()
-    .eq('id', id)
-    .eq('ledger_id', gate.ledger.id)
-    .in('source', ['manual', 'mileage']);
-  if (error) console.error('books void failed', { ledger: gate.ledger.id, id, error: error.message });
+  await voidEntry(gate.ledger.id, id);
   revalidateBooks();
 }
 

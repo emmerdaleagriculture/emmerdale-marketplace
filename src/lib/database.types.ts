@@ -1313,6 +1313,135 @@ export type Database = {
         }
         Relationships: []
       }
+      books_receipts: {
+        Row: {
+          account_code: string | null
+          ai_cost_usd: number
+          ai_input_tokens: number
+          ai_output_tokens: number
+          ai_reads: number
+          confidence: number | null
+          counterparty: string | null
+          counterparty_vat_number: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          doc_date: string | null
+          doc_type: string | null
+          email_from: string | null
+          email_subject: string | null
+          email_to: string | null
+          entry_id: number | null
+          extracted: Json | null
+          extraction_error: string | null
+          file_name: string | null
+          file_path: string | null
+          gross_pence: number | null
+          id: number
+          ledger_id: string
+          message_id: string | null
+          mime_type: string | null
+          net_pence: number | null
+          notes: string | null
+          payment_account_code: string | null
+          processing_started_at: string | null
+          received_at: string
+          reference: string | null
+          review_reasons: string | null
+          sha256: string | null
+          size_bytes: number | null
+          source: string
+          status: string
+          updated_at: string
+          vat_code: string | null
+          vat_pence: number | null
+        }
+        Insert: {
+          account_code?: string | null
+          ai_cost_usd?: number
+          ai_input_tokens?: number
+          ai_output_tokens?: number
+          ai_reads?: number
+          confidence?: number | null
+          counterparty?: string | null
+          counterparty_vat_number?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          doc_date?: string | null
+          doc_type?: string | null
+          email_from?: string | null
+          email_subject?: string | null
+          email_to?: string | null
+          entry_id?: number | null
+          extracted?: Json | null
+          extraction_error?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          gross_pence?: number | null
+          id?: number
+          ledger_id: string
+          message_id?: string | null
+          mime_type?: string | null
+          net_pence?: number | null
+          notes?: string | null
+          payment_account_code?: string | null
+          processing_started_at?: string | null
+          received_at?: string
+          reference?: string | null
+          review_reasons?: string | null
+          sha256?: string | null
+          size_bytes?: number | null
+          source?: string
+          status?: string
+          updated_at?: string
+          vat_code?: string | null
+          vat_pence?: number | null
+        }
+        Update: {
+          account_code?: string | null
+          ai_cost_usd?: number
+          ai_input_tokens?: number
+          ai_output_tokens?: number
+          ai_reads?: number
+          confidence?: number | null
+          counterparty?: string | null
+          counterparty_vat_number?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          doc_date?: string | null
+          doc_type?: string | null
+          email_from?: string | null
+          email_subject?: string | null
+          email_to?: string | null
+          entry_id?: number | null
+          extracted?: Json | null
+          extraction_error?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          gross_pence?: number | null
+          id?: number
+          ledger_id?: string
+          message_id?: string | null
+          mime_type?: string | null
+          net_pence?: number | null
+          notes?: string | null
+          payment_account_code?: string | null
+          processing_started_at?: string | null
+          received_at?: string
+          reference?: string | null
+          review_reasons?: string | null
+          sha256?: string | null
+          size_bytes?: number | null
+          source?: string
+          status?: string
+          updated_at?: string
+          vat_code?: string | null
+          vat_pence?: number | null
+        }
+        Relationships: []
+      }
       diary_entries: {
         Row: {
           created_at: string
@@ -4001,6 +4130,14 @@ export type Database = {
       }
     }
     Functions: {
+      books_ai_reads_this_month: {
+        Args: { p_ledger_id: string }
+        Returns: number
+      }
+      books_reserve_ai_read: {
+        Args: { p_receipt_id: number; p_started_at: string; p_cap: number }
+        Returns: string
+      }
       books_account_opening: {
         Args: { p_ledger_id: string; p_code: string; p_before: string }
         Returns: number

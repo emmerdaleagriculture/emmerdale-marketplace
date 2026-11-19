@@ -31,7 +31,7 @@ export default async function JournalPage() {
             </span>
             <span className={s.muted}>
               #{e.id} · {e.vat_code}
-              {access.canEdit && (e.source === 'manual' || e.source === 'mileage') && (
+              {access.canEdit && (e.source === 'manual' || e.source === 'mileage' || e.source === 'receipt') && (
                 <form action={voidEntryAction} style={{ display: 'inline', marginLeft: 10 }}>
                   <input type="hidden" name="entry_id" value={e.id} />
                   <button className={s.voidBtn} type="submit">
