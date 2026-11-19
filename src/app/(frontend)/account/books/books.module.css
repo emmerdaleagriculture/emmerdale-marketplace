@@ -13,7 +13,8 @@
   padding-top: 0;
 }
 
-/* The header: a field at dusk, drawn rather than photographed, kept short. */
+/* The header: the sunset field from the site banner (cropped below the logo,
+   public/images/books-hero.jpg), darkened at the top so the title reads. */
 .hero {
   position: relative;
   overflow: hidden;
@@ -23,14 +24,10 @@
   margin: 0 0 14px;
   text-align: center;
   color: #fff;
-  background: linear-gradient(180deg, #06100a 0%, #0c1d10 45%, #1c3519 100%);
-}
-.heroArt {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  width: 100%;
-  height: 100%;
+  background:
+    linear-gradient(180deg, rgba(4, 12, 6, 0.5) 0%, rgba(4, 12, 6, 0.18) 45%, rgba(4, 12, 6, 0) 75%),
+    url('/images/books-hero.jpg') center 14% / cover no-repeat,
+    #1c3519;
 }
 .heroMark {
   display: block;
@@ -39,6 +36,7 @@
   width: auto;
 }
 .heroName {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
   font-size: 11.5px;
   letter-spacing: 0.32em;
   text-transform: uppercase;
@@ -52,7 +50,7 @@
   line-height: 1.1;
   margin: 4px 0 0;
   color: #fff;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 2px 18px rgba(0, 0, 0, 0.5);
 }
 :global(html[data-app]) .hero {
   margin: 0 -16px 14px;
