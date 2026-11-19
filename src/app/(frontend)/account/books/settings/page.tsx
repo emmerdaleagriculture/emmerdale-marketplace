@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getAccounts, loadLedger } from '@/lib/books/server';
 import { isBankAccount } from '@/lib/books/chart';
+import { receiptsAddress } from '@/lib/books/inbound';
+import { createClient } from '@/lib/supabase/server';
 import { BooksFrame } from '../BooksFrame';
 import { SettingsForm } from '../SettingsForm';
 import { saveSettingsAction } from '../actions';
@@ -13,12 +15,18 @@ export default async function BooksSettingsPage() {
   if (!access.canEdit) redirect('/account/books');
   const accounts = await getAccounts(access.ledger.id);
   const l = access.ledger;
+  const {
+    data: { user },
+  } = await (await createClient()).auth.getUser();
+  const email = user?.email ?? null;
   return (
     <BooksFrame access={access} title="Settings" tab="settings" crumb="Settings">
       <SettingsForm
         action={saveSettingsAction}
         setup={false}
         paymentAccounts={accounts.filter(isBankAccount)}
+        receiptsAddress={receiptsAddress(l.inbound_code)}
+        accountEmail={email}
         values={{ ...l, flat_rate_percent: l.flat_rate_percent == null ? null : Number(l.flat_rate_percent) }}
       />
     </BooksFrame>

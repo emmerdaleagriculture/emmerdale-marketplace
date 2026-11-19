@@ -25,6 +25,7 @@ export type SettingsValues = {
   bank_details: string | null;
   invoice_terms_days: number;
   invoice_footer: string | null;
+  inbound_senders: string[];
 };
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -39,11 +40,15 @@ export function SettingsForm({
   values,
   setup,
   paymentAccounts,
+  receiptsAddress,
+  accountEmail,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   values: SettingsValues;
   setup: boolean;
   paymentAccounts: { code: string; name: string }[];
+  receiptsAddress?: string;
+  accountEmail?: string | null;
 }) {
   const [state, formAction, pending] = useActionState(action, emptyFormState);
   const [type, setType] = useState(values.business_type);
@@ -165,6 +170,26 @@ export function SettingsForm({
         )}
         {!vat && <p className={f.hint}>Not registered: your sales won’t charge VAT, but VAT you pay is still recorded so it can be reclaimed if you register.</p>}
       </fieldset>
+
+      {!setup && receiptsAddress && (
+        <fieldset className={s.fieldset}>
+          <legend>Receipts by email</legend>
+          <p className={f.hint}>
+            Forward receipts and invoices to <b>{receiptsAddress}</b>. Attachments (PDFs and photos) are read by AI; an
+            email with none, like most online order confirmations, is read itself.
+          </p>
+          <label className={f.field}>
+            <span className={f.label}>Other addresses you send from</span>
+            <textarea className={f.textarea} name="inbound_senders" rows={3} defaultValue={values.inbound_senders.join('\n')} />
+            <span className={f.hint}>
+              One per line. {accountEmail ? `${accountEmail} is always allowed. ` : ''}Mail from anyone else waits in your
+              receipts unread until you choose to read it.
+            </span>
+          </label>
+        </fieldset>
+      )}
+      {setup && <input type="hidden" name="inbound_senders" value="" />}
+      {!setup && !receiptsAddress && <input type="hidden" name="inbound_senders" value={values.inbound_senders.join('\n')} />}
 
       {!setup && (
         <fieldset className={s.fieldset}>

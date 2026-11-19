@@ -1218,6 +1218,8 @@ export type Database = {
           farming: boolean
           flat_rate_percent: number | null
           id: string
+          inbound_code: string
+          inbound_senders: string[]
           invoice_footer: string | null
           invoice_reply_to: string | null
           invoice_terms_days: number
@@ -1244,6 +1246,8 @@ export type Database = {
           farming?: boolean
           flat_rate_percent?: number | null
           id?: string
+          inbound_code?: string
+          inbound_senders?: string[]
           invoice_footer?: string | null
           invoice_reply_to?: string | null
           invoice_terms_days?: number
@@ -1270,6 +1274,8 @@ export type Database = {
           farming?: boolean
           flat_rate_percent?: number | null
           id?: string
+          inbound_code?: string
+          inbound_senders?: string[]
           invoice_footer?: string | null
           invoice_reply_to?: string | null
           invoice_terms_days?: number
