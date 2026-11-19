@@ -14,11 +14,9 @@ export const dynamic = 'force-dynamic';
  * The contractor's Earnings tab (PRD task 9): what is on its way, then the
  * recent jobs with what the customer paid, our fee and what they get. Paid
  * means we have sent it; held means the customer has yet to sign off or
- * settle, or the invoice is missing. Premium shows its status and benefits
- * only: no price, no button, and no pointer to the website. Apple's 3.1.1
- * bars an app outside the US from selling a membership, or sending people
- * anywhere else to buy one, except through Apple's own payments. Membership
- * is bought and managed on the website, and the app does not say so.
+ * settle, or the invoice is missing. Nothing about membership here (the
+ * dashboard shows a member their plan); never a price, button or pointer to
+ * buying one in the app (Apple 3.1.1).
  */
 export default async function EarningsPage() {
   const supabase = await createClient();
@@ -30,14 +28,13 @@ export default async function EarningsPage() {
   if (!me) redirect(await nonContractorPath(user.id));
 
   const admin = createServiceRoleClient();
-  const [{ data: won }, { data: ready }, { data: tier }, { data: bank }] = await Promise.all([
+  const [{ data: won }, { data: ready }, { data: bank }] = await Promise.all([
     supabase
       .from('my_sq_won_jobs')
       .select('id, service, status, postcode, contractor_price_pence, awarded_at, contractor_invoice_at, paid_out_on, paid_out_pence')
       .order('awarded_at', { ascending: false })
       .limit(30),
     admin.from('sq_payout_ready').select('submission_id, owed_pence, collected_pence, total_pence, contractor_invoice_at, status, payout_before_balance').eq('contractor_id', user.id),
-    admin.rpc('contractor_tier', { p_contractor_id: user.id }),
     admin.from('contractor_bank_details').select('account_number').eq('contractor_id', user.id).maybeSingle(),
   ]);
 
@@ -58,9 +55,8 @@ export default async function EarningsPage() {
   const nextPayout = releasable.reduce((n, r) => n + (r.owed_pence ?? 0), 0);
   const held = owed.reduce((n, r) => n + (r.owed_pence ?? 0), 0) - nextPayout;
 
-  // Market data: in the app reachable only from here (the website's dashboard
-  // links it). Members only. Council tenders live on the Jobs tab.
-  const openTools = tier === 'open' && me.status === 'approved';
+  // Market data moved to the Premium panel on the dashboard, and the
+  // membership card left this screen (2026-11-19): Earnings is just money.
 
   const label = (j: NonNullable<typeof won>[number]) =>
     j.paid_out_on ? 'Paid' : j.status === 'completed_by_contractor' ? 'Waiting for sign-off' : ['completed', 'paid'].includes(j.status ?? '') ? (j.contractor_invoice_at ? 'Payout due' : 'Send your invoice') : 'Booked';
@@ -79,19 +75,6 @@ export default async function EarningsPage() {
         </div>
       </div>
 
-      {openTools && (
-        <>
-          <div className={ui.sectionHead}>
-            <h2 className={ui.sectionTitle}>Your patch</h2>
-          </div>
-          <div className={ui.rows}>
-            <Link href="/account/market" className={ui.row}>
-              Market data
-              <span className={ui.rowValue}>›</span>
-            </Link>
-          </div>
-        </>
-      )}
 
       <div className={ui.sectionHead}>
         <h2 className={ui.sectionTitle}>Recent jobs</h2>
@@ -121,33 +104,6 @@ export default async function EarningsPage() {
         </div>
       )}
 
-      {/* Members see their own plan. Nothing about plans for anyone else:
-          they are only offered on the website, like Spotify. */}
-      {tier && (
-      <div className={ui.card} style={{ marginTop: 22, background: 'var(--member-bg)', border: '1px solid var(--member-line)' }}>
-        <div className={ui.cardTitle} style={{ color: 'var(--member-ink)' }}>
-          {`✦ Emmerdale ${tier === 'open' ? 'Premium' : 'Pro'} · you’re a member`}
-        </div>
-                <ul className={ui.promises} style={{ marginTop: 10 }}>
-          <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
-            <span className={ui.tick} aria-hidden="true">✓</span>
-            <span><strong>First refusal on new jobs.</strong> Price new jobs near you before anyone else sees them.</span>
-          </li>
-          <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
-            <span className={ui.tick} aria-hidden="true">✓</span>
-            <span><strong>5% commission, not 15%.</strong> Customers see your price plus less on top.</span>
-          </li>
-          <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
-            <span className={ui.tick} aria-hidden="true">✓</span>
-            <span><strong>Expedited payouts.</strong> Paid as soon as the customer pays, up to 3 days sooner.</span>
-          </li>
-          {tier === 'open' && <li className={ui.promise} style={{ background: 'transparent', padding: '4px 0' }}>
-            <span className={ui.tick} aria-hidden="true">✓</span>
-            <span><strong>Premium: the customer’s details on every job.</strong> Ring them and agree the work directly.</span>
-          </li>}
-        </ul>
-      </div>
-      )}
     </main>
   );
 }
