@@ -1,0 +1,241 @@
+/* The app's shared screen pieces (AppKit.tsx): photo header, figure tiles,
+   icon shortcuts, the two action buttons. Site tokens throughout, so light
+   and dark app mode follow; the header stays dark over its photo. */
+
+/* The header: the tab's photo, darkened at the top for the mark and name
+   and at the foot for the title. */
+.hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 20px;
+  padding: 18px 16px 26px;
+  margin: 0 0 14px;
+  text-align: center;
+  color: #fff;
+  font-family: var(--font-body-stack);
+  background:
+    linear-gradient(180deg, rgba(4, 12, 6, 0.55) 0%, rgba(4, 12, 6, 0.15) 45%, rgba(4, 12, 6, 0) 70%),
+    linear-gradient(0deg, rgba(4, 12, 6, 0.55) 0%, rgba(4, 12, 6, 0) 55%),
+    var(--hero-photo) var(--hero-at, center) / cover no-repeat,
+    #1c3519;
+}
+.heroTall {
+  padding-top: 26px;
+  padding-bottom: 36px;
+}
+.heroMark {
+  display: block;
+  margin: 0 auto 6px;
+  height: 25px;
+  width: auto;
+}
+.heroName {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.heroTitle {
+  font-family: var(--font-body-stack);
+  font-weight: 700;
+  font-size: clamp(28px, 6vw, 38px);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 4px 0 0;
+  color: #fff;
+  overflow-wrap: anywhere;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 2px 18px rgba(0, 0, 0, 0.5);
+}
+/* In the app the header runs edge to edge under the status bar strip. */
+:global(html[data-app]) .hero {
+  margin: 0 -16px 14px;
+  border-radius: 0 0 22px 22px;
+  padding-top: 14px;
+}
+:global(html[data-app]) .heroTall {
+  padding-top: 22px;
+}
+
+/* Figures. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+  font-family: var(--font-body-stack);
+}
+@media (max-width: 560px) {
+  .tiles {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+}
+.tile {
+  --tone: var(--jd-green);
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: linear-gradient(165deg, var(--white) 55%, var(--green-wash));
+  padding: 14px 16px 16px;
+  min-width: 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+/* What the figure is, by colour: the icon's square carries it. */
+.tile[data-tone='teal'] {
+  --tone: #138a8f;
+}
+.tile[data-tone='green'] {
+  --tone: #3a8f30;
+}
+.tile[data-tone='amber'] {
+  --tone: #b7790f;
+}
+.tile[data-tone='red'] {
+  --tone: #c23b2c;
+}
+.tileLink:hover {
+  border-color: var(--tone);
+}
+.tileHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tileIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  flex: none;
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+}
+.tileLabel {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink-2);
+}
+.tileValue {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  margin-top: 6px;
+  white-space: nowrap;
+}
+.tileHint {
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--ink-3);
+  margin-top: 4px;
+}
+@media (max-width: 560px) {
+  .tileValue {
+    font-size: 22px;
+  }
+}
+@media (max-width: 420px) {
+  .tileLabel {
+    font-size: 12.5px;
+  }
+  .tileHead {
+    gap: 6px;
+  }
+  .tile {
+    padding: 12px 13px 14px;
+  }
+}
+
+/* Icon shortcuts. */
+.shortcuts {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 18px;
+  font-family: var(--font-body-stack);
+}
+.shortcuts a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.shortcutIcon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  color: var(--jd-green);
+}
+.shortcuts a[aria-current='page'] .shortcutIcon {
+  background: var(--green-wash-strong);
+}
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border-radius: 9px;
+  background: #c2410c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+/* The two main moves. */
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 18px;
+  font-family: var(--font-body-stack);
+}
+.actions a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 15.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  min-width: 0;
+}
+.actionMain {
+  background: linear-gradient(180deg, var(--jd-green-light), var(--fill-green));
+  color: var(--on-fill);
+  border: 1px solid var(--fill-green);
+  box-shadow: 0 4px 14px rgba(54, 124, 43, 0.3);
+}
+.actionSecond {
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+}

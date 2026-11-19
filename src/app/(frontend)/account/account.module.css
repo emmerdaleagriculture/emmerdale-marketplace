@@ -767,3 +767,18 @@
     padding: 22px 16px 0;
   }
 }
+
+/* App: the tab's photo header, figures and shortcuts (AppKit) in place of
+   the green band. */
+.appTop {
+  padding: 0 16px;
+}
+.appStatus .statusRow {
+  justify-content: center;
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+:global(html[data-app]) .appTop + .dashBody {
+  padding-top: 4px;
+}

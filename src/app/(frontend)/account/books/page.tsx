@@ -8,7 +8,7 @@ import { accountingYear, todayUk, ukDate } from '@/lib/books/period';
 import m from '../market/market.module.css';
 import s from './books.module.css';
 import { BooksFrame } from './BooksFrame';
-import { Icon, Tile } from './BooksUi';
+import { Icon, Tile, Tiles } from './BooksUi';
 import { SettingsForm } from './SettingsForm';
 import { createLedgerAction } from './actions';
 import { syncLedgerMarketplace } from '@/lib/books/marketplace.server';
@@ -153,12 +153,12 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
         </div>
       )}
 
-      <div className={s.tiles}>
+      <Tiles>
         <Tile icon="bank" label="Bank (1200)" value={formatPence(bal('1200'))} hint="As recorded in your books" tone="teal" />
         <Tile icon="coins" label="Income this year" value={formatPence(income)} hint={`${ukDate(year.from)} – ${ukDate(year.to)}`} tone="green" />
         <Tile icon="expenses" label="Expenses this year" value={formatPence(expenses)} tone="amber" />
         <Tile icon="trend" label="Profit this year" value={formatPence(profit)} hint="Before tax" tone={profit < 0 ? 'red' : 'green'} />
-      </div>
+      </Tiles>
 
       {access.canEdit && (
         <div className={s.actionGrid}>

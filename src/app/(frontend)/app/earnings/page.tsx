@@ -5,7 +5,10 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { nonContractorPath } from '@/lib/auth';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { formatDate } from '@/lib/time';
+import { AppHero, Tile, Tiles } from '@/components/app/AppKit';
+import { taxYearOf } from '@/lib/books/taxRates';
 import ui from '../app-ui.module.css';
+import { todayInLondon } from '../diary/diary';
 
 export const metadata: Metadata = { title: 'Earnings', robots: { index: false, follow: false } };
 export const dynamic = 'force-dynamic';
@@ -28,7 +31,9 @@ export default async function EarningsPage() {
   if (!me) redirect(await nonContractorPath(user.id));
 
   const admin = createServiceRoleClient();
-  const [{ data: won }, { data: ready }, { data: bank }] = await Promise.all([
+  // The tax year so far (6 April on), for the paid and won figures.
+  const yearFrom = `${taxYearOf(todayInLondon())}-04-06`;
+  const [{ data: won }, { data: ready }, { data: bank }, { data: thisYear }] = await Promise.all([
     supabase
       .from('my_sq_won_jobs')
       .select('id, service, status, postcode, contractor_price_pence, awarded_at, contractor_invoice_at, paid_out_on, paid_out_pence')
@@ -36,7 +41,10 @@ export default async function EarningsPage() {
       .limit(30),
     admin.from('sq_payout_ready').select('submission_id, owed_pence, collected_pence, total_pence, contractor_invoice_at, status, payout_before_balance').eq('contractor_id', user.id),
     admin.from('contractor_bank_details').select('account_number').eq('contractor_id', user.id).maybeSingle(),
+    supabase.from('my_sq_won_jobs').select('awarded_at, paid_out_on, paid_out_pence').or(`awarded_at.gte.${yearFrom},paid_out_on.gte.${yearFrom}`).limit(1000),
   ]);
+  const paidThisYear = (thisYear ?? []).reduce((n, j) => n + (j.paid_out_on && j.paid_out_on >= yearFrom ? (j.paid_out_pence ?? 0) : 0), 0);
+  const wonThisYear = (thisYear ?? []).filter((j) => (j.awarded_at ?? '') >= yearFrom).length;
 
   // The customer's figure for each job, for the gross / fee / net lines.
   const ids = (won ?? []).map((j) => j.id).filter((x): x is string => !!x);
@@ -63,18 +71,15 @@ export default async function EarningsPage() {
 
   return (
     <main className={ui.screen}>
-      <h1 className={ui.title}>Earnings</h1>
+      <AppHero photo="earnings" name={bank?.account_number ? `Paid to •••• ${bank.account_number.slice(-4)}` : 'Your money'} title="Earnings" />
 
       {/* No "Your dashboard" row: the dashboard has its own tab (2026-11-19). */}
-      <div className={ui.card} style={{ background: 'var(--fill-green-deep)', color: '#fff', border: 0 }}>
-        <div style={{ fontSize: 14, opacity: 0.85 }}>{nextPayout > 0 ? 'Ready to pay out' : 'Nothing ready to pay out yet'}</div>
-        <div style={{ fontFamily: 'var(--font-display-stack)', fontSize: 40, lineHeight: 1.1, margin: '4px 0' }}>{formatGBP(nextPayout)}</div>
-        <div style={{ fontSize: 14, opacity: 0.85 }}>
-          {bank?.account_number ? `To ••••${bank.account_number.slice(-4)} · ` : ''}
-          {held > 0 ? `${formatGBP(held)} more held until sign-off, balance or invoice` : 'Payouts go once the customer has paid in full and your invoice is in'}
-        </div>
-      </div>
-
+      <Tiles>
+        <Tile icon="pound" tone="green" label="Ready to pay out" value={formatGBP(nextPayout)} hint={nextPayout > 0 ? 'Invoice in, customer paid' : 'Nothing ready yet'} />
+        <Tile icon="clock" tone="amber" label="Held" value={formatGBP(held)} hint="Until sign-off, balance or invoice" />
+        <Tile icon="trend" tone="teal" label="Paid this tax year" value={formatGBP(paidThisYear)} hint="Since 6 April" />
+        <Tile icon="check" tone="teal" label="Jobs won" value={wonThisYear} hint="Since 6 April" />
+      </Tiles>
 
       <div className={ui.sectionHead}>
         <h2 className={ui.sectionTitle}>Recent jobs</h2>

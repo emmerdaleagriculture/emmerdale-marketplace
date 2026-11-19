@@ -7,6 +7,7 @@ import { formatPence } from '@/lib/books/money';
 import { todayUk, ukDate } from '@/lib/books/period';
 import f from '@/components/forms/forms.module.css';
 import m from '../../market/market.module.css';
+import kit from '@/components/app/appKit.module.css';
 import s from '../books.module.css';
 import { BooksFrame } from '../BooksFrame';
 
@@ -39,14 +40,14 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
 
   return (
     <BooksFrame access={access} title="Invoices" tab="invoices" crumb="Invoices">
-      <div className={s.tiles}>
-        <div className={s.tile}>
-          <div className={s.tileLabel}>Owed to you</div>
-          <div className={s.tileValue}>{formatPence(totalOwed)}</div>
+      <div className={kit.tiles}>
+        <div className={kit.tile}>
+          <div className={kit.tileLabel}>Owed to you</div>
+          <div className={kit.tileValue}>{formatPence(totalOwed)}</div>
         </div>
-        <div className={s.tile}>
-          <div className={s.tileLabel}>Overdue</div>
-          <div className={s.tileValue}>{formatPence(totalOverdue)}</div>
+        <div className={kit.tile}>
+          <div className={kit.tileLabel}>Overdue</div>
+          <div className={kit.tileValue}>{formatPence(totalOverdue)}</div>
         </div>
       </div>
       <div className={s.actions}>

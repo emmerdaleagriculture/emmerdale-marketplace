@@ -8,6 +8,7 @@ import { taxYearLabel } from '@/lib/books/taxRates';
 import { taxView } from '@/lib/books/taxPointers.server';
 import f from '@/components/forms/forms.module.css';
 import m from '../../market/market.module.css';
+import kit from '@/components/app/appKit.module.css';
 import s from '../books.module.css';
 import { BooksFrame } from '../BooksFrame';
 import { TaxProfileForm } from './TaxProfileForm';
@@ -53,37 +54,37 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
       </p>
 
       <h2 className={m.h2}>Rough tax {v.partYear ? 'on the profit so far' : 'for the year'}</h2>
-      <div className={s.tiles}>
-        <div className={s.tile}>
-          <div className={s.tileLabel}>Profit in the books</div>
-          <div className={s.tileValue}>{formatPence(e.accountsProfit)}</div>
-          <div className={s.tileHint}>
+      <div className={kit.tiles}>
+        <div className={kit.tile}>
+          <div className={kit.tileLabel}>Profit in the books</div>
+          <div className={kit.tileValue}>{formatPence(e.accountsProfit)}</div>
+          <div className={kit.tileHint}>
             {formatPence(e.income)} in, {formatPence(e.expenses)} out
           </div>
         </div>
-        <div className={s.tile}>
-          <div className={s.tileLabel}>Taxable profit</div>
-          <div className={s.tileValue}>{formatPence(e.taxableProfit)}</div>
-          <div className={s.tileHint}>
+        <div className={kit.tile}>
+          <div className={kit.tileLabel}>Taxable profit</div>
+          <div className={kit.tileValue}>{formatPence(e.taxableProfit)}</div>
+          <div className={kit.tileHint}>
             {[e.allowances ? `less ${formatPence(e.allowances)} equipment` : '', e.disallowed ? `plus ${formatPence(e.disallowed)} entertaining` : '']
               .filter(Boolean)
               .join(', ') || 'Same as the books'}
             {!company && v.profile.profitShare < 100 ? ` · your ${v.profile.profitShare}%: ${formatPence(e.yourProfit)}` : ''}
           </div>
         </div>
-        <div className={s.tile}>
-          <div className={s.tileLabel}>{company ? 'Corporation tax' : 'Income tax and NI'}</div>
-          <div className={s.tileValue}>{formatPence(e.total)}</div>
-          <div className={s.tileHint}>
+        <div className={kit.tile}>
+          <div className={kit.tileLabel}>{company ? 'Corporation tax' : 'Income tax and NI'}</div>
+          <div className={kit.tileValue}>{formatPence(e.total)}</div>
+          <div className={kit.tileHint}>
             {company
               ? 'Before any dividends you take'
               : `${formatPence(e.incomeTax)} income tax, ${formatPence(e.class4)} Class 4 NI`}
           </div>
         </div>
-        <div className={s.tile}>
-          <div className={s.tileLabel}>Next £100 of profit</div>
-          <div className={s.tileValue}>£{e.marginalRate}</div>
-          <div className={s.tileHint}>goes in tax</div>
+        <div className={kit.tile}>
+          <div className={kit.tileLabel}>Next £100 of profit</div>
+          <div className={kit.tileValue}>£{e.marginalRate}</div>
+          <div className={kit.tileHint}>goes in tax</div>
         </div>
       </div>
 
