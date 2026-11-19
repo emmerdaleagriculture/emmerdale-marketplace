@@ -97,7 +97,7 @@ create table if not exists public.books_lines (
   memo text,
   check ((debit_pence = 0) <> (credit_pence = 0)),
   -- A line's account must be in the same ledger as its entry.
-  foreign key (ledger_id, account_id) references public.books_accounts (ledger_id, id) on delete restrict
+  foreign key (ledger_id, account_id) references public.books_accounts (ledger_id, id) on delete no action deferrable initially deferred
 );
 
 create index if not exists books_lines_entry_idx on public.books_lines (entry_id);
