@@ -3,6 +3,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { membershipOf } from '@/lib/membership';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { isAppRequest } from '@/lib/appMode.server';
+import { booksAllowed } from './access';
 import { fetchAll } from '@/lib/supabase/fetchAll';
 import type { Database } from '@/lib/database.types';
 import type { AccountType, BusinessType } from './chart';
@@ -35,7 +36,10 @@ export type BooksAccess = {
 };
 
 async function resolve(): Promise<
-  { kind: 'anon' } | { kind: 'not-contractor'; userId: string; email: string | null } | ({ kind: 'ok' } & BooksAccess)
+  | { kind: 'anon' }
+  | { kind: 'not-contractor'; userId: string; email: string | null }
+  | { kind: 'not-released' }
+  | ({ kind: 'ok' } & BooksAccess)
 > {
   const supabase = await createClient();
   const {
@@ -55,12 +59,16 @@ async function resolve(): Promise<
       .maybeSingle(),
   ]);
   if (!contractor) return { kind: 'not-contractor', userId: user.id, email: user.email ?? null };
-  const canEdit = contractor.status === 'approved' && membershipOf(sub, contractor) === 'open';
   const { data: ledger } = await createServiceRoleClient()
     .from('books_ledgers')
     .select('*')
     .eq('contractor_id', user.id)
     .maybeSingle();
+  // Released account by account while it's trialled. Someone taken off the
+  // list keeps read-only access to books they already have (their records).
+  const released = await booksAllowed(user.email);
+  if (!released && !ledger) return { kind: 'not-released' };
+  const canEdit = released && contractor.status === 'approved' && membershipOf(sub, contractor) === 'open';
   return {
     kind: 'ok',
     userId: user.id,
@@ -79,6 +87,7 @@ export async function loadBooks(next: string): Promise<BooksAccess> {
     if (isAdminEmail(r.email)) redirect('/admin');
     redirect(await nonContractorPath(r.userId));
   }
+  if (r.kind === 'not-released') redirect('/account');
   return { userId: r.userId, businessName: r.businessName, canEdit: r.canEdit, ledger: r.ledger, app: r.app };
 }
 
@@ -92,6 +101,7 @@ export async function loadLedger(next: string): Promise<BooksAccess & { ledger: 
 /** For server actions that change the books. */
 export async function requireBooksWriter(): Promise<{ ok: true; userId: string; ledger: Ledger | null } | { ok: false; error: string }> {
   const r = await resolve();
+  if (r.kind === 'not-released') return { ok: false, error: 'Books isn’t available on your account yet.' };
   if (r.kind !== 'ok') return { ok: false, error: 'You are not signed in as a contractor.' };
   if (!r.canEdit) {
     return { ok: false, error: r.ledger ? 'Your books are read-only while you’re not on Premium.' : 'Books is part of Premium membership.' };

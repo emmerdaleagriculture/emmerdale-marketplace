@@ -24,6 +24,13 @@ export type CronJob = {
 
 export const HTTP_CRONS: CronJob[] = [
   {
+    name: 'books-stripe-sync',
+    path: '/api/cron/books-stripe-sync',
+    schedule: '20 4 * * *',
+    everyMinutes: 24 * 60,
+    what: 'Brings each Books member’s Stripe fees, payouts and refunds into their books.',
+  },
+  {
     name: 'balances',
     path: '/api/cron/balances',
     schedule: '*/15 * * * *',

@@ -71,6 +71,10 @@ const SettingsSchema = z
     if (v.vat_registration_date && !isIsoDate(v.vat_registration_date)) {
       ctx.addIssue({ code: 'custom', message: 'Enter the VAT registration date.', path: ['vat_registration_date'] });
     }
+    if (v.vat_scheme === 'cash') {
+      // The return uses the invoice date as the tax point; cash accounting needs the payment date.
+      ctx.addIssue({ code: 'custom', message: 'Cash accounting isn’t supported in Books yet: choose standard or flat rate, or ask your accountant.', path: ['vat_scheme'] });
+    }
     if (v.vat_scheme === 'flat_rate') {
       const n = Number(v.flat_rate_percent);
       if (!(n > 0 && n < 100)) ctx.addIssue({ code: 'custom', message: 'Enter your flat rate percentage.', path: ['flat_rate_percent'] });

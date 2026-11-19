@@ -1225,6 +1225,11 @@ export type Database = {
           invoice_terms_days: number
           legal_name: string
           phone: string | null
+          stripe_account_id: string | null
+          stripe_charges_enabled: boolean
+          stripe_connected_at: string | null
+          stripe_details_submitted: boolean
+          stripe_synced_at: string | null
           trading_name: string | null
           updated_at: string
           vat_number: string | null
@@ -1253,6 +1258,11 @@ export type Database = {
           invoice_terms_days?: number
           legal_name: string
           phone?: string | null
+          stripe_account_id?: string | null
+          stripe_charges_enabled?: boolean
+          stripe_connected_at?: string | null
+          stripe_details_submitted?: boolean
+          stripe_synced_at?: string | null
           trading_name?: string | null
           updated_at?: string
           vat_number?: string | null
@@ -1281,6 +1291,11 @@ export type Database = {
           invoice_terms_days?: number
           legal_name?: string
           phone?: string | null
+          stripe_account_id?: string | null
+          stripe_charges_enabled?: boolean
+          stripe_connected_at?: string | null
+          stripe_details_submitted?: boolean
+          stripe_synced_at?: string | null
           trading_name?: string | null
           updated_at?: string
           vat_number?: string | null
@@ -1448,6 +1463,27 @@ export type Database = {
           updated_at?: string
           vat_code?: string | null
           vat_pence?: number | null
+        }
+        Relationships: []
+      }
+      books_ai_reads: {
+        Row: {
+          at: string
+          id: number
+          ledger_id: string
+          receipt_id: number | null
+        }
+        Insert: {
+          at?: string
+          id?: number
+          ledger_id: string
+          receipt_id?: number | null
+        }
+        Update: {
+          at?: string
+          id?: number
+          ledger_id?: string
+          receipt_id?: number | null
         }
         Relationships: []
       }

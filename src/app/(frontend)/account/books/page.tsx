@@ -35,9 +35,9 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
       return (
         <BooksFrame access={access} title="Books" tab={null}>
           <p className={m.lead}>
-            <b>Premium members keep their books here.</b> Record sales and expenses, claim mileage at the
-            HMRC rate, and see your profit and loss and trial balance at any time. Send in receipts and AI reads them into
-            your books. Invoices customers can pay by card, VAT returns and bank statement matching are on the way.
+            <b>Premium members keep their books here.</b> Snap or email receipts and AI posts them for you,
+            send invoices customers can pay by card, claim mileage at the HMRC rate, and see your VAT return,
+            profit and loss and trial balance at any time.
           </p>
           <div className={m.pitch}>
             <h2>Part of Premium membership</h2>

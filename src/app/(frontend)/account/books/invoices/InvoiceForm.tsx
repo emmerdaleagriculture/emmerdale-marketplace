@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useState } from 'react';
 import { emptyFormState } from '@/lib/form';
+import { addDays, isIsoDate } from '@/lib/books/period';
 import { formatPence, parsePounds } from '@/lib/books/money';
 import { invoiceTotals, priceLine } from '@/lib/books/invoice';
 import { VAT_CODES, type VatCode } from '@/lib/books/vat';
@@ -14,10 +15,6 @@ import { saveInvoiceAction } from './actions';
 type Opt = { code: string; name: string };
 export type DraftLine = { description: string; quantity: string; unit: string; vat_code: string; account_code: string };
 
-function addDays(iso: string, n: number): string {
-  const t = Date.parse(`${iso}T00:00:00Z`);
-  return Number.isNaN(t) ? iso : new Date(t + n * 86_400_000).toISOString().slice(0, 10);
-}
 
 /**
  * New or draft invoice: customer (existing or new), number, dates, lines
@@ -98,7 +95,7 @@ export function InvoiceForm({
             value={issue}
             onChange={(e) => {
               setIssue(e.target.value);
-              setDue(addDays(e.target.value, termsDays));
+              if (isIsoDate(e.target.value)) setDue(addDays(e.target.value, termsDays));
             }}
             required
           />

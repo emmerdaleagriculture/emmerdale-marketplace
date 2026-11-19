@@ -16,7 +16,7 @@ function iso(y: number, m: number, d: number): string {
   return `${y}-${String(m).padStart(2, '0')}-${String(Math.min(d, lastDayOfMonth(y, m))).padStart(2, '0')}`;
 }
 
-function addDays(isoDate: string, n: number): string {
+export function addDays(isoDate: string, n: number): string {
   const t = Date.parse(`${isoDate}T00:00:00Z`) + n * 86_400_000;
   return new Date(t).toISOString().slice(0, 10);
 }

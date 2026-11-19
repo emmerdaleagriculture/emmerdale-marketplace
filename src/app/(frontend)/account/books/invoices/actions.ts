@@ -9,6 +9,7 @@ import { requireBooksWriter, getAccounts } from '@/lib/books/server';
 import { invoiceTotals, priceLine, PAYMENT_METHODS, type PaymentMethod } from '@/lib/books/invoice';
 import { issueInvoice, loadInvoice, newPublicToken, recordPayment, voidInvoice } from '@/lib/books/invoices.server';
 import { sendInvoiceEmail } from '@/lib/books/invoiceEmail';
+import { expireInvoiceSession } from '@/lib/books/stripeConnect';
 import { parsePounds } from '@/lib/books/money';
 import { isIsoDate, todayUk } from '@/lib/books/period';
 import { registeredOn, cleanVatNumber } from '@/lib/books/vat';
@@ -145,8 +146,9 @@ export async function saveInvoiceAction(_prev: FormState, fd: FormData): Promise
   const row = { customer_id: customerId, number, issue_date: issueDate, due_date: dueDate, notes: optional(str(fd, 'notes')), ...totals };
   let id = invoiceId;
   if (editing) {
-    const { error } = await admin.from('books_invoices').update(row).eq('id', id).eq('status', 'draft');
+    const { data: still, error } = await admin.from('books_invoices').update(row).eq('id', id).eq('status', 'draft').select('id');
     if (error) return { error: error.code === '23505' ? `Invoice ${number} already exists.` : 'That didn’t save. Please try again.' };
+    if (!still?.length) return { error: 'This invoice has just been issued, so it can’t be changed.' };
     await admin.from('books_invoice_lines').delete().eq('invoice_id', id);
   } else {
     const { data: made, error } = await admin
@@ -217,6 +219,8 @@ export async function recordPaymentAction(_prev: FormState, fd: FormData): Promi
   if (!(method in PAYMENT_METHODS)) return { error: 'Choose how it was paid.' };
   const res = await recordPayment(r.ledger, r.inv, { paid_on: paidOn, amount_pence: amount, method, reference: optional(str(fd, 'reference')), external_id: null });
   if (!res.ok) return { error: res.error };
+  // The amount due has changed: an open card checkout for the old amount mustn't be paid.
+  await expireInvoiceSession(r.inv, r.ledger);
   revalidate();
   redirect(`/account/books/invoices/${r.inv.id}?done=paid`);
 }
@@ -227,6 +231,7 @@ export async function voidInvoiceAction(_prev: FormState, fd: FormData): Promise
   const wasDraft = r.inv.status === 'draft';
   const err = await voidInvoice(r.inv);
   if (err) return { error: err };
+  await expireInvoiceSession(r.inv, r.ledger);
   revalidate();
   if (wasDraft) redirect('/account/books/invoices');
   redirect(`/account/books/invoices/${r.inv.id}?done=voided`);

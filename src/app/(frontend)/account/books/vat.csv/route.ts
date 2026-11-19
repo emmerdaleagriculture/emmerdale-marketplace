@@ -5,14 +5,10 @@ import { isIsoDate } from '@/lib/books/period';
 import { BOX_LABELS, computeReturn, type Boxes } from '@/lib/books/vatReturn';
 import { vatEntries } from '@/lib/books/vat.server';
 
+import { csvText } from '@/lib/books/csv';
+
 export const dynamic = 'force-dynamic';
 
-/** Free text with formula characters defused, quoted when needed. */
-function cell(v: unknown): string {
-  const s = v == null ? '' : String(v);
-  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
-  return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-}
 
 /** The VAT return as CSV: the nine boxes (summary) or every entry with its box amounts (detail). */
 export async function GET(req: NextRequest) {
@@ -33,7 +29,7 @@ export async function GET(req: NextRequest) {
     rows = [
       ['Business', 'VAT number', 'Scheme', 'Period start', 'Period end', 'Box', 'Description', 'Amount'].join(','),
       ...(Object.keys(BOX_LABELS) as unknown as (keyof Boxes)[]).map((k) =>
-        [cell(l.legal_name), cell(l.vat_number), l.vat_scheme, from, to, String(k), cell(BOX_LABELS[k]), penceToDecimal(boxes[k])].join(','),
+        [csvText(l.legal_name), csvText(l.vat_number), l.vat_scheme, from, to, String(k), csvText(BOX_LABELS[k]), penceToDecimal(boxes[k])].join(','),
       ),
     ];
   } else {
@@ -45,8 +41,8 @@ export async function GET(req: NextRequest) {
           String(e.id),
           e.kind,
           e.vat_code,
-          cell(e.counterparty),
-          cell(e.description),
+          csvText(e.counterparty),
+          csvText(e.description),
           penceToDecimal(e.net_pence),
           penceToDecimal(e.vat_pence),
           penceToDecimal(e.gross_pence),

@@ -47,6 +47,14 @@ const EVENTS: Record<string, Delivery> = {
   'email.suppressed': 'suppressed',
 };
 
+/** Resend echoes our tags on events; Books invoice emails carry kind=books_invoice. */
+function isBooksInvoice(event: ResendEvent): boolean {
+  const tags = (event.data as { tags?: unknown } | undefined)?.tags;
+  if (Array.isArray(tags)) return tags.some((t) => (t as { name?: string; value?: string })?.name === 'kind' && (t as { value?: string }).value === 'books_invoice');
+  if (tags && typeof tags === 'object') return (tags as Record<string, unknown>).kind === 'books_invoice';
+  return false;
+}
+
 /** Delivery outcomes recorded on a Books invoice (a delay is not news). */
 const BOOKS_EVENT: Partial<Record<Delivery, string>> = {
   delivered: 'delivered',
@@ -229,6 +237,9 @@ export async function POST(request: Request) {
         }
         return NextResponse.json({ received: true, matched: 'books_invoice' });
       }
+      // An invoice email whose 'sent' row isn't written yet (the webhook beat
+      // it): ask Resend to try again rather than lose the bounce.
+      if (isBooksInvoice(event)) return NextResponse.json({ retry: 'books invoice not recorded yet' }, { status: 503 });
     }
   }
 

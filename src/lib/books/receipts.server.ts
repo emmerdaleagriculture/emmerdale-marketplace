@@ -179,6 +179,8 @@ export async function postReceiptFields(
   receiptId: number,
   f: ReceiptFields,
   accounts?: Map<string, AccountInfo>,
+  /** From an automatic read: only mark posted if the read still owns the receipt. */
+  token?: string,
 ): Promise<string[] | null> {
   const acc = accounts ?? accountMap(await getAccounts(ledger.id));
   const doc = docFromFields(f);
@@ -195,7 +197,15 @@ export async function postReceiptFields(
     console.error('[books] receipt post failed', { receiptId, error: error?.message });
     return ['That didn’t post. Please check the details and try again.'];
   }
-  await update(receiptId, { ...f, status: 'posted', entry_id: entryId, review_reasons: null });
+  const patch = { ...f, status: 'posted', entry_id: entryId, review_reasons: null };
+  if (token) {
+    // Rejected or re-queued while this posted: undo the entry, leave their choice.
+    if (!(await updateIfOurs(receiptId, token, patch))) {
+      await admin.from('books_entries').delete().eq('id', entryId).eq('ledger_id', ledger.id);
+    }
+    return null;
+  }
+  await update(receiptId, patch);
   return null;
 }
 
@@ -301,8 +311,8 @@ export async function processReceipt(receiptId: number): Promise<void> {
       await toReview(reasons.join('\n'));
       return;
     }
-    const failed = await postReceiptFields(ledger, receiptId, f, accounts);
-    if (failed) await update(receiptId, { status: 'needs_review', review_reasons: failed.join('\n') });
+    const failed = await postReceiptFields(ledger, receiptId, f, accounts, token);
+    if (failed) await toReview(failed.join('\n'));
   } catch (err) {
     console.error('[books] processReceipt crashed', { receiptId, error: err instanceof Error ? err.message : err });
     await toReview('Something went wrong reading this. Enter the details by hand.');

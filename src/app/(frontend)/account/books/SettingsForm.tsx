@@ -147,7 +147,6 @@ export function SettingsForm({
                 <span className={f.label}>Scheme</span>
                 <select className={f.input} name="vat_scheme" value={scheme} onChange={(e) => setScheme(e.target.value)}>
                   <option value="standard">Standard (accrual)</option>
-                  <option value="cash">Cash accounting</option>
                   <option value="flat_rate">Flat rate</option>
                 </select>
               </label>
@@ -175,7 +174,7 @@ export function SettingsForm({
         <fieldset className={s.fieldset}>
           <legend>Receipts by email</legend>
           <p className={f.hint}>
-            Forward receipts and invoices to <b>{receiptsAddress}</b>. Attachments (PDFs and photos) are read by AI; an
+            Forward receipts and invoices to <b style={{ overflowWrap: 'anywhere' }}>{receiptsAddress}</b>. Attachments (PDFs and photos) are read by AI; an
             email with none, like most online order confirmations, is read itself.
           </p>
           <label className={f.field}>
