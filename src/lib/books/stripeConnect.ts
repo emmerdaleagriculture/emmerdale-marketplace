@@ -39,8 +39,8 @@ export async function onboardingLink(ledger: Ledger, email: string | null): Prom
   const link = await stripe.accountLinks.create({
     account: accountId,
     type: 'account_onboarding',
-    refresh_url: `${siteUrl()}/account/books/stripe?refresh=1`,
-    return_url: `${siteUrl()}/account/books/stripe?return=1`,
+    refresh_url: `${siteUrl()}/account/books/settings?stripe=refresh#card-payments`,
+    return_url: `${siteUrl()}/account/books/settings?stripe=return#card-payments`,
   });
   return link.url;
 }

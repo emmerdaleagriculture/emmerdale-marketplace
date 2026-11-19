@@ -59,7 +59,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           Customers
         </Link>
         {access.canEdit && (
-          <Link className={f.btnGhost} href="/account/books/stripe">
+          <Link className={f.btnGhost} href="/account/books/settings#card-payments">
             {access.ledger.stripe_charges_enabled ? 'Card payments: on' : 'Take card payments'}
           </Link>
         )}

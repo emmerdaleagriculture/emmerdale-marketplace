@@ -46,7 +46,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
       {access.canEdit && !access.ledger.stripe_charges_enabled && inv.status !== 'void' && inv.status !== 'paid' && (
         <p className={s.readOnly}>
           Customers can’t pay this by card yet.{' '}
-          <Link href="/account/books/stripe">Connect Stripe to add a Pay by card button →</Link>
+          <Link href="/account/books/settings#card-payments">Connect Stripe to add a Pay by card button →</Link>
         </p>
       )}
       <p className={m.sub}>
