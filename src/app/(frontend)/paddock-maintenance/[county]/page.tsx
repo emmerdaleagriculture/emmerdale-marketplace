@@ -220,7 +220,9 @@ export default async function PaddockCountyPage({
         </div>
       </section>
 
-      {extra?.section && <CountyExtraSection section={extra.section} alt />}
+      {extra?.sections?.map((sec, i) => (
+        <CountyExtraSection key={sec.h2} section={sec} alt={i % 2 === 0} />
+      ))}
 
       <ServicesSection
         services={services}

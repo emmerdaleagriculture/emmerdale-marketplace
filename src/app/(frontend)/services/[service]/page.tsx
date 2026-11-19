@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -120,16 +121,16 @@ export default async function ServicePage({ params }: { params: Promise<Params> 
           {page.when.map((p) => (
             <p key={p} className={t.prose}>{p}</p>
           ))}
-          {page.extra && (
-            <>
-              <h2 className={s.sectionTitle}>{page.extra.h2}</h2>
-              {page.extra.body.map((p) => (
+          {(page.extra ? [page.extra].flat() : []).map((x) => (
+            <Fragment key={x.h2}>
+              <h2 className={s.sectionTitle}>{x.h2}</h2>
+              {x.body.map((p) => (
                 <p key={p} className={t.prose}>
                   <InlineMd text={p} />
                 </p>
               ))}
-            </>
-          )}
+            </Fragment>
+          ))}
         </div>
       </section>
 
