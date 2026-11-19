@@ -94,7 +94,7 @@ export default async function ReceiptsPage({ searchParams }: { searchParams: Pro
       {access.canEdit && <ReceiptUploader />}
       {access.canEdit && (
         <p className={m.sub}>
-          Or email them to <b>{receiptsAddress(access.ledger.inbound_code)}</b> from your own address. Other senders can
+          Or email them to <b style={{ overflowWrap: 'anywhere' }}>{receiptsAddress(access.ledger.inbound_code)}</b> from your own address. Other senders can
           be added in <Link className={s.link} href="/account/books/settings">Settings</Link>.
         </p>
       )}
