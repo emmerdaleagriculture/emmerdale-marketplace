@@ -1109,6 +1109,210 @@ export type Database = {
         }
         Relationships: []
       }
+      books_accounts: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: number
+          is_fixed_asset: boolean
+          is_system: boolean
+          ledger_id: string
+          name: string
+          type: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_fixed_asset?: boolean
+          is_system?: boolean
+          ledger_id: string
+          name: string
+          type: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_fixed_asset?: boolean
+          is_system?: boolean
+          ledger_id?: string
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      books_entries: {
+        Row: {
+          counterparty: string | null
+          created_at: string
+          description: string | null
+          entry_date: string
+          external_id: string | null
+          gross_pence: number
+          id: number
+          is_capital: boolean
+          kind: string
+          ledger_id: string
+          meta: Json
+          net_pence: number
+          receipt_id: number | null
+          reference: string | null
+          source: string
+          vat_code: string
+          vat_pence: number
+        }
+        Insert: {
+          counterparty?: string | null
+          created_at?: string
+          description?: string | null
+          entry_date: string
+          external_id?: string | null
+          gross_pence?: number
+          id?: number
+          is_capital?: boolean
+          kind: string
+          ledger_id: string
+          meta?: Json
+          net_pence?: number
+          receipt_id?: number | null
+          reference?: string | null
+          source?: string
+          vat_code?: string
+          vat_pence?: number
+        }
+        Update: {
+          counterparty?: string | null
+          created_at?: string
+          description?: string | null
+          entry_date?: string
+          external_id?: string | null
+          gross_pence?: number
+          id?: number
+          is_capital?: boolean
+          kind?: string
+          ledger_id?: string
+          meta?: Json
+          net_pence?: number
+          receipt_id?: number | null
+          reference?: string | null
+          source?: string
+          vat_code?: string
+          vat_pence?: number
+        }
+        Relationships: []
+      }
+      books_ledgers: {
+        Row: {
+          address: string | null
+          bank_details: string | null
+          base_currency: string
+          business_type: string
+          company_number: string | null
+          contractor_id: string
+          created_at: string
+          default_payment_account: string
+          farming: boolean
+          flat_rate_percent: number | null
+          id: string
+          invoice_footer: string | null
+          invoice_reply_to: string | null
+          invoice_terms_days: number
+          legal_name: string
+          phone: string | null
+          trading_name: string | null
+          updated_at: string
+          vat_number: string | null
+          vat_registered: boolean
+          vat_registration_date: string | null
+          vat_scheme: string
+          year_end: string | null
+        }
+        Insert: {
+          address?: string | null
+          bank_details?: string | null
+          base_currency?: string
+          business_type?: string
+          company_number?: string | null
+          contractor_id: string
+          created_at?: string
+          default_payment_account?: string
+          farming?: boolean
+          flat_rate_percent?: number | null
+          id?: string
+          invoice_footer?: string | null
+          invoice_reply_to?: string | null
+          invoice_terms_days?: number
+          legal_name: string
+          phone?: string | null
+          trading_name?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          vat_registered?: boolean
+          vat_registration_date?: string | null
+          vat_scheme?: string
+          year_end?: string | null
+        }
+        Update: {
+          address?: string | null
+          bank_details?: string | null
+          base_currency?: string
+          business_type?: string
+          company_number?: string | null
+          contractor_id?: string
+          created_at?: string
+          default_payment_account?: string
+          farming?: boolean
+          flat_rate_percent?: number | null
+          id?: string
+          invoice_footer?: string | null
+          invoice_reply_to?: string | null
+          invoice_terms_days?: number
+          legal_name?: string
+          phone?: string | null
+          trading_name?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          vat_registered?: boolean
+          vat_registration_date?: string | null
+          vat_scheme?: string
+          year_end?: string | null
+        }
+        Relationships: []
+      }
+      books_lines: {
+        Row: {
+          account_id: number
+          credit_pence: number
+          debit_pence: number
+          entry_id: number
+          id: number
+          ledger_id: string
+          memo: string | null
+        }
+        Insert: {
+          account_id: number
+          credit_pence?: number
+          debit_pence?: number
+          entry_id: number
+          id?: number
+          ledger_id: string
+          memo?: string | null
+        }
+        Update: {
+          account_id?: number
+          credit_pence?: number
+          debit_pence?: number
+          entry_id?: number
+          id?: number
+          ledger_id?: string
+          memo?: string | null
+        }
+        Relationships: []
+      }
       diary_entries: {
         Row: {
           created_at: string
@@ -3541,6 +3745,28 @@ export type Database = {
       }
     }
     Views: {
+      books_line_view: {
+        Row: {
+          line_id: number
+          ledger_id: string
+          entry_id: number
+          entry_date: string
+          kind: string
+          source: string
+          counterparty: string | null
+          reference: string | null
+          description: string | null
+          vat_code: string
+          receipt_id: number | null
+          account_code: string
+          account_name: string
+          account_type: string
+          debit_pence: number
+          credit_pence: number
+          memo: string | null
+        }
+        Relationships: []
+      }
       contractor_standing_latest: {
         Row: {
           clean: boolean | null
@@ -3775,6 +4001,30 @@ export type Database = {
       }
     }
     Functions: {
+      books_account_opening: {
+        Args: { p_ledger_id: string; p_code: string; p_before: string }
+        Returns: number
+      }
+      books_mileage_claimed: {
+        Args: { p_ledger_id: string; p_driver: string; p_from: string; p_to: string }
+        Returns: number
+      }
+      books_post_entry: {
+        Args: { p_ledger_id: string; p_entry: Json; p_lines: Json }
+        Returns: number
+      }
+      books_trial_balance: {
+        Args: { p_ledger_id: string; p_from?: string; p_to?: string }
+        Returns: {
+          code: string
+          name: string
+          type: string
+          is_fixed_asset: boolean
+          is_system: boolean
+          debit_pence: number
+          credit_pence: number
+        }[]
+      }
       admin_premium_summary: { Args: never; Returns: Json }
       contractor_is_premium: {
         Args: { p_contractor_id: string }
