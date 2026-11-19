@@ -246,3 +246,24 @@
   font-size: 13px;
   margin: 0;
 }
+
+/* VAT threshold meter */
+.meter {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  margin: 10px 0 6px;
+  overflow: hidden;
+}
+.meter span {
+  display: block;
+  height: 100%;
+  background: var(--jd-green-dark);
+}
+.meter .meterNear {
+  background: var(--jd-yellow, #e8b400);
+}
+.meter .meterOver {
+  background: #b3261e;
+}

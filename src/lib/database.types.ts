@@ -1229,6 +1229,7 @@ export type Database = {
           vat_registered: boolean
           vat_registration_date: string | null
           vat_scheme: string
+          vat_quarter_stagger: number
           year_end: string | null
         }
         Insert: {
@@ -1254,6 +1255,7 @@ export type Database = {
           vat_registered?: boolean
           vat_registration_date?: string | null
           vat_scheme?: string
+          vat_quarter_stagger?: number
           year_end?: string | null
         }
         Update: {
@@ -1279,6 +1281,7 @@ export type Database = {
           vat_registered?: boolean
           vat_registration_date?: string | null
           vat_scheme?: string
+          vat_quarter_stagger?: number
           year_end?: string | null
         }
         Relationships: []

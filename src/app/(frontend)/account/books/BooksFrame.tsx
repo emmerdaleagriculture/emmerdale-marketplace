@@ -13,6 +13,7 @@ const TABS = [
   { key: 'receipts', href: '/account/books/receipts', label: 'Receipts' },
   { key: 'ledger', href: '/account/books/ledger', label: 'Trial balance' },
   { key: 'pnl', href: '/account/books/pnl', label: 'Profit & loss' },
+  { key: 'vat', href: '/account/books/vat', label: 'VAT' },
   { key: 'journal', href: '/account/books/journal', label: 'Journal' },
   { key: 'settings', href: '/account/books/settings', label: 'Settings' },
 ] as const;

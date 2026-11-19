@@ -50,6 +50,7 @@ const SettingsSchema = z
       .transform(cleanVatNumber)
       .refine((s) => s === '' || /^(GB)?\d{9}(\d{3})?$/.test(s), 'A UK VAT number is 9 digits, e.g. GB123456789.'),
     vat_scheme: z.enum(['standard', 'cash', 'flat_rate']),
+    vat_quarter_stagger: z.coerce.number().int().min(0).max(2),
     flat_rate_percent: z.string(),
     vat_registration_date: z.string(),
     year_end: z.string().refine((s) => s === '' || /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(s), 'Choose the year end.'),
@@ -84,6 +85,7 @@ function readSettings(fd: FormData) {
     vat_registered: fd.get('vat_registered') === 'on',
     vat_number: str(fd, 'vat_number'),
     vat_scheme: str(fd, 'vat_scheme') || 'standard',
+    vat_quarter_stagger: str(fd, 'vat_quarter_stagger') || '0',
     flat_rate_percent: str(fd, 'flat_rate_percent'),
     vat_registration_date: str(fd, 'vat_registration_date'),
     year_end: month && day ? `${month.padStart(2, '0')}-${day.padStart(2, '0')}` : '',
@@ -107,6 +109,7 @@ function settingsRow(v: z.infer<typeof SettingsSchema>) {
     vat_registered: v.vat_registered,
     vat_number: optional(v.vat_number),
     vat_scheme: v.vat_scheme,
+    vat_quarter_stagger: v.vat_quarter_stagger,
     flat_rate_percent: v.vat_scheme === 'flat_rate' ? Number(v.flat_rate_percent) : null,
     vat_registration_date: optional(v.vat_registration_date),
     year_end: optional(v.year_end),
