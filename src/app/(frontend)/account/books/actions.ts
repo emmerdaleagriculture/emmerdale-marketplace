@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { FormState } from '@/lib/form';
-import { BUSINESS_TYPES, chartFor, isPaymentAccount, personalAccountCode, type BusinessType } from '@/lib/books/chart';
+import { BUSINESS_TYPES, chartFor, isBankAccount, personalAccountCode, type BusinessType } from '@/lib/books/chart';
 import { parsePounds } from '@/lib/books/money';
 import { buildPosting, validateDoc, type Posting } from '@/lib/books/posting';
 import { buildMileagePosting, taxYearOf } from '@/lib/books/mileage';
@@ -171,7 +171,7 @@ export async function saveSettingsAction(_prev: FormState, fd: FormData): Promis
   const rest: Partial<typeof row> = { ...row };
   delete rest.business_type;
   const accounts = await getAccounts(gate.ledger.id);
-  if (!accounts.some((a) => a.code === rest.default_payment_account && isPaymentAccount(a))) {
+  if (!accounts.some((a) => a.code === rest.default_payment_account && isBankAccount(a))) {
     return { error: 'Choose a bank or card account as the default.' };
   }
   const { error } = await createServiceRoleClient().from('books_ledgers').update(rest).eq('id', gate.ledger.id);
@@ -230,14 +230,19 @@ export async function postMileageAction(_prev: FormState, fd: FormData): Promise
     return { error: 'Enter the business miles (up to one decimal place).' };
   }
   const accounts = await getAccounts(ledger.id);
-  if (!accounts.some((a) => a.code === payCode)) return { error: 'Choose who pays the driver.' };
+  const personal = personalAccountCode(businessTypeOf(ledger));
+  if (!accounts.some((a) => a.code === payCode && (a.code === personal || isBankAccount(a)))) {
+    return { error: 'Choose who pays the driver.' };
+  }
   if (!accounts.some((a) => a.code === '6330')) return { error: 'Your books have no 6330 Mileage allowance account.' };
   const ty = taxYearOf(date);
   const { data: claimed, error } = await createServiceRoleClient().rpc('books_mileage_claimed', {
     p_ledger_id: ledger.id,
     p_driver: driver,
     p_from: ty.from,
-    p_to: ty.to,
+    // Claims dated up to this journey: the first 10,000 miles of the tax year
+    // are the earliest ones, whatever order they're entered in.
+    p_to: date,
   });
   if (error) return { error: 'That didn’t post. Please try again.' };
   const err = await post(

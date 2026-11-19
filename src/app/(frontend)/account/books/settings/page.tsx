@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getAccounts, loadLedger } from '@/lib/books/server';
-import { isPaymentAccount } from '@/lib/books/chart';
+import { isBankAccount } from '@/lib/books/chart';
 import { BooksFrame } from '../BooksFrame';
 import { SettingsForm } from '../SettingsForm';
 import { saveSettingsAction } from '../actions';
@@ -18,7 +18,7 @@ export default async function BooksSettingsPage() {
       <SettingsForm
         action={saveSettingsAction}
         setup={false}
-        paymentAccounts={accounts.filter(isPaymentAccount).filter((a) => a.type === 'asset' || a.type === 'liability')}
+        paymentAccounts={accounts.filter(isBankAccount)}
         values={{ ...l, flat_rate_percent: l.flat_rate_percent == null ? null : Number(l.flat_rate_percent) }}
       />
     </BooksFrame>

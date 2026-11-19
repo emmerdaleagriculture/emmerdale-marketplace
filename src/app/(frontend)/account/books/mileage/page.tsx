@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getAccounts, loadLedger, businessTypeOf } from '@/lib/books/server';
-import { isPaymentAccount, personalAccountCode } from '@/lib/books/chart';
+import { isBankAccount, personalAccountCode } from '@/lib/books/chart';
 import { MILEAGE_BAND_MILES, MILEAGE_HIGH_PENCE, MILEAGE_LOW_PENCE } from '@/lib/books/mileage';
 import { todayUk } from '@/lib/books/period';
 import m from '../../market/market.module.css';
@@ -24,7 +24,7 @@ export default async function MileagePage() {
       </p>
       <MileageForm
         today={todayUk()}
-        payAccounts={accounts.filter((a) => a.code === personal || isPaymentAccount(a))}
+        payAccounts={accounts.filter((a) => a.code === personal || isBankAccount(a))}
         defaultPay={personal}
       />
     </BooksFrame>

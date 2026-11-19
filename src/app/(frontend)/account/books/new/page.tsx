@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getAccounts, loadLedger } from '@/lib/books/server';
-import { isPaymentAccount, isPurchaseCategory, isSaleCategory } from '@/lib/books/chart';
+import { isPaymentAccount, isPurchaseCategory, isSaleCategory, type BusinessType } from '@/lib/books/chart';
 import { registeredOn, type VatCode } from '@/lib/books/vat';
 import { todayUk } from '@/lib/books/period';
 import m from '../../market/market.module.css';
@@ -29,7 +29,7 @@ export default async function NewEntryPage({ searchParams }: { searchParams: Pro
         : ['NOVAT', 'EXEMPT', 'OUTSIDE']
       : ['STD', 'RED', 'ZERO', 'EXEMPT', 'OUTSIDE', 'RC', 'BLOCKED'];
   const categories = accounts.filter(kind === 'sale' ? isSaleCategory : isPurchaseCategory);
-  const payments = accounts.filter(isPaymentAccount);
+  const payments = accounts.filter((a) => isPaymentAccount(a, l.business_type as BusinessType));
 
   return (
     <BooksFrame access={access} title={kind === 'sale' ? 'Record a sale' : 'Record an expense'} tab={null} crumb={kind === 'sale' ? 'Sale' : 'Expense'}>

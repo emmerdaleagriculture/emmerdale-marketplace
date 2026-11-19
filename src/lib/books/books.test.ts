@@ -175,3 +175,25 @@ describe('period', () => {
     expect(accountingYear('02-29', '2027-03-01')).toEqual({ from: '2027-03-01', to: '2028-02-29' });
   });
 });
+
+describe('review fixes', () => {
+  it('rejects dates that do not exist', async () => {
+    const { isIsoDate } = await import('./period');
+    expect(isIsoDate('2026-02-31')).toBe(false);
+    expect(isIsoDate('2026-04-31')).toBe(false);
+    expect(isIsoDate('2028-02-29')).toBe(true);
+    expect(isIsoDate('2027-02-29')).toBe(false);
+    expect(validateDoc(purchase({ date: '2026-02-30' }), registered, accounts)).toContain('Enter the date.');
+  });
+  it('a zero-rated, exempt or outside item cannot carry VAT', () => {
+    const errs = validateDoc(purchase({ kind: 'sale', accountCode: '4000', vatCode: 'ZERO' }), registered, accounts);
+    expect(errs.some((e) => e.includes('no VAT'))).toBe(true);
+  });
+  it('only bank, owner, debtors or creditors accounts can pay', () => {
+    const ltd = { ...registered, business_type: 'limited_company' as const };
+    expect(validateDoc(purchase({ paymentCode: '3000' }), ltd, accounts)).toContain('Choose what it was paid from or into.');
+    expect(validateDoc(purchase({ paymentCode: '2300' }), ltd, accounts)).toEqual([]);
+    expect(validateDoc(purchase({ paymentCode: '2100' }), ltd, accounts)).toEqual([]);
+    expect(validateDoc(purchase({ paymentCode: '4000' }), ltd, accounts)).toContain('Choose what it was paid from or into.');
+  });
+});
