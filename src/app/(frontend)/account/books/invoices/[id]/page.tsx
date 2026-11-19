@@ -43,6 +43,12 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
   return (
     <BooksFrame access={access} title={`Invoice ${inv.number}`} tab="invoices" crumb={`Invoice ${inv.number}`}>
       {done && DONE[done] && <p className={s.notice}>{DONE[done]}</p>}
+      {access.canEdit && !access.ledger.stripe_charges_enabled && inv.status !== 'void' && inv.status !== 'paid' && (
+        <p className={s.readOnly}>
+          Customers can’t pay this by card yet.{' '}
+          <Link href="/account/books/stripe">Connect Stripe to add a Pay by card button →</Link>
+        </p>
+      )}
       <p className={m.sub}>
         <b>{overdue ? 'Overdue' : inv.status[0].toUpperCase() + inv.status.slice(1)}</b> ·{' '}
         <Link className={s.link} href={`/account/books/customers/${inv.customer.id}`}>
