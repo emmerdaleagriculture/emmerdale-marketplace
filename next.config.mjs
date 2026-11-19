@@ -18,6 +18,18 @@ const nextConfig = {
   // directory makes Next infer the wrong workspace root.
   outputFileTracingRoot: fileURLToPath(new URL('.', import.meta.url)),
 
+  /**
+   * Invoice PDFs (@react-pdf/renderer → pdfkit) load pdfkit's built-in fonts
+   * through the package's "#standard-fonts/…" import map, which file tracing
+   * can't follow, so the deployed functions shipped without them and every
+   * PDF threw "Cannot find module …/pdfkit/js/standard-fonts/Helvetica.cjs"
+   * (2026-11-19). Ship them with every route that renders or emails one.
+   */
+  outputFileTracingIncludes: {
+    '/account/books/**': ['./node_modules/pdfkit/js/standard-fonts/**', './node_modules/pdfkit/js/data/**'],
+    '/i/**': ['./node_modules/pdfkit/js/standard-fonts/**', './node_modules/pdfkit/js/data/**'],
+  },
+
   // React 19 strict mode — catches accidental side-effects
   reactStrictMode: true,
 
