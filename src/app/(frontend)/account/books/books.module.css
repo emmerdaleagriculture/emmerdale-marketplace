@@ -272,3 +272,68 @@
 .flagged td:first-child {
   box-shadow: inset 4px 0 0 var(--jd-yellow, #e8b400);
 }
+
+/* Tax pointers: one card each, a coloured edge by kind. */
+.pointers {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 28px;
+}
+.pointer {
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--rule);
+  border-radius: 12px;
+  background: var(--white);
+  padding: 14px 16px;
+}
+.pointer[data-kind='saving'] {
+  border-left-color: var(--jd-green, #367c2b);
+}
+.pointer[data-kind='risk'] {
+  border-left-color: #c0392b;
+}
+.pointer[data-kind='check'] {
+  border-left-color: var(--jd-yellow, #e8b400);
+}
+.pointer[data-done] {
+  opacity: 0.6;
+}
+.pointerHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.pointerHead h3 {
+  margin: 0;
+  font-size: 16.5px;
+}
+.kind {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin: 0 0 2px;
+}
+.pointerValue {
+  font-size: 14.5px;
+  color: var(--jd-green-dark);
+  white-space: nowrap;
+}
+.pointer p {
+  margin: 8px 0 0;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+.pointerFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 10px 0 0;
+  font-size: 14px;
+}
+.pointerFoot form {
+  margin-left: auto;
+}
