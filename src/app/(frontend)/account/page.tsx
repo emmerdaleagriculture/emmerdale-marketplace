@@ -30,7 +30,7 @@ import { Breadcrumb } from '@/components/Breadcrumb';
 import ac from './account.module.css';
 import { LogoutButton, ThemeRow } from '@/components/app/PushControls';
 import ui from '../app/app-ui.module.css';
-import { AppHero, Shortcuts, Tile, Tiles, type IconName, type TileTone } from '@/components/app/AppKit';
+import { Actions, AppHero, Attention, Shortcuts, Tile, Tiles, type IconName, type TileTone } from '@/components/app/AppKit';
 
 export const metadata: Metadata = {
   title: 'Your dashboard',
@@ -263,6 +263,14 @@ export default async function AccountPage({
   const appBannerDismissed =
     contractor.app_banner_dismissed_at != null || (await cookies()).get(APP_BANNER_COOKIE)?.value === '1';
 
+  // App: the one-line summary of what needs doing, over the figures.
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  const attention = [
+    toPrice.length > 0 ? plural(toPrice.length, 'job waiting for your price', 'jobs waiting for your price') : null,
+    toContact.length > 0 ? plural(toContact.length, 'customer to call', 'customers to call') : null,
+    toInvoice.length > 0 ? plural(toInvoice.length, 'invoice to send', 'invoices to send') : null,
+  ].filter((x): x is string => !!x);
+
   // The app header greets by the time of day in the UK.
   const hour = Number(new Date().toLocaleString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', hour12: false }));
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
@@ -309,11 +317,27 @@ export default async function AccountPage({
               <AppHero photo="dashboard" tall name={greeting} title={contractor.business_name}>
                 <div className={ac.appStatus}>{statusRow}</div>
               </AppHero>
+              {attention.length > 0 && (
+                <Attention href={toPrice.length > 0 ? '/invitations' : '/won'}>
+                  {attention.map((x, i) => (
+                    <span key={x}>
+                      {i > 0 && ' · '}
+                      <b>{x}</b>
+                    </span>
+                  ))}
+                </Attention>
+              )}
               <Tiles>
                 {tiles.map((t) => (
                   <Tile key={t.label} href={t.href} icon={t.icon} tone={t.tone} label={t.label} value={t.value} hint={t.hint} />
                 ))}
               </Tiles>
+              <Actions
+                items={[
+                  { href: '/invitations', label: 'Price jobs', icon: 'tag' },
+                  { href: '/app/diary', label: 'Open diary', icon: 'calendar' },
+                ]}
+              />
               <Shortcuts
                 label="More"
                 items={[

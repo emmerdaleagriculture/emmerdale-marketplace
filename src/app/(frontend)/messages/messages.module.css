@@ -77,3 +77,35 @@
   color: var(--ink-2);
   line-height: 1.55;
 }
+
+/* Search over the conversations. */
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 12px;
+  margin: 0 0 10px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--white);
+  color: var(--ink-3);
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

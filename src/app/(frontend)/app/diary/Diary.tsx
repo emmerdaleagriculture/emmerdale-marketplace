@@ -27,7 +27,7 @@ const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const EMPTY: FormState = {};
 const VIEW_KEY = 'diary-view';
 
-export type DiaryView = 'month' | 'week';
+export type DiaryView = 'day' | 'week' | 'month';
 
 /** How far a sideways swipe on the calendar must travel to turn the page. */
 const STEP_AT = 50;
@@ -176,7 +176,8 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
   useEffect(() => {
     if (initialView) return;
     try {
-      if (window.localStorage.getItem(VIEW_KEY) === 'week') setView('week');
+      const v = window.localStorage.getItem(VIEW_KEY);
+      if (v === 'week' || v === 'day') setView(v);
     } catch {}
   }, [initialView]);
 
@@ -188,7 +189,7 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
     return m;
   }, [optimistic]);
   const todays = sortDay(byDay.get(day) ?? []);
-  const href = (d: string, v: DiaryView = view) => `/app/diary?m=${d.slice(0, 7)}&d=${d}${v === 'week' ? '&v=week' : ''}`;
+  const href = (d: string, v: DiaryView = view) => `/app/diary?m=${d.slice(0, 7)}&d=${d}${v === 'month' ? '' : `&v=${v}`}`;
 
   // Keep the day and view across a refresh or a pull-to-refresh, without a round trip.
   function remember(d: string, v: DiaryView) {
@@ -237,22 +238,22 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
   }, [router, prevMonth, nextMonth]);
 
   const pager = useCalendarPager(
-    view === 'week' ? week[0] : month,
-    (dir) => (view === 'week' ? addDays(week[0], dir * 7) : shiftMonth(month, dir)),
+    view !== 'month' ? week[0] : month,
+    (dir) => (view !== 'month' ? addDays(week[0], dir * 7) : shiftMonth(month, dir)),
     (dir) => {
-      if (view === 'week') pick(addDays(day, dir * 7));
+      if (view !== 'month') pick(addDays(day, dir * 7));
       else startNav(() => router.replace(dir < 0 ? prevMonth : nextMonth));
     },
   );
 
-  const backToToday = view === 'week' ? !week.includes(today) : !today.startsWith(month);
+  const backToToday = view !== 'month' ? !week.includes(today) : !today.startsWith(month);
 
   return (
     <>
       <div className={s.switcher} role="tablist" aria-label="Diary view">
-        {(['month', 'week'] as const).map((v) => (
+        {(['day', 'week', 'month'] as const).map((v) => (
           <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? `${s.seg} ${s.segOn}` : s.seg} onClick={() => switchView(v)}>
-            {v === 'month' ? 'Month' : 'Week'}
+            {v === 'day' ? 'Day' : v === 'week' ? 'Week' : 'Month'}
           </button>
         ))}
       </div>
@@ -295,6 +296,50 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
               Back to today
             </Link>
           )}
+          </div>
+        </div>
+      ) : view === 'day' ? (
+        <div className={s.strip} {...pager.bind}>
+          <div ref={pager.pane}>
+            <div className={s.calHead}>
+              <button type="button" className={s.nav} aria-label="Previous week" disabled={navigating} onClick={() => pager.turn(-1)}>
+                ‹
+              </button>
+              <div className={s.month}>{weekLabel(week)}</div>
+              <button type="button" className={s.nav} aria-label="Next week" disabled={navigating} onClick={() => pager.turn(1)}>
+                ›
+              </button>
+            </div>
+            {/* The week as a strip of days: tap one to see it below. */}
+            <div className={s.stripDays}>
+              {week.map((d, i) => {
+                const items = byDay.get(d) ?? [];
+                const cls = [s.sDay, d === today ? s.sToday : '', d === day ? s.sSel : ''].filter(Boolean).join(' ');
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    className={cls}
+                    onClick={() => pick(d)}
+                    aria-label={`${dayLabel(d, today)}${items.length ? `, ${items.length} ${items.length === 1 ? 'entry' : 'entries'}` : ''}`}
+                    aria-pressed={d === day}
+                  >
+                    <span className={s.sName}>{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}</span>
+                    <span className={s.sNum}>{Number(d.slice(8))}</span>
+                    <span className={s.sDots} aria-hidden="true">
+                      {items.slice(0, 3).map((e) => (
+                        <span key={e.id} className={e.done ? `${s.sDot} ${s.sDotDone}` : s.sDot} />
+                      ))}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {backToToday && (
+              <button type="button" className={s.todayLink} disabled={navigating} onClick={() => pick(today)}>
+                Back to this week
+              </button>
+            )}
           </div>
         </div>
       ) : (
@@ -397,7 +442,7 @@ export function Diary({ month, today, initialDay, initialView, entries }: Props)
         </div>
       )}
 
-      <div className={ui.card} style={{ marginTop: 12 }}>
+      <div id="diary-add" className={ui.card} style={{ marginTop: 12, scrollMarginTop: 12 }}>
         <EntryForm
           key={`${day}:${addKey}`}
           day={day}
