@@ -1205,6 +1205,48 @@ export type Database = {
         }
         Relationships: []
       }
+      books_bank_statements: {
+        Row: {
+          id: number
+          ledger_id: string
+          account_code: string
+          file_name: string
+          start_date: string
+          end_date: string
+          row_count: number
+          opening_balance_pence: number | null
+          closing_balance_pence: number | null
+          rows: Json
+          created_at: string
+        }
+        Insert: {
+          id?: never
+          ledger_id: string
+          account_code: string
+          file_name: string
+          start_date: string
+          end_date: string
+          row_count: number
+          opening_balance_pence?: number | null
+          closing_balance_pence?: number | null
+          rows: Json
+          created_at?: string
+        }
+        Update: {
+          id?: never
+          ledger_id?: string
+          account_code?: string
+          file_name?: string
+          start_date?: string
+          end_date?: string
+          row_count?: number
+          opening_balance_pence?: number | null
+          closing_balance_pence?: number | null
+          rows?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
       books_ledgers: {
         Row: {
           address: string | null
@@ -1224,6 +1266,8 @@ export type Database = {
           invoice_reply_to: string | null
           invoice_terms_days: number
           legal_name: string
+          marketplace_auto: boolean
+          marketplace_from: string | null
           phone: string | null
           stripe_account_id: string | null
           stripe_charges_enabled: boolean
@@ -1257,6 +1301,8 @@ export type Database = {
           invoice_reply_to?: string | null
           invoice_terms_days?: number
           legal_name: string
+          marketplace_auto?: boolean
+          marketplace_from?: string | null
           phone?: string | null
           stripe_account_id?: string | null
           stripe_charges_enabled?: boolean
@@ -1290,6 +1336,8 @@ export type Database = {
           invoice_reply_to?: string | null
           invoice_terms_days?: number
           legal_name?: string
+          marketplace_auto?: boolean
+          marketplace_from?: string | null
           phone?: string | null
           stripe_account_id?: string | null
           stripe_charges_enabled?: boolean
@@ -4166,6 +4214,7 @@ export type Database = {
           debit_pence: number
           credit_pence: number
           memo: string | null
+          external_id: string | null
         }
         Relationships: []
       }

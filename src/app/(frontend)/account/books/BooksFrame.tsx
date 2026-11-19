@@ -12,6 +12,7 @@ const TABS = [
   { key: 'home', href: '/account/books', label: 'Overview' },
   { key: 'receipts', href: '/account/books/receipts', label: 'Receipts' },
   { key: 'invoices', href: '/account/books/invoices', label: 'Invoices' },
+  { key: 'bank', href: '/account/books/bank', label: 'Bank' },
   { key: 'ledger', href: '/account/books/ledger', label: 'Trial balance' },
   { key: 'pnl', href: '/account/books/pnl', label: 'Profit & loss' },
   { key: 'vat', href: '/account/books/vat', label: 'VAT' },

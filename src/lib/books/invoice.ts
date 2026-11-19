@@ -136,10 +136,11 @@ export type PaymentMethod = keyof typeof PAYMENT_METHODS;
 /** Payment: Dr bank / Stripe / the owner's account, Cr 1100 Debtors. */
 export function paymentPosting(
   inv: { id: number; number: string; customer_name: string },
-  p: { paid_on: string; amount_pence: number; method: PaymentMethod; reference: string | null; external_id: string | null },
+  p: { paid_on: string; amount_pence: number; method: PaymentMethod; reference: string | null; external_id: string | null; into?: string },
   ownerAccount: string,
 ): Posting {
-  const into = PAYMENT_METHODS[p.method].account ?? ownerAccount;
+  // A bank payment lands in 1200 unless it came in on another account's statement.
+  const into = (p.method === 'bank' && p.into) || PAYMENT_METHODS[p.method].account || ownerAccount;
   return {
     entry: {
       entry_date: p.paid_on,

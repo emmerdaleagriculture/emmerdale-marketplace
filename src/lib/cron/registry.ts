@@ -31,6 +31,13 @@ export const HTTP_CRONS: CronJob[] = [
     what: 'Brings each Books member’s Stripe fees, payouts and refunds into their books.',
   },
   {
+    name: 'books-marketplace-sync',
+    path: '/api/cron/books-marketplace-sync',
+    schedule: '35 4 * * *',
+    everyMinutes: 24 * 60,
+    what: 'Books each Books member’s signed-off marketplace jobs (sales to Emmerdale) and our payouts.',
+  },
+  {
     name: 'balances',
     path: '/api/cron/balances',
     schedule: '*/15 * * * *',

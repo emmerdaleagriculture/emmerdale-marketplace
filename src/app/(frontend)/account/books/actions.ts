@@ -65,6 +65,8 @@ const SettingsSchema = z
     invoice_terms_days: z.coerce.number().int().min(0).max(120),
     invoice_footer: z.string().max(1000),
     inbound_senders: z.array(z.string()),
+    marketplace_auto: z.boolean(),
+    marketplace_from: z.string().refine((s) => s === '' || isIsoDate(s), 'Enter the date to book Emmerdale jobs from.'),
   })
   .superRefine((v, ctx) => {
     if (v.vat_registered && !v.vat_number) ctx.addIssue({ code: 'custom', message: 'Enter the VAT number.', path: ['vat_number'] });
@@ -105,6 +107,8 @@ function readSettings(fd: FormData) {
     invoice_terms_days: str(fd, 'invoice_terms_days') || '7',
     invoice_footer: str(fd, 'invoice_footer'),
     inbound_senders: parseSenders(str(fd, 'inbound_senders')),
+    marketplace_auto: fd.get('marketplace_auto') === 'on',
+    marketplace_from: str(fd, 'marketplace_from'),
   });
 }
 
@@ -129,6 +133,8 @@ function settingsRow(v: z.infer<typeof SettingsSchema>) {
     invoice_terms_days: v.invoice_terms_days,
     invoice_footer: optional(v.invoice_footer),
     inbound_senders: v.inbound_senders,
+    marketplace_auto: v.marketplace_auto,
+    marketplace_from: optional(v.marketplace_from),
   };
 }
 

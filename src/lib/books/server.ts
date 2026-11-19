@@ -182,8 +182,12 @@ export async function allLines(ledgerId: string, opts: { code?: string; from?: s
   );
 }
 
-/** Entries a person may void: hand-entered ones, mileage claims, and receipts' entries. */
-export const VOIDABLE_SOURCES = ['manual', 'mileage', 'receipt'] as const;
+/**
+ * Entries a person may void: hand-entered ones, mileage claims, receipts'
+ * entries and rows imported from a bank statement (the row shows as not
+ * imported again). Marketplace entries aren't: the sync would book them again.
+ */
+export const VOIDABLE_SOURCES = ['manual', 'mileage', 'receipt', 'bank'] as const;
 
 /**
  * Void an entry: it is removed from the books. If it came from a receipt,
