@@ -65,3 +65,16 @@
     text-align: left;
   }
 }
+
+.payButton {
+  display: inline-block;
+  margin: 4px 0 12px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--jd-green-deep);
+  color: var(--white);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}

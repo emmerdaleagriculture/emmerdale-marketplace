@@ -58,6 +58,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
         <Link className={f.btnGhost} href="/account/books/customers">
           Customers
         </Link>
+        {access.canEdit && (
+          <Link className={f.btnGhost} href="/account/books/stripe">
+            {access.ledger.stripe_charges_enabled ? 'Card payments: on' : 'Take card payments'}
+          </Link>
+        )}
       </div>
       <nav className={s.nav} aria-label="Show invoices">
         {(Object.keys(FILTERS) as Filter[]).map((k) => (
