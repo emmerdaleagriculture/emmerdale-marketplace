@@ -416,6 +416,18 @@ export default async function AccountPage({
                   />
                 )}
 
+                {/* Premium tools sit under the membership card (2026-11-19).
+                    Market data is Premium; on the website non-members see its
+                    upgrade page, in the app only members see the link. */}
+                {(isOpen || !app) && (
+                  <nav className={ac.sidePanel} aria-label="Premium">
+                    <h2 className={ac.sidePanelTitle}>Premium</h2>
+                    <Link href="/account/market" className={ac.sideLink}>
+                      Market data <span aria-hidden="true">›</span>
+                    </Link>
+                  </nav>
+                )}
+
                 <nav className={ac.sidePanel} aria-label="Your account">
                   <h2 className={ac.sidePanelTitle}>Your account</h2>
                   <Link href="/invitations" className={ac.sideLink}>
@@ -424,11 +436,6 @@ export default async function AccountPage({
                   <Link href="/won" className={ac.sideLink}>
                     Won jobs <span aria-hidden="true">›</span>
                   </Link>
-                  {(isOpen || !app) && (
-                    <Link href="/account/market" className={ac.sideLink}>
-                      Market data <span aria-hidden="true">›</span>
-                    </Link>
-                  )}
                   {(tendersOn || (!isOpen && !app)) && (
                     <Link href="/account/tenders" className={ac.sideLink}>
                       <span>
