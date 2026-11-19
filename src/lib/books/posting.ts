@@ -6,7 +6,8 @@
 
 import { FLAT_RATE_CAPITAL_THRESHOLD_PENCE, VAT_CODES, isVatCode, registeredOn, type VatCode, type VatSettings } from './vat';
 import { vatOnNet } from './money';
-import type { AccountType } from './chart';
+import { isIsoDate } from './period';
+import { isPaymentAccount, type AccountType, type BusinessType } from './chart';
 
 export type Line = { code: string; debit: number; credit: number; memo?: string };
 
@@ -25,7 +26,7 @@ export type PostableDoc = {
   paymentCode: string; // bank, card, director's loan…
 };
 
-export type LedgerForPosting = VatSettings & { base_currency: string };
+export type LedgerForPosting = VatSettings & { base_currency: string; business_type?: BusinessType };
 export type AccountInfo = { code: string; type: AccountType; is_fixed_asset: boolean };
 
 export type EntryPayload = {
@@ -47,13 +48,11 @@ export type EntryPayload = {
 
 export type Posting = { entry: EntryPayload; lines: Line[] };
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-
 /** Every reason the document can't be posted; empty means it can. */
 export function validateDoc(doc: PostableDoc, ledger: LedgerForPosting, accounts: Map<string, AccountInfo>): string[] {
   const errs: string[] = [];
   if (doc.kind !== 'purchase' && doc.kind !== 'sale') errs.push('Choose purchase or sale.');
-  if (!doc.date || !ISO_DATE.test(doc.date) || Number.isNaN(Date.parse(doc.date))) errs.push('Enter the date.');
+  if (!isIsoDate(doc.date)) errs.push('Enter the date.');
   if (doc.gross == null) errs.push('Enter the total.');
   else if (doc.gross <= 0) errs.push('The total must be more than £0.00.');
   if (!isVatCode(doc.vatCode) || doc.vatCode === 'PREREG') errs.push('Choose a VAT code.');
@@ -66,13 +65,18 @@ export function validateDoc(doc: PostableDoc, ledger: LedgerForPosting, accounts
   if (doc.gross != null && doc.vatCode !== 'RC' && Math.abs(net + vat - doc.gross) > 1) {
     errs.push('Net + VAT must equal the total.');
   }
+  if (vat > 0 && (doc.vatCode === 'ZERO' || doc.vatCode === 'EXEMPT' || doc.vatCode === 'OUTSIDE')) {
+    errs.push(`There’s no VAT on a ${VAT_CODES[doc.vatCode].label.toLowerCase()} item: set VAT to £0 or change the code.`);
+  }
   const cat = accounts.get(doc.accountCode);
   if (!cat) errs.push('Choose a category.');
   else if (doc.kind === 'purchase' && !(cat.type === 'expense' || cat.is_fixed_asset)) {
     errs.push('A purchase goes to an expense or fixed-asset account.');
   } else if (doc.kind === 'sale' && cat.type !== 'income') errs.push('A sale goes to an income account.');
-  if (!accounts.has(doc.paymentCode)) errs.push('Choose what it was paid from or into.');
-  else if (doc.paymentCode === doc.accountCode) errs.push('The category and the payment account must differ.');
+  const pay = accounts.get(doc.paymentCode);
+  if (!pay || (ledger.business_type && !isPaymentAccount(pay, ledger.business_type))) {
+    errs.push('Choose what it was paid from or into.');
+  } else if (doc.paymentCode === doc.accountCode) errs.push('The category and the payment account must differ.');
   return errs;
 }
 

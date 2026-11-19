@@ -107,9 +107,19 @@ export function isDebitNormal(type: AccountType): boolean {
   return type === 'asset' || type === 'expense';
 }
 
-/** Accounts money can be paid from or into on a manual entry. */
-export function isPaymentAccount(a: { code: string }): boolean {
-  return (a.code >= '1200' && a.code < '1300') || a.code === '2300' || a.code === '3000';
+/** Bank, card and payment-provider accounts (12xx assets and liabilities). */
+export function isBankAccount(a: { code: string; type: AccountType | string }): boolean {
+  return a.code >= '1200' && a.code < '1300' && (a.type === 'asset' || a.type === 'liability');
+}
+
+/**
+ * Accounts a purchase or sale can be paid from or into: a bank or card
+ * account, the owner's own account (director's loan for a company, capital
+ * introduced otherwise), or not paid yet — owed to us (1100 Trade debtors)
+ * or by us (2100 Trade creditors).
+ */
+export function isPaymentAccount(a: { code: string; type: AccountType | string }, businessType: BusinessType): boolean {
+  return isBankAccount(a) || a.code === personalAccountCode(businessType) || a.code === '1100' || a.code === '2100';
 }
 
 /** Accounts a purchase can be categorised to. */

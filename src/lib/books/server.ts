@@ -105,6 +105,7 @@ export function ledgerForPosting(l: Ledger): LedgerForPosting {
     vat_registration_date: l.vat_registration_date,
     vat_scheme: l.vat_scheme as LedgerForPosting['vat_scheme'],
     base_currency: l.base_currency,
+    business_type: l.business_type as BusinessType,
   };
 }
 

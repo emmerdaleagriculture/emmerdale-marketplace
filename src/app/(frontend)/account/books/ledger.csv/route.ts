@@ -5,12 +5,15 @@ import { isIsoDate, todayUk } from '@/lib/books/period';
 
 export const dynamic = 'force-dynamic';
 
+/** Free text: quoted, and a leading = + - @ tab or CR defused so a spreadsheet won't run it as a formula. */
 function cell(v: unknown): string {
   const s = v == null ? '' : String(v);
-  // Quote, and defuse spreadsheet formulas from free text.
-  const safe = /^[=+\-@\t\r]/.test(s) && !/^-?\d/.test(s) ? `'${s}` : s;
+  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
+
+/** Our own numbers and codes: written as they are. */
+const num = (v: unknown) => (v == null ? '' : String(v));
 
 /**
  * The general ledger as CSV (Tally's columns). Available read-only too, so a
@@ -25,21 +28,19 @@ export async function GET(req: NextRequest) {
   const header = ['Date', 'Entry ID', 'Type', 'Account code', 'Account', 'Counterparty', 'Reference', 'Description', 'Debit', 'Credit', 'VAT code', 'Receipt ID'];
   const rows = lines.map((l) =>
     [
-      l.entry_date,
-      l.entry_id,
-      l.kind,
-      l.account_code,
-      l.account_name,
-      l.counterparty,
-      l.reference,
-      [l.description, l.memo].filter(Boolean).join(' · '),
+      num(l.entry_date),
+      num(l.entry_id),
+      num(l.kind),
+      num(l.account_code),
+      cell(l.account_name),
+      cell(l.counterparty),
+      cell(l.reference),
+      cell([l.description, l.memo].filter(Boolean).join(' · ')),
       l.debit_pence ? penceToDecimal(l.debit_pence) : '',
       l.credit_pence ? penceToDecimal(l.credit_pence) : '',
-      l.vat_code,
-      l.receipt_id ?? '',
-    ]
-      .map(cell)
-      .join(','),
+      num(l.vat_code),
+      num(l.receipt_id),
+    ].join(','),
   );
   const body = '﻿' + [header.join(','), ...rows].join('\r\n') + '\r\n';
   return new NextResponse(body, {
