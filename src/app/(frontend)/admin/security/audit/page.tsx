@@ -44,6 +44,17 @@ export default async function SecurityAuditPage() {
     admin.from('security_audit_allowlist').select('kind, item, reason, reviewed_at, reviewed_by').order('kind').order('item'),
     admin.rpc('cron_jobs_health'),
   ]);
+  // Contractors changing where they're paid: the last four digits only.
+  const { data: bankChanges } = await admin
+    .from('bank_detail_changes')
+    .select('id, contractor_id, old_last4, new_last4, hold_until, ip, created_at')
+    .order('created_at', { ascending: false })
+    .limit(30);
+  const changedIds = [...new Set((bankChanges ?? []).map((c) => c.contractor_id))];
+  const { data: changedNames } = changedIds.length
+    ? await admin.from('contractors').select('id, business_name').in('id', changedIds)
+    : { data: [] as { id: string; business_name: string }[] };
+  const nameOf = new Map((changedNames ?? []).map((c) => [c.id, c.business_name]));
   for (const [what, q] of [
     ['open audit findings', openQ],
     ['closed audit findings', resolvedQ],
@@ -156,6 +167,28 @@ export default async function SecurityAuditPage() {
             />
           ))}
         </>
+      )}
+
+      <div className={s.sectionLabel}>Bank detail changes</div>
+      <p className={s.metricHint} style={{ marginBottom: 10 }}>
+        Every change a contractor makes to where we pay them, confirmed by an emailed code. Payouts to a changed account are
+        held for 72 hours, and the job&rsquo;s payout panel warns until then.
+      </p>
+      {(bankChanges ?? []).length === 0 ? (
+        <div className={s.empty}>No changes yet.</div>
+      ) : (
+        <AdminTable head={['When', 'Contractor', 'From', 'To', 'Held until', 'IP']}>
+          {(bankChanges ?? []).map((c) => (
+            <tr key={c.id}>
+              <td>{fmt(c.created_at)}</td>
+              <td>{nameOf.get(c.contractor_id) ?? '—'}</td>
+              <td>{c.old_last4 ? `••••${c.old_last4}` : 'first details'}</td>
+              <td>••••{c.new_last4}</td>
+              <td>{c.hold_until ? fmt(c.hold_until) : '—'}</td>
+              <td>{c.ip ?? '—'}</td>
+            </tr>
+          ))}
+        </AdminTable>
       )}
     </div>
   );

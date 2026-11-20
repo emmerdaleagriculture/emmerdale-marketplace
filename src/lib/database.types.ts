@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_detail_changes: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          hold_until: string | null
+          id: string
+          ip: string | null
+          new_last4: string
+          old_last4: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          hold_until?: string | null
+          id?: string
+          ip?: string | null
+          new_last4: string
+          old_last4?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          hold_until?: string | null
+          id?: string
+          ip?: string | null
+          new_last4?: string
+          old_last4?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      bank_detail_codes: {
+        Row: {
+          account_name: string
+          account_number: string
+          attempts: number
+          code_hash: string
+          contractor_id: string
+          created_at: string
+          expires_at: string
+          sort_code: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          attempts?: number
+          code_hash: string
+          contractor_id: string
+          created_at?: string
+          expires_at: string
+          sort_code: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          attempts?: number
+          code_hash?: string
+          contractor_id?: string
+          created_at?: string
+          expires_at?: string
+          sort_code?: string
+        }
+        Relationships: []
+      }
       app_config: {
         Row: {
           key: string
@@ -371,24 +437,30 @@ export type Database = {
         Row: {
           account_name: string
           account_number: string
+          changed_count: number
           contractor_id: string
           created_at: string
+          hold_until: string | null
           sort_code: string
           updated_at: string
         }
         Insert: {
           account_name: string
           account_number: string
+          changed_count?: number
           contractor_id: string
           created_at?: string
+          hold_until?: string | null
           sort_code: string
           updated_at?: string
         }
         Update: {
           account_name?: string
           account_number?: string
+          changed_count?: number
           contractor_id?: string
           created_at?: string
+          hold_until?: string | null
           sort_code?: string
           updated_at?: string
         }
