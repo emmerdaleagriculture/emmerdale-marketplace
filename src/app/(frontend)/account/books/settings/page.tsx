@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import s from '../books.module.css';
 import { redirect } from 'next/navigation';
 import { getAccounts, loadLedger } from '@/lib/books/server';
 import { isBankAccount } from '@/lib/books/chart';
@@ -42,6 +44,12 @@ export default async function BooksSettingsPage({ searchParams }: { searchParams
   }));
   return (
     <BooksFrame access={{ ...access, ledger: l }} title="Settings" tab="settings" crumb="Settings">
+      <p className={s.notice}>
+        Moving from Xero or FreshBooks?{' '}
+        <Link className={s.link} href="/account/books/import">
+          Bring your balances and customers over →
+        </Link>
+      </p>
       <StripeSettings ledger={l} />
       <SettingsForm
         action={saveSettingsAction}

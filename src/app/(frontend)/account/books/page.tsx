@@ -141,6 +141,16 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
         </div>
       )}
 
+      {/* New books: offer to bring the old ones over. */}
+      {access.canEdit && entries.length < 12 && !entries.some((e) => String(e.external_id ?? '').startsWith('import:opening:')) && (
+        <p className={s.notice}>
+          Moving from Xero or FreshBooks?{' '}
+          <Link className={s.link} href="/account/books/import">
+            Bring your balances and customers over →
+          </Link>
+        </p>
+      )}
+
       <Tiles>
         <Tile icon="bank" label="Bank (1200)" value={formatPence(bal('1200'))} hint="As recorded in your books" tone="teal" />
         <Tile icon="coins" label="Income this year" value={formatPence(income)} hint={`${ukDate(year.from)} – ${ukDate(year.to)}`} tone="green" />
