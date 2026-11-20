@@ -12,6 +12,7 @@ import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { isAppRequest } from '@/lib/appMode.server';
 import { TenderCard, type TenderRow } from './TenderCard';
 import { TenderTabs } from './TenderTabs';
+import { SeenRefresh } from './SeenRefresh';
 import a from '../../auth.module.css';
 import m from '../market/market.module.css';
 import s from './tenders.module.css';
@@ -141,6 +142,7 @@ export default async function TendersPage() {
     <div className={a.wrap}>
       <SiteHeader />
       <main className={a.main}>
+        {rows.length > 0 && <SeenRefresh />}
         <div className={a.wide}>
           <Breadcrumb
             tone="light"

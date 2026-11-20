@@ -63,3 +63,13 @@ export async function saveTenderAction(_prev: TenderSaveState, formData: FormDat
   revalidatePath('/account/tenders');
   return { ok: true };
 }
+
+/**
+ * Opening the list stamps every tender seen while the page renders, but a
+ * render can't clear the browser's copy of the dashboard, so going back
+ * showed the old "new" count. The list calls this once it's on screen:
+ * revalidating from an action also drops the router's cached pages.
+ */
+export async function tendersSeenAction(): Promise<void> {
+  revalidatePath('/account');
+}
