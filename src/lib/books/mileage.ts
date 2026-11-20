@@ -35,6 +35,21 @@ export function mileageAmount(miles: number, alreadyClaimed: number): { pence: n
   return { pence, highMiles: highTenths / 10, lowMiles: lowTenths / 10 };
 }
 
+/** Parse an odometer reading as typed: commas and spaces allowed, up to one decimal place. */
+export function parseOdometer(raw: string): number | null {
+  const t = raw.replace(/[,\s]/g, '');
+  if (!/^\d{1,7}(\.\d)?$/.test(t)) return null;
+  return Number(t);
+}
+
+/** Miles between two odometer readings, or null unless finish is past start. */
+export function milesFromOdometer(start: string, finish: string): number | null {
+  const a = parseOdometer(start);
+  const b = parseOdometer(finish);
+  if (a === null || b === null || b <= a) return null;
+  return Math.round((b - a) * 10) / 10;
+}
+
 export type MileageClaim = {
   date: string;
   driver: string;
@@ -42,6 +57,8 @@ export type MileageClaim = {
   journey: string;
   purpose: string;
   payCode: string;
+  /** Odometer readings, when the driver gave them. */
+  odometer?: { start: number; finish: number } | null;
 };
 
 const fmtMiles = (n: number) => n.toLocaleString('en-GB', { maximumFractionDigits: 1 });
@@ -54,7 +71,8 @@ export function buildMileagePosting(c: MileageClaim, alreadyClaimed: number): Po
       : highMiles === 0
         ? `at ${MILEAGE_LOW_PENCE}p/mile (over ${fmtMiles(MILEAGE_BAND_MILES)} this tax year)`
         : `(${fmtMiles(highMiles)} at ${MILEAGE_HIGH_PENCE}p, ${fmtMiles(lowMiles)} at ${MILEAGE_LOW_PENCE}p)`;
-  const detail = [c.journey.trim(), c.purpose.trim()].filter(Boolean).join(' · ');
+  const odo = c.odometer ? `odometer ${fmtMiles(c.odometer.start)}–${fmtMiles(c.odometer.finish)}` : '';
+  const detail = [c.journey.trim(), c.purpose.trim(), odo].filter(Boolean).join(' · ');
   return {
     entry: {
       entry_date: c.date,
@@ -73,6 +91,7 @@ export function buildMileagePosting(c: MileageClaim, alreadyClaimed: number): Po
         driver: c.driver.trim(),
         journey: c.journey.trim(),
         purpose: c.purpose.trim(),
+        ...(c.odometer ? { odometer_start: c.odometer.start, odometer_finish: c.odometer.finish } : {}),
         high_miles: highMiles,
         low_miles: lowMiles,
       },

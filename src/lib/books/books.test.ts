@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { formatPence, parsePounds, roundDiv, vatInGross, vatOnNet } from './money';
 import { buildPosting, balances, validateDoc, type AccountInfo, type LedgerForPosting, type PostableDoc } from './posting';
 import { chartFor, personalAccountCode } from './chart';
-import { buildMileagePosting, mileageAmount, taxYearOf } from './mileage';
+import { buildMileagePosting, mileageAmount, milesFromOdometer, parseOdometer, taxYearOf } from './mileage';
 import { accountingYear } from './period';
 
 const accounts = new Map<string, AccountInfo>(
@@ -159,6 +159,20 @@ describe('mileage', () => {
     expect(mileageAmount(100, 9950)).toEqual({ pence: 50 * 55 + 50 * 25, highMiles: 50, lowMiles: 50 });
     expect(mileageAmount(10, 12000).pence).toBe(250);
     expect(mileageAmount(0.5, 0).pence).toBe(28); // 27.5 → 28
+  });
+
+  it('works out miles from odometer readings', () => {
+    expect(milesFromOdometer('45,210', '45262')).toBe(52);
+    expect(milesFromOdometer('100.2', '150.5')).toBe(50.3);
+    expect(milesFromOdometer('500', '400')).toBeNull();
+    expect(milesFromOdometer('', '400')).toBeNull();
+    expect(parseOdometer('1.25')).toBeNull();
+    expect(
+      buildMileagePosting(
+        { date: '2026-11-01', driver: 'Tom', miles: 52, journey: '', purpose: '', payCode: '2300', odometer: { start: 45210, finish: 45262 } },
+        0,
+      ).entry.description,
+    ).toContain('odometer 45,210–45,262');
   });
   it('tax years run 6 April to 5 April', () => {
     expect(taxYearOf('2026-04-05')).toEqual({ from: '2025-04-06', to: '2026-04-05' });

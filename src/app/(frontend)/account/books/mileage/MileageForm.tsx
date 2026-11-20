@@ -1,10 +1,11 @@
 'use client';
 
-import { useActionState } from 'react';
+import { startTransition, useActionState, useState } from 'react';
 import { emptyFormState } from '@/lib/form';
 import f from '@/components/forms/forms.module.css';
 import s from '../books.module.css';
 import { postMileageAction } from '../actions';
+import { milesFromOdometer } from '@/lib/books/mileage';
 
 export function MileageForm({
   today,
@@ -16,9 +17,24 @@ export function MileageForm({
   defaultPay: string;
 }) {
   const [state, action, pending] = useActionState(postMileageAction, emptyFormState);
+  const [start, setStart] = useState('');
+  const [finish, setFinish] = useState('');
+  const [typedMiles, setTypedMiles] = useState<string | null>(null);
+  const fromReadings = milesFromOdometer(start, finish);
+  // Miles follow the readings until the driver types their own figure (e.g. part of the trip was private).
+  const miles = typedMiles ?? (fromReadings === null ? '' : String(fromReadings));
   return (
-    <form action={action} className={s.form}>
-      <div className={s.row3}>
+    <form
+      className={s.form}
+      // Submitted by hand rather than action= so React doesn't reset the
+      // uncontrolled fields after a refused post while the readings stay.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        startTransition(() => action(fd));
+      }}
+    >
+      <div className={s.row2}>
         <label className={f.field}>
           <span className={f.label}>Date</span>
           <input className={f.input} type="date" name="date" defaultValue={today} max={today} required />
@@ -27,11 +43,49 @@ export function MileageForm({
           <span className={f.label}>Who drove</span>
           <input className={f.input} name="driver" maxLength={100} required />
         </label>
+      </div>
+      <div className={s.row3}>
+        <label className={f.field}>
+          <span className={f.label}>Odometer at start</span>
+          <input
+            className={f.input}
+            name="odometer_start"
+            inputMode="decimal"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+            placeholder="e.g. 45210"
+          />
+        </label>
+        <label className={f.field}>
+          <span className={f.label}>Odometer at finish</span>
+          <input
+            className={f.input}
+            name="odometer_finish"
+            inputMode="decimal"
+            value={finish}
+            onChange={(e) => setFinish(e.target.value)}
+            placeholder="e.g. 45262"
+          />
+        </label>
         <label className={f.field}>
           <span className={f.label}>Business miles</span>
-          <input className={f.input} name="miles" inputMode="decimal" required />
+          <input
+            className={f.input}
+            name="miles"
+            inputMode="decimal"
+            value={miles}
+            onChange={(e) => setTypedMiles(e.target.value === '' ? null : e.target.value)}
+            required
+          />
         </label>
       </div>
+      <p className={f.hint}>
+        {fromReadings !== null
+          ? typedMiles !== null && typedMiles !== String(fromReadings)
+            ? `The readings show ${fromReadings.toLocaleString('en-GB')} miles.`
+            : `${fromReadings.toLocaleString('en-GB')} miles from the readings. Lower it if part of the trip was private.`
+          : 'Give the odometer readings and we’ll work out the miles, or just type the miles in.'}
+      </p>
       <div className={s.row2}>
         <label className={f.field}>
           <span className={f.label}>Journey</span>
