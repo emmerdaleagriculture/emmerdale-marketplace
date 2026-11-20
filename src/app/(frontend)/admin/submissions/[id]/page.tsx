@@ -12,6 +12,7 @@ import { RetractButton } from './RetractButton';
 import { DeleteJobButton } from './DeleteJobButton';
 import { ExtraWorkForm } from './ExtraWorkForm';
 import { PayoutPanel } from './PayoutPanel';
+import { PayTo } from './PayTo';
 import { BalanceTransferButton } from './BalanceTransferButton';
 import { InvoiceAmountPanel } from './InvoiceAmountPanel';
 import { RecordInvoiceAmount } from './RecordInvoiceAmount';
@@ -367,6 +368,16 @@ export default async function SubmissionDetailPage({
     ['Attribution', [sub.utm_source, sub.utm_medium, sub.utm_campaign, sub.gclid ? 'gclid' : null].filter(Boolean).join(' / ') || '—'],
   ];
 
+  // Where to send the payout, and whether it changed too recently to trust.
+  const { data: payBank } =
+    sub.awarded_contractor_id && (['completed', 'paid'].includes(sub.status) || payout)
+      ? await admin
+          .from('contractor_bank_details')
+          .select('account_name, sort_code, account_number, hold_until, updated_at, changed_count')
+          .eq('contractor_id', sub.awarded_contractor_id)
+          .maybeSingle()
+      : { data: null };
+
   return (
     <div>
       <Link href="/admin/submissions" className={s.back}>
@@ -495,6 +506,7 @@ export default async function SubmissionDetailPage({
         <>
           <div className={s.sectionLabel}>Contractor payout</div>
           <div className={s.empty}>
+            {!payout && <PayTo bank={payBank} />}
             <PayoutPanel
               submissionId={sub.id}
               payout={

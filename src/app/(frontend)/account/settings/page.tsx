@@ -68,6 +68,13 @@ export default async function SettingsPage() {
 
           <AvatarUpload url={avatarUrl(contractor.avatar_path)} name={contractor.business_name} />
 
+          <div className={ui.rows} style={{ margin: '0 0 20px' }}>
+            <Link href="/account/bank" className={ui.row}>
+              Bank details
+              <span className={ui.rowValue}>Where we pay you ›</span>
+            </Link>
+          </div>
+
           <AccountForm
             contractor={contractor}
             counties={counties}

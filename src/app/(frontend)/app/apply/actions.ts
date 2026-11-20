@@ -169,7 +169,9 @@ export async function submitApplicationAction(_prev: FormState, formData: FormDa
       sort_code: d.sort_code.replace(/-/g, '').replace(/(\d{2})(\d{2})(\d{2})/, '$1-$2-$3'),
       account_number: d.account_number,
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'contractor_id' }),
+      // Insert only: changing them later goes through /account/bank (a code
+      // and a payout hold), never through applying.
+    }, { onConflict: 'contractor_id', ignoreDuplicates: true }),
   ]);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';

@@ -5,7 +5,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { nonContractorPath } from '@/lib/auth';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { formatDate } from '@/lib/time';
-import { AppHero, Seg, Tile, Tiles } from '@/components/app/AppKit';
+import { Actions, AppHero, Seg, Tile, Tiles } from '@/components/app/AppKit';
 import { taxYearOf } from '@/lib/books/taxRates';
 import ui from '../app-ui.module.css';
 import { todayInLondon } from '../diary/diary';
@@ -88,6 +88,13 @@ export default async function EarningsPage({ searchParams }: { searchParams: Pro
         <Tile icon="trend" tone="teal" label="Paid this tax year" value={formatGBP(paidThisYear)} hint="Since 6 April" />
         <Tile icon="check" tone="teal" label="Jobs won" value={wonThisYear} hint="Since 6 April" />
       </Tiles>
+
+      <Actions
+        items={[
+          { href: '/won', label: 'Won jobs', icon: 'check' },
+          { href: '/account/bank', label: 'Bank details', icon: 'bank' },
+        ]}
+      />
 
       <Seg
         label="Earnings"
