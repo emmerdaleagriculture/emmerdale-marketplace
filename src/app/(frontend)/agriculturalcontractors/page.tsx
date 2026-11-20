@@ -101,6 +101,26 @@ const STEPS: { n: number; title: string; body: string }[] = [
   },
 ];
 
+/** Books, for Premium members (src/app/(frontend)/account/books). */
+const BOOKS: { h: string; body: string }[] = [
+  {
+    h: 'Snap the receipt and it’s posted',
+    body: 'Take a photo in the app or forward the email. AI reads it and posts it to the right account, and anything it isn’t sure of waits for you to check.',
+  },
+  {
+    h: 'Invoices customers can pay by card',
+    body: 'Send a proper invoice from your phone, with a PDF and a link the customer can pay by card. Jobs you do through us are booked in by themselves.',
+  },
+  {
+    h: 'VAT, profit and mileage, any time',
+    body: 'Your VAT return figures, profit and loss and trial balance are always up to date, and mileage is claimed at the HMRC rate. Import your bank statement to check it all off.',
+  },
+  {
+    h: 'Your accountant can see it all',
+    body: 'Give your accountant or bookkeeper read-only access with one email, or download everything as a spreadsheet at the year end.',
+  },
+];
+
 const ASKS: { h: string; body: string }[] = [
   {
     h: 'Price it while the job’s still live',
@@ -385,8 +405,33 @@ export default async function AgriculturalContractorsPage() {
         </div>
       </section>
 
+      <section className={`${s.section} ${s.sectionAlt}`}>
+        <div className={s.sectionInner}>
+          <div className={s.kicker}>With Premium</div>
+          <h2 className={s.sectionTitle}>
+            Your books, <em>done for you.</em>
+          </h2>
+          <p className={s.sectionLede}>
+            Premium members get Books: proper bookkeeping for a contracting business, in the app and on the website, with
+            nothing extra to buy.
+          </p>
+          <div className={c.reasons}>
+            {BOOKS.map((r) => (
+              <div key={r.h} className={c.reason}>
+                <h3 className={c.reasonH}>{r.h}</h3>
+                <p className={c.reasonBody}>{r.body}</p>
+              </div>
+            ))}
+          </div>
+          <p className={s.sectionLede} style={{ marginTop: 28 }}>
+            Premium is £49 a month or £399 a year, and also brings first look at new jobs, the customer’s contact details on every
+            invitation, market data for your area and council tenders. Joining the network stays free.
+          </p>
+        </div>
+      </section>
+
       <ServicesSection
-        alt
+
         services={services}
         title={
           <>

@@ -27,6 +27,7 @@ export const OPEN_BENEFITS: ReactNode[] = [
   <><b>A listing in Find a contractor</b> and on our county pages, with a link to your website and customers’ enquiries sent straight to you.</>,
   <><b>Market data for your area:</b> jobs month by month, what each kind of work goes for, and your win rate against the field.</>,
   <><b>Council tenders on your patch:</b> grass cutting, verge, hedge and grounds contracts from Contracts Finder and Find a Tender every morning, and running contracts coming up for renewal.</>,
+  <><b>Books, your bookkeeping done for you:</b> snap receipts and AI posts them, send invoices customers can pay by card, claim mileage, and see your VAT, profit and loss at any time. Your accountant can have read-only access.</>,
 ];
 export const FREE_BENEFITS: ReactNode[] = [
   <><b>Every job in your area for your services</b> once members have had first refusal.</>,
@@ -37,7 +38,7 @@ export const FREE_BENEFITS: ReactNode[] = [
 const BLURB: Record<CardTier, string> = {
   free: 'Every job in your area for the work you do, after members have seen it, at our standard commission.',
   premium: 'Every job in your area for the work you do, ahead of the market, and 5% commission instead of 15%.',
-  open: 'Everything in Pro, plus first look, the customer’s details, a county-page listing, market data and council tenders.',
+  open: 'Everything in Pro, plus first look, the customer’s details, a county-page listing, market data, council tenders and Books.',
 };
 const GLYPH: Record<CardTier, string> = { free: '', ...MEMBERSHIP_GLYPHS };
 /** A page that centres everything on a phone puts this on a wrapper round the grid. */
