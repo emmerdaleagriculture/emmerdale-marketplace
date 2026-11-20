@@ -45,9 +45,9 @@ export default async function BooksSettingsPage({ searchParams }: { searchParams
   return (
     <BooksFrame access={{ ...access, ledger: l }} title="Settings" tab="settings" crumb="Settings">
       <p className={s.notice}>
-        Moving from Xero or FreshBooks?{' '}
+        Starting balances, or moving from Xero or FreshBooks?{' '}
         <Link className={s.link} href="/account/books/import">
-          Bring your balances and customers over →
+          Set them up here →
         </Link>
       </p>
       <StripeSettings ledger={l} />

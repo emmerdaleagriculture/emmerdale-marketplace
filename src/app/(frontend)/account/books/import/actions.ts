@@ -8,7 +8,9 @@ import type { Json } from '@/lib/database.types';
 import { businessTypeOf, getAccounts, requireBooksWriter } from '@/lib/books/server';
 import type { AccountType } from '@/lib/books/chart';
 import { readSheet } from '@/lib/books/importFile';
-import { codeForNew, openingLines, parseTrialBalance, suggestTargets, type ImportedAccount } from '@/lib/books/importTb';
+import { codeForNew, openingLines, parseTrialBalance, startingBalances, suggestTargets, type ImportedAccount } from '@/lib/books/importTb';
+import { equityCodeFor, startingAccounts } from '@/lib/books/startingAccounts';
+import { parsePounds } from '@/lib/books/money';
 import { customerKey, parseContacts } from '@/lib/books/importContacts';
 
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -89,7 +91,7 @@ export async function postOpeningBalancesAction(_prev: FormState, fd: FormData):
   const accounts = await getAccounts(ledger.id);
   const existing = new Set(accounts.map((a) => a.code));
   const taken = new Set(existing);
-  const fresh: { code: string; name: string; type: AccountType; is_fixed_asset: boolean; description: string }[] = [];
+  const fresh: NewAccount[] = [];
   const lines: { balance: number; code: string }[] = [];
   for (const r of rows) {
     if (!Number.isSafeInteger(r?.balance) || typeof r.name !== 'string' || typeof r.target !== 'string') return { error: 'Something went wrong reading the matches. Please upload the file again.' };
@@ -116,43 +118,109 @@ export async function postOpeningBalancesAction(_prev: FormState, fd: FormData):
   const entryLines = openingLines(lines);
   if (entryLines.length < 2) return { error: 'Everything nets to nothing once matched, so there’s nothing to post.' };
 
+  const posted = await postOpening(ledger.id, date, entryLines, fresh, {
+    description: `Opening balances brought over from ${SOURCES[source]}`,
+    reference: file || null,
+    meta: { import: source, file, accounts: rows.length },
+  });
+  if (posted) return { error: posted };
+  revalidatePath('/account/books', 'layout');
+  redirect(`/account/books/ledger?imported=${fresh.length}`);
+}
+
+type NewAccount = { code: string; name: string; type: AccountType; is_fixed_asset: boolean; description: string };
+
+/**
+ * Post one opening journal (making any new accounts first). One per date:
+ * the external_id stops a second set of balances at the same date. Returns
+ * an error message, or null when it's in.
+ */
+async function postOpening(
+  ledgerId: string,
+  date: string,
+  entryLines: { code: string; debit: number; credit: number }[],
+  fresh: NewAccount[],
+  info: { description: string; reference: string | null; meta: Record<string, unknown> },
+): Promise<string | null> {
   const admin = createServiceRoleClient();
   const externalId = `import:opening:${date}`;
-  const { data: already } = await admin.from('books_entries').select('id').eq('ledger_id', ledger.id).eq('external_id', externalId).maybeSingle();
-  if (already) return { error: 'Opening balances at that date are already in your books. Void that journal first if you want to bring them in again.' };
+  const { data: already } = await admin.from('books_entries').select('id').eq('ledger_id', ledgerId).eq('external_id', externalId).maybeSingle();
+  if (already) return 'Starting balances at that date are already in your books. Void that journal on the journal page first if you want to redo them.';
 
   if (fresh.length) {
-    const { error } = await admin.from('books_accounts').insert(fresh.map((a) => ({ ledger_id: ledger.id, ...a })));
+    const { error } = await admin.from('books_accounts').insert(fresh.map((a) => ({ ledger_id: ledgerId, ...a })));
     if (error) {
-      console.error('[books] import accounts failed', { ledger: ledger.id, error: error.message });
-      return { error: 'The new accounts couldn’t be made. Please try again.' };
+      console.error('[books] import accounts failed', { ledger: ledgerId, error: error.message });
+      return 'The new accounts couldn’t be made. Please try again.';
     }
   }
   const total = entryLines.reduce((s, l) => s + l.debit, 0);
   const { error } = await admin.rpc('books_post_entry', {
-    p_ledger_id: ledger.id,
+    p_ledger_id: ledgerId,
     p_entry: {
       entry_date: date,
       kind: 'journal',
       source: 'manual',
-      description: `Opening balances brought over from ${SOURCES[source]}`,
-      reference: file || null,
+      description: info.description,
+      reference: info.reference,
       vat_code: 'OUTSIDE',
       net_pence: total,
       gross_pence: total,
       external_id: externalId,
-      meta: { import: source, file, accounts: rows.length },
+      meta: info.meta,
     } as unknown as Json,
     p_lines: entryLines.map((l) => ({ ...l, memo: 'Opening balance' })) as unknown as Json,
   });
   if (error) {
-    console.error('[books] opening balances post failed', { ledger: ledger.id, error: error.message });
+    console.error('[books] opening balances post failed', { ledger: ledgerId, error: error.message });
     // Don't leave the empty accounts behind.
-    if (fresh.length) await admin.from('books_accounts').delete().eq('ledger_id', ledger.id).in('code', fresh.map((a) => a.code));
-    return { error: 'The balances couldn’t be posted. Please try again.' };
+    if (fresh.length) await admin.from('books_accounts').delete().eq('ledger_id', ledgerId).in('code', fresh.map((a) => a.code));
+    return 'The balances couldn’t be posted. Please try again.';
   }
+  return null;
+}
+
+/**
+ * Starting balances typed in: an amount per bank, debtor, creditor, loan or
+ * fixed asset account (fields bal_<code>), optionally sales and costs so far
+ * this year; the difference goes to the owner's equity.
+ */
+export async function postStartingBalancesAction(_prev: FormState, fd: FormData): Promise<FormState> {
+  const gate = await requireBooksWriter();
+  if (!gate.ok) return { error: gate.error };
+  if (!gate.ledger) return { error: 'Set up your books first.' };
+  const ledger = gate.ledger;
+  const date = String(fd.get('date') ?? '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) return { error: 'Choose the date the balances are at.' };
+  const accounts = await getAccounts(ledger.id);
+  const allowed = new Map(startingAccounts(accounts).map((a) => [a.code, a]));
+  const amounts: { code: string; type: AccountType; amount: number }[] = [];
+  for (const [k, v] of fd.entries()) {
+    if (!k.startsWith('bal_') || typeof v !== 'string' || !v.trim()) continue;
+    const a = allowed.get(k.slice(4));
+    const pence = parsePounds(v);
+    if (!a) continue;
+    if (pence == null) return { error: `The amount for ${a.name} isn’t a number.` };
+    amounts.push({ code: a.code, type: a.type, amount: pence });
+  }
+  for (const [field, code, type] of [['sales_so_far', '4000', 'income'], ['costs_so_far', '6990', 'expense']] as const) {
+    const v = String(fd.get(field) ?? '').trim();
+    if (!v) continue;
+    const pence = parsePounds(v);
+    if (pence == null || pence < 0) return { error: 'Sales and costs so far need to be amounts of zero or more.' };
+    if (accounts.some((a) => a.code === code)) amounts.push({ code, type, amount: pence });
+  }
+  const equity = equityCodeFor(businessTypeOf(ledger));
+  const lines = openingLines(startingBalances(amounts, equity));
+  if (lines.length < 2) return { error: 'Fill in at least one balance.' };
+  const posted = await postOpening(ledger.id, date, lines, [], {
+    description: 'Starting balances',
+    reference: null,
+    meta: { import: 'manual', accounts: amounts.length },
+  });
+  if (posted) return { error: posted };
   revalidatePath('/account/books', 'layout');
-  redirect(`/account/books/ledger?imported=${fresh.length}`);
+  redirect('/account/books/ledger?imported=0');
 }
 
 /** Customers from a contacts / clients export. Ones already in the books (same name) are left alone. */

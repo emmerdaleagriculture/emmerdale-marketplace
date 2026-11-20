@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { strToU8, zipSync } from 'fflate';
 import { readSheet } from './importFile';
-import { codeForNew, openingLines, parseTrialBalance, splitName, suggestTargets, tbAmount } from './importTb';
+import { codeForNew, openingLines, startingBalances, parseTrialBalance, splitName, suggestTargets, tbAmount } from './importTb';
 import { parseContacts } from './importContacts';
 import { chartFor } from './chart';
 
@@ -162,6 +162,36 @@ describe('contacts', () => {
     expect(r.customers.map((c) => [c.name, c.organisation, c.email, c.address])).toEqual([
       ['Oak Farm', null, 'sam@oak.example', 'Oak Lane\nAndover\nSP10 1AA\nUnited Kingdom'],
       ['Pat Jones', null, null, null],
+    ]);
+  });
+});
+
+describe('starting balances by hand', () => {
+  it('signs each figure and puts the difference to equity', () => {
+    const rows = startingBalances(
+      [
+        { code: '1200', type: 'asset', amount: 800_000 },
+        { code: '1210', type: 'liability', amount: 50_000 },
+        { code: '1100', type: 'asset', amount: 200_000 },
+        { code: '2201', type: 'liability', amount: 0 },
+        { code: '4000', type: 'income', amount: 1_000_000 },
+        { code: '6990', type: 'expense', amount: 400_000 },
+      ],
+      '3000',
+    );
+    expect(openingLines(rows)).toEqual([
+      { code: '1100', debit: 200_000, credit: 0 },
+      { code: '1200', debit: 800_000, credit: 0 },
+      { code: '6990', debit: 400_000, credit: 0 },
+      { code: '1210', debit: 0, credit: 50_000 },
+      { code: '3000', debit: 0, credit: 350_000 },
+      { code: '4000', debit: 0, credit: 1_000_000 },
+    ]);
+  });
+  it('an overdrawn bank with nothing else leaves equity in debit', () => {
+    expect(openingLines(startingBalances([{ code: '1200', type: 'asset', amount: -30_000 }], '3100'))).toEqual([
+      { code: '3100', debit: 30_000, credit: 0 },
+      { code: '1200', debit: 0, credit: 30_000 },
     ]);
   });
 });

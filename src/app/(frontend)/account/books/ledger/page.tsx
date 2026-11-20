@@ -32,7 +32,7 @@ export default async function TrialBalancePage({ searchParams }: { searchParams:
     <BooksFrame access={access} title="Trial balance" tab="ledger" crumb="Trial balance">
       {sp.imported != null && (
         <p className={s.notice}>
-          Opening balances brought in
+          Starting balances posted
           {Number(sp.imported) > 0 ? `, with ${Number(sp.imported)} new account${Number(sp.imported) === 1 ? '' : 's'}` : ''}. Check the
           balances below against the report you exported. Got something wrong? Void the journal on
           the <Link className={s.link} href="/account/books/journal">journal</Link> page and import again.

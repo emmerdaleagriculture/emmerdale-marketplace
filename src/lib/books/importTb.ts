@@ -204,7 +204,7 @@ export function parseTrialBalance(rows: string[][]): ParsedTrialBalance | { erro
 
 // ── Matching to our chart ───────────────────────────────────────────────────
 
-export type OurAccount = { code: string; name: string; type: AccountType | string; is_fixed_asset: boolean };
+export type OurAccount = { code: string; name: string; type: AccountType | string };
 
 /** Keyword → our code, checked in order; a rule only applies if its type fits. */
 const RULES: { re: RegExp; code: string; types?: AccountType[]; fixed?: boolean }[] = [
@@ -350,4 +350,24 @@ export function openingLines(rows: { balance: number; code: string }[]): { code:
     .filter(([, b]) => b !== 0)
     .sort((a, b) => (a[1] > 0 === b[1] > 0 ? a[0].localeCompare(b[0]) : a[1] > 0 ? -1 : 1))
     .map(([code, b]) => ({ code, debit: Math.max(b, 0), credit: Math.max(-b, 0) }));
+}
+
+// ── Starting balances typed in by hand ──────────────────────────────────────
+
+/**
+ * Starting balances as the person thinks of them: what each bank holds or
+ * they're owed (assets, costs) and what they owe (liabilities, income), all
+ * as plain positive amounts, a minus for an overdrawn bank. Turned into
+ * signed balances (+ debit) with the difference to the owner's equity
+ * account, so the journal always balances.
+ */
+export function startingBalances(
+  amounts: { code: string; type: AccountType; amount: number }[],
+  equityCode: string,
+): { code: string; balance: number }[] {
+  const rows = amounts
+    .filter((a) => a.amount !== 0)
+    .map((a) => ({ code: a.code, balance: a.type === 'asset' || a.type === 'expense' ? a.amount : -a.amount }));
+  const net = rows.reduce((s, r) => s + r.balance, 0);
+  return net === 0 ? rows : [...rows, { code: equityCode, balance: -net }];
 }

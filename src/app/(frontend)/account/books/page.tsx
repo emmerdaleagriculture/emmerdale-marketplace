@@ -144,9 +144,9 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
       {/* New books: offer to bring the old ones over. */}
       {access.canEdit && entries.length < 12 && !entries.some((e) => String(e.external_id ?? '').startsWith('import:opening:')) && (
         <p className={s.notice}>
-          Moving from Xero or FreshBooks?{' '}
+          Business already going?{' '}
           <Link className={s.link} href="/account/books/import">
-            Bring your balances and customers over →
+            Add your starting balances, or bring them over from Xero or FreshBooks →
           </Link>
         </p>
       )}
