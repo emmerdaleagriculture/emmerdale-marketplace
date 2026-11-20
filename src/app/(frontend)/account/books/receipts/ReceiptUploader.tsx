@@ -84,7 +84,9 @@ export function ReceiptUploader() {
           hidden
           onChange={async (e) => {
             const file = e.target.files?.[0];
-            if (file) void send([await downscalePhoto(file, 2400)]);
+            if (!file) return;
+            setBusy(true); // covers the shrink, not just the upload
+            void send([await downscalePhoto(file, 2400)]);
           }}
         />
       </label>
