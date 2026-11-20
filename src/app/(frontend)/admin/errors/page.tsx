@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { loadAdminErrors } from '@/lib/adminErrors';
 import { loadSentryIssues } from '@/lib/sentry/issues';
+import { latest as latestHeartbeat } from '@/lib/heartbeat/run';
+import { createServiceRoleClient } from '@/lib/supabase/server';
+import { ackErrorAction, resolveSentryAction, runHeartbeatAction } from './actions';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles, ago } from '../ui';
@@ -21,8 +24,44 @@ export const dynamic = 'force-dynamic';
  * Neither half is the whole picture, which is why they are on one page.
  */
 
-export default async function ErrorsPage() {
-  const [db, sentry] = await Promise.all([loadAdminErrors(), loadSentryIssues()]);
+/** A small inline button that posts one form. */
+function RowButton({ action, fields, label }: { action: (fd: FormData) => Promise<void>; fields: Record<string, string>; label: string }) {
+  return (
+    <form action={action} style={{ display: 'inline' }}>
+      {Object.entries(fields).map(([k, v]) => (
+        <input key={k} type="hidden" name={k} value={v} />
+      ))}
+      <button type="submit" style={{ font: 'inherit', fontSize: 12, padding: '2px 8px', border: '1px solid #ccc', borderRadius: 6, background: 'transparent', cursor: 'pointer' }}>
+        {label}
+      </button>
+    </form>
+  );
+}
+
+export default async function ErrorsPage({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
+  const { msg } = await searchParams;
+  const [raw, sentry, beats, acksQ] = await Promise.all([
+    loadAdminErrors(),
+    loadSentryIssues(),
+    latestHeartbeat(),
+    createServiceRoleClient().from('admin_error_acks').select('section, key, acked_at'),
+  ]);
+  // Rows someone has cleared stay hidden until they happen again.
+  const acked = new Map((acksQ.data ?? []).map((a) => [`${a.section}|${a.key}`, a.acked_at]));
+  const live = (section: string, key: string, last: string | null) => {
+    const at = acked.get(`${section}|${key}`);
+    return !at || (last !== null && last > at);
+  };
+  const refusalKey = (r: { action: string; outcome: string; reason: string }) => `${r.action}|${r.outcome}|${r.reason}`;
+  const emailKey = (e: { kind: string; status: string; detail: string | null }) => `${e.kind}|${e.status}|${e.detail ?? ''}`;
+  const db = {
+    ...raw,
+    refusals: raw.refusals.filter((r) => live('refusal', refusalKey(r), r.last)),
+    emails: raw.emails.filter((e) => live('email', emailKey(e), e.last)),
+    payments: raw.payments.filter((p) => live('payment', String(p.id), p.last_attempt_at ?? null)),
+  };
+  const beatRows = [...beats.values()].sort((a, b) => Number(a.ok) - Number(b.ok) || a.check_name.localeCompare(b.check_name));
+  const failingBeats = beatRows.filter((b) => !b.ok).length;
 
   const sentryCount = sentry.configured && sentry.ok ? sentry.issues.length : null;
   const refusalTotal = db.refusals.reduce((n, r) => n + r.count, 0);
@@ -38,12 +77,35 @@ export default async function ErrorsPage() {
         <Link href="/admin/reporting/journey?path=/start">The funnel is next door.</Link>
       </p>
 
+      {msg && <div className={s.empty} role="status">{msg}</div>}
+
       <Tiles>
+        <Tile value={beatRows.length ? failingBeats : '—'} label="Heartbeat" hint={beatRows.length ? `failing of ${beatRows.length} checks` : 'not run yet'} />
         <Tile value={sentryCount ?? '—'} label="Unhandled" hint={<>{sentry.configured ? 'open in Sentry, 14d' : 'Sentry not readable'}</>} />
         <Tile value={refusalTotal} label="Turned away" hint="refused at /start" />
         <Tile value={emailTotal} label="Email lost" hint="failed or bounced" />
         <Tile value={db.payments.length} label="Payments" hint="with a recorded error" />
       </Tiles>
+
+      <div className={s.sectionLabel}>
+        Heartbeat: every 15 minutes{' '}
+        <RowButton action={runHeartbeatAction} fields={{}} label="Run now" />
+      </div>
+      {beatRows.length === 0 ? (
+        <div className={s.empty}>The heartbeat has not run yet. It runs every 15 minutes, or press Run now.</div>
+      ) : (
+        <AdminTable head={['Check', 'State', 'Detail', 'Checked', 'Last ok']}>
+          {beatRows.map((b) => (
+            <tr key={b.check_name}>
+              <td>{b.check_name}</td>
+              <td style={{ color: b.ok ? '#2f6b2f' : '#a02a2a', fontWeight: 600 }}>{b.ok ? 'ok' : 'failing'}</td>
+              <td>{b.detail ?? '—'}</td>
+              <td>{ago(b.checked_at)}</td>
+              <td>{b.ok ? '—' : b.lastOk ? ago(b.lastOk) : 'not in 3 days'}</td>
+            </tr>
+          ))}
+        </AdminTable>
+      )}
 
       <div className={s.sectionLabel}>Unhandled exceptions (Sentry)</div>
       {!sentry.configured ? (
@@ -72,7 +134,7 @@ export default async function ErrorsPage() {
           happened: the token is working.
         </div>
       ) : (
-        <AdminTable head={['Error', 'Where', 'Events', 'People', 'Last']}>
+        <AdminTable head={['Error', 'Where', 'Events', 'People', 'Last', '']}>
           {sentry.issues.map((i) => (
             <tr key={i.id}>
               <td>
@@ -89,6 +151,7 @@ export default async function ErrorsPage() {
               <td>{i.count}</td>
               <td>{i.userCount}</td>
               <td>{ago(i.lastSeen)}</td>
+              <td><RowButton action={resolveSentryAction} fields={{ id: i.id }} label="Resolve" /></td>
             </tr>
           ))}
         </AdminTable>
@@ -98,7 +161,7 @@ export default async function ErrorsPage() {
       {db.refusals.length === 0 ? (
         <div className={s.empty}>Nobody was refused in the last {db.days} days.</div>
       ) : (
-        <AdminTable head={['Step', 'Reason', 'Times', 'Last']}>
+        <AdminTable head={['Step', 'Reason', 'Times', 'Last', '']}>
           {db.refusals.map((r) => (
             <tr key={`${r.action}-${r.outcome}-${r.reason}`}>
               <td>{r.action === 'parse' ? 'Step 1' : 'Step 2'}</td>
@@ -108,6 +171,7 @@ export default async function ErrorsPage() {
               </td>
               <td>{r.count}</td>
               <td>{ago(r.last)}</td>
+              <td><RowButton action={ackErrorAction} fields={{ section: 'refusal', key: refusalKey(r) }} label="Clear" /></td>
             </tr>
           ))}
         </AdminTable>
@@ -117,7 +181,7 @@ export default async function ErrorsPage() {
       {db.emails.length === 0 ? (
         <div className={s.empty}>Everything sent in the last {db.days} days was delivered.</div>
       ) : (
-        <AdminTable head={['Kind', 'What happened', 'Detail', 'Times', 'Last']}>
+        <AdminTable head={['Kind', 'What happened', 'Detail', 'Times', 'Last', '']}>
           {db.emails.map((e) => (
             <tr key={`${e.kind}-${e.status}-${e.detail ?? ''}`}>
               <td><code>{e.kind}</code></td>
@@ -127,6 +191,7 @@ export default async function ErrorsPage() {
               <td>{e.detail ?? '—'}</td>
               <td>{e.count}</td>
               <td>{ago(e.last)}</td>
+              <td><RowButton action={ackErrorAction} fields={{ section: 'email', key: emailKey(e) }} label="Clear" /></td>
             </tr>
           ))}
         </AdminTable>
@@ -138,7 +203,7 @@ export default async function ErrorsPage() {
           No payment has recorded an error in the last {db.days} days.
         </div>
       ) : (
-        <AdminTable head={['Kind', 'Status', 'Amount', 'Tries', 'Error', 'Last']}>
+        <AdminTable head={['Kind', 'Status', 'Amount', 'Tries', 'Error', 'Last', '']}>
           {db.payments.map((p) => (
             <tr key={p.id}>
               <td>{p.kind ?? '—'}</td>
@@ -147,6 +212,7 @@ export default async function ErrorsPage() {
               <td>{p.attempts ?? 0}</td>
               <td>{p.last_error ?? '—'}</td>
               <td>{ago(p.last_attempt_at)}</td>
+              <td><RowButton action={ackErrorAction} fields={{ section: 'payment', key: String(p.id) }} label="Clear" /></td>
             </tr>
           ))}
         </AdminTable>

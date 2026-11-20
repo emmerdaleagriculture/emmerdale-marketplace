@@ -28,6 +28,9 @@ const nextConfig = {
   outputFileTracingIncludes: {
     '/account/books/**': ['./node_modules/pdfkit/js/standard-fonts/**', './node_modules/pdfkit/js/data/**'],
     '/i/**': ['./node_modules/pdfkit/js/standard-fonts/**', './node_modules/pdfkit/js/data/**'],
+    // The heartbeat renders a sample invoice to prove the fonts are deployed.
+    '/api/cron/heartbeat': ['./node_modules/pdfkit/js/standard-fonts/**', './node_modules/pdfkit/js/data/**'],
+    '/admin/errors': ['./node_modules/pdfkit/js/standard-fonts/**', './node_modules/pdfkit/js/data/**'],
   },
 
   // React 19 strict mode — catches accidental side-effects

@@ -20,6 +20,12 @@ describe('isNoise', () => {
     expect(isNoise(ev('Error', 'Server Action "605067ed" was not found on the server. Read more: …'))).toBe(true);
   });
 
+  it('drops the newer stale-action wording, too-old browsers and bare Event rejections', () => {
+    expect(isNoise(ev('Error', 'Failed to find Server Action. This request might be from an older or newer deployment.'))).toBe(true);
+    expect(isNoise(ev('ReferenceError', "Can't find variable: BigInt64Array", [{ function: 'runAction', filename: 'https://www.emmerdaleagriculture.com/_next/static/chunks/x.js' }]))).toBe(true);
+    expect(isNoise({ message: 'Event `Event` (type=error) captured as promise rejection' } as unknown as ErrorEvent)).toBe(true);
+  });
+
   it('keeps network failures and ordinary errors', () => {
     expect(isNoise(ev('TypeError', 'Load failed', [{ function: 'fetchServerAction', filename: 'https://www.emmerdaleagriculture.com/_next/static/chunks/a.js' }]))).toBe(false);
     expect(isNoise(ev('TypeError', 'Load failed'))).toBe(false);
