@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { startTransition, useActionState, useState } from 'react';
 import { emptyFormState } from '@/lib/form';
 import f from '@/components/forms/forms.module.css';
 import s from '../books.module.css';
@@ -19,17 +19,21 @@ export function MileageForm({
   const [state, action, pending] = useActionState(postMileageAction, emptyFormState);
   const [start, setStart] = useState('');
   const [finish, setFinish] = useState('');
-  const [miles, setMiles] = useState('');
-  // Fill business miles from the readings; the driver can still lower it if part of the trip was private.
-  const onReading = (nextStart: string, nextFinish: string) => {
-    setStart(nextStart);
-    setFinish(nextFinish);
-    const d = milesFromOdometer(nextStart, nextFinish);
-    if (d !== null) setMiles(String(d));
-  };
+  const [typedMiles, setTypedMiles] = useState<string | null>(null);
   const fromReadings = milesFromOdometer(start, finish);
+  // Miles follow the readings until the driver types their own figure (e.g. part of the trip was private).
+  const miles = typedMiles ?? (fromReadings === null ? '' : String(fromReadings));
   return (
-    <form action={action} className={s.form}>
+    <form
+      className={s.form}
+      // Submitted by hand rather than action= so React doesn't reset the
+      // uncontrolled fields after a refused post while the readings stay.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        startTransition(() => action(fd));
+      }}
+    >
       <div className={s.row2}>
         <label className={f.field}>
           <span className={f.label}>Date</span>
@@ -48,7 +52,7 @@ export function MileageForm({
             name="odometer_start"
             inputMode="decimal"
             value={start}
-            onChange={(e) => onReading(e.target.value, finish)}
+            onChange={(e) => setStart(e.target.value)}
             placeholder="e.g. 45210"
           />
         </label>
@@ -59,7 +63,7 @@ export function MileageForm({
             name="odometer_finish"
             inputMode="decimal"
             value={finish}
-            onChange={(e) => onReading(start, e.target.value)}
+            onChange={(e) => setFinish(e.target.value)}
             placeholder="e.g. 45262"
           />
         </label>
@@ -70,14 +74,16 @@ export function MileageForm({
             name="miles"
             inputMode="decimal"
             value={miles}
-            onChange={(e) => setMiles(e.target.value)}
+            onChange={(e) => setTypedMiles(e.target.value === '' ? null : e.target.value)}
             required
           />
         </label>
       </div>
       <p className={f.hint}>
         {fromReadings !== null
-          ? `${fromReadings.toLocaleString('en-GB')} miles from the readings. Lower it if part of the trip was private.`
+          ? typedMiles !== null && typedMiles !== String(fromReadings)
+            ? `The readings show ${fromReadings.toLocaleString('en-GB')} miles.`
+            : `${fromReadings.toLocaleString('en-GB')} miles from the readings. Lower it if part of the trip was private.`
           : 'Give the odometer readings and we’ll work out the miles, or just type the miles in.'}
       </p>
       <div className={s.row2}>

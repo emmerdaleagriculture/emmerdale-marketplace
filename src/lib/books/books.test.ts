@@ -156,6 +156,12 @@ describe('mileage', () => {
     expect(p.entry.description).toBe('Mileage: 10 miles at 55p/mile (Romsey – Andover · Site visit)');
   });
   it('switches to 25p after 10,000 miles in the tax year', () => {
+    expect(mileageAmount(100, 9950)).toEqual({ pence: 50 * 55 + 50 * 25, highMiles: 50, lowMiles: 50 });
+    expect(mileageAmount(10, 12000).pence).toBe(250);
+    expect(mileageAmount(0.5, 0).pence).toBe(28); // 27.5 → 28
+  });
+
+  it('works out miles from odometer readings', () => {
     expect(milesFromOdometer('45,210', '45262')).toBe(52);
     expect(milesFromOdometer('100.2', '150.5')).toBe(50.3);
     expect(milesFromOdometer('500', '400')).toBeNull();
@@ -167,9 +173,6 @@ describe('mileage', () => {
         0,
       ).entry.description,
     ).toContain('odometer 45,210–45,262');
-    expect(mileageAmount(100, 9950)).toEqual({ pence: 50 * 55 + 50 * 25, highMiles: 50, lowMiles: 50 });
-    expect(mileageAmount(10, 12000).pence).toBe(250);
-    expect(mileageAmount(0.5, 0).pence).toBe(28); // 27.5 → 28
   });
   it('tax years run 6 April to 5 April', () => {
     expect(taxYearOf('2026-04-05')).toEqual({ from: '2025-04-06', to: '2026-04-05' });

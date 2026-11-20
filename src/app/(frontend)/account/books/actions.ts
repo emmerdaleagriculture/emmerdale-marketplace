@@ -263,6 +263,7 @@ export async function postMileageAction(_prev: FormState, fd: FormData): Promise
   const ledger = gate.ledger;
   const date = str(fd, 'date');
   const driver = str(fd, 'driver');
+  const miles = Number(str(fd, 'miles'));
   const odoStart = str(fd, 'odometer_start');
   const odoFinish = str(fd, 'odometer_finish');
   let odometer: { start: number; finish: number } | null = null;
@@ -270,19 +271,17 @@ export async function postMileageAction(_prev: FormState, fd: FormData): Promise
     const start = parseOdometer(odoStart);
     const finish = parseOdometer(odoFinish);
     if (start === null || finish === null) return { error: 'Enter both odometer readings, or leave both blank.' };
-    if (milesFromOdometer(odoStart, odoFinish) === null) return { error: 'The finish reading should be higher than the start.' };
+    const shown = milesFromOdometer(odoStart, odoFinish);
+    if (shown === null) return { error: 'The finish reading should be higher than the start.' };
+    if (miles > shown) return { error: `Business miles can’t be more than the ${shown.toLocaleString('en-GB')} the readings show.` };
     odometer = { start, finish };
-  }
-  const milesRaw = str(fd, 'miles');
-  const miles = milesRaw ? Number(milesRaw) : odometer ? Math.round((odometer.finish - odometer.start) * 10) / 10 : NaN;
-  if (odometer && miles > odometer.finish - odometer.start + 0.05) {
-    return { error: 'Business miles can’t be more than the odometer readings show.' };
   }
   const payCode = str(fd, 'pay_code') || personalAccountCode(businessTypeOf(ledger));
   if (!isIsoDate(date)) return { error: 'Enter the date of the journey.' };
   if (date > todayUk()) return { error: 'A mileage claim can’t be in the future.' };
   if (!driver) return { error: 'Enter who drove.' };
-  if (!(miles > 0 && miles <= 2000) || Math.round(miles * 10) !== miles * 10) {
+  if (miles > 2000) return { error: 'One claim can be up to 2,000 miles. Split a longer run into separate journeys.' };
+  if (!(miles > 0) || Math.round(miles * 10) !== miles * 10) {
     return { error: 'Enter the business miles (up to one decimal place).' };
   }
   const accounts = await getAccounts(ledger.id);
