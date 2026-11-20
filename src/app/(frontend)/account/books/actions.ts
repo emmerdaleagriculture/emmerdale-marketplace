@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { FormState } from '@/lib/form';
-import { BUSINESS_TYPES, chartFor, isBankAccount, personalAccountCode, type BusinessType } from '@/lib/books/chart';
+import { BUSINESS_TYPES, chartFor, ownerAccountsFor, isBankAccount, personalAccountCode, type BusinessType } from '@/lib/books/chart';
 import { parsePounds } from '@/lib/books/money';
 import { buildPosting, validateDoc, type Posting } from '@/lib/books/posting';
 import { buildMileagePosting, taxYearOf } from '@/lib/books/mileage';
@@ -184,14 +184,39 @@ export async function saveSettingsAction(_prev: FormState, fd: FormData): Promis
   const parsed = readSettings(fd);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Please check the details.' };
   const row = settingsRow(parsed.data);
-  // The chart was seeded for the business type; changing type later doesn't re-seed.
-  const rest: Partial<typeof row> = { ...row };
-  delete rest.business_type;
   const accounts = await getAccounts(gate.ledger.id);
-  if (!accounts.some((a) => a.code === rest.default_payment_account && isBankAccount(a))) {
+  if (!accounts.some((a) => a.code === row.default_payment_account && isBankAccount(a))) {
     return { error: 'Choose a bank or card account as the default.' };
   }
-  const { error } = await createServiceRoleClient().from('books_ledgers').update(rest).eq('id', gate.ledger.id);
+  const admin = createServiceRoleClient();
+  // A new business type brings its own accounts for paying the owner
+  // (Director's loan and Share capital, or Capital introduced and Drawings).
+  // Entries already posted stay where they are.
+  if (row.business_type !== gate.ledger.business_type) {
+    const { error: accErr } = await admin.from('books_accounts').upsert(
+      ownerAccountsFor(row.business_type).map((a) => ({
+        ledger_id: gate.ledger!.id,
+        code: a.code,
+        name: a.name,
+        type: a.type,
+        description: a.description ?? null,
+      })),
+      { onConflict: 'ledger_id,code' },
+    );
+    if (accErr) {
+      console.error('books type switch accounts failed', { ledger: gate.ledger.id, error: accErr.message });
+      return { error: 'That didn’t save. Please try again.' };
+    }
+  }
+  const update: typeof row & { tax_profile?: Json } = { ...row };
+  if (row.business_type !== gate.ledger.business_type) {
+    // The tax page's own structure follows (an LLP stays an LLP as a partnership).
+    const profile = (gate.ledger.tax_profile && typeof gate.ledger.tax_profile === 'object' ? gate.ledger.tax_profile : {}) as Record<string, unknown>;
+    if (!(row.business_type === 'partnership' && profile.structure === 'llp')) {
+      update.tax_profile = { ...profile, structure: row.business_type } as Json;
+    }
+  }
+  const { error } = await admin.from('books_ledgers').update(update).eq('id', gate.ledger.id);
   if (error) return { error: 'That didn’t save. Please try again.' };
   revalidateBooks();
   return { ok: true, message: 'Saved.' };

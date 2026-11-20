@@ -1,9 +1,10 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { startTransition, useActionState, useState } from 'react';
 import { emptyFormState, type FormState } from '@/lib/form';
 import f from '@/components/forms/forms.module.css';
 import s from './books.module.css';
+import { CopyText } from './CopyText';
 
 export type SettingsValues = {
   business_type: string;
@@ -59,22 +60,34 @@ export function SettingsForm({
   const [ym, yd] = (values.year_end ?? '').split('-');
 
   return (
-    <form action={formAction} className={s.form}>
+    <form
+      className={s.form}
+      // Submitted by hand, not through the action prop: React resets a form
+      // after its action runs, and the controlled selects and tick boxes
+      // (business type, VAT) then showed their first-loaded values again.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        startTransition(() => formAction(fd));
+      }}
+    >
       <fieldset className={s.fieldset}>
         <legend>Your business</legend>
-        {setup ? (
-          <label className={f.field}>
-            <span className={f.label}>Business type</span>
-            <select className={f.input} name="business_type" value={type} onChange={(e) => setType(e.target.value)}>
-              <option value="sole_trader">Sole trader</option>
-              <option value="partnership">Partnership</option>
-              <option value="limited_company">Limited company</option>
-            </select>
-            <span className={f.hint}>This sets up the right accounts for paying yourself. It can’t be changed later.</span>
-          </label>
-        ) : (
-          <input type="hidden" name="business_type" value={values.business_type} />
-        )}
+        <label className={f.field}>
+          <span className={f.label}>Business type</span>
+          <select className={f.input} name="business_type" value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="sole_trader">Sole trader</option>
+            <option value="partnership">Partnership</option>
+            <option value="limited_company">Limited company</option>
+          </select>
+          <span className={f.hint}>
+            {setup
+              ? 'This sets up the right accounts for paying yourself.'
+              : type !== values.business_type
+                ? 'Saving adds the right accounts for paying yourself. Entries you’ve already posted stay as they are.'
+                : 'Sets the accounts for paying yourself: a director’s loan for a company, drawings otherwise.'}
+          </span>
+        </label>
         <label className={f.field}>
           <span className={f.label}>Legal name</span>
           <input className={f.input} name="legal_name" defaultValue={values.legal_name} required maxLength={200} />
@@ -175,10 +188,13 @@ export function SettingsForm({
       {!setup && receiptsAddress && (
         <fieldset className={s.fieldset}>
           <legend>Receipts by email</legend>
-          <p className={f.hint}>
-            Forward receipts and invoices to <b style={{ overflowWrap: 'anywhere' }}>{receiptsAddress}</b>. Attachments (PDFs and photos) are read by AI; an
-            email with none, like most online order confirmations, is read itself.
-          </p>
+          <div className={f.hint}>
+            <p style={{ margin: 0 }}>Forward receipts and invoices to:</p>
+            <CopyText text={receiptsAddress} />
+            <p style={{ margin: 0 }}>
+              Attachments (PDFs and photos) are read by AI; an email with none, like most online order confirmations, is read itself.
+            </p>
+          </div>
           <label className={f.field}>
             <span className={f.label}>Other addresses you send from</span>
             <textarea className={f.textarea} name="inbound_senders" rows={3} defaultValue={values.inbound_senders.join('\n')} />
