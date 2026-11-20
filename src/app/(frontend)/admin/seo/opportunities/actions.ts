@@ -15,13 +15,20 @@ const NEXT: Record<string, 'approved' | 'completed' | 'rejected' | 'pending'> = 
  * Review decision on one opportunity. Every decision stamps decided_at,
  * which is what starts (or, on reopen, clears) the 120-day cooldown and what
  * the outcome check measures from.
+ *
+ * The decision is bound per button (formAction), not read from the
+ * submitter's name/value: a server-action form posts only its fields, so
+ * the clicked button's value never arrived and every click did nothing.
  */
-export async function decideOpportunityAction(formData: FormData) {
+export async function decideOpportunityAction(decision: string, formData: FormData) {
   const user = await getUser();
   if (!user || !isAdminEmail(user.email)) throw new Error('Not authorised');
   const id = Number(formData.get('id'));
-  const status = NEXT[String(formData.get('decision') ?? '')];
-  if (!Number.isInteger(id) || !status) return;
+  const status = NEXT[decision];
+  if (!Number.isInteger(id) || !status) {
+    console.error('[seo-opportunities] decision ignored', { id, decision });
+    return;
+  }
   const note = String(formData.get('note') ?? '').trim();
 
   const db = createServiceRoleClient();

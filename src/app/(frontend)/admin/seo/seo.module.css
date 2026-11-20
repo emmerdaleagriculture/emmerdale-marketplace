@@ -276,3 +276,71 @@
 .table a:hover {
   text-decoration: underline;
 }
+
+/* Cheatcode opportunities: inline grey text (.muted is a padded box and
+   overlapped when used inside a line), a readable "why" block, tabs that
+   wrap as pills, and a decision row that stacks on a phone. */
+.dim {
+  color: #5f5e57;
+  font-size: 14px;
+}
+.why {
+  white-space: pre-wrap;
+  color: #4a4944;
+  font-size: 14.5px;
+  line-height: 1.5;
+  background: #fafaf7;
+  border: 1px solid #ece9dd;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+.oppTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 16px;
+}
+.oppTabs a {
+  padding: 6px 12px;
+  border: 1px solid #ece9dd;
+  border-radius: 999px;
+  font-size: 14px;
+  color: #2c2c2a;
+  text-decoration: none;
+  background: #fff;
+}
+.oppTabs a[aria-current='page'] {
+  background: #17330d;
+  border-color: #17330d;
+  color: #fff;
+}
+.opp {
+  margin-bottom: 16px;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.opp h2 {
+  overflow-wrap: anywhere;
+}
+.decide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+.decideNote {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 16px;
+  border: 1px solid #d9d5c7;
+  border-radius: 6px;
+}
+@media (max-width: 560px) {
+  .decide > button {
+    flex: 1 1 auto;
+  }
+}
