@@ -51,6 +51,7 @@ type IconName =
   | 'price'
   | 'board'
   | 'won'
+  | 'diary'
   | 'star'
   | 'myjobs'
   | 'quote'
@@ -77,6 +78,12 @@ type Group = {
 };
 
 const ICON_PATHS: Record<IconName, ReactNode> = {
+  diary: (
+    <>
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <path d="M4 10h16M8 3v4M16 3v4" />
+    </>
+  ),
   how: (
     <>
       <circle cx="12" cy="12" r="9" />
@@ -286,6 +293,7 @@ export function SiteNav({ viewer: known, defaultOpen = false }: { viewer?: Viewe
           // route to it from the header. /jobs/new hangs off it.
           { href: '/jobs', label: 'Open jobs', icon: 'board' },
           { href: '/won', label: 'Won jobs', icon: 'won' },
+          { href: '/app/diary', label: 'Diary', icon: 'diary' },
         ],
       });
       // Where they stand with us, and the way up if they are on the free
