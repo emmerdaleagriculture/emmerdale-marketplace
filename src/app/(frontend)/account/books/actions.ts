@@ -8,7 +8,7 @@ import type { FormState } from '@/lib/form';
 import { BUSINESS_TYPES, chartFor, ownerAccountsFor, isBankAccount, personalAccountCode, type BusinessType } from '@/lib/books/chart';
 import { parsePounds } from '@/lib/books/money';
 import { buildPosting, validateDoc, type Posting } from '@/lib/books/posting';
-import { buildMileagePosting, taxYearOf } from '@/lib/books/mileage';
+import { buildMileagePosting, milesFromOdometer, parseOdometer, taxYearOf } from '@/lib/books/mileage';
 import { cleanVatNumber, isVatCode } from '@/lib/books/vat';
 import { parseSenders } from '@/lib/books/inbound';
 import { isIsoDate, todayUk } from '@/lib/books/period';
@@ -263,7 +263,21 @@ export async function postMileageAction(_prev: FormState, fd: FormData): Promise
   const ledger = gate.ledger;
   const date = str(fd, 'date');
   const driver = str(fd, 'driver');
-  const miles = Number(str(fd, 'miles'));
+  const odoStart = str(fd, 'odometer_start');
+  const odoFinish = str(fd, 'odometer_finish');
+  let odometer: { start: number; finish: number } | null = null;
+  if (odoStart || odoFinish) {
+    const start = parseOdometer(odoStart);
+    const finish = parseOdometer(odoFinish);
+    if (start === null || finish === null) return { error: 'Enter both odometer readings, or leave both blank.' };
+    if (milesFromOdometer(odoStart, odoFinish) === null) return { error: 'The finish reading should be higher than the start.' };
+    odometer = { start, finish };
+  }
+  const milesRaw = str(fd, 'miles');
+  const miles = milesRaw ? Number(milesRaw) : odometer ? Math.round((odometer.finish - odometer.start) * 10) / 10 : NaN;
+  if (odometer && miles > odometer.finish - odometer.start + 0.05) {
+    return { error: 'Business miles can’t be more than the odometer readings show.' };
+  }
   const payCode = str(fd, 'pay_code') || personalAccountCode(businessTypeOf(ledger));
   if (!isIsoDate(date)) return { error: 'Enter the date of the journey.' };
   if (date > todayUk()) return { error: 'A mileage claim can’t be in the future.' };
@@ -289,7 +303,7 @@ export async function postMileageAction(_prev: FormState, fd: FormData): Promise
   if (error) return { error: 'That didn’t post. Please try again.' };
   const err = await post(
     ledger.id,
-    buildMileagePosting({ date, driver, miles, journey: str(fd, 'journey'), purpose: str(fd, 'purpose'), payCode }, Number(claimed ?? 0)),
+    buildMileagePosting({ date, driver, miles, journey: str(fd, 'journey'), purpose: str(fd, 'purpose'), payCode, odometer }, Number(claimed ?? 0)),
   );
   if (err) return { error: err };
   revalidateBooks();
