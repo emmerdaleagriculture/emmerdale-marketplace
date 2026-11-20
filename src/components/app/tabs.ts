@@ -5,7 +5,7 @@ import type { ViewerRole } from '@/components/useViewer';
  *
  *   Customers:    Home · My jobs · Messages · Account
  *   Contractors:  Dashboard · Earnings · [Books] · Diary · Messages · Jobs
- *                 (Books only where they have it; Jobs at the right,
+ *                 (Books for every contractor since 2026-11-20; Jobs at the right,
  *                 beside the Back slot AppShell adds on inner screens)
  *
  * Each points at an existing page where one exists. "Diary" is the user's

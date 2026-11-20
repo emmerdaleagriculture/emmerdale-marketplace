@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { loadBooks, recentEntries, trialBalance } from '@/lib/books/server';
 import { formatPence } from '@/lib/books/money';
@@ -10,6 +9,7 @@ import s from './books.module.css';
 import { BooksFrame } from './BooksFrame';
 import { Icon, Tile, Tiles } from './BooksUi';
 import { SettingsForm } from './SettingsForm';
+import { BooksPreview } from './BooksPreview';
 import { createLedgerAction } from './actions';
 import { syncLedgerMarketplace } from '@/lib/books/marketplace.server';
 
@@ -23,7 +23,7 @@ const POSTED: Record<string, string> = {
 
 /**
  * Books home. No books yet: a Premium member sets them up here; anyone else
- * sees what Books is (on the web; the app never sells membership). With
+ * sees the page with sample figures under a Premium overlay (BooksPreview). With
  * books: bank balance, this year's figures, and the latest entries.
  */
 export default async function BooksPage({ searchParams }: { searchParams: Promise<{ posted?: string }> }) {
@@ -32,22 +32,10 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
 
   if (!access.ledger) {
     if (!access.canEdit) {
-      if (access.app) redirect('/invitations');
+      // Without Premium: the page as members see it, faded under a Premium card.
       return (
         <BooksFrame access={access} title="Books" tab={null}>
-          <p className={m.lead}>
-            <b>Premium members keep their books here.</b> Snap or email receipts and AI posts them for you,
-            send invoices customers can pay by card, claim mileage at the HMRC rate, and see your VAT return,
-            profit and loss and trial balance at any time.
-          </p>
-          <div className={m.pitch}>
-            <h2>Part of Premium membership</h2>
-            <p>
-              Premium is £49 a month or £399 a year, and includes first look at every new job, the
-              customer’s contact details on every invitation, market data, council tenders and Books.
-            </p>
-            <Link href="/account/membership">See the membership tiers →</Link>
-          </div>
+          <BooksPreview app={access.app} />
         </BooksFrame>
       );
     }

@@ -1,5 +1,4 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { membershipOf } from '@/lib/membership';
 
 /**
  * Books is released account by account while it's trialled. app_config
@@ -33,17 +32,12 @@ export async function booksAllowList(): Promise<(email: string | null | undefine
 }
 
 /**
- * Whether the app's tab bar shows Books (src/components/app/tabs.ts): the
- * same test as the dashboard's Books link in the app — released to them,
- * an approved contractor, and on Premium. The app never sells membership,
- * so nobody without it is shown the way in.
+ * Whether the app's tab bar shows Books (src/components/app/tabs.ts): every
+ * contractor, since 2026-11-20. Members get their books; anyone without
+ * Premium gets the page with sample figures under a Premium overlay
+ * (BooksPreview), which says what it is without selling it in the app.
  */
-export async function booksTabFor(userId: string, email: string | null | undefined): Promise<boolean> {
-  if (!(await booksAllowed(email))) return false;
-  const admin = createServiceRoleClient();
-  const [{ data: c }, { data: sub }] = await Promise.all([
-    admin.from('contractors').select('status, premium_comped_until, open_comped_until').eq('id', userId).maybeSingle(),
-    admin.from('subscriptions').select('status, tier').eq('contractor_id', userId).maybeSingle(),
-  ]);
-  return Boolean(c && c.status === 'approved' && membershipOf(sub, c) === 'open');
+export async function booksTabFor(userId: string, _email?: string | null): Promise<boolean> {
+  const { data: c } = await createServiceRoleClient().from('contractors').select('id').eq('id', userId).maybeSingle();
+  return Boolean(c);
 }
