@@ -30,7 +30,8 @@ const IN_MS = 260;
 
 /**
  * Swipe sideways to move between the bottom tabs: right to left for the next
- * tab, left to right for the one before, as the tab bar is laid out. The
+ * tab, left to right for the one before, as the tab bar is laid out, and
+ * round again past either end (last → first, first → last). The
  * screen's <main> follows the finger; a release past the trigger (or a quick
  * flick) carries it off the side, and the new tab's <main> slides in from
  * the other side when it arrives, like turning a page. Short of that it
@@ -92,8 +93,11 @@ export function SwipeTabs({
     if (!tabs || !currentKey) return;
     const i = tabs.findIndex((t) => t.key === currentKey);
     if (i < 0) return;
-    const prev = tabs[i - 1] ?? null;
-    const next = tabs[i + 1] ?? null;
+    // The row loops: past the last tab is the first, before the first is the
+    // last, so nobody has to swipe all the way back.
+    const n = tabs.length;
+    const prev = n > 1 ? tabs[(i - 1 + n) % n] : null;
+    const next = n > 1 ? tabs[(i + 1) % n] : null;
 
     let startX = 0;
     let startY = 0;
@@ -157,7 +161,8 @@ export function SwipeTabs({
       swiping = false;
       const m = main;
       const flick = Math.abs(dx) > 24 && Math.abs(v) > FLICK && Math.sign(v) === Math.sign(dx);
-      const to = dx <= -TRIGGER || (flick && dx < 0) ? next : dx >= TRIGGER || (flick && dx > 0) ? prev : null;
+      const forward = dx <= -TRIGGER || (flick && dx < 0);
+      const to = forward ? next : dx >= TRIGGER || (flick && dx > 0) ? prev : null;
       dx = 0;
       if (!m) return;
       if (!to) {
@@ -166,7 +171,8 @@ export function SwipeTabs({
       }
       // Off the side it was going, and the new one comes in from the other.
       const w = window.innerWidth;
-      const out = to === next ? -w : w;
+      // From the swipe, not the tab: with two tabs, next and prev are the same one.
+      const out = forward ? -w : w;
       m.style.transition = `transform ${OUT_MS}ms ${EASE}`;
       m.style.transform = `translateX(${out}px)`;
       const timer = setTimeout(() => {
