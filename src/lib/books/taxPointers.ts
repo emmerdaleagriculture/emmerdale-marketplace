@@ -130,7 +130,7 @@ export type TaxEstimate = {
 };
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
-const gbp = (p: number) => `£${Math.round(p / 100).toLocaleString('en-GB')}`;
+export const gbp = (p: number) => `£${Math.round(p / 100).toLocaleString('en-GB')}`;
 
 const VEHICLES = '0050';
 const ENTERTAINMENT = '6960';

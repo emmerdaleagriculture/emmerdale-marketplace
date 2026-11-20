@@ -37,6 +37,14 @@ export type TaxYearRates = {
   tradingAllowance: number;
   staffPartyPerHead: number;
   trivialBenefit: number;
+  /** Yearly cap on trivial benefits for a director of a close company. */
+  trivialDirectorCap: number;
+  /** Employment Allowance off the employer National Insurance bill. */
+  employmentAllowance: number;
+  /** National Living Wage (21 and over), per hour. */
+  livingWage: number;
+  /** Company car benefit for a zero-emission car, as a share of list price. */
+  electricCarBenefit: number;
   /** Self Assessment bill above which payments on account are due. */
   paymentsOnAccountFrom: number;
 };
@@ -67,6 +75,8 @@ const COMMON = {
   tradingAllowance: P(1_000),
   staffPartyPerHead: P(150),
   trivialBenefit: P(50),
+  trivialDirectorCap: P(300),
+  employmentAllowance: P(10_500),
   paymentsOnAccountFrom: P(1_000),
 };
 
@@ -74,6 +84,8 @@ export const TAX_YEARS: TaxYearRates[] = [
   {
     ...COMMON,
     year: 2025,
+    livingWage: P(12.21),
+    electricCarBenefit: 0.03,
     // Rate limits after the allowance: starter to £15,397, basic to £27,491,
     // intermediate to £43,662, higher to £75,000, advanced to £125,140.
     scottishIncomeTax: [
@@ -89,6 +101,8 @@ export const TAX_YEARS: TaxYearRates[] = [
   {
     ...COMMON,
     year: 2026,
+    livingWage: P(12.71),
+    electricCarBenefit: 0.04,
     // Starter to £16,537, basic to £29,526, intermediate to £43,662,
     // higher to £75,000, advanced to £125,140.
     scottishIncomeTax: [
