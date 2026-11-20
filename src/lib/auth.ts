@@ -68,10 +68,28 @@ export async function nonContractorPath(userId: string): Promise<string> {
       .select('id')
       .eq('id', userId)
       .maybeSingle();
-    return data ? '/my' : '/onboarding';
+    if (data) return '/my';
+    // Someone a contractor shared their books with (an accountant) has no
+    // contractor or customer row; their place is the books, not onboarding.
+    return (await viewsBooks(userId)) ? '/account/books' : '/onboarding';
   } catch (err) {
     console.error('[auth] customer lookup failed:', err);
     return '/onboarding';
+  }
+}
+
+/** Whether this person has accepted access to someone's books (books_viewers). */
+async function viewsBooks(userId: string): Promise<boolean> {
+  try {
+    const { data } = await createServiceRoleClient()
+      .from('books_viewers')
+      .select('id')
+      .eq('user_id', userId)
+      .is('revoked_at', null)
+      .limit(1);
+    return Boolean(data?.length);
+  } catch {
+    return false;
   }
 }
 
@@ -117,6 +135,7 @@ export async function postLoginPath(
     if (contractor.data && customer.data) return asCustomer;
     if (contractor.data) return '/account';
     if (customer.data) return '/my';
+    if (await viewsBooks(userId)) return '/account/books';
     return asCustomer;
   } catch (err) {
     // Never strand someone at a blank page over a failed lookup.
