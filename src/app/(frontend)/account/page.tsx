@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -31,6 +32,7 @@ import ac from './account.module.css';
 import { LogoutButton, ThemeRow } from '@/components/app/PushControls';
 import ui from '../app/app-ui.module.css';
 import { Actions, AppHero, Attention, Shortcuts, Tile, Tiles, type IconName, type TileTone } from '@/components/app/AppKit';
+import { FreshOnReturn } from './FreshOnReturn';
 
 export const metadata: Metadata = {
   title: 'Your dashboard',
@@ -311,6 +313,7 @@ export default async function AccountPage({
       <div className={a.wrap}>
         <SiteHeader />
         <SettingsHashRedirect />
+        <FreshOnReturn stamp={randomUUID()} />
         <main className={ac.dash}>
           {app ? (
             <div className={ac.appTop}>
