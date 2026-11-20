@@ -31,6 +31,10 @@
     {
       "path": "/api/cron/books-marketplace-sync",
       "schedule": "35 4 * * *"
+    },
+    {
+      "path": "/api/cron/heartbeat",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

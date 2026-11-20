@@ -286,3 +286,23 @@ export async function loadSentryIssueDetail(id: string): Promise<SentryIssueDeta
     return { configured: true, ok: false, error: err instanceof Error ? err.message : 'could not reach Sentry' };
   }
 }
+
+/**
+ * Mark an issue resolved in Sentry (Admin › Errors, "Resolve"). Needs a token
+ * with event:write; the read token may only have event:read, in which case
+ * Sentry answers 403 and the page says so rather than pretending.
+ */
+export async function resolveSentryIssue(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const token = process.env.SENTRY_READ_TOKEN || process.env.SENTRY_AUTH_TOKEN;
+  if (!token) return { ok: false, error: 'No Sentry token is set.' };
+  if (!/^\d+$/.test(id)) return { ok: false, error: 'Not a Sentry issue id.' };
+  const res = await fetch(`${apiBase()}/organizations/${ORG}/issues/?id=${id}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'resolved' }),
+    signal: AbortSignal.timeout(8000),
+  });
+  if (res.ok) return { ok: true };
+  if (res.status === 403) return { ok: false, error: 'Sentry refused (403): the token needs the event:write scope. Resolve it in Sentry instead.' };
+  return { ok: false, error: `Sentry answered ${res.status}.` };
+}

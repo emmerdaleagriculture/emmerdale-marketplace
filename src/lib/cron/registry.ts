@@ -24,6 +24,13 @@ export type CronJob = {
 
 export const HTTP_CRONS: CronJob[] = [
   {
+    name: 'heartbeat',
+    path: '/api/cron/heartbeat',
+    schedule: '*/15 * * * *',
+    everyMinutes: 15,
+    what: 'Checks every job here, the queues, Books, Stripe and Resend, and the site itself; results on Admin › Errors.',
+  },
+  {
     name: 'books-stripe-sync',
     path: '/api/cron/books-stripe-sync',
     schedule: '20 4 * * *',

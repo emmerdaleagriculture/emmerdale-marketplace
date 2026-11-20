@@ -1613,6 +1613,18 @@ export type Database = {
         }
         Relationships: []
       }
+      heartbeat_results: {
+        Row: { id: number; run_id: string; checked_at: string; check_name: string; ok: boolean; detail: string | null; ms: number | null }
+        Insert: { id?: number; run_id: string; checked_at?: string; check_name: string; ok: boolean; detail?: string | null; ms?: number | null }
+        Update: { id?: number; run_id?: string; checked_at?: string; check_name?: string; ok?: boolean; detail?: string | null; ms?: number | null }
+        Relationships: []
+      }
+      admin_error_acks: {
+        Row: { section: string; key: string; acked_at: string; acked_by: string | null }
+        Insert: { section: string; key: string; acked_at?: string; acked_by?: string | null }
+        Update: { section?: string; key?: string; acked_at?: string; acked_by?: string | null }
+        Relationships: []
+      }
       books_viewers: {
         Row: {
           id: number

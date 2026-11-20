@@ -15,17 +15,24 @@ import type { ErrorEvent } from '@sentry/nextjs';
  * window.webkit.messageHandlers, so an error that passes through our code is
  * kept. "Load failed" network drops are kept too: they can mean a real outage.
  *
- * Also dropped: "Server Action … was not found on the server", a tab left open
- * across a deploy calling an action the new build no longer has.
+ * Also dropped: "Server Action … was not found on the server" and Next's newer
+ * wording "Failed to find Server Action", a tab left open across a deploy
+ * calling an action the new build no longer has; "Can't find variable:
+ * BigInt64Array", a browser too old to run the site at all (iOS 14 and
+ * earlier), which no change of ours fixes; and "Event `Event` (type=error)
+ * captured as promise rejection", a failed third-party script or image load
+ * with no message and no stack (39 of them by 2026-11-20, none actionable).
  */
 const INJECTED_MESSAGES = [/_META\.IABInnerFrame/, /window\.webkit\.messageHandlers/];
 const INJECTED_FUNCTIONS = new Set(['dispatchToBridge', 'sendDataToNative']);
-const STALE_ACTION = /Server Action "[^"]*" was not found on the server/;
+const STALE_ACTION = /Server Action "[^"]*" was not found on the server|Failed to find Server Action/;
+const UNACTIONABLE = [/Can't find variable: BigInt64Array/, /^Event: Event `Event` \(type=error\) captured as promise rejection/, /Event `Event` \(type=error\) captured as promise rejection/];
 
 export function isNoise(event: ErrorEvent): boolean {
   const values = event.exception?.values ?? [];
   const messages = [event.message ?? '', ...values.map((v) => `${v.type ?? ''}: ${v.value ?? ''}`)];
   if (messages.some((m) => STALE_ACTION.test(m))) return true;
+  if (messages.some((m) => UNACTIONABLE.some((re) => re.test(m)))) return true;
 
   const frames = values.flatMap((v) => v.stacktrace?.frames ?? []);
   const touchesOurBundle = frames.some((f) => /\/_next\//.test(f.filename ?? f.abs_path ?? ''));

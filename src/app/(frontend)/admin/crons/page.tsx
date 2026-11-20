@@ -33,15 +33,21 @@ type Verdict = { label: string; bad: boolean };
 export default async function CronsPage() {
   const admin = createServiceRoleClient();
 
-  const [pgQ, runsQ] = await Promise.all([
+  // Per job, not one shared window: the 15-minute jobs (balances, heartbeat)
+  // write ~200 rows a day, which pushed the monthly ones out of a shared
+  // limit(200) and made them read "never seen".
+  const [pgQ, ...perJob] = await Promise.all([
     admin.rpc('cron_jobs_health'),
-    // Enough to show the last few of each without a query per job.
-    admin
-      .from('cron_runs')
-      .select('name, started_at, finished_at, ok, detail, error')
-      .order('started_at', { ascending: false })
-      .limit(200),
+    ...HTTP_CRONS.map((job) =>
+      admin
+        .from('cron_runs')
+        .select('name, started_at, finished_at, ok, detail, error')
+        .eq('name', job.name)
+        .order('started_at', { ascending: false })
+        .limit(30),
+    ),
   ]);
+  const runsQ = { error: perJob.find((q) => q.error)?.error ?? null, data: perJob.flatMap((q) => q.data ?? []) };
 
   // Same rule as /admin/errors: a failed read must not render as an all-clear.
   // This page's empty state means "nothing is scheduled", which would be the
@@ -106,7 +112,7 @@ export default async function CronsPage() {
       <Tiles>
         <Tile value={HTTP_CRONS.length + pgRows.length} label="Scheduled" hint={<>{HTTP_CRONS.length} on Vercel, {pgRows.length} in Postgres</>} />
         <Tile value={unhealthy} label="Needing a look" hint="late, failing, or never seen" />
-        <Tile value={runs.length} label="Runs recorded" hint="HTTP crons, last 200" />
+        <Tile value={runs.length} label="Runs recorded" hint="HTTP crons, last 30 each" />
       </Tiles>
 
       <div className={s.sectionLabel}>Vercel Cron: the app&rsquo;s own endpoints</div>
