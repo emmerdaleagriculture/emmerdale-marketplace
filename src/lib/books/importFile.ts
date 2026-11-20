@@ -61,7 +61,8 @@ function firstSheetPath(files: Record<string, Uint8Array>): string | null {
   const wb = files['xl/workbook.xml'];
   const rels = files['xl/_rels/workbook.xml.rels'];
   if (wb && rels) {
-    const rid = strFromU8(wb).match(/<sheet\b[^>]*\br:id="([^"]+)"/)?.[1];
+    // The id comes from the file: keep it to plain characters before it goes in a pattern.
+    const rid = strFromU8(wb).match(/<sheet\b[^>]*\br:id="([A-Za-z0-9_-]{1,32})"/)?.[1];
     const target = rid ? strFromU8(rels).match(new RegExp(`<Relationship\\b[^>]*Id="${rid}"[^>]*Target="([^"]+)"`))?.[1] : undefined;
     const alt = rid ? strFromU8(rels).match(new RegExp(`<Relationship\\b[^>]*Target="([^"]+)"[^>]*Id="${rid}"`))?.[1] : undefined;
     const t = target ?? alt;
@@ -74,10 +75,21 @@ function firstSheetPath(files: Record<string, Uint8Array>): string | null {
   return sheets[0] ?? null;
 }
 
+const MAX_UNZIPPED = 40 * 1024 * 1024;
+
 export function readXlsx(bytes: Uint8Array): Sheet | { error: string } {
   let files: Record<string, Uint8Array>;
+  let total = 0;
   try {
-    files = unzipSync(bytes, { filter: (f) => (f.name.startsWith('xl/') && f.name.endsWith('.xml')) || f.name.endsWith('.rels') });
+    files = unzipSync(bytes, {
+      filter: (f) => {
+        if (!((f.name.startsWith('xl/') && f.name.endsWith('.xml')) || f.name.endsWith('.rels'))) return false;
+        // A small file can claim to unpack to gigabytes; a real export is a few MB at most.
+        total += f.originalSize;
+        if (total > MAX_UNZIPPED) throw new Error('too big');
+        return true;
+      },
+    });
   } catch {
     return { error: 'That Excel file can’t be opened. Try exporting it again, or as CSV.' };
   }
