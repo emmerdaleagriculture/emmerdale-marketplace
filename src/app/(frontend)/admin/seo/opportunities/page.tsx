@@ -37,18 +37,18 @@ function pathOf(url: string | null): string {
 }
 
 function Draft({ type, draft, noteId }: { type: string; draft: unknown; noteId: string | null }) {
-  if (!draft) return <p className={styles.muted}>No draft (budget or time limit, deferred, or the model returned nothing usable).</p>;
+  if (!draft) return <p className={styles.dim}>No draft (budget or time limit, deferred, or the model returned nothing usable).</p>;
   if (type === 'meta_rewrite') {
     const d = draft as MetaRewriteDraft;
     return (
       <ol>
         {d.alternatives.map((a, i) => (
           <li key={i} style={{ marginBottom: 8 }}>
-            <strong>{a.title}</strong> <span className={styles.muted}>({a.title.length})</span>
+            <strong>{a.title}</strong> <span className={styles.dim}>({a.title.length})</span>
             <br />
-            {a.meta} <span className={styles.muted}>({a.meta.length})</span>
+            {a.meta} <span className={styles.dim}>({a.meta.length})</span>
             <br />
-            <em className={styles.muted}>{a.rationale}</em>
+            <em className={styles.dim}>{a.rationale}</em>
           </li>
         ))}
       </ol>
@@ -78,13 +78,13 @@ function Draft({ type, draft, noteId }: { type: string; draft: unknown; noteId: 
             <ul>
               {d.internalLinksToAdd.map((l, i) => (
                 <li key={i}>
-                  “{l.anchor}” → <a href={l.path}>{l.path}</a> <span className={styles.muted}>({l.reason})</span>
+                  “{l.anchor}” → <a href={l.path}>{l.path}</a> <span className={styles.dim}>({l.reason})</span>
                 </li>
               ))}
             </ul>
           </>
         )}
-        <p className={styles.muted}>{d.rationale}</p>
+        <p className={styles.dim}>{d.rationale}</p>
       </div>
     );
   }
@@ -93,12 +93,12 @@ function Draft({ type, draft, noteId }: { type: string; draft: unknown; noteId: 
     <p>
       <strong>{d.title}</strong> · /notes/{d.slug}
       <br />
-      <span className={styles.muted}>{d.metaDescription}</span>
+      <span className={styles.dim}>{d.metaDescription}</span>
       <br />
       {noteId ? (
         <Link href={`/admin/notes/${noteId}`}>Open the unpublished draft note</Link>
       ) : (
-        <span className={styles.muted}>The draft note wasn’t created; the text is in the row’s draft_content.</span>
+        <span className={styles.dim}>The draft note wasn’t created; the text is in the row’s draft_content.</span>
       )}
     </p>
   );
@@ -131,9 +131,9 @@ export default async function OpportunitiesPage({
         </div>
       </header>
 
-      <nav style={{ display: 'flex', gap: 12, flexWrap: 'wrap', margin: '0 0 16px' }}>
+      <nav className={styles.oppTabs} aria-label="Opportunities">
         {TABS.map((t) => (
-          <Link key={t.key} href={`?tab=${t.key}`} aria-current={t.key === tab.key ? 'page' : undefined} style={{ fontWeight: t.key === tab.key ? 700 : 400 }}>
+          <Link key={t.key} href={`?tab=${t.key}`} aria-current={t.key === tab.key ? 'page' : undefined}>
             {t.label}
           </Link>
         ))}
@@ -152,13 +152,13 @@ export default async function OpportunitiesPage({
         const competing = (r.competing_pages as PageShare[] | null) ?? [];
         const related = (r.related_queries as Array<{ query: string }> | null) ?? [];
         return (
-          <section key={r.id} className={s.card} style={{ marginBottom: 16 }}>
+          <section key={r.id} className={`${s.card} ${styles.opp}`}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: 17 }}>
                   “{r.query}” <StatusPill status={r.status} />
                 </h2>
-                <p className={styles.muted} style={{ margin: '4px 0' }}>
+                <p className={styles.dim} style={{ margin: '4px 0' }}>
                   #{r.id} · {TYPE_LABEL[r.type] ?? r.type} · {r.intent ?? '—'} · {r.week_identified} · raised {ago(r.created_at)}
                 </p>
                 <p style={{ margin: '4px 0' }}>
@@ -174,25 +174,33 @@ export default async function OpportunitiesPage({
                 ⚠ Split: Google also shows {competing.map((p) => `${pathOf(p.page)} (${p.impressions} impr)`).join(', ')}
               </p>
             )}
-            <p className={styles.muted} style={{ whiteSpace: 'pre-wrap' }}>{r.rationale}</p>
+            <p className={styles.why}>{r.rationale}</p>
             <Draft type={r.type} draft={r.draft_content} noteId={r.related_note_id} />
             {r.review_notes && <p style={{ whiteSpace: 'pre-wrap' }}><strong>Notes:</strong> {r.review_notes}</p>}
 
             {r.status !== 'superseded' && (
-              <form action={decideOpportunityAction} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
+              <form className={styles.decide}>
                 <input type="hidden" name="id" value={r.id} />
-                <input name="note" placeholder="Note (optional)" style={{ flex: '1 1 200px', padding: 6 }} />
+                <input name="note" placeholder="Note (optional)" aria-label="Note (optional)" className={styles.decideNote} />
                 {r.status === 'pending' && (
-                  <button type="submit" name="decision" value="approve" className={s.btnApprove}>Approve</button>
+                  <button type="submit" formAction={decideOpportunityAction.bind(null, 'approve')} className={s.btnApprove}>
+                    Approve
+                  </button>
                 )}
                 {(r.status === 'pending' || r.status === 'approved') && (
                   <>
-                    <button type="submit" name="decision" value="complete" className={s.btnApprove}>Mark done</button>
-                    <button type="submit" name="decision" value="reject" className={s.btnSuspend}>Reject</button>
+                    <button type="submit" formAction={decideOpportunityAction.bind(null, 'complete')} className={s.btnApprove}>
+                      Mark done
+                    </button>
+                    <button type="submit" formAction={decideOpportunityAction.bind(null, 'reject')} className={s.btnSuspend}>
+                      Reject
+                    </button>
                   </>
                 )}
                 {(r.status === 'completed' || r.status === 'rejected') && (
-                  <button type="submit" name="decision" value="reopen" className={s.btnSuspend}>Reopen</button>
+                  <button type="submit" formAction={decideOpportunityAction.bind(null, 'reopen')} className={s.btnSuspend}>
+                    Reopen
+                  </button>
                 )}
               </form>
             )}
