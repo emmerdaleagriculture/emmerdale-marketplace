@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { membershipOf } from '@/lib/membership';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { isAppRequest } from '@/lib/appMode.server';
 import { booksAllowed } from './access';
+import { sharedLedgers, touchViewer } from './viewers.server';
 import { fetchAll } from '@/lib/supabase/fetchAll';
 import type { Database } from '@/lib/database.types';
 import type { AccountType, BusinessType } from './chart';
@@ -26,6 +28,12 @@ export type BooksAccount = {
  * access to books they already have — they are business records — and can
  * still download them. The tables are service-role only, so every page and
  * action goes through here.
+ *
+ * Someone the owner has shared their books with (an accountant: see
+ * viewers.server.ts) sees that ledger read only, with `viewing` set. They
+ * need not be a contractor at all. A person with more than one set of books
+ * to look at picks between them (the books_view cookie, set by
+ * /account/books/switch); without a choice a contractor sees their own.
  */
 export type BooksAccess = {
   userId: string;
@@ -33,9 +41,18 @@ export type BooksAccess = {
   canEdit: boolean;
   ledger: Ledger | null;
   app: boolean;
+  /** Set when these are someone else's books, shared with this person. */
+  viewing: { ownerName: string } | null;
+  /** Whether the signed-in person is a contractor (has a dashboard to go back to). */
+  isContractor: boolean;
+  /** Every set of books this person can open, when there's more than one. */
+  choices: { id: string; name: string; current: boolean }[];
 };
 
-async function resolve(): Promise<
+export const VIEW_COOKIE = 'books_view';
+export const OWN_BOOKS = 'own';
+
+async function resolve(opts: { own?: boolean } = {}): Promise<
   | { kind: 'anon' }
   | { kind: 'not-contractor'; userId: string; email: string | null }
   | { kind: 'not-released' }
@@ -46,7 +63,7 @@ async function resolve(): Promise<
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { kind: 'anon' };
-  const [{ data: contractor }, { data: sub }] = await Promise.all([
+  const [{ data: contractor }, { data: sub }, shared] = await Promise.all([
     supabase
       .from('contractors')
       .select('id, business_name, status, premium_comped_until, open_comped_until')
@@ -57,17 +74,45 @@ async function resolve(): Promise<
       .select('status, plan, tier, current_period_end')
       .eq('contractor_id', user.id)
       .maybeSingle(),
+    // Writers only ever touch their own books, so actions skip the lookup.
+    opts.own ? Promise.resolve([]) : sharedLedgers(user.id),
   ]);
-  if (!contractor) return { kind: 'not-contractor', userId: user.id, email: user.email ?? null };
-  const { data: ledger } = await createServiceRoleClient()
-    .from('books_ledgers')
-    .select('*')
-    .eq('contractor_id', user.id)
-    .maybeSingle();
+  const { data: ledger } = contractor
+    ? await createServiceRoleClient().from('books_ledgers').select('*').eq('contractor_id', user.id).maybeSingle()
+    : { data: null };
   // Released account by account while it's trialled. Someone taken off the
   // list keeps read-only access to books they already have (their records).
-  const released = await booksAllowed(user.email);
-  if (!released && !ledger) return { kind: 'not-released' };
+  const released = contractor ? await booksAllowed(user.email) : false;
+  const hasOwn = Boolean(contractor && (released || ledger));
+
+  const picked = shared.length ? (await cookies()).get(VIEW_COOKIE)?.value : undefined;
+  // A pick of someone's books wins; otherwise your own, or the first shared set if you have none.
+  const view = shared.find((s) => s.ledger.id === picked) ?? (hasOwn ? undefined : shared[0]);
+  const app = await isAppRequest();
+  const choices =
+    shared.length + (hasOwn ? 1 : 0) > 1
+      ? [
+          ...(hasOwn ? [{ id: OWN_BOOKS, name: 'Your books', current: !view }] : []),
+          ...shared.map((s) => ({ id: s.ledger.id, name: s.ownerName, current: view?.ledger.id === s.ledger.id })),
+        ]
+      : [];
+
+  if (view) {
+    void touchViewer(user.id, view.ledger.id).catch(() => {});
+    return {
+      kind: 'ok',
+      userId: user.id,
+      businessName: view.ownerName,
+      canEdit: false,
+      ledger: view.ledger,
+      app,
+      viewing: { ownerName: view.ownerName },
+      isContractor: Boolean(contractor),
+      choices,
+    };
+  }
+  if (!contractor) return { kind: 'not-contractor', userId: user.id, email: user.email ?? null };
+  if (!hasOwn) return { kind: 'not-released' };
   const canEdit = released && contractor.status === 'approved' && membershipOf(sub, contractor) === 'open';
   return {
     kind: 'ok',
@@ -75,7 +120,10 @@ async function resolve(): Promise<
     businessName: contractor.business_name,
     canEdit,
     ledger: ledger ?? null,
-    app: await isAppRequest(),
+    app,
+    viewing: null,
+    isContractor: true,
+    choices,
   };
 }
 
@@ -88,7 +136,8 @@ export async function loadBooks(next: string): Promise<BooksAccess> {
     redirect(await nonContractorPath(r.userId));
   }
   if (r.kind === 'not-released') redirect('/account');
-  return { userId: r.userId, businessName: r.businessName, canEdit: r.canEdit, ledger: r.ledger, app: r.app };
+  const { kind: _kind, ...access } = r;
+  return access;
 }
 
 /** For pages under /account/books/* that need a ledger: no ledger → the Books home. */
@@ -100,7 +149,7 @@ export async function loadLedger(next: string): Promise<BooksAccess & { ledger: 
 
 /** For server actions that change the books. */
 export async function requireBooksWriter(): Promise<{ ok: true; userId: string; ledger: Ledger | null } | { ok: false; error: string }> {
-  const r = await resolve();
+  const r = await resolve({ own: true });
   if (r.kind === 'not-released') return { ok: false, error: 'Books isn’t available on your account yet.' };
   if (r.kind !== 'ok') return { ok: false, error: 'You are not signed in as a contractor.' };
   if (!r.canEdit) {

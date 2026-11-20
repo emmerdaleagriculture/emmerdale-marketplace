@@ -50,7 +50,7 @@ export function BooksFrame({
   crumb?: string;
   children: ReactNode;
 }) {
-  const items = [{ label: 'Dashboard', href: '/account' }, ...(crumb ? [{ label: 'Books', href: '/account/books' }, { label: crumb }] : [{ label: 'Books' }])];
+  const items = [...(access.isContractor ? [{ label: 'Dashboard', href: '/account' }] : []), ...(crumb ? [{ label: 'Books', href: '/account/books' }, { label: crumb }] : [{ label: 'Books' }])];
   const name = access.ledger?.trading_name || access.ledger?.legal_name || access.businessName;
   return (
     <div className={a.wrap}>
@@ -58,6 +58,15 @@ export function BooksFrame({
       <main className={`${a.main} ${s.booksMain}`}>
         <div className={a.wide}>
           <Breadcrumb tone="light" jsonLd={false} skipHome items={items} />
+          {access.choices.length > 1 && (
+            <nav className={s.switcher} aria-label="Whose books">
+              {access.choices.map((c) => (
+                <a key={c.id} href={`/account/books/switch?to=${encodeURIComponent(c.id)}`} aria-current={c.current ? 'true' : undefined}>
+                  {c.name}
+                </a>
+              ))}
+            </nav>
+          )}
           <AppHero photo="books" name={name} title={title} />
           {access.ledger && (
             <>
@@ -78,7 +87,13 @@ export function BooksFrame({
               </nav>
             </>
           )}
-          {access.ledger && !access.canEdit && (
+          {access.viewing && (
+            <p className={s.readOnly}>
+              You’re viewing {access.viewing.ownerName}’s books, read only. You can look at and download everything; only{' '}
+              {access.viewing.ownerName} can change it.
+            </p>
+          )}
+          {access.ledger && !access.canEdit && !access.viewing && (
             <p className={s.readOnly}>
               Your books are read-only while you’re not on Premium. Everything is still here and you can
               download it from the trial balance page.{' '}
@@ -86,9 +101,11 @@ export function BooksFrame({
             </p>
           )}
           {children}
-          <p className={m.back} data-app-hide>
-            <Link href="/account">← Back to your dashboard</Link>
-          </p>
+          {access.isContractor && (
+            <p className={m.back} data-app-hide>
+              <Link href="/account">← Back to your dashboard</Link>
+            </p>
+          )}
         </div>
       </main>
       <SiteFooter />

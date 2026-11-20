@@ -46,7 +46,16 @@ export default async function SignupPage({
       <SiteHeader />
       <main className={a.main}>
         <div className={a.narrow}>
-          {isCustomerSignup(next, params.from) ? (
+          {next?.startsWith('/account/books/join/') ? (
+            <>
+              <div className={a.eyebrow}>Shared books</div>
+              <h1 className={a.title}>Create your account</h1>
+              <p className={a.sub}>
+                Use the address the invitation was sent to. Once you&rsquo;re in, the books
+                that were shared with you open straight away, read only.
+              </p>
+            </>
+          ) : isCustomerSignup(next, params.from) ? (
             <>
               <div className={a.eyebrow}>For customers</div>
               <h1 className={a.title}>Create your account</h1>

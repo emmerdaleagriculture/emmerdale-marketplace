@@ -9,6 +9,8 @@ import { SettingsForm } from '../SettingsForm';
 import { saveSettingsAction } from '../actions';
 import { StripeSettings } from '../stripe/StripeSettings';
 import { refreshAccount } from '@/lib/books/stripeConnect';
+import { listViewers, MAX_VIEWERS } from '@/lib/books/viewers.server';
+import { ViewersSection } from './ViewersSection';
 
 export const metadata: Metadata = { title: 'Books settings', robots: { index: false, follow: false } };
 
@@ -29,6 +31,15 @@ export default async function BooksSettingsPage({ searchParams }: { searchParams
     data: { user },
   } = await (await createClient()).auth.getUser();
   const email = user?.email ?? null;
+  const viewers = (await listViewers(l.id)).map((v) => ({
+    id: v.id,
+    email: v.email,
+    name: v.name,
+    accepted: Boolean(v.user_id),
+    lastSeen: v.last_seen_at
+      ? new Date(v.last_seen_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/London' })
+      : null,
+  }));
   return (
     <BooksFrame access={{ ...access, ledger: l }} title="Settings" tab="settings" crumb="Settings">
       <StripeSettings ledger={l} />
@@ -40,6 +51,7 @@ export default async function BooksSettingsPage({ searchParams }: { searchParams
         accountEmail={email}
         values={{ ...l, flat_rate_percent: l.flat_rate_percent == null ? null : Number(l.flat_rate_percent) }}
       />
+      <ViewersSection viewers={viewers} max={MAX_VIEWERS} />
     </BooksFrame>
   );
 }

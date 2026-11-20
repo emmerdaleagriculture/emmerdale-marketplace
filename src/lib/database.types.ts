@@ -1613,6 +1613,45 @@ export type Database = {
         }
         Relationships: []
       }
+      books_viewers: {
+        Row: {
+          id: number
+          ledger_id: string
+          email: string
+          name: string | null
+          token: string
+          user_id: string | null
+          invited_at: string
+          accepted_at: string | null
+          revoked_at: string | null
+          last_seen_at: string | null
+        }
+        Insert: {
+          id?: number
+          ledger_id: string
+          email: string
+          name?: string | null
+          token?: string
+          user_id?: string | null
+          invited_at?: string
+          accepted_at?: string | null
+          revoked_at?: string | null
+          last_seen_at?: string | null
+        }
+        Update: {
+          id?: number
+          ledger_id?: string
+          email?: string
+          name?: string | null
+          token?: string
+          user_id?: string | null
+          invited_at?: string
+          accepted_at?: string | null
+          revoked_at?: string | null
+          last_seen_at?: string | null
+        }
+        Relationships: []
+      }
       books_customers: {
         Row: {
           address: string | null
