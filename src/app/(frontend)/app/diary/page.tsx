@@ -2,6 +2,10 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Actions, AppHero } from '@/components/app/AppKit';
+import { SiteHeader } from '@/components/SiteHeader';
+import { SiteFooter } from '@/components/SiteFooter';
+import { isAppRequest } from '@/lib/appMode.server';
+import a from '../../auth.module.css';
 import ui from '../app-ui.module.css';
 import { Diary } from './Diary';
 import { isDay, isMonth, monthGrid, todayInLondon } from './diary';
@@ -46,7 +50,11 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
     supabase.from('contractors').select('id').eq('id', user.id).maybeSingle(),
   ]);
 
-  return (
+  // In a desktop browser the page wears the site's header and footer, so the
+  // diary is a page of the website too, not a dead end without navigation.
+  const app = await isAppRequest();
+
+  const screen = (
     <main className={ui.screen}>
       <AppHero
         photo="diary"
@@ -70,5 +78,14 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
         entries={entries ?? []}
       />
     </main>
+  );
+
+  if (app) return screen;
+  return (
+    <div className={a.wrap}>
+      <SiteHeader />
+      {screen}
+      <SiteFooter />
+    </div>
   );
 }

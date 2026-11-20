@@ -51,6 +51,7 @@ type IconName =
   | 'price'
   | 'board'
   | 'won'
+  | 'diary'
   | 'star'
   | 'myjobs'
   | 'quote'
@@ -77,6 +78,13 @@ type Group = {
 };
 
 const ICON_PATHS: Record<IconName, ReactNode> = {
+  // A bound book, so it does not read as Open jobs' calendar.
+  diary: (
+    <>
+      <path d="M6 3h12v18H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+      <path d="M8 3v18M11 8h4M11 12h4" />
+    </>
+  ),
   how: (
     <>
       <circle cx="12" cy="12" r="9" />
@@ -286,6 +294,7 @@ export function SiteNav({ viewer: known, defaultOpen = false }: { viewer?: Viewe
           // route to it from the header. /jobs/new hangs off it.
           { href: '/jobs', label: 'Open jobs', icon: 'board' },
           { href: '/won', label: 'Won jobs', icon: 'won' },
+          { href: '/app/diary', label: 'Diary', icon: 'diary' },
         ],
       });
       // Where they stand with us, and the way up if they are on the free

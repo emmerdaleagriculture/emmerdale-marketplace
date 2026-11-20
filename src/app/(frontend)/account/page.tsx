@@ -501,6 +501,9 @@ export default async function AccountPage({
                     <Link href="/won" className={ac.sideLink}>
                       Won jobs <span aria-hidden="true">›</span>
                     </Link>
+                    <Link href="/app/diary" className={ac.sideLink}>
+                      Diary <span aria-hidden="true">›</span>
+                    </Link>
                     {(tendersOn || (!isOpen && !app)) && (
                       <Link href="/account/tenders" className={ac.sideLink}>
                         <span>
