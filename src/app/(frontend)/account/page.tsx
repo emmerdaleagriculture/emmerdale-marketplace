@@ -510,7 +510,7 @@ export default async function AccountPage({
                         <span aria-hidden="true">›</span>
                       </Link>
                     )}
-                    {booksOn && (isOpen || !app) && (
+                    {booksOn && (
                       <Link href="/account/books" className={ac.sideLink}>
                         Books <span aria-hidden="true">›</span>
                       </Link>
