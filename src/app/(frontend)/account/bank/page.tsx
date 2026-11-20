@@ -62,10 +62,19 @@ export default async function BankPage() {
 
           <BankForm hasDetails={!!bank} holdHours={HOLD_HOURS} />
 
-          <p style={{ fontSize: 13.5, color: 'var(--ink-3)', marginTop: 20 }}>
-            Only Emmerdale can see these, and only to pay you. We send a code to your email before any change, tell you when
-            they change, and hold payouts to a new account for {HOLD_HOURS} hours.
-          </p>
+          <section aria-labelledby="bank-safe" style={{ marginTop: 24, borderTop: '1px solid var(--rule)', paddingTop: 16 }}>
+            <h2 id="bank-safe" style={{ fontSize: 16, margin: '0 0 8px' }}>
+              How we keep them safe
+            </h2>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14.5, color: 'var(--ink-2)', display: 'grid', gap: 6 }}>
+              <li>Encrypted on the way to us and encrypted where they’re stored, backups included.</li>
+              <li>Locked away from the rest of the site: only our payments team can read them, and only to pay you.</li>
+              <li>Never shown in full again, here or in the app: just the last four digits.</li>
+              <li>No change without a code sent to your email, and we email you whenever they change.</li>
+              <li>Payouts to a new account wait {HOLD_HOURS} hours, so there’s time to stop anything that isn’t you.</li>
+              <li>A sort code and account number only let money be paid in. Nobody can take money out with them.</li>
+            </ul>
+          </section>
         </div>
       </main>
       <SiteFooter />
