@@ -1,3 +1,4 @@
+import { CopyText } from '../CopyText';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
@@ -93,10 +94,13 @@ export default async function ReceiptsPage({ searchParams }: { searchParams: Pro
       {posted && <p className={s.notice}>Receipt posted to your books.</p>}
       {access.canEdit && <ReceiptUploader />}
       {access.canEdit && (
-        <p className={m.sub}>
-          Or email them to <b style={{ overflowWrap: 'anywhere' }}>{receiptsAddress(access.ledger.inbound_code)}</b> from your own address. Other senders can
-          be added in <Link className={s.link} href="/account/books/settings">Settings</Link>.
-        </p>
+        <div className={m.sub}>
+          <p style={{ margin: 0 }}>Or email them from your own address to:</p>
+          <CopyText text={receiptsAddress(access.ledger.inbound_code)} />
+          <p style={{ margin: 0 }}>
+            Other senders can be added in <Link className={s.link} href="/account/books/settings">Settings</Link>.
+          </p>
+        </div>
       )}
 
       {reading.length > 0 && (

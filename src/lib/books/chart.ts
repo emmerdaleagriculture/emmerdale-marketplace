@@ -88,6 +88,16 @@ const FARMING: SeedAccount[] = [
   { code: '5170', name: 'Fencing, hedging & land maintenance', type: 'expense' },
 ];
 
+/**
+ * The accounts that depend on the business type (how the owner is paid and
+ * puts money in). Switching type in Settings writes these over the chart:
+ * same codes are renamed, missing ones added, and the old type's extra
+ * account (Drawings or Director's loan) is left in place with its history.
+ */
+export function ownerAccountsFor(businessType: BusinessType): SeedAccount[] {
+  return businessType === 'limited_company' ? LIMITED : OWNER;
+}
+
 export function chartFor(businessType: BusinessType, farming: boolean): SeedAccount[] {
   const all = [...COMMON, ...(businessType === 'limited_company' ? LIMITED : OWNER), ...(farming ? FARMING : [])];
   return all.sort((a, b) => a.code.localeCompare(b.code));

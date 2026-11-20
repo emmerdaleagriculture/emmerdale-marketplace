@@ -55,7 +55,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
       <BooksFrame access={access} title="Set up your books" tab={null}>
         <p className={m.lead}>
           A proper double-entry set of books for your business. Tell us a little about it and we’ll set
-          up the accounts. You can change everything except the business type later.
+          up the accounts. You can change any of it later in Settings.
         </p>
         <SettingsForm
           action={createLedgerAction}
