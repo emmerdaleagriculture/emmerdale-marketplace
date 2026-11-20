@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: 'Trial balance', robots: { index: fal
 const TYPE_ORDER: AccountType[] = ['asset', 'liability', 'equity', 'income', 'expense'];
 
 /** Every account with its debits, credits and balance, optionally for a date range. */
-export default async function TrialBalancePage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
+export default async function TrialBalancePage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; imported?: string }> }) {
   const access = await loadLedger('/account/books/ledger');
   const sp = await searchParams;
   const from = isIsoDate(sp.from) ? sp.from : null;
@@ -30,6 +30,14 @@ export default async function TrialBalancePage({ searchParams }: { searchParams:
 
   return (
     <BooksFrame access={access} title="Trial balance" tab="ledger" crumb="Trial balance">
+      {sp.imported != null && (
+        <p className={s.notice}>
+          Starting balances posted
+          {Number(sp.imported) > 0 ? `, with ${Number(sp.imported)} new account${Number(sp.imported) === 1 ? '' : 's'}` : ''}. Check the
+          balances below against the report you exported. Got something wrong? Void the journal on
+          the <Link className={s.link} href="/account/books/journal">journal</Link> page and import again.
+        </p>
+      )}
       <DateFilter from={from} to={to} />
       {shown.length === 0 ? (
         <p className={m.sub}>Nothing posted {from || to ? 'in these dates' : 'yet'}.</p>
