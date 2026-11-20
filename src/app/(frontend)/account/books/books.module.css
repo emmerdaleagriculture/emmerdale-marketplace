@@ -373,6 +373,20 @@
   cursor: pointer;
   display: inline-block;
 }
+.cameraBtn {
+  display: none !important;
+}
+@media (pointer: coarse) {
+  .cameraBtn {
+    display: inline-block !important;
+    margin: 0 8px 8px 0;
+  }
+  .chooseBtn {
+    background: transparent;
+    color: var(--fill-green);
+    box-shadow: inset 0 0 0 2px var(--fill-green);
+  }
+}
 .uploadMessages {
   margin: 12px 0 0;
   padding-left: 18px;
