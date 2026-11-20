@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { accountingYear, addDays, todayUk } from './period';
 import { allLines, trialBalance, type Ledger } from './server';
+import { ideas } from './taxIdeas';
 import { estimate, pointers, readProfile, type ExpenseLine, type TaxInput } from './taxPointers';
 import { ratesFor, taxYearOf } from './taxRates';
 
@@ -86,5 +87,5 @@ export async function taxView(ledger: Ledger, offset: 0 | -1) {
     turnover: tb12.filter((r) => r.type === 'income').reduce((t, r) => t + r.credit_pence - r.debit_pence, 0),
   };
   const est = estimate(input);
-  return { period, partYear, rates, exact, profile, estimate: est, pointers: pointers(input, est), done: doneMap(ledger.tax_done) };
+  return { period, partYear, rates, exact, profile, estimate: est, pointers: pointers(input, est), ideas: ideas(input), done: doneMap(ledger.tax_done) };
 }

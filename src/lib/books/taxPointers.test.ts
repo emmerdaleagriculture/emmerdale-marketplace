@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { class4, corporationTax, incomeTax, ratesFor, taxYearOf } from './taxRates';
+import { ideas } from './taxIdeas';
 import { estimate, mtdPointer, pointers, readProfile, type TaxInput, type TbLine } from './taxPointers';
 
 const r26 = ratesFor(2026).rates;
@@ -144,5 +145,43 @@ describe('readProfile', () => {
     expect(readProfile(null, 'limited_company').structure).toBe('limited_company');
     expect(readProfile({ structure: 'llp' }, 'sole_trader')).toMatchObject({ structure: 'llp', profitShare: 50 });
     expect(readProfile({ profitShare: 500, otherIncome: -3 }, 'sole_trader')).toMatchObject({ profitShare: 100, otherIncome: 0 });
+  });
+});
+
+describe('ideas', () => {
+  it('shows the everyday ideas with nothing in the books', () => {
+    const list = ideas(input({ tb: [], expenseLines: [] }));
+    const keys = list.map((i) => i.key);
+    expect(keys).toEqual(expect.arrayContaining(['trivial-benefits', 'staff-party', 'family', 'customer-gifts', 'phone', 'workwear', 'training']));
+    expect(keys).not.toContain('electric-car');
+    expect(list.every((i) => !i.inUse)).toBe(true);
+    const family = list.find((i) => i.key === 'family')!;
+    expect(family.why).toContain('£12,570');
+    expect(family.why).toContain('£12.71 an hour');
+    expect(list.find((i) => i.key === 'trivial-benefits')!.why).toContain('can’t give them to yourself');
+  });
+  it('adds the company ideas and the director cap for a company', () => {
+    const list = ideas(input({ profile: readProfile({}, 'limited_company'), tb: [], expenseLines: [] }));
+    expect(list.map((i) => i.key)).toEqual(expect.arrayContaining(['eye-tests', 'electric-car']));
+    expect(list.find((i) => i.key === 'trivial-benefits')!.why).toContain('£300 a year');
+    expect(list.find((i) => i.key === 'family')!.why).toContain('£10,500 Employment Allowance');
+    expect(list.find((i) => i.key === 'electric-car')!.why).toContain('4% of its list price');
+  });
+  it('marks ideas already in the books', () => {
+    const list = ideas(
+      input({
+        tb: [tbRow('6970', 'expense', P(120), 0), tbRow('6400', 'expense', P(300), 0)],
+        expenseLines: [
+          { entry_id: 2, date: '2026-12-18', code: '6970', account: 'Staff welfare', text: 'The Bell · Christmas dinner', amount: P(120) },
+          { entry_id: 3, date: '2026-06-01', code: '6990', account: 'General', text: 'Screwfix · Safety boots', amount: P(85) },
+        ],
+      }),
+    );
+    const used = (k: string) => list.find((i) => i.key === k)!.inUse;
+    expect(used('trivial-benefits')).toBe('£120 on staff welfare in 2026-27');
+    expect(used('staff-party')).toBe('£120 on staff events in 2026-27');
+    expect(used('phone')).toBe('£300 on telephone in 2026-27');
+    expect(used('workwear')).toBe('£85 on workwear in 2026-27');
+    expect(used('family')).toBeUndefined();
   });
 });

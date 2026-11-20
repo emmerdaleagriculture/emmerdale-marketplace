@@ -469,6 +469,9 @@
 .pointer[data-kind='check'] {
   border-left-color: var(--jd-yellow, #e8b400);
 }
+.pointer[data-kind='idea'] {
+  border-left-color: var(--jd-green-dark, #1f4d1a);
+}
 .pointer[data-done] {
   opacity: 0.6;
 }

@@ -142,6 +142,35 @@ export default async function TaxPage({ searchParams }: { searchParams: Promise<
           );
         })}
       </div>
+
+      <h2 className={m.h2}>Ideas worth checking</h2>
+      <p className={s.muted}>
+        Everyday ways businesses like yours pay less tax, whatever is in your books yet. Check any you take up with your
+        accountant.
+      </p>
+      <div className={s.pointers}>
+        {[...v.ideas]
+          .sort((a, b) => Number(Boolean(a.inUse)) - Number(Boolean(b.inUse)))
+          .map((idea) => (
+            <article key={idea.key} className={s.pointer} data-kind="idea" data-done={idea.inUse ? '' : undefined}>
+              <div className={s.kind}>{idea.inUse ? `Idea · already in your books (${idea.inUse})` : 'Idea'}</div>
+              <div className={s.pointerHead}>
+                <h3>{idea.title}</h3>
+              </div>
+              <p>{idea.why}</p>
+              {idea.todo && (
+                <p>
+                  <b>What to do:</b> {idea.todo}
+                </p>
+              )}
+              <div className={s.pointerFoot}>
+                <a className={s.link} href={idea.link.href} target="_blank" rel="noopener noreferrer">
+                  GOV.UK: {idea.link.label} ↗
+                </a>
+              </div>
+            </article>
+          ))}
+      </div>
     </BooksFrame>
   );
 }
