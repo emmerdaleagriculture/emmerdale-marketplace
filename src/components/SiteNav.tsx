@@ -78,10 +78,11 @@ type Group = {
 };
 
 const ICON_PATHS: Record<IconName, ReactNode> = {
+  // A bound book, so it does not read as Open jobs' calendar.
   diary: (
     <>
-      <rect x="4" y="5" width="16" height="15" rx="2" />
-      <path d="M4 10h16M8 3v4M16 3v4" />
+      <path d="M6 3h12v18H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+      <path d="M8 3v18M11 8h4M11 12h4" />
     </>
   ),
   how: (
