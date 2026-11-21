@@ -81,7 +81,7 @@ export async function saveColourAction(_prev: FormState, fd: FormData): Promise<
   const gate = await requireBooksWriter();
   if (!gate.ok) return { error: gate.error };
   if (!gate.ledger) return { error: 'Set up your books first.' };
-  const raw = fd.get('reset') ? '' : String(fd.get('colour') ?? '').trim();
+  const raw = fd.get('use_default') ? '' : String(fd.get('colour') ?? '').trim();
   const hex = raw ? normaliseHex(raw) : null;
   if (raw && !hex) return { error: 'Enter the colour as a hex code, like #1f4d2b.' };
   if (hex && !readableColour(hex)) {

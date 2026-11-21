@@ -142,7 +142,9 @@ export function InvoiceBranding({ logoUrl, colour, name }: { logoUrl: string | n
             {saving ? 'Saving…' : 'Save colour'}
           </button>
           {colour && (
-            <button type="submit" name="reset" value="1" className={f.btnGhost} disabled={saving} onClick={() => pick(DEFAULT_INVOICE_COLOUR)}>
+            // Not name="reset": a control called reset hides form.reset(),
+            // which React calls after the action, and it threw.
+            <button type="submit" name="use_default" value="1" className={f.btnGhost} disabled={saving} onClick={() => pick(DEFAULT_INVOICE_COLOUR)}>
               Use Emmerdale green
             </button>
           )}
