@@ -17,7 +17,7 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
   const l = access.ledger;
   const { customer } = await searchParams;
   const [{ data: customers }, accounts, numbers] = await Promise.all([
-    createServiceRoleClient().from('books_customers').select('id, name, organisation').eq('ledger_id', l.id).order('name').limit(1000),
+    createServiceRoleClient().from('books_customers').select('id, name, organisation, email, phone, address, vat_number').eq('ledger_id', l.id).order('name').limit(1000),
     getAccounts(l.id),
     invoiceNumbers(l.id),
   ]);

@@ -17,7 +17,7 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ id
   if (!access.canEdit || inv.status !== 'draft') redirect(`/account/books/invoices/${inv.id}`);
   const l = access.ledger;
   const [{ data: customers }, accounts] = await Promise.all([
-    createServiceRoleClient().from('books_customers').select('id, name, organisation').eq('ledger_id', l.id).order('name').limit(1000),
+    createServiceRoleClient().from('books_customers').select('id, name, organisation, email, phone, address, vat_number').eq('ledger_id', l.id).order('name').limit(1000),
     getAccounts(l.id),
   ]);
   return (

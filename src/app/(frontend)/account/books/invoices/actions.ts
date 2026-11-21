@@ -141,6 +141,15 @@ export async function saveInvoiceAction(_prev: FormState, fd: FormData): Promise
   } else {
     const { data: own } = await admin.from('books_customers').select('id').eq('id', customerId).eq('ledger_id', ledger.id).maybeSingle();
     if (!own) return { error: 'Choose a customer.' };
+    // The form shows the chosen customer's details for checking; save any edits back.
+    if (fd.has('cust_name')) {
+      const c = readCustomer(fd, 'cust_');
+      if (!c.success) return { error: c.error.issues[0]?.message ?? 'Please check the customer’s details.' };
+      const details: Partial<ReturnType<typeof customerRow>> = customerRow(c.data);
+      delete details.notes; // notes aren't on the invoice form; keep the saved ones
+      const { error } = await admin.from('books_customers').update(details).eq('id', customerId).eq('ledger_id', ledger.id);
+      if (error) return { error: 'The customer’s details couldn’t be saved. Please try again.' };
+    }
   }
 
   const row = { customer_id: customerId, number, issue_date: issueDate, due_date: dueDate, notes: optional(str(fd, 'notes')), ...totals };
