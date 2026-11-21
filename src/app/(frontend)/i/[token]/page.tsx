@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { CSSProperties } from 'react';
 import { notFound } from 'next/navigation';
 import { after } from 'next/server';
 import { loadInvoiceByToken } from '@/lib/books/invoices.server';
@@ -7,6 +8,7 @@ import { cardPaymentsReady, confirmCheckout } from '@/lib/books/stripeConnect';
 import { amountDue } from '@/lib/books/invoice';
 import { formatPence } from '@/lib/books/money';
 import { ukDate } from '@/lib/books/period';
+import { invoiceColour, logoUrl } from '@/lib/books/branding';
 import m from '../../account/market/market.module.css';
 import s from './invoice.module.css';
 
@@ -49,12 +51,17 @@ export default async function PublicInvoicePage({
   const name = l.trading_name || l.legal_name;
   const due = amountDue(inv);
   const registered = inv.lines.some((x) => x.vat_code !== 'NOVAT');
+  const logo = logoUrl(l.invoice_logo_path);
 
   return (
-    <main className={s.wrap}>
+    <main className={s.wrap} style={{ '--brand': invoiceColour(l) } as CSSProperties}>
       <div className={s.card}>
         <div className={s.head}>
           <div>
+            {logo && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img className={s.logo} src={logo} alt={name} />
+            )}
             <div className={s.business}>{name}</div>
             {l.address && <div className={s.muted}>{l.address}</div>}
             {l.vat_number && <div className={s.muted}>VAT {l.vat_number}</div>}

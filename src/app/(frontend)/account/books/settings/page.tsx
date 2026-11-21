@@ -13,6 +13,8 @@ import { StripeSettings } from '../stripe/StripeSettings';
 import { refreshAccount } from '@/lib/books/stripeConnect';
 import { listViewers, MAX_VIEWERS } from '@/lib/books/viewers.server';
 import { ViewersSection } from './ViewersSection';
+import { InvoiceBranding } from './InvoiceBranding';
+import { logoUrl } from '@/lib/books/branding';
 
 export const metadata: Metadata = { title: 'Books settings', robots: { index: false, follow: false } };
 
@@ -59,6 +61,7 @@ export default async function BooksSettingsPage({ searchParams }: { searchParams
         accountEmail={email}
         values={{ ...l, flat_rate_percent: l.flat_rate_percent == null ? null : Number(l.flat_rate_percent) }}
       />
+      <InvoiceBranding logoUrl={logoUrl(l.invoice_logo_path)} colour={l.invoice_colour} name={l.trading_name || l.legal_name} />
       <ViewersSection viewers={viewers} max={MAX_VIEWERS} />
     </BooksFrame>
   );

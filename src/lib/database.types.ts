@@ -1334,7 +1334,9 @@ export type Database = {
           id: string
           inbound_code: string
           inbound_senders: string[]
+          invoice_colour: string | null
           invoice_footer: string | null
+          invoice_logo_path: string | null
           invoice_reply_to: string | null
           invoice_terms_days: number
           legal_name: string
@@ -1371,7 +1373,9 @@ export type Database = {
           id?: string
           inbound_code?: string
           inbound_senders?: string[]
+          invoice_colour?: string | null
           invoice_footer?: string | null
+          invoice_logo_path?: string | null
           invoice_reply_to?: string | null
           invoice_terms_days?: number
           legal_name: string
@@ -1408,7 +1412,9 @@ export type Database = {
           id?: string
           inbound_code?: string
           inbound_senders?: string[]
+          invoice_colour?: string | null
           invoice_footer?: string | null
+          invoice_logo_path?: string | null
           invoice_reply_to?: string | null
           invoice_terms_days?: number
           legal_name?: string

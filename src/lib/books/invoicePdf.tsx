@@ -1,17 +1,19 @@
 /**
  * The invoice PDF: A4, plain, with the business's details, the customer,
  * the lines, VAT and totals, how to pay, and the footer. Rendered on the
- * server with @react-pdf/renderer (no browser needed).
+ * server with @react-pdf/renderer (no browser needed). Branded with the
+ * ledger's logo and accent colour (see branding.ts) when it has them.
  */
 
-import { Document, Page, StyleSheet, Text, View, renderToBuffer } from '@react-pdf/renderer';
+import { Document, Image, Page, StyleSheet, Text, View, renderToBuffer } from '@react-pdf/renderer';
+import { LOGO_BUCKET, invoiceColour } from './branding';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatPence } from './money';
 import { ukDate } from './period';
 import { VAT_CODES, type VatCode } from './vat';
 import type { InvoiceFull } from './invoices.server';
 import type { Ledger } from './server';
 
-const GREEN = '#1f4d2b';
 const INK = '#1d1d1b';
 const MUTED = '#6b6b66';
 const RULE = '#dcdcd6';
@@ -19,13 +21,16 @@ const RULE = '#dcdcd6';
 const s = StyleSheet.create({
   page: { padding: 44, fontSize: 10, color: INK, fontFamily: 'Helvetica', lineHeight: 1.35 },
   top: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 28 },
-  business: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: GREEN, marginBottom: 4 },
-  title: { fontSize: 22, fontFamily: 'Helvetica-Bold', color: GREEN, textAlign: 'right' },
+  // Big text sets its own line height: the page's 1.35 is inherited as
+  // 13.5pt, which let the invoice number ride up over the 22pt title.
+  business: { fontSize: 16, lineHeight: 1.2, fontFamily: 'Helvetica-Bold', marginBottom: 4 },
+  logo: { maxWidth: 200, maxHeight: 64, objectFit: 'contain', objectPosition: 'left top', marginBottom: 8 },
+  title: { fontSize: 22, lineHeight: 1.2, fontFamily: 'Helvetica-Bold', textAlign: 'right' },
   muted: { color: MUTED },
   right: { textAlign: 'right' },
   meta: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
   label: { fontSize: 8, color: MUTED, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 },
-  table: { borderTopWidth: 1, borderTopColor: GREEN, marginBottom: 12 },
+  table: { borderTopWidth: 1, marginBottom: 12 },
   head: { flexDirection: 'row', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: RULE },
   row: { flexDirection: 'row', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: RULE },
   cDesc: { flex: 1, paddingRight: 8 },
@@ -36,7 +41,7 @@ const s = StyleSheet.create({
   th: { fontSize: 8, color: MUTED, textTransform: 'uppercase' },
   totals: { alignSelf: 'flex-end', width: 220, marginBottom: 24 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
-  grand: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderTopWidth: 1, borderTopColor: GREEN, marginTop: 4 },
+  grand: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderTopWidth: 1, marginTop: 4 },
   grandText: { fontSize: 12, fontFamily: 'Helvetica-Bold' },
   box: { borderWidth: 1, borderColor: RULE, borderRadius: 4, padding: 10, marginBottom: 12 },
   footer: { position: 'absolute', bottom: 30, left: 44, right: 44, fontSize: 8, color: MUTED, textAlign: 'center' },
@@ -44,8 +49,9 @@ const s = StyleSheet.create({
 
 const qty = (n: number) => n.toLocaleString('en-GB', { maximumFractionDigits: 3 });
 
-function InvoiceDoc({ inv, ledger, payUrl }: { inv: InvoiceFull; ledger: Ledger; payUrl: string | null }) {
+function InvoiceDoc({ inv, ledger, payUrl, logo }: { inv: InvoiceFull; ledger: Ledger; payUrl: string | null; logo: Buffer | null }) {
   const name = ledger.trading_name || ledger.legal_name;
+  const colour = invoiceColour(ledger);
   const due = Math.max(0, inv.gross_pence - inv.paid_pence);
   const registered = inv.lines.some((l) => l.vat_code !== 'NOVAT');
   return (
@@ -53,7 +59,9 @@ function InvoiceDoc({ inv, ledger, payUrl }: { inv: InvoiceFull; ledger: Ledger;
       <Page size="A4" style={s.page}>
         <View style={s.top}>
           <View style={{ maxWidth: 280 }}>
-            <Text style={s.business}>{name}</Text>
+            {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image has no alt */}
+            {logo && <Image style={s.logo} src={{ data: logo, format: 'png' }} />}
+            <Text style={[s.business, { color: colour }]}>{name}</Text>
             {ledger.trading_name && ledger.trading_name !== ledger.legal_name && <Text style={s.muted}>{ledger.legal_name}</Text>}
             {ledger.address && <Text style={s.muted}>{ledger.address}</Text>}
             {ledger.phone && <Text style={s.muted}>{ledger.phone}</Text>}
@@ -61,8 +69,8 @@ function InvoiceDoc({ inv, ledger, payUrl }: { inv: InvoiceFull; ledger: Ledger;
             {ledger.vat_number && <Text style={s.muted}>VAT {ledger.vat_number}</Text>}
             {ledger.company_number && <Text style={s.muted}>Company {ledger.company_number}</Text>}
           </View>
-          <View>
-            <Text style={s.title}>INVOICE</Text>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={[s.title, { color: colour }]}>INVOICE</Text>
             <Text style={[s.right, { fontSize: 12 }]}>{inv.number}</Text>
           </View>
         </View>
@@ -83,7 +91,7 @@ function InvoiceDoc({ inv, ledger, payUrl }: { inv: InvoiceFull; ledger: Ledger;
           </View>
         </View>
 
-        <View style={s.table}>
+        <View style={[s.table, { borderTopColor: colour }]}>
           <View style={s.head}>
             <Text style={[s.cDesc, s.th]}>Description</Text>
             <Text style={[s.cQty, s.th]}>Qty</Text>
@@ -115,7 +123,7 @@ function InvoiceDoc({ inv, ledger, payUrl }: { inv: InvoiceFull; ledger: Ledger;
               </View>
             </>
           )}
-          <View style={s.grand}>
+          <View style={[s.grand, { borderTopColor: colour }]}>
             <Text style={s.grandText}>Total</Text>
             <Text style={s.grandText}>{formatPence(inv.gross_pence)}</Text>
           </View>
@@ -152,8 +160,26 @@ function InvoiceDoc({ inv, ledger, payUrl }: { inv: InvoiceFull; ledger: Ledger;
   );
 }
 
+/**
+ * The stored logo's bytes, or null. Read from storage directly rather than
+ * by URL so the renderer never fetches over the network; a missing or
+ * unreadable logo leaves the invoice with the name only, never fails it.
+ */
+async function logoBytes(path: string | null | undefined): Promise<Buffer | null> {
+  if (!path) return null;
+  try {
+    const { data, error } = await createServiceRoleClient().storage.from(LOGO_BUCKET).download(path);
+    if (error || !data) throw new Error(error?.message ?? 'no data');
+    return Buffer.from(await data.arrayBuffer());
+  } catch (err) {
+    console.error('[books] invoice logo unavailable', { path, error: err instanceof Error ? err.message : err });
+    return null;
+  }
+}
+
 export async function invoicePdf(inv: InvoiceFull, ledger: Ledger, payUrl: string | null): Promise<Buffer> {
-  return renderToBuffer(<InvoiceDoc inv={inv} ledger={ledger} payUrl={payUrl} />);
+  const logo = await logoBytes(ledger.invoice_logo_path);
+  return renderToBuffer(<InvoiceDoc inv={inv} ledger={ledger} payUrl={payUrl} logo={logo} />);
 }
 
 export function invoiceFileName(inv: { number: string }, ledger: Ledger): string {
