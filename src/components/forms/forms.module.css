@@ -27,6 +27,24 @@
   color: var(--ink);
   width: 100%;
 }
+/* iOS Safari gives date and time boxes their own width (wider than a phone
+   column, and taller when empty) and ignores width: 100% until the native
+   look is switched off. */
+.input[type='date'],
+.input[type='time'],
+.input[type='month'],
+.input[type='datetime-local'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 46px;
+  text-align: left;
+}
+.input::-webkit-date-and-time-value {
+  text-align: left;
+}
 .input:focus,
 .textarea:focus {
   outline: 2px solid var(--jd-green);

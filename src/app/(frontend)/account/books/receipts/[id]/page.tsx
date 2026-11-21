@@ -93,7 +93,7 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
             <a href={url} target="_blank" rel="noreferrer"><img src={url} alt="The receipt" className={s.receiptImage} /></a>
           )}
           {text != null && <pre className={s.receiptText}>{text}</pre>}
-          {!url && text == null && <p className={s.muted}>No file.</p>}
+          {!url && text == null && <p className={s.muted}>No copy of the receipt is stored here.</p>}
         </div>
 
         <div>
