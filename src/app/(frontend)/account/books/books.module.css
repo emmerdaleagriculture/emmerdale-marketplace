@@ -644,3 +644,76 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+
+/* Settings › Invoice branding */
+.brandPreview {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  color: #1d1d1b;
+  border: 1px solid var(--rule);
+  border-top: 3px solid;
+  border-radius: 8px;
+}
+.brandLogo {
+  display: block;
+  max-width: min(200px, 100%);
+  max-height: 64px;
+  width: auto;
+  height: auto;
+  margin-bottom: 8px;
+}
+.brandName {
+  font-weight: 700;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.brandSide {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+.brandTitle {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+}
+.brandButton {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--rule);
+  cursor: pointer;
+  padding: 0;
+}
+.swatch[aria-checked='true'] {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.swatchPicker {
+  width: 40px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}

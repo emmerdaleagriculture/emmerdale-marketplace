@@ -19,10 +19,18 @@
   gap: 16px;
   margin-bottom: 18px;
 }
+.logo {
+  display: block;
+  max-width: min(240px, 100%);
+  max-height: 80px;
+  width: auto;
+  height: auto;
+  margin-bottom: 10px;
+}
 .business {
   font-family: var(--font-display-stack);
   font-size: 24px;
-  color: var(--jd-green-deep);
+  color: var(--brand, var(--jd-green-deep));
 }
 .title {
   font-size: 20px;
@@ -72,8 +80,8 @@
   padding: 12px 20px;
   border: 0;
   border-radius: 8px;
-  background: var(--jd-green-deep);
-  color: var(--white);
+  background: var(--brand, var(--jd-green-deep));
+  color: #fff;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;

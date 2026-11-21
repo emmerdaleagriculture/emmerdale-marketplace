@@ -211,7 +211,9 @@ export function SettingsForm({
       {!setup && (
         <fieldset className={s.fieldset}>
           <legend>Invoices</legend>
-          <p className={f.hint}>Shown on the invoices you send from Books.</p>
+          <p className={f.hint}>
+            Shown on the invoices you send from Books. Your logo and colour are under <a href="#branding">Invoice branding</a> below.
+          </p>
           <label className={f.field}>
             <span className={f.label}>Trading name</span>
             <input className={f.input} name="trading_name" defaultValue={values.trading_name ?? ''} maxLength={200} />
