@@ -45,6 +45,11 @@ const SettingsSchema = z
       .string()
       .transform((s) => s.replace(/\s+/g, '').toUpperCase())
       .refine((s) => s === '' || /^[A-Z0-9]{8}$/.test(s), 'A company number is 8 characters, e.g. 12345678 or SC123456.'),
+    utr: z
+      .string()
+      // People copy it as "12345 67890" or with HMRC's trailing K.
+      .transform((s) => s.replace(/\s+/g, '').replace(/k$/i, ''))
+      .refine((s) => s === '' || /^\d{10}$/.test(s), 'A UTR is 10 digits, e.g. 12345 67890.'),
     vat_registered: z.boolean(),
     vat_number: z
       .string()
@@ -90,6 +95,7 @@ function readSettings(fd: FormData) {
     business_type: str(fd, 'business_type') || 'sole_trader',
     legal_name: str(fd, 'legal_name'),
     company_number: str(fd, 'company_number'),
+    utr: str(fd, 'utr'),
     vat_registered: fd.get('vat_registered') === 'on',
     vat_number: str(fd, 'vat_number'),
     vat_scheme: str(fd, 'vat_scheme') || 'standard',
@@ -117,6 +123,7 @@ function settingsRow(v: z.infer<typeof SettingsSchema>) {
     business_type: v.business_type,
     legal_name: v.legal_name,
     company_number: optional(v.company_number),
+    utr: optional(v.utr),
     vat_registered: v.vat_registered,
     vat_number: optional(v.vat_number),
     vat_scheme: v.vat_scheme,

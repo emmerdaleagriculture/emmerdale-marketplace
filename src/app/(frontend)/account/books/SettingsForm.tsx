@@ -10,6 +10,7 @@ export type SettingsValues = {
   business_type: string;
   legal_name: string;
   company_number: string | null;
+  utr: string | null;
   vat_registered: boolean;
   vat_number: string | null;
   vat_scheme: string;
@@ -99,6 +100,27 @@ export function SettingsForm({
             <input className={f.input} name="company_number" defaultValue={values.company_number ?? ''} maxLength={10} />
           </label>
         )}
+        {!setup && (
+          <label className={f.field}>
+            <span className={f.label}>UTR (Unique Taxpayer Reference)</span>
+            <input
+              className={f.input}
+              name="utr"
+              inputMode="numeric"
+              autoComplete="off"
+              defaultValue={values.utr ? `${values.utr.slice(0, 5)} ${values.utr.slice(5)}` : ''}
+              maxLength={14}
+              style={{ maxWidth: 220 }}
+            />
+            <span className={f.hint}>
+              {type === 'limited_company'
+                ? 'The company’s Corporation Tax UTR: 10 digits, on letters from HMRC about Corporation Tax.'
+                : 'Your Self Assessment UTR: 10 digits, on your tax return, statements and HMRC app.'}{' '}
+              Kept with your books for you and anyone you share them with. It never goes on invoices.
+            </span>
+          </label>
+        )}
+        {setup && <input type="hidden" name="utr" value="" />}
         <div className={s.row2}>
           <label className={f.field}>
             <span className={f.label}>Accounting year ends (month)</span>

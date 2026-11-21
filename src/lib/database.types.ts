@@ -1351,6 +1351,7 @@ export type Database = {
           stripe_details_submitted: boolean
           stripe_synced_at: string | null
           trading_name: string | null
+          utr: string | null
           updated_at: string
           vat_number: string | null
           vat_registered: boolean
@@ -1390,6 +1391,7 @@ export type Database = {
           stripe_details_submitted?: boolean
           stripe_synced_at?: string | null
           trading_name?: string | null
+          utr?: string | null
           updated_at?: string
           vat_number?: string | null
           vat_registered?: boolean
@@ -1429,6 +1431,7 @@ export type Database = {
           stripe_details_submitted?: boolean
           stripe_synced_at?: string | null
           trading_name?: string | null
+          utr?: string | null
           updated_at?: string
           vat_number?: string | null
           vat_registered?: boolean
