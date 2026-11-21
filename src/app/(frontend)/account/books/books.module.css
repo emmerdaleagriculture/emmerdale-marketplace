@@ -276,6 +276,7 @@
   color: var(--on-fill, #fff);
 }
 .readOnly {
+  overflow-wrap: anywhere;
   border: 1px solid var(--rule);
   border-left: 4px solid var(--jd-yellow, #e8b400);
   border-radius: 10px;
@@ -291,6 +292,7 @@
 }
 
 .notice {
+  overflow-wrap: anywhere;
   border-radius: 10px;
   background: var(--cream);
   border: 1px solid var(--rule);
@@ -313,18 +315,20 @@
 }
 .row2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, …): a plain 1fr won't shrink below its content, so an iOS
+     date box or a long value pushed the column off the screen. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
 }
 .row3 {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
 }
 @media (max-width: 560px) {
   .row2,
   .row3 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 .fieldset {
