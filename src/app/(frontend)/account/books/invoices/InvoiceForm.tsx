@@ -9,7 +9,7 @@ import { VAT_CODES, type VatCode } from '@/lib/books/vat';
 import f from '@/components/forms/forms.module.css';
 import m from '../../market/market.module.css';
 import s from '../books.module.css';
-import { CustomerFields } from '../customers/CustomerForm';
+import { CustomerFields, type CustomerValues } from '../customers/CustomerForm';
 import { saveInvoiceAction } from './actions';
 
 type Opt = { code: string; name: string };
@@ -29,7 +29,7 @@ export function InvoiceForm({
   registeredFrom,
 }: {
   invoiceId?: number;
-  customers: { id: number; name: string; organisation: string | null }[];
+  customers: (Omit<CustomerValues, 'notes'> & { id: number })[];
   incomeAccounts: Opt[];
   values: { customer_id: number | null; number: string; issue_date: string; due_date: string; notes: string; lines: DraftLine[] };
   termsDays: number;
@@ -42,6 +42,7 @@ export function InvoiceForm({
   const [due, setDue] = useState(values.due_date);
   const [lines, setLines] = useState<DraftLine[]>(values.lines);
   const registered = registeredFrom != null && issue >= registeredFrom;
+  const chosen = customers.find((c) => String(c.id) === customer);
 
   const priced = useMemo(
     () =>
@@ -69,16 +70,25 @@ export function InvoiceForm({
             <option value="" disabled>
               Choose a customer…
             </option>
+            <option value="new">+ New customer</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
                 {c.organisation ? ` (${c.organisation})` : ''}
               </option>
             ))}
-            <option value="new">+ New customer</option>
           </select>
         </label>
         {customer === 'new' && <CustomerFields prefix="new_" />}
+        {chosen && (
+          <>
+            {/* keyed so switching customer reloads their saved details */}
+            <CustomerFields key={chosen.id} v={chosen} prefix="cust_" />
+            <p className={s.muted} style={{ margin: 0 }}>
+              Changes here update {chosen.name}’s saved details too.
+            </p>
+          </>
+        )}
       </fieldset>
 
       <div className={s.row3}>
