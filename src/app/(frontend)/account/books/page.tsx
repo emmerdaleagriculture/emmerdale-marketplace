@@ -53,6 +53,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
             business_type: 'sole_trader',
             legal_name: access.businessName,
             company_number: null,
+            utr: null,
             vat_registered: false,
             vat_number: null,
             vat_scheme: 'standard',
