@@ -3,6 +3,7 @@ import { unstable_cache } from 'next/cache';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { revalidateDirectory } from '@/lib/directory';
+import { computeMrr, type Mrr, type MrrSubscription } from '@/lib/mrr';
 
 /** Stripe client — throws if the key isn't set (paid tier not configured yet). */
 export function getStripe(): Stripe {
@@ -455,6 +456,27 @@ async function loadMembershipRevenue(): Promise<MembershipRevenue | null> {
   // A turned-down applicant, paid and refunded in full, is not a member.
   out.members = [...heldByCustomer.values()].filter((n) => n > 0).length;
   return out;
+}
+
+/**
+ * Subscribers and monthly recurring revenue, from the live subscriptions in
+ * Stripe (computeMrr says what counts). Read from Stripe rather than our
+ * subscriptions table because only Stripe has each one's actual price and
+ * discount. Cached ten minutes like membershipRevenue; null when Stripe is
+ * not configured; throws when Stripe doesn't answer.
+ */
+export const membershipMrr = unstable_cache(loadMembershipMrr, ['membership-mrr'], { revalidate: 600 });
+
+async function loadMembershipMrr(): Promise<Mrr | null> {
+  if (!stripeConfigured()) return null;
+  const stripe = getStripe();
+  const opts = { timeout: 20_000, maxNetworkRetries: 1 };
+  const [active, pastDue] = await Promise.all(
+    (['active', 'past_due'] as const).map((status) =>
+      stripe.subscriptions.list({ status, limit: 100 }, opts).autoPagingToArray({ limit: 5000 }),
+    ),
+  );
+  return computeMrr([...active, ...pastDue] as unknown as MrrSubscription[]);
 }
 
 /** The parts of an expanded invoice the tier can be read from, either API shape. */

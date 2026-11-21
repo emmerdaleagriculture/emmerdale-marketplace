@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatGBP } from '@/lib/sealedQuotes/money';
-import { membershipRevenue, type MembershipRevenue } from '@/lib/stripe';
+import { membershipMrr, membershipRevenue, type MembershipRevenue } from '@/lib/stripe';
+import type { Mrr } from '@/lib/mrr';
 import { balanceDueLabel, formatDate, formatDateTime } from '@/lib/time';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
@@ -29,7 +30,9 @@ export const dynamic = 'force-dynamic';
  *
  * Membership revenue is the other income and lives only in Stripe (nothing
  * here records a subscription payment), so its tile is read from there,
- * cached ten minutes, and says so when Stripe cannot be reached.
+ * cached ten minutes, and says so when Stripe cannot be reached. So are
+ * subscribers and monthly recurring revenue, read from the live
+ * subscriptions (annual plans spread over twelve months; see lib/mrr.ts).
  */
 
 type Payment = {
@@ -139,11 +142,22 @@ async function loadMemberships(): Promise<{ rev: MembershipRevenue | null; probl
   }
 }
 
+/** Live subscriptions from Stripe, or why they are missing; never throws. */
+async function loadMrr(): Promise<{ mrr: Mrr | null; problem: string | null }> {
+  try {
+    return { mrr: await membershipMrr(), problem: null };
+  } catch (err) {
+    console.error('[money] mrr:', err);
+    return { mrr: null, problem: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 export default async function MoneyPage() {
   const admin = createServiceRoleClient();
 
   // Stripe is slow next to the database, so it is asked first and awaited last.
   const membershipsPromise = loadMemberships();
+  const mrrPromise = loadMrr();
 
   // Every job that reached acceptance has a deposit row, so the payments
   // table is the universe; the job comes along with each of its rows.
@@ -222,6 +236,24 @@ export default async function MoneyPage() {
   const marginBanked = figures.filter((f) => f.left === 0 && !STOPPED.has(f.j.status)).reduce((n, f) => n + f.margin, 0);
 
   const { rev, problem } = await membershipsPromise;
+  const { mrr, problem: mrrProblem } = await mrrPromise;
+  const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+  const subscribersHint = mrr
+    ? [
+        `${mrr.byTier.premium.subscribers} Pro · ${mrr.byTier.open.subscribers} Premium`,
+        `${mrr.byPlan.monthly} monthly · ${mrr.byPlan.annual} annual`,
+        mrr.cancelling > 0 ? `${mrr.cancelling} cancelling at period end` : null,
+        mrr.pastDue > 0 ? `${mrr.pastDue} payment failed` : null,
+        mrr.free > 0 ? `${plural(mrr.free, 'free subscription')} not counted` : null,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : mrrProblem
+      ? `Stripe didn’t answer: ${mrrProblem}`
+      : 'Stripe is not configured';
+  const mrrHint = mrr
+    ? `${formatGBP(Math.round(mrr.byTier.premium.mrrPence))} Pro · ${formatGBP(Math.round(mrr.byTier.open.mrrPence))} Premium · annual plans spread over 12 months · ${formatGBP(Math.round(mrr.mrrPence * 12))} a year`
+    : subscribersHint;
   const membershipHint = rev
     ? rev.payments === 0
       ? 'No membership payments yet'
@@ -285,6 +317,18 @@ export default async function MoneyPage() {
           value={formatGBP(marginBanked)}
           label="Our margin, fully collected"
           hint={<>{formatGBP(marginPence)} across every job that has paid anything</>}
+        />
+        <Tile
+          value={mrr ? String(mrr.subscribers) : '—'}
+          label="Paying subscribers"
+          hint={subscribersHint}
+          warn={!mrr && Boolean(mrrProblem)}
+        />
+        <Tile
+          value={mrr ? formatGBP(Math.round(mrr.mrrPence)) : '—'}
+          label="Monthly recurring revenue"
+          hint={mrrHint}
+          warn={!mrr && Boolean(mrrProblem)}
         />
         <Tile
           value={rev ? formatGBP(rev.netPence) : '—'}
