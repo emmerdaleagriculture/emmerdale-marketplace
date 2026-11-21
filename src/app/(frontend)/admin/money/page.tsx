@@ -4,6 +4,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { formatGBP } from '@/lib/sealedQuotes/money';
 import { membershipMrr, membershipRevenue, type MembershipRevenue } from '@/lib/stripe';
 import type { Mrr } from '@/lib/mrr';
+import { jobRevenueAverage } from '@/lib/jobRevenueAverage';
 import { balanceDueLabel, formatDate, formatDateTime } from '@/lib/time';
 import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
@@ -235,6 +236,30 @@ export default async function MoneyPage() {
   const marginPence = figures.reduce((n, f) => n + f.margin, 0);
   const marginBanked = figures.filter((f) => f.left === 0 && !STOPPED.has(f.j.status)).reduce((n, f) => n + f.margin, 0);
 
+  // Jobs a month, beside MRR: each live job in the month its deposit was
+  // paid, at our margin (see lib/jobRevenueAverage.ts). Reads the same
+  // newest-400 payment rows as the rest of the page, which covers well over
+  // the twelve months it looks back at today's volume.
+  const jobAvg = jobRevenueAverage(
+    figures
+      .filter((f) => !STOPPED.has(f.j.status))
+      .flatMap((f) => {
+        const dep = f.j.payments.find((p) => p.kind === 'deposit' && COLLECTED.has(p.status) && p.paid_at);
+        return dep?.paid_at ? [{ depositPaidAt: dep.paid_at, marginPence: f.margin, pricePence: f.price }] : [];
+      }),
+  );
+  const monthName = (ym: string) =>
+    new Date(`${ym}-15T12:00:00Z`).toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'Europe/London' });
+  const jobAvgHint =
+    jobAvg.months === 0
+      ? `No full month yet · ${formatGBP(jobAvg.thisMonth.marginPence)} this month so far`
+      : [
+          `Our margin, averaged over ${jobAvg.months === 1 ? monthName(jobAvg.from!) : `${monthName(jobAvg.from!)} to ${monthName(jobAvg.to!)}`}`,
+          `${formatGBP(Math.round(jobAvg.pricePerMonth!))} a month paid by customers`,
+          `${(Math.round(jobAvg.jobsPerMonth! * 10) / 10).toLocaleString('en-GB')} jobs a month`,
+          `${formatGBP(jobAvg.thisMonth.marginPence)} this month so far (${jobAvg.thisMonth.jobs} job${jobAvg.thisMonth.jobs === 1 ? '' : 's'})`,
+        ].join(' · ');
+
   const { rev, problem } = await membershipsPromise;
   const { mrr, problem: mrrProblem } = await mrrPromise;
   const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -329,6 +354,11 @@ export default async function MoneyPage() {
           label="Monthly recurring revenue"
           hint={mrrHint}
           warn={!mrr && Boolean(mrrProblem)}
+        />
+        <Tile
+          value={jobAvg.marginPerMonth == null ? '—' : formatGBP(Math.round(jobAvg.marginPerMonth))}
+          label="Job revenue, average a month"
+          hint={jobAvgHint}
         />
         <Tile
           value={rev ? formatGBP(rev.netPence) : '—'}
