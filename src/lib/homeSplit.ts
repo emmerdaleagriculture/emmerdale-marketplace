@@ -11,7 +11,7 @@
  * hero is parsed, so there is no flash and the page stays statically cached.
  * It lands on <html data-home-ab>, CSS does the rearranging
  * (home.module.css, "split test"), and PageTracker sends it with the visit.
- * Read the result on Admin › Metrics (admin_home_split_summary).
+ * Read the result on Admin › Insight › A/B tests (admin_home_split_summary).
  *
  * To stop the test: set HOME_SPLIT_ENABLED to false. Everyone sees A, and
  * nothing more is recorded with an arm. To ship B, move its CSS into the
