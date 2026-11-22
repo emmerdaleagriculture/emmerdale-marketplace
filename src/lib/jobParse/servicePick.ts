@@ -68,7 +68,17 @@ const MENTIONS: [CanonicalService, RegExp][] = [
   // the trees, not bare "leaves" ("he leaves the gate open"): offered only,
   // so "fell the sycamore" being offered sweeping too costs one tap.
   ['Paddock sweeping', /\b(?:sycamores?|acorns?|conkers?|leaf|(?:fallen|dead|autumn) leaves|leaves (?:off|from|up))\b/i],
+  // Not bare "muck" or "manure": spreading a heap is Muck spreading.
+  ['Manure sweeping', /\b(?:droppings|poo|poo[- ]?pick(?:ing|er)?|manure (?:sweep(?:ing|er)?|collect(?:ion|ing)?|vac(?:uum)?))\b/i],
 ];
+
+/**
+ * Sweeping is one machine and two jobs: a paddock sweeper or vacuum picks up
+ * droppings and leaves, acorns and sycamore seeds alike, but they are priced
+ * and ticked as separate services. Offering one puts the other beside it, so
+ * the customer chooses rather than us (decided 22 Nov 2026).
+ */
+const OFFERED_TOGETHER: CanonicalService[][] = [['Paddock sweeping', 'Manure sweeping']];
 
 /** In the order the customer mentioned them: the first thing they asked for leads. */
 export function servicesMentioned(text: string): CanonicalService[] {
@@ -77,5 +87,7 @@ export function servicesMentioned(text: string): CanonicalService[] {
     return at < 0 ? [] : [{ name, at }];
   })
     .sort((a, b) => a.at - b.at)
-    .map((m) => m.name);
+    .map((m) => m.name)
+    .flatMap((name) => [name, ...(OFFERED_TOGETHER.find((g) => g.includes(name)) ?? [])])
+    .filter((name, i, all) => all.indexOf(name) === i);
 }
