@@ -523,7 +523,15 @@ const ConfirmSchema = z.object({
   county_id: z.coerce.number().int().positive().optional().or(z.literal('')),
   service_choice: z.string().trim(),
   service_confirmed: z.enum(['yes', 'no']),
-  service_other_text: z.string().trim().max(300).optional().or(z.literal('')),
+  // Pre-filled with step 1's whole description (service_verbatim), which may
+  // run to 2,000 — a 300 cap here refused people for their own words, with a
+  // bare Zod message, until they cut the text down (4 drafts on 2026-11-22).
+  service_other_text: z
+    .string()
+    .trim()
+    .max(2000, 'That’s a bit long. Please keep it under 2,000 characters.')
+    .optional()
+    .or(z.literal('')),
   area_value: z.coerce.number().positive().optional().or(z.literal('')),
   area_unit: z.enum(AREA_UNITS).optional().or(z.literal('')),
   postcode: z.string().trim().max(10).optional().or(z.literal('')),

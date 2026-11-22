@@ -502,11 +502,11 @@ export function ConfirmStep({
           {otherOpen && (
             <label className={f.field}>
               <span className={f.label}>Describe it in your own words</span>
-              <input
-                className={f.input}
-                type="text"
+              <textarea
+                className={f.textarea}
                 name="service_other_text"
-                maxLength={300}
+                rows={4}
+                maxLength={2000}
                 defaultValue={result.service_verbatim}
               />
             </label>
