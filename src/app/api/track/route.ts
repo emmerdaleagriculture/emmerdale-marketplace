@@ -24,6 +24,7 @@ type Incoming = {
   utm_source?: unknown;
   utm_medium?: unknown;
   has_gclid?: unknown;
+  variant?: unknown;
 };
 
 /** Campaign labels, clamped like every other field here. Never the gclid
@@ -77,6 +78,9 @@ export async function POST(request: Request) {
   const utmSource = text(body.utm_source, 200);
   const utmMedium = text(body.utm_medium, 200);
   const hasGclid = body.has_gclid === true ? true : null;
+  // The home hero split test's arm (src/lib/homeSplit.ts). Only the home page
+  // is in the test; the attribute outlives it on client-side navigation.
+  const variant = path === '/' && (body.variant === 'a' || body.variant === 'b') ? body.variant : null;
 
   const rows = (body.events as Record<string, unknown>[])
     .slice(0, MAX_EVENTS)
@@ -100,6 +104,7 @@ export async function POST(request: Request) {
         utm_medium: utmMedium,
         has_gclid: hasGclid,
         country,
+        ...(variant ? { variant } : {}),
       };
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);

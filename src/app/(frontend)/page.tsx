@@ -32,6 +32,7 @@ import {
 } from '@/lib/site';
 import { SOCIAL_LINKS } from '@/lib/social';
 import s from '@/components/home/home.module.css';
+import { HOME_SPLIT_ENABLED, HOME_SPLIT_SCRIPT } from '@/lib/homeSplit';
 
 // Canonical origin for structured data — www in production.
 const SITE = siteUrl();
@@ -212,6 +213,9 @@ export default async function LandingPage() {
 
   return (
     <div className={s.page}>
+      {/* The hero split test picks its arm here, before the hero is parsed,
+          so the page never paints one layout and then jumps to the other. */}
+      {HOME_SPLIT_ENABLED && <script dangerouslySetInnerHTML={{ __html: HOME_SPLIT_SCRIPT }} />}
       <PageTracker path="/" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(orgJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(serviceJsonLd) }} />
@@ -255,7 +259,7 @@ export default async function LandingPage() {
             work as reassurance rather than as an obstacle. */}
         <section className={s.hero} id="quote">
           <div className={`${s.container} ${s.heroGrid}`}>
-            <div>
+            <div className={s.heroText}>
               <p className={s.kicker}>{KICKER}</p>
               <h1 className={s.heroH1}>{HEADLINE}</h1>
               <p className={s.heroSub}>

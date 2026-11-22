@@ -153,9 +153,15 @@ function emptyArm(rate: number): MarkupArm {
  */
 function bookingRatePValue(a: MarkupArm, b: MarkupArm): number | null {
   if (a.priced < 5 || b.priced < 5) return null;
-  const p1 = a.booked / a.priced, p2 = b.booked / b.priced;
-  const p = (a.booked + b.booked) / (a.priced + b.priced);
-  const se = Math.sqrt(p * (1 - p) * (1 / a.priced + 1 / b.priced));
+  return twoProportionPValue(a.booked, a.priced, b.booked, b.priced);
+}
+
+/** The same test on any two proportions x1/n1 against x2/n2. */
+function twoProportionPValue(x1: number, n1: number, x2: number, n2: number): number | null {
+  if (n1 === 0 || n2 === 0) return null;
+  const p1 = x1 / n1, p2 = x2 / n2;
+  const p = (x1 + x2) / (n1 + n2);
+  const se = Math.sqrt(p * (1 - p) * (1 / n1 + 1 / n2));
   if (se === 0) return null;
   const z = Math.abs(p1 - p2) / se;
   // Φ(z) via the Abramowitz–Stegun erf approximation.
@@ -163,6 +169,12 @@ function bookingRatePValue(a: MarkupArm, b: MarkupArm): number | null {
   const erf = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-(z * z) / 2);
   return Math.max(0, Math.min(1, 1 - erf));
 }
+
+type HomeArm = {
+  visits: number; saw_form: number; started: number; sent: number; median_depth: number | null;
+  ad_visits: number; ad_saw_form: number; ad_started: number; ad_sent: number;
+};
+type HomeSplit = { days: number; since: string | null; arms: { a?: HomeArm; b?: HomeArm } };
 
 const PIPELINE_LABEL: Record<string, string> = {
   confirmed: 'Confirmed, not yet sent',
@@ -198,7 +210,7 @@ export default async function AdminDashboard() {
   // early jobs need the IP join in jobSources to say anything at all.
   const page = <T,>(q: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) =>
     fetchAll(q).catch(() => [] as T[]);
-  const [{ data, error }, invitations, sourceSubs, parses, views, priorityQ, markupQ, passQ, premiumQ] = await Promise.all([
+  const [{ data, error }, invitations, sourceSubs, parses, views, priorityQ, markupQ, passQ, premiumQ, homeQ] = await Promise.all([
     admin.rpc('admin_dashboard'),
     // Every invitation of the last 30 days, for the response donut: the RPC
     // carries rates, not the split. Paged; the month is past 600 already.
@@ -240,7 +252,10 @@ export default async function AdminDashboard() {
     admin.rpc('admin_pass_summary').then((r) => r, () => ({ data: null })),
     // Premium membership (20261003170000).
     admin.rpc('admin_premium_summary').then((r) => r, () => ({ data: null })),
+    // Home hero split test, phones (20261122140000, src/lib/homeSplit.ts).
+    admin.rpc('admin_home_split_summary', { p_days: 30 }).then((r) => r, () => ({ data: null })),
   ]);
+  const hs = (homeQ?.data ?? null) as HomeSplit | null;
   const pm = (premiumQ?.data ?? null) as PremiumSummary | null;
   const pr = (priorityQ?.data ?? null) as PrioritySummary | null;
   const mt = (markupQ?.data ?? null) as MarkupTest | null;
@@ -648,6 +663,52 @@ export default async function AdminDashboard() {
               {row('Average booked price (contractor)', (x) => gbp(x.avg_contractor_pence))}
               {row('Our margin on bookings', (x) => gbp(x.margin_pence))}
               {row('Median days from first price to booking', (x) => (x.median_days_to_book == null ? '—' : `${x.median_days_to_book}`))}
+            </AdminTable>
+          </>
+        );
+      })()}
+
+      {/* ── Home hero split test ─────────────────────────────────────── */}
+      {hs && (hs.arms.a || hs.arms.b) && (() => {
+        const arms = (['a', 'b'] as const).map((k) => hs.arms[k]);
+        const [a, b] = arms;
+        // Read on the outcome that matters, a job sent; fall back to quotes
+        // started while sends are too few to say anything.
+        const read = (x: HomeArm, ad: boolean) => (ad ? [x.ad_sent, x.ad_visits] : [x.sent, x.visits]);
+        const pv = a && b && a.visits >= 100 && b.visits >= 100
+          ? twoProportionPValue(read(a, false)[0], read(a, false)[1], read(b, false)[0], read(b, false)[1])
+          : null;
+        const row = (label: string, f: (x: HomeArm) => React.ReactNode) => (
+          <tr key={label}>
+            <td>{label}</td>
+            {arms.map((x, i) => <td key={i}>{x ? f(x) : '—'}</td>)}
+          </tr>
+        );
+        const of = (num: number, den: number) => `${n(num)} (${pct(num, den)})`;
+        return (
+          <>
+            <div className={s.sectionLabel}>
+              Home page split test, phones · last {hs.days} days
+              {hs.since ? ` · since ${new Date(hs.since).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}
+            </div>
+            <p className={s.sub}>
+              A is the hero as it was. B puts the quote form under a smaller headline, with the intro and promises
+              below it. Same header, photo and yellow banner. A visit is one browser tab; desktop and the app are not
+              in the test.
+              {pv != null
+                ? ` On jobs sent, the chance the arms are really the same is ${pv < 0.001 ? 'under 0.1%' : `${Math.round(pv * 100)}%`}${pv < 0.05 ? ', a difference you can act on' : ', not enough to call yet'}.`
+                : ' A reading on jobs sent needs 100 visits in each arm.'}
+            </p>
+            <AdminTable head={['', 'A: as it was', 'B: form first']}>
+              {row('Phone visits', (x) => n(x.visits))}
+              {row('Saw the quote form', (x) => of(x.saw_form, x.visits))}
+              {row('Started a quote', (x) => of(x.started, x.visits))}
+              {row('Sent a job', (x) => of(x.sent, x.visits))}
+              {row('Median scroll depth', (x) => (x.median_depth == null ? '—' : `${Math.round(x.median_depth)}%`))}
+              {row('From ads: visits', (x) => n(x.ad_visits))}
+              {row('From ads: saw the form', (x) => of(x.ad_saw_form, x.ad_visits))}
+              {row('From ads: started a quote', (x) => of(x.ad_started, x.ad_visits))}
+              {row('From ads: sent a job', (x) => of(x.ad_sent, x.ad_visits))}
             </AdminTable>
           </>
         );

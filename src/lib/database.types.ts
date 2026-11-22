@@ -3421,6 +3421,7 @@ export type Database = {
           session_key: string
           utm_medium: string | null
           utm_source: string | null
+          variant: string | null
           viewport_w: number | null
           x_pct: number | null
           y_pct: number | null
@@ -3439,6 +3440,7 @@ export type Database = {
           session_key: string
           utm_medium?: string | null
           utm_source?: string | null
+          variant?: string | null
           viewport_w?: number | null
           x_pct?: number | null
           y_pct?: number | null
@@ -3457,6 +3459,7 @@ export type Database = {
           session_key?: string
           utm_medium?: string | null
           utm_source?: string | null
+          variant?: string | null
           viewport_w?: number | null
           x_pct?: number | null
           y_pct?: number | null
@@ -4764,6 +4767,7 @@ export type Database = {
         Args: { p_actor: string; p_ids: string[] }
         Returns: Json
       }
+      admin_home_split_summary: { Args: { p_days?: number }; Returns: Json }
       admin_markup_test_summary: { Args: never; Returns: Json }
       admin_metrics: { Args: never; Returns: Json }
       admin_pass_summary: { Args: never; Returns: Json }
