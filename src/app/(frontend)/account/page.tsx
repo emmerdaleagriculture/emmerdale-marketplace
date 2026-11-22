@@ -33,6 +33,8 @@ import { LogoutButton, ThemeRow } from '@/components/app/PushControls';
 import ui from '../app/app-ui.module.css';
 import { Actions, AppHero, Attention, Shortcuts, Tile, Tiles, type IconName, type TileTone } from '@/components/app/AppKit';
 import { FreshOnReturn } from './FreshOnReturn';
+import { getNotesData } from '@/lib/notes/data';
+import { formatMonth } from '@/lib/notes/format';
 
 export const metadata: Metadata = {
   title: 'Your dashboard',
@@ -74,6 +76,14 @@ type Action = {
 function clip(text: string, n: number) {
   const t = text.trim().replace(/\s+/g, ' ');
   return t.length > n ? `${t.slice(0, n - 1)}…` : t;
+}
+
+/** Newest published notes, featured or not (getNotesData splits them). */
+async function latestNoteCards(n: number) {
+  const { featured, grid } = await getNotesData();
+  return [...(featured ? [featured] : []), ...grid]
+    .sort((x, y) => (y.publishedAt ?? '').localeCompare(x.publishedAt ?? ''))
+    .slice(0, n);
 }
 
 const when = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : Infinity);
@@ -261,6 +271,8 @@ export default async function AccountPage({
     if (error) console.error('sq_tender_attention failed', { contractor: user.id, error: error.message });
     tenderCount = data ?? 0;
   }
+  // App: the newest notes under the work (cached, shared with /notes).
+  const latestNotes = app && status === 'approved' ? await latestNoteCards(3) : [];
   // Closed here (cookie) or in any other browser (stamped on their row).
   const appBannerDismissed =
     contractor.app_banner_dismissed_at != null || (await cookies()).get(APP_BANNER_COOKIE)?.value === '1';
@@ -459,6 +471,32 @@ export default async function AccountPage({
                         </li>
                       ))}
                     </ul>
+                  </>
+                )}
+
+                {latestNotes.length > 0 && (
+                  <>
+                    <h2 className={ac.sectionTitle}>Latest notes</h2>
+                    <ul className={ac.actions}>
+                      {latestNotes.map((n) => (
+                        <li key={n.id}>
+                          <Link href={`/notes/${n.slug}`} prefetch={false} className={`${ac.action} ${ac.actionQuiet}`}>
+                            <span className={ac.actionText}>
+                              <span className={ac.actionTitle}>{n.title}</span>
+                              <span className={ac.actionDetail}>
+                                {[formatMonth(n.publishedAt), n.excerpt ? clip(n.excerpt, 90) : null]
+                                  .filter(Boolean)
+                                  .join(' · ')}
+                              </span>
+                            </span>
+                            <span className={ac.actionCta}>Read →</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link href="/notes" className={ac.more}>
+                      All notes →
+                    </Link>
                   </>
                 )}
               </div>
