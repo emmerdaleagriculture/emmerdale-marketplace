@@ -1355,6 +1355,42 @@
   color: var(--green);
 }
 
+/* Hero split test, arm B, phones only (src/lib/homeSplit.ts): the form
+   straight under a smaller headline, the standfirst and promises after it.
+   The text column dissolves into the grid so its children can be reordered
+   around the widget without touching the markup arm A uses. */
+@media (max-width: 767px) {
+  :global(html[data-home-ab='b']) .hero {
+    padding-top: 20px;
+  }
+  :global(html[data-home-ab='b']) .heroGrid {
+    gap: 16px;
+  }
+  :global(html[data-home-ab='b']) .heroText {
+    display: contents;
+  }
+  :global(html[data-home-ab='b']) .kicker {
+    display: none;
+  }
+  :global(html[data-home-ab='b']) .heroH1 {
+    order: 1;
+    font-size: 1.875rem;
+    line-height: 1.15;
+    margin-bottom: 0;
+  }
+  :global(html[data-home-ab='b']) .widget {
+    order: 2;
+  }
+  :global(html[data-home-ab='b']) .heroSub {
+    order: 3;
+    margin-top: 8px;
+    margin-bottom: 0;
+  }
+  :global(html[data-home-ab='b']) .promises {
+    order: 4;
+  }
+}
+
 /* Hero booking widget — the highest-leverage element on the page. */
 .widget {
   background: var(--surface);

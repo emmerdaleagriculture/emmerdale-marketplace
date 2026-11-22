@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HOME_SERVICES } from '@/lib/home/services';
 import { ViewOnce } from './Track';
+import { trackStep } from '@/components/PageTracker';
 import { CoverageHint } from '@/components/CoverageHint';
 import s from './home.module.css';
 
@@ -64,6 +65,8 @@ export function QuoteWidget() {
       source: 'hero',
     });
 
+    // Our own beacon's copy, for the hero split test (src/lib/homeSplit.ts).
+    trackStep('start_quote');
     router.push(`/start?${params}`);
   };
 
@@ -98,7 +101,7 @@ export function QuoteWidget() {
     <div className={s.widget}>
       {/* The denominator for the hero's conversion rate: how many arrivals
           actually got the widget on screen. */}
-      <ViewOnce event="view_quote_widget" />
+      <ViewOnce event="view_quote_widget" step="form_seen" />
       <h2 className={s.widgetTitle}>What needs doing?</h2>
       <p className={s.widgetSub}>Takes about a minute. No account needed.</p>
 

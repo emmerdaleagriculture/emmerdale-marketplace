@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { homeVariant } from '@/lib/homeSplit';
 
 /**
  * The landing-page beacon: where people clicked, and how far down they got.
@@ -184,7 +185,7 @@ export function PageTracker({ path }: { path: string }) {
       try {
         navigator.sendBeacon?.(
           '/api/track',
-          new Blob([JSON.stringify({ path, session, events: batch, ...attribution() })], {
+          new Blob([JSON.stringify({ path, session, events: batch, variant: homeVariant(), ...attribution() })], {
             type: 'application/json',
           }),
         );

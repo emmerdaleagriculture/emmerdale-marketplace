@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { trackStep } from '@/components/PageTracker';
 
 // window.gtag is declared once, in @/components/Analytics.
 
@@ -36,7 +37,7 @@ export function trackCta(location: string, params: Params = {}) {
  * back down has not seen it twice, and counting it twice would quietly inflate
  * the denominator of every rate computed from it.
  */
-export function ViewOnce({ event, params }: { event: string; params?: Params }) {
+export function ViewOnce({ event, params, step }: { event: string; params?: Params; step?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const fired = useRef(false);
 
@@ -48,6 +49,7 @@ export function ViewOnce({ event, params }: { event: string; params?: Params }) 
     if (!('IntersectionObserver' in window)) {
       fired.current = true;
       send(event, params);
+      if (step) trackStep(step);
       return;
     }
     const io = new IntersectionObserver(
@@ -55,6 +57,9 @@ export function ViewOnce({ event, params }: { event: string; params?: Params }) 
         if (!entries.some((e) => e.isIntersecting) || fired.current) return;
         fired.current = true;
         send(event, params);
+        // The same moment, into our own beacon too (`step`), where the
+        // hero split test reads it beside the visit's arm.
+        if (step) trackStep(step);
         io.disconnect();
       },
       // A sliver on screen is not "seen" — ask for a quarter of it.

@@ -67,6 +67,8 @@ const GROUPS: { name: string; items: { href: string; label: string }[] }[] = [
     name: 'Insight',
     items: [
       { href: '/admin/metrics', label: 'Dashboard' },
+      // Every split test's results, cached for an hour (admin/tests/data.ts).
+      { href: '/admin/tests', label: 'A/B tests' },
       { href: '/admin/reporting', label: 'Landing funnel' },
       { href: '/admin/reporting/sources', label: 'Sources' },
       // Reachable only from body links on three other pages until now.
