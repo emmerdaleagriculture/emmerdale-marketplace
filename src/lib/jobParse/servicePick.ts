@@ -63,6 +63,11 @@ const MENTIONS: [CanonicalService, RegExp][] = [
   // unclassified and missed the hay invite radius (12 Nov, EH23). "Cut and
   // bale my hay" is grass work, not a purchase; offered, the customer says no.
   ['Hay, straw & haylage', /\b(?:hay|haylage|straw|bales?)\b/i],
+  // A sycamore-seed paddock (22 Nov, TD1) found nothing to pick and was
+  // refused four times describing it under "None of these". What falls from
+  // the trees, not bare "leaves" ("he leaves the gate open"): offered only,
+  // so "fell the sycamore" being offered sweeping too costs one tap.
+  ['Paddock sweeping', /\b(?:sycamores?|acorns?|conkers?|leaf|(?:fallen|dead|autumn) leaves|leaves (?:off|from|up))\b/i],
 ];
 
 /** In the order the customer mentioned them: the first thing they asked for leads. */

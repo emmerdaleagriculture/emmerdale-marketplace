@@ -70,6 +70,16 @@ describe('servicesMentioned', () => {
     expect(servicesMentioned('strawberry field topped')).toEqual(['Paddock topping']);
   });
 
+  it('offers paddock sweeping for what falls from the trees', () => {
+    expect(
+      servicesMentioned('clear a paddock of accumulated sycamore leaves and sycamore helicopters'),
+    ).toEqual(['Paddock sweeping']);
+    expect(servicesMentioned('acorns everywhere under the oaks')).toEqual(['Paddock sweeping']);
+    expect(servicesMentioned('need the fallen leaves cleared')).toEqual(['Paddock sweeping']);
+    expect(servicesMentioned('leaf clearance, 2 acres')).toEqual(['Paddock sweeping']);
+    expect(servicesMentioned('he leaves the gate open, needs topping')).toEqual(['Paddock topping']);
+  });
+
   it('offers topping first when a topping job mentions weeds', () => {
     expect(
       servicesMentioned('Orchard topping Spring, summer to control Bracken, creeping thistle, nettle'),

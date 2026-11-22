@@ -23,6 +23,15 @@ import s from './start.module.css';
 const EMPTY: ConfirmActionState = {};
 
 /**
+ * What a customer looking for the job would call it, where our name alone
+ * does not say. Display only: the value sent is still the canonical name.
+ */
+const SERVICE_HINT: Partial<Record<string, string>> = {
+  'Paddock sweeping': 'Paddock sweeping (leaves, acorns, sycamore seeds)',
+};
+const serviceLabel = (name: string) => SERVICE_HINT[name] ?? name;
+
+/**
  * Steps 3–4: the parse result as editable fields, then contact details, one
  * form. The editing is the accuracy mechanism, not a formality — nothing
  * downstream treats unconfirmed parse output as reliable.
@@ -449,7 +458,7 @@ export function ConfirmStep({
                     setListOpen(false);
                   }}
                 >
-                  {name}
+                  {serviceLabel(name)}
                 </button>
               ))}
               <button
@@ -486,7 +495,7 @@ export function ConfirmStep({
                 </option>
                 {listed.map((name) => (
                   <option key={name} value={name}>
-                    {name}
+                    {serviceLabel(name)}
                   </option>
                 ))}
                 <option value="other">None of these (I&rsquo;ll describe it)</option>
