@@ -70,6 +70,28 @@ describe('servicesMentioned', () => {
     expect(servicesMentioned('strawberry field topped')).toEqual(['Paddock topping']);
   });
 
+  it('offers paddock sweeping for what falls from the trees', () => {
+    expect(
+      servicesMentioned('clear a paddock of accumulated sycamore leaves and sycamore helicopters'),
+    ).toEqual(['Paddock sweeping', 'Manure sweeping']);
+    expect(servicesMentioned('acorns everywhere under the oaks')).toEqual(['Paddock sweeping', 'Manure sweeping']);
+    expect(servicesMentioned('need the fallen leaves cleared')).toEqual(['Paddock sweeping', 'Manure sweeping']);
+    expect(servicesMentioned('leaf clearance, 2 acres')).toEqual(['Paddock sweeping', 'Manure sweeping']);
+    expect(servicesMentioned('he leaves the gate open, needs topping')).toEqual(['Paddock topping']);
+  });
+
+  it('offers both sweeping services together, whichever was named', () => {
+    expect(servicesMentioned('poo picking for 3 acres')).toEqual(['Manure sweeping', 'Paddock sweeping']);
+    expect(servicesMentioned('droppings and sycamore seeds')).toEqual(['Manure sweeping', 'Paddock sweeping']);
+    expect(servicesMentioned('topping, then sweep the acorns')).toEqual([
+      'Paddock topping',
+      'Paddock sweeping',
+      'Manure sweeping',
+    ]);
+    expect(servicesMentioned('spread the muck heap')).toEqual([]);
+    expect(servicesMentioned('manure spreading')).toEqual([]);
+  });
+
   it('offers topping first when a topping job mentions weeds', () => {
     expect(
       servicesMentioned('Orchard topping Spring, summer to control Bracken, creeping thistle, nettle'),
