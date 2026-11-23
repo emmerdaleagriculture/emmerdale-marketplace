@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { cronEveryMinutes } from './checks';
+import { cronEveryMinutes, pinnedDate } from './checks';
+
+describe('pinnedDate', () => {
+  it('recognises a one-off date and nothing that repeats', () => {
+    expect(pinnedDate('0 9 23 12 *')).toBe('23 Dec 09:00 UTC');
+    expect(pinnedDate('35 3 1 * *')).toBeNull();
+    expect(pinnedDate('30 6 * * 1')).toBeNull();
+    expect(pinnedDate('*/5 * * * *')).toBeNull();
+  });
+});
 
 describe('cronEveryMinutes', () => {
   it('reads the common shapes', () => {
