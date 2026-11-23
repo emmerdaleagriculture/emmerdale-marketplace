@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { recordCronRun } from '@/lib/cron/record';
 import { getStripe, syncSubscription } from '@/lib/stripe';
+import { issueMembershipReceipt, RECEIPTS_FROM } from '@/lib/receipts';
 import { cronAuthorised } from '@/lib/cronAuth';
 
 /**
@@ -33,6 +34,10 @@ async function run() {
   const stripe = getStripe();
   let synced = 0;
   let ended = 0;
+  let receipts = 0;
+  // Receipts for membership payments the webhook didn't deliver (invoice.paid
+  // may not be on the live endpoint). Three days back covers a missed night.
+  const since = Math.floor(Math.max(RECEIPTS_FROM, Date.now() - 3 * 86_400_000) / 1000);
   const failed: string[] = [];
   for (const row of rows ?? []) {
     try {
@@ -44,6 +49,15 @@ async function run() {
       // The live one if there is one, else the most recent.
       const pick =
         subs.find((s) => LIVE.has(s.status)) ?? [...subs].sort((a, b) => b.created - a.created)[0];
+      const { data: invoices } = await stripe.invoices.list({
+        customer: row.stripe_customer_id!,
+        status: 'paid',
+        created: { gte: since },
+        limit: 20,
+      });
+      for (const inv of invoices) {
+        if ((await issueMembershipReceipt(inv)) === 'issued') receipts++;
+      }
       if (pick) {
         await syncSubscription(pick);
         synced++;
@@ -61,7 +75,7 @@ async function run() {
     }
   }
   if (failed.length) throw new Error(`${failed.length} of ${(rows ?? []).length} failed: ${failed.join(', ')}`);
-  return { customers: (rows ?? []).length, synced, ended };
+  return { customers: (rows ?? []).length, synced, ended, receipts };
 }
 
 async function handle(request: Request) {

@@ -15,6 +15,10 @@ const ProfileSchema = z.object({
   base_postcode: z.string().trim().min(3, 'Base postcode is required.'),
   county_ids: z.array(z.coerce.number().int()).min(1, 'Select at least one county.'),
   service_ids: z.array(z.coerce.number().int()).min(1, 'Pick at least one service.'),
+  receipt_email: z.union([
+    z.literal(''),
+    z.string().trim().toLowerCase().email('That receipts address doesn’t look right.').max(254),
+  ]),
 });
 
 /** The listing's fields, present only when the form showed them (Open members). */
@@ -42,6 +46,7 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
     base_postcode: formData.get('base_postcode'),
     county_ids: formData.getAll('county_ids'),
     service_ids: formData.getAll('service_ids'),
+    receipt_email: String(formData.get('receipt_email') ?? '').trim(),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Please check the form.' };
@@ -102,6 +107,7 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
       ...(geo.lat != null && geo.lng != null ? { base_lat: geo.lat, base_lng: geo.lng } : {}),
       notify_new_jobs: notify,
       notify_sms: notifySms,
+      receipt_email: d.receipt_email || null,
       ...(directory ?? {}),
       // Only on the form for Open members; absent, the switch is left alone.
       ...(formData.has('tenders_section') ? { tenders_enabled: formData.get('tenders_enabled') === 'on' } : {}),

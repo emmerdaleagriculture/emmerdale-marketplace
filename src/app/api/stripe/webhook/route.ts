@@ -4,6 +4,7 @@ import type Stripe from 'stripe';
 import { getStripe, syncSubscription } from '@/lib/stripe';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
+import { issueMembershipReceipt } from '@/lib/receipts';
 
 /**
  * POST /api/stripe/webhook — Stripe events, one endpoint for both flows:
@@ -12,7 +13,8 @@ import { notifyAdmins } from '@/lib/adminNotify';
  *
  * Configure the endpoint in Stripe → Developers → Webhooks with events:
  *   checkout.session.completed, checkout.session.expired,
- *   customer.subscription.updated, customer.subscription.deleted
+ *   customer.subscription.updated, customer.subscription.deleted,
+ *   invoice.paid (membership receipts; premium-sync sweeps if it's missing)
  * and set STRIPE_WEBHOOK_SECRET to the signing secret.
  */
 
@@ -185,6 +187,12 @@ export async function POST(request: Request) {
           const { error } = await admin.rpc('void_acceptance', { p_session_id: session.id });
           if (error) throw error;
         }
+        break;
+      }
+      case 'invoice.paid': {
+        // A membership payment (first or renewal) → its receipt. Once per
+        // invoice, however often Stripe replays this.
+        await issueMembershipReceipt(event.data.object as Stripe.Invoice);
         break;
       }
       case 'customer.subscription.updated':

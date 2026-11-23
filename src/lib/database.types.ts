@@ -883,6 +883,7 @@ export type Database = {
           certificate_paths: string[]
           conduct_version: string | null
           conduct_accepted_at: string | null
+          receipt_email: string | null
           rating_avg: number | null
           rating_count: number
           services: number[]
@@ -921,6 +922,7 @@ export type Database = {
           certificate_paths?: string[]
           conduct_version?: string | null
           conduct_accepted_at?: string | null
+          receipt_email?: string | null
           rating_avg?: number | null
           rating_count?: number
           services?: number[]
@@ -959,6 +961,7 @@ export type Database = {
           certificate_paths?: string[]
           conduct_version?: string | null
           conduct_accepted_at?: string | null
+          receipt_email?: string | null
           rating_avg?: number | null
           rating_count?: number
           services?: number[]
@@ -5089,6 +5092,21 @@ export type Database = {
       sq_service_label: {
         Args: { p_service_id: number; p_verbatim: string }
         Returns: string
+      }
+      sq_issue_receipt: {
+        Args: {
+          p_amount_pence: number
+          p_contractor_id: string
+          p_email_kind: string
+          p_key: string
+          p_kind: string
+          p_paid_at: string
+          p_payload: Json
+          p_receipt_no: string
+          p_submission_id: string
+          p_to_email: string
+        }
+        Returns: boolean
       }
       sq_settle_balance: {
         Args: { p_intent_id: string; p_payment_id: string }

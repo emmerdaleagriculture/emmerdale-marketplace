@@ -139,6 +139,26 @@ function vatSuffix(basis: unknown): string {
   }
 }
 
+/** "23 November 2026" in London, for a receipt. */
+function receiptDate(iso: unknown): string {
+  const d = new Date(typeof iso === 'string' || typeof iso === 'number' ? iso : Date.now());
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-GB', {
+    timeZone: 'Europe/London', day: 'numeric', month: 'long', year: 'numeric',
+  });
+}
+
+/**
+ * Who was paid, at the foot of every receipt. A copy of COMPANY_LEGAL_NAME,
+ * COMPANY_NUMBER and COMPANY_ADDRESS_LINES in src/lib/site.ts (this function
+ * cannot import from the app) — change both together.
+ */
+const RECEIPT_FOOTER =
+  `Paid to Emmerdale Agriculture Online Ltd, Company No. 17435453\n` +
+  `The Old Poultry Shed, Upper Slackstead Farm, Farley Lane, Braishfield, ` +
+  `Hampshire, SO51 0QL\n\n` +
+  `Keep this email for your records. Questions about a payment: reply to this email.`;
+
 function areaLine(p: Record<string, unknown>): string {
   if (p.area_mapped_value) return `${p.area_mapped_value} acres (measured from a drawn boundary)`;
   if (p.area_value) return `${p.area_value} ${p.area_unit === 'linear_m' ? 'metres' : p.area_unit ?? ''}`;
@@ -1101,6 +1121,59 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
             : '') +
           `\nIf that doesn’t match the work you asked for, reply to this email before paying and ` +
           `we’ll sort it out with them first.`,
+      };
+
+    // A receipt for one payment on a job (20261123120000_payment_receipts):
+    // deposit, card balance or bank transfer. Sent alongside the "Booked" /
+    // "Paid in full" emails, which say what happens next; this one is the
+    // record to keep.
+    case 'sq_receipt': {
+      const what = p.payment_kind === 'deposit' ? 'Deposit' : 'Balance';
+      const paidToDate = Number(p.paid_to_date_pence ?? 0);
+      const outstanding = Number(p.outstanding_pence ?? 0);
+      const job = [p.service, p.postcode_district].filter(Boolean).join(', ');
+      return {
+        subject: `Receipt ${p.receipt_no}: ${gbp(p.amount_pence)} paid`,
+        text:
+          `Hi ${first},\n\nThank you for your payment. This is your receipt.\n\n` +
+          `Receipt number: ${p.receipt_no}\n` +
+          `Date paid:      ${receiptDate(p.paid_at)}\n` +
+          `Amount paid:    ${gbp(p.amount_pence)}${vatSuffix(p.price_basis)}\n` +
+          `For:            ${what}${job ? ` for ${job}` : ''}\n` +
+          (p.contractor_business_name ? `Contractor:     ${p.contractor_business_name}\n` : '') +
+          `Paid by:        ${p.method === 'bank_transfer' ? 'Bank transfer' : 'Card or online payment'}\n` +
+          (paymentReference(p.submission_id) ? `Job reference:  ${paymentReference(p.submission_id)}\n` : '') +
+          `\n` +
+          `Paid so far:    ${gbp(paidToDate)}\n` +
+          (outstanding > 0
+            ? `Still to pay:   ${gbp(outstanding)}\n`
+            : p.payment_kind === 'deposit'
+              ? `The balance is due once the work is done and you’ve confirmed it.\n`
+              : `Nothing more to pay on this job.\n`) +
+          `\nYour job page: ${portal}\n\n` +
+          RECEIPT_FOOTER,
+      };
+    }
+
+    // A receipt for a membership payment: the first payment and every renewal,
+    // from the Stripe invoice (src/lib/receipts.ts).
+    case 'sq_membership_receipt':
+      return {
+        subject: `Receipt ${p.receipt_no}: ${gbp(p.amount_pence)} paid`,
+        text:
+          `Hi ${first},\n\nThank you for your payment. This is your receipt.\n\n` +
+          `Receipt number: ${p.receipt_no}\n` +
+          `Date paid:      ${receiptDate(p.paid_at)}\n` +
+          `Amount paid:    ${gbp(p.amount_pence)}\n` +
+          `For:            ${p.description ?? 'Membership'}\n` +
+          (p.period_start && p.period_end
+            ? `Period:         ${receiptDate(p.period_start)} to ${receiptDate(p.period_end)}\n`
+            : '') +
+          (p.business_name ? `Billed to:      ${p.business_name}\n` : '') +
+          `Paid by:        Card or online payment\n` +
+          (p.invoice_pdf ? `\nA PDF copy: ${p.invoice_pdf}\n` : '') +
+          `\nManage your membership: ${SITE_URL}/account/membership\n\n` +
+          RECEIPT_FOOTER,
       };
 
     case 'sq_balance_paid':
