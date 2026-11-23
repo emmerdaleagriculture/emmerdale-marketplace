@@ -150,6 +150,17 @@ export function AccountForm({
               <span className={f.label}>Base postcode</span>
               <input className={f.input} name="base_postcode" defaultValue={contractor.base_postcode} required />
             </label>
+            <label className={f.field}>
+              <span className={f.label}>Send receipts to</span>
+              <input
+                className={f.input}
+                name="receipt_email"
+                type="email"
+                defaultValue={contractor.receipt_email ?? ''}
+                placeholder={contractor.email}
+              />
+              <span className={f.hint}>Your accounts or bookkeeper’s address. Blank sends them to {contractor.email}.</span>
+            </label>
           </div>
         </div>
       </details>
