@@ -133,6 +133,51 @@ export function hourlyRateProblem(note: string): string | null {
 }
 
 /** What people put between the digits of a phone number. */
+/**
+ * Lookalike characters turned back into plain ones, before any check runs.
+ * On 23 Nov 2026 a mobile got through as keycap emoji ("0️⃣7️⃣9️⃣…"): each is
+ * an ordinary digit followed by an invisible variation selector and a
+ * combining keycap, so no digit run matched. Folded here:
+ *
+ * - NFKC: full-width "０７", maths "𝟎𝟕", circled "⓪①", superscripts, "＠";
+ * - invisible characters (variation selectors, the keycap mark, zero-width
+ *   spaces and joiners, soft hyphens) removed, and 🔟 read as 10;
+ * - decimal digits from any other script (Arabic-Indic, Devanagari…);
+ * - a run of eight or more digits spelled out ("oh seven nine eight …").
+ *
+ * Used only to decide whether to refuse: what is stored and shown is what
+ * the person typed.
+ */
+export function plainText(text: string): string {
+  let t = text.normalize('NFKC');
+  t = t.replace(/\u{1F51F}/gu, '10');
+  t = t.replace(/[\uFE00-\uFE0F\u20E3\u200B-\u200F\u2060-\u2064\uFEFF\u00AD\u{E0020}-\u{E007F}]/gu, '');
+  t = t.replace(/\p{Nd}/gu, (ch) => {
+    if (ch >= '0' && ch <= '9') return ch;
+    // Unicode digit blocks run 0 to 9 in order: count back to the block's zero.
+    let cp = ch.codePointAt(0)!;
+    let value = 0;
+    while (value < 9 && /\p{Nd}/u.test(String.fromCodePoint(cp - 1))) {
+      cp -= 1;
+      value += 1;
+    }
+    return String(value);
+  });
+  return t.replace(SPELLED_RUN, (run) =>
+    run
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean)
+      .map((w) => (/^\d+$/.test(w) ? w : String(DIGIT_WORDS[w])))
+      .join(''),
+  );
+}
+
+const DIGIT_WORDS: Record<string, number> = { zero: 0, oh: 0, o: 0, nought: 0, nil: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9 };
+const DIGIT_WORD = `(?:${Object.keys(DIGIT_WORDS).join('|')}|\\d)`;
+/** Eight or more digits in a row, at least some written as words. */
+const SPELLED_RUN = new RegExp(`\\b${DIGIT_WORD}(?:[\\s,.\\-–—/]+${DIGIT_WORD}){7,}\\b`, 'gi');
+
 const PHONE_SEPARATOR = /[\s().\-–—]+/;
 
 /**
@@ -184,7 +229,7 @@ export function hasPhoneNumber(note: string): boolean {
  * contractor. Phrased as what to do, not what they did wrong.
  */
 export function clientNoteProblem(note: string): string | null {
-  const t = note.trim();
+  const t = plainText(note.trim());
   if (!t) return null;
   if (t.length > CLIENT_NOTE_MAX) {
     return `That note is a bit long. Keep it under ${CLIENT_NOTE_MAX} characters.`;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { messageProblem, messageRefusal } from './messageText';
+import { clientNoteProblem } from './clientNote';
 
 describe('messageProblem', () => {
   it('passes an ordinary question either way, before and after award', () => {
@@ -147,5 +148,45 @@ describe('the 5 Oct 2026 messages (West Sussex land services)', () => {
     expect(open('a'.repeat(2001))?.text).toMatch(/too long/);
     // Only the contractor side: the customer still cannot see who they are.
     expect(open('Ring me on 07123 456 789', 'client')?.flag).toBe('phone');
+  });
+});
+
+describe('lookalike digits (23 Nov 2026: a mobile sent as keycap emoji got through)', () => {
+  // 07700 900123 is in Ofcom's drama range: never a real number.
+  const keycaps = [...'07700900123'].map((d) => `${d}️⃣`).join('');
+  const cases: [string, string][] = [
+    ['keycap emoji', `Yes that’s fine, coming out will include the job if I get it thanks ${keycaps}`],
+    ['keycaps without the variation selector', [...'07700900123'].map((d) => `${d}⃣`).join('')],
+    ['full-width digits', '０７７００９００１２３'],
+    ['maths bold digits', '𝟎𝟕𝟕𝟎𝟎𝟗𝟎𝟎𝟏𝟐𝟑'],
+    ['circled digits', '⓪⑦⑦⓪⓪⑨⓪⓪①②③'],
+    ['Arabic-Indic digits', '٠٧٧٠٠٩٠٠١٢٣'],
+    ['zero-width spaces between digits', '0​7​7​0​0​9​0​0​1​2​3'],
+    ['spelled out', 'oh seven seven oh oh nine oh oh one two three'],
+    ['words and digits mixed', 'zero 7 seven 0 0 nine 0 0 1 two three'],
+  ];
+  for (const [name, body] of cases) {
+    it(`refuses a number as ${name}`, () => {
+      expect(messageRefusal(body, 'contractor', 'pre_award')?.flag).toBe('phone');
+    });
+  }
+
+  it('refuses a full-width @ address', () => {
+    expect(messageRefusal('send it to joe＠example.com', 'contractor', 'pre_award')?.flag).toBe('email_or_link');
+  });
+
+  it('refuses keycaps in a quote note too', () => {
+    expect(clientNoteProblem(`Happy to do this ${keycaps}`)).toMatch(/phone number/);
+  });
+
+  it('leaves ordinary messages alone', () => {
+    for (const ok of [
+      'I can come Tuesday 👍 about 2pm',
+      'Rated 5️⃣ stars by my last customers',
+      'One or two passes should do it, maybe three',
+      'The field is 3.5 acres, gate on the left 🚜',
+    ]) {
+      expect(messageRefusal(ok, 'contractor', 'pre_award')).toBeNull();
+    }
   });
 });
