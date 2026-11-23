@@ -135,7 +135,7 @@
 .field select,
 .field textarea {
   font: inherit;
-  font-size: 15px;
+  font-size: 16px; /* under 16px makes iOS zoom in on tap */
   color: var(--ink);
   border: 1px solid var(--rule);
   border-radius: 8px;

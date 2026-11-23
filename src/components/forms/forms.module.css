@@ -27,6 +27,15 @@
   color: var(--ink);
   width: 100%;
 }
+/* iOS zooms the page into any box whose text is under 16px when it is tapped,
+   and does not zoom back out. Boxes inherit their text size (a 14px table on
+   the Books invoice form), so on touch screens hold them at 16px or more. */
+@media (pointer: coarse) {
+  .input,
+  .textarea {
+    font-size: max(1em, 16px);
+  }
+}
 /* iOS Safari gives date and time boxes their own width (wider than a phone
    column, and taller when empty) and ignores width: 100% until the native
    look is switched off. */
