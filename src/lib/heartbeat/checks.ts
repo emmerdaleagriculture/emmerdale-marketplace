@@ -64,6 +64,23 @@ export function pinnedDate(schedule: string): string | null {
   return `${Number(dom)} ${MONTHS[m - 1]} ${hour.padStart(2, '0')}:${min.padStart(2, '0')} UTC`;
 }
 
+/**
+ * Whether a pinned job's date passed in the last week without it running:
+ * pg_cron was down, or the job broke before it could record a run. Only a
+ * week, because the schedule has no year — after that its date is next
+ * year's, and "runs once" is all we can say.
+ */
+export function missedPinnedDate(schedule: string, now = new Date()): boolean {
+  const [min, hour, dom, mon] = schedule.trim().split(/\s+/).map(Number);
+  if (!pinnedDate(schedule)) return false;
+  for (const year of [now.getUTCFullYear(), now.getUTCFullYear() - 1]) {
+    const at = Date.UTC(year, mon - 1, dom, hour, min);
+    // Ten minutes' grace for pg_cron to start and record the run.
+    if (at + 10 * 60_000 < now.getTime() && now.getTime() - at < 7 * 86_400_000) return true;
+  }
+  return false;
+}
+
 function httpCronChecks(): Check[] {
   return HTTP_CRONS.map((job) => ({
     name: `cron: ${job.name}`,
@@ -97,6 +114,7 @@ async function pgCronChecks(): Promise<Check[]> {
       if (!j.active) return { ok: false, detail: 'switched off' };
       if (!j.last_start) {
         const due = pinnedDate(j.schedule);
+        if (due && missedPinnedDate(j.schedule)) return { ok: false, detail: `was due once, on ${due}, and has not run` };
         return due ? { ok: true, detail: `runs once, on ${due}` } : { ok: false, detail: 'has never run' };
       }
       if (j.last_status === 'failed') return { ok: false, detail: `last run failed ${ago(j.last_start)}: ${(j.last_message ?? '').slice(0, 200)}` };
