@@ -2,13 +2,16 @@
  * Bank statement rows against the books (Tally 2.11 / 3.9). Pure: the
  * server loads what's in the books and hands it in.
  *
- *   imported  the row was booked from a statement before (same row key)
+ *   imported  the row was booked from a statement before (same row key, or
+ *             the bank's own transaction id on an imported entry)
  *   matched   the same amount is already on that account within 5 days
- *             (a Stripe payout, a receipt, an invoice payment…); left unticked
- *   new       ticked, with a suggested account: a Monzo pot transfer → 1205,
- *             money in that is exactly an open invoice's amount due → that
- *             invoice, else what this payee went to last time, else 4900 /
- *             6990 flagged to check
+ *             (a Stripe payout, a receipt, an invoice payment…)
+ *   new       not in the books: booked automatically on upload with the
+ *             suggested account: a Monzo pot transfer → 1205, money in that
+ *             is exactly an open invoice's amount due → that invoice, else
+ *             what this payee went to last time, else the AI's pick (or 4900 /
+ *             6990) flagged to check. A Stripe payout on a ledger Stripe
+ *             syncs waits for the sync instead.
  */
 
 import { VAT_CODES, registeredOn, type VatCode } from './vat';
@@ -52,7 +55,9 @@ export function classify(rows: BankRow[], accountCode: string, lines: BookLine[]
   const used = new Set<number>();
   const states: RowState[] = rows.map((r) => {
     const ext = rowExternalId(accountCode, r.key);
-    const hit = byExt.get(ext) ?? byExt.get(`invpay:${ext}`);
+    // Entries imported from another system keep the bank's id (Monzo mm_…).
+    const bankId = r.key.startsWith('id:') ? r.key.slice(3) : null;
+    const hit = byExt.get(ext) ?? byExt.get(`invpay:${ext}`) ?? (bankId ? byExt.get(bankId) : undefined);
     if (hit) {
       used.add(hit.entry_id);
       return { status: 'imported', entryId: hit.entry_id };
@@ -82,6 +87,9 @@ export type OpenInvoice = { id: number; number: string; customer: string; due_pe
 export type PayeeHistory = Map<string, { account: string; vat: VatCode }>;
 
 export type Suggestion = { account: string; vat: VatCode; check: boolean; why: string };
+
+/** Money in from Stripe: a payout of card payments. */
+export const isStripePayout = (r: BankRow) => r.amount > 0 && /\bstripe\b/i.test(r.payee);
 
 const isPot = (r: BankRow) => /pot transfer/i.test(r.type ?? '') || /^(savings )?pot\b/i.test(r.payee);
 

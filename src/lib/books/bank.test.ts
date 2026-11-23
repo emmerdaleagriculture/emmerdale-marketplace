@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseAmount, parseCsv, parseStatement, parseUkDate, payeeKey, type BankRow } from './bankCsv';
-import { classify, reconcile, rowExternalId, rowPosting, suggest, type BookLine } from './bank';
+import { classify, isStripePayout, reconcile, rowExternalId, rowPosting, suggest, type BookLine } from './bank';
 import { balances, type AccountInfo, type LedgerForPosting } from './posting';
 import { chartFor } from './chart';
 
@@ -176,6 +176,21 @@ describe('classify', () => {
     const r = row('2026-02-01', 1000);
     const { states } = classify([r], '1200', [line(9, '2026-02-01', 1000, `invpay:${rowExternalId('1200', r.key)}`)]);
     expect(states[0].status).toBe('imported');
+  });
+
+  it('an entry carrying the bank’s own id (imported from another system) is that row, whatever the amount match', () => {
+    const r = row('2026-02-01', -1000, 'Shop', { key: 'id:mm_abc' });
+    const other = row('2026-02-01', -1000, 'Shop', { key: 'id:mm_def' });
+    const { states } = classify([other, r], '1200', [line(5, '2026-02-01', -1000, 'mm_abc')]);
+    expect(states.map((s) => s.status)).toEqual(['new', 'imported']);
+  });
+});
+
+describe('isStripePayout', () => {
+  it('money in from Stripe only', () => {
+    expect(isStripePayout(row('2026-02-01', 5000, 'Stripe Payments UK Ltd'))).toBe(true);
+    expect(isStripePayout(row('2026-02-01', -5000, 'Stripe Payments UK Ltd'))).toBe(false);
+    expect(isStripePayout(row('2026-02-01', 5000, 'Stripey Farm'))).toBe(false);
   });
 });
 

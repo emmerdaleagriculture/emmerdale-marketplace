@@ -14,8 +14,8 @@ import { UploadForm } from './UploadForm';
 export const metadata: Metadata = { title: 'Bank statements', robots: { index: false, follow: false } };
 
 /**
- * Bank statements: upload a CSV from the bank, then tick the rows to bring
- * into the books. Coverage per account shows how far the books are checked
+ * Bank statements: upload a CSV from the bank and every row not already in
+ * the books is booked automatically. Coverage per account shows how far the books are checked
  * against the bank.
  */
 export default async function BankPage() {
@@ -39,9 +39,10 @@ export default async function BankPage() {
   return (
     <BooksFrame access={access} title="Bank statements" tab="bank" crumb="Bank">
       <p className={m.lead}>
-        Download a statement from your bank as a CSV file and upload it here. You choose which rows to bring
-        into your books; anything already there (a receipt, an invoice payment, a Stripe payout) is spotted
-        and left out.
+        Download a statement from your bank as a CSV file and upload it here. Every row goes into your books
+        on its own: anything already there (a receipt, an invoice payment, a Stripe payout) is spotted and
+        left out, payees you’ve had before go where they went last time, and new ones are filed by AI and
+        marked for you to glance at.
       </p>
 
       {covered.size > 0 && (
