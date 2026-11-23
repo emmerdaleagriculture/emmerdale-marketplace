@@ -23,9 +23,19 @@ export async function GET(req: NextRequest) {
     vat_scheme: l.vat_scheme as 'standard',
     flat_rate_percent: l.flat_rate_percent == null ? null : Number(l.flat_rate_percent),
   });
-  const type = p.get('type') === 'detail' ? 'detail' : 'summary';
+  const t = p.get('type');
+  const type = t === 'detail' ? 'detail' : t === 'tinytax' ? 'tinytax' : 'summary';
   let rows: string[];
-  if (type === 'summary') {
+  if (type === 'tinytax') {
+    // TinyTax MTD VAT's import: two columns, the nine boxes and a value
+    // (https://tinytax.co.uk/mtd-vat). Their exact headings are only shown
+    // inside their app, so these are unconfirmed: change them here if an
+    // upload is refused. Plain decimals, no thousands separators.
+    rows = [
+      ['Box', 'Value'].join(','),
+      ...(Object.keys(BOX_LABELS) as unknown as (keyof Boxes)[]).map((k) => [`Box ${k}`, penceToDecimal(boxes[k])].join(',')),
+    ];
+  } else if (type === 'summary') {
     rows = [
       ['Business', 'VAT number', 'Scheme', 'Period start', 'Period end', 'Box', 'Description', 'Amount'].join(','),
       ...(Object.keys(BOX_LABELS) as unknown as (keyof Boxes)[]).map((k) =>
@@ -51,7 +61,8 @@ export async function GET(req: NextRequest) {
       ),
     ];
   }
-  return new NextResponse('﻿' + rows.join('\r\n') + '\r\n', {
+  // No byte-order mark for TinyTax: an importer can read it as part of the first heading.
+  return new NextResponse((type === 'tinytax' ? '' : '﻿') + rows.join('\r\n') + '\r\n', {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
       'Content-Disposition': `attachment; filename="vat-${type}-${from}-to-${to}.csv"`,
