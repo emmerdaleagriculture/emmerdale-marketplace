@@ -222,7 +222,7 @@
 .select {
   width: 100%;
   font: inherit;
-  font-size: 15px;
+  font-size: 16px; /* under 16px makes iOS zoom in on tap */
   padding: 10px 12px;
   border: 1px solid var(--rule-strong);
   border-radius: 10px;
