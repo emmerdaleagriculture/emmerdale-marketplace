@@ -42,6 +42,19 @@ const GROUPS: Group[] = [
       { k: 'shareCapital', hint: 'Usually £1 to £100' },
     ],
   },
+  {
+    title: 'Last year (comparatives)',
+    hint: 'From last year’s filed accounts. Books starts these from what it holds; check them against what you filed.',
+    fields: [
+      { k: 'priorTurnover' },
+      { k: 'priorProfitBeforeTax', hint: 'A loss is negative' },
+      { k: 'priorFixedAssets' },
+      { k: 'priorCurrentAssets' },
+      { k: 'priorCreditorsWithinYear' },
+      { k: 'priorCreditorsAfterYear' },
+      { k: 'priorShareCapital' },
+    ],
+  },
 ];
 
 const toInput = (p: number) => (p === 0 ? '0' : penceToDecimal(p));
@@ -51,12 +64,15 @@ export function YearEndForm({
   figures,
   fromBooks,
   canEdit,
+  canCheck,
   dlaOverdrawn,
 }: {
   periodEnd: string;
   figures: YearEndFigures;
   fromBooks: YearEndFigures;
   canEdit: boolean;
+  /** TinyTax won't check a year that hasn't ended. */
+  canCheck: boolean;
   dlaOverdrawn: boolean;
 }) {
   const [state, check, checking] = useActionState(checkFiguresAction, emptyFormState);
@@ -64,12 +80,14 @@ export function YearEndForm({
     () => Object.fromEntries(GROUPS.flatMap((g) => g.fields.map(({ k }) => [k, toInput(figures[k])]))) as Record<PenceField, string>,
   );
   const [hasLoan, setHasLoan] = useState(Boolean(figures.directorLoan) || dlaOverdrawn);
+  const [firstYear, setFirstYear] = useState(figures.firstYear);
   const p = (k: PenceField) => parsePounds(vals[k]) ?? 0;
 
   const live = useMemo(() => {
     const profit = p('turnover') + p('otherIncome') - p('costOfSales') - p('staffCosts') - p('depreciation') - p('otherExpenses');
     const net = p('fixedAssets') + p('currentAssets') - p('creditorsWithinYear') - p('creditorsAfterYear');
-    return { profit, net, reserve: net - p('shareCapital') };
+    const priorNet = p('priorFixedAssets') + p('priorCurrentAssets') - p('priorCreditorsWithinYear') - p('priorCreditorsAfterYear');
+    return { profit, net, reserve: net - p('shareCapital'), priorReserve: priorNet - p('priorShareCapital') };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vals]);
 
@@ -78,8 +96,13 @@ export function YearEndForm({
   return (
     <form action={check} className={s.fieldset} style={{ display: 'grid', gap: 16 }}>
       <input type="hidden" name="period_end" value={periodEnd} />
-      {GROUPS.map((g) => (
+      <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <input type="checkbox" name="firstYear" checked={firstYear} onChange={(e) => setFirstYear(e.target.checked)} disabled={!canEdit} />
+        <span>This is the company’s first accounting period (no figures for last year)</span>
+      </label>
+      {GROUPS.filter((g) => !(firstYear && g.title.startsWith('Last year'))).map((g) => (
         <div key={g.title} className={m.tableWrap}>
+          {g.hint && <p className={s.muted} style={{ margin: '0 0 6px' }}>{g.hint}</p>}
           <table className={m.table}>
             <thead>
               <tr>
@@ -125,6 +148,12 @@ export function YearEndForm({
                 <tr className={s.totalRow}>
                   <td colSpan={2}>{live.profit >= 0 ? 'Profit' : 'Loss'} before tax</td>
                   <td className={m.num}>{formatPence(live.profit)}</td>
+                </tr>
+              )}
+              {g.title.startsWith('Last year') && (
+                <tr>
+                  <td colSpan={2}>Profit and loss reserve last year</td>
+                  <td className={m.num}>{formatPence(live.priorReserve)}</td>
                 </tr>
               )}
               {g.title.startsWith('Balance') && (
@@ -213,9 +242,13 @@ export function YearEndForm({
       {canEdit && (
         <div>
           <button type="submit" className={f.btnPrimary} disabled={checking}>
-            {checking ? 'Checking with TinyTax…' : 'Save and check with TinyTax'}
+            {checking ? (canCheck ? 'Checking with TinyTax…' : 'Saving…') : canCheck ? 'Save and check with TinyTax' : 'Save'}
           </button>
-          <p className={f.hint}>A check sends nothing to HMRC or Companies House. TinyTax validates the figures and works out the tax.</p>
+          <p className={f.hint}>
+            {canCheck
+              ? 'A check sends nothing to HMRC or Companies House. TinyTax validates the figures and works out the tax.'
+              : 'TinyTax checks a year once it has ended. You can save your changes until then.'}
+          </p>
         </div>
       )}
     </form>

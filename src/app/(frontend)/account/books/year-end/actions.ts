@@ -55,6 +55,7 @@ function figuresFrom(fd: FormData): { figures: YearEndFigures } | { error: strin
   if (Number.isNaN(f.averageEmployees)) return { error: 'Average employees should be a whole number.' };
   if (Number.isNaN(f.associatedCompanies)) return { error: 'Associated companies should be a whole number.' };
   f.declarantName = String(fd.get('declarantName') ?? '').trim().slice(0, 120);
+  f.firstYear = fd.get('firstYear') === 'on';
   if (fd.get('has_loan') === 'on') {
     const p = (k: string) => {
       const raw = String(fd.get(k) ?? '').trim();
@@ -91,6 +92,10 @@ export async function checkFiguresAction(_prev: FormState, fd: FormData): Promis
   if (blockers.length) {
     revalidatePath(PATH);
     return { error: blockers.join(' ') };
+  }
+  if (g.period.to >= todayUk()) {
+    revalidatePath(PATH);
+    return { ok: true, message: 'Saved. TinyTax can check them once the year has ended.' };
   }
   const check = await checkBoth(g.ledger, g.period, figures);
   if ('error' in check) {

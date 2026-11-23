@@ -50,6 +50,16 @@ export type Financials = {
     provisions?: number;
     accruals_and_deferred_income?: number;
   };
+  prior_year?: {
+    fixed_assets?: number;
+    current_assets?: number;
+    creditors_within_one_year?: number;
+    creditors_after_one_year?: number;
+    share_capital?: number;
+    profit_and_loss_account?: number;
+    turnover?: number;
+    profit_before_tax?: number;
+  };
   average_employees?: number;
   nil_disclosures_confirmed: boolean;
   director_loan?: {
@@ -73,6 +83,7 @@ export type Ct600Request = {
   declarant?: { name?: string; status?: 'Director' | 'Company Secretary' | 'Agent' };
   credentials: { government_gateway_id: string; government_gateway_password: string };
   dry_run?: boolean;
+  first_year?: boolean;
   associated_companies?: number;
   financials?: Financials;
 };
@@ -83,6 +94,7 @@ export type AccountsRequest = {
   period?: { start?: string | null };
   credentials: { company_auth_code: string };
   dry_run?: boolean;
+  first_year?: boolean;
   financials?: Financials;
 };
 
@@ -139,6 +151,9 @@ export type FilingStatus = {
   ch_submission_number?: string | null;
   billing_status?: string;
   error?: { code?: string; message?: string };
+  error_code?: string | null;
+  error_message?: string | null;
+  sandbox?: boolean;
 };
 
 export type Company = {

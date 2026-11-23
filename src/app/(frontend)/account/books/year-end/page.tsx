@@ -147,6 +147,7 @@ export default async function YearEndPage({ searchParams }: { searchParams: Prom
             figures={view.figures}
             fromBooks={view.fromBooks}
             canEdit={access.canEdit}
+            canCheck={year.ended}
             dlaOverdrawn={view.dlaOverdrawn}
           />
 
@@ -281,7 +282,7 @@ function FilingRow({ x }: { x: Filing }) {
         )}
       </td>
       <td>
-        {docs.length === 0 && <span className={s.muted}>{x.status === 'accepted' ? 'Fetching…' : '—'}</span>}
+        {docs.length === 0 && <span className={s.muted}>{x.status !== 'accepted' ? '—' : x.sandbox ? 'None in the sandbox' : 'Fetching…'}</span>}
         {docs.map((d) => (
           <div key={d.type}>
             <a className={s.link} href={`/account/books/year-end/doc/${x.id}/${d.type}`}>

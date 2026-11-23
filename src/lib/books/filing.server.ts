@@ -148,14 +148,16 @@ export function figuresHash(f: YearEndFigures): string {
 }
 
 export async function yearEndView(ledger: Ledger, period: { from: string; to: string }, directorName: string): Promise<YearEndView> {
-  const [year, atEnd, atStart, saved] = await Promise.all([
+  const lastYear = { from: accountingYear(ledger.year_end, addDays(period.from, -1)).from, to: addDays(period.from, -1) };
+  const [year, atEnd, atStart, priorYear, saved] = await Promise.all([
     trialBalance(ledger.id, period.from, period.to),
     trialBalance(ledger.id, null, period.to),
     trialBalance(ledger.id, null, addDays(period.from, -1)),
+    trialBalance(ledger.id, lastYear.from, lastYear.to),
     createServiceRoleClient().from('books_year_ends').select('figures, last_check').eq('ledger_id', ledger.id).eq('period_end', period.to).maybeSingle(),
   ]);
   const profile = readProfile(ledger.tax_profile, ledger.business_type);
-  const fromBooks = figuresFromBooks(year, atEnd, atStart, { declarantName: directorName, associatedCompanies: profile.associated });
+  const fromBooks = figuresFromBooks(year, atEnd, atStart, { declarantName: directorName, associatedCompanies: profile.associated, priorYear });
   const savedFigures = readFigures(saved.data?.figures);
   const dla = atEnd.find((r) => r.code === DIRECTORS_LOAN);
   return {
@@ -213,6 +215,7 @@ function ct600Body(r: Extract<Ready, { ok: true }>, period: { from: string; to: 
     declarant: { name: f.declarantName.trim(), status: 'Director' },
     credentials: { government_gateway_id: r.s.gatewayId, government_gateway_password: r.s.gatewayPassword },
     associated_companies: f.associatedCompanies,
+    first_year: f.firstYear,
     dry_run: dryRun,
     financials: toFinancials(f, { forCt600: true }),
   };
@@ -224,6 +227,7 @@ function accountsBody(r: Extract<Ready, { ok: true }>, period: { from: string; t
     period_end: period.to,
     period: { start: period.from },
     credentials: { company_auth_code: r.s.authCode },
+    first_year: f.firstYear,
     dry_run: dryRun,
     financials: toFinancials(f, { forCt600: false }),
   };
@@ -364,7 +368,8 @@ export async function pollFilings(ledger: Ledger, filings: Filing[], opts: { for
     filings.map(async (fl) => {
       if (fl.status === 'sending' && (opts.force || !fl.next_poll_at || Date.parse(fl.next_poll_at) <= now)) return retrySending(ledger, fl);
       const due = LIVE.includes(fl.status) && fl.tinytax_filing_id && (opts.force || !fl.next_poll_at || Date.parse(fl.next_poll_at) <= now);
-      const needsDocs = fl.status === 'accepted' && fl.tinytax_filing_id && !(Array.isArray(fl.documents) && fl.documents.length);
+      // TinyTax's sandbox is stateless: it keeps no documents to fetch.
+      const needsDocs = !fl.sandbox && fl.status === 'accepted' && fl.tinytax_filing_id && !(Array.isArray(fl.documents) && fl.documents.length);
       if (!due && !needsDocs) return fl;
       return pollOne(ledger, apiKey, fl);
     }),
@@ -385,13 +390,16 @@ async function pollOne(ledger: Ledger, apiKey: string, fl: Filing): Promise<Fili
     const st: FilingStatus = res.data;
     patch.status = normaliseStatus(st.status);
     patch.last_status = st as unknown as Json;
-    if (st.error) patch.error = [st.error.code, st.error.message].filter(Boolean).join(': ');
+    // The spec says `error: { code, message }`; the API (sandbox, 2026-11-23) sends error_code / error_message.
+    const code = st.error?.code ?? st.error_code;
+    const message = st.error?.message ?? st.error_message;
+    if (code || message) patch.error = [code, message].filter(Boolean).join(': ');
     // Their advice: every 30s for 5 minutes, then every 5 minutes; Retry-After wins when longer.
     const age = Date.now() - Date.parse(fl.created_at);
     const wait = Math.max(res.retryAfter ?? 0, age < 5 * 60_000 ? 30 : 300);
     patch.next_poll_at = LIVE.includes(patch.status) ? new Date(Date.now() + wait * 1000).toISOString() : null;
   }
-  if ((patch.status ?? fl.status) === 'accepted') patch.documents = (await keepDocuments(ledger.id, api, fl)) as unknown as Json;
+  if (!fl.sandbox && (patch.status ?? fl.status) === 'accepted') patch.documents = (await keepDocuments(ledger.id, api, fl)) as unknown as Json;
   const { data } = await admin.from('books_filings').update(patch).eq('id', fl.id).select('*').single();
   return data ?? { ...fl, ...patch } as Filing;
 }

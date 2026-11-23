@@ -45,6 +45,17 @@ export type YearEndFigures = {
   creditorsWithinYear: number;
   creditorsAfterYear: number;
   shareCapital: number;
+  // Last year's balance sheet and results (comparatives; TinyTax requires them unless it's the first year)
+  priorFixedAssets: number;
+  priorCurrentAssets: number;
+  priorCreditorsWithinYear: number;
+  priorCreditorsAfterYear: number;
+  priorShareCapital: number;
+  priorTurnover: number;
+  /** May be negative (a loss). */
+  priorProfitBeforeTax: number;
+  /** The company's first accounting period: no comparatives. */
+  firstYear: boolean;
   // Other
   averageEmployees: number;
   declarantName: string;
@@ -68,11 +79,18 @@ export const PENCE_FIELDS = [
   'creditorsWithinYear',
   'creditorsAfterYear',
   'shareCapital',
+  'priorFixedAssets',
+  'priorCurrentAssets',
+  'priorCreditorsWithinYear',
+  'priorCreditorsAfterYear',
+  'priorShareCapital',
+  'priorTurnover',
+  'priorProfitBeforeTax',
 ] as const satisfies readonly (keyof YearEndFigures)[];
 export type PenceField = (typeof PENCE_FIELDS)[number];
 
 /** Fields that may go below zero. */
-export const SIGNED_FIELDS: readonly PenceField[] = ['taxCharge'];
+export const SIGNED_FIELDS: readonly PenceField[] = ['taxCharge', 'priorProfitBeforeTax'];
 
 const VEHICLES = '0050';
 const ENTERTAINMENT = '6960';
@@ -103,6 +121,42 @@ function isFixed(r: TbLike): boolean {
   return r.type === 'asset' && (r.is_fixed_asset || r.code < '1000');
 }
 
+type BalanceSheet = Pick<YearEndFigures, 'fixedAssets' | 'currentAssets' | 'creditorsWithinYear' | 'creditorsAfterYear' | 'shareCapital'>;
+
+/** The balance sheet from balances to a date. */
+export function balanceSheet(balances: TbLike[]): BalanceSheet {
+  const b: BalanceSheet = { fixedAssets: 0, currentAssets: 0, creditorsWithinYear: 0, creditorsAfterYear: 0, shareCapital: 0 };
+  let fixed = 0;
+  for (const r of balances) {
+    const n = net(r); // debit balance positive
+    if (r.type === 'asset') {
+      if (isFixed(r)) fixed += n;
+      else if (n >= 0) b.currentAssets += n;
+      else b.creditorsWithinYear += -n; // overdrawn bank
+    } else if (r.type === 'liability') {
+      if (n <= 0) b.creditorsWithinYear += -n;
+      else b.currentAssets += n; // e.g. a director's loan account the director owes
+    } else if (r.type === 'equity' && r.code === SHARE_CAPITAL) {
+      b.shareCapital += pos(-n);
+    }
+  }
+  b.fixedAssets = pos(fixed);
+  return b;
+}
+
+/** Turnover and profit before tax for a year's movements. */
+function results(year: TbLike[]): { turnover: number; profit: number } {
+  let turnover = 0;
+  let profit = 0;
+  for (const r of year) {
+    if (r.type === 'income') {
+      profit += -net(r);
+      if (incomeBucket(r) === 'turnover') turnover += -net(r);
+    } else if (r.type === 'expense' && expenseBucket(r) !== 'taxCharge') profit -= net(r);
+  }
+  return { turnover: pos(turnover), profit };
+}
+
 /**
  * The figures as the books have them.
  * @param year movements for the accounting year
@@ -113,7 +167,7 @@ export function figuresFromBooks(
   year: TbLike[],
   atEnd: TbLike[],
   atStart: TbLike[],
-  opts: { declarantName?: string; associatedCompanies?: number } = {},
+  opts: { declarantName?: string; associatedCompanies?: number; priorYear?: TbLike[] } = {},
 ): YearEndFigures {
   const f: YearEndFigures = {
     turnover: 0,
@@ -131,6 +185,14 @@ export function figuresFromBooks(
     creditorsWithinYear: 0,
     creditorsAfterYear: 0,
     shareCapital: 0,
+    priorFixedAssets: 0,
+    priorCurrentAssets: 0,
+    priorCreditorsWithinYear: 0,
+    priorCreditorsAfterYear: 0,
+    priorShareCapital: 0,
+    priorTurnover: 0,
+    priorProfitBeforeTax: 0,
+    firstYear: false,
     averageEmployees: 1,
     declarantName: opts.declarantName ?? '',
     associatedCompanies: opts.associatedCompanies ?? 0,
@@ -147,21 +209,20 @@ export function figuresFromBooks(
   f.capitalAllowances = pos(year.filter((r) => r.is_fixed_asset && r.code !== VEHICLES).reduce((t, r) => t + net(r), 0));
   f.disallowable = pos(year.filter((r) => r.code === ENTERTAINMENT).reduce((t, r) => t + net(r), 0));
 
-  let fixed = 0;
-  for (const r of atEnd) {
-    const b = net(r); // debit balance positive
-    if (r.type === 'asset') {
-      if (isFixed(r)) fixed += b;
-      else if (b >= 0) f.currentAssets += b;
-      else f.creditorsWithinYear += -b; // overdrawn bank
-    } else if (r.type === 'liability') {
-      if (b <= 0) f.creditorsWithinYear += -b;
-      else f.currentAssets += b; // e.g. a director's loan account the director owes
-    } else if (r.type === 'equity' && r.code === SHARE_CAPITAL) {
-      f.shareCapital += pos(-b);
-    }
-  }
-  f.fixedAssets = pos(fixed);
+  Object.assign(f, balanceSheet(atEnd));
+
+  // Comparatives: the balance sheet the day before the year starts, and last year's results.
+  const prior = balanceSheet(atStart);
+  f.priorFixedAssets = prior.fixedAssets;
+  f.priorCurrentAssets = prior.currentAssets;
+  f.priorCreditorsWithinYear = prior.creditorsWithinYear;
+  f.priorCreditorsAfterYear = prior.creditorsAfterYear;
+  f.priorShareCapital = prior.shareCapital;
+  const last = results(opts.priorYear ?? []);
+  f.priorTurnover = last.turnover;
+  f.priorProfitBeforeTax = last.profit;
+  // Nothing at all before this year: it's the first.
+  f.firstYear = atStart.every((r) => r.debit_pence === 0 && r.credit_pence === 0);
 
   const dlaEnd = atEnd.find((r) => r.code === DIRECTORS_LOAN && r.type === 'liability');
   const owedAtEnd = dlaEnd ? net(dlaEnd) : 0;
@@ -191,6 +252,14 @@ export function netAssets(f: YearEndFigures): number {
 /** Profit and loss reserve (retained earnings), the balancing figure. */
 export function reserve(f: YearEndFigures): number {
   return netAssets(f) - f.shareCapital;
+}
+
+export function priorNetAssets(f: YearEndFigures): number {
+  return f.priorFixedAssets + f.priorCurrentAssets - f.priorCreditorsWithinYear - f.priorCreditorsAfterYear;
+}
+
+export function priorReserve(f: YearEndFigures): number {
+  return priorNetAssets(f) - f.priorShareCapital;
 }
 
 /** Owed by the director at the year end, by these figures. */
@@ -273,6 +342,20 @@ export function toFinancials(f: YearEndFigures, opts: { forCt600: boolean }): Fi
       share_capital: pounds(f.shareCapital),
       profit_and_loss_account: pounds(reserve(f)),
     },
+    ...(f.firstYear
+      ? {}
+      : {
+          prior_year: {
+            fixed_assets: pounds(f.priorFixedAssets),
+            current_assets: pounds(f.priorCurrentAssets),
+            creditors_within_one_year: pounds(f.priorCreditorsWithinYear),
+            creditors_after_one_year: pounds(f.priorCreditorsAfterYear),
+            share_capital: pounds(f.priorShareCapital),
+            profit_and_loss_account: pounds(priorReserve(f)),
+            turnover: pounds(f.priorTurnover),
+            profit_before_tax: pounds(f.priorProfitBeforeTax),
+          },
+        }),
     average_employees: f.averageEmployees,
     nil_disclosures_confirmed: true,
     director_loan: d
@@ -305,6 +388,13 @@ export const LABELS: Record<PenceField, string> = {
   creditorsWithinYear: 'Creditors due within one year',
   creditorsAfterYear: 'Creditors due after one year',
   shareCapital: 'Share capital',
+  priorFixedAssets: 'Fixed assets',
+  priorCurrentAssets: 'Current assets',
+  priorCreditorsWithinYear: 'Creditors due within one year',
+  priorCreditorsAfterYear: 'Creditors due after one year',
+  priorShareCapital: 'Share capital',
+  priorTurnover: 'Turnover',
+  priorProfitBeforeTax: 'Profit (or loss) before tax',
 };
 
 /** Figures saved as JSON (books_year_ends.figures), read back defensively. */
@@ -317,6 +407,7 @@ export function readFigures(raw: unknown): YearEndFigures | null {
   f.averageEmployees = num(o.averageEmployees);
   f.associatedCompanies = num(o.associatedCompanies);
   f.declarantName = typeof o.declarantName === 'string' ? o.declarantName : '';
+  f.firstYear = o.firstYear === true;
   const d = o.directorLoan as Record<string, unknown> | null | undefined;
   f.directorLoan =
     d && typeof d === 'object'
