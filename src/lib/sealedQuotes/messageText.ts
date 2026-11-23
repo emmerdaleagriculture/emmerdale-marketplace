@@ -1,4 +1,4 @@
-import { DOMAIN, EMAIL, LINK, MONEY, OFF_PLATFORM, OFF_PLATFORM_REFUSAL, hasPhoneNumber } from './clientNote';
+import { DOMAIN, EMAIL, LINK, MONEY, OFF_PLATFORM, OFF_PLATFORM_REFUSAL, hasPhoneNumber, plainText } from './clientNote';
 
 /**
  * A message between a customer and a contractor, checked before it is stored.
@@ -119,6 +119,11 @@ export function messageRefusal(
     return { text: `That message is too long. Keep it under ${MESSAGE_MAX} characters.`, flag: null };
   }
   if (open && sender === 'contractor') return null;
+  return contentRefusal(plainText(t), sender, state, recent.map(plainText));
+}
+
+/** The rules about what a message says, on text already folded to plain characters. */
+function contentRefusal(t: string, sender: MessageSender, state: ThreadState, recent: string[]): MessageRefusal | null {
   if (OFF_PLATFORM.test(t)) {
     return {
       flag: 'off_platform',
