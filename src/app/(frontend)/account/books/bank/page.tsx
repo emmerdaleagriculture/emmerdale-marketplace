@@ -42,7 +42,11 @@ export default async function BankPage() {
         Download a statement from your bank as a CSV file and upload it here. Every row goes into your books
         on its own: anything already there (a receipt, an invoice payment, a Stripe payout) is spotted and
         left out, payees you’ve had before go where they went last time, and new ones are filed by AI and
-        marked for you to glance at.
+        marked for you to glance at. Want a payee always booked a certain way? Set a{' '}
+        <Link className={s.link} href="/account/books/rules">
+          rule
+        </Link>
+        .
       </p>
 
       {covered.size > 0 && (

@@ -16,6 +16,8 @@ import { convertPence, gbpRate } from './fx';
 import { penceToDecimal } from './money';
 import { addDays } from './period';
 import { MATCH_DAYS } from './bank';
+import { ruleFor } from './rules';
+import { loadRules } from './rules.server';
 
 export const RECEIPTS_BUCKET = 'books-receipts';
 /** AI reads per set of books per calendar month; past it, receipts wait for hand entry. */
@@ -310,7 +312,15 @@ export async function processReceipt(receiptId: number): Promise<void> {
     let f = fieldsFromRead(read, lp, accounts, ledger.default_payment_account);
     const notes: string[] = [];
     if (read.notes) notes.push(read.notes);
-    if (read.is_paid === false && f.doc_type) {
+    // The owner's rule for this supplier beats the AI on where it goes and what paid it.
+    const rule = f.counterparty ? ruleFor(await loadRules(ledger.id), f.counterparty) : null;
+    if (rule) {
+      const a = rule.account_code ? accountRows.find((x) => x.code === rule.account_code) : null;
+      const fits = a && (f.doc_type === 'sale' ? a.type === 'income' : a.type === 'expense' || a.is_fixed_asset);
+      f = { ...f, ...(fits ? { account_code: a.code } : {}), ...(rule.paid_from && accounts.has(rule.paid_from) ? { payment_account_code: rule.paid_from } : {}) };
+      notes.push(`Your rule “${rule.match_text}” applied.`);
+    }
+    if (f.payment_account_code === '2100' || f.payment_account_code === '1100') {
       notes.push(f.doc_type === 'sale' ? 'Not paid yet: recorded as owed to you (1100 Trade debtors).' : 'Not paid yet: recorded as owed by you (2100 Trade creditors).');
     }
     const reasons: string[] = [];

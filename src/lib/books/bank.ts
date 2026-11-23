@@ -19,6 +19,7 @@ import { vatInGross } from './money';
 import { buildPosting, validateDoc, type AccountInfo, type LedgerForPosting, type Posting } from './posting';
 import { isPurchaseCategory, type AccountType } from './chart';
 import { payeeKey, type BankRow } from './bankCsv';
+import { bankAccountFromRule, ruleFor, type Rule } from './rules';
 
 export const MATCH_DAYS = 5;
 export const POTS_CODE = '1205';
@@ -102,6 +103,7 @@ export function suggest(
     history: PayeeHistory;
     invoices: OpenInvoice[];
     accounts: Map<string, AccountInfo>;
+    rules?: Rule[];
   },
 ): (Suggestion | null)[] {
   const invoicesLeft = [...ctx.invoices].sort((a, b) => a.issue_date.localeCompare(b.issue_date));
@@ -116,6 +118,13 @@ export function suggest(
         const inv = invoicesLeft.splice(j, 1)[0];
         return { account: `inv:${inv.id}`, vat: 'OUTSIDE', check: false, why: `Pays invoice ${inv.number}` };
       }
+    }
+    const rule = ruleFor(ctx.rules ?? [], `${r.payee} ${r.description}`, r.amount);
+    const ruleAcc = rule && bankAccountFromRule(rule, r.amount);
+    if (rule && ruleAcc && ctx.accounts.has(ruleAcc)) {
+      const v = rule.vat_code && ruleAcc === rule.account_code ? rule.vat_code : plainVat;
+      const vat: VatCode = !reg && v !== 'OUTSIDE' && v !== 'EXEMPT' ? 'NOVAT' : reg && v === 'NOVAT' ? 'STD' : v;
+      return { account: ruleAcc, vat, check: false, why: `Your rule: “${rule.match_text}”` };
     }
     const h = ctx.history.get(payeeKey(r.payee));
     if (h && ctx.accounts.has(h.account)) {

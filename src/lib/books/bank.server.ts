@@ -6,6 +6,7 @@ import { isVatCode, registeredOn, type VatCode } from './vat';
 import { accountMap, allLines, getAccounts, ledgerForPosting, type BooksAccount, type Ledger } from './server';
 import { classify, isStripePayout, reconcile, rowExternalId, rowPosting, suggest, MATCH_DAYS, type BookLine, type Choice, type OpenInvoice, type PayeeHistory } from './bank';
 import { categoriseRows } from './bankAi';
+import { loadRules } from './rules.server';
 import { payeeKey, type BankRow } from './bankCsv';
 import { loadInvoice, recordPayment } from './invoices.server';
 
@@ -88,11 +89,12 @@ async function openInvoices(ledgerId: string): Promise<OpenInvoice[]> {
 
 /** Everything the statement page shows. */
 export async function statementView(ledger: Ledger, st: Statement) {
-  const [lines, accounts, history, invoices] = await Promise.all([
+  const [lines, accounts, history, invoices, rules] = await Promise.all([
     bookLines(ledger.id, st.account_code, st.start_date, st.end_date),
     getAccounts(ledger.id),
     payeeHistory(ledger.id),
     openInvoices(ledger.id),
+    loadRules(ledger.id),
   ]);
   const { states, usedEntries } = classify(st.rows, st.account_code, lines);
   const suggestions = suggest(st.rows, states, {
@@ -100,6 +102,7 @@ export async function statementView(ledger: Ledger, st: Statement) {
     history,
     invoices,
     accounts: accountMap(accounts),
+    rules,
   });
   const rec = reconcile(st.rows, states, lines, usedEntries, { start: st.start_date, end: st.end_date });
   // Stripe payouts on a ledger Stripe syncs: the sync books them (Dr bank, Cr 1220).

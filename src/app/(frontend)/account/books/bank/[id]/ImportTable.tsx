@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState, useMemo, useState } from 'react';
 import { emptyFormState } from '@/lib/form';
 import { formatPence } from '@/lib/books/money';
@@ -114,6 +115,11 @@ export function ImportTable({
                     <td style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', minWidth: 160 }}>
                       {r.payee}
                       {r.description && <div className={s.muted}>{r.description}</div>}
+                      {canEdit && r.status !== 'waiting' && (
+                        <Link className={s.link} style={{ fontSize: 13 }} href={`/account/books/rules?match=${encodeURIComponent(r.payee.slice(0, 100))}`}>
+                          Make a rule
+                        </Link>
+                      )}
                     </td>
                     <td className={m.num}>{formatPence(r.amount)}</td>
                     <td style={{ minWidth: 200 }}>
