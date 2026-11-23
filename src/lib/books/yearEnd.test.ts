@@ -13,6 +13,25 @@ const row = (code: string, name: string, type: string, net: number, fixed = fals
   credit_pence: net < 0 ? -net : 0,
 });
 
+describe('figuresFromBooks: review fixes', () => {
+  const machinery = (n: number) => row('0060', 'Farm machinery & equipment', 'asset', n, true);
+  it('opening balances inside the year are not this year’s purchases, and the year is not the first', () => {
+    const opening = [machinery(5_000_000)];
+    const atEnd = [machinery(6_000_000)];
+    const year = [machinery(6_000_000)];
+    const f = figuresFromBooks(year, atEnd, [], { opening: { at: opening, onFirstDay: true } });
+    expect(f.capitalAllowances).toBe(1_000_000);
+    expect(f.firstYear).toBe(false);
+    expect(f.priorFixedAssets).toBe(5_000_000);
+  });
+  it('declares a director’s loan owed at the start and cleared in the year', () => {
+    const dla = (n: number) => row('2300', "Director's loan account", 'liability', n);
+    const f = figuresFromBooks([], [dla(0)], [dla(300_000)]);
+    expect(f.directorLoan).toMatchObject({ broughtForward: 300_000, lent: 0, repaidInYear: 300_000 });
+    expect(problems({ ...f, declarantName: 'Tom Smith', directorLoan: { ...f.directorLoan!, name: 'Tom Smith' } }, { periodEnd: '2027-06-30', today: '2027-08-01', dlaOverdrawn: true })).toEqual([]);
+  });
+});
+
 describe('figuresFromBooks', () => {
   const year = [
     row('4000', 'Sales', 'income', -5_000_000),
@@ -47,7 +66,7 @@ describe('figuresFromBooks', () => {
     expect(f.depreciation).toBe(300_000);
     expect(f.otherExpenses).toBe(40_000); // bank charges + entertainment + welfare
     expect(f.disallowable).toBe(15_000);
-    expect(f.capitalAllowances).toBe(2_000_000); // vans and cars aren't AIA
+    expect(f.capitalAllowances).toBe(2_000_000); // 0050 Motor vehicles left out: the books can't tell a van (AIA) from a car or double-cab pickup (not)
     expect(profitBeforeTax(f)).toBe(5_010_000 - 2_340_000);
   });
 
@@ -171,5 +190,20 @@ describe('tinytax client', () => {
     const r = await tinytax('tt_test_a_b', fake).filing('fil_1');
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error.details?.[0].field).toBe('utr');
+  });
+});
+
+describe('TinyTax retries', () => {
+  it('sends a filing body byte for byte, with the Idempotency-Key', async () => {
+    const { tinytax } = await import('./tinytax');
+    const seen: { body: unknown; key: string | null }[] = [];
+    const fake = (async (_url: string, init: RequestInit) => {
+      seen.push({ body: init.body, key: new Headers(init.headers).get('Idempotency-Key') });
+      return new Response(JSON.stringify({ success: true, data: { filing_id: 'f1', status: 'pending' } }), { status: 202 });
+    }) as unknown as typeof fetch;
+    const raw = '{"z":1,"a":{"b":2}}';
+    const res = await tinytax('tt_test_keyid_fakesecret1234', fake).send('ct600', raw, 'k-1');
+    expect(res.ok).toBe(true);
+    expect(seen).toEqual([{ body: raw, key: 'k-1' }]);
   });
 });

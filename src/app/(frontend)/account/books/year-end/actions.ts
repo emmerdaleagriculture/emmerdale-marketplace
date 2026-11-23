@@ -141,6 +141,10 @@ export async function refreshFilingsAction(fd: FormData): Promise<void> {
   const g = await requireBooksWriter();
   if (!g.ok || !g.ledger) return;
   void fd;
+  const {
+    data: { user },
+  } = await (await createClient()).auth.getUser();
+  if (!(await filingAvailable(g.ledger, user?.email))) return;
   await pollFilings(g.ledger, await listFilings(g.ledger.id), { force: true });
   revalidatePath(PATH);
 }

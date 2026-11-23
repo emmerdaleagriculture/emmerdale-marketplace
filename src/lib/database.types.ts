@@ -1324,6 +1324,7 @@ export type Database = {
       }
       books_filings: {
         Row: {
+          sealed_body: string | null
           id: string
           ledger_id: string
           kind: string
@@ -1344,6 +1345,7 @@ export type Database = {
           next_poll_at: string | null
         }
         Insert: {
+          sealed_body?: string | null
           id?: string
           ledger_id: string
           kind: string
@@ -1364,6 +1366,7 @@ export type Database = {
           next_poll_at?: string | null
         }
         Update: {
+          sealed_body?: string | null
           id?: string
           ledger_id?: string
           kind?: string

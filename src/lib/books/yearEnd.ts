@@ -92,12 +92,15 @@ export type PenceField = (typeof PENCE_FIELDS)[number];
 /** Fields that may go below zero. */
 export const SIGNED_FIELDS: readonly PenceField[] = ['taxCharge', 'priorProfitBeforeTax'];
 
-const VEHICLES = '0050';
+/** Cars, vans and pickups. Kept out of AIA: cars (and double-cab pickups from April 2025) don't qualify, vans do, and the books can't tell which — the page says what was bought so the director can add vans. */
+export const VEHICLES_ACCOUNT = '0050';
+const VEHICLES = VEHICLES_ACCOUNT;
 const ENTERTAINMENT = '6960';
 const SHARE_CAPITAL = '3000';
 export const DIRECTORS_LOAN = '2300';
 
 const net = (r: TbLike) => r.debit_pence - r.credit_pence;
+const empty = (r: TbLike) => r.debit_pence === 0 && r.credit_pence === 0;
 const pos = (n: number) => Math.max(0, n);
 
 type ExpenseBucket = 'taxCharge' | 'depreciation' | 'staffCosts' | 'costOfSales' | 'otherExpenses';
@@ -167,7 +170,13 @@ export function figuresFromBooks(
   year: TbLike[],
   atEnd: TbLike[],
   atStart: TbLike[],
-  opts: { declarantName?: string; associatedCompanies?: number; priorYear?: TbLike[] } = {},
+  opts: {
+    declarantName?: string;
+    associatedCompanies?: number;
+    priorYear?: TbLike[];
+    /** Balances to the date of opening balances dated inside this year, and whether that's the year's first day. */
+    opening?: { at: TbLike[]; onFirstDay: boolean };
+  } = {},
 ): YearEndFigures {
   const f: YearEndFigures = {
     turnover: 0,
@@ -206,13 +215,17 @@ export function figuresFromBooks(
   // A bucket can only go below zero through refunds outweighing it; TinyTax wants ≥ 0.
   for (const k of ['turnover', 'otherIncome', 'costOfSales', 'staffCosts', 'depreciation', 'otherExpenses'] as const) f[k] = pos(f[k]);
 
-  f.capitalAllowances = pos(year.filter((r) => r.is_fixed_asset && r.code !== VEHICLES).reduce((t, r) => t + net(r), 0));
+  // With opening balances dated inside the year, only what moved after them was bought this year.
+  const boughtFrom = opts.opening?.at;
+  const fixedNet = (rows: TbLike[]) => rows.filter((r) => r.is_fixed_asset && r.code !== VEHICLES).reduce((t, r) => t + net(r), 0);
+  f.capitalAllowances = pos(boughtFrom ? fixedNet(atEnd) - fixedNet(boughtFrom) : fixedNet(year));
   f.disallowable = pos(year.filter((r) => r.code === ENTERTAINMENT).reduce((t, r) => t + net(r), 0));
 
   Object.assign(f, balanceSheet(atEnd));
 
   // Comparatives: the balance sheet the day before the year starts, and last year's results.
-  const prior = balanceSheet(atStart);
+  // Opening balances on the year's first day stand in for the balance sheet the day before.
+  const prior = balanceSheet(opts.opening?.onFirstDay && atStart.every(empty) ? opts.opening.at : atStart);
   f.priorFixedAssets = prior.fixedAssets;
   f.priorCurrentAssets = prior.currentAssets;
   f.priorCreditorsWithinYear = prior.creditorsWithinYear;
@@ -222,18 +235,20 @@ export function figuresFromBooks(
   f.priorTurnover = last.turnover;
   f.priorProfitBeforeTax = last.profit;
   // Nothing at all before this year: it's the first.
-  f.firstYear = atStart.every((r) => r.debit_pence === 0 && r.credit_pence === 0);
+  // Opening balances brought in during the year mean the company was trading before it.
+  f.firstYear = atStart.every(empty) && !opts.opening;
 
   const dlaEnd = atEnd.find((r) => r.code === DIRECTORS_LOAN && r.type === 'liability');
   const owedAtEnd = dlaEnd ? net(dlaEnd) : 0;
-  if (owedAtEnd > 0) {
-    const dlaStart = atStart.find((r) => r.code === DIRECTORS_LOAN);
-    const owedAtStart = pos(dlaStart ? net(dlaStart) : 0);
+  const dlaStart = atStart.find((r) => r.code === DIRECTORS_LOAN);
+  const owedAtStart = pos(dlaStart ? net(dlaStart) : 0);
+  // Owed at either end of the year has to be declared, even if cleared by the end.
+  if (owedAtEnd > 0 || owedAtStart > 0) {
     f.directorLoan = {
       name: opts.declarantName ?? '',
       broughtForward: owedAtStart,
       lent: pos(owedAtEnd - owedAtStart),
-      repaidInYear: 0,
+      repaidInYear: pos(owedAtStart - pos(owedAtEnd)),
       repaidAfter: 0,
       repaidDate: null,
     };
@@ -287,9 +302,9 @@ export function problems(f: YearEndFigures, opts: { periodEnd: string; today: st
     for (const [k, v] of Object.entries({ broughtForward: d.broughtForward, lent: d.lent, repaidInYear: d.repaidInYear, repaidAfter: d.repaidAfter })) {
       if (!Number.isInteger(v) || v < 0) out.push(`Director’s loan: ${k} must be 0 or more.`);
     }
-    if (d.repaidInYear > d.lent) out.push('Director’s loan: repaid in the year can’t be more than was lent in the year.');
+    if (d.repaidInYear > d.broughtForward + d.lent) out.push('Director’s loan: repaid in the year can’t be more than was owed.');
     if (d.lent < 100 && d.broughtForward < 100) out.push('Director’s loan: lent in the year should be at least £1 (or something brought forward).');
-    if (d.repaidAfter > d.lent - d.repaidInYear) out.push('Director’s loan: repaid after the year end can’t be more than this year’s loan still owed.');
+    if (d.repaidAfter > Math.max(0, loanOwedAtEnd(d))) out.push('Director’s loan: repaid after the year end can’t be more than was owed at the year end.');
     if (d.repaidAfter > 0) {
       if (!d.repaidDate) out.push('Director’s loan: give the date it was repaid.');
       else {

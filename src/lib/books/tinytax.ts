@@ -201,17 +201,17 @@ async function call<T>(
   apiKey: string,
   method: 'GET' | 'POST',
   path: string,
-  opts: { body?: unknown; idempotencyKey?: string; fetchImpl?: Fetch } = {},
+  opts: { body?: unknown; raw?: string; idempotencyKey?: string; fetchImpl?: Fetch } = {},
 ): Promise<TinyTaxResult<T>> {
   const headers: Record<string, string> = { 'X-API-Key': apiKey, Accept: 'application/json' };
-  if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+  if (opts.body !== undefined || opts.raw !== undefined) headers['Content-Type'] = 'application/json';
   if (opts.idempotencyKey) headers['Idempotency-Key'] = opts.idempotencyKey;
   let res: Response;
   try {
     res = await (opts.fetchImpl ?? fetch)(`${TINYTAX_BASE}${path}`, {
       method,
       headers,
-      body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+      body: opts.raw ?? (opts.body === undefined ? undefined : JSON.stringify(opts.body)),
       cache: 'no-store',
       signal: AbortSignal.timeout(30_000),
     });
@@ -245,6 +245,9 @@ export function tinytax(apiKey: string, fetchImpl?: Fetch) {
       call<DryRun & Submitted>(apiKey, 'POST', '/filings/ct600', { body, idempotencyKey, fetchImpl }),
     accounts: (body: AccountsRequest, idempotencyKey?: string) =>
       call<DryRun & Submitted>(apiKey, 'POST', '/filings/accounts', { body, idempotencyKey, fetchImpl }),
+    /** Send a filing body that is already JSON, exactly as given: a submission and its retries must match byte for byte. */
+    send: (kind: 'ct600' | 'accounts', raw: string, idempotencyKey: string) =>
+      call<DryRun & Submitted>(apiKey, 'POST', `/filings/${kind}`, { raw, idempotencyKey, fetchImpl }),
     filing: (id: string) => call<FilingStatus>(apiKey, 'GET', `/filings/${encodeURIComponent(id)}`, { fetchImpl }),
     documents: (id: string) =>
       call<{ filing_id: string; documents: { type: DocumentType; name?: string; size_bytes?: number }[] }>(

@@ -6,7 +6,9 @@ import { loadLedger } from '@/lib/books/server';
 import { formatPence } from '@/lib/books/money';
 import { ukDate } from '@/lib/books/period';
 import {
+  checkContext,
   figuresHash,
+  stalled,
   filingAvailable,
   filingYears,
   listFilings,
@@ -69,10 +71,10 @@ export default async function YearEndPage({ searchParams }: { searchParams: Prom
   if (access.canEdit) filings = await pollFilings(l, filings);
   const thisYear = filings.filter((x) => x.period_end === period.to);
   const live = (kind: string) => thisYear.find((x) => x.kind === kind && x.sandbox === sandbox && ['sending', 'pending', 'submitted', 'accepted'].includes(x.status));
-  const onTheirWay = filings.some((x) => ['sending', 'pending', 'submitted'].includes(x.status));
+  const onTheirWay = filings.some((x) => ['sending', 'pending', 'submitted'].includes(x.status) && !stalled(x));
 
   const check = view.lastCheck;
-  const fresh = Boolean(check && check.hash === figuresHash(view.figures));
+  const fresh = Boolean(check && check.hash === figuresHash(view.figures, checkContext(l, period)));
   const blockedFor = (kind: 'ct600' | 'accounts'): string | null => {
     const existing = live(kind);
     if (existing) return existing.status === 'accepted' ? 'Already filed and accepted for this year.' : 'Already sent; see below.';
@@ -149,6 +151,7 @@ export default async function YearEndPage({ searchParams }: { searchParams: Prom
             canEdit={access.canEdit}
             canCheck={year.ended}
             dlaOverdrawn={view.dlaOverdrawn}
+            vehiclesBought={view.vehiclesBought}
           />
 
           {check && (
@@ -270,7 +273,7 @@ function FilingRow({ x }: { x: Filing }) {
         {x.sandbox && <div className={s.muted}>Test (sandbox)</div>}
       </td>
       <td>
-        <b>{STATUS[x.status] ?? x.status}</b>
+        <b>{stalled(x) ? 'No answer from TinyTax: we’ve stopped retrying. Check with TinyTax whether it went in before doing anything else, and tell us.' : (STATUS[x.status] ?? x.status)}</b>
         <div className={s.muted} style={{ fontSize: 13 }}>
           {new Date(x.created_at).toLocaleString('en-GB', { timeZone: 'Europe/London', dateStyle: 'medium', timeStyle: 'short' })}
           {ref ? ` · ref ${ref}` : ''}

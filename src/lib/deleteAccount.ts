@@ -27,7 +27,12 @@ export async function contractorHasHistory(contractorId: string): Promise<boolea
     admin.from('contractor_payouts').select('id', head).eq('contractor_id', contractorId),
     admin.from('job_submissions').select('id', head).eq('awarded_contractor_id', contractorId),
   ]);
-  return counts.some((r) => (r.count ?? 0) > 0);
+  if (counts.some((r) => (r.count ?? 0) > 0)) return true;
+  // A real year-end filing is a statutory record: keep the books it came from.
+  const { data: ledger } = await admin.from('books_ledgers').select('id').eq('contractor_id', contractorId).maybeSingle();
+  if (!ledger) return false;
+  const filed = await admin.from('books_filings').select('id', head).eq('ledger_id', ledger.id).eq('sandbox', false);
+  return (filed.count ?? 0) > 0;
 }
 
 async function cancelPremium(contractorId: string, pending: boolean): Promise<void> {
@@ -69,6 +74,9 @@ async function closeContractor(contractorId: string, status: string): Promise<'r
   await admin.from('contractor_bank_details').delete().eq('contractor_id', contractorId);
 
   if (!(await contractorHasHistory(contractorId))) {
+    // Only test filings can be left (real ones count as history); they'd block the ledger's delete.
+    const { data: ledger } = await admin.from('books_ledgers').select('id').eq('contractor_id', contractorId).maybeSingle();
+    if (ledger) await admin.from('books_filings').delete().eq('ledger_id', ledger.id).eq('sandbox', true);
     const { error } = await admin.from('contractors').delete().eq('id', contractorId);
     if (error) throw new Error(`contractor row: ${error.message}`);
     revalidateDirectory();

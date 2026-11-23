@@ -27,7 +27,7 @@ const GROUPS: Group[] = [
   {
     title: 'Tax adjustments (CT600)',
     fields: [
-      { k: 'capitalAllowances', hint: 'Equipment bought this year (Annual Investment Allowance). Cars don’t qualify.' },
+      { k: 'capitalAllowances', hint: 'Equipment bought this year (Annual Investment Allowance). Cars and double-cab pickups don’t qualify; vans do.' },
       { k: 'disallowable', hint: 'Entertaining and other costs tax doesn’t allow' },
       { k: 'lossesBroughtForward', hint: 'Unused trading losses from earlier years, from your last CT600' },
     ],
@@ -66,6 +66,7 @@ export function YearEndForm({
   canEdit,
   canCheck,
   dlaOverdrawn,
+  vehiclesBought = 0,
 }: {
   periodEnd: string;
   figures: YearEndFigures;
@@ -74,6 +75,8 @@ export function YearEndForm({
   /** TinyTax won't check a year that hasn't ended. */
   canCheck: boolean;
   dlaOverdrawn: boolean;
+  /** Pence bought on 0050 Motor vehicles this year, not counted in capital allowances. */
+  vehiclesBought?: number;
 }) {
   const [state, check, checking] = useActionState(checkFiguresAction, emptyFormState);
   const [vals, setVals] = useState<Record<PenceField, string>>(
@@ -121,6 +124,11 @@ export function YearEndForm({
                         <b>{LABELS[k]}</b>
                       </label>
                       {hint && <div className={s.muted} style={{ fontSize: 13 }}>{hint}</div>}
+                      {k === 'capitalAllowances' && vehiclesBought > 0 && (
+                        <div className={s.muted} style={{ fontSize: 13 }}>
+                          Not counted: {formatPence(vehiclesBought)} of vehicles bought this year. Add any vans; cars and double-cab pickups don’t qualify.
+                        </div>
+                      )}
                     </td>
                     <td className={m.num}>{formatPence(fromBooks[k])}</td>
                     <td className={m.num}>
