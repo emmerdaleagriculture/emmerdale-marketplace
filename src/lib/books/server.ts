@@ -4,7 +4,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { membershipOf } from '@/lib/membership';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { isAppRequest } from '@/lib/appMode.server';
-import { booksAllowed } from './access';
+import { booksAllowed, filingAllowed } from './access';
 import { sharedLedgers, touchViewer } from './viewers.server';
 import { fetchAll } from '@/lib/supabase/fetchAll';
 import type { Database } from '@/lib/database.types';
@@ -45,6 +45,8 @@ export type BooksAccess = {
   viewing: { ownerName: string } | null;
   /** Whether the signed-in person is a contractor (has a dashboard to go back to). */
   isContractor: boolean;
+  /** Year-end filing through TinyTax is open for these books (a company, released to this account). */
+  filing: boolean;
   /** Every set of books this person can open, when there's more than one. */
   choices: { id: string; name: string; current: boolean }[];
 };
@@ -108,6 +110,7 @@ async function resolve(opts: { own?: boolean } = {}): Promise<
       app,
       viewing: { ownerName: view.ownerName },
       isContractor: Boolean(contractor),
+      filing: false,
       choices,
     };
   }
@@ -123,6 +126,7 @@ async function resolve(opts: { own?: boolean } = {}): Promise<
     app,
     viewing: null,
     isContractor: true,
+    filing: Boolean(ledger && ledger.business_type === 'limited_company' && (await filingAllowed(user.email))),
     choices,
   };
 }

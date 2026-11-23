@@ -1322,6 +1322,72 @@ export type Database = {
         }
         Relationships: []
       }
+      books_filings: {
+        Row: {
+          sealed_body: string | null
+          id: string
+          ledger_id: string
+          kind: string
+          period_start: string
+          period_end: string
+          sandbox: boolean
+          idempotency_key: string
+          tinytax_filing_id: string | null
+          status: string
+          request: Json
+          response: Json | null
+          last_status: Json | null
+          error: string | null
+          documents: Json
+          submitted_by: string | null
+          created_at: string
+          updated_at: string
+          next_poll_at: string | null
+        }
+        Insert: {
+          sealed_body?: string | null
+          id?: string
+          ledger_id: string
+          kind: string
+          period_start: string
+          period_end: string
+          sandbox: boolean
+          idempotency_key?: string
+          tinytax_filing_id?: string | null
+          status?: string
+          request: Json
+          response?: Json | null
+          last_status?: Json | null
+          error?: string | null
+          documents?: Json
+          submitted_by?: string | null
+          created_at?: string
+          updated_at?: string
+          next_poll_at?: string | null
+        }
+        Update: {
+          sealed_body?: string | null
+          id?: string
+          ledger_id?: string
+          kind?: string
+          period_start?: string
+          period_end?: string
+          sandbox?: boolean
+          idempotency_key?: string
+          tinytax_filing_id?: string | null
+          status?: string
+          request?: Json
+          response?: Json | null
+          last_status?: Json | null
+          error?: string | null
+          documents?: Json
+          submitted_by?: string | null
+          created_at?: string
+          updated_at?: string
+          next_poll_at?: string | null
+        }
+        Relationships: []
+      }
       books_ledgers: {
         Row: {
           address: string | null
@@ -1333,6 +1399,7 @@ export type Database = {
           created_at: string
           default_payment_account: string
           farming: boolean
+          filing_secrets: string | null
           flat_rate_percent: number | null
           id: string
           inbound_code: string
@@ -1373,6 +1440,7 @@ export type Database = {
           created_at?: string
           default_payment_account?: string
           farming?: boolean
+          filing_secrets?: string | null
           flat_rate_percent?: number | null
           id?: string
           inbound_code?: string
@@ -1413,6 +1481,7 @@ export type Database = {
           created_at?: string
           default_payment_account?: string
           farming?: boolean
+          filing_secrets?: string | null
           flat_rate_percent?: number | null
           id?: string
           inbound_code?: string
@@ -1673,6 +1742,33 @@ export type Database = {
           accepted_at?: string | null
           revoked_at?: string | null
           last_seen_at?: string | null
+        }
+        Relationships: []
+      }
+      books_year_ends: {
+        Row: {
+          ledger_id: string
+          period_end: string
+          period_start: string
+          figures: Json
+          last_check: Json | null
+          updated_at: string
+        }
+        Insert: {
+          ledger_id: string
+          period_end: string
+          period_start: string
+          figures: Json
+          last_check?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          ledger_id?: string
+          period_end?: string
+          period_start?: string
+          figures?: Json
+          last_check?: Json | null
+          updated_at?: string
         }
         Relationships: []
       }

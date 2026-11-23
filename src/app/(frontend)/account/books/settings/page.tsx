@@ -15,6 +15,8 @@ import { listViewers, MAX_VIEWERS } from '@/lib/books/viewers.server';
 import { ViewersSection } from './ViewersSection';
 import { InvoiceBranding } from './InvoiceBranding';
 import { logoUrl } from '@/lib/books/branding';
+import { filingAvailable, readSecrets, secretsSummary } from '@/lib/books/filing.server';
+import { FilingSettings } from './FilingSettings';
 
 export const metadata: Metadata = { title: 'Books settings', robots: { index: false, follow: false } };
 
@@ -35,6 +37,7 @@ export default async function BooksSettingsPage({ searchParams }: { searchParams
     data: { user },
   } = await (await createClient()).auth.getUser();
   const email = user?.email ?? null;
+  const filing = await filingAvailable(l, email);
   const viewers = (await listViewers(l.id)).map((v) => ({
     id: v.id,
     email: v.email,
@@ -59,10 +62,17 @@ export default async function BooksSettingsPage({ searchParams }: { searchParams
         paymentAccounts={accounts.filter(isBankAccount)}
         receiptsAddress={receiptsAddress(l.inbound_code)}
         accountEmail={email}
-        values={{ ...l, flat_rate_percent: l.flat_rate_percent == null ? null : Number(l.flat_rate_percent) }}
+        values={{ ...withoutSecrets(l), flat_rate_percent: l.flat_rate_percent == null ? null : Number(l.flat_rate_percent) }}
       />
       <InvoiceBranding logoUrl={logoUrl(l.invoice_logo_path)} colour={l.invoice_colour} name={l.trading_name || l.legal_name} />
+      {filing && <FilingSettings saved={secretsSummary(readSecrets(l))} companyNumber={l.company_number} utr={l.utr} />}
       <ViewersSection viewers={viewers} max={MAX_VIEWERS} />
     </BooksFrame>
   );
+}
+
+/** The ledger without its sealed filing secrets: the form is a client component, and nothing sealed needs to reach a browser. */
+function withoutSecrets<T extends { filing_secrets?: unknown }>(l: T): Omit<T, 'filing_secrets'> {
+  const { filing_secrets: _s, ...rest } = l;
+  return rest;
 }

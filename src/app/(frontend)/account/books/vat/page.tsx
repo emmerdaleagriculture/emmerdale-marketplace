@@ -165,9 +165,17 @@ export default async function VatPage({ searchParams }: { searchParams: Promise<
         ·{' '}
         <a className={s.link} href={`/account/books/vat.csv?${q}&type=detail`}>
           every entry
+        </a>{' '}
+        ·{' '}
+        <a className={s.link} href={`/account/books/vat.csv?${q}&type=tinytax`}>
+          for TinyTax MTD VAT
         </a>
-        . Books doesn’t file returns with HMRC yet: give these to your accountant, or use bridging software for Making
-        Tax Digital. Each entry’s date is used as its tax point.
+        . Books doesn’t file returns with HMRC itself: give these to your accountant, or upload the TinyTax file at{' '}
+        <a className={s.link} href="https://tinytax.co.uk/mtd-vat" target="_blank" rel="noopener noreferrer">
+          TinyTax MTD VAT
+        </a>{' '}
+        (Making Tax Digital bridging; downloading here and uploading there keeps the digital link HMRC requires). Each
+        entry’s date is used as its tax point.
       </p>
 
       {detail.length > 0 && (

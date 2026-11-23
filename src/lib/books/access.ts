@@ -41,3 +41,20 @@ export async function booksTabFor(userId: string, _email?: string | null): Promi
   const { data: c } = await createServiceRoleClient().from('contractors').select('id').eq('id', userId).maybeSingle();
   return Boolean(c);
 }
+
+/**
+ * Year-end filing through TinyTax (filing.server.ts) is released separately:
+ * app_config `tinytax_allowlist`, a JSON array of emails or "all". Missing
+ * means nobody.
+ */
+export async function filingAllowed(email: string | null | undefined): Promise<boolean> {
+  if (!email) return false;
+  try {
+    const { data } = await createServiceRoleClient().from('app_config').select('value').eq('key', 'tinytax_allowlist').maybeSingle();
+    const v = data?.value;
+    if (v === 'all') return true;
+    return Array.isArray(v) && v.some((x) => typeof x === 'string' && x.trim().toLowerCase() === email.trim().toLowerCase());
+  } catch {
+    return false;
+  }
+}
