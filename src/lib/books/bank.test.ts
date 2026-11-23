@@ -281,6 +281,8 @@ describe('rules', () => {
     expect(ruleFor(rules, 'Amazon', -899)?.id).toBe(2);
     expect(ruleFor(rules, 'Amazon refund', 899)).toBeNull();
     expect(ruleFor(rules, 'Lakeside Oils Ltd T/A Fusion Fuels')?.id).toBe(1);
+    expect(ruleFor(rules, 'AMAZON.CO.UK*XY', -100)?.id).toBe(2);
+    expect(ruleFor(rules, 'Amazonia Plants', -100)).toBeNull();
   });
   it('a bank payment to an on-credit supplier clears creditors; suggest uses the rule', () => {
     expect(bankAccountFromRule(rules[0], -64652)).toBe('2100');

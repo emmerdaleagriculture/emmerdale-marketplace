@@ -31,7 +31,8 @@ export function ruleFor(rules: Rule[], text: string, amount?: number): Rule | nu
   let best: Rule | null = null;
   for (const r of rules) {
     const m = norm(r.match_text);
-    if (!m || !t.includes(m)) continue;
+    // Whole words: “Meta” is not “Metal Supplies”.
+    if (!m || !t.includes(` ${m} `)) continue;
     if (amount != null && ((r.direction === 'in' && amount <= 0) || (r.direction === 'out' && amount >= 0))) continue;
     if (!best || m.length > norm(best.match_text).length) best = r;
   }
