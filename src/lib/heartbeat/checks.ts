@@ -48,6 +48,39 @@ export function cronEveryMinutes(schedule: string): number {
   return 60;
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * A schedule pinned to one date ("0 9 23 12 *"): a one-off job, such as an
+ * end to a timed suspension, that unschedules itself after it runs. Until its
+ * date it has never run, and that is right, not a failure. Answers when it is
+ * due, like "23 Dec 09:00 UTC", or null for any repeating schedule.
+ */
+export function pinnedDate(schedule: string): string | null {
+  const [min, hour, dom, mon, dow] = schedule.trim().split(/\s+/);
+  if (dow !== '*' || ![min, hour, dom, mon].every((x) => /^\d+$/.test(x ?? ''))) return null;
+  const m = Number(mon);
+  if (m < 1 || m > 12) return null;
+  return `${Number(dom)} ${MONTHS[m - 1]} ${hour.padStart(2, '0')}:${min.padStart(2, '0')} UTC`;
+}
+
+/**
+ * Whether a pinned job's date passed in the last week without it running:
+ * pg_cron was down, or the job broke before it could record a run. Only a
+ * week, because the schedule has no year — after that its date is next
+ * year's, and "runs once" is all we can say.
+ */
+export function missedPinnedDate(schedule: string, now = new Date()): boolean {
+  const [min, hour, dom, mon] = schedule.trim().split(/\s+/).map(Number);
+  if (!pinnedDate(schedule)) return false;
+  for (const year of [now.getUTCFullYear(), now.getUTCFullYear() - 1]) {
+    const at = Date.UTC(year, mon - 1, dom, hour, min);
+    // Ten minutes' grace for pg_cron to start and record the run.
+    if (at + 10 * 60_000 < now.getTime() && now.getTime() - at < 7 * 86_400_000) return true;
+  }
+  return false;
+}
+
 function httpCronChecks(): Check[] {
   return HTTP_CRONS.map((job) => ({
     name: `cron: ${job.name}`,
@@ -79,7 +112,11 @@ async function pgCronChecks(): Promise<Check[]> {
     name: `cron: ${j.jobname}`,
     run: async () => {
       if (!j.active) return { ok: false, detail: 'switched off' };
-      if (!j.last_start) return { ok: false, detail: 'has never run' };
+      if (!j.last_start) {
+        const due = pinnedDate(j.schedule);
+        if (due && missedPinnedDate(j.schedule)) return { ok: false, detail: `was due once, on ${due}, and has not run` };
+        return due ? { ok: true, detail: `runs once, on ${due}` } : { ok: false, detail: 'has never run' };
+      }
       if (j.last_status === 'failed') return { ok: false, detail: `last run failed ${ago(j.last_start)}: ${(j.last_message ?? '').slice(0, 200)}` };
       if (j.failures_24h > 0) return { ok: false, detail: `${j.failures_24h} failed run${j.failures_24h === 1 ? '' : 's'} in 24h` };
       const every = cronEveryMinutes(j.schedule);

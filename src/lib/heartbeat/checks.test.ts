@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { cronEveryMinutes } from './checks';
+import { cronEveryMinutes, missedPinnedDate, pinnedDate } from './checks';
+
+describe('missedPinnedDate', () => {
+  it('flags a date passed in the last week, not one to come', () => {
+    expect(missedPinnedDate('0 9 23 12 *', new Date('2026-11-23T18:00:00Z'))).toBe(false);
+    expect(missedPinnedDate('0 9 23 12 *', new Date('2026-12-23T09:05:00Z'))).toBe(false);
+    expect(missedPinnedDate('0 9 23 12 *', new Date('2026-12-23T10:00:00Z'))).toBe(true);
+    expect(missedPinnedDate('0 9 23 12 *', new Date('2027-01-02T10:00:00Z'))).toBe(false);
+    expect(missedPinnedDate('0 9 28 12 *', new Date('2027-01-02T10:00:00Z'))).toBe(true);
+    expect(missedPinnedDate('*/5 * * * *', new Date('2027-01-02T10:00:00Z'))).toBe(false);
+  });
+});
+
+describe('pinnedDate', () => {
+  it('recognises a one-off date and nothing that repeats', () => {
+    expect(pinnedDate('0 9 23 12 *')).toBe('23 Dec 09:00 UTC');
+    expect(pinnedDate('35 3 1 * *')).toBeNull();
+    expect(pinnedDate('30 6 * * 1')).toBeNull();
+    expect(pinnedDate('*/5 * * * *')).toBeNull();
+  });
+});
 
 describe('cronEveryMinutes', () => {
   it('reads the common shapes', () => {

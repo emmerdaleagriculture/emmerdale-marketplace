@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { missedPinnedDate, pinnedDate } from '@/lib/heartbeat/checks';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { HTTP_CRONS, isLate } from '@/lib/cron/registry';
 import s from '../admin.module.css';
@@ -97,7 +98,7 @@ export default async function CronsPage() {
 
   const unhealthy =
     httpRows.filter((r) => r.verdict.bad).length +
-    pgRows.filter((j) => !j.active || j.failures_24h > 0 || !j.last_start).length;
+    pgRows.filter((j) => !j.active || j.failures_24h > 0 || (!j.last_start && (!pinnedDate(j.schedule) || missedPinnedDate(j.schedule)))).length;
 
   return (
     <div>
@@ -177,7 +178,11 @@ export default async function CronsPage() {
                 {!j.active
                   ? '⚠ disabled'
                   : !j.last_start
-                    ? '⚠ never run'
+                    ? pinnedDate(j.schedule)
+                      ? missedPinnedDate(j.schedule)
+                        ? `⚠ was due ${pinnedDate(j.schedule)}, not run`
+                        : `runs once, on ${pinnedDate(j.schedule)}`
+                      : '⚠ never run'
                     : j.failures_24h > 0
                       ? `⚠ ${j.failures_24h} failed today`
                       : 'running to schedule'}
