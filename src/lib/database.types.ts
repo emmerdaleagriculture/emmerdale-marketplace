@@ -1676,6 +1676,39 @@ export type Database = {
         }
         Relationships: []
       }
+      books_rules: {
+        Row: {
+          id: number
+          ledger_id: string
+          match_text: string
+          direction: string
+          account_code: string | null
+          vat_code: string | null
+          paid_from: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          ledger_id: string
+          match_text: string
+          direction?: string
+          account_code?: string | null
+          vat_code?: string | null
+          paid_from?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          ledger_id?: string
+          match_text?: string
+          direction?: string
+          account_code?: string | null
+          vat_code?: string | null
+          paid_from?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       books_customers: {
         Row: {
           address: string | null

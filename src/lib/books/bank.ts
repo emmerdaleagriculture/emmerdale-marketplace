@@ -2,13 +2,16 @@
  * Bank statement rows against the books (Tally 2.11 / 3.9). Pure: the
  * server loads what's in the books and hands it in.
  *
- *   imported  the row was booked from a statement before (same row key)
+ *   imported  the row was booked from a statement before (same row key, or
+ *             the bank's own transaction id on an imported entry)
  *   matched   the same amount is already on that account within 5 days
- *             (a Stripe payout, a receipt, an invoice payment…); left unticked
- *   new       ticked, with a suggested account: a Monzo pot transfer → 1205,
- *             money in that is exactly an open invoice's amount due → that
- *             invoice, else what this payee went to last time, else 4900 /
- *             6990 flagged to check
+ *             (a Stripe payout, a receipt, an invoice payment…)
+ *   new       not in the books: booked automatically on upload with the
+ *             suggested account: a Monzo pot transfer → 1205, money in that
+ *             is exactly an open invoice's amount due → that invoice, else
+ *             what this payee went to last time, else the AI's pick (or 4900 /
+ *             6990) flagged to check. A Stripe payout on a ledger Stripe
+ *             syncs waits for the sync instead.
  */
 
 import { VAT_CODES, registeredOn, type VatCode } from './vat';
@@ -16,6 +19,7 @@ import { vatInGross } from './money';
 import { buildPosting, validateDoc, type AccountInfo, type LedgerForPosting, type Posting } from './posting';
 import { isPurchaseCategory, type AccountType } from './chart';
 import { payeeKey, type BankRow } from './bankCsv';
+import { bankAccountFromRule, ruleFor, type Rule } from './rules';
 
 export const MATCH_DAYS = 5;
 export const POTS_CODE = '1205';
@@ -52,7 +56,9 @@ export function classify(rows: BankRow[], accountCode: string, lines: BookLine[]
   const used = new Set<number>();
   const states: RowState[] = rows.map((r) => {
     const ext = rowExternalId(accountCode, r.key);
-    const hit = byExt.get(ext) ?? byExt.get(`invpay:${ext}`);
+    // Entries imported from another system keep the bank's id (Monzo mm_…).
+    const bankId = r.key.startsWith('id:') ? r.key.slice(3) : null;
+    const hit = byExt.get(ext) ?? byExt.get(`invpay:${ext}`) ?? (bankId ? byExt.get(bankId) : undefined);
     if (hit) {
       used.add(hit.entry_id);
       return { status: 'imported', entryId: hit.entry_id };
@@ -83,6 +89,9 @@ export type PayeeHistory = Map<string, { account: string; vat: VatCode }>;
 
 export type Suggestion = { account: string; vat: VatCode; check: boolean; why: string };
 
+/** Money in from Stripe: a payout of card payments. */
+export const isStripePayout = (r: BankRow) => r.amount > 0 && /\bstripe\b/i.test(r.payee);
+
 const isPot = (r: BankRow) => /pot transfer/i.test(r.type ?? '') || /^(savings )?pot\b/i.test(r.payee);
 
 /** A suggested account and VAT code for each new row (null for the others). */
@@ -94,6 +103,7 @@ export function suggest(
     history: PayeeHistory;
     invoices: OpenInvoice[];
     accounts: Map<string, AccountInfo>;
+    rules?: Rule[];
   },
 ): (Suggestion | null)[] {
   const invoicesLeft = [...ctx.invoices].sort((a, b) => a.issue_date.localeCompare(b.issue_date));
@@ -108,6 +118,13 @@ export function suggest(
         const inv = invoicesLeft.splice(j, 1)[0];
         return { account: `inv:${inv.id}`, vat: 'OUTSIDE', check: false, why: `Pays invoice ${inv.number}` };
       }
+    }
+    const rule = ruleFor(ctx.rules ?? [], `${r.payee} ${r.description}`, r.amount);
+    const ruleAcc = rule && bankAccountFromRule(rule, r.amount);
+    if (rule && ruleAcc && ctx.accounts.has(ruleAcc)) {
+      const v = rule.vat_code && ruleAcc === rule.account_code ? rule.vat_code : plainVat;
+      const vat: VatCode = !reg && v !== 'OUTSIDE' && v !== 'EXEMPT' ? 'NOVAT' : reg && v === 'NOVAT' ? 'STD' : v;
+      return { account: ruleAcc, vat, check: false, why: `Your rule: “${rule.match_text}”` };
     }
     const h = ctx.history.get(payeeKey(r.payee));
     if (h && ctx.accounts.has(h.account)) {

@@ -11,14 +11,14 @@ import f from '@/components/forms/forms.module.css';
 import m from '../../../market/market.module.css';
 import s from '../../books.module.css';
 import { BooksFrame } from '../../BooksFrame';
-import { deleteStatementAction } from '../actions';
+import { autoImportAction, deleteStatementAction } from '../actions';
 import { ImportTable, type ImportRow } from './ImportTable';
 
 export const metadata: Metadata = { title: 'Bank statement', robots: { index: false, follow: false } };
 
-export default async function StatementPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ imported?: string; skipped?: string }> }) {
+export default async function StatementPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ imported?: string; saved?: string; skipped?: string }> }) {
   const { id } = await params;
-  const { imported, skipped } = await searchParams;
+  const { imported, saved, skipped } = await searchParams;
   const access = await loadLedger(`/account/books/bank/${id}`);
   const l = access.ledger;
   const st = await loadStatement(l.id, Number(id));
@@ -29,13 +29,15 @@ export default async function StatementPage({ params, searchParams }: { params: 
 
   const rows: ImportRow[] = st.rows.map((r, i) => {
     const state = v.states[i];
+    const b = v.booked[i];
     return {
       date: r.date,
       payee: r.payee,
       description: r.description,
       amount: r.amount,
-      status: state.status,
+      status: v.waiting[i] ? 'waiting' : state.status,
       matchLabel: state.status === 'matched' ? state.label : undefined,
+      booked: b ? { account: b.account, vat: b.vat, check: b.check, why: b.why, editable: b.own } : null,
       registered: registeredOn(lfp, r.date),
       suggestion: v.suggestions[i],
     };
@@ -48,6 +50,9 @@ export default async function StatementPage({ params, searchParams }: { params: 
       group: a.type === 'income' ? ('income' as const) : a.type === 'expense' ? ('expense' as const) : isPurchaseCategory(a) ? ('asset' as const) : ('other' as const),
     }));
   const r = v.rec;
+  const notIn = rows.filter((x) => x.status === 'new').length;
+  const waitingN = rows.filter((x) => x.status === 'waiting').length;
+  const checkN = rows.filter((x) => x.booked?.check).length;
   const cardLike = acc?.type === 'liability';
 
   return (
@@ -55,7 +60,12 @@ export default async function StatementPage({ params, searchParams }: { params: 
       <p className={m.sub}>
         {ukDate(st.start_date)} – {ukDate(st.end_date)} · {st.row_count} rows · {st.file_name}
       </p>
-      {imported && <p className={s.notice}>Imported {imported} row{imported === '1' ? '' : 's'}.</p>}
+      {imported && imported !== '0' && (
+        <p className={s.notice}>
+          Booked {imported} row{imported === '1' ? '' : 's'} into your books.
+        </p>
+      )}
+      {saved && <p className={s.notice}>Saved.</p>}
       {skipped && (
         <p className={s.notice}>
           {skipped} line{skipped === '1' ? ' wasn’t a transaction' : 's weren’t transactions'} (headings, totals or blank amounts)
@@ -93,12 +103,25 @@ export default async function StatementPage({ params, searchParams }: { params: 
         </table>
       </div>
       <p className={m.fine}>
-        {r.notInBooks === 0 ? 'Every statement row is in your books.' : `${r.notInBooks} statement row${r.notInBooks === 1 ? ' is' : 's are'} not in your books yet.`}{' '}
+        {notIn === 0 ? 'Every statement row is in your books.' : `${notIn} statement row${notIn === 1 ? ' is' : 's are'} not in your books yet.`}{' '}
+        {waitingN > 0 && `${waitingN} Stripe payout${waitingN === 1 ? '' : 's'} will be booked by your Stripe sync. `}
+        {checkN > 0 && `${checkN} row${checkN === 1 ? ' was' : 's were'} new payees, filed by AI: worth a glance (highlighted below). `}
         {r.notOnStatement.length > 0 &&
           `${r.notOnStatement.length} entr${r.notOnStatement.length === 1 ? 'y' : 'ies'} on ${st.account_code} in these dates ${r.notOnStatement.length === 1 ? 'isn’t' : 'aren’t'} on the statement (below).`}
       </p>
 
       <h2 className={m.h2}>Rows</h2>
+      {access.canEdit && rows.some((x) => x.status === 'new') && (
+        <form action={autoImportAction} className={s.actions}>
+          <input type="hidden" name="statement_id" value={st.id} />
+          <span className={m.sub} style={{ margin: 0 }}>
+            {rows.filter((x) => x.status === 'new').length} rows aren’t in your books yet.
+          </span>
+          <button type="submit" className={f.btnPrimary}>
+            Book them now
+          </button>
+        </form>
+      )}
       <ImportTable
         statementId={st.id}
         rows={rows}

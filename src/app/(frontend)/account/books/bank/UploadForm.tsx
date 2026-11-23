@@ -32,7 +32,7 @@ export function UploadForm({ accounts, defaultCode }: { accounts: { code: string
       {state.error && <p className={f.error}>{state.error}</p>}
       <div>
         <button className={f.btnPrimary} type="submit" disabled={pending}>
-          {pending ? 'Reading…' : 'Upload statement'}
+          {pending ? 'Reading and booking…' : 'Upload statement'}
         </button>
       </div>
     </form>

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { parseAmount, parseCsv, parseStatement, parseUkDate, payeeKey, type BankRow } from './bankCsv';
-import { classify, reconcile, rowExternalId, rowPosting, suggest, type BookLine } from './bank';
+import { classify, isStripePayout, reconcile, rowExternalId, rowPosting, suggest, type BookLine } from './bank';
 import { balances, type AccountInfo, type LedgerForPosting } from './posting';
 import { chartFor } from './chart';
+import { bankAccountFromRule, ruleFor, type Rule } from './rules';
 
 describe('statement dates', () => {
   it.each([
@@ -177,6 +178,21 @@ describe('classify', () => {
     const { states } = classify([r], '1200', [line(9, '2026-02-01', 1000, `invpay:${rowExternalId('1200', r.key)}`)]);
     expect(states[0].status).toBe('imported');
   });
+
+  it('an entry carrying the bank’s own id (imported from another system) is that row, whatever the amount match', () => {
+    const r = row('2026-02-01', -1000, 'Shop', { key: 'id:mm_abc' });
+    const other = row('2026-02-01', -1000, 'Shop', { key: 'id:mm_def' });
+    const { states } = classify([other, r], '1200', [line(5, '2026-02-01', -1000, 'mm_abc')]);
+    expect(states.map((s) => s.status)).toEqual(['new', 'imported']);
+  });
+});
+
+describe('isStripePayout', () => {
+  it('money in from Stripe only', () => {
+    expect(isStripePayout(row('2026-02-01', 5000, 'Stripe Payments UK Ltd'))).toBe(true);
+    expect(isStripePayout(row('2026-02-01', -5000, 'Stripe Payments UK Ltd'))).toBe(false);
+    expect(isStripePayout(row('2026-02-01', 5000, 'Stripey Farm'))).toBe(false);
+  });
 });
 
 const ledger: LedgerForPosting = { vat_registered: true, vat_registration_date: null, vat_scheme: 'standard', base_currency: 'GBP', business_type: 'sole_trader' };
@@ -251,5 +267,29 @@ describe('rowPosting', () => {
 
   it('refuses the statement’s own account', () => {
     expect(rowPosting(row('2026-02-01', -1), { account: '1200', vat: 'STD' }, '1200', ledger, accounts, 1)).toEqual({ error: expect.any(String) });
+  });
+});
+
+describe('rules', () => {
+  const rules: Rule[] = [
+    { id: 1, match_text: 'Lakeside Oils', direction: 'any', account_code: '5160', vat_code: 'RED', paid_from: '2100' },
+    { id: 2, match_text: 'Amazon', direction: 'out', account_code: '6150', vat_code: 'STD', paid_from: null },
+    { id: 3, match_text: 'Amazon Prime', direction: 'out', account_code: '6500', vat_code: null, paid_from: null },
+  ];
+  it('longest match wins and direction counts', () => {
+    expect(ruleFor(rules, 'AMAZON PRIME*AB12', -899)?.id).toBe(3);
+    expect(ruleFor(rules, 'Amazon', -899)?.id).toBe(2);
+    expect(ruleFor(rules, 'Amazon refund', 899)).toBeNull();
+    expect(ruleFor(rules, 'Lakeside Oils Ltd T/A Fusion Fuels')?.id).toBe(1);
+    expect(ruleFor(rules, 'AMAZON.CO.UK*XY', -100)?.id).toBe(2);
+    expect(ruleFor(rules, 'Amazonia Plants', -100)).toBeNull();
+  });
+  it('a bank payment to an on-credit supplier clears creditors; suggest uses the rule', () => {
+    expect(bankAccountFromRule(rules[0], -64652)).toBe('2100');
+    const rows = [row('2026-11-10', -64652, 'Lakeside Oils Ltd'), row('2026-11-11', -899, 'Amazon')];
+    const states = rows.map(() => ({ status: 'new' as const }));
+    const out = suggest(rows, states, { registered: () => true, history: new Map(), invoices: [], accounts, rules });
+    expect(out[0]).toMatchObject({ account: '2100', vat: 'STD', check: false });
+    expect(out[1]).toMatchObject({ account: '6150', vat: 'STD', why: 'Your rule: “Amazon”' });
   });
 });

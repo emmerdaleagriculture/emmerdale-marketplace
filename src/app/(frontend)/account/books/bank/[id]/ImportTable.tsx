@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState, useMemo, useState } from 'react';
 import { emptyFormState } from '@/lib/form';
 import { formatPence } from '@/lib/books/money';
@@ -15,10 +16,13 @@ export type ImportRow = {
   payee: string;
   description: string;
   amount: number;
-  status: 'imported' | 'matched' | 'new';
+  /** waiting: a Stripe payout the Stripe sync will book. */
+  status: 'imported' | 'matched' | 'new' | 'waiting';
   matchLabel?: string;
   registered: boolean;
   suggestion: { account: string; vat: VatCode; check: boolean; why: string } | null;
+  /** How an imported row went in; editable when this statement page booked it. */
+  booked: { account: string | null; vat: VatCode; check: boolean; why: string | null; editable: boolean } | null;
 };
 type Acc = { code: string; name: string; group: 'income' | 'expense' | 'asset' | 'other' };
 type Inv = { id: number; number: string; customer: string; due_pence: number };
@@ -26,7 +30,10 @@ type Inv = { id: number; number: string; customer: string; due_pence: number };
 const PNL_VAT: VatCode[] = ['STD', 'RED', 'ZERO', 'EXEMPT', 'OUTSIDE', 'BLOCKED'];
 const vatLabel = (c: VatCode) => (c === 'STD' ? '20%' : c === 'RED' ? '5%' : c === 'ZERO' ? '0%' : VAT_CODES[c].label.split(/[ (/]/)[0]);
 
-/** The statement's rows: tick, choose where each goes, import. */
+/**
+ * The statement's rows, already booked. Rows filed by AI (new payees) come
+ * first and are highlighted; change where any booked row went and save.
+ */
 export function ImportTable({
   statementId,
   rows,
@@ -41,16 +48,28 @@ export function ImportTable({
   canEdit: boolean;
 }) {
   const [state, action, pending] = useActionState(importRowsAction, emptyFormState);
-  const [picks, setPicks] = useState(() =>
-    rows.map((r) => ({ on: r.status === 'new', account: r.suggestion?.account ?? (r.amount > 0 ? '4900' : '6990'), vat: r.suggestion?.vat ?? ((r.registered ? 'STD' : 'NOVAT') as VatCode) })),
+  const initial = useMemo(
+    () =>
+      rows.map((r) => ({
+        account: r.booked?.account ?? r.suggestion?.account ?? (r.amount > 0 ? '4900' : '6990'),
+        vat: r.booked?.vat ?? r.suggestion?.vat ?? ((r.registered ? 'STD' : 'NOVAT') as VatCode),
+      })),
+    [rows],
   );
+  const [picks, setPicks] = useState(initial);
   const [showAll, setShowAll] = useState(false);
   const pnl = useMemo(() => new Set(accounts.filter((a) => a.group === 'income' || a.group === 'expense').map((a) => a.code)), [accounts]);
   const set = (i: number, patch: Partial<(typeof picks)[number]>) => setPicks(picks.map((p, j) => (j === i ? { ...p, ...patch } : p)));
-  const todo = rows.filter((r) => r.status !== 'imported').length;
-  const ticked = picks.filter((p, i) => p.on && rows[i].status !== 'imported');
-  const visible = rows.map((r, i) => ({ r, i })).filter(({ r }) => showAll || r.status !== 'imported');
-  const payload = JSON.stringify(picks.flatMap((p, i) => (p.on && rows[i].status !== 'imported' ? [{ row: i, account: p.account, vat: pnl.has(p.account) ? p.vat : 'OUTSIDE' }] : [])));
+
+  const editable = (r: ImportRow) => r.status === 'new' || (r.status === 'imported' && Boolean(r.booked?.editable));
+  const needsLook = (r: ImportRow) => r.status === 'new' || Boolean(r.booked?.check);
+  const changed = (i: number) => picks[i].account !== initial[i].account || picks[i].vat !== initial[i].vat;
+  // Saving sends every row changed, and every highlighted one (looked at now, so no longer a guess).
+  const sending = rows.flatMap((r, i) => (canEdit && editable(r) && (changed(i) || needsLook(r)) ? [i] : []));
+  const payload = JSON.stringify(sending.map((i) => ({ row: i, account: picks[i].account, vat: pnl.has(picks[i].account) ? picks[i].vat : 'OUTSIDE' })));
+  const lookN = rows.filter(needsLook).length;
+  const order = rows.map((r, i) => ({ r, i })).sort((a, b) => Number(needsLook(b.r)) - Number(needsLook(a.r)) || a.i - b.i);
+  const visible = order.filter(({ r, i }) => showAll || needsLook(r) || changed(i));
 
   const groups: [string, Acc[]][] = [
     ['Income', accounts.filter((a) => a.group === 'income')],
@@ -65,54 +84,56 @@ export function ImportTable({
       <input type="hidden" name="picks" value={payload} />
       <div className={s.actions} style={{ alignItems: 'center' }}>
         <span className={m.sub} style={{ margin: 0 }}>
-          {todo === 0 ? 'Every row is in your books.' : `${todo} row${todo === 1 ? '' : 's'} not imported · ${ticked.length} ticked`}
+          {lookN === 0 ? 'Nothing needs a look.' : `${lookN} row${lookN === 1 ? '' : 's'} worth a glance`}
+          {!showAll && ` · ${rows.length - lookN} more booked`}
         </span>
-        {rows.length > todo && (
-          <button type="button" className={f.btnGhost} onClick={() => setShowAll(!showAll)}>
-            {showAll ? 'Hide imported rows' : 'Show imported rows too'}
-          </button>
-        )}
+        <button type="button" className={f.btnGhost} onClick={() => setShowAll(!showAll)}>
+          {showAll ? 'Show only rows worth a glance' : `Show all ${rows.length} rows`}
+        </button>
       </div>
-      <div className={m.tableWrap}>
-        <table className={m.table}>
-          <thead>
-            <tr>
-              <th aria-label="Import" />
-              <th>Date</th>
-              <th>Payee</th>
-              <th className={m.num}>Amount</th>
-              <th>Goes to</th>
-              <th>VAT</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map(({ r, i }) => {
-              const p = picks[i];
-              const done = r.status === 'imported';
-              const money = r.amount > 0;
-              const invs = money ? invoices.filter((v) => v.due_pence >= r.amount) : [];
-              const flagged = !done && p.on && r.suggestion?.check && p.account === r.suggestion.account;
-              return (
-                <tr key={i} className={flagged ? s.flagged : undefined}>
-                  <td>
-                    {!done && canEdit && (
-                      <input type="checkbox" checked={p.on} onChange={(e) => set(i, { on: e.target.checked })} aria-label={`Import ${r.payee}`} />
-                    )}
-                  </td>
-                  <td>{ukDate(r.date)}</td>
-                  <td style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', minWidth: 160 }}>
-                    {r.payee}
-                    {r.description && <div className={s.muted}>{r.description}</div>}
-                  </td>
-                  <td className={m.num}>{formatPence(r.amount)}</td>
-                  <td style={{ minWidth: 200 }}>
-                    {done ? (
-                      <span className={s.muted}>In your books</span>
-                    ) : (
-                      <>
-                        {r.status === 'matched' && <div className={s.muted}>Already in your books: {r.matchLabel}</div>}
-                        {canEdit && (
-                          <select className={f.input} value={p.account} onChange={(e) => set(i, { account: e.target.value, on: true })} aria-label="Account">
+      {visible.length > 0 && (
+        <div className={m.tableWrap}>
+          <table className={m.table}>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Payee</th>
+                <th className={m.num}>Amount</th>
+                <th>Goes to</th>
+                <th>VAT</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map(({ r, i }) => {
+                const p = picks[i];
+                const canChange = canEdit && editable(r);
+                const money = r.amount > 0;
+                const invs = money && r.status === 'new' ? invoices.filter((v) => v.due_pence >= r.amount) : [];
+                return (
+                  <tr key={i} className={needsLook(r) && !changed(i) ? s.flagged : undefined}>
+                    <td>{ukDate(r.date)}</td>
+                    <td style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', minWidth: 160 }}>
+                      {r.payee}
+                      {r.description && <div className={s.muted}>{r.description}</div>}
+                      {canEdit && r.status !== 'waiting' && (
+                        <Link className={s.link} style={{ fontSize: 13 }} href={`/account/books/rules?match=${encodeURIComponent(r.payee.slice(0, 100))}`}>
+                          Make a rule
+                        </Link>
+                      )}
+                    </td>
+                    <td className={m.num}>{formatPence(r.amount)}</td>
+                    <td style={{ minWidth: 200 }}>
+                      {r.status === 'waiting' ? (
+                        <span className={s.muted}>Your Stripe sync books this payout</span>
+                      ) : r.status === 'matched' ? (
+                        <span className={s.muted}>Already in your books: {r.matchLabel}</span>
+                      ) : !canChange ? (
+                        <span className={s.muted}>
+                          In your books{r.booked?.account ? `: ${r.booked.account} ${accounts.find((a) => a.code === r.booked!.account)?.name ?? ''}` : ''}
+                        </span>
+                      ) : (
+                        <>
+                          <select className={f.input} value={p.account} onChange={(e) => set(i, { account: e.target.value })} aria-label="Account">
                             {invs.length > 0 && (
                               <optgroup label="Payment of an invoice">
                                 {invs.map((v) => (
@@ -134,38 +155,34 @@ export function ImportTable({
                               ) : null,
                             )}
                           </select>
-                        )}
-                        {r.suggestion && p.account === r.suggestion.account && r.status === 'new' && (
-                          <div className={s.muted}>{r.suggestion.check ? 'A guess: check this' : r.suggestion.why}</div>
-                        )}
-                      </>
-                    )}
-                  </td>
-                  <td style={{ width: 100 }}>
-                    {!done && canEdit && r.registered && pnl.has(p.account) && (
-                      <select className={f.input} value={p.vat} onChange={(e) => set(i, { vat: e.target.value as VatCode })} aria-label="VAT">
-                        {PNL_VAT.map((c) => (
-                          <option key={c} value={c}>
-                            {vatLabel(c)}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                          {!changed(i) && r.booked?.check && <div className={s.muted}>{r.booked.why ?? 'A guess: check this'}</div>}
+                          {r.status === 'new' && <div className={s.muted}>Not in your books yet</div>}
+                        </>
+                      )}
+                    </td>
+                    <td style={{ width: 100 }}>
+                      {canChange && r.registered && pnl.has(p.account) && (
+                        <select className={f.input} value={p.vat} onChange={(e) => set(i, { vat: e.target.value as VatCode })} aria-label="VAT">
+                          {PNL_VAT.map((c) => (
+                            <option key={c} value={c}>
+                              {vatLabel(c)}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
       {state.error && <p className={f.error}>{state.error}</p>}
-      {canEdit && todo > 0 && (
+      {canEdit && sending.length > 0 && (
         <div className={s.actions}>
-          <button className={f.btnPrimary} type="submit" disabled={pending || ticked.length === 0}>
-            {pending ? 'Importing…' : `Import ${ticked.length} ticked row${ticked.length === 1 ? '' : 's'}`}
-          </button>
-          <button type="button" className={f.btnGhost} onClick={() => setPicks(picks.map((p) => ({ ...p, on: false })))}>
-            Untick all
+          <button className={f.btnPrimary} type="submit" disabled={pending}>
+            {pending ? 'Saving…' : lookN > 0 ? 'Save: these look right now' : 'Save changes'}
           </button>
         </div>
       )}

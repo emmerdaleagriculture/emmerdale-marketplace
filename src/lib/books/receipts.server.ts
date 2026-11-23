@@ -14,6 +14,10 @@ import { blockingReasons, cleanConfidence, docFromFields, fieldsFromRead, type R
 import { buildPosting, validateDoc, type AccountInfo } from './posting';
 import { convertPence, gbpRate } from './fx';
 import { penceToDecimal } from './money';
+import { addDays } from './period';
+import { MATCH_DAYS } from './bank';
+import { ruleFor } from './rules';
+import { loadRules } from './rules.server';
 
 export const RECEIPTS_BUCKET = 'books-receipts';
 /** AI reads per set of books per calendar month; past it, receipts wait for hand entry. */
@@ -166,8 +170,45 @@ async function sameEntryExists(ledgerId: string, f: ReceiptFields): Promise<bool
     .eq('entry_date', f.doc_date)
     .eq('gross_pence', f.gross_pence)
     .eq('kind', f.doc_type)
+    // A statement row booked automatically isn't a duplicate: the receipt replaces it.
+    .or('external_id.is.null,external_id.not.like.bank:*')
     .limit(1);
   return Boolean(data?.length);
+}
+
+/**
+ * A statement row booked before its receipt arrived: same bank account, same
+ * total, within a few days. The receipt knows more (VAT, what was bought),
+ * so its entry replaces the row's; the statement then shows the row as
+ * already in the books.
+ */
+async function supersedeBankRow(ledgerId: string, f: ReceiptFields, receiptEntryId: number): Promise<void> {
+  const code = f.payment_account_code;
+  if (!code || !/^12\d\d$/.test(code) || !f.doc_date || f.gross_pence == null || !f.doc_type) return;
+  const admin = createServiceRoleClient();
+  const { data } = await admin
+    .from('books_entries')
+    .select('id, entry_date, books_lines(debit_pence, credit_pence, books_accounts(code))')
+    .eq('ledger_id', ledgerId)
+    .eq('source', 'bank')
+    .eq('kind', f.doc_type)
+    .eq('gross_pence', f.gross_pence)
+    .like('external_id', 'bank:%')
+    .is('receipt_id', null)
+    .gte('entry_date', addDays(f.doc_date, -MATCH_DAYS))
+    .lte('entry_date', addDays(f.doc_date, MATCH_DAYS))
+    .neq('id', receiptEntryId)
+    .limit(20);
+  const gross = f.gross_pence;
+  const onBank = (e: NonNullable<typeof data>[number]) =>
+    (e.books_lines as unknown as { debit_pence: number; credit_pence: number; books_accounts: { code: string } | null }[]).some(
+      (l) => l.books_accounts?.code === code && (f.doc_type === 'purchase' ? l.credit_pence : l.debit_pence) === gross,
+    );
+  const days = (d: string) => Math.abs(Date.parse(d) - Date.parse(f.doc_date!));
+  const best = (data ?? []).filter(onBank).sort((a, b) => days(a.entry_date) - days(b.entry_date))[0];
+  if (!best) return;
+  const { error } = await admin.from('books_entries').delete().eq('id', best.id).eq('ledger_id', ledgerId);
+  if (error) console.error('[books] bank row supersede failed', { ledgerId, entry: best.id, error: error.message });
 }
 
 /**
@@ -202,10 +243,13 @@ export async function postReceiptFields(
     // Rejected or re-queued while this posted: undo the entry, leave their choice.
     if (!(await updateIfOurs(receiptId, token, patch))) {
       await admin.from('books_entries').delete().eq('id', entryId).eq('ledger_id', ledger.id);
+      return null;
     }
+    await supersedeBankRow(ledger.id, f, entryId);
     return null;
   }
   await update(receiptId, patch);
+  await supersedeBankRow(ledger.id, f, entryId);
   return null;
 }
 
@@ -268,7 +312,15 @@ export async function processReceipt(receiptId: number): Promise<void> {
     let f = fieldsFromRead(read, lp, accounts, ledger.default_payment_account);
     const notes: string[] = [];
     if (read.notes) notes.push(read.notes);
-    if (read.is_paid === false && f.doc_type) {
+    // The owner's rule for this supplier beats the AI on where it goes and what paid it.
+    const rule = f.counterparty ? ruleFor(await loadRules(ledger.id), f.counterparty) : null;
+    if (rule) {
+      const a = rule.account_code ? accountRows.find((x) => x.code === rule.account_code) : null;
+      const fits = a && (f.doc_type === 'sale' ? a.type === 'income' : a.type === 'expense' || a.is_fixed_asset);
+      f = { ...f, ...(fits ? { account_code: a.code } : {}), ...(rule.paid_from && accounts.has(rule.paid_from) ? { payment_account_code: rule.paid_from } : {}) };
+      notes.push(`Your rule “${rule.match_text}” applied.`);
+    }
+    if (f.payment_account_code === '2100' || f.payment_account_code === '1100') {
       notes.push(f.doc_type === 'sale' ? 'Not paid yet: recorded as owed to you (1100 Trade debtors).' : 'Not paid yet: recorded as owed by you (2100 Trade creditors).');
     }
     const reasons: string[] = [];

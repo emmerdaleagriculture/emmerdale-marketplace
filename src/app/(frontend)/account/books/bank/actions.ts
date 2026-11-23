@@ -8,7 +8,7 @@ import type { Json } from '@/lib/database.types';
 import { getAccounts, requireBooksWriter } from '@/lib/books/server';
 import { parseStatement } from '@/lib/books/bankCsv';
 import { POTS_CODE } from '@/lib/books/bank';
-import { importRows, loadStatement, statementAccounts } from '@/lib/books/bank.server';
+import { autoImport, loadStatement, rebookRows, statementAccounts } from '@/lib/books/bank.server';
 import { isVatCode } from '@/lib/books/vat';
 
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -22,7 +22,7 @@ function decode(buf: ArrayBuffer): string {
   }
 }
 
-/** Upload a CSV: read it, keep it with its rows, and open it for importing. */
+/** Upload a CSV: read it, keep it with its rows, and book every row not already in the books. */
 export async function uploadStatementAction(_prev: FormState, fd: FormData): Promise<FormState> {
   const gate = await requireBooksWriter();
   if (!gate.ok) return { error: gate.error };
@@ -65,11 +65,28 @@ export async function uploadStatementAction(_prev: FormState, fd: FormData): Pro
     console.error('[books] statement save failed', { ledger: gate.ledger.id, error: error?.message });
     return { error: 'That didn’t save. Please try again.' };
   }
+  const st = await loadStatement(gate.ledger.id, data.id);
+  const r = st ? await autoImport(gate.ledger, st) : { posted: 0, failed: [] };
+  if (r.failed.length) console.error('[books] auto import left rows', { ledger: gate.ledger.id, statement: data.id, failed: r.failed.slice(0, 5) });
   revalidatePath('/account/books', 'layout');
-  redirect(`/account/books/bank/${data.id}${parsed.skipped ? `?skipped=${parsed.skipped}` : ''}`);
+  const q = new URLSearchParams({ imported: String(r.posted) });
+  if (parsed.skipped) q.set('skipped', String(parsed.skipped));
+  redirect(`/account/books/bank/${data.id}?${q}`);
 }
 
-/** Import the ticked rows: picks is JSON [{row, account, vat}]. */
+/** Book the rows of a statement uploaded before importing was automatic. */
+export async function autoImportAction(fd: FormData): Promise<void> {
+  const gate = await requireBooksWriter();
+  if (!gate.ok || !gate.ledger) return;
+  const id = Number(fd.get('statement_id'));
+  const st = await loadStatement(gate.ledger.id, id);
+  if (!st) return;
+  const r = await autoImport(gate.ledger, st);
+  revalidatePath('/account/books', 'layout');
+  redirect(`/account/books/bank/${id}?imported=${r.posted}`);
+}
+
+/** Save changed rows (and book any not in the books yet): picks is JSON [{row, account, vat}]. */
 export async function importRowsAction(_prev: FormState, fd: FormData): Promise<FormState> {
   const gate = await requireBooksWriter();
   if (!gate.ok) return { error: gate.error };
@@ -88,16 +105,16 @@ export async function importRowsAction(_prev: FormState, fd: FormData): Promise<
     .filter((p): p is { row: number; account: string; vat: string } => p && Number.isInteger(p.row) && typeof p.account === 'string' && isVatCode(p.vat))
     .slice(0, 5000)
     .map((p) => ({ row: p.row, choice: { account: p.account, vat: p.vat as never } }));
-  if (!picks.length) return { error: 'Tick the rows to import.' };
-  const r = await importRows(gate.ledger, st, picks);
+  if (!picks.length) return { error: 'Nothing has changed.' };
+  const r = await rebookRows(gate.ledger, st, picks);
   revalidatePath('/account/books', 'layout');
   if (r.failed.length) {
     const first = r.failed[0];
     return {
-      error: `${r.posted ? `Imported ${r.posted}. ` : ''}${r.failed.length} row${r.failed.length === 1 ? '' : 's'} didn’t import — row ${first.row + 1}: ${first.error}`,
+      error: `${r.posted ? `Saved ${r.posted}. ` : ''}${r.failed.length} row${r.failed.length === 1 ? '' : 's'} didn’t save — row ${first.row + 1}: ${first.error}`,
     };
   }
-  redirect(`/account/books/bank/${id}?imported=${r.posted}`);
+  redirect(`/account/books/bank/${id}?saved=${r.posted}`);
 }
 
 /** Remove an uploaded statement. Entries it booked stay in the books. */
