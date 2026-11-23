@@ -1,24 +1,33 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
-import { createServiceRoleClient } from '@/lib/supabase/server';
-import { loadBooks, recentEntries, trialBalance } from '@/lib/books/server';
-import { formatPence } from '@/lib/books/money';
-import { accountingYear, todayUk, ukDate } from '@/lib/books/period';
-import m from '../market/market.module.css';
-import s from './books.module.css';
-import { BooksFrame } from './BooksFrame';
-import { Icon, Tile, Tiles } from './BooksUi';
-import { SettingsForm } from './SettingsForm';
-import { BooksPreview } from './BooksPreview';
-import { createLedgerAction } from './actions';
-import { syncLedgerMarketplace } from '@/lib/books/marketplace.server';
+import type { Metadata } from "next";
+import Link from "next/link";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import {
+  loadBooks,
+  recentEntries,
+  trialBalance,
+  VOIDABLE_SOURCES,
+} from "@/lib/books/server";
+import { formatPence } from "@/lib/books/money";
+import { accountingYear, todayUk, ukDate } from "@/lib/books/period";
+import m from "../market/market.module.css";
+import s from "./books.module.css";
+import { BooksFrame } from "./BooksFrame";
+import { Icon, Tile, Tiles } from "./BooksUi";
+import { SettingsForm } from "./SettingsForm";
+import { BooksPreview } from "./BooksPreview";
+import { EntryModal } from "./EntryModal";
+import { createLedgerAction } from "./actions";
+import { syncLedgerMarketplace } from "@/lib/books/marketplace.server";
 
-export const metadata: Metadata = { title: 'Books', robots: { index: false, follow: false } };
+export const metadata: Metadata = {
+  title: "Books",
+  robots: { index: false, follow: false },
+};
 
 const POSTED: Record<string, string> = {
-  sale: 'Sale recorded.',
-  purchase: 'Expense recorded.',
-  mileage: 'Mileage claim recorded.',
+  sale: "Sale recorded.",
+  purchase: "Expense recorded.",
+  mileage: "Mileage claim recorded.",
 };
 
 /**
@@ -26,8 +35,12 @@ const POSTED: Record<string, string> = {
  * sees the page with sample figures under a Premium overlay (BooksPreview). With
  * books: bank balance, this year's figures, and the latest entries.
  */
-export default async function BooksPage({ searchParams }: { searchParams: Promise<{ posted?: string }> }) {
-  const access = await loadBooks('/account/books');
+export default async function BooksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ posted?: string }>;
+}) {
+  const access = await loadBooks("/account/books");
   const { posted } = await searchParams;
 
   if (!access.ledger) {
@@ -42,27 +55,28 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
     return (
       <BooksFrame access={access} title="Set up your books" tab={null}>
         <p className={m.lead}>
-          A proper double-entry set of books for your business. Tell us a little about it and we’ll set
-          up the accounts. You can change any of it later in Settings.
+          A proper double-entry set of books for your business. Tell us a little
+          about it and we’ll set up the accounts. You can change any of it later
+          in Settings.
         </p>
         <SettingsForm
           action={createLedgerAction}
           setup
           paymentAccounts={[]}
           values={{
-            business_type: 'sole_trader',
+            business_type: "sole_trader",
             legal_name: access.businessName,
             company_number: null,
             utr: null,
             vat_registered: false,
             vat_number: null,
-            vat_scheme: 'standard',
+            vat_scheme: "standard",
             vat_quarter_stagger: 0,
             flat_rate_percent: null,
             vat_registration_date: null,
-            year_end: '04-05',
+            year_end: "04-05",
             farming: true,
-            default_payment_account: '1200',
+            default_payment_account: "1200",
             trading_name: access.businessName,
             address: null,
             phone: null,
@@ -85,30 +99,61 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
     try {
       await syncLedgerMarketplace(ledger);
     } catch (err) {
-      console.error('[books] marketplace sync on visit failed', { ledger: ledger.id, error: err instanceof Error ? err.message : err });
+      console.error("[books] marketplace sync on visit failed", {
+        ledger: ledger.id,
+        error: err instanceof Error ? err.message : err,
+      });
     }
   }
   const today = todayUk();
   const year = accountingYear(ledger.year_end, today);
   const admin = createServiceRoleClient();
-  const [all, yearTb, entries, { count: toReview }, { data: overdueRows }] = await Promise.all([
-    trialBalance(ledger.id),
-    trialBalance(ledger.id, year.from, year.to),
-    recentEntries(ledger.id, 12),
-    admin.from('books_receipts').select('id', { count: 'exact', head: true }).eq('ledger_id', ledger.id).eq('status', 'needs_review'),
-    admin.from('books_invoices').select('gross_pence, paid_pence').eq('ledger_id', ledger.id).eq('status', 'issued').lt('due_date', today).limit(1000),
-  ]);
+  const [all, yearTb, entries, { count: toReview }, { data: overdueRows }] =
+    await Promise.all([
+      trialBalance(ledger.id),
+      trialBalance(ledger.id, year.from, year.to),
+      recentEntries(ledger.id, 12),
+      admin
+        .from("books_receipts")
+        .select("id", { count: "exact", head: true })
+        .eq("ledger_id", ledger.id)
+        .eq("status", "needs_review"),
+      admin
+        .from("books_invoices")
+        .select("gross_pence, paid_pence")
+        .eq("ledger_id", ledger.id)
+        .eq("status", "issued")
+        .lt("due_date", today)
+        .limit(1000),
+    ]);
   const bal = (code: string) => {
     const r = all.find((a) => a.code === code);
     return r ? r.debit_pence - r.credit_pence : 0;
   };
-  const income = yearTb.filter((r) => r.type === 'income').reduce((t, r) => t + r.credit_pence - r.debit_pence, 0);
-  const expenses = yearTb.filter((r) => r.type === 'expense').reduce((t, r) => t + r.debit_pence - r.credit_pence, 0);
+  const income = yearTb
+    .filter((r) => r.type === "income")
+    .reduce((t, r) => t + r.credit_pence - r.debit_pence, 0);
+  const expenses = yearTb
+    .filter((r) => r.type === "expense")
+    .reduce((t, r) => t + r.debit_pence - r.credit_pence, 0);
   const profit = income - expenses;
-  const overdue = (overdueRows ?? []).filter((i) => i.gross_pence > i.paid_pence);
-  const overdueTotal = overdue.reduce((t, i) => t + i.gross_pence - i.paid_pence, 0);
+  const overdue = (overdueRows ?? []).filter(
+    (i) => i.gross_pence > i.paid_pence,
+  );
+  const overdueTotal = overdue.reduce(
+    (t, i) => t + i.gross_pence - i.paid_pence,
+    0,
+  );
   const kindOf = (e: (typeof entries)[number]) =>
-    e.source === 'mileage' ? 'Mileage' : e.source === 'marketplace' && e.kind === 'sale' ? 'Emmerdale job' : e.kind === 'sale' ? 'Sale' : e.kind === 'purchase' ? 'Expense' : 'Journal';
+    e.source === "mileage"
+      ? "Mileage"
+      : e.source === "marketplace" && e.kind === "sale"
+        ? "Emmerdale job"
+        : e.kind === "sale"
+          ? "Sale"
+          : e.kind === "purchase"
+            ? "Expense"
+            : "Journal";
 
   return (
     <BooksFrame access={access} title="Books" tab="home">
@@ -121,8 +166,8 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
             <Link href="/account/books/receipts">
               <span>
                 <b>
-                  {toReview} receipt{toReview === 1 ? '' : 's'}
-                </b>{' '}
+                  {toReview} receipt{toReview === 1 ? "" : "s"}
+                </b>{" "}
                 waiting for you to check
               </span>
               <Icon name="arrow" size={18} />
@@ -132,8 +177,9 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
             <Link href="/account/books/invoices?show=open">
               <span>
                 <b>
-                  {overdue.length} invoice{overdue.length === 1 ? '' : 's'} overdue
-                </b>{' '}
+                  {overdue.length} invoice{overdue.length === 1 ? "" : "s"}{" "}
+                  overdue
+                </b>{" "}
                 · {formatPence(overdueTotal)} owed
               </span>
               <Icon name="arrow" size={18} />
@@ -143,20 +189,48 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
       )}
 
       {/* New books: offer to bring the old ones over. */}
-      {access.canEdit && entries.length < 12 && !entries.some((e) => String(e.external_id ?? '').startsWith('import:opening:')) && (
-        <p className={s.notice}>
-          Business already going?{' '}
-          <Link className={s.link} href="/account/books/import">
-            Add your starting balances, or bring them over from Xero or FreshBooks →
-          </Link>
-        </p>
-      )}
+      {access.canEdit &&
+        entries.length < 12 &&
+        !entries.some((e) =>
+          String(e.external_id ?? "").startsWith("import:opening:"),
+        ) && (
+          <p className={s.notice}>
+            Business already going?{" "}
+            <Link className={s.link} href="/account/books/import">
+              Add your starting balances, or bring them over from Xero or
+              FreshBooks →
+            </Link>
+          </p>
+        )}
 
       <Tiles>
-        <Tile icon="bank" label="Bank (1200)" value={formatPence(bal('1200'))} hint="As recorded in your books" tone="teal" />
-        <Tile icon="coins" label="Income this year" value={formatPence(income)} hint={`${ukDate(year.from)} – ${ukDate(year.to)}`} tone="green" />
-        <Tile icon="expenses" label="Expenses this year" value={formatPence(expenses)} tone="amber" />
-        <Tile icon="trend" label="Profit this year" value={formatPence(profit)} hint="Before tax" tone={profit < 0 ? 'red' : 'green'} />
+        <Tile
+          icon="bank"
+          label="Bank (1200)"
+          value={formatPence(bal("1200"))}
+          hint="As recorded in your books"
+          tone="teal"
+        />
+        <Tile
+          icon="coins"
+          label="Income this year"
+          value={formatPence(income)}
+          hint={`${ukDate(year.from)} – ${ukDate(year.to)}`}
+          tone="green"
+        />
+        <Tile
+          icon="expenses"
+          label="Expenses this year"
+          value={formatPence(expenses)}
+          tone="amber"
+        />
+        <Tile
+          icon="trend"
+          label="Profit this year"
+          value={formatPence(profit)}
+          hint="Before tax"
+          tone={profit < 0 ? "red" : "green"}
+        />
       </Tiles>
 
       {access.canEdit && (
@@ -165,7 +239,10 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
             <Icon name="plus" size={22} />
             <span>Record sale</span>
           </Link>
-          <Link className={s.actionMain} href="/account/books/new?kind=purchase">
+          <Link
+            className={s.actionMain}
+            href="/account/books/new?kind=purchase"
+          >
             <Icon name="minus" size={22} />
             <span>Record expense</span>
           </Link>
@@ -195,21 +272,40 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
         </Link>
       </div>
       {entries.length === 0 ? (
-        <p className={m.sub}>Nothing recorded yet. Start with a sale or an expense.</p>
+        <p className={m.sub}>
+          Nothing recorded yet. Start with a sale or an expense.
+        </p>
       ) : (
         <ul className={s.entryList}>
           {entries.map((e) => {
-            const amount = e.kind === 'purchase' ? -e.gross_pence : e.gross_pence;
+            const amount =
+              e.kind === "purchase" ? -e.gross_pence : e.gross_pence;
             return (
               <li key={e.id}>
-                <span className={s.entryWho}>{e.counterparty || e.description || kindOf(e)}</span>
-                <span className={s.entryAmount} data-in={e.kind === 'sale' && amount > 0 ? '' : undefined}>
-                  {formatPence(amount)}
-                </span>
-                <span className={s.entryMeta}>
-                  {ukDate(e.entry_date)} · {kindOf(e)}
-                  {e.counterparty && e.description ? ` · ${e.description}` : ''}
-                </span>
+                <EntryModal
+                  entry={e}
+                  canVoid={
+                    access.canEdit &&
+                    (VOIDABLE_SOURCES as readonly string[]).includes(e.source)
+                  }
+                  className={s.entryRow}
+                >
+                  <span className={s.entryWho}>
+                    {e.counterparty || e.description || kindOf(e)}
+                  </span>
+                  <span
+                    className={s.entryAmount}
+                    data-in={e.kind === "sale" && amount > 0 ? "" : undefined}
+                  >
+                    {formatPence(amount)}
+                  </span>
+                  <span className={s.entryMeta}>
+                    {ukDate(e.entry_date)} · {kindOf(e)}
+                    {e.counterparty && e.description
+                      ? ` · ${e.description}`
+                      : ""}
+                  </span>
+                </EntryModal>
               </li>
             );
           })}
