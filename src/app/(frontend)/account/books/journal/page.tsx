@@ -5,7 +5,7 @@ import { ukDate } from '@/lib/books/period';
 import m from '../../market/market.module.css';
 import s from '../books.module.css';
 import { BooksFrame } from '../BooksFrame';
-import { voidEntryAction } from '../actions';
+import { EntryModal } from '../EntryModal';
 import { VOIDABLE_SOURCES } from '@/lib/books/server';
 
 export const metadata: Metadata = { title: 'Journal', robots: { index: false, follow: false } };
@@ -24,7 +24,12 @@ export default async function JournalPage() {
       </p>
       {entries.length === 0 && <p className={m.sub}>Nothing recorded yet.</p>}
       {entries.map((e) => (
-        <div key={e.id} className={s.entry}>
+        <EntryModal
+          key={e.id}
+          entry={e}
+          canVoid={access.canEdit && (VOIDABLE_SOURCES as readonly string[]).includes(e.source)}
+          className={s.entry}
+        >
           <div className={s.entryHead}>
             <span>
               <b>{ukDate(e.entry_date)}</b> · {e.counterparty ?? (e.kind === 'journal' ? 'Journal' : '')}
@@ -32,14 +37,6 @@ export default async function JournalPage() {
             </span>
             <span className={s.muted}>
               #{e.id} · {e.vat_code}
-              {access.canEdit && (VOIDABLE_SOURCES as readonly string[]).includes(e.source) && (
-                <form action={voidEntryAction} style={{ display: 'inline', marginLeft: 10 }}>
-                  <input type="hidden" name="entry_id" value={e.id} />
-                  <button className={s.voidBtn} type="submit">
-                    Void
-                  </button>
-                </form>
-              )}
             </span>
           </div>
           {e.description && <div className={s.muted}>{e.description}</div>}
@@ -57,7 +54,7 @@ export default async function JournalPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </EntryModal>
       ))}
     </BooksFrame>
   );

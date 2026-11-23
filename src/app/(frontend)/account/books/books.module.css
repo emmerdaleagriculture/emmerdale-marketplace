@@ -175,6 +175,17 @@
   padding: 11px 14px;
   border-top: 1px solid var(--app-line-soft, var(--rule));
 }
+/* Overview rows that open the entry: the row's grid moves onto the trigger. */
+.entryList li:has(> .entryRow) {
+  display: block;
+  padding: 0;
+}
+.entryRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  padding: 11px 14px;
+}
 .entryList li:first-child {
   border-top: 0;
 }
@@ -729,4 +740,103 @@ input.lineNum {
   padding-right: 8px;
   text-align: right;
   min-width: 64px;
+}
+
+/* An entry that opens in a modal (overview, journal). */
+.entryOpen {
+  cursor: pointer;
+  min-width: 0;
+}
+.entryOpen:hover {
+  background: var(--cream);
+}
+.entryOpen:focus-visible {
+  outline: 2px solid var(--jd-green);
+  outline-offset: -2px;
+}
+.entryModal {
+  /* The global reset zeroes margins, which un-centres a modal dialog. */
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  background: var(--white);
+  color: var(--ink);
+}
+.entryModal::backdrop {
+  background: rgba(20, 30, 20, 0.45);
+}
+.entryModalBody {
+  padding: 16px 18px 14px;
+}
+.entryModalHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.entryModalTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.entryModalClose {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  margin: -6px -8px 0 0;
+  border: 0;
+  background: none;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.entryFacts {
+  margin: 0 0 12px;
+  font-size: 14.5px;
+}
+.entryFacts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  border-top: 1px solid var(--app-line-soft, var(--rule));
+}
+.entryFacts dt {
+  color: var(--ink-3);
+}
+.entryFacts dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.entryModal .entryLines th {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-align: left;
+  padding-bottom: 2px;
+}
+.entryModal .entryLines th:not(:first-child),
+.entryModal .entryLines td:not(:first-child) {
+  text-align: right;
+  white-space: nowrap;
+  padding-left: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.entryModalFoot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 14px;
+}
+.entryModalFoot form {
+  margin-left: auto;
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { loadBooks, recentEntries, trialBalance } from '@/lib/books/server';
+import { loadBooks, recentEntries, trialBalance, VOIDABLE_SOURCES } from '@/lib/books/server';
 import { formatPence } from '@/lib/books/money';
 import { accountingYear, todayUk, ukDate } from '@/lib/books/period';
 import m from '../market/market.module.css';
@@ -10,6 +10,7 @@ import { BooksFrame } from './BooksFrame';
 import { Icon, Tile, Tiles } from './BooksUi';
 import { SettingsForm } from './SettingsForm';
 import { BooksPreview } from './BooksPreview';
+import { EntryModal } from './EntryModal';
 import { createLedgerAction } from './actions';
 import { syncLedgerMarketplace } from '@/lib/books/marketplace.server';
 
@@ -202,14 +203,20 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
             const amount = e.kind === 'purchase' ? -e.gross_pence : e.gross_pence;
             return (
               <li key={e.id}>
-                <span className={s.entryWho}>{e.counterparty || e.description || kindOf(e)}</span>
-                <span className={s.entryAmount} data-in={e.kind === 'sale' && amount > 0 ? '' : undefined}>
-                  {formatPence(amount)}
-                </span>
-                <span className={s.entryMeta}>
-                  {ukDate(e.entry_date)} · {kindOf(e)}
-                  {e.counterparty && e.description ? ` · ${e.description}` : ''}
-                </span>
+                <EntryModal
+                  entry={e}
+                  canVoid={access.canEdit && (VOIDABLE_SOURCES as readonly string[]).includes(e.source)}
+                  className={s.entryRow}
+                >
+                  <span className={s.entryWho}>{e.counterparty || e.description || kindOf(e)}</span>
+                  <span className={s.entryAmount} data-in={e.kind === 'sale' && amount > 0 ? '' : undefined}>
+                    {formatPence(amount)}
+                  </span>
+                  <span className={s.entryMeta}>
+                    {ukDate(e.entry_date)} · {kindOf(e)}
+                    {e.counterparty && e.description ? ` · ${e.description}` : ''}
+                  </span>
+                </EntryModal>
               </li>
             );
           })}
