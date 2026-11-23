@@ -1627,9 +1627,9 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
       return {
         subject: `Message from ${p.from ?? 'your contractor'} about your ${p.service ?? 'job'}`,
         text:
-          `${p.from ?? 'Your contractor'} wrote:\n\n${p.body ?? ''}\n\n` +
-          `Reply on your job page (replies to this email don’t reach them):\n` +
-          `${SITE_URL}/my/${p.client_token}`,
+          `${p.from ?? 'Your contractor'} has sent you a message about your ${p.service ?? 'job'}.\n\n` +
+          `Read it and reply on your job page (replies to this email don’t reach them):\n` +
+          `${SITE_URL}/my/${p.client_token}#messages`,
       };
 
     // A day on, the customer still hasn't read what a contractor sent. One
@@ -1649,7 +1649,7 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         const when = day(t.since);
         return (
           `${t.from ?? 'A contractor'} (${n === 1 ? 'a message' : `${n} messages`}` +
-          `${when ? `, since ${when}` : ''}):\n\n${t.body ?? ''}`
+          `${when ? `, since ${when}` : ''})`
         );
       });
       return {
@@ -1659,9 +1659,9 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
         text:
           `You have unread ${threads.length === 1 && Number(one?.count ?? 1) === 1 ? 'message' : 'messages'} ` +
           `about your ${p.service ?? 'job'}. They may need your answer before they can price or plan the work.\n\n` +
-          blocks.join('\n\n* * *\n\n') +
-          `\n\nReply on your job page (replies to this email don’t reach them):\n` +
-          `${SITE_URL}/my/${p.client_token}\n\n` +
+          blocks.join('\n') +
+          `\n\nRead and reply on your job page (replies to this email don’t reach them):\n` +
+          `${SITE_URL}/my/${p.client_token}#messages\n\n` +
           `If you no longer need the work, you can withdraw the job from the same page ` +
           `and we’ll stop the messages.`,
       };
