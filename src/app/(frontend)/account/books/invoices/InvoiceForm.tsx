@@ -135,11 +135,11 @@ export function InvoiceForm({
                 <td style={{ minWidth: 200 }}>
                   <input className={f.input} value={l.description} onChange={(e) => set(i, { description: e.target.value })} aria-label="Description" maxLength={500} />
                 </td>
-                <td style={{ width: 80 }}>
-                  <input className={f.input} value={l.quantity} onChange={(e) => set(i, { quantity: e.target.value })} inputMode="decimal" aria-label="Quantity" />
+                <td style={{ width: 100 }}>
+                  <input className={`${f.input} ${s.lineNum}`} value={l.quantity} onChange={(e) => set(i, { quantity: e.target.value })} inputMode="decimal" aria-label="Quantity" />
                 </td>
-                <td style={{ width: 110 }}>
-                  <input className={f.input} value={l.unit} onChange={(e) => set(i, { unit: e.target.value })} inputMode="decimal" aria-label="Price" />
+                <td style={{ width: 130 }}>
+                  <input className={`${f.input} ${s.lineNum}`} value={l.unit} onChange={(e) => set(i, { unit: e.target.value })} inputMode="decimal" aria-label="Price" />
                 </td>
                 {registered && (
                   <td style={{ width: 120 }}>

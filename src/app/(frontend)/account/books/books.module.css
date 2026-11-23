@@ -721,3 +721,12 @@
   background: none;
   cursor: pointer;
 }
+
+/* Invoice line Qty / Price boxes: narrow table columns, so trim the shared
+   box padding or a phone shows only two digits (16px text, see forms.module.css). */
+input.lineNum {
+  padding-left: 8px;
+  padding-right: 8px;
+  text-align: right;
+  min-width: 64px;
+}
