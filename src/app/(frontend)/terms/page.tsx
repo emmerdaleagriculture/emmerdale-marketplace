@@ -22,7 +22,7 @@ export default function TermsPage() {
         <article className={l.prose}>
           <Breadcrumb tone="light" items={[{ label: 'Contractor terms' }]} />
           <h1>Contractor terms</h1>
-          <p className={l.updated}>Version 2.13, 17 November 2026. {COMPANY_REG_LINE}</p>
+          <p className={l.updated}>Version 2.14, 24 November 2026. {COMPANY_REG_LINE}</p>
 
           <p>
             These terms cover work you take on through Emmerdale Agriculture. They are
@@ -284,6 +284,19 @@ export default function TermsPage() {
             for the counties you cover, with a form customers use to write to you alone; you can
             turn the listing off from your dashboard. What a customer sends through it is between
             you and them in the same way.
+          </p>
+          <p>
+            <strong>Premium: Ask.</strong> Premium includes Ask, which answers questions about
+            your books and your work through us from your own records. Each question uses one
+            token. You are given 100 tokens when you first use it as a Premium member and
+            another 100 every 12 months after that; tokens we give you lapse 12 months after
+            they are given. You can buy more in packs at the price shown when you buy. Tokens
+            you have bought do not lapse, but tokens of either kind can only be used while you
+            are a Premium member. A question that cannot be answered does not use a token.
+            Tokens that have been used are not refundable. Answers are produced by an AI
+            system from what is recorded in your account, so they can be incomplete or wrong
+            where your records are; they are figures and pointers, not tax, legal or financial
+            advice, and you should check anything you intend to rely on.
           </p>
           <p>
             Membership does not guarantee any volume of work (clause 10). If your payment

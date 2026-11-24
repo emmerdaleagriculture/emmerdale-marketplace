@@ -17,6 +17,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { HTTP_CRONS, isLate } from '@/lib/cron/registry';
 import { getStripe, stripeConfigured } from '@/lib/stripe';
 import { siteUrl } from '@/lib/site';
+import { PACK_KIND } from '@/lib/books/askTokens';
 
 export type CheckResult = { name: string; ok: boolean; detail: string; ms: number };
 type Check = { name: string; run: () => Promise<{ ok: boolean; detail: string }> };
@@ -209,6 +210,47 @@ const CHECKS_STATIC: Check[] = [
     run: async () => {
       const { error } = await createServiceRoleClient().from('books_viewers').select('id', { head: true, count: 'exact' });
       return error ? { ok: false, detail: error.message } : { ok: true, detail: 'readable' };
+    },
+  },
+  {
+    name: 'ask: questions',
+    run: async () => {
+      const admin = createServiceRoleClient();
+      const stuckBefore = new Date(Date.now() - 15 * 60_000).toISOString();
+      const day = new Date(Date.now() - 24 * 3600_000).toISOString();
+      const [stuck, failed, answered] = await Promise.all([
+        admin.from('ask_questions').select('id', { count: 'exact', head: true }).eq('status', 'running').lt('created_at', stuckBefore),
+        admin.from('ask_questions').select('id', { count: 'exact', head: true }).eq('status', 'failed').gt('created_at', day),
+        admin.from('ask_questions').select('id', { count: 'exact', head: true }).eq('status', 'answered').gt('created_at', day),
+      ]);
+      if (stuck.error) return { ok: false, detail: stuck.error.message };
+      // A stuck question is holding a token; it is given back when its owner next asks.
+      if ((stuck.count ?? 0) > 0) return { ok: false, detail: `${stuck.count} question(s) unanswered after 15 min, tokens held` };
+      const f = failed.count ?? 0;
+      const a = answered.count ?? 0;
+      if (f >= 3 && f > a) return { ok: false, detail: `${f} failed against ${a} answered in 24h` };
+      return { ok: true, detail: `${a} answered, ${f} failed in 24h` };
+    },
+  },
+  {
+    name: 'ask: paid packs granted',
+    run: async () => {
+      if (!stripeConfigured()) return { ok: true, detail: 'Stripe not set up here' };
+      // Every token pack paid for in the last day should have its tokens.
+      const since = Math.floor(Date.now() / 1000) - 24 * 3600;
+      const sessions = await getStripe().checkout.sessions.list({ created: { gte: since }, limit: 100 });
+      const paid = sessions.data.filter((x) => x.mode === 'payment' && x.metadata?.kind === PACK_KIND && x.payment_status === 'paid');
+      if (!paid.length) return { ok: true, detail: 'no packs bought in 24h' };
+      const { data, error } = await createServiceRoleClient()
+        .from('ask_token_lots')
+        .select('stripe_session_id')
+        .in('stripe_session_id', paid.map((x) => x.id));
+      if (error) return { ok: false, detail: error.message };
+      const have = new Set((data ?? []).map((r) => r.stripe_session_id));
+      const missing = paid.filter((x) => !have.has(x.id));
+      return missing.length
+        ? { ok: false, detail: `${missing.length} pack(s) paid for with no tokens granted: ${missing.map((x) => x.id).join(', ')}` }
+        : { ok: true, detail: `${paid.length} pack(s) bought in 24h, all granted` };
     },
   },
   {

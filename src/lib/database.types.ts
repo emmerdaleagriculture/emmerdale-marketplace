@@ -4754,6 +4754,7 @@ export type Database = {
         Args: { p_ledger_id: string }
         Returns: number
       }
+      admin_ask_summary: { Args: never; Returns: Json }
       ask_tokens_grant_free: {
         Args: { p_contractor_id: string; p_tokens: number }
         Returns: boolean
