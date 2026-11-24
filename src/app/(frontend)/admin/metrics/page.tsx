@@ -6,6 +6,7 @@ import s from '../admin.module.css';
 import { AdminTable, Tile, Tiles } from '../ui';
 import { Fold, Pie, PieCard, type PieSlice } from '../Pie';
 import { fetchAll } from '@/lib/supabase/fetchAll';
+import { TOKEN_PACK } from '@/lib/books/askTokens';
 import {
   groupOf, jobSources, SOURCE_GROUPS,
   type LandingView, type ParseEvent, type SourceSub,
@@ -56,6 +57,18 @@ type PrioritySummary = {
   visits: Record<string, number>;
 };
 
+type AskSummary = {
+  askers_30d: number;
+  answered_30d: number;
+  failed_30d: number;
+  cost_usd_30d: number;
+  answered_all: number;
+  cost_usd_all: number;
+  packs_30d: number;
+  packs_all: number;
+  free_left: number;
+  kept_left: number;
+};
 type PremiumSummary = {
   paid: number;
   monthly: number;
@@ -148,7 +161,7 @@ export default async function AdminDashboard() {
   // early jobs need the IP join in jobSources to say anything at all.
   const page = <T,>(q: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) =>
     fetchAll(q).catch(() => [] as T[]);
-  const [{ data, error }, invitations, sourceSubs, parses, views, priorityQ, passQ, premiumQ] = await Promise.all([
+  const [{ data, error }, invitations, sourceSubs, parses, views, priorityQ, passQ, premiumQ, askQ] = await Promise.all([
     admin.rpc('admin_dashboard'),
     // Every invitation of the last 30 days, for the response donut: the RPC
     // carries rates, not the split. Paged; the month is past 600 already.
@@ -188,7 +201,10 @@ export default async function AdminDashboard() {
     admin.rpc('admin_pass_summary').then((r) => r, () => ({ data: null })),
     // Premium membership (20261003170000).
     admin.rpc('admin_premium_summary').then((r) => r, () => ({ data: null })),
+    // Ask: questions, what they cost us, packs sold (20261124150000).
+    admin.rpc('admin_ask_summary').then((r) => r, () => ({ data: null })),
   ]);
+  const ask = (askQ?.data ?? null) as AskSummary | null;
   const pm = (premiumQ?.data ?? null) as PremiumSummary | null;
   const pr = (priorityQ?.data ?? null) as PrioritySummary | null;
   const ps = (passQ?.data ?? null) as PassSummary | null;
@@ -467,6 +483,35 @@ export default async function AdminDashboard() {
           <PieCard title="Registered contractors, by standing" slices={contractorSlices} centre="registered" />
         </div>
       </div>
+
+      {/* ── Ask: questions, AI cost, packs ───────────────────────────── */}
+      {ask && (ask.answered_all > 0 || ask.packs_all > 0) && (
+        <>
+          <div className={s.sectionLabel}>Ask</div>
+          <Tiles>
+            <Tile
+              value={n(ask.answered_30d)}
+              label="Questions answered, 30 days"
+              hint={`${n(ask.askers_30d)} member${ask.askers_30d === 1 ? '' : 's'} asking${ask.failed_30d ? ` · ${n(ask.failed_30d)} failed and refunded` : ''}`}
+            />
+            <Tile
+              value={`$${Number(ask.cost_usd_30d).toFixed(2)}`}
+              label="AI cost, 30 days"
+              hint={
+                ask.answered_30d
+                  ? `$${(Number(ask.cost_usd_30d) / ask.answered_30d).toFixed(3)} a question · $${Number(ask.cost_usd_all).toFixed(2)} all time`
+                  : 'No questions yet'
+              }
+            />
+            <Tile
+              value={gbp(ask.packs_30d * TOKEN_PACK.pence)}
+              label="Token packs sold, 30 days"
+              hint={`${n(ask.packs_30d)} pack${ask.packs_30d === 1 ? '' : 's'} · ${n(ask.packs_all)} all time`}
+            />
+            <Tile value={n(ask.free_left + ask.kept_left)} label="Tokens unspent" hint={`${n(ask.free_left)} free · ${n(ask.kept_left)} bought or given`} />
+          </Tiles>
+        </>
+      )}
 
       {/* ── Premium membership ───────────────────────────────────────── */}
       {pm && (

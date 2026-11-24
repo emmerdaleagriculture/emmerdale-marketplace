@@ -1694,6 +1694,18 @@ export type Database = {
         }
         Relationships: []
       }
+      ask_token_lots: {
+        Row: { id: number; contractor_id: string; kind: string; tokens: number; remaining: number; expires_at: string | null; stripe_session_id: string | null; stripe_payment_intent_id: string | null; note: string | null; created_at: string }
+        Insert: { id?: number; contractor_id: string; kind: string; tokens: number; remaining: number; expires_at?: string | null; stripe_session_id?: string | null; stripe_payment_intent_id?: string | null; note?: string | null; created_at?: string }
+        Update: { id?: number; contractor_id?: string; kind?: string; tokens?: number; remaining?: number; expires_at?: string | null; stripe_session_id?: string | null; stripe_payment_intent_id?: string | null; note?: string | null; created_at?: string }
+        Relationships: []
+      }
+      ask_questions: {
+        Row: { id: number; contractor_id: string; lot_id: number | null; question: string; answer: string | null; status: string; refunded: boolean; model: string | null; tools: Json | null; input_tokens: number | null; output_tokens: number | null; cost_usd: number | null; error: string | null; created_at: string; finished_at: string | null }
+        Insert: { id?: number; contractor_id: string; lot_id?: number | null; question: string; answer?: string | null; status?: string; refunded?: boolean; model?: string | null; tools?: Json | null; input_tokens?: number | null; output_tokens?: number | null; cost_usd?: number | null; error?: string | null; created_at?: string; finished_at?: string | null }
+        Update: { id?: number; contractor_id?: string; lot_id?: number | null; question?: string; answer?: string | null; status?: string; refunded?: boolean; model?: string | null; tools?: Json | null; input_tokens?: number | null; output_tokens?: number | null; cost_usd?: number | null; error?: string | null; created_at?: string; finished_at?: string | null }
+        Relationships: []
+      }
       heartbeat_results: {
         Row: { id: number; run_id: string; checked_at: string; check_name: string; ok: boolean; detail: string | null; ms: number | null }
         Insert: { id?: number; run_id: string; checked_at?: string; check_name: string; ok: boolean; detail?: string | null; ms?: number | null }
@@ -4741,6 +4753,19 @@ export type Database = {
       books_ai_reads_this_month: {
         Args: { p_ledger_id: string }
         Returns: number
+      }
+      admin_ask_summary: { Args: never; Returns: Json }
+      ask_tokens_grant_free: {
+        Args: { p_contractor_id: string; p_tokens: number }
+        Returns: boolean
+      }
+      ask_tokens_take: {
+        Args: { p_contractor_id: string; p_question: string }
+        Returns: number | null
+      }
+      ask_tokens_refund: {
+        Args: { p_question_id: number; p_error?: string | null }
+        Returns: boolean
       }
       books_reserve_ai_read: {
         Args: { p_receipt_id: number; p_started_at: string; p_cap: number }

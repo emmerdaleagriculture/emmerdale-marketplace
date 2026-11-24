@@ -20,6 +20,7 @@ const PRIMARY = [
 
 /** Reports and settings, as a row of icon shortcuts. */
 const SHORTCUTS: { key: string; href: string; label: string; icon: BooksIconName }[] = [
+  { key: 'ask', href: '/account/books/ask', label: 'Ask', icon: 'ask' },
   { key: 'ledger', href: '/account/books/ledger', label: 'Trial balance', icon: 'ledger' },
   { key: 'pnl', href: '/account/books/pnl', label: 'Profit & loss', icon: 'pnl' },
   { key: 'vat', href: '/account/books/vat', label: 'VAT', icon: 'vat' },
@@ -29,7 +30,7 @@ const SHORTCUTS: { key: string; href: string; label: string; icon: BooksIconName
   { key: 'settings', href: '/account/books/settings', label: 'Settings', icon: 'settings' },
 ];
 
-export type BooksTab = (typeof PRIMARY)[number]['key'] | 'ledger' | 'pnl' | 'vat' | 'tax' | 'year-end' | 'journal' | 'settings' | null;
+export type BooksTab = (typeof PRIMARY)[number]['key'] | 'ask' | 'ledger' | 'pnl' | 'vat' | 'tax' | 'year-end' | 'journal' | 'settings' | null;
 
 /**
  * The page shell for every Books page: a short sunset-field header with the
@@ -79,7 +80,7 @@ export function BooksFrame({
                 ))}
               </nav>
               <nav className={s.shortcuts} aria-label="Reports and settings">
-                {SHORTCUTS.filter((t) => (t.key !== 'settings' || access.canEdit) && (t.key !== 'year-end' || access.filing || tab === 'year-end')).map((t) => (
+                {SHORTCUTS.filter((t) => (t.key !== 'settings' || access.canEdit) && (t.key !== 'year-end' || access.filing || tab === 'year-end') && (t.key !== 'ask' || access.ask)).map((t) => (
                   <Link key={t.key} href={t.href} aria-current={tab === t.key ? 'page' : undefined}>
                     <Icon name={t.icon} size={24} />
                     <span>{t.label}</span>

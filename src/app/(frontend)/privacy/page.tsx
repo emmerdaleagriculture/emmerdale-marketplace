@@ -42,7 +42,7 @@ export default function PrivacyPage() {
           <Breadcrumb tone="light" items={[{ label: 'Privacy policy' }]} />
           <h1>Privacy policy</h1>
           <p className={l.updated}>
-            <strong>Version 2.2, 17 November 2026</strong>
+            <strong>Version 2.3, 24 November 2026</strong>
           </p>
 
           <h2>Who we are</h2>
@@ -249,8 +249,10 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong>Anthropic</strong>: reads the text of a contractor&rsquo;s emailed reply
-              to a job, to pick out a price or a decline. Customer job descriptions are not sent
-              to it.
+              to a job, to pick out a price or a decline. For Premium members using Books, it
+              also reads the receipts, invoices and bank statement lines they add, to record
+              them, and, when they use Ask, their question and the figures from their own books
+              and jobs needed to answer it. Customer job descriptions are not sent to it.
             </li>
             <li>
               <strong>Google</strong> and <strong>Meta</strong>: analytics and advertising, as

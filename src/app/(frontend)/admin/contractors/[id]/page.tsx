@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { tokenBalance } from '@/lib/books/askTokens.server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
@@ -7,6 +8,7 @@ import {
   sendContractorWarning,
   setContractorStatus,
   setPremiumComp,
+  giveAskTokens,
   setServicesOnly,
 } from '../actions';
 import { warningDraft } from '@/lib/sealedQuotes/contractorWarning';
@@ -77,6 +79,9 @@ export default async function ContractorDetailPage({
         .filter(Boolean)
         .join(' ')
     : null;
+
+  // Ask tokens. Null until the tokens migration is in.
+  const askTokens = await tokenBalance(id).catch(() => null);
 
   const compedUntil = c.premium_comped_until && new Date(c.premium_comped_until) > new Date()
     ? c.premium_comped_until
@@ -266,6 +271,36 @@ export default async function ContractorDetailPage({
           </form>
         )}
       </div>
+
+      {askTokens && (
+        <>
+          <div className={s.sectionLabel}>Ask tokens</div>
+          <p className={s.dValue}>
+            <b>{askTokens.total}</b> to spend
+            {askTokens.free > 0 && askTokens.freeExpires
+              ? ` · ${askTokens.free} free, lapsing ${day(askTokens.freeExpires)}`
+              : ''}
+            {askTokens.kept > 0 ? ` · ${askTokens.kept} bought or given` : ''}
+            {tier !== 'open' ? ' · can only be spent on Premium' : ''}
+          </p>
+          <div className={s.actions}>
+            <form action={giveAskTokens}>
+              <input type="hidden" name="id" value={c.id} />
+              <input type="hidden" name="tokens" value="25" />
+              <button type="submit" className={s.btnApprove}>
+                Give 25 tokens
+              </button>
+            </form>
+            <form action={giveAskTokens}>
+              <input type="hidden" name="id" value={c.id} />
+              <input type="hidden" name="tokens" value="100" />
+              <button type="submit" className={s.btnApprove}>
+                Give 100 tokens
+              </button>
+            </form>
+          </div>
+        </>
+      )}
 
       <div className={s.sectionLabel} id="warning">
         Warnings{warnings.length > 0 ? ` (${warnings.length})` : ''}

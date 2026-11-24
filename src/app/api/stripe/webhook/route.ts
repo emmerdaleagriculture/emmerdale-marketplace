@@ -5,6 +5,8 @@ import { getStripe, syncSubscription } from '@/lib/stripe';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { notifyAdmins } from '@/lib/adminNotify';
 import { issueMembershipReceipt } from '@/lib/receipts';
+import { grantPackFromSession, voidRefundedPack } from '@/lib/books/askPacks.server';
+import { PACK_KIND } from '@/lib/books/askTokens';
 
 /**
  * POST /api/stripe/webhook — Stripe events, one endpoint for both flows:
@@ -14,7 +16,8 @@ import { issueMembershipReceipt } from '@/lib/receipts';
  * Configure the endpoint in Stripe → Developers → Webhooks with events:
  *   checkout.session.completed, checkout.session.expired,
  *   customer.subscription.updated, customer.subscription.deleted,
- *   invoice.paid (membership receipts; premium-sync sweeps if it's missing)
+ *   invoice.paid (membership receipts; premium-sync sweeps if it's missing),
+ *   charge.refunded (a refunded Ask token pack loses its unspent tokens)
  * and set STRIPE_WEBHOOK_SECRET to the signing secret.
  */
 
@@ -50,6 +53,12 @@ export async function POST(request: Request) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
+        if (session.mode === 'payment' && session.metadata?.kind === PACK_KIND) {
+          // An Ask token pack. Once per session, however often this replays
+          // (the buyer's return to the Ask page grants it too).
+          await grantPackFromSession(session);
+          break;
+        }
         if (isJobPayment(session)) {
           // Payment cleared → transactional award. Idempotent on replay.
           const admin = createServiceRoleClient();
@@ -187,6 +196,10 @@ export async function POST(request: Request) {
           const { error } = await admin.rpc('void_acceptance', { p_session_id: session.id });
           if (error) throw error;
         }
+        break;
+      }
+      case 'charge.refunded': {
+        await voidRefundedPack(event.data.object as Stripe.Charge);
         break;
       }
       case 'invoice.paid': {

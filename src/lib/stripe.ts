@@ -186,6 +186,30 @@ export async function syncSubscription(sub: Stripe.Subscription) {
 }
 
 /**
+ * This contractor's Stripe customer, made on first use and kept on their
+ * subscriptions row, so memberships and one-off purchases share one customer.
+ */
+export async function stripeCustomerFor(contractorId: string): Promise<string> {
+  const admin = createServiceRoleClient();
+  const [{ data: contractor }, { data: sub }] = await Promise.all([
+    admin.from('contractors').select('email, business_name').eq('id', contractorId).maybeSingle(),
+    admin.from('subscriptions').select('stripe_customer_id').eq('contractor_id', contractorId).maybeSingle(),
+  ]);
+  if (!contractor) throw new Error('No contractor profile.');
+  if (sub?.stripe_customer_id) return sub.stripe_customer_id;
+
+  const customer = await getStripe().customers.create({
+    email: contractor.email,
+    name: contractor.business_name,
+    metadata: { contractor_id: contractorId },
+  });
+  await admin
+    .from('subscriptions')
+    .upsert({ contractor_id: contractorId, stripe_customer_id: customer.id, status: 'none' });
+  return customer.id;
+}
+
+/**
  * A Checkout session for a membership plan, for this contractor. Reuses (or
  * creates) their Stripe customer. Shared by the dashboard buttons and the
  * choice at the end of onboarding.
@@ -196,26 +220,8 @@ export async function premiumCheckoutUrl(
   returnPath: MembershipReturnPath = '/account',
   tier: MembershipTier = 'premium',
 ): Promise<string> {
-  const admin = createServiceRoleClient();
-  const [{ data: contractor }, { data: sub }] = await Promise.all([
-    admin.from('contractors').select('email, business_name').eq('id', contractorId).maybeSingle(),
-    admin.from('subscriptions').select('stripe_customer_id').eq('contractor_id', contractorId).maybeSingle(),
-  ]);
-  if (!contractor) throw new Error('No contractor profile.');
-
   const stripe = getStripe();
-  let customerId = sub?.stripe_customer_id ?? null;
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: contractor.email,
-      name: contractor.business_name,
-      metadata: { contractor_id: contractorId },
-    });
-    customerId = customer.id;
-    await admin
-      .from('subscriptions')
-      .upsert({ contractor_id: contractorId, stripe_customer_id: customerId, status: 'none' });
-  }
+  const customerId = await stripeCustomerFor(contractorId);
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
