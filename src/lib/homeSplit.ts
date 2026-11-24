@@ -24,11 +24,14 @@ const KEY = 'ea_home_ab';
 const PHONE = '(max-width: 767px)';
 
 /**
- * Phones only, never the app (contractors, not customers). Kept per browser so
- * a returning visitor sees the same page; with no storage, a fresh pick per
- * load is still a fair coin.
+ * Phones only, never the app (contractors, not customers), and never a
+ * signed-in visitor: the test is about people arriving to get a price, and
+ * one member opening the site all day swamped an arm. A browser seen signed
+ * in is marked 'x' and stays out for good, signed in or not; it sees A.
+ * Kept per browser so a returning visitor sees the same page; with no
+ * storage, a fresh pick per load is still a fair coin.
  */
-export const HOME_SPLIT_SCRIPT = `(function(){try{var h=document.documentElement;if(h.hasAttribute('data-app')||!window.matchMedia||!matchMedia('${PHONE}').matches)return;var v=null;try{v=localStorage.getItem('${KEY}')}catch(e){}if(v!=='a'&&v!=='b'){v=Math.random()<0.5?'a':'b';try{localStorage.setItem('${KEY}',v)}catch(e){}}h.setAttribute('data-home-ab',v)}catch(e){}})();`;
+export const HOME_SPLIT_SCRIPT = `(function(){try{var h=document.documentElement;if(h.hasAttribute('data-app')||!window.matchMedia||!matchMedia('${PHONE}').matches)return;var v=null;try{v=localStorage.getItem('${KEY}')}catch(e){}if(/(?:^|;\\s*)sb-[^=]*-auth-token(?:\\.\\d+)?=/.test(document.cookie)){try{localStorage.setItem('${KEY}','x')}catch(e){}return}if(v==='x')return;if(v!=='a'&&v!=='b'){v=Math.random()<0.5?'a':'b';try{localStorage.setItem('${KEY}',v)}catch(e){}}h.setAttribute('data-home-ab',v)}catch(e){}})();`;
 
 /** The arm this page view is in, or null when not in the test. */
 export function homeVariant(): 'a' | 'b' | null {

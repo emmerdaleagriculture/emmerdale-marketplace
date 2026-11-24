@@ -83,8 +83,8 @@ export default async function AbTestsPage() {
             </div>
             <p className={s.sub}>
               A is the hero as it was. B puts the quote form under a smaller headline, with the intro and promises
-              below it. Same header, photo and yellow banner. A visit is one browser tab; desktop and the app are not
-              in the test.
+              below it. Same header, photo and yellow banner. A visit is one browser tab; desktop, the app and signed-in visitors
+              are not in the test.
               {pv != null
                 ? ` On jobs sent, the chance the arms are really the same is ${pv < 0.001 ? 'under 0.1%' : `${Math.round(pv * 100)}%`}${pv < 0.05 ? ', a difference you can act on' : ', not enough to call yet'}.`
                 : ' A reading on jobs sent needs 100 visits in each arm.'}
