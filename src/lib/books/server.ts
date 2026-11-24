@@ -4,7 +4,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { membershipOf } from '@/lib/membership';
 import { isAdminEmail, nonContractorPath } from '@/lib/auth';
 import { isAppRequest } from '@/lib/appMode.server';
-import { booksAllowed, filingAllowed } from './access';
+import { booksAllowed, filingAllowed, askAllowed } from './access';
 import { sharedLedgers, touchViewer } from './viewers.server';
 import { fetchAll } from '@/lib/supabase/fetchAll';
 import type { Database } from '@/lib/database.types';
@@ -47,6 +47,8 @@ export type BooksAccess = {
   isContractor: boolean;
   /** Year-end filing through TinyTax is open for these books (a company, released to this account). */
   filing: boolean;
+  /** Ask (questions answered from the books, paid for in tokens) is open to this person: their own books, on Premium, released to them. */
+  ask: boolean;
   /** Every set of books this person can open, when there's more than one. */
   choices: { id: string; name: string; current: boolean }[];
 };
@@ -111,6 +113,7 @@ async function resolve(opts: { own?: boolean } = {}): Promise<
       viewing: { ownerName: view.ownerName },
       isContractor: Boolean(contractor),
       filing: false,
+      ask: false,
       choices,
     };
   }
@@ -127,6 +130,7 @@ async function resolve(opts: { own?: boolean } = {}): Promise<
     viewing: null,
     isContractor: true,
     filing: Boolean(ledger && ledger.business_type === 'limited_company' && (await filingAllowed(user.email))),
+    ask: canEdit && (await askAllowed(user.email)),
     choices,
   };
 }
@@ -160,6 +164,13 @@ export async function requireBooksWriter(): Promise<{ ok: true; userId: string; 
     return { ok: false, error: r.ledger ? 'Your books are read-only while you’re not on Premium.' : 'Books is part of Premium membership.' };
   }
   return { ok: true, userId: r.userId, ledger: r.ledger };
+}
+
+/** For Ask: the signed-in contractor, on Premium, with Ask released to them. Always their own books. */
+export async function requireAsker(): Promise<{ ok: true; userId: string; businessName: string; ledger: Ledger | null } | { ok: false; error: string }> {
+  const r = await resolve({ own: true });
+  if (r.kind !== 'ok' || !r.ask) return { ok: false, error: 'Ask isn’t available on your account.' };
+  return { ok: true, userId: r.userId, businessName: r.businessName, ledger: r.ledger };
 }
 
 export function ledgerForPosting(l: Ledger): LedgerForPosting {

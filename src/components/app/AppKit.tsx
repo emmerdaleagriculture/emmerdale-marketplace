@@ -67,6 +67,7 @@ const PATHS = {
   pound: 'M17 20H7c2-1.5 2.5-3.5 2.5-6V8.5a3.5 3.5 0 0 1 6.5-1.8M6 13h8',
   tenders: 'M3 21h18M5 18v-7M9.5 18v-7M14.5 18v-7M19 18v-7M12 3l9 5H3z',
   star: 'M12 2l3 6.5 7 .8-5.2 4.8 1.4 7L12 17.6 5.8 21l1.4-7L2 9.3l7-.8z',
+  ask: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
 } as const;
 
 export type IconName = keyof typeof PATHS;
