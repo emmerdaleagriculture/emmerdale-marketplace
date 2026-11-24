@@ -139,8 +139,8 @@ export function AskPanel({ balance: initial, hasBooks, past, children }: { balan
         )}
       </form>
 
-      {/* The top-up offer: shown once they.re running low. */}
-      {balance.total <= 10 && children}
+      {/* The top-up offer: always there, so a member can buy before they run out. */}
+      {children}
 
       {asked.length === 0 && !empty && (
         <div className={s.askExamples}>
