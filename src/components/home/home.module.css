@@ -1497,6 +1497,101 @@
   line-height: 1.45;
 }
 
+/* "Not sure what needs doing? Ask us!" — the question form under Get
+   started. One quiet line until it is opened. */
+.ask {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.askLine {
+  font-size: 0.9375rem;
+  color: var(--text);
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+}
+.askToggle {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.askToggle:hover {
+  color: var(--green-hover);
+}
+.askForm {
+  margin-top: 16px;
+  text-align: left;
+}
+.askTextarea {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  padding: 13px;
+  font: inherit;
+  /* 16px minimum, or iOS zooms the page on focus. */
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--surface);
+  resize: vertical;
+  min-height: 112px;
+  display: block;
+}
+.askNote {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin-top: 7px;
+  line-height: 1.45;
+}
+.askSend {
+  width: 100%;
+  border: 1.5px solid var(--green);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--green);
+  padding: 14px 20px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 52px;
+}
+.askSend:hover {
+  background: var(--green-tint);
+}
+.askSend:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.askError {
+  font-size: 0.875rem;
+  color: #a12a1e;
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+.askDone {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--green);
+  text-align: center;
+  margin: 12px 0 0;
+  line-height: 1.5;
+}
+.askHp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 /* Service cards gain a footer row in place of the old link. */
 .serviceFoot {
   display: flex;

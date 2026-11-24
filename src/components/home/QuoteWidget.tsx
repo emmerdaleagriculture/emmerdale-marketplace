@@ -6,6 +6,7 @@ import { HOME_SERVICES } from '@/lib/home/services';
 import { ViewOnce } from './Track';
 import { trackStep } from '@/components/PageTracker';
 import { CoverageHint } from '@/components/CoverageHint';
+import { AskUs } from './AskUs';
 import s from './home.module.css';
 
 // window.gtag is declared once, in @/components/Analytics.
@@ -157,6 +158,11 @@ export function QuoteWidget() {
       <p className={s.widgetReassure}>
         Free and no obligation: you&rsquo;re not booking anything yet.
       </p>
+      {/* The way out for someone who can't name the job: a question to us. */}
+      <AskUs
+        postcode={postcode}
+        service={HOME_SERVICES.find((x) => x.slug === service)?.name ?? ''}
+      />
     </div>
   );
 }

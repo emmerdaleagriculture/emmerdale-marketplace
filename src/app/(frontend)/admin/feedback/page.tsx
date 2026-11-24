@@ -24,6 +24,8 @@ const ROLE_LABEL: Record<string, string> = {
   both: 'Contractor & customer',
   account: 'Signed in',
   visitor: 'Not signed in',
+  // "Not sure what needs doing? Ask us!" under the home page's Get started.
+  question: 'Question (home page)',
 };
 
 type Row = {
@@ -55,7 +57,7 @@ export default async function AdminFeedbackPage() {
     <div>
       <h1 className={s.h1}>Problem reports</h1>
       <p className={s.sub}>
-        From the tab on every page and the line under every thread. {open.length} to look at
+        From the tab on every page, the line under every thread and the home page&rsquo;s &ldquo;Ask us&rdquo; form. {open.length} to look at
         {done.length > 0 ? `, ${done.length} dealt with` : ''}.
       </p>
 
