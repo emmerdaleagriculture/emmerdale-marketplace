@@ -39,3 +39,32 @@ export function balanceOf(lots: TokenLot[], now = Date.now()): TokenBalance {
   const freeExpires = lapsing.map((l) => l.expires_at!).sort()[0] ?? null;
   return { total: free + kept, free, kept, freeExpires };
 }
+
+/** The `kind` a pack's Checkout session and payment carry in their metadata. */
+export const PACK_KIND = 'ask_token_pack';
+
+/** The parts of a Stripe Checkout session a pack grant is decided on. */
+export type PackSession = {
+  id: string;
+  mode: string | null;
+  payment_status: string | null;
+  amount_total: number | null;
+  currency: string | null;
+  metadata: Record<string, string> | null;
+  payment_intent: string | { id: string } | null;
+};
+
+/**
+ * Whether this Checkout session is a paid-for token pack, and for whom. The
+ * tokens come from our own pack, never from the session: the amount paid has
+ * to be the pack's price, so an edited or stale session can't mint tokens.
+ */
+export function packToGrant(session: PackSession): { contractorId: string; tokens: number; sessionId: string; paymentIntentId: string | null } | null {
+  if (session.mode !== 'payment' || session.metadata?.kind !== PACK_KIND) return null;
+  if (session.payment_status !== 'paid') return null;
+  if (session.amount_total !== TOKEN_PACK.pence || session.currency?.toLowerCase() !== 'gbp') return null;
+  const contractorId = session.metadata.contractor_id;
+  if (!contractorId) return null;
+  const pi = session.payment_intent;
+  return { contractorId, tokens: TOKEN_PACK.tokens, sessionId: session.id, paymentIntentId: typeof pi === 'string' ? pi : (pi?.id ?? null) };
+}

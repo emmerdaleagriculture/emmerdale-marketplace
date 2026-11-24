@@ -1695,9 +1695,9 @@ export type Database = {
         Relationships: []
       }
       ask_token_lots: {
-        Row: { id: number; contractor_id: string; kind: string; tokens: number; remaining: number; expires_at: string | null; stripe_session_id: string | null; note: string | null; created_at: string }
-        Insert: { id?: number; contractor_id: string; kind: string; tokens: number; remaining: number; expires_at?: string | null; stripe_session_id?: string | null; note?: string | null; created_at?: string }
-        Update: { id?: number; contractor_id?: string; kind?: string; tokens?: number; remaining?: number; expires_at?: string | null; stripe_session_id?: string | null; note?: string | null; created_at?: string }
+        Row: { id: number; contractor_id: string; kind: string; tokens: number; remaining: number; expires_at: string | null; stripe_session_id: string | null; stripe_payment_intent_id: string | null; note: string | null; created_at: string }
+        Insert: { id?: number; contractor_id: string; kind: string; tokens: number; remaining: number; expires_at?: string | null; stripe_session_id?: string | null; stripe_payment_intent_id?: string | null; note?: string | null; created_at?: string }
+        Update: { id?: number; contractor_id?: string; kind?: string; tokens?: number; remaining?: number; expires_at?: string | null; stripe_session_id?: string | null; stripe_payment_intent_id?: string | null; note?: string | null; created_at?: string }
         Relationships: []
       }
       ask_questions: {

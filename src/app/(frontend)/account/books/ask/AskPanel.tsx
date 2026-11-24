@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import type { TokenBalance } from '@/lib/books/askTokens';
 import f from '@/components/forms/forms.module.css';
 import s from '../books.module.css';
@@ -21,8 +21,8 @@ function balanceLine(b: TokenBalance): string {
   return parts.join(' · ');
 }
 
-/** The question box, the answers from this sitting (newest first) and earlier ones underneath. */
-export function AskPanel({ balance: initial, hasBooks, past }: { balance: TokenBalance; hasBooks: boolean; past: Past[] }) {
+/** The question box, the top-up offer (passed in by the page), the answers from this sitting (newest first) and earlier ones underneath. */
+export function AskPanel({ balance: initial, hasBooks, past, children }: { balance: TokenBalance; hasBooks: boolean; past: Past[]; children?: ReactNode }) {
   const [balance, setBalance] = useState(initial);
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
@@ -138,6 +138,9 @@ export function AskPanel({ balance: initial, hasBooks, past }: { balance: TokenB
           </p>
         )}
       </form>
+
+      {/* The top-up offer: shown once they.re running low. */}
+      {balance.total <= 10 && children}
 
       {asked.length === 0 && !empty && (
         <div className={s.askExamples}>

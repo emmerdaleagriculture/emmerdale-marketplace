@@ -923,3 +923,16 @@ input.lineNum {
   font-size: 13.5px;
   color: var(--ink-3);
 }
+.askTopUp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--cream);
+  padding: 12px 16px;
+  margin: 0 0 24px;
+  font-size: 14.5px;
+}
