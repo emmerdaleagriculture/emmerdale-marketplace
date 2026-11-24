@@ -9,6 +9,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getUser, isAdminEmail } from '@/lib/auth';
 import { refundUnapprovedPremium } from '@/lib/stripe';
 import { billedTier } from '@/lib/membership';
+import { giftTokens } from '@/lib/books/askTokens.server';
 import { WARNING_SUBJECT } from '@/lib/sealedQuotes/contractorWarning';
 
 async function assertAdmin() {
@@ -175,6 +176,21 @@ export async function setPremiumComp(formData: FormData) {
 
   // Approval, vetting, suspension and a comp all change who is listed.
   revalidateDirectory();
+  revalidatePath(`/admin/contractors/${id}`);
+}
+
+/**
+ * Give a contractor Ask tokens (questions of their books and business). A
+ * gift doesn't lapse; it can only be spent while they're on Premium.
+ */
+export async function giveAskTokens(formData: FormData) {
+  await assertAdmin();
+
+  const id = String(formData.get('id') || '');
+  const tokens = Math.floor(Number(formData.get('tokens') || 0));
+  if (!id || !Number.isFinite(tokens) || tokens < 1 || tokens > 1000) return;
+
+  await giftTokens(id, tokens, 'Given by admin');
   revalidatePath(`/admin/contractors/${id}`);
 }
 

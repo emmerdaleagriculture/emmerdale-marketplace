@@ -7,9 +7,14 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
  * still required on top of this (see server.ts).
  */
 export async function booksAllowed(email: string | null | undefined): Promise<boolean> {
+  return listed('books_allowlist', email);
+}
+
+/** Whether an app_config allowlist (a JSON array of emails, or "all") names this account. Missing or unreadable = no. */
+async function listed(key: string, email: string | null | undefined): Promise<boolean> {
   if (!email) return false;
   try {
-    const { data } = await createServiceRoleClient().from('app_config').select('value').eq('key', 'books_allowlist').maybeSingle();
+    const { data } = await createServiceRoleClient().from('app_config').select('value').eq('key', key).maybeSingle();
     const v = data?.value;
     if (v === 'all') return true;
     return Array.isArray(v) && v.some((x) => typeof x === 'string' && x.trim().toLowerCase() === email.trim().toLowerCase());
@@ -48,13 +53,14 @@ export async function booksTabFor(userId: string, _email?: string | null): Promi
  * means nobody.
  */
 export async function filingAllowed(email: string | null | undefined): Promise<boolean> {
-  if (!email) return false;
-  try {
-    const { data } = await createServiceRoleClient().from('app_config').select('value').eq('key', 'tinytax_allowlist').maybeSingle();
-    const v = data?.value;
-    if (v === 'all') return true;
-    return Array.isArray(v) && v.some((x) => typeof x === 'string' && x.trim().toLowerCase() === email.trim().toLowerCase());
-  } catch {
-    return false;
-  }
+  return listed('tinytax_allowlist', email);
+}
+
+/**
+ * Ask (questions of your books and business, paid for in tokens) is released
+ * separately too: app_config `ask_allowlist`, a JSON array of emails or
+ * "all". Missing means nobody. Premium is still required on top.
+ */
+export async function askAllowed(email: string | null | undefined): Promise<boolean> {
+  return listed('ask_allowlist', email);
 }
