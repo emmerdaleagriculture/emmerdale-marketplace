@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { loadBooks } from '@/lib/books/server';
-import { ensureFreeTokens, tokenBalance } from '@/lib/books/askTokens.server';
+import { ensureFreeTokens, sweepStaleQuestions, tokenBalance } from '@/lib/books/askTokens.server';
 import { FREE_TOKENS_PER_YEAR, TOKEN_PACK } from '@/lib/books/askTokens';
 import { confirmPackReturn } from '@/lib/books/askPacks.server';
 import f from '@/components/forms/forms.module.css';
@@ -44,6 +44,8 @@ export default async function AskPage({ searchParams }: { searchParams: Promise<
   }
   const packNotice = pack ? PACK_NOTICES[pack] : undefined;
 
+  // A question cut off earlier gives its token back before the balance is read.
+  await sweepStaleQuestions(access.userId);
   await ensureFreeTokens(access.userId);
   const [balance, { data: past }] = await Promise.all([
     tokenBalance(access.userId),

@@ -238,8 +238,10 @@ const CHECKS_STATIC: Check[] = [
       if (!stripeConfigured()) return { ok: true, detail: 'Stripe not set up here' };
       // Every token pack paid for in the last day should have its tokens.
       const since = Math.floor(Date.now() / 1000) - 24 * 3600;
-      const sessions = await getStripe().checkout.sessions.list({ created: { gte: since }, limit: 100 });
-      const paid = sessions.data.filter((x) => x.mode === 'payment' && x.metadata?.kind === PACK_KIND && x.payment_status === 'paid');
+      // Up to five minutes old is left alone: the webhook or the buyer's return may not have landed yet.
+      const settled = Math.floor(Date.now() / 1000) - 5 * 60;
+      const sessions = await getStripe().checkout.sessions.list({ created: { gte: since, lte: settled }, limit: 100 }).autoPagingToArray({ limit: 2000 });
+      const paid = sessions.filter((x) => x.mode === 'payment' && x.metadata?.kind === PACK_KIND && x.payment_status === 'paid');
       if (!paid.length) return { ok: true, detail: 'no packs bought in 24h' };
       const { data, error } = await createServiceRoleClient()
         .from('ask_token_lots')

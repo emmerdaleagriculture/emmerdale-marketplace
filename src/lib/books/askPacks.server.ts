@@ -44,7 +44,16 @@ export type PackGrant = 'granted' | 'already' | 'not-a-pack';
 /** Grant the pack a paid Checkout session bought. Safe to call any number of times. */
 export async function grantPackFromSession(session: Stripe.Checkout.Session): Promise<PackGrant> {
   const grant = packToGrant(session as unknown as PackSession);
-  if (!grant) return 'not-a-pack';
+  if (!grant) {
+    // Paid for as a pack but not grantable (say, charged in another currency): a person needs to look.
+    if (session.metadata?.kind === PACK_KIND && session.payment_status === 'paid') {
+      await notifyAdmins(
+        'Ask token pack paid but not granted',
+        `Checkout session ${session.id} is a paid token pack that didn't match the pack's price (${session.amount_total} ${session.currency}). No tokens were given. Contractor ${session.metadata.contractor_id ?? 'unknown'}. Give the tokens by hand from their admin page, or refund it.`,
+      ).catch(() => {});
+    }
+    return 'not-a-pack';
+  }
   const admin = createServiceRoleClient();
   const { error } = await admin.from('ask_token_lots').insert({
     contractor_id: grant.contractorId,
@@ -103,7 +112,9 @@ export async function voidRefundedPack(charge: Stripe.Charge): Promise<void> {
   const intentId = typeof charge.payment_intent === 'string' ? charge.payment_intent : (charge.payment_intent?.id ?? null);
   if (!intentId) return;
   const admin = createServiceRoleClient();
-  const { data: lot } = await admin.from('ask_token_lots').select('id, contractor_id, tokens, remaining').eq('kind', 'pack').eq('stripe_payment_intent_id', intentId).maybeSingle();
+  const { data: lot, error: lookupErr } = await admin.from('ask_token_lots').select('id, contractor_id, tokens, remaining').eq('kind', 'pack').eq('stripe_payment_intent_id', intentId).maybeSingle();
+  // Thrown so Stripe sends the event again, rather than a failed read passing for "not a pack".
+  if (lookupErr) throw new Error(`ask pack refund lookup: ${lookupErr.message}`);
   if (!lot) return;
   if (charge.amount_refunded < charge.amount) {
     await notifyAdmins('Ask token pack part-refunded', `A token pack payment (${intentId}) was part-refunded. The tokens were left alone: ${lot.remaining} of ${lot.tokens} unspent. Contractor ${lot.contractor_id}.`);

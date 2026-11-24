@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { fetchAll } from '@/lib/supabase/fetchAll';
 import { allLines, trialBalance, type Ledger } from './server';
 import { todayUk } from './period';
 import { isToolName, summariseLines, summariseTotals, TOOL_INPUTS } from './askTools';
@@ -9,6 +10,18 @@ import { isToolName, summariseLines, summariseTotals, TOOL_INPUTS } from './askT
  * asker's own books and jobs. Everything here reads; nothing writes.
  */
 export type AskWho = { contractorId: string; ledger: Ledger | null };
+
+type InvoiceRow = { id: number; number: string; issue_date: string; due_date: string; gross_pence: number; paid_pence: number; customer: unknown };
+type JobRow = {
+  id: string;
+  postcode: string | null;
+  status: string;
+  awarded_at: string | null;
+  completed_by_contractor_at: string | null;
+  service_verbatim: string | null;
+  service: unknown;
+  quote: unknown;
+};
 
 const pounds = (pence: number) => Math.round(pence) / 100;
 const NO_BOOKS = { error: 'This business has not set up its books yet, so there are no accounts to read.' };
@@ -39,20 +52,21 @@ export async function runAskTool(name: string, input: unknown, who: AskWho): Pro
     case 'invoices': {
       if (!who.ledger) return NO_BOOKS;
       const i = parsed.data as (typeof TOOL_INPUTS)['invoices']['_output'];
-      let q = admin
-        .from('books_invoices')
-        .select('number, status, issue_date, due_date, gross_pence, paid_pence, paid_at, customer:books_customers(name, organisation)')
-        .eq('ledger_id', who.ledger.id)
-        .neq('status', 'draft')
-        .neq('status', 'void')
-        .order('issue_date', { ascending: false })
-        .limit(1000);
-      if (i.from) q = q.gte('issue_date', i.from);
-      if (i.to) q = q.lte('issue_date', i.to);
-      const { data, error } = await q;
-      if (error) throw new Error(error.message);
+      const ledgerId = who.ledger.id;
+      // Paged: one response stops at 1,000 rows, and the oldest invoices are the ones most likely still owed.
+      const data = await fetchAll<InvoiceRow>((a, b) => {
+        let q = admin
+          .from('books_invoices')
+          .select('id, number, issue_date, due_date, gross_pence, paid_pence, customer:books_customers(name, organisation)')
+          .eq('ledger_id', ledgerId)
+          .neq('status', 'draft')
+          .neq('status', 'void');
+        if (i.from) q = q.gte('issue_date', i.from);
+        if (i.to) q = q.lte('issue_date', i.to);
+        return q.order('issue_date', { ascending: false }).order('id', { ascending: false }).range(a, b) as unknown as PromiseLike<{ data: InvoiceRow[] | null; error: { message: string } | null }>;
+      });
       const today = todayUk();
-      const all = (data ?? []).map((r) => {
+      const all = data.map((r) => {
         const c = r.customer as unknown as { name: string; organisation: string | null } | null;
         const owed = r.gross_pence - r.paid_pence;
         return {
@@ -81,27 +95,28 @@ export async function runAskTool(name: string, input: unknown, who: AskWho): Pro
 
     case 'marketplace_jobs': {
       const { from, to } = parsed.data as { from: string | null; to: string | null };
-      let q = admin
-        .from('job_submissions')
-        .select(
-          `id, postcode, status, awarded_at, completed_by_contractor_at, service_verbatim,
-           service:services(name),
-           quote:client_quotes!job_submissions_accepted_quote_fk(contractor_quote:contractor_quotes(contractor_price_pence))`,
-        )
-        .eq('awarded_contractor_id', who.contractorId)
-        .order('awarded_at', { ascending: false })
-        .limit(1000);
-      if (from) q = q.gte('awarded_at', startOf(from));
-      if (to) q = q.lte('awarded_at', endOf(to));
-      const [{ data, error }, { data: payouts, error: payErr }] = await Promise.all([
-        q,
-        admin.from('contractor_payouts').select('submission_id, amount_pence').eq('contractor_id', who.contractorId).limit(5000),
+      // Both paged: one response stops at 1,000 rows.
+      const [data, payouts] = await Promise.all([
+        fetchAll<JobRow>((a, b) => {
+          let q = admin
+            .from('job_submissions')
+            .select(
+              `id, postcode, status, awarded_at, completed_by_contractor_at, service_verbatim,
+               service:services(name),
+               quote:client_quotes!job_submissions_accepted_quote_fk(contractor_quote:contractor_quotes(contractor_price_pence))`,
+            )
+            .eq('awarded_contractor_id', who.contractorId);
+          if (from) q = q.gte('awarded_at', startOf(from));
+          if (to) q = q.lte('awarded_at', endOf(to));
+          return q.order('awarded_at', { ascending: false }).order('id').range(a, b) as unknown as PromiseLike<{ data: JobRow[] | null; error: { message: string } | null }>;
+        }),
+        fetchAll<{ submission_id: string; amount_pence: number }>((a, b) =>
+          admin.from('contractor_payouts').select('submission_id, amount_pence').eq('contractor_id', who.contractorId).order('id').range(a, b),
+        ),
       ]);
-      if (error) throw new Error(error.message);
-      if (payErr) throw new Error(payErr.message);
       const paid = new Map<string, number>();
-      for (const p of payouts ?? []) paid.set(p.submission_id, (paid.get(p.submission_id) ?? 0) + p.amount_pence);
-      const jobs = (data ?? []).map((j) => {
+      for (const p of payouts) paid.set(p.submission_id, (paid.get(p.submission_id) ?? 0) + p.amount_pence);
+      const jobs = data.map((j) => {
         const quote = j.quote as unknown as { contractor_quote: { contractor_price_pence: number } | null } | null;
         const price = quote?.contractor_quote?.contractor_price_pence ?? null;
         return {

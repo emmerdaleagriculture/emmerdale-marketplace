@@ -43,6 +43,29 @@ export async function refundToken(questionId: number, reason: string): Promise<v
   if (error) console.error('[ask] token refund failed', { questionId, error: error.message });
 }
 
+/** A question still "running" after this long died with its request. */
+export const STALE_QUESTION_MS = 6 * 60 * 1000;
+
+/**
+ * Give back the tokens of questions that never finished (the request was cut
+ * off or crashed). Run before each new question and when the Ask page opens,
+ * so a token is never left held. Never throws.
+ */
+export async function sweepStaleQuestions(contractorId: string): Promise<void> {
+  try {
+    const { data } = await createServiceRoleClient()
+      .from('ask_questions')
+      .select('id')
+      .eq('contractor_id', contractorId)
+      .eq('status', 'running')
+      .lt('created_at', new Date(Date.now() - STALE_QUESTION_MS).toISOString())
+      .limit(50);
+    for (const q of data ?? []) await refundToken(q.id, 'timed out');
+  } catch (err) {
+    console.error('[ask] stale sweep failed', err instanceof Error ? err.message : err);
+  }
+}
+
 /** Tokens given by an admin. They don't lapse. */
 export async function giftTokens(contractorId: string, tokens: number, note: string | null): Promise<void> {
   const { error } = await createServiceRoleClient()

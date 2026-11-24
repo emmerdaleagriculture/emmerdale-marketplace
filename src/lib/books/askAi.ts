@@ -16,6 +16,9 @@ export const ASK_MODEL = 'claude-opus-5-5';
 /** Model calls allowed per question (each tool round is one). */
 const MAX_ROUNDS = 6;
 const MAX_TOKENS = 8000;
+/** The route may run for 300s; a question gets 240 of them, a single lookup 40. */
+const DEADLINE_MS = 240_000;
+const TOOL_TIMEOUT_MS = 40_000;
 
 /** USD per million tokens (Opus 5.5). A fallback model bills at its own rate; this is the estimate. */
 const PRICE_PER_M = { input: 4, cacheWrite: 5, cacheRead: 0.2, output: 20 };
@@ -52,6 +55,8 @@ export type AskEvent = { t: 'status'; text: string } | { t: 'delta'; text: strin
 export type AskResult = {
   answer: string | null;
   error: string | null;
+  /** On a failure: true when it was our side (an outage, a crash), false when the question itself overran its allowance. */
+  ours: boolean;
   tools: string[];
   inputTokens: number;
   outputTokens: number;
@@ -80,8 +85,11 @@ export async function answerQuestion(
 ): Promise<AskResult> {
   const usage = { inputTokens: 0, outputTokens: 0, costUsd: 0 };
   const tools: string[] = [];
-  const fail = (error: string): AskResult => ({ answer: null, error, tools, ...usage });
+  const fail = (error: string, ours = true): AskResult => ({ answer: null, error, ours, tools, ...usage });
   if (!process.env.ANTHROPIC_API_KEY) return fail('Ask is not configured.');
+  // The whole question has to finish inside the request, with room left to save or refund.
+  const deadline = Date.now() + DEADLINE_MS;
+  const TOO_SLOW = 'That took too long to work out. Try asking about one thing at a time.';
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const messages: Anthropic.Beta.BetaMessageParam[] = [
@@ -94,6 +102,8 @@ export async function answerQuestion(
 
   try {
     for (let round = 0; round < MAX_ROUNDS; round++) {
+      const left = deadline - Date.now();
+      if (left < 15_000) return fail(TOO_SLOW, false);
       const stream = client.beta.messages.stream(
         {
           model: ASK_MODEL,
@@ -109,7 +119,8 @@ export async function answerQuestion(
           tools: ASK_TOOLS,
           messages,
         },
-        { timeout: 90_000, maxRetries: 1 },
+        // No retry once a second attempt couldn't fit in the time left.
+        { timeout: Math.min(90_000, left), maxRetries: left > 180_000 ? 1 : 0 },
       );
       stream.on('text', (delta) => emit({ t: 'delta', text: delta }));
       const message = await stream.finalMessage();
@@ -124,7 +135,7 @@ export async function answerQuestion(
         1_000_000;
 
       if (message.stop_reason === 'refusal') return fail('Ask couldn’t answer that one.');
-      if (message.stop_reason === 'max_tokens') return fail('The answer was cut short.');
+      if (message.stop_reason === 'max_tokens') return fail('The answer ran too long and was cut short. Try a narrower question.', false);
 
       if (message.stop_reason !== 'tool_use') {
         const answer = message.content
@@ -132,7 +143,7 @@ export async function answerQuestion(
           .map((b) => b.text)
           .join('')
           .trim();
-        return answer ? { answer, error: null, tools, ...usage } : fail('Ask came back with nothing.');
+        return answer ? { answer, error: null, ours: false, tools, ...usage } : fail('Ask came back with nothing.');
       }
 
       // Anything said before a tool call isn't the answer.
@@ -144,7 +155,11 @@ export async function answerQuestion(
           tools.push(call.name);
           if (isToolName(call.name)) emit({ t: 'status', text: TOOL_STATUS[call.name] });
           try {
-            return { type: 'tool_result', tool_use_id: call.id, content: JSON.stringify(await runAskTool(call.name, call.input, who)) };
+            const result = await Promise.race([
+              runAskTool(call.name, call.input, who),
+              new Promise<never>((_, reject) => setTimeout(() => reject(new Error('lookup timed out')), TOOL_TIMEOUT_MS)),
+            ]);
+            return { type: 'tool_result', tool_use_id: call.id, content: JSON.stringify(result) };
           } catch (err) {
             console.error('[ask] tool failed', { tool: call.name, error: err instanceof Error ? err.message : err });
             return { type: 'tool_result', tool_use_id: call.id, content: 'That lookup failed.', is_error: true };
@@ -153,7 +168,7 @@ export async function answerQuestion(
       );
       messages.push({ role: 'user', content: results });
     }
-    return fail('That question needed more looking up than one answer allows. Try asking about one thing at a time.');
+    return fail('That question needed more looking up than one answer allows. Try asking about one thing at a time.', false);
   } catch (err) {
     if (err instanceof Anthropic.RateLimitError || (err instanceof Anthropic.APIError && (err.status ?? 0) >= 500)) {
       console.error('[ask] Claude is busy', err.status);
