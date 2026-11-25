@@ -20,6 +20,7 @@ const POSTED: Record<string, string> = {
   sale: 'Sale recorded.',
   purchase: 'Expense recorded.',
   mileage: 'Mileage claim recorded.',
+  trip: 'Start reading saved. Come back to Claim mileage with the finish reading when the trip is done.',
 };
 
 /**
@@ -92,12 +93,13 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   const today = todayUk();
   const year = accountingYear(ledger.year_end, today);
   const admin = createServiceRoleClient();
-  const [all, yearTb, entries, { count: toReview }, { data: overdueRows }] = await Promise.all([
+  const [all, yearTb, entries, { count: toReview }, { data: overdueRows }, { count: openTrips }] = await Promise.all([
     trialBalance(ledger.id),
     trialBalance(ledger.id, year.from, year.to),
     recentEntries(ledger.id, 12),
     admin.from('books_receipts').select('id', { count: 'exact', head: true }).eq('ledger_id', ledger.id).eq('status', 'needs_review'),
     admin.from('books_invoices').select('gross_pence, paid_pence').eq('ledger_id', ledger.id).eq('status', 'issued').lt('due_date', today).limit(1000),
+    admin.from('books_mileage_trips').select('id', { count: 'exact', head: true }).eq('ledger_id', ledger.id),
   ]);
   const bal = (code: string) => {
     const r = all.find((a) => a.code === code);
@@ -106,6 +108,8 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   const income = yearTb.filter((r) => r.type === 'income').reduce((t, r) => t + r.credit_pence - r.debit_pence, 0);
   const expenses = yearTb.filter((r) => r.type === 'expense').reduce((t, r) => t + r.debit_pence - r.credit_pence, 0);
   const profit = income - expenses;
+  // Only the owner can finish a trip, so a viewer isn't nudged.
+  const tripsWaiting = access.canEdit ? (openTrips ?? 0) : 0;
   const overdue = (overdueRows ?? []).filter((i) => i.gross_pence > i.paid_pence);
   const overdueTotal = overdue.reduce((t, i) => t + i.gross_pence - i.paid_pence, 0);
   const kindOf = (e: (typeof entries)[number]) =>
@@ -116,8 +120,19 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
       {posted && POSTED[posted] && <p className={s.notice}>{POSTED[posted]}</p>}
 
       {/* What needs doing comes first. */}
-      {((toReview ?? 0) > 0 || overdue.length > 0) && (
+      {((toReview ?? 0) > 0 || overdue.length > 0 || tripsWaiting > 0) && (
         <div className={s.attention}>
+          {tripsWaiting > 0 && (
+            <Link href="/account/books/mileage">
+              <span>
+                <b>
+                  {tripsWaiting} trip{tripsWaiting === 1 ? '' : 's'} started
+                </b>{' '}
+                · add the finish reading to claim the miles
+              </span>
+              <Icon name="arrow" size={18} />
+            </Link>
+          )}
           {(toReview ?? 0) > 0 && (
             <Link href="/account/books/receipts">
               <span>

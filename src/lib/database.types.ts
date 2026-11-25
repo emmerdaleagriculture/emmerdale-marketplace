@@ -1784,6 +1784,45 @@ export type Database = {
         }
         Relationships: []
       }
+      books_mileage_trips: {
+        Row: {
+          id: number
+          ledger_id: string
+          trip_date: string
+          driver: string
+          odometer_start: number
+          journey: string | null
+          purpose: string | null
+          pay_code: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          ledger_id: string
+          trip_date: string
+          driver: string
+          odometer_start: number
+          journey?: string | null
+          purpose?: string | null
+          pay_code?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          ledger_id?: string
+          trip_date?: string
+          driver?: string
+          odometer_start?: number
+          journey?: string | null
+          purpose?: string | null
+          pay_code?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       books_rules: {
         Row: {
           id: number

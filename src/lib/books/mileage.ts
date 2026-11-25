@@ -50,6 +50,20 @@ export function milesFromOdometer(start: string, finish: string): number | null 
   return Math.round((b - a) * 10) / 10;
 }
 
+/** Trips a ledger may have started and not yet claimed. */
+export const MAX_OPEN_TRIPS = 20;
+
+/** A trip whose start reading is saved, waiting for the finish reading. */
+export type OpenTrip = {
+  id: number;
+  date: string;
+  driver: string;
+  odometerStart: number;
+  journey: string;
+  purpose: string;
+  payCode: string | null;
+};
+
 export type MileageClaim = {
   date: string;
   driver: string;
