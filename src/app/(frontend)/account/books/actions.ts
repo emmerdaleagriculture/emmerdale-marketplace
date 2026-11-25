@@ -8,7 +8,7 @@ import type { FormState } from '@/lib/form';
 import { BUSINESS_TYPES, chartFor, ownerAccountsFor, isBankAccount, personalAccountCode, type BusinessType } from '@/lib/books/chart';
 import { parsePounds } from '@/lib/books/money';
 import { buildPosting, validateDoc, type Posting } from '@/lib/books/posting';
-import { buildMileagePosting, milesFromOdometer, parseOdometer, taxYearOf } from '@/lib/books/mileage';
+import { MAX_OPEN_TRIPS, buildMileagePosting, milesFromOdometer, parseOdometer, taxYearOf } from '@/lib/books/mileage';
 import { cleanVatNumber, isVatCode } from '@/lib/books/vat';
 import { parseSenders } from '@/lib/books/inbound';
 import { isIsoDate, todayUk } from '@/lib/books/period';
@@ -312,8 +312,74 @@ export async function postMileageAction(_prev: FormState, fd: FormData): Promise
     buildMileagePosting({ date, driver, miles, journey: str(fd, 'journey'), purpose: str(fd, 'purpose'), payCode, odometer }, Number(claimed ?? 0)),
   );
   if (err) return { error: err };
+  // The claim finishes a trip whose start reading was saved earlier.
+  const tripId = Number(str(fd, 'trip_id'));
+  if (Number.isSafeInteger(tripId) && tripId > 0) {
+    await createServiceRoleClient().from('books_mileage_trips').delete().eq('ledger_id', ledger.id).eq('id', tripId);
+  }
   revalidateBooks();
   redirect('/account/books?posted=mileage');
+}
+
+/**
+ * Save the start of a trip: the odometer reading at setting off, kept until
+ * the driver is back with the finish reading and claims the miles.
+ */
+export async function startMileageTripAction(_prev: FormState, fd: FormData): Promise<FormState> {
+  const gate = await requireBooksWriter();
+  if (!gate.ok) return { error: gate.error };
+  if (!gate.ledger) return { error: 'Set up your books first.' };
+  const ledger = gate.ledger;
+  const date = str(fd, 'date');
+  const driver = str(fd, 'driver');
+  const start = parseOdometer(str(fd, 'odometer_start'));
+  if (!isIsoDate(date)) return { error: 'Enter the date of the journey.' };
+  if (date > todayUk()) return { error: 'A mileage claim can’t be in the future.' };
+  if (!driver) return { error: 'Enter who drove.' };
+  if (driver.length > 100) return { error: 'Keep the driver’s name under 100 characters.' };
+  if (start === null) return { error: 'Enter the odometer reading at the start, e.g. 45210.' };
+  const payCode = str(fd, 'pay_code');
+  const row = {
+    trip_date: date,
+    driver,
+    odometer_start: start,
+    journey: optional(str(fd, 'journey').slice(0, 200)),
+    purpose: optional(str(fd, 'purpose').slice(0, 200)),
+    pay_code: /^\d{4}$/.test(payCode) ? payCode : null,
+  };
+  const admin = createServiceRoleClient();
+  const tripId = Number(str(fd, 'trip_id'));
+  if (Number.isSafeInteger(tripId) && tripId > 0) {
+    const { data, error } = await admin.from('books_mileage_trips').update(row).eq('ledger_id', ledger.id).eq('id', tripId).select('id');
+    if (error) return { error: 'That didn’t save. Please try again.' };
+    if (data.length > 0) {
+      revalidateBooks();
+      redirect('/account/books?posted=trip');
+    }
+    // The trip has gone (claimed or discarded elsewhere): save it as a new one.
+  }
+  const { count } = await admin.from('books_mileage_trips').select('id', { count: 'exact', head: true }).eq('ledger_id', ledger.id);
+  if ((count ?? 0) >= MAX_OPEN_TRIPS) {
+    return { error: `You have ${MAX_OPEN_TRIPS} trips waiting for a finish reading. Finish or discard one first.` };
+  }
+  const { error } = await admin.from('books_mileage_trips').insert({ ...row, ledger_id: ledger.id, created_by: gate.userId });
+  if (error) {
+    console.error('books_mileage_trips insert failed', { ledgerId: ledger.id, error: error.message });
+    return { error: 'That didn’t save. Please try again.' };
+  }
+  revalidateBooks();
+  redirect('/account/books?posted=trip');
+}
+
+/** Drop a started trip without claiming it. */
+export async function discardMileageTripAction(fd: FormData): Promise<void> {
+  const gate = await requireBooksWriter();
+  if (!gate.ok || !gate.ledger) return;
+  const id = Number(fd.get('trip_id'));
+  if (!Number.isSafeInteger(id)) return;
+  await createServiceRoleClient().from('books_mileage_trips').delete().eq('ledger_id', gate.ledger.id).eq('id', id);
+  revalidateBooks();
+  redirect('/account/books/mileage');
 }
 
 /** Void a hand-entered entry, mileage claim or receipt's entry: it is removed from the books. */

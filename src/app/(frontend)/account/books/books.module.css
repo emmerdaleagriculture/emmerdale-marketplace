@@ -312,6 +312,46 @@
   font-size: 14.5px;
 }
 
+/* Mileage: trips started and waiting for a finish reading. */
+.tripActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  margin-top: 8px;
+}
+.tripActions a,
+.tripList a,
+.linkButton {
+  color: var(--jd-green-dark);
+  text-decoration: underline;
+}
+.linkButton {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.tripList {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.tripList li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 14px;
+}
+.formButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
