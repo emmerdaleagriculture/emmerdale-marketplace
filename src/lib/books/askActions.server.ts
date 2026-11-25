@@ -336,12 +336,13 @@ export async function proposeAction(
 }
 
 /**
- * The model took back a change it prepared earlier that the member hasn't
- * confirmed. Returns what to tell the model and the id withdrawn, if any.
+ * The model took back a change it prepared earlier in this conversation that
+ * the member hasn't confirmed. Returns what to tell the model and the id withdrawn, if any.
  */
-export async function withdrawAction(contractorId: string, input: unknown): Promise<{ toModel: unknown; withdrawn: number | null }> {
+export async function withdrawAction(contractorId: string, input: unknown, inConversation: ReadonlySet<number>): Promise<{ toModel: unknown; withdrawn: number | null }> {
   const id = Number((input as { change?: unknown } | null)?.change);
-  if (!Number.isSafeInteger(id) || id <= 0) return { toModel: { withdrawn: false, error: 'Give the number of the change.' }, withdrawn: null };
+  // Only changes from this conversation: a wrong number must not take back something asked for elsewhere.
+  if (!Number.isSafeInteger(id) || !inConversation.has(id)) return { toModel: { withdrawn: false, error: 'There is no change with that number in this conversation.' }, withdrawn: null };
   const action = await cancelAction(id, contractorId);
   if (!action) return { toModel: { withdrawn: false, error: `There is no change ${id}.` }, withdrawn: null };
   if (action.status !== 'cancelled') {
@@ -350,13 +351,20 @@ export async function withdrawAction(contractorId: string, input: unknown): Prom
   return { toModel: { withdrawn: true }, withdrawn: id };
 }
 
+/** The stored summary comes back from jsonb with its keys in another order, so compare what it says. */
+function sameSummary(now: ActionSummary, stored: unknown): boolean {
+  const was = (stored ?? {}) as Partial<ActionSummary>;
+  return was.title === now.title && Array.isArray(was.lines) && was.lines.length === now.lines.length && was.lines.every((l, i) => l === now.lines[i]);
+}
+
 /** An action claimed this long ago and never finished: its request died. It is not retried (it may have been recorded). */
 const STUCK_MS = 2 * 60 * 1000;
 
 /**
  * The member confirmed: check the change again against the books as they are
- * now and do it. Claimed first, so two taps can't record it twice. A change
- * that no longer checks out stays pending with the reason.
+ * now and do it, provided it is still exactly what they were shown. Claimed
+ * first, so two taps can't record it twice. A change that no longer checks
+ * out stays pending with the reason.
  */
 export async function confirmAction(actionId: number, contractorId: string, ledger: Ledger): Promise<AskActionView | null> {
   const admin = createServiceRoleClient();
@@ -383,11 +391,24 @@ export async function confirmAction(actionId: number, contractorId: string, ledg
   try {
     const plan = await planAction(row.kind, row.input, ledger);
     if (!plan.ok) return back(plan.error);
+    // What would be done must be what they were shown. If the books have moved on since (a different
+    // mileage rate, VAT registration, an invoice part-paid), show the new details and ask again.
+    if (!sameSummary(plan.value.summary, row.summary)) {
+      const error = 'Your books have changed since this was set up, so the details have been updated. Check them and confirm again.';
+      const { data } = await admin
+        .from('ask_actions')
+        .update({ status: 'pending', summary: plan.value.summary as unknown as Json, error, finished_at: null })
+        .eq('id', actionId)
+        .eq('status', 'running')
+        .select(cols)
+        .single();
+      return actionView(data ?? { ...row, status: 'pending', summary: plan.value.summary, error });
+    }
     outcome = await plan.value.run();
   } catch (err) {
     // It may or may not have been written: leave it claimed rather than risk recording it twice.
     console.error('[ask] action crashed', { actionId, kind: row.kind, error: err instanceof Error ? err.message : err });
-    return actionView({ ...row, status: 'running' });
+    return { ...actionView({ ...row, status: 'running' }), stuck: true };
   }
   if (!outcome.ok) return back(outcome.error);
   const { data: done, error } = await admin

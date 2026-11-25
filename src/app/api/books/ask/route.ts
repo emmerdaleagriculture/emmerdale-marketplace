@@ -114,6 +114,8 @@ export async function POST(request: Request) {
     // The conversation so far (the asker's own, answered turns only), with what became of any changes prepared in it.
     let history: AskTurn[] = [];
     let earlierChanges: string[] = [];
+    // Changes prepared in this conversation: the only ones this answer may take back.
+    const inConversation = new Set<number>();
     if (threadId) {
       const { data } = await admin
         .from('ask_questions')
@@ -126,7 +128,9 @@ export async function POST(request: Request) {
       const turns = (data ?? []).filter((r) => r.answer).reverse();
       history = turns.map((r) => ({ question: r.question, answer: r.answer as string }));
       const actions = await actionsFor(asker.userId, turns.map((r) => r.id));
-      earlierChanges = [...actions.values()].flat().map(actionNote);
+      const earlier = [...actions.values()].flat();
+      earlierChanges = earlier.map(actionNote);
+      for (const a of earlier) inConversation.add(a.id);
     }
 
     const ledger = asker.ledger;
@@ -148,12 +152,15 @@ export async function POST(request: Request) {
     const withdrawn: number[] = [];
     const propose = async (name: string, input: unknown) => {
       if (name === WITHDRAW_TOOL.name) {
-        const res = await withdrawAction(asker.userId, input);
+        const res = await withdrawAction(asker.userId, input, inConversation);
         if (res.withdrawn !== null) withdrawn.push(res.withdrawn);
         return res.toModel;
       }
       const { toModel, action } = await proposeAction(id, who, name, input);
-      if (action) actions.push(action);
+      if (action) {
+        actions.push(action);
+        inConversation.add(action.id);
+      }
       return toModel;
     };
 
