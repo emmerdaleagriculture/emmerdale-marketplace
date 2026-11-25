@@ -153,7 +153,7 @@ export function PullToRefresh({ onRefresh }: { onRefresh?: () => void }) {
       aria-live="polite"
       aria-label={refreshing ? 'Refreshing' : undefined}
     >
-      <TractorLoader size={30} label={null} />
+      <TractorLoader size={38} label={null} />
     </div>
   );
 }

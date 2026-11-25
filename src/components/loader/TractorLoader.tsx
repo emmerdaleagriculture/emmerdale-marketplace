@@ -80,7 +80,7 @@ export function TractorLoader({ size = 72, label = 'Loading' }: { size?: number;
 export function PageLoading({ label }: { label?: string }) {
   return (
     <div className={s.page}>
-      <TractorLoader label={label} />
+      <TractorLoader size={132} label={label} />
     </div>
   );
 }

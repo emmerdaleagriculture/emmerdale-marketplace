@@ -6,8 +6,8 @@
   left: 50%;
   top: calc(var(--app-safe-top, 0px) + 8px);
   z-index: 55;
-  width: 46px;
-  height: 46px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: grid;
   place-items: center;
