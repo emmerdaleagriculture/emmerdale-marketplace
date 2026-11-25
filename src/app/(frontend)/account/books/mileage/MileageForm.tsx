@@ -97,7 +97,9 @@ export function MileageForm({
             ? `The readings show ${fromReadings.toLocaleString('en-GB')} miles.`
             : `${fromReadings.toLocaleString('en-GB')} miles from the readings. Lower it if part of the trip was private.`
           : waitingForFinish
-            ? 'Setting off? Save the start reading now and add the finish reading when you’re back.'
+            ? trip
+              ? 'Add the finish reading and we’ll work out the miles.'
+              : 'Setting off? Save the start reading now and add the finish reading when you’re back.'
             : 'Give the odometer readings and we’ll work out the miles, or just type the miles in.'}
       </p>
       <div className={s.row2}>
