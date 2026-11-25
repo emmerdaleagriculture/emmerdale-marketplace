@@ -1,5 +1,6 @@
 'use client';
 
+import { TractorLoader } from '@/components/loader/TractorLoader';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import s from './PullToRefresh.module.css';
@@ -152,16 +153,7 @@ export function PullToRefresh({ onRefresh }: { onRefresh?: () => void }) {
       aria-live="polite"
       aria-label={refreshing ? 'Refreshing' : undefined}
     >
-      <svg className={s.icon} viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-        <path
-          d="M20 12a8 8 0 1 1-2.34-5.66"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-        />
-        <path d="M20 4v5h-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <TractorLoader size={30} label={null} />
     </div>
   );
 }

@@ -1,0 +1,137 @@
+/* TractorLoader: a tractor driving on the spot. The wheels turn, the body
+   rides the bumps, the exhaust puffs and the ground slides past. */
+.wrap {
+  display: inline-grid;
+  place-items: center;
+  line-height: 0;
+  --tl-tyre: #23281d;
+  --tl-glass: #dcebf2;
+}
+:global(html[data-theme='dark']) .wrap {
+  --tl-tyre: #596051;
+  --tl-glass: #b9cdd6;
+}
+.svg {
+  overflow: visible;
+}
+.page {
+  display: grid;
+  place-items: center;
+  min-height: 45vh;
+  padding: 32px 16px;
+}
+
+.green {
+  fill: var(--jd-green, #367c2b);
+}
+.roof,
+.guard {
+  fill: var(--jd-green-dark, #245018);
+}
+.glass {
+  fill: var(--tl-glass);
+}
+.stripe,
+.hub {
+  fill: var(--jd-yellow, #ffde00);
+}
+.dark,
+.tyre,
+.nut {
+  fill: var(--tl-tyre);
+}
+.lugs {
+  fill: none;
+  stroke: var(--tl-tyre);
+  stroke-width: 1.8;
+}
+.spoke {
+  fill: none;
+  stroke: var(--tl-tyre);
+  opacity: 0.5;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.front .spoke {
+  stroke-width: 1.1;
+}
+.ground {
+  fill: none;
+  stroke: var(--rule-strong, #c5ccbc);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 7 6;
+  animation: tl-ground 0.45s linear infinite;
+}
+.puff {
+  fill: var(--rule-strong, #c5ccbc);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tl-puff 1.2s ease-out infinite;
+}
+.puff2 {
+  animation-delay: 0.6s;
+}
+
+/* Each wheel turns about its own centre, whatever size the SVG is drawn at. */
+.wheel {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tl-spin 1.1s linear infinite;
+}
+/* The small wheel covers the same ground, so it turns faster. */
+.front {
+  animation-duration: 0.64s;
+}
+.body {
+  animation: tl-bump 0.45s ease-in-out infinite;
+}
+
+@keyframes tl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes tl-bump {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.7px);
+  }
+}
+@keyframes tl-ground {
+  to {
+    stroke-dashoffset: 13;
+  }
+}
+@keyframes tl-puff {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.5);
+  }
+  20% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-9px, -7px) scale(1.7);
+  }
+}
+
+/* Less motion: the wheels still turn, slowly, so it reads as working; the rest holds still. */
+@media (prefers-reduced-motion: reduce) {
+  .wheel {
+    animation-duration: 4s;
+  }
+  .front {
+    animation-duration: 2.4s;
+  }
+  .body,
+  .ground,
+  .puff {
+    animation: none;
+  }
+}
