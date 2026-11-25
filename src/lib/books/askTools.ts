@@ -1,6 +1,6 @@
 /**
  * Ask: the read-only tools the model answers from, and the pure sums behind
- * them. The model picks dates and filters; it never names whose data to read
+ * them (the changes it can prepare are in askActions.ts). The model picks dates and filters; it never names whose data to read
  * (askTools.server.ts binds every call to the signed-in contractor), and it
  * never adds up: totals come back worked out, in pounds.
  */
@@ -28,6 +28,7 @@ export const TOOL_INPUTS = {
   invoices: z.object({ show: z.enum(['unpaid', 'overdue', 'paid', 'all']), from: date, to: date }),
   marketplace_jobs: z.object({ from: date, to: date }),
   marketplace_activity: z.object({ from: date, to: date }),
+  customers: z.object({ search: z.string().max(80) }),
 } as const;
 
 export type ToolName = keyof typeof TOOL_INPUTS;
@@ -43,6 +44,7 @@ export const TOOL_STATUS: Record<ToolName, string> = {
   invoices: 'Checking your invoices…',
   marketplace_jobs: 'Looking at your Emmerdale jobs…',
   marketplace_activity: 'Counting your invitations and prices…',
+  customers: 'Looking up your customers…',
 };
 
 export const ASK_TOOLS: Anthropic.Beta.BetaTool[] = [
@@ -56,7 +58,7 @@ export const ASK_TOOLS: Anthropic.Beta.BetaTool[] = [
   {
     name: 'ledger_lines',
     description:
-      'Individual transactions from the books, filtered and totalled. Every transaction has one line per account it touches (an expense, its VAT, the bank), so to total spending set account_type "expense" (or an account_code), and for sales "income"; otherwise the same money is counted twice. `search` matches the supplier or customer name, description, reference and memo. group_by returns totals per supplier/customer, per month or per account instead of a flat list. Returns totals over everything matched and the latest 50 lines.',
+      'Individual transactions from the books, filtered and totalled. Every transaction has one line per account it touches (an expense, its VAT, the bank), so to total spending set account_type "expense" (or an account_code), and for sales "income"; otherwise the same money is counted twice. `search` matches the supplier or customer name, description, reference and memo. group_by returns totals per supplier/customer, per month or per account instead of a flat list. Returns totals over everything matched and the latest 50 lines, each with the number of the entry it belongs to.',
     strict: true,
     input_schema: {
       type: 'object',
@@ -96,6 +98,13 @@ export const ASK_TOOLS: Anthropic.Beta.BetaTool[] = [
       'Counts of this contractor’s Emmerdale marketplace activity in a date range: job invitations received, opened and passed on, prices given, and jobs won.',
     strict: true,
     input_schema: { type: 'object', properties: range, required: ['from', 'to'], additionalProperties: false },
+  },
+  {
+    name: 'customers',
+    description:
+      'The customers saved in Books (the people the business invoices), with the id needed to draft an invoice for one. `search` matches the name, business name and email; "" lists them all.',
+    strict: true,
+    input_schema: { type: 'object', properties: { search: { type: 'string' } }, required: ['search'], additionalProperties: false },
   },
 ];
 
@@ -159,6 +168,7 @@ export function summariseLines(
   return {
     ...totals,
     lines: latest.map((l) => ({
+      entry: l.entry_id,
       date: l.entry_date,
       account: `${l.account_code} ${l.account_name}`,
       who: l.counterparty,

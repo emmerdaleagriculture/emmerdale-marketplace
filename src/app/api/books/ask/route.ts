@@ -5,10 +5,14 @@ import { accountingYear, todayUk } from '@/lib/books/period';
 import { answerQuestion, ASK_MODEL, type AskContext, type AskEvent, type AskTurn } from '@/lib/books/askAi';
 import { ensureFreeTokens, refundToken, STALE_QUESTION_MS, sweepStaleQuestions, takeToken, tokenBalance } from '@/lib/books/askTokens.server';
 import type { TokenBalance } from '@/lib/books/askTokens';
+import { actionNote, WITHDRAW_TOOL, type AskActionView } from '@/lib/books/askActions';
+import { actionsFor, proposeAction, withdrawAction } from '@/lib/books/askActions.server';
 
 export const maxDuration = 300;
 
 const MAX_QUESTION = 500;
+/** Earlier turns of a conversation sent along with a follow-up. */
+const MAX_HISTORY = 6;
 const PER_MINUTE = 6;
 /**
  * A question that ran out of room (too long an answer, too many lookups) has
@@ -30,23 +34,43 @@ async function balanceOrNull(contractorId: string): Promise<TokenBalance | null>
 }
 
 /**
- * Ask a question of your books and business. Takes one token, then streams
- * the answer as lines of JSON: {t:'status'|'delta'|'reset'} while it works,
- * then {t:'done', id, answer, balance} or {t:'error', message, balance}. A
- * question we couldn't answer gives its token back. The answer is finished
- * and saved even if the page is closed part-way.
+ * Ask a question of your books and business, or ask for something to be done
+ * in the books. Takes one token, then streams the answer as lines of JSON:
+ * {t:'status'|'delta'|'reset'} while it works, then {t:'done', id, answer,
+ * actions, withdrawn, balance} or {t:'error', message, balance}. `actions` are
+ * changes prepared for the member to confirm (nothing is written here) and
+ * `withdrawn` the ids of earlier ones it took back. `follow` is
+ * the id of an earlier answer this question continues: that conversation is
+ * sent along so "and last year?" makes sense. A question we couldn't answer
+ * gives its token back. The answer is finished and saved even if the page is
+ * closed part-way.
  */
 export async function POST(request: Request) {
   const asker = await requireAsker();
   if (!asker.ok) return json(403, { error: asker.error });
 
-  const body = (await request.json().catch(() => null)) as { question?: unknown; context?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as { question?: unknown; follow?: unknown } | null;
   const question = typeof body?.question === 'string' ? body.question.trim() : '';
-  if (question.length < 3) return json(400, { error: 'Type a question first.' });
+  const follow = typeof body?.follow === 'number' && Number.isSafeInteger(body.follow) && body.follow > 0 ? body.follow : null;
+  // A follow-up can be as short as "ok" or "no".
+  if (question.length < (follow ? 2 : 3)) return json(400, { error: 'Type a question first.' });
   if (question.length > MAX_QUESTION) return json(400, { error: `Keep it under ${MAX_QUESTION} characters.` });
-  const contextIds = Array.isArray(body?.context) ? body.context.filter((n): n is number => Number.isInteger(n)).slice(-3) : [];
 
   const admin = createServiceRoleClient();
+  // A follow-up continues one of the asker's own answered questions; its conversation is named by the first question in it.
+  let threadId: number | null = null;
+  if (follow) {
+    const { data: parent, error } = await admin
+      .from('ask_questions')
+      .select('id, thread_id')
+      .eq('id', follow)
+      .eq('contractor_id', asker.userId)
+      .eq('status', 'answered')
+      .maybeSingle();
+    if (error) return json(500, { error: 'Ask isn’t working just now.' });
+    if (!parent) return json(400, { error: 'That answer can’t be followed up. Ask it as a new question.' });
+    threadId = parent.thread_id ?? parent.id;
+  }
   // Questions whose request died give their tokens back first, however old.
   await sweepStaleQuestions(asker.userId);
   const now = Date.now();
@@ -77,23 +101,32 @@ export async function POST(request: Request) {
   }
   if (questionId === null) return json(402, { error: 'You have no tokens left.', balance: await balanceOrNull(asker.userId) });
   const id = questionId;
+  if (threadId) {
+    const { error } = await admin.from('ask_questions').update({ thread_id: threadId }).eq('id', id);
+    if (error) console.error('[ask] thread not set', { questionId: id, error: error.message });
+  }
 
   const encoder = new TextEncoder();
   let send: (line: Record<string, unknown>) => void = () => {};
 
   // From here a token is held: everything runs inside `work`, whose catch gives it back.
   const work = (async () => {
-    // Earlier questions from this sitting, so "and last year?" makes sense. Only the asker's own.
+    // The conversation so far (the asker's own, answered turns only), with what became of any changes prepared in it.
     let history: AskTurn[] = [];
-    if (contextIds.length) {
+    let earlierChanges: string[] = [];
+    if (threadId) {
       const { data } = await admin
         .from('ask_questions')
         .select('id, question, answer')
         .eq('contractor_id', asker.userId)
         .eq('status', 'answered')
-        .in('id', contextIds)
-        .order('id');
-      history = (data ?? []).flatMap((r) => (r.answer ? [{ question: r.question, answer: r.answer }] : []));
+        .or(`id.eq.${threadId},thread_id.eq.${threadId}`)
+        .order('id', { ascending: false })
+        .limit(MAX_HISTORY);
+      const turns = (data ?? []).filter((r) => r.answer).reverse();
+      history = turns.map((r) => ({ question: r.question, answer: r.answer as string }));
+      const actions = await actionsFor(asker.userId, turns.map((r) => r.id));
+      earlierChanges = [...actions.values()].flat().map(actionNote);
     }
 
     const ledger = asker.ledger;
@@ -105,9 +138,26 @@ export async function POST(request: Request) {
       vatRegistered: Boolean(ledger?.vat_registered),
       year: ledger ? accountingYear(ledger.year_end, today) : null,
       accounts: ledger ? (await getAccounts(ledger.id)).map((a) => ({ code: a.code, name: a.name, type: a.type })) : [],
+      usualAccount: ledger?.default_payment_account ?? null,
+      earlierChanges,
+    };
+    const who = { contractorId: asker.userId, ledger };
+    // Changes the answer prepares: held for the member to confirm, shown with the answer.
+    const actions: AskActionView[] = [];
+    // Earlier changes it took back, so the page stops offering them.
+    const withdrawn: number[] = [];
+    const propose = async (name: string, input: unknown) => {
+      if (name === WITHDRAW_TOOL.name) {
+        const res = await withdrawAction(asker.userId, input);
+        if (res.withdrawn !== null) withdrawn.push(res.withdrawn);
+        return res.toModel;
+      }
+      const { toModel, action } = await proposeAction(id, who, name, input);
+      if (action) actions.push(action);
+      return toModel;
     };
 
-    const result = await answerQuestion(question, history, ctx, { contractorId: asker.userId, ledger }, (e: AskEvent) => send(e));
+    const result = await answerQuestion(question, history, ctx, who, (e: AskEvent) => send(e), propose);
     const usage = { model: ASK_MODEL, tools: result.tools, input_tokens: result.inputTokens, output_tokens: result.outputTokens, cost_usd: result.costUsd };
 
     if (result.answer) {
@@ -121,9 +171,12 @@ export async function POST(request: Request) {
       let { error } = await save();
       if (error) ({ error } = await save());
       if (error) console.error('[ask] answer not saved', { questionId: id, error: error.message });
-      send({ t: 'done', id, answer: result.answer, balance: await balanceOrNull(asker.userId) });
+      send({ t: 'done', id, answer: result.answer, actions, withdrawn, balance: await balanceOrNull(asker.userId) });
       return;
     }
+
+    // No answer, so nothing it prepared is offered either.
+    if (actions.length) await admin.from('ask_actions').delete().eq('question_id', id).eq('status', 'pending');
 
     // No answer. Our fault: the token goes back. The question overran: it goes back the first few times a day.
     let giveBack = result.ours;
@@ -154,6 +207,7 @@ export async function POST(request: Request) {
   })().catch(async (err) => {
     console.error('[ask] question failed', { questionId: id, error: err instanceof Error ? err.message : err });
     await refundToken(id, 'crashed');
+    await admin.from('ask_actions').delete().eq('question_id', id).eq('status', 'pending');
     send({ t: 'error', message: 'Ask couldn’t answer just now. Your token has been given back.' });
   });
   // Keep going if the page is closed: the token is spent, so the answer should be there when they come back.

@@ -5,14 +5,14 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { FormState } from '@/lib/form';
-import { BUSINESS_TYPES, chartFor, ownerAccountsFor, isBankAccount, personalAccountCode, type BusinessType } from '@/lib/books/chart';
+import { BUSINESS_TYPES, chartFor, ownerAccountsFor, isBankAccount, type BusinessType } from '@/lib/books/chart';
 import { parsePounds } from '@/lib/books/money';
-import { buildPosting, validateDoc, type Posting } from '@/lib/books/posting';
-import { MAX_OPEN_TRIPS, buildMileagePosting, milesFromOdometer, parseOdometer, taxYearOf } from '@/lib/books/mileage';
+import { MAX_OPEN_TRIPS, milesFromOdometer, parseOdometer } from '@/lib/books/mileage';
 import { cleanVatNumber, isVatCode } from '@/lib/books/vat';
 import { parseSenders } from '@/lib/books/inbound';
 import { isIsoDate, todayUk } from '@/lib/books/period';
-import { accountMap, businessTypeOf, getAccounts, ledgerForPosting, requireBooksWriter, voidEntry } from '@/lib/books/server';
+import { getAccounts, requireBooksWriter, voidEntry } from '@/lib/books/server';
+import { recordDocument, recordMileage } from '@/lib/books/record.server';
 import type { Json } from '@/lib/database.types';
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
@@ -20,19 +20,6 @@ const optional = (s: string) => (s === '' ? null : s);
 
 function revalidateBooks() {
   revalidatePath('/account/books', 'layout');
-}
-
-async function post(ledgerId: string, p: Posting): Promise<string | null> {
-  const { error } = await createServiceRoleClient().rpc('books_post_entry', {
-    p_ledger_id: ledgerId,
-    p_entry: p.entry as unknown as Json,
-    p_lines: p.lines as unknown as Json,
-  });
-  if (error) {
-    console.error('books_post_entry failed', { ledgerId, error: error.message });
-    return 'That didn’t post. Please check the details and try again.';
-  }
-  return null;
 }
 
 // ── Settings ────────────────────────────────────────────────────────────────
@@ -252,13 +239,8 @@ export async function postEntryAction(_prev: FormState, fd: FormData): Promise<F
     accountCode: str(fd, 'account_code'),
     paymentCode: str(fd, 'payment_code'),
   } as const;
-  // Blank net: work it out from the total and VAT.
-  const filled = { ...doc, net: doc.net ?? (doc.gross != null ? doc.gross - (doc.vat ?? 0) : null) };
-  const accounts = accountMap(await getAccounts(ledger.id));
-  const errs = validateDoc(filled, ledgerForPosting(ledger), accounts);
-  if (errs.length) return { error: errs.join(' ') };
-  const err = await post(ledger.id, buildPosting(filled, ledgerForPosting(ledger), accounts, 'manual'));
-  if (err) return { error: err };
+  const done = await recordDocument(ledger, doc);
+  if (!done.ok) return { error: done.error };
   revalidateBooks();
   redirect(`/account/books?posted=${kind}`);
 }
@@ -283,35 +265,8 @@ export async function postMileageAction(_prev: FormState, fd: FormData): Promise
     if (miles > shown) return { error: `Business miles can’t be more than the ${shown.toLocaleString('en-GB')} the readings show.` };
     odometer = { start, finish };
   }
-  const payCode = str(fd, 'pay_code') || personalAccountCode(businessTypeOf(ledger));
-  if (!isIsoDate(date)) return { error: 'Enter the date of the journey.' };
-  if (date > todayUk()) return { error: 'A mileage claim can’t be in the future.' };
-  if (!driver) return { error: 'Enter who drove.' };
-  if (miles > 2000) return { error: 'One claim can be up to 2,000 miles. Split a longer run into separate journeys.' };
-  if (!(miles > 0) || Math.round(miles * 10) !== miles * 10) {
-    return { error: 'Enter the business miles (up to one decimal place).' };
-  }
-  const accounts = await getAccounts(ledger.id);
-  const personal = personalAccountCode(businessTypeOf(ledger));
-  if (!accounts.some((a) => a.code === payCode && (a.code === personal || isBankAccount(a)))) {
-    return { error: 'Choose who pays the driver.' };
-  }
-  if (!accounts.some((a) => a.code === '6330')) return { error: 'Your books have no 6330 Mileage allowance account.' };
-  const ty = taxYearOf(date);
-  const { data: claimed, error } = await createServiceRoleClient().rpc('books_mileage_claimed', {
-    p_ledger_id: ledger.id,
-    p_driver: driver,
-    p_from: ty.from,
-    // Claims dated up to this journey: the first 10,000 miles of the tax year
-    // are the earliest ones, whatever order they're entered in.
-    p_to: date,
-  });
-  if (error) return { error: 'That didn’t post. Please try again.' };
-  const err = await post(
-    ledger.id,
-    buildMileagePosting({ date, driver, miles, journey: str(fd, 'journey'), purpose: str(fd, 'purpose'), payCode, odometer }, Number(claimed ?? 0)),
-  );
-  if (err) return { error: err };
+  const done = await recordMileage(ledger, { date, driver, miles, journey: str(fd, 'journey'), purpose: str(fd, 'purpose'), payCode: str(fd, 'pay_code'), odometer });
+  if (!done.ok) return { error: done.error };
   // The claim finishes a trip whose start reading was saved earlier.
   const tripId = Number(str(fd, 'trip_id'));
   if (Number.isSafeInteger(tripId) && tripId > 0) {

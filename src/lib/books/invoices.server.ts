@@ -9,7 +9,7 @@ import { randomBytes } from 'node:crypto';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { fetchAll } from '@/lib/supabase/fetchAll';
 import type { Database, Json } from '@/lib/database.types';
-import { issuePosting, paymentPosting, voidPosting, type InvoiceLine, type PaymentMethod } from './invoice';
+import { invoiceTotals, issuePosting, nextInvoiceNumber, paymentPosting, voidPosting, type InvoiceLine, type PaymentMethod } from './invoice';
 import type { Line } from './posting';
 import { personalAccountCode, type BusinessType } from './chart';
 import { todayUk } from './period';
@@ -202,4 +202,37 @@ export async function invoiceNumbers(ledgerId: string): Promise<string[]> {
     admin.from('books_invoices').select('number').eq('ledger_id', ledgerId).order('id').range(a, b),
   );
   return rows.map((r) => r.number);
+}
+
+/**
+ * Save a new draft with the next free number. `lines` are already priced
+ * (priceLine). Two drafts made at once can pick the same number: the second
+ * tries again with a fresh one.
+ */
+export async function createDraftInvoice(
+  ledgerId: string,
+  d: { customerId: number; issueDate: string; dueDate: string; notes: string | null; lines: InvoiceLine[] },
+): Promise<{ ok: true; id: number; number: string } | { ok: false; error: string }> {
+  const admin = createServiceRoleClient();
+  const totals = invoiceTotals(d.lines);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const number = nextInvoiceNumber(await invoiceNumbers(ledgerId));
+    const { data: made, error } = await admin
+      .from('books_invoices')
+      .insert({ ledger_id: ledgerId, public_token: newPublicToken(), customer_id: d.customerId, number, issue_date: d.issueDate, due_date: d.dueDate, notes: d.notes, ...totals })
+      .select('id')
+      .single();
+    if (error?.code === '23505') continue;
+    if (error || !made) break;
+    const { error: lineErr } = await admin
+      .from('books_invoice_lines')
+      .insert(d.lines.map((l, i) => ({ invoice_id: made.id, position: i + 1, description: l.description, quantity: l.quantity, unit_pence: l.unit_pence, vat_code: l.vat_code, account_code: l.account_code, net_pence: l.net_pence, vat_pence: l.vat_pence })));
+    if (lineErr) {
+      // A draft with no lines is no use: take it back out.
+      await admin.from('books_invoices').delete().eq('id', made.id).eq('status', 'draft');
+      break;
+    }
+    return { ok: true, id: made.id, number };
+  }
+  return { ok: false, error: 'The invoice didn’t save. Please try again.' };
 }
