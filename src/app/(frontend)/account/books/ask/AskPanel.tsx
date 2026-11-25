@@ -84,7 +84,7 @@ function ActionCard({ action, onChange }: { action: AskActionView; onChange: (a:
           <button type="button" className={f.btnGhost} disabled={busy !== null} onClick={() => void act('cancel')}>
             Don’t
           </button>
-          <span className={s.askActionNote}>Nothing is recorded until you confirm.</span>
+          <span className={s.askActionNote}>Nothing changes until you confirm.</span>
         </div>
       )}
       {action.status === 'done' && (
