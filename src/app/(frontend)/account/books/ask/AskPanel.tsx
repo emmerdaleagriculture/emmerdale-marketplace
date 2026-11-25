@@ -364,10 +364,13 @@ export function AskPanel({ balance: initial, hasBooks, past, children }: { balan
       {!hasBooks && <p className={s.muted}>You haven’t set up your books yet, so Ask can only answer about your Emmerdale work for now.</p>}
 
       {earlier.length > 0 && (
-        <>
-          <h2>Earlier answers</h2>
+        <details className={s.askDrawer}>
+          <summary>
+            Earlier answers <span>{earlier.length}</span>
+          </summary>
           <ol className={s.askList}>{earlier.map(conversation)}</ol>
-        </>
+          <p className={s.muted}>Answers are kept for 30 days, then deleted.</p>
+        </details>
       )}
 
       <p className={s.askFoot}>
