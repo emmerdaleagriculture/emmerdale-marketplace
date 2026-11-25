@@ -45,6 +45,74 @@ export async function onboardingLink(ledger: Ledger, email: string | null): Prom
   return link.url;
 }
 
+/* ------------------------------------------------ an account they already have */
+
+/** Linking an existing Stripe account needs the platform's Connect OAuth client id. */
+export const oauthReady = () => Boolean(process.env.STRIPE_CONNECT_CLIENT_ID && process.env.STRIPE_SECRET_KEY);
+export const OAUTH_COOKIE = 'books_stripe_oauth';
+/** How far back a newly linked account's history is brought in. */
+export const LINK_BACK_DAYS = 30;
+
+/** Stripe's page where the owner of an existing account agrees to link it. */
+export function oauthUrl(state: string): string {
+  return getStripe().oauth.authorizeUrl({
+    response_type: 'code',
+    client_id: process.env.STRIPE_CONNECT_CLIENT_ID!,
+    scope: 'read_write',
+    state,
+    redirect_uri: `${siteUrl()}/api/books/stripe-oauth`,
+  });
+}
+
+/**
+ * Back from Stripe with a code: the account the person signed in to becomes
+ * the ledger's Stripe account (in place of one made here before), and its
+ * last month of payments, fees and payouts is brought into the books.
+ */
+export async function linkExistingAccount(ledger: Ledger, code: string): Promise<{ ok: true; posted: number } | { ok: false; error: string }> {
+  const stripe = getStripe();
+  const admin = createServiceRoleClient();
+  const token = await stripe.oauth.token({ grant_type: 'authorization_code', code });
+  const accountId = token.stripe_user_id;
+  if (!accountId) return { ok: false, error: 'Stripe didn’t say which account that was.' };
+  const { data: taken } = await admin.from('books_ledgers').select('id').eq('stripe_account_id', accountId).neq('id', ledger.id).limit(1);
+  if (taken?.length) return { ok: false, error: 'That Stripe account is already linked to another business’s books.' };
+  const acct = await stripe.accounts.retrieve(accountId);
+  const { data, error } = await admin
+    .from('books_ledgers')
+    .update({
+      stripe_account_id: accountId,
+      stripe_connected_at: new Date().toISOString(),
+      stripe_synced_at: null,
+      stripe_charges_enabled: Boolean(acct.charges_enabled),
+      stripe_details_submitted: Boolean(acct.details_submitted),
+    })
+    .eq('id', ledger.id)
+    .select('*')
+    .single();
+  if (error || !data) return { ok: false, error: 'That didn’t save. Please try again.' };
+  if (ledger.stripe_account_id && ledger.stripe_account_id !== accountId) {
+    console.log('[books] stripe account replaced', { ledger: ledger.id, was: ledger.stripe_account_id, now: accountId });
+  }
+  let posted = 0;
+  try {
+    const { syncLedgerStripe } = await import('./stripeSync');
+    posted = (await syncLedgerStripe(data as Ledger, { backDays: LINK_BACK_DAYS })).posted;
+  } catch (err) {
+    // Linked all the same: the nightly sync picks it up.
+    console.error('[books] first sync of a linked stripe account failed', { ledger: ledger.id, error: err instanceof Error ? err.message : err });
+  }
+  return { ok: true, posted };
+}
+
+/** The owner removed our access in their Stripe dashboard: forget the account. */
+export async function unlinkAccount(accountId: string): Promise<void> {
+  await createServiceRoleClient()
+    .from('books_ledgers')
+    .update({ stripe_account_id: null, stripe_charges_enabled: false, stripe_details_submitted: false, stripe_connected_at: null, stripe_synced_at: null })
+    .eq('stripe_account_id', accountId);
+}
+
 /** Re-read the account from Stripe and keep the flags on the ledger. */
 export async function refreshAccount(ledger: Ledger): Promise<Ledger> {
   if (!ledger.stripe_account_id) return ledger;

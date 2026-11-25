@@ -148,8 +148,43 @@ export function postingsFor(
   return out;
 }
 
-/** Sync one ledger's connected account since its last sync (3 days' overlap). */
-export async function syncLedgerStripe(ledger: Ledger): Promise<{ posted: number; seen: number }> {
+/** How long after Stripe sends a payout the bank may show it. */
+const PAYOUT_BANK_DAYS = 7;
+
+/**
+ * A payout the bank statement got to first: with no Stripe entry to match, the
+ * statement row was booked on its own (as sales, or wherever a rule sent it).
+ * Now Stripe reports the payout and the sales behind it, that entry goes, so
+ * the money isn't in the bank twice; the row then matches the payout.
+ */
+async function dropStatementPayout(ledgerId: string, date: string, amount: number): Promise<void> {
+  const admin = createServiceRoleClient();
+  const to = new Date(`${date}T00:00:00Z`);
+  to.setUTCDate(to.getUTCDate() + PAYOUT_BANK_DAYS);
+  const { data } = await admin
+    .from('books_entries')
+    .select('id')
+    .eq('ledger_id', ledgerId)
+    .eq('source', 'bank')
+    .like('external_id', 'bank:%')
+    .ilike('counterparty', '%stripe%')
+    .eq('gross_pence', amount)
+    .gte('entry_date', date)
+    .lte('entry_date', to.toISOString().slice(0, 10))
+    .order('entry_date')
+    .order('id')
+    .limit(1);
+  const id = data?.[0]?.id;
+  if (!id) return;
+  await admin.from('books_entries').delete().eq('ledger_id', ledgerId).eq('id', id).eq('source', 'bank').like('external_id', 'bank:%');
+  console.log('[books] statement payout replaced by the stripe sync', { ledger: ledgerId, entry: id, amount });
+}
+
+/**
+ * Sync one ledger's connected account since its last sync (3 days' overlap),
+ * or from `backDays` ago for an account just linked.
+ */
+export async function syncLedgerStripe(ledger: Ledger, opts: { backDays?: number } = {}): Promise<{ posted: number; seen: number }> {
   // Not gated on charges being enabled: a restricted account still pays out,
   // refunds and has disputes, and those must reach the books.
   if (!ledger.stripe_account_id) return { posted: 0, seen: 0 };
@@ -157,7 +192,7 @@ export async function syncLedgerStripe(ledger: Ledger): Promise<{ posted: number
   const stripe = getStripe();
   const acct = { stripeAccount: ledger.stripe_account_id };
   const since = ledger.stripe_synced_at ?? ledger.stripe_connected_at ?? new Date().toISOString();
-  const fromMs = Date.parse(since) - 3 * 86_400_000;
+  const fromMs = opts.backDays ? Date.now() - opts.backDays * 86_400_000 : Date.parse(since) - 3 * 86_400_000;
   const gte = Math.floor(fromMs / 1000);
 
   // What's already booked in the window, in one query.
@@ -186,6 +221,7 @@ export async function syncLedgerStripe(ledger: Ledger): Promise<{ posted: number
     }
     for (const p of postingsFor(t, ledger, refund)) {
       if (booked.has(p.entry.external_id)) continue;
+      if (t.type === 'payout' && t.amount < 0) await dropStatementPayout(ledger.id, p.entry.entry_date, -t.amount);
       const { error } = await admin.rpc('books_post_entry', {
         p_ledger_id: ledger.id,
         p_entry: p.entry as unknown as Json,
