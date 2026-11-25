@@ -1701,9 +1701,15 @@ export type Database = {
         Relationships: []
       }
       ask_questions: {
-        Row: { id: number; contractor_id: string; lot_id: number | null; question: string; answer: string | null; status: string; refunded: boolean; model: string | null; tools: Json | null; input_tokens: number | null; output_tokens: number | null; cost_usd: number | null; error: string | null; created_at: string; finished_at: string | null }
-        Insert: { id?: number; contractor_id: string; lot_id?: number | null; question: string; answer?: string | null; status?: string; refunded?: boolean; model?: string | null; tools?: Json | null; input_tokens?: number | null; output_tokens?: number | null; cost_usd?: number | null; error?: string | null; created_at?: string; finished_at?: string | null }
-        Update: { id?: number; contractor_id?: string; lot_id?: number | null; question?: string; answer?: string | null; status?: string; refunded?: boolean; model?: string | null; tools?: Json | null; input_tokens?: number | null; output_tokens?: number | null; cost_usd?: number | null; error?: string | null; created_at?: string; finished_at?: string | null }
+        Row: { id: number; contractor_id: string; lot_id: number | null; question: string; answer: string | null; status: string; refunded: boolean; model: string | null; tools: Json | null; input_tokens: number | null; output_tokens: number | null; cost_usd: number | null; error: string | null; created_at: string; finished_at: string | null; thread_id: number | null }
+        Insert: { id?: number; contractor_id: string; lot_id?: number | null; question: string; answer?: string | null; status?: string; refunded?: boolean; model?: string | null; tools?: Json | null; input_tokens?: number | null; output_tokens?: number | null; cost_usd?: number | null; error?: string | null; created_at?: string; finished_at?: string | null; thread_id?: number | null }
+        Update: { id?: number; contractor_id?: string; lot_id?: number | null; question?: string; answer?: string | null; status?: string; refunded?: boolean; model?: string | null; tools?: Json | null; input_tokens?: number | null; output_tokens?: number | null; cost_usd?: number | null; error?: string | null; created_at?: string; finished_at?: string | null; thread_id?: number | null }
+        Relationships: []
+      }
+      ask_actions: {
+        Row: { id: number; question_id: number; contractor_id: string; kind: string; input: Json; summary: Json; status: string; result: Json | null; error: string | null; created_at: string; finished_at: string | null }
+        Insert: { id?: number; question_id: number; contractor_id: string; kind: string; input: Json; summary: Json; status?: string; result?: Json | null; error?: string | null; created_at?: string; finished_at?: string | null }
+        Update: { id?: number; question_id?: number; contractor_id?: string; kind?: string; input?: Json; summary?: Json; status?: string; result?: Json | null; error?: string | null; created_at?: string; finished_at?: string | null }
         Relationships: []
       }
       heartbeat_results: {

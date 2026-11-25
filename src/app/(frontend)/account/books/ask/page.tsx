@@ -10,9 +10,14 @@ import s from '../books.module.css';
 import { buyPackAction } from './actions';
 import m from '../../market/market.module.css';
 import { BooksFrame } from '../BooksFrame';
-import { AskPanel } from './AskPanel';
+import { AskPanel, type PastThread } from './AskPanel';
+import { actionsFor } from '@/lib/books/askActions.server';
 
 export const metadata: Metadata = { title: 'Ask', robots: { index: false, follow: false } };
+
+/** How far back the page shows: the latest questions, grouped into this many conversations at most. */
+const RECENT_QUESTIONS = 40;
+const RECENT_THREADS = 12;
 
 const PACK_NOTICES: Record<string, string> = {
   added: `${TOKEN_PACK.tokens} tokens added. A receipt is on its way by email.`,
@@ -23,7 +28,9 @@ const PACK_NOTICES: Record<string, string> = {
 
 /**
  * Ask: type a question about your books or your Emmerdale work and get the
- * answer worked out from your own records. One question, one token.
+ * answer worked out from your own records, or ask for something to be done
+ * in your books and confirm it. One question, one token; any answer can be
+ * asked about further.
  */
 export default async function AskPage({ searchParams }: { searchParams: Promise<{ pack?: string; session_id?: string }> }) {
   const access = await loadBooks('/account/books/ask');
@@ -51,24 +58,39 @@ export default async function AskPage({ searchParams }: { searchParams: Promise<
     tokenBalance(access.userId),
     createServiceRoleClient()
       .from('ask_questions')
-      .select('id, question, answer, created_at')
+      .select('id, thread_id, question, answer, created_at')
       .eq('contractor_id', access.userId)
       .eq('status', 'answered')
       .order('id', { ascending: false })
-      .limit(10),
+      .limit(RECENT_QUESTIONS),
   ]);
+
+  // Conversations: a question with its follow-ups, the most recently asked-in first.
+  const answered = (past ?? []).filter((q) => q.answer);
+  const actions = await actionsFor(access.userId, answered.map((q) => q.id));
+  const byThread = new Map<number, PastThread>();
+  for (const q of answered) {
+    const root = q.thread_id ?? q.id;
+    const thread = byThread.get(root) ?? { turns: [] };
+    // Newest first here, so each conversation is built back to front.
+    thread.turns.unshift({ id: q.id, question: q.question, answer: q.answer as string, at: q.created_at, actions: actions.get(q.id) ?? [] });
+    byThread.set(root, thread);
+  }
+  const threads = [...byThread.values()].slice(0, RECENT_THREADS);
 
   return (
     <BooksFrame access={access} title="Ask" tab="ask" crumb="Ask">
       <p className={m.lead}>
-        Ask a question about your books or your Emmerdale work, in your own words. The answer is worked out
-        from your own records. Each question uses one token; you get {FREE_TOKENS_PER_YEAR} free every year.
+        Ask a question about your books or your Emmerdale work, in your own words, or ask for something to be
+        done in your books: record an expense, claim mileage, draft an invoice. Answers are worked out from
+        your own records, and nothing is changed until you confirm it. Each question uses one token; you
+        get {FREE_TOKENS_PER_YEAR} free every year.
       </p>
       {packNotice && <p className={s.notice}>{packNotice}</p>}
       <AskPanel
         balance={balance}
         hasBooks={Boolean(access.ledger)}
-        past={(past ?? []).flatMap((q) => (q.answer ? [{ id: q.id, question: q.question, answer: q.answer, at: q.created_at }] : []))}
+        past={threads}
       >
         {/* Not sold inside the phone apps: there it's the balance only. */}
         {!access.app && (

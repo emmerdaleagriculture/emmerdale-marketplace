@@ -28,7 +28,7 @@ export const OPEN_BENEFITS: ReactNode[] = [
   <><b>Market data for your area:</b> jobs month by month, what each kind of work goes for, and your win rate against the field.</>,
   <><b>Council tenders on your patch:</b> grass cutting, verge, hedge and grounds contracts from Contracts Finder and Find a Tender every morning, and running contracts coming up for renewal.</>,
   <><b>Books, your bookkeeping done for you:</b> snap receipts and AI posts them, send invoices customers can pay by card, claim mileage, and see your VAT, profit and loss at any time. Your accountant can have read-only access.</>,
-  <><b>Ask your books a question:</b> “What did I spend on fuel last month?”, “Who owes me money?”. Answered from your own records, 100 questions a year included.</>,
+  <><b>Ask your books a question, or tell them what to do:</b> “What did I spend on fuel last month?”, “Who owes me money?”, “Record £40 of diesel”, “Invoice Mrs Field for 6 acres of topping”. Answered from your own records, nothing changed until you confirm, 100 questions a year included.</>,
 ];
 export const FREE_BENEFITS: ReactNode[] = [
   <><b>Every job in your area for your services</b> once members have had first refusal.</>,

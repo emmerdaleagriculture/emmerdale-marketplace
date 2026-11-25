@@ -287,8 +287,11 @@ export default function TermsPage() {
           </p>
           <p>
             <strong>Premium: Ask.</strong> Premium includes Ask, which answers questions about
-            your books and your work through us from your own records. Each question uses one
-            token. You are given 100 tokens when you first use it as a Premium member and
+            your books and your work through us from your own records, and can set up changes
+            to your books when you ask for them (such as recording an expense or drafting an
+            invoice). Nothing is changed in your books until you confirm it, and you should
+            check what a change says before you confirm it. Each question, follow-up question
+            or request uses one token. You are given 100 tokens when you first use it as a Premium member and
             another 100 every 12 months after that; tokens we give you lapse 12 months after
             they are given. You can buy more in packs at the price shown when you buy. Tokens
             you have bought do not lapse, but tokens of either kind can only be used while you

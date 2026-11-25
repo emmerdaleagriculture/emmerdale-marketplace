@@ -7,7 +7,8 @@ import { isToolName, summariseLines, summariseTotals, TOOL_INPUTS } from './askT
 /**
  * Runs one Ask tool for one contractor. `who` comes from the signed-in
  * session, never from the model, so a question can only ever read the
- * asker's own books and jobs. Everything here reads; nothing writes.
+ * asker's own books and jobs. Everything here reads; nothing writes
+ * (changes go through askActions.server.ts and the member's confirmation).
  */
 export type AskWho = { contractorId: string; ledger: Ledger | null };
 
@@ -168,6 +169,22 @@ export async function runAskTool(name: string, input: unknown, who: AskWho): Pro
         n(wins),
       ]);
       return { from, to, invitations_received: invited, invitations_opened: opened, invitations_passed_on: passed, prices_given: priced, jobs_won: won };
+    }
+
+    case 'customers': {
+      if (!who.ledger) return NO_BOOKS;
+      const ledgerId = who.ledger.id;
+      const { search } = parsed.data as { search: string };
+      const all = await fetchAll<{ id: number; name: string; organisation: string | null; email: string | null }>((a, b) =>
+        admin.from('books_customers').select('id, name, organisation, email').eq('ledger_id', ledgerId).order('name').order('id').range(a, b),
+      );
+      const needle = search.trim().toLowerCase();
+      const matched = needle ? all.filter((c) => [c.name, c.organisation, c.email].some((f) => f?.toLowerCase().includes(needle))) : all;
+      return {
+        customers_matched: matched.length,
+        customers: matched.slice(0, 60).map((c) => ({ id: c.id, name: c.name, business: c.organisation, email: c.email })),
+        customers_not_shown: Math.max(0, matched.length - 60),
+      };
     }
   }
 }
