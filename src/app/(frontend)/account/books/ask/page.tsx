@@ -18,6 +18,8 @@ export const metadata: Metadata = { title: 'Ask', robots: { index: false, follow
 /** How far back the page shows: the latest questions, grouped into this many conversations at most. */
 const RECENT_QUESTIONS = 40;
 const RECENT_THREADS = 12;
+/** Answers are kept this long after a conversation was last asked in (a nightly job removes older ones). */
+const KEEP_DAYS = 30;
 
 const PACK_NOTICES: Record<string, string> = {
   added: `${TOKEN_PACK.tokens} tokens added. A receipt is on its way by email.`,
@@ -76,7 +78,8 @@ export default async function AskPage({ searchParams }: { searchParams: Promise<
     thread.turns.unshift({ id: q.id, question: q.question, answer: q.answer as string, at: q.created_at, actions: actions.get(q.id) ?? [] });
     byThread.set(root, thread);
   }
-  const threads = [...byThread.values()].slice(0, RECENT_THREADS);
+  const keepFrom = Date.now() - KEEP_DAYS * 86_400_000;
+  const threads = [...byThread.values()].filter((t) => Date.parse(t.turns[t.turns.length - 1].at) >= keepFrom).slice(0, RECENT_THREADS);
 
   return (
     <BooksFrame access={access} title="Ask" tab="ask" crumb="Ask">

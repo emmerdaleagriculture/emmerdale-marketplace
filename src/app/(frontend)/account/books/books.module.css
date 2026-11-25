@@ -923,6 +923,54 @@ input.lineNum {
   opacity: 0.6;
   cursor: default;
 }
+/* Earlier answers: shut away in a drawer until asked for. */
+.askDrawer {
+  margin: 0 0 24px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--white);
+}
+.askDrawer > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 16px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.askDrawer > summary::-webkit-details-marker {
+  display: none;
+}
+.askDrawer > summary span {
+  font-weight: 500;
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+.askDrawer > summary::after {
+  content: '';
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--ink-3);
+  border-bottom: 2px solid var(--ink-3);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.15s ease;
+}
+.askDrawer[open] > summary::after {
+  transform: translateY(2px) rotate(-135deg);
+}
+.askDrawer[open] > summary {
+  border-bottom: 1px solid var(--rule);
+}
+.askDrawer > .askList {
+  margin: 12px;
+}
+.askDrawer > .muted {
+  margin: 0 16px 14px;
+  font-size: 13.5px;
+}
 .askList {
   list-style: none;
   padding: 0;
