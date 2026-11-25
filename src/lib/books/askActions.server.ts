@@ -170,9 +170,14 @@ async function planInvoice(ledger: Ledger, i: ActionInput<'draft_invoice'>): Pro
       run: async () => {
         let customerId = i.customer_id;
         if (!(customerId > 0)) {
-          const { data: made, error } = await admin.from('books_customers').insert({ ledger_id: ledger.id, name: newName, email: newEmail || null }).select('id').single();
-          if (error || !made) return bad('The customer couldn’t be saved. Please try again.');
-          customerId = made.id;
+          // Someone of that name may be there already (a first try that saved the customer but not the invoice): use them.
+          const { data: same } = await admin.from('books_customers').select('id').eq('ledger_id', ledger.id).ilike('name', newName.replace(/[%_\\]/g, '\\$&')).order('id').limit(1);
+          if (same?.length) customerId = same[0].id;
+          else {
+            const { data: made, error } = await admin.from('books_customers').insert({ ledger_id: ledger.id, name: newName, email: newEmail || null }).select('id').single();
+            if (error || !made) return bad('The customer couldn’t be saved. Please try again.');
+            customerId = made.id;
+          }
         }
         const made = await createDraftInvoice(ledger.id, { customerId, issueDate: i.issue_date, dueDate, notes: i.notes.trim() || null, lines });
         if (!made.ok) return made;
