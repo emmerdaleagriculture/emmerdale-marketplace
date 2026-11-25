@@ -3,13 +3,25 @@
 import { useActionState } from 'react';
 import { emptyFormState } from '@/lib/form';
 import f from '@/components/forms/forms.module.css';
-import { connectStripeAction, syncStripeAction } from './actions';
+import { connectStripeAction, linkStripeAction, syncStripeAction } from './actions';
 
 export function ConnectButton({ label }: { label: string }) {
   const [state, action, pending] = useActionState(connectStripeAction, emptyFormState);
   return (
     <form action={action}>
       <button className={f.btnPrimary} type="submit" disabled={pending}>
+        {pending ? 'Opening Stripe…' : label}
+      </button>
+      {state.error && <p className={f.error}>{state.error}</p>}
+    </form>
+  );
+}
+
+export function LinkButton({ label }: { label: string }) {
+  const [state, action, pending] = useActionState(linkStripeAction, emptyFormState);
+  return (
+    <form action={action}>
+      <button className={f.btnGhost} type="submit" disabled={pending}>
         {pending ? 'Opening Stripe…' : label}
       </button>
       {state.error && <p className={f.error}>{state.error}</p>}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe';
-import { applyAccount, confirmCheckout } from '@/lib/books/stripeConnect';
+import { applyAccount, confirmCheckout, unlinkAccount } from '@/lib/books/stripeConnect';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic';
  *
  *   checkout.session.completed / async_payment_succeeded  record the invoice payment
  *   account.updated                                        keep charges_enabled current
+ *   account.application.deauthorized                       a linked account removed our access
  *
  * The return from Checkout records the payment too; the payment's external id
  * makes whichever comes second a no-op.
@@ -38,6 +39,9 @@ export async function POST(request: Request) {
       }
       case 'account.updated':
         await applyAccount(event.data.object as Stripe.Account);
+        break;
+      case 'account.application.deauthorized':
+        if (event.account) await unlinkAccount(event.account);
         break;
     }
   } catch (err) {

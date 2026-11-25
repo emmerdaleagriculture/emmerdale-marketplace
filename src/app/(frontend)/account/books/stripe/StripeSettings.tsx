@@ -1,7 +1,7 @@
 import m from '../../market/market.module.css';
 import s from '../books.module.css';
 import type { Ledger } from '@/lib/books/server';
-import { ConnectButton, SyncButton } from './StripeButtons';
+import { ConnectButton, LinkButton, SyncButton } from './StripeButtons';
 
 /**
  * Card payments, in Books settings: what connecting Stripe does, how to set
@@ -9,12 +9,36 @@ import { ConnectButton, SyncButton } from './StripeButtons';
  * the person back to settings; we keep only the account id and whether it
  * can take payments.
  */
-export function StripeSettings({ ledger }: { ledger: Ledger }) {
+const NOTICES: Record<string, { text: string; bad?: boolean }> = {
+  linked: { text: 'Your Stripe account is linked. Its last month of payments, fees and payouts is in your books, and it is kept up to date each night.' },
+  'link-cancelled': { text: 'Stripe wasn’t linked: you cancelled on Stripe’s page.', bad: true },
+  'link-taken': { text: 'That Stripe account is already linked to another business’s books.', bad: true },
+  'link-failed': { text: 'Stripe wasn’t linked. Please try again.', bad: true },
+};
+
+export function StripeSettings({ ledger, canLink = false, notice }: { ledger: Ledger; canLink?: boolean; notice?: string }) {
   const ready = Boolean(ledger.stripe_account_id && ledger.stripe_charges_enabled);
   const started = Boolean(ledger.stripe_account_id);
+  const note = notice ? NOTICES[notice] : undefined;
+  const existing = canLink && (
+    <div style={{ marginTop: 16 }}>
+      <p style={{ margin: '0 0 6px' }}>
+        <b>{started ? 'Take card payments through a different Stripe account?' : 'Already take card payments through Stripe?'}</b>
+      </p>
+      <p className={m.fine} style={{ margin: '0 0 8px' }}>
+        Link the Stripe account you already use, for example the one your current invoicing software is paid through.
+        Books then brings in every card payment, fee and payout from it, so payouts on your bank statement match
+        without you doing anything, and your Books invoices are paid into the same account.
+        {started && ' It takes the place of the account connected now.'} You sign in on Stripe’s own page; Emmerdale
+        never sees your Stripe password.
+      </p>
+      <LinkButton label={started ? 'Link my other Stripe account' : 'Link my existing Stripe account'} />
+    </div>
+  );
   return (
     <fieldset className={s.fieldset} id="card-payments" style={{ marginBottom: 20 }}>
       <legend>Card payments (Stripe)</legend>
+      {note && <p className={note.bad ? s.readOnly : s.notice}>{note.text}</p>}
       {ready ? (
         <>
           <p className={s.notice}>
@@ -36,6 +60,10 @@ export function StripeSettings({ ledger }: { ledger: Ledger }) {
             </li>
           </ul>
           <SyncButton />
+          <p className={m.fine} style={{ marginTop: 12 }}>
+            Connected account: <code>{ledger.stripe_account_id}</code>
+          </p>
+          {existing}
         </>
       ) : (
         <>
@@ -81,6 +109,7 @@ export function StripeSettings({ ledger }: { ledger: Ledger }) {
             ). There’s no monthly charge from Stripe or from us. Books records the fees for you, so your profit and VAT
             stay right.
           </p>
+          {existing}
         </>
       )}
     </fieldset>

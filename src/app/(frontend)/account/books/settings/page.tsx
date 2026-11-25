@@ -10,7 +10,7 @@ import { BooksFrame } from '../BooksFrame';
 import { SettingsForm } from '../SettingsForm';
 import { saveSettingsAction } from '../actions';
 import { StripeSettings } from '../stripe/StripeSettings';
-import { refreshAccount } from '@/lib/books/stripeConnect';
+import { oauthReady, refreshAccount } from '@/lib/books/stripeConnect';
 import { listViewers, MAX_VIEWERS } from '@/lib/books/viewers.server';
 import { ViewersSection } from './ViewersSection';
 import { InvoiceBranding } from './InvoiceBranding';
@@ -26,7 +26,8 @@ export default async function BooksSettingsPage({ searchParams }: { searchParams
   const accounts = await getAccounts(access.ledger.id);
   let l = access.ledger;
   // Back from Stripe, or part-way through: ask Stripe where the account has got to.
-  if (l.stripe_account_id && ((await searchParams).stripe || !l.stripe_charges_enabled)) {
+  const stripeNote = (await searchParams).stripe;
+  if (l.stripe_account_id && (stripeNote || !l.stripe_charges_enabled)) {
     try {
       l = await refreshAccount(l);
     } catch (err) {
@@ -55,7 +56,7 @@ export default async function BooksSettingsPage({ searchParams }: { searchParams
           Set them up here →
         </Link>
       </p>
-      <StripeSettings ledger={l} />
+      <StripeSettings ledger={l} canLink={oauthReady()} notice={stripeNote} />
       <SettingsForm
         action={saveSettingsAction}
         setup={false}
