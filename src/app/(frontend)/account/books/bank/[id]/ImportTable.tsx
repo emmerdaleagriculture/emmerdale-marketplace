@@ -16,8 +16,8 @@ export type ImportRow = {
   payee: string;
   description: string;
   amount: number;
-  /** waiting: a Stripe payout the Stripe sync will book. */
-  status: 'imported' | 'matched' | 'new' | 'waiting';
+  /** waiting: a Stripe payout the Stripe sync will book. covered: in the opening balances already. */
+  status: 'imported' | 'matched' | 'covered' | 'new' | 'waiting';
   matchLabel?: string;
   registered: boolean;
   suggestion: { account: string; vat: VatCode; check: boolean; why: string } | null;
@@ -115,7 +115,7 @@ export function ImportTable({
                     <td style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', minWidth: 160 }}>
                       {r.payee}
                       {r.description && <div className={s.muted}>{r.description}</div>}
-                      {canEdit && r.status !== 'waiting' && (
+                      {canEdit && r.status !== 'waiting' && r.status !== 'covered' && (
                         <Link className={s.link} style={{ fontSize: 13 }} href={`/account/books/rules?match=${encodeURIComponent(r.payee.slice(0, 100))}`}>
                           Make a rule
                         </Link>
@@ -125,6 +125,8 @@ export function ImportTable({
                     <td style={{ minWidth: 200 }}>
                       {r.status === 'waiting' ? (
                         <span className={s.muted}>Your Stripe sync books this payout</span>
+                      ) : r.status === 'covered' ? (
+                        <span className={s.muted}>In your opening balances</span>
                       ) : r.status === 'matched' ? (
                         <span className={s.muted}>Already in your books: {r.matchLabel}</span>
                       ) : !canChange ? (

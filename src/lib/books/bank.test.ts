@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseAmount, parseCsv, parseStatement, parseUkDate, payeeKey, type BankRow } from './bankCsv';
-import { classify, isStripePayout, reconcile, rowExternalId, rowPosting, suggest, type BookLine } from './bank';
+import { classify, compareFrom, isStripePayout, payoutDue, reconcile, rowExternalId, rowPosting, suggest, type BookLine } from './bank';
 import { balances, type AccountInfo, type LedgerForPosting } from './posting';
 import { chartFor } from './chart';
 import { bankAccountFromRule, ruleFor, type Rule } from './rules';
@@ -185,6 +185,37 @@ describe('classify', () => {
     const { states } = classify([other, r], '1200', [line(5, '2026-02-01', -1000, 'mm_abc')]);
     expect(states.map((s) => s.status)).toEqual(['new', 'imported']);
   });
+
+  it('rows up to the opening balances are covered by them, and the comparison starts the day after', () => {
+    const rows = [row('2026-06-28', -1000), row('2026-06-30', 500), row('2026-07-01', -200), row('2026-07-02', 300)];
+    const lines = [
+      // In the books before the opening balances: summed up in them, so it matches nothing later.
+      line(1, '2026-06-29', 300),
+      line(2, '2026-06-30', -999999, 'emm-open:2026-06-30'),
+      line(3, '2026-07-01', -200),
+    ];
+    const { states, usedEntries } = classify(rows, '1200', lines, '2026-06-30');
+    expect(states.map((s) => s.status)).toEqual(['covered', 'covered', 'matched', 'new']);
+    const from = compareFrom('2026-06-28', '2026-06-30');
+    expect(from).toBe('2026-07-01');
+    const rec = reconcile(rows, states, lines, usedEntries, { start: from, end: '2026-07-02' });
+    expect(rec).toMatchObject({ statementIn: 300, statementOut: 200, booksIn: 0, booksOut: 200, notInBooks: 1 });
+    expect(rec.notOnStatement).toEqual([]);
+  });
+
+  it('opening balances before the statement change nothing', () => {
+    expect(compareFrom('2026-10-01', '2026-06-30')).toBe('2026-10-01');
+    expect(compareFrom('2026-10-01', null)).toBe('2026-10-01');
+    expect(compareFrom('2026-12-30', '2026-12-31')).toBe('2027-01-01');
+    const { states } = classify([row('2026-10-01', -100)], '1200', [], '2026-06-30');
+    expect(states[0].status).toBe('new');
+  });
+
+  it('a row booked from a statement before stays imported, whatever its date', () => {
+    const r = row('2026-06-28', -1000);
+    const { states } = classify([r], '1200', [line(1, '2026-06-28', -1000, rowExternalId('1200', r.key))], '2026-06-30');
+    expect(states[0].status).toBe('imported');
+  });
 });
 
 describe('isStripePayout', () => {
@@ -192,6 +223,12 @@ describe('isStripePayout', () => {
     expect(isStripePayout(row('2026-02-01', 5000, 'Stripe Payments UK Ltd'))).toBe(true);
     expect(isStripePayout(row('2026-02-01', -5000, 'Stripe Payments UK Ltd'))).toBe(false);
     expect(isStripePayout(row('2026-02-01', 5000, 'Stripey Farm'))).toBe(false);
+  });
+  it('waits for the Stripe sync only until one has run on a later day', () => {
+    const r = row('2026-11-23', 69964, 'Stripe Payments UK Ltd');
+    expect(payoutDue(r, null)).toBe(true);
+    expect(payoutDue(r, '2026-11-23')).toBe(true);
+    expect(payoutDue(r, '2026-11-24')).toBe(false);
   });
 });
 
@@ -218,6 +255,16 @@ describe('suggest', () => {
     expect(sug.map((s) => s?.account)).toEqual(['1205', 'inv:7', '4900', '6150', '6990']);
     expect(sug[2]?.check).toBe(true);
     expect(sug[3]).toMatchObject({ vat: 'STD', check: false });
+  });
+
+  it('a Stripe payout nothing accounts for is sales, flagged, and not one for the AI', () => {
+    const rows = [row('2026-11-23', 69964, 'Stripe Payments UK Ltd')];
+    const ctx = { registered: () => true, history: new Map(), invoices: [], accounts };
+    expect(suggest(rows, [{ status: 'new' }], ctx)[0]).toMatchObject({ account: '4000', vat: 'STD', check: true, fixed: true });
+    expect(suggest(rows, [{ status: 'covered' }], ctx)[0]).toBeNull();
+    // A rule or the payee's history still comes first.
+    const hist = new Map([[payeeKey(rows[0].payee), { account: '1220', vat: 'OUTSIDE' as const }]]);
+    expect(suggest(rows, [{ status: 'new' }], { ...ctx, accounts: new Map([...accounts, ['1220', { code: '1220', type: 'asset' as const, is_fixed_asset: false }]]), history: hist })[0]).toMatchObject({ account: '1220', check: false });
   });
 });
 

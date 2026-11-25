@@ -78,7 +78,7 @@ export default async function StatementPage({ params, searchParams }: { params: 
         <table className={m.table}>
           <thead>
             <tr>
-              <th>{ukDate(st.start_date)} – {ukDate(st.end_date)}</th>
+              <th>{ukDate(v.from)} – {ukDate(st.end_date)}</th>
               <th className={m.num}>Statement</th>
               <th className={m.num}>Books</th>
               <th className={m.num}>Difference</th>
@@ -89,7 +89,7 @@ export default async function StatementPage({ params, searchParams }: { params: 
               ['Money in', r.statementIn, r.booksIn],
               ['Money out', r.statementOut, r.booksOut],
               ['Net movement', r.statementIn - r.statementOut, r.booksIn - r.booksOut],
-              ...(!cardLike && st.opening_balance_pence != null ? [['Opening balance', st.opening_balance_pence, v.booksOpening] as const] : []),
+              ...(!cardLike && v.statementOpening != null ? [['Opening balance', v.statementOpening, v.booksOpening] as const] : []),
               ...(!cardLike && st.closing_balance_pence != null ? [['Closing balance', st.closing_balance_pence, v.booksClosing] as const] : []),
             ].map(([label, a, b]) => (
               <tr key={label as string}>
@@ -104,6 +104,9 @@ export default async function StatementPage({ params, searchParams }: { params: 
       </div>
       <p className={m.fine}>
         {notIn === 0 ? 'Every statement row is in your books.' : `${notIn} statement row${notIn === 1 ? ' is' : 's are'} not in your books yet.`}{' '}
+        {v.coveredRows > 0 &&
+          v.openingAt &&
+          `${v.coveredRows} row${v.coveredRows === 1 ? '' : 's'} up to ${ukDate(v.openingAt)} ${v.coveredRows === 1 ? 'is' : 'are'} already in your opening balances, so ${v.coveredRows === 1 ? 'it isn’t' : 'they aren’t'} booked again. `}
         {waitingN > 0 && `${waitingN} Stripe payout${waitingN === 1 ? '' : 's'} will be booked by your Stripe sync. `}
         {checkN > 0 && `${checkN} row${checkN === 1 ? ' was' : 's were'} new payees, filed by AI: worth a glance (highlighted below). `}
         {r.notOnStatement.length > 0 &&
@@ -134,7 +137,7 @@ export default async function StatementPage({ params, searchParams }: { params: 
         <>
           <h2 className={m.h2}>In your books but not on the statement</h2>
           <p className={m.sub}>
-            Entries on {st.account_code} in these dates with no matching statement row. A wrong amount, a wrong
+            Entries on {st.account_code} from {ukDate(v.from)} to {ukDate(st.end_date)} with no matching statement row. A wrong amount, a wrong
             date, the wrong account, or something entered twice? Check the{' '}
             <Link className={s.link} href={`/account/books/accounts/${st.account_code}`}>
               account ledger
