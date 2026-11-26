@@ -316,6 +316,17 @@ describe('receipts assumed paid', () => {
         { receiptId: 9, amount: -50000, date: '2026-08-01', name: 'Too old', account: '2100' },
       ],
     });
+    // Down as paid personally: only a payment within a few days is that receipt's.
+    const personal = (date: string) =>
+      suggest([row('2026-12-05', -2596, 'Hill Top Farm')], [{ status: 'new' as const }], {
+        registered: () => true,
+        history: new Map(),
+        invoices: [],
+        accounts,
+        bills: [{ receiptId: 167, amount: -2596, date, name: 'Hill Top Farm', account: '3000', within: 5 }],
+      })[0];
+    expect(personal('2026-12-04')).toMatchObject({ account: '3000', bill: 167, check: false });
+    expect(personal('2026-11-20')).not.toMatchObject({ account: '3000' });
     expect(sug[0]).toMatchObject({ account: '2100', vat: 'OUTSIDE', bill: 224, check: true, fixed: true });
     expect(sug[1]).toMatchObject({ account: '6100', why: 'As last time' });
     expect(sug[2]).toMatchObject({ account: '2100', bill: 223, check: false });

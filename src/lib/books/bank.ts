@@ -102,11 +102,13 @@ export type OpenInvoice = { id: number; number: string; customer: string; due_pe
 export type PayeeHistory = Map<string, { account: string; vat: VatCode }>;
 
 /**
- * A receipt's bill a statement showed wasn't paid (or a rule put on credit),
- * with nothing booked as paying it yet. Amount as the bank will show the
+ * A receipt's bill not paid from the bank as far as the books know (on
+ * credit, or recorded as paid personally: `within` days only, for a payment
+ * that turns up on the statement after all), with nothing booked as paying
+ * it yet. Amount as the bank will show the
  * payment: − out for a purchase, + in for a sale.
  */
-export type OpenBill = { receiptId: number; amount: number; date: string; name: string; account: string };
+export type OpenBill = { receiptId: number; amount: number; date: string; name: string; account: string; within?: number };
 /** A bill is looked for among payments up to this long after its date. */
 export const BILL_DAYS = 60;
 
@@ -130,7 +132,7 @@ function takeBill(bills: OpenBill[], r: BankRow): { bill: OpenBill; named: boole
   const fits = bills.filter((b) => {
     if (b.amount !== r.amount) return false;
     const days = (Date.parse(r.date) - Date.parse(b.date)) / 86_400_000;
-    return days >= -MATCH_DAYS && days <= BILL_DAYS;
+    return days >= -MATCH_DAYS && days <= (b.within ?? BILL_DAYS);
   });
   if (!fits.length) return null;
   const named = fits.find((b) => sameName(b.name, `${r.payee} ${r.description}`));
@@ -141,10 +143,11 @@ function takeBill(bills: OpenBill[], r: BankRow): { bill: OpenBill; named: boole
 
 /**
  * Receipts' entries on the statement's account, dated within it, that it
- * doesn't show: they were assumed paid from this account and, by the day the
- * statement ends, weren't. Right up to its last day: left on the bank, they
- * put the books' balance below the statement's. One paid a day or two after
- * the statement ends is cleared by that payment on the next one.
+ * doesn't show: they were assumed paid from this account and weren't (a
+ * purchase was paid personally; a sale is still owed). Right up to its last
+ * day: left on the bank, they put the books' balance off the statement's.
+ * One paid a day or two after the statement ends is cleared by that payment
+ * on the next one.
  */
 export function receiptsNotPaid(lines: BookLine[], usedEntries: Set<number>, range: { start: string; end: string }): BookLine[] {
   return lines.filter(
@@ -221,7 +224,12 @@ export function suggest(
     const paid = takeBill(billsLeft, r);
     if (paid) {
       const { bill, named } = paid;
-      const what = bill.amount < 0 ? `Pays ${bill.name || 'a supplier'}’s bill of ${bill.date}` : `${bill.name || 'A customer'} paying your invoice of ${bill.date}`;
+      const what =
+        bill.amount > 0
+          ? `${bill.name || 'A customer'} paying your invoice of ${bill.date}`
+          : bill.within != null
+            ? `Pays ${bill.name || 'a supplier'}’s receipt of ${bill.date}, which was down as paid personally`
+            : `Pays ${bill.name || 'a supplier'}’s bill of ${bill.date}`;
       return named
         ? { account: bill.account, vat: 'OUTSIDE', check: false, why: what, bill: bill.receiptId }
         : { account: bill.account, vat: 'OUTSIDE', check: true, fixed: true, why: `${what}: same amount, a different name`, bill: bill.receiptId };
