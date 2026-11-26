@@ -102,11 +102,13 @@ export type OpenInvoice = { id: number; number: string; customer: string; due_pe
 export type PayeeHistory = Map<string, { account: string; vat: VatCode }>;
 
 /**
- * A receipt's bill a statement showed wasn't paid (or a rule put on credit),
- * with nothing booked as paying it yet. Amount as the bank will show the
+ * A receipt's bill not paid from the bank as far as the books know (on
+ * credit, or recorded as paid personally: `within` days only, for a payment
+ * that turns up on the statement after all), with nothing booked as paying
+ * it yet. Amount as the bank will show the
  * payment: − out for a purchase, + in for a sale.
  */
-export type OpenBill = { receiptId: number; amount: number; date: string; name: string; account: string };
+export type OpenBill = { receiptId: number; amount: number; date: string; name: string; account: string; within?: number };
 /** A bill is looked for among payments up to this long after its date. */
 export const BILL_DAYS = 60;
 
@@ -130,7 +132,7 @@ function takeBill(bills: OpenBill[], r: BankRow): { bill: OpenBill; named: boole
   const fits = bills.filter((b) => {
     if (b.amount !== r.amount) return false;
     const days = (Date.parse(r.date) - Date.parse(b.date)) / 86_400_000;
-    return days >= -MATCH_DAYS && days <= BILL_DAYS;
+    return days >= -MATCH_DAYS && days <= (b.within ?? BILL_DAYS);
   });
   if (!fits.length) return null;
   const named = fits.find((b) => sameName(b.name, `${r.payee} ${r.description}`));
@@ -140,15 +142,42 @@ function takeBill(bills: OpenBill[], r: BankRow): { bill: OpenBill; named: boole
 }
 
 /**
- * Receipts' entries on the statement's account that the statement has had
- * its full chance to show (dated at least MATCH_DAYS before it ends) and
- * doesn't: they were assumed paid from this account and weren't.
+ * Receipts' entries on the statement's account, dated within it, that it
+ * doesn't show: they were assumed paid from this account and weren't (a
+ * purchase was paid personally; a sale is still owed). Right up to its last
+ * day: left on the bank, they put the books' balance off the statement's.
+ * One paid a day or two after the statement ends is cleared by that payment
+ * on the next one.
  */
 export function receiptsNotPaid(lines: BookLine[], usedEntries: Set<number>, range: { start: string; end: string }): BookLine[] {
-  const last = Date.parse(range.end) - MATCH_DAYS * 86_400_000;
   return lines.filter(
-    (l) => /^receipt:\d+$/.test(l.external_id ?? '') && !usedEntries.has(l.entry_id) && l.date >= range.start && Date.parse(l.date) <= last,
+    (l) => /^receipt:\d+$/.test(l.external_id ?? '') && !usedEntries.has(l.entry_id) && l.date >= range.start && l.date <= range.end,
   );
+}
+
+/**
+ * Of those, the ones the statement does show after all: its row was booked
+ * on its own (bank:…, by history, a rule or a guess) without being tied to
+ * the receipt, so the payment is in the books twice. Receipt's entry → the
+ * row's entry, the nearest date first, each row's entry taken once.
+ */
+export function bookedTwice(unpaid: BookLine[], lines: BookLine[]): Map<number, number> {
+  const out = new Map<number, number>();
+  const taken = new Set<number>();
+  for (const u of unpaid) {
+    let best: BookLine | null = null;
+    for (const l of lines) {
+      if (taken.has(l.entry_id) || !(l.external_id ?? '').startsWith('bank:') || l.amount !== u.amount) continue;
+      const d = dayDiff(l.date, u.date);
+      if (d > MATCH_DAYS) continue;
+      if (!best || d < dayDiff(best.date, u.date)) best = l;
+    }
+    if (best) {
+      taken.add(best.entry_id);
+      out.set(u.entry_id, best.entry_id);
+    }
+  }
+  return out;
 }
 
 /** Money in from Stripe: a payout of card payments. */
@@ -195,7 +224,12 @@ export function suggest(
     const paid = takeBill(billsLeft, r);
     if (paid) {
       const { bill, named } = paid;
-      const what = bill.amount < 0 ? `Pays ${bill.name || 'a supplier'}’s bill of ${bill.date}` : `${bill.name || 'A customer'} paying your invoice of ${bill.date}`;
+      const what =
+        bill.amount > 0
+          ? `${bill.name || 'A customer'} paying your invoice of ${bill.date}`
+          : bill.within != null
+            ? `Pays ${bill.name || 'a supplier'}’s receipt of ${bill.date}, which was down as paid personally`
+            : `Pays ${bill.name || 'a supplier'}’s bill of ${bill.date}`;
       return named
         ? { account: bill.account, vat: 'OUTSIDE', check: false, why: what, bill: bill.receiptId }
         : { account: bill.account, vat: 'OUTSIDE', check: true, fixed: true, why: `${what}: same amount, a different name`, bill: bill.receiptId };

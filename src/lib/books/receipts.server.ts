@@ -329,7 +329,7 @@ export async function processReceipt(receiptId: number): Promise<void> {
       notes.push(
         f.doc_type === 'sale'
           ? 'Not marked as paid: assumed paid into your bank. A statement that shows no payment will move it to money owed to you.'
-          : 'Not marked as paid: assumed paid from your bank. A statement that shows no payment will move it to bills still to pay.',
+          : 'Not marked as paid: assumed paid from your bank. A statement that shows no payment will record it as paid by you personally.',
       );
     }
     const reasons: string[] = [];

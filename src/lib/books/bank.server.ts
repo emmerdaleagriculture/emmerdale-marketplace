@@ -2,9 +2,10 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { fetchAll } from '@/lib/supabase/fetchAll';
 import type { Json } from '@/lib/database.types';
 import { addDays, todayUk } from './period';
+import { personalAccountCode } from './chart';
 import { isVatCode, registeredOn, type VatCode } from './vat';
-import { accountMap, allLines, getAccounts, ledgerForPosting, type BooksAccount, type Ledger } from './server';
-import { classify, compareFrom, isStripePayout, payoutDue, reconcile, receiptsNotPaid, rowExternalId, rowPosting, suggest, MATCH_DAYS, type BookLine, type Choice, type OpenBill, type OpenInvoice, type PayeeHistory } from './bank';
+import { accountMap, allLines, businessTypeOf, getAccounts, ledgerForPosting, type BooksAccount, type Ledger } from './server';
+import { bookedTwice, classify, compareFrom, isStripePayout, payoutDue, reconcile, receiptsNotPaid, rowExternalId, rowPosting, suggest, MATCH_DAYS, type BookLine, type Choice, type OpenBill, type OpenInvoice, type PayeeHistory } from './bank';
 import { categoriseRows } from './bankAi';
 import { loadRules } from './rules.server';
 import { payeeKey, type BankRow } from './bankCsv';
@@ -87,16 +88,21 @@ async function openInvoices(ledgerId: string): Promise<OpenInvoice[]> {
   });
 }
 
-/** Receipts' bills left unpaid (on creditors or debtors) that no statement row has been booked as paying. */
-async function openBills(ledgerId: string): Promise<OpenBill[]> {
+/**
+ * Receipts' bills left unpaid (on creditors or debtors), and purchases down
+ * as paid personally, that no statement row has been booked as paying.
+ */
+async function openBills(ledger: Ledger): Promise<OpenBill[]> {
   const admin = createServiceRoleClient();
+  const ledgerId = ledger.id;
+  const personal = personalAccountCode(businessTypeOf(ledger));
   const [{ data: receipts }, { data: paid }] = await Promise.all([
     admin
       .from('books_receipts')
       .select('id, doc_type, doc_date, counterparty, gross_pence, payment_account_code')
       .eq('ledger_id', ledgerId)
       .eq('status', 'posted')
-      .in('payment_account_code', ['2100', '1100'])
+      .in('payment_account_code', ['2100', '1100', personal])
       .not('entry_id', 'is', null)
       .not('doc_date', 'is', null)
       .order('doc_date', { ascending: false })
@@ -105,17 +111,28 @@ async function openBills(ledgerId: string): Promise<OpenBill[]> {
   ]);
   const done = new Set((paid ?? []).map((e) => Number((e.meta as { pays_receipt?: number }).pays_receipt)));
   return (receipts ?? []).flatMap((r) =>
-    done.has(r.id) || !r.gross_pence || !r.doc_date || !r.payment_account_code
+    done.has(r.id) || !r.gross_pence || !r.doc_date || !r.payment_account_code || (r.payment_account_code === personal && r.doc_type === 'sale')
       ? []
-      : [{ receiptId: r.id, amount: r.doc_type === 'sale' ? r.gross_pence : -r.gross_pence, date: r.doc_date, name: r.counterparty ?? '', account: r.payment_account_code }],
+      : [
+          {
+            receiptId: r.id,
+            amount: r.doc_type === 'sale' ? r.gross_pence : -r.gross_pence,
+            date: r.doc_date,
+            name: r.counterparty ?? '',
+            account: r.payment_account_code,
+            // Paid personally unless the bank shows it about then: not weeks later.
+            ...(r.payment_account_code === personal ? { within: MATCH_DAYS } : {}),
+          },
+        ],
   );
 }
 
 /**
  * A statement saying otherwise: receipts are booked as paid from the bank
- * when they arrive; one this statement has had every chance to show, and
- * doesn't, wasn't. Its entry moves off the bank to creditors (a sale's, to
- * debtors), where the payment clears it when a statement does show it.
+ * when they arrive; one dated within this statement that it doesn't show
+ * wasn't. A purchase was paid by the owner personally (the director's loan,
+ * or capital introduced); a sale is still owed (debtors). Its entry moves
+ * off the bank to there, and a payment a statement shows after all clears it.
  * Returns how many moved.
  */
 export async function moveUnpaidReceipts(ledger: Ledger, st: Statement): Promise<number> {
@@ -143,6 +160,27 @@ export async function moveUnpaidReceipts(ledger: Ledger, st: Statement): Promise
     left = left.filter((l) => !used.has(l.entry_id));
     if (!left.length) return 0;
   }
+  // The statement does show it, but its row was booked on its own: that entry
+  // goes (the receipt knows more) and the receipt stays paid from the bank.
+  // Only a row booked as the same kind of thing: never a pot transfer or
+  // another journal that happens to be the same amount.
+  for (const [receiptEntry, rowEntry] of bookedTwice(left, lines)) {
+    const amount = left.find((l) => l.entry_id === receiptEntry)?.amount ?? 0;
+    const { data: gone, error } = await admin
+      .from('books_entries')
+      .delete()
+      .eq('ledger_id', ledger.id)
+      .eq('id', rowEntry)
+      .eq('source', 'bank')
+      .eq('kind', amount < 0 ? 'purchase' : 'sale')
+      .like('external_id', 'bank:%')
+      .is('receipt_id', null)
+      .is('meta->>pays_receipt', null)
+      .select('id');
+    if (error) console.error('[books] twice-booked row removal failed', { ledger: ledger.id, entry: rowEntry, error: error.message });
+    if (gone?.length) left = left.filter((l) => l.entry_id !== receiptEntry);
+  }
+  if (!left.length) return 0;
   const accounts = await getAccounts(ledger.id);
   const idOf = (code: string) => accounts.find((a) => a.code === code)?.id ?? null;
   const bankId = idOf(st.account_code);
@@ -155,7 +193,7 @@ export async function moveUnpaidReceipts(ledger: Ledger, st: Statement): Promise
     .in('entry_id', left.map((l) => l.entry_id));
   let moved = 0;
   for (const r of receipts ?? []) {
-    const code = r.doc_type === 'sale' ? '1100' : '2100';
+    const code = r.doc_type === 'sale' ? '1100' : personalAccountCode(businessTypeOf(ledger));
     const to = idOf(code);
     if (!to || !bankId || !r.entry_id) continue;
     const { data: changed, error } = await admin
@@ -172,7 +210,7 @@ export async function moveUnpaidReceipts(ledger: Ledger, st: Statement): Promise
     const note =
       r.doc_type === 'sale'
         ? `Your statement to ${st.end_date} shows no payment for this: recorded as owed to you (1100 Trade debtors).`
-        : `Your statement to ${st.end_date} shows no payment of this: recorded as still to pay (2100 Trade creditors). If you paid it another way, void it and change what paid it.`;
+        : `Your statement to ${st.end_date} shows no payment of this: recorded as paid by you personally (${code} ${accounts.find((a) => a.code === code)?.name ?? ''}). If it is still to pay, void it and change what paid it.`;
     await admin
       .from('books_receipts')
       .update({ payment_account_code: code, notes: [r.notes, note].filter(Boolean).join('\n') })
@@ -196,7 +234,7 @@ export async function checkReceiptAgainstStatements(ledger: Ledger, f: { doc_dat
       .eq('ledger_id', ledger.id)
       .eq('account_code', f.payment_account_code)
       .lte('start_date', f.doc_date)
-      .gte('end_date', addDays(f.doc_date, MATCH_DAYS))
+      .gte('end_date', f.doc_date)
       .order('end_date', { ascending: false })
       .limit(1);
     const st = data?.[0] ? await loadStatement(ledger.id, data[0].id) : null;
@@ -232,7 +270,7 @@ export async function statementView(ledger: Ledger, st: Statement) {
     openInvoices(ledger.id),
     loadRules(ledger.id),
     openingBalancesAt(ledger.id),
-    openBills(ledger.id),
+    openBills(ledger),
   ]);
   const { states, usedEntries } = classify(st.rows, st.account_code, lines, openingAt);
   const suggestions = suggest(st.rows, states, {

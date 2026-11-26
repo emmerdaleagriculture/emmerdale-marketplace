@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseAmount, parseCsv, parseStatement, parseUkDate, payeeKey, type BankRow } from './bankCsv';
-import { classify, compareFrom, isStripePayout, payoutDue, receiptsNotPaid, reconcile, rowExternalId, rowPosting, sameName, suggest, type BookLine } from './bank';
+import { bookedTwice, classify, compareFrom, isStripePayout, payoutDue, receiptsNotPaid, reconcile, rowExternalId, rowPosting, sameName, suggest, type BookLine } from './bank';
 import { balances, type AccountInfo, type LedgerForPosting } from './posting';
 import { chartFor } from './chart';
 import { bankAccountFromRule, ruleFor, type Rule } from './rules';
@@ -269,18 +269,38 @@ describe('suggest', () => {
 });
 
 describe('receipts assumed paid', () => {
-  it('a receipt the statement had its full chance to show, and didn’t, was not paid', () => {
+  it('a receipt dated within the statement that it doesn’t show was not paid', () => {
     const rows = [row('2026-11-03', -16800, 'Snap-on')];
     const lines = [
       line(1, '2026-11-01', -16800, 'receipt:1'),
       line(2, '2026-11-10', -50000, 'receipt:2'),
-      // Too close to the end of the statement: the payment may be on the next one.
-      line(3, '2026-11-27', -11339, 'receipt:3'),
+      // Days before the statement ends: still on the bank, it would leave the books short of the statement.
+      line(3, '2026-11-28', -11339, 'receipt:3'),
       // Not a receipt's entry: never moved.
       line(4, '2026-11-10', -999),
+      // After the statement ends: for the next one to say.
+      line(5, '2026-12-01', -4200, 'receipt:5'),
     ];
     const { usedEntries } = classify(rows, '1200', lines);
-    expect(receiptsNotPaid(lines, usedEntries, { start: '2026-11-01', end: '2026-11-30' }).map((l) => l.entry_id)).toEqual([2]);
+    expect(receiptsNotPaid(lines, usedEntries, { start: '2026-11-01', end: '2026-11-30' }).map((l) => l.entry_id)).toEqual([2, 3]);
+  });
+
+  it('a receipt whose statement row was booked on its own was paid: the row is in twice', () => {
+    const rows = [row('2026-11-24', -11608, 'Mr A Landlord'), row('2026-11-24', -11339, 'Mr A Landlord')];
+    const ext = (r: BankRow) => rowExternalId('1200', r.key);
+    const lines = [
+      line(10, '2026-11-24', -11608, 'receipt:219'),
+      line(11, '2026-11-24', -11339, 'receipt:223'),
+      line(12, '2026-11-20', -700, 'receipt:300'),
+      line(20, '2026-11-24', -11608, ext(rows[0])),
+      line(21, '2026-11-24', -11339, ext(rows[1])),
+      // Same amount as receipt 300, but from another system, not a statement row.
+      line(22, '2026-11-20', -700, 'mm_abc'),
+    ];
+    const { usedEntries } = classify(rows, '1200', lines);
+    const unpaid = receiptsNotPaid(lines, usedEntries, { start: '2026-11-01', end: '2026-11-26' });
+    expect(unpaid.map((l) => l.entry_id)).toEqual([10, 11, 12]);
+    expect([...bookedTwice(unpaid, lines)]).toEqual([[10, 20], [11, 21]]);
   });
 
   it('a later payment of the same amount clears the bill once, ahead of history', () => {
@@ -296,6 +316,17 @@ describe('receipts assumed paid', () => {
         { receiptId: 9, amount: -50000, date: '2026-08-01', name: 'Too old', account: '2100' },
       ],
     });
+    // Down as paid personally: only a payment within a few days is that receipt's.
+    const personal = (date: string) =>
+      suggest([row('2026-12-05', -2596, 'Hill Top Farm')], [{ status: 'new' as const }], {
+        registered: () => true,
+        history: new Map(),
+        invoices: [],
+        accounts,
+        bills: [{ receiptId: 167, amount: -2596, date, name: 'Hill Top Farm', account: '3000', within: 5 }],
+      })[0];
+    expect(personal('2026-12-04')).toMatchObject({ account: '3000', bill: 167, check: false });
+    expect(personal('2026-11-20')).not.toMatchObject({ account: '3000' });
     expect(sug[0]).toMatchObject({ account: '2100', vat: 'OUTSIDE', bill: 224, check: true, fixed: true });
     expect(sug[1]).toMatchObject({ account: '6100', why: 'As last time' });
     expect(sug[2]).toMatchObject({ account: '2100', bill: 223, check: false });
