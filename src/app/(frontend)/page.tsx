@@ -7,6 +7,7 @@ import { HomeHeader } from '@/components/home/HomeHeader';
 import { HomeFooter } from '@/components/home/HomeFooter';
 import { StickyBar } from '@/components/home/StickyBar';
 import { DeferredImage } from '@/components/home/DeferredImage';
+import ServicesDrawer from '@/components/home/ServicesDrawer';
 import { ServiceCard } from '@/components/home/ServiceCard';
 import { TrackedLink } from '@/components/home/Track';
 import { CoverageSection } from '@/components/home/CoverageSection';
@@ -17,7 +18,7 @@ import { QuoteWidget } from '@/components/home/QuoteWidget';
 import { Comparison } from '@/components/home/Comparison';
 import { UK_COUNTY_NAMES } from '@/lib/coverage';
 import { HOME_SERVICES } from '@/lib/home/services';
-import { HEADLINE, KICKER, PROMISES, STANDFIRST, TICKER } from '@/lib/home/proposition';
+import { HEADLINE, KICKER, OPERATOR_QUESTION, PROMISES, STANDFIRST, TICKER } from '@/lib/home/proposition';
 import { getCountyCoverage } from '@/lib/reference';
 import { allCountyRefs } from '@/lib/verticals';
 import {
@@ -299,32 +300,35 @@ export default async function LandingPage() {
             the customer never describes twice what they already chose. */}
         <section id="services" className={s.services}>
           <div className={s.container}>
-            <p className={s.eyebrow}>Everything we do</p>
-            <h2 className={s.sectionH}>Pick the job. Operators near you come back with prices.</h2>
-            {/* The way from the board to the service pages: the cards
-                themselves go straight to the form, which is what converts. */}
-            <p className={s.lede}>
-              <Link href="/services">What each job involves, and when to do it →</Link>
-            </p>
-            <p className={s.lede}>
-              If you own a paddock or a bit of land, finding someone reliable
-              usually means trawling Facebook groups and hoping for the best. We
-              do that part for you.
-            </p>
-            <div className={s.servicesGrid}>
-              {HOME_SERVICES.map((svc) => (
-                <ServiceCard
-                  key={svc.slug}
-                  svc={svc}
-                  // `job` and `src` are LandingFlow's existing prefill params:
-                  // the card's service arrives already typed into the
-                  // description, and the hand-off is attributed to the home
-                  // page rather than showing up as "(direct)". `service` is
-                  // the pick itself, which opens a service's own questions.
-                  href={`${START_HREF}?job=${encodeURIComponent(svc.name)}&service=${svc.slug}&src=home`}
-                />
-              ))}
-            </div>
+            <ServicesDrawer
+              eyebrow="Everything we do"
+              heading="Pick the job. Operators near you come back with prices."
+            >
+              {/* The way from the board to the service pages: the cards
+                  themselves go straight to the form, which is what converts. */}
+              <p className={s.lede}>
+                <Link href="/services">What each job involves, and when to do it →</Link>
+              </p>
+              <p className={s.lede}>
+                If you own a paddock or a bit of land, finding someone reliable
+                usually means trawling Facebook groups and hoping for the best. We
+                do that part for you.
+              </p>
+              <div className={s.servicesGrid}>
+                {HOME_SERVICES.map((svc) => (
+                  <ServiceCard
+                    key={svc.slug}
+                    svc={svc}
+                    // `job` and `src` are LandingFlow's existing prefill params:
+                    // the card's service arrives already typed into the
+                    // description, and the hand-off is attributed to the home
+                    // page rather than showing up as "(direct)". `service` is
+                    // the pick itself, which opens a service's own questions.
+                    href={`${START_HREF}?job=${encodeURIComponent(svc.name)}&service=${svc.slug}&src=home`}
+                  />
+                ))}
+              </div>
+            </ServicesDrawer>
           </div>
         </section>
 
@@ -426,9 +430,7 @@ export default async function LandingPage() {
           <div className={`${s.container} ${s.operatorsGrid}`}>
             <div>
               <p className={`${s.eyebrow} ${s.eyebrowLight}`}>For operators</p>
-              <h2 className={`${s.sectionH} ${s.operatorsH}`}>
-                Run an agricultural contracting business?
-              </h2>
+              <h2 className={`${s.sectionH} ${s.operatorsH}`}>{OPERATOR_QUESTION}</h2>
               <p className={s.operatorsCopy}>
                 We bring you the customer and handle the payment. You set your
                 own price and do the work you&rsquo;re good at.

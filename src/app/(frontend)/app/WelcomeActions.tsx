@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { SignInButtons } from '@/components/app/SignInButtons';
 import { signInProvidersConfigured } from '@/lib/app/signInProviders';
-import { OPERATOR_CTA, OPERATOR_QUESTION } from '@/lib/home/proposition';
+import { OPERATOR_CTA, OPERATOR_QUESTION_SHORT } from '@/lib/home/proposition';
 import type { RoleIntent } from '@/lib/app/landing';
 import s from './app.module.css';
 
@@ -44,7 +44,7 @@ export function WelcomeActions({ initialIntent, appleFirst }: { initialIntent: R
           </span>
         ) : (
           <span>
-            {OPERATOR_QUESTION} <strong>{OPERATOR_CTA}</strong>
+            {OPERATOR_QUESTION_SHORT} <strong>{OPERATOR_CTA}</strong>
           </span>
         )}
         <span aria-hidden="true">›</span>
