@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseAmount, parseCsv, parseStatement, parseUkDate, payeeKey, type BankRow } from './bankCsv';
-import { classify, compareFrom, isStripePayout, payoutDue, receiptsNotPaid, reconcile, rowExternalId, rowPosting, sameName, suggest, type BookLine } from './bank';
+import { bookedTwice, classify, compareFrom, isStripePayout, payoutDue, receiptsNotPaid, reconcile, rowExternalId, rowPosting, sameName, suggest, type BookLine } from './bank';
 import { balances, type AccountInfo, type LedgerForPosting } from './posting';
 import { chartFor } from './chart';
 import { bankAccountFromRule, ruleFor, type Rule } from './rules';
@@ -283,6 +283,24 @@ describe('receipts assumed paid', () => {
     ];
     const { usedEntries } = classify(rows, '1200', lines);
     expect(receiptsNotPaid(lines, usedEntries, { start: '2026-11-01', end: '2026-11-30' }).map((l) => l.entry_id)).toEqual([2, 3]);
+  });
+
+  it('a receipt whose statement row was booked on its own was paid: the row is in twice', () => {
+    const rows = [row('2026-11-24', -11608, 'Mr A Landlord'), row('2026-11-24', -11339, 'Mr A Landlord')];
+    const ext = (r: BankRow) => rowExternalId('1200', r.key);
+    const lines = [
+      line(10, '2026-11-24', -11608, 'receipt:219'),
+      line(11, '2026-11-24', -11339, 'receipt:223'),
+      line(12, '2026-11-20', -700, 'receipt:300'),
+      line(20, '2026-11-24', -11608, ext(rows[0])),
+      line(21, '2026-11-24', -11339, ext(rows[1])),
+      // Same amount as receipt 300, but from another system, not a statement row.
+      line(22, '2026-11-20', -700, 'mm_abc'),
+    ];
+    const { usedEntries } = classify(rows, '1200', lines);
+    const unpaid = receiptsNotPaid(lines, usedEntries, { start: '2026-11-01', end: '2026-11-26' });
+    expect(unpaid.map((l) => l.entry_id)).toEqual([10, 11, 12]);
+    expect([...bookedTwice(unpaid, lines)]).toEqual([[10, 20], [11, 21]]);
   });
 
   it('a later payment of the same amount clears the bill once, ahead of history', () => {

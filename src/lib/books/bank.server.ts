@@ -4,7 +4,7 @@ import type { Json } from '@/lib/database.types';
 import { addDays, todayUk } from './period';
 import { isVatCode, registeredOn, type VatCode } from './vat';
 import { accountMap, allLines, getAccounts, ledgerForPosting, type BooksAccount, type Ledger } from './server';
-import { classify, compareFrom, isStripePayout, payoutDue, reconcile, receiptsNotPaid, rowExternalId, rowPosting, suggest, MATCH_DAYS, type BookLine, type Choice, type OpenBill, type OpenInvoice, type PayeeHistory } from './bank';
+import { bookedTwice, classify, compareFrom, isStripePayout, payoutDue, reconcile, receiptsNotPaid, rowExternalId, rowPosting, suggest, MATCH_DAYS, type BookLine, type Choice, type OpenBill, type OpenInvoice, type PayeeHistory } from './bank';
 import { categoriseRows } from './bankAi';
 import { loadRules } from './rules.server';
 import { payeeKey, type BankRow } from './bankCsv';
@@ -143,6 +143,23 @@ export async function moveUnpaidReceipts(ledger: Ledger, st: Statement): Promise
     left = left.filter((l) => !used.has(l.entry_id));
     if (!left.length) return 0;
   }
+  // The statement does show it, but its row was booked on its own: that entry
+  // goes (the receipt knows more) and the receipt stays paid from the bank.
+  for (const [receiptEntry, rowEntry] of bookedTwice(left, lines)) {
+    const { data: gone, error } = await admin
+      .from('books_entries')
+      .delete()
+      .eq('ledger_id', ledger.id)
+      .eq('id', rowEntry)
+      .eq('source', 'bank')
+      .like('external_id', 'bank:%')
+      .is('receipt_id', null)
+      .is('meta->>pays_receipt', null)
+      .select('id');
+    if (error) console.error('[books] twice-booked row removal failed', { ledger: ledger.id, entry: rowEntry, error: error.message });
+    if (gone?.length) left = left.filter((l) => l.entry_id !== receiptEntry);
+  }
+  if (!left.length) return 0;
   const accounts = await getAccounts(ledger.id);
   const idOf = (code: string) => accounts.find((a) => a.code === code)?.id ?? null;
   const bankId = idOf(st.account_code);

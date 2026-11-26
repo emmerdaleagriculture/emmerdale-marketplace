@@ -152,6 +152,31 @@ export function receiptsNotPaid(lines: BookLine[], usedEntries: Set<number>, ran
   );
 }
 
+/**
+ * Of those, the ones the statement does show after all: its row was booked
+ * on its own (bank:…, by history, a rule or a guess) without being tied to
+ * the receipt, so the payment is in the books twice. Receipt's entry → the
+ * row's entry, the nearest date first, each row's entry taken once.
+ */
+export function bookedTwice(unpaid: BookLine[], lines: BookLine[]): Map<number, number> {
+  const out = new Map<number, number>();
+  const taken = new Set<number>();
+  for (const u of unpaid) {
+    let best: BookLine | null = null;
+    for (const l of lines) {
+      if (taken.has(l.entry_id) || !(l.external_id ?? '').startsWith('bank:') || l.amount !== u.amount) continue;
+      const d = dayDiff(l.date, u.date);
+      if (d > MATCH_DAYS) continue;
+      if (!best || d < dayDiff(best.date, u.date)) best = l;
+    }
+    if (best) {
+      taken.add(best.entry_id);
+      out.set(u.entry_id, best.entry_id);
+    }
+  }
+  return out;
+}
+
 /** Money in from Stripe: a payout of card payments. */
 export const isStripePayout = (r: BankRow) => r.amount > 0 && /\bstripe\b/i.test(r.payee);
 
