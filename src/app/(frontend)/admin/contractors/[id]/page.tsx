@@ -9,7 +9,7 @@ import {
   setContractorStatus,
   setPremiumComp,
   giveAskTokens,
-  setServicesOnly,
+  setPaidOnly, setServicesOnly,
 } from '../actions';
 import { warningDraft } from '@/lib/sealedQuotes/contractorWarning';
 import { formatDateTime } from '@/lib/time';
@@ -320,9 +320,23 @@ export default async function ContractorDetailPage({
           })}
         </AdminTable>
       )}
-      {/* Removal is the Suspend button below; this is the step before it. */}
+      <p className={s.dValue}>
+        {c.paid_only_since
+          ? `Paid accounts only since ${formatDateTime(c.paid_only_since)}: after a second contact attempt they still receive jobs, but can’t price them or message customers before award without a paid membership.`
+          : 'A second contact attempt (a day or more after the first) makes pricing and messaging need a paid membership. Not in force for this contractor.'}
+      </p>
+      <div className={s.actions}>
+        <form action={setPaidOnly}>
+          <input type="hidden" name="id" value={c.id} />
+          <input type="hidden" name="paid_only" value={c.paid_only_since ? '0' : '1'} />
+          <button type="submit" className={c.paid_only_since ? s.btnApprove : s.btnSuspend}>
+            {c.paid_only_since ? 'Lift it: let them price without paying' : 'Require a paid account to price'}
+          </button>
+        </form>
+      </div>
+      {/* A written warning by hand; the automatic one goes out on a refused message. */}
       <details className={s.fold} open={!!warnJobId}>
-        <summary>Send a warning: one more attempt to go off the platform means removal</summary>
+        <summary>Send a warning: one more attempt to go off the platform means a paid account to price</summary>
         <form action={sendContractorWarning}>
           <input type="hidden" name="id" value={c.id} />
           {warnJobId && <input type="hidden" name="submission_id" value={warnJobId} />}

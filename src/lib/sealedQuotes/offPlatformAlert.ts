@@ -30,6 +30,89 @@ export async function recordRefusal(args: {
   if (error) console.error('[sq] platform flag not recorded:', error.message);
 }
 
+/** An attempt this long after an earlier one is a second offence, not the same one reworded. */
+export const SECOND_ATTEMPT_AFTER_HOURS = 24;
+
+/** Whether an attempt now is a second offence, given when the earlier refusals were recorded. */
+export function isSecondAttempt(earlier: string[], now = Date.now()): boolean {
+  const cutoff = now - SECOND_ATTEMPT_AFTER_HOURS * 3_600_000;
+  return earlier.some((t) => new Date(t).getTime() <= cutoff);
+}
+
+/**
+ * The second time a contractor tries to pass contact details or take a job
+ * off the site: from now on pricing a job, or writing to a customer before
+ * award, needs a paid membership (contractors.paid_only_since; enforced by
+ * contractor_paid_only in submit_contractor_quote and sq_post_message,
+ * 20261126200000). They keep receiving jobs. Call it after the refusal is
+ * recorded. Returns whether the restriction is in force for them now: set
+ * here or earlier, and not already met by a membership. Never throws.
+ */
+export async function strikeAfterAttempt(args: {
+  contractorId: string | null | undefined;
+  submissionId?: string | null;
+}): Promise<boolean> {
+  if (!args.contractorId) return false;
+  try {
+    const admin = createServiceRoleClient();
+    const [{ data: ct }, { data: flags }, { data: member }] = await Promise.all([
+      admin.from('contractors').select('business_name, email, paid_only_since').eq('id', args.contractorId).maybeSingle(),
+      admin
+        .from('platform_flags')
+        .select('created_at')
+        .eq('contractor_id', args.contractorId)
+        .eq('sender', 'contractor')
+        .order('created_at')
+        .limit(50),
+      admin.rpc('contractor_is_premium', { p_contractor_id: args.contractorId }),
+    ]);
+    if (!ct) return false;
+    const paying = member === true;
+    if (ct.paid_only_since) return !paying;
+    if (!isSecondAttempt((flags ?? []).map((f) => f.created_at))) return false;
+    // Of two refusals in flight at once, only the one whose update lands tells anyone.
+    const { data: won, error } = await admin
+      .from('contractors')
+      .update({ paid_only_since: new Date().toISOString() })
+      .eq('id', args.contractorId)
+      .is('paid_only_since', null)
+      .select('id');
+    if (error) {
+      console.error('[sq] second attempt: restriction not set:', error.message);
+      return false;
+    }
+    if (!won?.length) return !paying;
+    const who = ct.business_name || ct.email || 'A contractor';
+    await Promise.all([
+      // A member already has what it asks for: it bites only if they leave.
+      !paying && ct.email
+        ? admin
+            .from('pending_emails')
+            .insert({ kind: 'sq_paid_only', to_email: ct.email, payload: { business_name: ct.business_name ?? null } })
+            .then(({ error: qErr }) => {
+              if (qErr) console.error('[sq] paid-only email not queued:', qErr.message);
+            })
+        : Promise.resolve(),
+      notifyAdmins(
+        `Second contact attempt: ${who} now needs a paid account to price`,
+        [
+          `${who} has tried a second time to pass contact details or take a job off the site.`,
+          paying
+            ? 'They hold a paid membership, so nothing changes for them unless it ends.'
+            : 'They still receive jobs, but can’t price them or message customers before award until they take a paid membership. They have been emailed.',
+          '',
+          `To lift it: ${siteUrl()}/admin/contractors/${args.contractorId}#warning`,
+          args.submissionId ? `Job: ${siteUrl()}/admin/submissions/${args.submissionId}#messages` : '',
+        ].join('\n'),
+      ),
+    ]);
+    return !paying;
+  } catch (err) {
+    console.error('[sq] second attempt check failed:', err);
+    return false;
+  }
+}
+
 /** How long a contractor's messages are held for approval after one contact attempt. */
 const HOLD_DAYS = 30;
 
@@ -47,9 +130,11 @@ export async function holdAfterContactAttempt(args: {
   body: string;
   submissionId: string | null | undefined;
   contractorId: string | null | undefined;
-}): Promise<void> {
-  if (!args.contractorId) return;
+}): Promise<{ paidOnly: boolean }> {
+  if (!args.contractorId) return { paidOnly: false };
   const admin = createServiceRoleClient();
+  // A second offence has its own email, which replaces the warning.
+  const paidOnly = await strikeAfterAttempt({ contractorId: args.contractorId, submissionId: args.submissionId });
   const until = new Date(Date.now() + HOLD_DAYS * 86_400_000).toISOString();
   const { data: ct, error } = await admin
     .from('contractors')
@@ -70,15 +155,17 @@ export async function holdAfterContactAttempt(args: {
   // warning and admin's copy go out side by side rather than one after the
   // other on the path back to the browser.
   await Promise.all([
-    warnContractor({
-      contractorId: args.contractorId,
-      email: ct?.email,
-      businessName: ct?.business_name,
-      rule: args.rule,
-      // The hold in force, which an admin or an earlier attempt may have set
-      // longer than this one would.
-      until: already ? (ct.messages_moderated_until as string) : until,
-    }),
+    paidOnly
+      ? Promise.resolve()
+      : warnContractor({
+          contractorId: args.contractorId,
+          email: ct?.email,
+          businessName: ct?.business_name,
+          rule: args.rule,
+          // The hold in force, which an admin or an earlier attempt may have set
+          // longer than this one would.
+          until: already ? (ct.messages_moderated_until as string) : until,
+        }),
     notifyAdmins(
       `Contact-detail attempt: ${who}, messages now held`,
       [
@@ -91,6 +178,7 @@ export async function holdAfterContactAttempt(args: {
       ].join('\n'),
     ),
   ]);
+  return { paidOnly };
 }
 
 /** One warning per contractor per this many days, however many attempts. */
@@ -188,6 +276,7 @@ export async function flagOffPlatform(args: {
     submissionId: args.submissionId,
     contractorId: args.contractorId,
   });
+  if (args.sender === 'contractor') await strikeAfterAttempt({ contractorId: args.contractorId, submissionId: args.submissionId });
 
   let who = args.sender === 'customer' ? 'The customer' : 'A contractor';
   if (args.contractorId) {

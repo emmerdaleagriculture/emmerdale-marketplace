@@ -247,6 +247,29 @@ export async function setServicesOnly(formData: FormData) {
   revalidatePath(`/admin/contractors/${id}`);
 }
 
+/**
+ * Paid accounts only: after a second contact attempt a contractor still
+ * receives jobs but can't price them or message customers before award
+ * without a paid membership (contractor_paid_only, 20261126200000). Set
+ * automatically by strikeAfterAttempt; here to lift it, or set it by hand.
+ * No email either way.
+ */
+export async function setPaidOnly(formData: FormData) {
+  await assertAdmin();
+
+  const id = String(formData.get('id') || '');
+  const on = String(formData.get('paid_only') || '') === '1';
+  if (!id) throw new Error('Invalid request');
+
+  const admin = createServiceRoleClient();
+  const { error } = await admin
+    .from('contractors')
+    .update({ paid_only_since: on ? new Date().toISOString() : null })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/contractors/${id}`);
+}
+
 /** Further than any two points in the UK: a radius that never excludes a job. */
 const NATIONWIDE_RADIUS_MILES = 1000;
 

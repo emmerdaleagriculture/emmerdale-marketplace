@@ -10,7 +10,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getInvitationByToken } from '@/lib/sealedQuotes/data';
 import { getRecentOwnBodies, getThreadState, markThreadRead } from '@/lib/sealedQuotes/messages';
-import { messageRefusal, normaliseMessage, postRefusal } from '@/lib/sealedQuotes/messageText';
+import { messageRefusal, normaliseMessage, postRefusal, PAID_ONLY_PRICE } from '@/lib/sealedQuotes/messageText';
 import { readMessagePhotos, removeMessagePhotos, uploadMessagePhotos } from '@/lib/sealedQuotes/messagePhotos';
 import { flagOffPlatform, holdAfterContactAttempt, recordRefusal } from '@/lib/sealedQuotes/offPlatformAlert';
 import { runVisitOp } from '@/lib/sealedQuotes/visits';
@@ -160,6 +160,8 @@ export async function submitQuoteAction(
         return { error: 'You’ve passed on this job. If that’s changed, get in touch and we’ll re-open it.' };
       case 'suspended':
         return { error: 'Your account is no longer active, so this price can’t be sent.' };
+      case 'upgrade_required':
+        return { error: PAID_ONLY_PRICE };
       case 'not_found':
         return { error: 'This link is not valid.' };
       default:
@@ -271,14 +273,17 @@ export async function sendContractorMessageAction(
       });
       // A contact detail or another channel: one attempt and their messages
       // before award wait for an admin, so a reworded second try is caught.
-      await holdAfterContactAttempt({
+      const { paidOnly } = await holdAfterContactAttempt({
         rule: refusal.flag,
         body,
         submissionId: invitation.submission?.id,
         contractorId: invitation.contractor_id,
       });
+      if (paidOnly) revalidatePath(`/quote/${token}`);
       return {
-        error: `${refusal.text} Your messages will now be checked by us before they are passed on.`,
+        error: paidOnly
+          ? `${refusal.text} This is the second time, so from now on you need a paid membership to price jobs or message customers. We’ve emailed you the details.`
+          : `${refusal.text} Your messages will now be checked by us before they are passed on.`,
         body,
       };
     }
@@ -321,6 +326,13 @@ export async function contractorVisitAction(_prev: FormState, formData: FormData
   const invitation = await getInvitationByToken(token);
   if (!invitation) return { error: 'This link is not valid.' };
 
+  // Proposing or answering a visit before award is writing to the customer.
+  if ((await getThreadState(invitation.id)) === 'pre_award') {
+    const { data: paidOnly } = await createServiceRoleClient().rpc('contractor_paid_only', {
+      p_contractor_id: invitation.contractor_id,
+    });
+    if (paidOnly === true) return { error: postRefusal('upgrade_required') };
+  }
   const res = await runVisitOp(invitation.id, 'contractor', formData);
   if (res.ok) revalidatePath(`/quote/${token}`);
   return res;

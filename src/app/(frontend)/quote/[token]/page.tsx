@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { MEMBERSHIP_PRICES } from '@/lib/membership';
+import { PAID_ONLY_MESSAGE } from '@/lib/sealedQuotes/messageText';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { after } from 'next/server';
@@ -84,7 +86,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
     getThreadVisits(invitation.id),
     visitBlocked(invitation.id, 'contractor'),
     getPassOnCurrentPrice(js.id, invitation.contractor_id),
-    admin.from('contractors').select('status').eq('id', invitation.contractor_id).maybeSingle(),
+    admin.from('contractors').select('status, paid_only_since').eq('id', invitation.contractor_id).maybeSingle(),
   ]);
   // Suspended: the thread is the banner alone, and the words stay on the server.
   const suspended = contractorRes.data?.status === 'suspended';
@@ -168,6 +170,10 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
   // so what the thread says and what it enforces come from one answer. Not
   // `revealed`: that also fails on a closed job or a transient RPC error.
   const isOpen = openRes.data === true;
+  // A second contact attempt (contractor_paid_only, 20261126200000): the job
+  // is still theirs to read and pass on, but pricing it and writing to the
+  // customer before award wait for a paid membership.
+  const paidOnly = Boolean(contractorRes.data?.paid_only_since) && !isPremium;
 
   // An Open member sees the customer's details on every live invitation
   // (20261019120000). The RPC decides who and when — not Open, passed, or
@@ -451,6 +457,18 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                 />
               )}
 
+              {paidOnly ? (
+                <div id="price" className={q.closedPanel} role="alert">
+                  <strong>You need a paid membership to price this job.</strong> This follows a
+                  second attempt to pass contact details or take work off the site, which is
+                  against clause 8 of the contractor terms. You still receive every job as before.
+                  Join Pro (£{MEMBERSHIP_PRICES.premium.monthly} a month) or Premium (£
+                  {MEMBERSHIP_PRICES.open.monthly} a month) and you can price this one straight away.
+                  <p style={{ margin: '12px 0 0' }}>
+                    <Link href="/account/membership">See membership</Link>
+                  </p>
+                </div>
+              ) : (
               <div id="price">
                 <QuoteForm
                   token={token}
@@ -464,6 +482,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                   defaultValidUntil={js.expires_at ? js.expires_at.slice(0, 10) : null}
                 />
               </div>
+              )}
 
               {!live && (
                 <div id="pass">
@@ -505,14 +524,14 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
                     ? `Until ${formatDate(moderatedUntil.toISOString())}, your messages with customers are checked by a moderator before they are delivered, and so are theirs to you. This follows contact details being exchanged before a job was booked, which is against clause 8 of the contractor terms. Replies may take a few hours to reach the customer, and they may book another contractor in the meantime.`
                     : undefined
                 }
-                action={threadState === 'closed' ? null : sendContractorMessageAction}
+                action={threadState === 'closed' || (paidOnly && threadState === 'pre_award') ? null : sendContractorMessageAction}
                 monitored={!isOpen}
-                closedNote="This conversation has closed."
+                closedNote={threadState === 'closed' ? 'This conversation has closed.' : PAID_ONLY_MESSAGE}
                 hidden={{ token }}
                 unread={unread}
                 markRead={markContractorThreadReadAction.bind(null, token)}
                 visits={visits}
-                visitAction={visitBlock ? null : contractorVisitAction}
+                visitAction={visitBlock || (paidOnly && threadState === 'pre_award') ? null : contractorVisitAction}
                 visitContact={visitContact}
               />
             </>
