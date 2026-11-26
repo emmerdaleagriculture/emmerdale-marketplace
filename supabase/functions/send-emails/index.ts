@@ -333,6 +333,10 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `take a few hours to arrive.\n\n` +
           `We do it because the customer pays us, we carry the insurance on every job and we ` +
           `chase the balance, and none of that works for a job arranged privately.\n\n` +
+          `It also costs more than it gains. A contractor who takes work off the site is removed ` +
+          `from it, and loses every job that would have come after. As an example: six jobs from ` +
+          `us over the next 12 months, at an average of £500 a job, is £3,000 of work given up ` +
+          `for the sake of one.\n\n` +
           `If you'd rather ring customers and agree the work directly, that's exactly what Premium ` +
           `membership is for: the customer's name, phone and email on every job you're invited ` +
           `to, the moment it arrives, and you can agree the work with them directly with ` +
