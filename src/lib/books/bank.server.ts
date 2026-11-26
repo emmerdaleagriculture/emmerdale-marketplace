@@ -8,6 +8,7 @@ import { accountMap, allLines, businessTypeOf, getAccounts, ledgerForPosting, ty
 import { bookedTwice, classify, compareFrom, isStripePayout, payoutDue, reconcile, receiptsNotPaid, rowExternalId, rowPosting, suggest, MATCH_DAYS, type BookLine, type Choice, type OpenBill, type OpenInvoice, type PayeeHistory } from './bank';
 import { categoriseRows } from './bankAi';
 import { loadRules } from './rules.server';
+import { unpaidInvoice } from './receiptRules';
 import { payeeKey, type BankRow } from './bankCsv';
 import { loadInvoice, recordPayment } from './invoices.server';
 
@@ -33,6 +34,8 @@ export async function loadStatement(ledgerId: string, id: number): Promise<State
     .maybeSingle();
   return data ? ({ ...data, rows: data.rows as unknown as BankRow[] } as Statement) : null;
 }
+
+const ukDate = (iso: string) => iso.split('-').reverse().join('/');
 
 /** Lines on one account from a few days before to a few days after a range: + in, − out. */
 async function bookLines(ledgerId: string, code: string, start: string, end: string): Promise<BookLine[]> {
@@ -130,8 +133,9 @@ async function openBills(ledger: Ledger): Promise<OpenBill[]> {
 /**
  * A statement saying otherwise: receipts are booked as paid from the bank
  * when they arrive; one dated within this statement that it doesn't show
- * wasn't. A purchase was paid by the owner personally (the director's loan,
- * or capital introduced); a sale is still owed (debtors). Its entry moves
+ * wasn't. A purchase invoice that asks for payment is a bill on credit
+ * (creditors); any other purchase was paid by the owner personally (the
+ * director's loan, or capital introduced); a sale is still owed (debtors). Its entry moves
  * off the bank to there, and a payment a statement shows after all clears it.
  * Returns how many moved.
  */
@@ -186,14 +190,15 @@ export async function moveUnpaidReceipts(ledger: Ledger, st: Statement): Promise
   const bankId = idOf(st.account_code);
   const { data: receipts } = await admin
     .from('books_receipts')
-    .select('id, entry_id, doc_type, notes')
+    .select('id, entry_id, doc_type, notes, extracted')
     .eq('ledger_id', ledger.id)
     .eq('status', 'posted')
     .eq('payment_account_code', st.account_code)
     .in('entry_id', left.map((l) => l.entry_id));
   let moved = 0;
   for (const r of receipts ?? []) {
-    const code = r.doc_type === 'sale' ? '1100' : personalAccountCode(businessTypeOf(ledger));
+    const bill = r.doc_type === 'sale' ? null : unpaidInvoice(r.extracted);
+    const code = r.doc_type === 'sale' ? '1100' : bill ? '2100' : personalAccountCode(businessTypeOf(ledger));
     const to = idOf(code);
     if (!to || !bankId || !r.entry_id) continue;
     const { data: changed, error } = await admin
@@ -210,7 +215,9 @@ export async function moveUnpaidReceipts(ledger: Ledger, st: Statement): Promise
     const note =
       r.doc_type === 'sale'
         ? `Your statement to ${st.end_date} shows no payment for this: recorded as owed to you (1100 Trade debtors).`
-        : `Your statement to ${st.end_date} shows no payment of this: recorded as paid by you personally (${code} ${accounts.find((a) => a.code === code)?.name ?? ''}). If it is still to pay, void it and change what paid it.`;
+        : bill
+          ? `Your statement to ${st.end_date} shows no payment of this, and the invoice asks for payment${bill.due ? ` by ${ukDate(bill.due)}` : ''}: recorded as still to pay (2100 Trade creditors). The payment clears it when a statement shows it.`
+          : `Your statement to ${st.end_date} shows no payment of this: recorded as paid by you personally (${code} ${accounts.find((a) => a.code === code)?.name ?? ''}). If it is still to pay, void it and change what paid it.`;
     await admin
       .from('books_receipts')
       .update({ payment_account_code: code, notes: [r.notes, note].filter(Boolean).join('\n') })

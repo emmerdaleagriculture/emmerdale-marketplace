@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blockingReasons, cleanConfidence, completeAmounts, fieldsFromRead, toPence } from './receiptRules';
+import { blockingReasons, cleanConfidence, completeAmounts, fieldsFromRead, toPence, unpaidInvoice } from './receiptRules';
 import { chartFor } from './chart';
 import type { AccountInfo, LedgerForPosting } from './posting';
 import type { ReceiptRead } from './receiptAi';
@@ -24,6 +24,7 @@ const read = (over: Partial<ReceiptRead> = {}): ReceiptRead => ({
   gross_amount: 105,
   vat_code: 'RED',
   is_paid: true,
+  payment_due_date: null,
   account_code: '5160',
   mileage_miles: null,
   description: 'Red diesel',
@@ -74,6 +75,16 @@ describe('receipt rules', () => {
   it('not a financial document goes to review with one reason', () => {
     const r = read({ is_financial_document: false, document_type: 'other' });
     expect(blockingReasons(fieldsFromRead(r, registered, accounts, '1200'), r, registered, accounts, { sameEntryExists: false })).toHaveLength(1);
+  });
+
+  it('what a statement that shows no payment makes of it: an invoice still due is a bill, anything else was paid another way', () => {
+    expect(unpaidInvoice(read({ is_paid: false, payment_due_date: '2026-12-10' }))).toEqual({ due: '2026-12-10' });
+    // A read from before the due date was recorded, or a date that isn't one.
+    expect(unpaidInvoice({ is_paid: false })).toEqual({ due: null });
+    expect(unpaidInvoice(read({ is_paid: false, payment_due_date: '10 December' }))).toEqual({ due: null });
+    // A till receipt, a hand-entered or imported receipt with no read.
+    expect(unpaidInvoice(read({ is_paid: true }))).toBeNull();
+    expect(unpaidInvoice(null)).toBeNull();
   });
 
   it('an invoice not marked paid is still assumed paid from the bank', () => {
