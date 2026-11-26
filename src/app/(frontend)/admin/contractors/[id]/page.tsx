@@ -334,9 +334,9 @@ export default async function ContractorDetailPage({
           </button>
         </form>
       </div>
-      {/* Removal is the Suspend button below; this is the step before it. */}
+      {/* A written warning by hand; the automatic one goes out on a refused message. */}
       <details className={s.fold} open={!!warnJobId}>
-        <summary>Send a warning: one more attempt to go off the platform means removal</summary>
+        <summary>Send a warning: one more attempt to go off the platform means a paid account to price</summary>
         <form action={sendContractorWarning}>
           <input type="hidden" name="id" value={c.id} />
           {warnJobId && <input type="hidden" name="submission_id" value={warnJobId} />}

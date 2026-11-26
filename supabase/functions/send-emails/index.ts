@@ -334,12 +334,10 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `take a few hours to arrive.\n\n` +
           `We do it because the customer pays us, we carry the insurance on every job and we ` +
           `chase the balance, and none of that works for a job arranged privately.\n\n` +
-          `It also costs more than it gains. A contractor who takes work off the site is removed ` +
-          `from it, and loses every job that would have come after. As an example: six jobs from ` +
-          `us over the next 12 months, at an average of £500 a job, is £3,000 of work given up ` +
-          `for the sake of one.\n\n` +
-          `If it happens a second time, you'll still receive jobs but will need a paid ` +
-          `membership to price them or to message customers.\n\n` +
+          `If it happens a second time, you'll still receive every job, but you'll need a paid ` +
+          `membership to price them or to message customers. That puts a lot at stake for the ` +
+          `sake of one job. As an example: six jobs from us over the next 12 months, at an ` +
+          `average of £500 a job, is £3,000 of work.\n\n` +
           `If you'd rather ring customers and agree the work directly, that's exactly what Premium ` +
           `membership is for: the customer's name, phone and email on every job you're invited ` +
           `to, the moment it arrives, and you can agree the work with them directly with ` +
@@ -374,7 +372,6 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `customer's name, phone and email on every job you're invited to, so you can ring ` +
           `them and agree the work directly.\n\n` +
           `Join here and you can price straight away: ${SITE_URL}/account/membership\n\n` +
-          `A further attempt to take work off the site means removal from the network.\n\n` +
           `If you think the message was refused by mistake, reply to this email and we'll look at it.`,
       };
     }
