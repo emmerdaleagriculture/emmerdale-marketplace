@@ -862,6 +862,7 @@ export type Database = {
           premium_comped_until: string | null
           open_comped_until: string | null
           premium_reinstated_at: string | null
+          paid_only_since: string | null
           services_only: boolean
           invite_radius_miles: number | null
           messages_moderated_until: string | null
@@ -901,6 +902,7 @@ export type Database = {
           premium_comped_until?: string | null
           open_comped_until?: string | null
           premium_reinstated_at?: string | null
+          paid_only_since?: string | null
           services_only?: boolean
           invite_radius_miles?: number | null
           messages_moderated_until?: string | null
@@ -940,6 +942,7 @@ export type Database = {
           premium_comped_until?: string | null
           open_comped_until?: string | null
           premium_reinstated_at?: string | null
+          paid_only_since?: string | null
           services_only?: boolean
           invite_radius_miles?: number | null
           messages_moderated_until?: string | null
@@ -4842,6 +4845,10 @@ export type Database = {
       }
       admin_premium_summary: { Args: never; Returns: Json }
       contractor_is_premium: {
+        Args: { p_contractor_id: string }
+        Returns: boolean
+      }
+      contractor_paid_only: {
         Args: { p_contractor_id: string }
         Returns: boolean
       }

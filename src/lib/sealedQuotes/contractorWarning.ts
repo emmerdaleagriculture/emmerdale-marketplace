@@ -1,7 +1,8 @@
 /**
  * The warning an admin sends a contractor caught trying to take a customer
- * off the platform: the step before removal (contractor terms clauses 7 and
- * 8). Sent as an admin_direct email, so the admin can edit the words first;
+ * off the platform (contractor terms clauses 7 and 8). Nobody is removed
+ * for it any more: a second attempt means a paid membership to price or
+ * message (contractor_paid_only). Sent as an admin_direct email, so the admin can edit the words first;
  * this is only the starting draft.
  */
 export const WARNING_SUBJECT = 'A warning about your Emmerdale Agriculture account';
@@ -20,7 +21,7 @@ export function warningDraft({
   return [
     `Hello${contactName ? ` ${contactName}` : ''},`,
     `${what} That isn't allowed. Until a customer accepts your price, every conversation goes through the messages on the site, and the job is booked and paid for through us. Clause 8 of our contractor terms says you mustn't solicit a customer we introduced for work outside the platform.`,
-    `This is a formal warning. If it happens again we'll remove your account, and you won't receive any more jobs from us.`,
+    `This is a formal warning. If it happens again you'll still receive jobs from us, but you'll need a paid membership (Pro or Premium) to price them or to message customers.`,
     `If you think we've got this wrong, reply to this email or write to tom@emmerdaleagriculture.com.`,
     `Tom\nEmmerdale Agriculture`,
   ].join('\n\n');

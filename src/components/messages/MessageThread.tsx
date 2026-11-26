@@ -63,7 +63,7 @@ type Props = {
  * messages in Sep 2026. Contractors only — customers aren't shown it.
  */
 const MONITORED =
-  'Messages are monitored. Any attempt to take work off the platform (swapping contact details before a job is booked, or arranging to be paid directly) can lead to your messages being moderated or to being removed from the network.';
+  'Messages are monitored. Any attempt to take work off the platform (swapping contact details before a job is booked, or arranging to be paid directly) can lead to your messages being moderated, and a second attempt means you need a paid membership to price jobs or message customers.';
 
 /**
  * One customer↔contractor conversation. Rendered on the server's list of
