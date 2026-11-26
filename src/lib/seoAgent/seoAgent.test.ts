@@ -158,3 +158,23 @@ describe('holdsQuery (cooldown)', () => {
     expect(holdsQuery({ status: 'superseded', created_at: daysAgo(10), decided_at: daysAgo(10) }, now)).toBe(true);
   });
 });
+
+describe('write an article on request', () => {
+  const base = { type: 'new_article', status: 'superseded', related_note_id: null, review_notes: null };
+
+  it('offers it for a deferred or failed article row', async () => {
+    const { canWriteArticle } = await import('./writeArticle');
+    expect(canWriteArticle({ ...base, review_notes: 'Deferred: over the per-run article cap. Not held back; raised again next run.' })).toBe(true);
+    expect(canWriteArticle({ ...base, status: 'pending' })).toBe(true);
+    expect(canWriteArticle({ ...base, status: 'approved' })).toBe(true);
+  });
+
+  it('never for a row that already has a note, a held-back row, a closed row or another type', async () => {
+    const { canWriteArticle } = await import('./writeArticle');
+    expect(canWriteArticle({ ...base, status: 'pending', related_note_id: 'n1' })).toBe(false);
+    expect(canWriteArticle({ ...base, review_notes: 'Held back: #22 raised or resolved this query within the cooldown.' })).toBe(false);
+    expect(canWriteArticle({ ...base, status: 'completed' })).toBe(false);
+    expect(canWriteArticle({ ...base, status: 'rejected' })).toBe(false);
+    expect(canWriteArticle({ ...base, type: 'on_page_tweak', status: 'pending' })).toBe(false);
+  });
+});
