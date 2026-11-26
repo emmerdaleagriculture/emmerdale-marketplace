@@ -42,5 +42,8 @@ export const NO_OBLIGATION = 'Free and no obligation: you’re not booking anyth
 /** The same promise in four words, for a card with no room for the rest. */
 export const NO_OBLIGATION_SHORT = 'Free and no obligation.';
 
-export const OPERATOR_QUESTION = 'Run an agricultural contracting business?';
+export const OPERATOR_QUESTION =
+  'Run an agricultural contracting, paddock management or smallholding management business?';
+/** The app's welcome screen has one line for it. */
+export const OPERATOR_QUESTION_SHORT = 'Run an agricultural contracting business?';
 export const OPERATOR_CTA = 'Apply to join';
