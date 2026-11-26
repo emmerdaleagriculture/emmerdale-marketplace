@@ -162,13 +162,17 @@ export async function moveUnpaidReceipts(ledger: Ledger, st: Statement): Promise
   }
   // The statement does show it, but its row was booked on its own: that entry
   // goes (the receipt knows more) and the receipt stays paid from the bank.
+  // Only a row booked as the same kind of thing: never a pot transfer or
+  // another journal that happens to be the same amount.
   for (const [receiptEntry, rowEntry] of bookedTwice(left, lines)) {
+    const amount = left.find((l) => l.entry_id === receiptEntry)?.amount ?? 0;
     const { data: gone, error } = await admin
       .from('books_entries')
       .delete()
       .eq('ledger_id', ledger.id)
       .eq('id', rowEntry)
       .eq('source', 'bank')
+      .eq('kind', amount < 0 ? 'purchase' : 'sale')
       .like('external_id', 'bank:%')
       .is('receipt_id', null)
       .is('meta->>pays_receipt', null)
@@ -206,7 +210,7 @@ export async function moveUnpaidReceipts(ledger: Ledger, st: Statement): Promise
     const note =
       r.doc_type === 'sale'
         ? `Your statement to ${st.end_date} shows no payment for this: recorded as owed to you (1100 Trade debtors).`
-        : `Your statement to ${st.end_date} shows no payment of this: recorded as paid by you personally (${code}). If it is still to pay, void it and change what paid it.`;
+        : `Your statement to ${st.end_date} shows no payment of this: recorded as paid by you personally (${code} ${accounts.find((a) => a.code === code)?.name ?? ''}). If it is still to pay, void it and change what paid it.`;
     await admin
       .from('books_receipts')
       .update({ payment_account_code: code, notes: [r.notes, note].filter(Boolean).join('\n') })
