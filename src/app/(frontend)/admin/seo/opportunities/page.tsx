@@ -5,7 +5,9 @@ import type { MetaRewriteDraft, NewArticleDraft, OnPageTweakDraft, PageShare } f
 import { StatusPill, ago } from '../../ui';
 import s from '../../admin.module.css';
 import styles from '../seo.module.css';
-import { decideOpportunityAction } from './actions';
+import { canWriteArticle } from '@/lib/seoAgent/writeArticle';
+import { decideOpportunityAction, publishArticleAction, writeArticleAction } from './actions';
+import { PendingButton } from './PendingButton';
 
 export const metadata: Metadata = {
   title: 'Cheatcode · Admin',
@@ -13,6 +15,8 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-dynamic';
+// "Write the article" is a server action on this page: one Opus draft can take two minutes.
+export const maxDuration = 300;
 
 const TABS = [
   { key: 'open', label: 'To review', statuses: ['pending', 'approved'] },
@@ -36,7 +40,10 @@ function pathOf(url: string | null): string {
   }
 }
 
-function Draft({ type, draft, noteId }: { type: string; draft: unknown; noteId: string | null }) {
+type NoteState = { id: string; slug: string; published: boolean; published_at: string | null };
+
+function Draft({ type, draft, note, writable }: { type: string; draft: unknown; note: NoteState | null; writable: boolean }) {
+  if (!draft && writable) return <p className={styles.dim}>Not written yet.</p>;
   if (!draft) return <p className={styles.dim}>No draft (budget or time limit, deferred, or the model returned nothing usable).</p>;
   if (type === 'meta_rewrite') {
     const d = draft as MetaRewriteDraft;
@@ -95,10 +102,17 @@ function Draft({ type, draft, noteId }: { type: string; draft: unknown; noteId: 
       <br />
       <span className={styles.dim}>{d.metaDescription}</span>
       <br />
-      {noteId ? (
-        <Link href={`/admin/notes/${noteId}`}>Open the unpublished draft note</Link>
-      ) : (
+      {!note ? (
         <span className={styles.dim}>The draft note wasn’t created; the text is in the row’s draft_content.</span>
+      ) : note.published ? (
+        <>
+          <strong>Published{note.published_at ? ` ${new Date(note.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/London' })}` : ''}.</strong>{' '}
+          <a href={`/notes/${note.slug}`}>View it</a> · <Link href={`/admin/notes/${note.id}`}>Edit</Link>
+        </>
+      ) : (
+        <>
+          <strong>Written, not published.</strong> <Link href={`/admin/notes/${note.id}`}>Read and edit the draft</Link>
+        </>
       )}
     </p>
   );
@@ -118,6 +132,11 @@ export default async function OpportunitiesPage({
     .in('status', [...tab.statuses])
     .order('created_at', { ascending: false })
     .limit(100);
+  const noteIds = (rows ?? []).flatMap((r) => (r.related_note_id ? [r.related_note_id] : []));
+  const { data: noteRows } = noteIds.length
+    ? await db.from('notes').select('id, slug, published, published_at').in('id', noteIds)
+    : { data: [] as NoteState[] };
+  const notes = new Map((noteRows ?? []).map((n) => [n.id, n]));
 
   return (
     <main className={styles.page}>
@@ -151,6 +170,10 @@ export default async function OpportunitiesPage({
       {(rows ?? []).map((r) => {
         const competing = (r.competing_pages as PageShare[] | null) ?? [];
         const related = (r.related_queries as Array<{ query: string }> | null) ?? [];
+        const note = r.related_note_id ? (notes.get(r.related_note_id) ?? null) : null;
+        const open = r.status === 'pending' || r.status === 'approved';
+        const writable = canWriteArticle(r);
+        const publishable = r.type === 'new_article' && open && note !== null && !note.published;
         return (
           <section key={r.id} className={`${s.card} ${styles.opp}`}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
@@ -175,14 +198,32 @@ export default async function OpportunitiesPage({
               </p>
             )}
             <p className={styles.why}>{r.rationale}</p>
-            <Draft type={r.type} draft={r.draft_content} noteId={r.related_note_id} />
+            <Draft type={r.type} draft={r.draft_content} note={note} writable={writable} />
+            {(writable || publishable) && (
+              <form className={styles.decide}>
+                <input type="hidden" name="id" value={r.id} />
+                {writable && (
+                  <>
+                    <PendingButton formAction={writeArticleAction} className={s.btnApprove} pendingLabel="Writing… a minute or two">
+                      Write the article
+                    </PendingButton>
+                    <span className={styles.dim}>Saved as an unpublished note for you to read before it goes live.</span>
+                  </>
+                )}
+                {publishable && (
+                  <PendingButton formAction={publishArticleAction} className={s.btnApprove} pendingLabel="Publishing…">
+                    Publish as written
+                  </PendingButton>
+                )}
+              </form>
+            )}
             {r.review_notes && <p style={{ whiteSpace: 'pre-wrap' }}><strong>Notes:</strong> {r.review_notes}</p>}
 
             {r.status !== 'superseded' && (
               <form className={styles.decide}>
                 <input type="hidden" name="id" value={r.id} />
                 <input name="note" placeholder="Note (optional)" aria-label="Note (optional)" className={styles.decideNote} />
-                {r.status === 'pending' && (
+                {r.status === 'pending' && r.type !== 'new_article' && (
                   <button type="submit" formAction={decideOpportunityAction.bind(null, 'approve')} className={s.btnApprove}>
                     Approve
                   </button>
