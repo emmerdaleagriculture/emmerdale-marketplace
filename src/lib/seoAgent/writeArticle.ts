@@ -11,7 +11,7 @@
 
 import { draftArticle } from './generate';
 import { SpendBudget } from './llm';
-import { createDraftNote, loadSiteDocs, type Db } from './persist';
+import { createDraftNote, holdsQuery, loadSiteDocs, type Db } from './persist';
 import type { Json } from '@/lib/database.types';
 
 /** Per-article spend cap. One Opus draft is roughly $0.20-0.40. */
@@ -51,6 +51,18 @@ export async function writeArticleFor(db: Db, id: number): Promise<WriteArticleR
   if (!row) return { ok: false, error: 'Opportunity not found.' };
   // Re-checked here, not just on the page: a second click must not write a second note.
   if (!canWriteArticle(row)) return { ok: false, error: 'This row already has an article, or is not an article recommendation.' };
+
+  // An old shelved row can outlive a later one for the same query that did
+  // get its article: writing here would make a second article on one topic.
+  const { data: others, error: othersErr } = await db
+    .from('seo_opportunities')
+    .select('id, status, created_at, decided_at')
+    .eq('query', row.query)
+    .neq('id', id)
+    .limit(50);
+  if (othersErr) return { ok: false, error: othersErr.message };
+  const holder = (others ?? []).find((r) => holdsQuery(r));
+  if (holder) return { ok: false, error: `#${holder.id} already covers this query (open, or decided within the cooldown).` };
 
   let docs: Awaited<ReturnType<typeof loadSiteDocs>>;
   try {
