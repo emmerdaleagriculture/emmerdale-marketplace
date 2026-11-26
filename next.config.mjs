@@ -46,6 +46,16 @@ const nextConfig = {
    * protection is on and absent otherwise, so locally this does nothing.
    */
   webpack(config, { dev, webpack }) {
+    // The React that Next bundles throws away a "data has arrived" ping that
+    // fires mid-render, which left clicks inside a section with a loading.tsx
+    // doing nothing (37 in 120, 2026-11-26). The loader makes React's own
+    // one-line correction as that file is compiled, and stops the build if a
+    // Next upgrade has changed the line. The whole story is at the top of it.
+    config.module.rules.push({
+      test: /[\\/]next[\\/]dist[\\/]compiled[\\/]react-dom(?:-experimental)?[\\/]cjs[\\/]react-dom-client\.(?:production|development)\.js$/,
+      loader: fileURLToPath(new URL('./webpack/reactRenderPhasePing.cjs', import.meta.url)),
+    });
+
     const dpl = process.env.NEXT_DEPLOYMENT_ID;
     if (!dev && dpl) {
       const { Compilation, sources } = webpack;
