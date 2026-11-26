@@ -74,6 +74,7 @@ const REPLY_DOMAIN = (Deno.env.get('SQ_INBOUND_REPLY_DOMAIN') ?? '').trim();
 // belongs here for the same reason as the rest: during testing it must not
 // reach a real contractor.
 const SQ_CONTRACTOR_KINDS = new Set([
+  'sq_paid_only',
   'sq_invitation', 'sq_invitation_reminder',
   'sq_award_won', 'sq_award_lost', 'sq_quote_confirm', 'sq_invoice_chase',
   'sq_invoice_request', 'sq_invoice_received', 'sq_payout_sent',
@@ -337,6 +338,8 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           `from it, and loses every job that would have come after. As an example: six jobs from ` +
           `us over the next 12 months, at an average of £500 a job, is £3,000 of work given up ` +
           `for the sake of one.\n\n` +
+          `If it happens a second time, you'll still receive jobs but will need a paid ` +
+          `membership to price them or to message customers.\n\n` +
           `If you'd rather ring customers and agree the work directly, that's exactly what Premium ` +
           `membership is for: the customer's name, phone and email on every job you're invited ` +
           `to, the moment it arrives, and you can agree the work with them directly with ` +
@@ -344,6 +347,35 @@ function render(kind: string, p: Record<string, unknown>): { subject: string; te
           openOfferClose(premium) +
           `\n\n` +
           `If the message was refused by mistake, reply to this email and we'll look at it.`,
+      };
+    }
+
+    /**
+     * A second attempt to pass contact details or take a job off the site
+     * (offPlatformAlert.ts strikeAfterAttempt): contractors.paid_only_since
+     * is set, and pricing or pre-award messages now need a paid membership.
+     * Only sent to a contractor with no membership.
+     */
+    case 'sq_paid_only': {
+      return {
+        subject: 'You now need a paid membership to price jobs',
+        text:
+          `Hello${p.business_name ? ` ${p.business_name}` : ''},\n\n` +
+          `A message of yours has been refused for a second time for trying to pass contact ` +
+          `details to a customer, or to arrange work or payment outside the site. That is ` +
+          `against clauses 7 and 8 of the contractor terms, and we wrote to you about it the first time.\n\n` +
+          `From now on:\n` +
+          `- You still receive every job in your area, as before.\n` +
+          `- To send a price, or to message a customer before a job is booked, you need a paid ` +
+          `membership.\n` +
+          `- Jobs you have already won are not affected.\n\n` +
+          `Pro is £20 a month or £199 a year: first refusal on new jobs and 5% commission ` +
+          `instead of 15%. Premium is £49 a month or £399 a year: everything in Pro, plus the ` +
+          `customer's name, phone and email on every job you're invited to, so you can ring ` +
+          `them and agree the work directly.\n\n` +
+          `Join here and you can price straight away: ${SITE_URL}/account/membership\n\n` +
+          `A further attempt to take work off the site means removal from the network.\n\n` +
+          `If you think the message was refused by mistake, reply to this email and we'll look at it.`,
       };
     }
 

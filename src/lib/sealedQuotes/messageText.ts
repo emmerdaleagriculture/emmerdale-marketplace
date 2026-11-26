@@ -203,6 +203,16 @@ export function normaliseMessage(body: string): string {
   return body.replace(/\r\n?/g, '\n').trim();
 }
 
+/**
+ * After a second attempt to pass contact details or take a job off the site
+ * (contractors.paid_only_since): jobs still arrive, but pricing them and
+ * writing to the customer before award need a paid membership.
+ */
+export const PAID_ONLY_PRICE =
+  'Pricing jobs now needs a paid membership, after a second attempt to pass contact details or take work off the site. Join Pro or Premium on your membership page and you can price this job straight away.';
+export const PAID_ONLY_MESSAGE =
+  'Messaging customers before a job is booked now needs a paid membership, after a second attempt to pass contact details or take work off the site. Join Pro or Premium on your membership page.';
+
 /** The sentence for each refusal sq_post_message can return. */
 export function postRefusal(reason: string | undefined): string {
   switch (reason) {
@@ -216,6 +226,8 @@ export function postRefusal(reason: string | undefined): string {
       return 'That’s too many photos for one message. Send up to four at a time.';
     case 'no_thread':
       return 'You can message a contractor once they’ve sent a price or a question.';
+    case 'upgrade_required':
+      return PAID_ONLY_MESSAGE;
     default:
       return 'That didn’t send. Please try again.';
   }
