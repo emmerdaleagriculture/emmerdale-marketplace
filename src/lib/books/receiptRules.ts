@@ -80,9 +80,22 @@ export function fieldsFromRead(
     account_code: account,
     // Assumed paid, whatever the document says: an invoice still due is paid
     // within days more often than not. A bank statement that shows no payment
-    // moves it to creditors (or debtors): moveUnpaidReceipts in bank.server.
+    // moves it: an invoice still due to creditors, anything else to the
+    // owner's account (a sale to debtors). moveUnpaidReceipts in bank.server.
     payment_account_code: defaultPayment,
   };
+}
+
+/**
+ * What a stored read says about a purchase the bank statement doesn't show:
+ * an invoice still due (it asks for payment, by a date if it gives one) is
+ * a bill on credit; anything else was paid some other way. Reads from
+ * before payment_due_date existed have is_paid only.
+ */
+export function unpaidInvoice(extracted: unknown): { due: string | null } | null {
+  const x = (extracted ?? {}) as { is_paid?: unknown; payment_due_date?: unknown };
+  if (x.is_paid !== false) return null;
+  return { due: typeof x.payment_due_date === 'string' && isIsoDate(x.payment_due_date) ? x.payment_due_date : null };
 }
 
 /** The AI's confidence as 0–1; anything else (a percentage, NaN) counts as unsure. */
