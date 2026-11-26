@@ -113,8 +113,8 @@ async function openBills(ledgerId: string): Promise<OpenBill[]> {
 
 /**
  * A statement saying otherwise: receipts are booked as paid from the bank
- * when they arrive; one this statement has had every chance to show, and
- * doesn't, wasn't. Its entry moves off the bank to creditors (a sale's, to
+ * when they arrive; one dated within this statement that it doesn't show
+ * wasn't, as far as the statement goes. Its entry moves off the bank to creditors (a sale's, to
  * debtors), where the payment clears it when a statement does show it.
  * Returns how many moved.
  */
@@ -196,7 +196,7 @@ export async function checkReceiptAgainstStatements(ledger: Ledger, f: { doc_dat
       .eq('ledger_id', ledger.id)
       .eq('account_code', f.payment_account_code)
       .lte('start_date', f.doc_date)
-      .gte('end_date', addDays(f.doc_date, MATCH_DAYS))
+      .gte('end_date', f.doc_date)
       .order('end_date', { ascending: false })
       .limit(1);
     const st = data?.[0] ? await loadStatement(ledger.id, data[0].id) : null;

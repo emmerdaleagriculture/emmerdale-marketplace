@@ -269,18 +269,20 @@ describe('suggest', () => {
 });
 
 describe('receipts assumed paid', () => {
-  it('a receipt the statement had its full chance to show, and didn’t, was not paid', () => {
+  it('a receipt dated within the statement that it doesn’t show was not paid', () => {
     const rows = [row('2026-11-03', -16800, 'Snap-on')];
     const lines = [
       line(1, '2026-11-01', -16800, 'receipt:1'),
       line(2, '2026-11-10', -50000, 'receipt:2'),
-      // Too close to the end of the statement: the payment may be on the next one.
-      line(3, '2026-11-27', -11339, 'receipt:3'),
+      // Days before the statement ends: still on the bank, it would leave the books short of the statement.
+      line(3, '2026-11-28', -11339, 'receipt:3'),
       // Not a receipt's entry: never moved.
       line(4, '2026-11-10', -999),
+      // After the statement ends: for the next one to say.
+      line(5, '2026-12-01', -4200, 'receipt:5'),
     ];
     const { usedEntries } = classify(rows, '1200', lines);
-    expect(receiptsNotPaid(lines, usedEntries, { start: '2026-11-01', end: '2026-11-30' }).map((l) => l.entry_id)).toEqual([2]);
+    expect(receiptsNotPaid(lines, usedEntries, { start: '2026-11-01', end: '2026-11-30' }).map((l) => l.entry_id)).toEqual([2, 3]);
   });
 
   it('a later payment of the same amount clears the bill once, ahead of history', () => {

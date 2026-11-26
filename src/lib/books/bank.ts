@@ -140,14 +140,15 @@ function takeBill(bills: OpenBill[], r: BankRow): { bill: OpenBill; named: boole
 }
 
 /**
- * Receipts' entries on the statement's account that the statement has had
- * its full chance to show (dated at least MATCH_DAYS before it ends) and
- * doesn't: they were assumed paid from this account and weren't.
+ * Receipts' entries on the statement's account, dated within it, that it
+ * doesn't show: they were assumed paid from this account and, by the day the
+ * statement ends, weren't. Right up to its last day: left on the bank, they
+ * put the books' balance below the statement's. One paid a day or two after
+ * the statement ends is cleared by that payment on the next one.
  */
 export function receiptsNotPaid(lines: BookLine[], usedEntries: Set<number>, range: { start: string; end: string }): BookLine[] {
-  const last = Date.parse(range.end) - MATCH_DAYS * 86_400_000;
   return lines.filter(
-    (l) => /^receipt:\d+$/.test(l.external_id ?? '') && !usedEntries.has(l.entry_id) && l.date >= range.start && Date.parse(l.date) <= last,
+    (l) => /^receipt:\d+$/.test(l.external_id ?? '') && !usedEntries.has(l.entry_id) && l.date >= range.start && l.date <= range.end,
   );
 }
 
