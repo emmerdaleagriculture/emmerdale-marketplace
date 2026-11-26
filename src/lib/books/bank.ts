@@ -11,6 +11,8 @@
  *   new       not in the books: booked automatically on upload with the
  *             suggested account: a Monzo pot transfer → 1205, money in that
  *             is exactly an open invoice's amount due → that invoice, else
+ *             a payment of exactly a bill a receipt left unpaid → clears
+ *             that bill (2100; money in, 1100), else
  *             what this payee went to last time, else the AI's pick (or 4900 /
  *             6990) flagged to check. A Stripe payout on a ledger Stripe
  *             syncs waits for the sync, until a sync has run since without
@@ -99,8 +101,55 @@ export function classify(
 export type OpenInvoice = { id: number; number: string; customer: string; due_pence: number; issue_date: string };
 export type PayeeHistory = Map<string, { account: string; vat: VatCode }>;
 
-/** fixed: a flagged guess that is ours to make, not one to ask the AI about. */
-export type Suggestion = { account: string; vat: VatCode; check: boolean; why: string; fixed?: boolean };
+/**
+ * A receipt's bill a statement showed wasn't paid (or a rule put on credit),
+ * with nothing booked as paying it yet. Amount as the bank will show the
+ * payment: − out for a purchase, + in for a sale.
+ */
+export type OpenBill = { receiptId: number; amount: number; date: string; name: string; account: string };
+/** A bill is looked for among payments up to this long after its date. */
+export const BILL_DAYS = 60;
+
+/** fixed: a flagged guess that is ours to make, not one to ask the AI about. bill: the receipt this row pays. */
+export type Suggestion = { account: string; vat: VatCode; check: boolean; why: string; fixed?: boolean; bill?: number };
+
+const NAME_NOISE = new Set(['limited', 'company', 'services', 'payment', 'group']);
+const nameWords = (s: string) => new Set(s.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !NAME_NOISE.has(w)));
+/** The payee and the supplier share a proper word. */
+export function sameName(a: string, b: string): boolean {
+  const wa = nameWords(a);
+  for (const w of nameWords(b)) if (wa.has(w)) return true;
+  return false;
+}
+
+/**
+ * The open bill a row pays, taken off the list: the same amount, dated up to
+ * BILL_DAYS before the row. One in the payee's name first, else the oldest.
+ */
+function takeBill(bills: OpenBill[], r: BankRow): { bill: OpenBill; named: boolean } | null {
+  const fits = bills.filter((b) => {
+    if (b.amount !== r.amount) return false;
+    const days = (Date.parse(r.date) - Date.parse(b.date)) / 86_400_000;
+    return days >= -MATCH_DAYS && days <= BILL_DAYS;
+  });
+  if (!fits.length) return null;
+  const named = fits.find((b) => sameName(b.name, `${r.payee} ${r.description}`));
+  const bill = named ?? fits[0];
+  bills.splice(bills.indexOf(bill), 1);
+  return { bill, named: Boolean(named) };
+}
+
+/**
+ * Receipts' entries on the statement's account that the statement has had
+ * its full chance to show (dated at least MATCH_DAYS before it ends) and
+ * doesn't: they were assumed paid from this account and weren't.
+ */
+export function receiptsNotPaid(lines: BookLine[], usedEntries: Set<number>, range: { start: string; end: string }): BookLine[] {
+  const last = Date.parse(range.end) - MATCH_DAYS * 86_400_000;
+  return lines.filter(
+    (l) => /^receipt:\d+$/.test(l.external_id ?? '') && !usedEntries.has(l.entry_id) && l.date >= range.start && Date.parse(l.date) <= last,
+  );
+}
 
 /** Money in from Stripe: a payout of card payments. */
 export const isStripePayout = (r: BankRow) => r.amount > 0 && /\bstripe\b/i.test(r.payee);
@@ -125,9 +174,11 @@ export function suggest(
     invoices: OpenInvoice[];
     accounts: Map<string, AccountInfo>;
     rules?: Rule[];
+    bills?: OpenBill[];
   },
 ): (Suggestion | null)[] {
   const invoicesLeft = [...ctx.invoices].sort((a, b) => a.issue_date.localeCompare(b.issue_date));
+  const billsLeft = [...(ctx.bills ?? [])].filter((b) => ctx.accounts.has(b.account)).sort((a, b) => a.date.localeCompare(b.date));
   return rows.map((r, i) => {
     if (states[i].status !== 'new') return null;
     const reg = ctx.registered(r.date);
@@ -139,6 +190,15 @@ export function suggest(
         const inv = invoicesLeft.splice(j, 1)[0];
         return { account: `inv:${inv.id}`, vat: 'OUTSIDE', check: false, why: `Pays invoice ${inv.number}` };
       }
+    }
+    // Before rules and history: they would book the cost a second time.
+    const paid = takeBill(billsLeft, r);
+    if (paid) {
+      const { bill, named } = paid;
+      const what = bill.amount < 0 ? `Pays ${bill.name || 'a supplier'}’s bill of ${bill.date}` : `${bill.name || 'A customer'} paying your invoice of ${bill.date}`;
+      return named
+        ? { account: bill.account, vat: 'OUTSIDE', check: false, why: what, bill: bill.receiptId }
+        : { account: bill.account, vat: 'OUTSIDE', check: true, fixed: true, why: `${what}: same amount, a different name`, bill: bill.receiptId };
     }
     const rule = ruleFor(ctx.rules ?? [], `${r.payee} ${r.description}`, r.amount);
     const ruleAcc = rule && bankAccountFromRule(rule, r.amount);

@@ -4,7 +4,7 @@ import type { Json } from '@/lib/database.types';
 import { addDays, todayUk } from './period';
 import { isVatCode, registeredOn, type VatCode } from './vat';
 import { accountMap, allLines, getAccounts, ledgerForPosting, type BooksAccount, type Ledger } from './server';
-import { classify, compareFrom, isStripePayout, payoutDue, reconcile, rowExternalId, rowPosting, suggest, MATCH_DAYS, type BookLine, type Choice, type OpenInvoice, type PayeeHistory } from './bank';
+import { classify, compareFrom, isStripePayout, payoutDue, reconcile, receiptsNotPaid, rowExternalId, rowPosting, suggest, MATCH_DAYS, type BookLine, type Choice, type OpenBill, type OpenInvoice, type PayeeHistory } from './bank';
 import { categoriseRows } from './bankAi';
 import { loadRules } from './rules.server';
 import { payeeKey, type BankRow } from './bankCsv';
@@ -64,9 +64,9 @@ async function payeeHistory(ledgerId: string): Promise<PayeeHistory> {
   );
   const out: PayeeHistory = new Map();
   for (const e of entries) {
-    const meta = (e.meta ?? {}) as { payee?: string; bank?: string; check?: boolean };
-    // A guess nobody has confirmed isn't history to repeat.
-    if (!meta.payee || meta.check) continue;
+    const meta = (e.meta ?? {}) as { payee?: string; bank?: string; check?: boolean; pays_receipt?: number };
+    // A guess nobody has confirmed isn't history to repeat; nor is paying off one bill.
+    if (!meta.payee || meta.check || meta.pays_receipt) continue;
     // The account that isn't the bank or VAT.
     const acc = e.books_lines.map((l) => l.books_accounts?.code).find((c) => c && c !== meta.bank && c !== '2201' && c !== '2202');
     if (acc && isVatCode(e.vat_code)) out.set(meta.payee, { account: acc, vat: e.vat_code as VatCode });
@@ -85,6 +85,125 @@ async function openInvoices(ledgerId: string): Promise<OpenInvoice[]> {
     const c = i.books_customers as unknown as { name: string; organisation: string | null } | null;
     return { id: i.id, number: i.number, issue_date: i.issue_date, due_pence: i.gross_pence - i.paid_pence, customer: c?.organisation || c?.name || '' };
   });
+}
+
+/** Receipts' bills left unpaid (on creditors or debtors) that no statement row has been booked as paying. */
+async function openBills(ledgerId: string): Promise<OpenBill[]> {
+  const admin = createServiceRoleClient();
+  const [{ data: receipts }, { data: paid }] = await Promise.all([
+    admin
+      .from('books_receipts')
+      .select('id, doc_type, doc_date, counterparty, gross_pence, payment_account_code')
+      .eq('ledger_id', ledgerId)
+      .eq('status', 'posted')
+      .in('payment_account_code', ['2100', '1100'])
+      .not('entry_id', 'is', null)
+      .not('doc_date', 'is', null)
+      .order('doc_date', { ascending: false })
+      .limit(1000),
+    admin.from('books_entries').select('meta').eq('ledger_id', ledgerId).eq('source', 'bank').not('meta->>pays_receipt', 'is', null).limit(1000),
+  ]);
+  const done = new Set((paid ?? []).map((e) => Number((e.meta as { pays_receipt?: number }).pays_receipt)));
+  return (receipts ?? []).flatMap((r) =>
+    done.has(r.id) || !r.gross_pence || !r.doc_date || !r.payment_account_code
+      ? []
+      : [{ receiptId: r.id, amount: r.doc_type === 'sale' ? r.gross_pence : -r.gross_pence, date: r.doc_date, name: r.counterparty ?? '', account: r.payment_account_code }],
+  );
+}
+
+/**
+ * A statement saying otherwise: receipts are booked as paid from the bank
+ * when they arrive; one this statement has had every chance to show, and
+ * doesn't, wasn't. Its entry moves off the bank to creditors (a sale's, to
+ * debtors), where the payment clears it when a statement does show it.
+ * Returns how many moved.
+ */
+export async function moveUnpaidReceipts(ledger: Ledger, st: Statement): Promise<number> {
+  const admin = createServiceRoleClient();
+  const [lines, openingAt] = await Promise.all([bookLines(ledger.id, st.account_code, st.start_date, st.end_date), openingBalancesAt(ledger.id)]);
+  const { usedEntries } = classify(st.rows, st.account_code, lines, openingAt);
+  let left = receiptsNotPaid(lines, usedEntries, { start: compareFrom(st.start_date, openingAt), end: st.end_date });
+  if (!left.length) return 0;
+  // Another statement for the account may be the one that shows the payment.
+  const dates = left.map((l) => l.date).sort();
+  const { data: others } = await admin
+    .from('books_bank_statements')
+    .select('id')
+    .eq('ledger_id', ledger.id)
+    .eq('account_code', st.account_code)
+    .neq('id', st.id)
+    .lte('start_date', addDays(dates[dates.length - 1], MATCH_DAYS))
+    .gte('end_date', addDays(dates[0], -MATCH_DAYS))
+    .order('id', { ascending: false })
+    .limit(12);
+  for (const { id } of others ?? []) {
+    const o = await loadStatement(ledger.id, id);
+    if (!o) continue;
+    const used = classify(o.rows, o.account_code, await bookLines(ledger.id, o.account_code, o.start_date, o.end_date), openingAt).usedEntries;
+    left = left.filter((l) => !used.has(l.entry_id));
+    if (!left.length) return 0;
+  }
+  const accounts = await getAccounts(ledger.id);
+  const idOf = (code: string) => accounts.find((a) => a.code === code)?.id ?? null;
+  const bankId = idOf(st.account_code);
+  const { data: receipts } = await admin
+    .from('books_receipts')
+    .select('id, entry_id, doc_type, notes')
+    .eq('ledger_id', ledger.id)
+    .eq('status', 'posted')
+    .eq('payment_account_code', st.account_code)
+    .in('entry_id', left.map((l) => l.entry_id));
+  let moved = 0;
+  for (const r of receipts ?? []) {
+    const code = r.doc_type === 'sale' ? '1100' : '2100';
+    const to = idOf(code);
+    if (!to || !bankId || !r.entry_id) continue;
+    const { data: changed, error } = await admin
+      .from('books_lines')
+      .update({ account_id: to })
+      .eq('ledger_id', ledger.id)
+      .eq('entry_id', r.entry_id)
+      .eq('account_id', bankId)
+      .select('id');
+    if (error || !changed?.length) {
+      if (error) console.error('[books] unpaid receipt move failed', { ledger: ledger.id, receipt: r.id, error: error.message });
+      continue;
+    }
+    const note =
+      r.doc_type === 'sale'
+        ? `Your statement to ${st.end_date} shows no payment for this: recorded as owed to you (1100 Trade debtors).`
+        : `Your statement to ${st.end_date} shows no payment of this: recorded as still to pay (2100 Trade creditors). If you paid it another way, void it and change what paid it.`;
+    await admin
+      .from('books_receipts')
+      .update({ payment_account_code: code, notes: [r.notes, note].filter(Boolean).join('\n') })
+      .eq('id', r.id)
+      .eq('ledger_id', ledger.id);
+    moved++;
+  }
+  return moved;
+}
+
+/**
+ * A receipt posted after a statement that already covers its date: that
+ * statement has its say at once, not at the next upload.
+ */
+export async function checkReceiptAgainstStatements(ledger: Ledger, f: { doc_date: string | null; payment_account_code: string | null }): Promise<void> {
+  try {
+    if (!f.doc_date || !f.payment_account_code || !/^12\d\d$/.test(f.payment_account_code)) return;
+    const { data } = await createServiceRoleClient()
+      .from('books_bank_statements')
+      .select('id')
+      .eq('ledger_id', ledger.id)
+      .eq('account_code', f.payment_account_code)
+      .lte('start_date', f.doc_date)
+      .gte('end_date', addDays(f.doc_date, MATCH_DAYS))
+      .order('end_date', { ascending: false })
+      .limit(1);
+    const st = data?.[0] ? await loadStatement(ledger.id, data[0].id) : null;
+    if (st) await moveUnpaidReceipts(ledger, st);
+  } catch (err) {
+    console.error('[books] receipt statement check failed', { ledger: ledger.id, error: err instanceof Error ? err.message : err });
+  }
 }
 
 /**
@@ -106,13 +225,14 @@ async function openingBalancesAt(ledgerId: string): Promise<string | null> {
 
 /** Everything the statement page shows. */
 export async function statementView(ledger: Ledger, st: Statement) {
-  const [lines, accounts, history, invoices, rules, openingAt] = await Promise.all([
+  const [lines, accounts, history, invoices, rules, openingAt, bills] = await Promise.all([
     bookLines(ledger.id, st.account_code, st.start_date, st.end_date),
     getAccounts(ledger.id),
     payeeHistory(ledger.id),
     openInvoices(ledger.id),
     loadRules(ledger.id),
     openingBalancesAt(ledger.id),
+    openBills(ledger.id),
   ]);
   const { states, usedEntries } = classify(st.rows, st.account_code, lines, openingAt);
   const suggestions = suggest(st.rows, states, {
@@ -121,6 +241,7 @@ export async function statementView(ledger: Ledger, st: Statement) {
     invoices,
     accounts: accountMap(accounts),
     rules,
+    bills,
   });
   // Rows up to the opening balances are in them already: the comparison starts the day after.
   const from = compareFrom(st.start_date, openingAt);
@@ -204,7 +325,10 @@ export async function importRows(ledger: Ledger, st: Statement, picks: { row: nu
       result.failed.push({ row: i, error: p.error });
       continue;
     }
-    p.entry.meta = { ...p.entry.meta, bank: st.account_code, ...(check ? { check: true, why: check } : {}) };
+    // The bill this row pays, so no later row of the same amount pays it again.
+    const sug = view.suggestions[i];
+    const bill = sug?.bill && sug.account === choice.account ? { pays_receipt: sug.bill } : {};
+    p.entry.meta = { ...p.entry.meta, bank: st.account_code, ...bill, ...(check ? { check: true, why: check } : {}) };
     const { error } = await admin.rpc('books_post_entry', {
       p_ledger_id: ledger.id,
       p_entry: p.entry as unknown as Json,
@@ -225,6 +349,8 @@ export async function importRows(ledger: Ledger, st: Statement, picks: { row: nu
  * `only`, just the rows it picks.
  */
 export async function autoImport(ledger: Ledger, st: Statement, only?: (row: BankRow) => boolean): Promise<ImportResult> {
+  // First, so a payment later in this same statement finds the bill to clear.
+  if (!only) await moveUnpaidReceipts(ledger, st);
   const view = await statementView(ledger, st);
   const lfp = ledgerForPosting(ledger);
   const codes = new Set(view.accounts.map((a) => a.code));
