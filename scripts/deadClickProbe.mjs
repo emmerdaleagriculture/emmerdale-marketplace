@@ -29,35 +29,29 @@
  *   LINKS     CSS selector for links to click  (a[class*=submissions_title])
  *   CLICKS    clicks per browser               (40)
  *   BROWSERS  browsers clicking at once        (3)
+ *   DEAD_MS   how long a click gets to arrive  (6000; a live one takes under a second)
  *
  * For Books, as a contractor with Books:
  *   EMAIL=... START=/account/books LINKS='a[href^="/account/books/"]' node scripts/deadClickProbe.mjs
  *
- * Exits 1 if any click was dead. Needs Node 22 or later.
+ * Exits 1 if any click was dead, 2 if too few clicks were made to say
+ * (links hidden or covered, pages failing to load). Needs Node 22 or later.
  */
-import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { chromium } from 'playwright';
 
-const env = Object.fromEntries(
-  readFileSync('.env.local', 'utf8')
-    .split('\n')
-    .filter((l) => /^[A-Z_]+=/.test(l))
-    .map((l) => {
-      const i = l.indexOf('=');
-      return [l.slice(0, i), l.slice(i + 1).replace(/^"|"$/g, '')];
-    }),
-);
+// Supabase keys and ADMIN_EMAILS. Anything already set in the shell wins.
+process.loadEnvFile('.env.local');
+const env = process.env;
 
-const BASE = process.env.BASE || 'http://localhost:3107';
-const EMAIL = process.env.EMAIL || (env.ADMIN_EMAILS || '').split(',')[0].trim();
-const START = process.env.START || '/admin/submissions';
-const LINKS = process.env.LINKS || 'a[class*=submissions_title]';
-const CLICKS = Number(process.env.CLICKS || 40);
-const BROWSERS = Number(process.env.BROWSERS || 3);
-/** How long a click gets before it is called dead. A live one takes under a second. */
-const DEAD_AFTER_MS = 6000;
+const BASE = env.BASE || 'http://localhost:3107';
+const EMAIL = env.EMAIL || (env.ADMIN_EMAILS || '').split(',')[0].trim();
+const START = env.START || '/admin/submissions';
+const LINKS = env.LINKS || 'a[class*=submissions_title]';
+const CLICKS = Number(env.CLICKS || 40);
+const BROWSERS = Number(env.BROWSERS || 3);
+const DEAD_MS = Number(env.DEAD_MS || 6000);
 
 if (!EMAIL) throw new Error('No EMAIL given and no ADMIN_EMAILS in .env.local');
 
@@ -92,13 +86,14 @@ async function clickThrough(cookies, offset) {
   // Third-party trackers only add noise to the timings.
   await context.route(/google|doubleclick|facebook|clarity/, (r) => r.abort());
   const page = await context.newPage();
-  const result = { clicks: 0, dead: [], times: [] };
+  const result = { clicks: 0, skipped: 0, dead: [], times: [] };
+  const startPath = new URL(START, BASE).pathname;
 
   await page.goto(BASE + START, { waitUntil: 'networkidle' });
   const hrefs = await page.evaluate(
     (selector) =>
       [...new Set([...document.querySelectorAll(selector)].map((a) => a.getAttribute('href')))].filter(
-        (h) => h && h.split('?')[0] !== location.pathname,
+        (h) => h && new URL(h, location.href).origin === location.origin && new URL(h, location.href).pathname !== location.pathname,
       ),
     LINKS,
   );
@@ -106,23 +101,27 @@ async function clickThrough(cookies, offset) {
 
   for (let i = 0; i < CLICKS; i++) {
     const href = hrefs[(offset * 7 + 5 + i * 3) % hrefs.length];
-    const target = href.split('?')[0].split('#')[0];
-    // A fresh copy of the list each time, left to settle, so every click
-    // starts from the same quiet page.
-    await page.goto(BASE + START, { waitUntil: 'networkidle' });
-    const link = page.locator(`a[href="${href}"]`).first();
     let clickedAt;
     try {
+      // A fresh copy of the list each time, left to settle, so every click
+      // starts from the same quiet page.
+      await page.goto(BASE + START, { waitUntil: 'networkidle' });
+      const link = page.locator(`a[href=${JSON.stringify(href)}]`).first();
       await link.scrollIntoViewIfNeeded({ timeout: 3000 });
       await page.waitForTimeout(1200);
       clickedAt = Date.now();
       await link.click({ timeout: 3000 });
     } catch {
-      continue; // hidden or covered: not a click, so not counted
+      // The list did not load, or the link was hidden or covered: not a
+      // click, so it says nothing either way. Counted, and reported.
+      result.skipped++;
+      continue;
     }
     result.clicks++;
     try {
-      await page.waitForURL((u) => u.pathname === target, { timeout: DEAD_AFTER_MS });
+      // Anywhere but the list counts as arriving: a page that redirects on
+      // still answered the click.
+      await page.waitForURL((u) => u.pathname !== startPath, { timeout: DEAD_MS });
       result.times.push(Date.now() - clickedAt);
     } catch {
       result.dead.push(href);
@@ -135,6 +134,7 @@ async function clickThrough(cookies, offset) {
 const cookies = await sessionCookies(EMAIL);
 const results = await Promise.all(Array.from({ length: BROWSERS }, (_, i) => clickThrough(cookies, i)));
 const clicks = results.reduce((n, r) => n + r.clicks, 0);
+const skipped = results.reduce((n, r) => n + r.skipped, 0);
 const dead = results.flatMap((r) => r.dead);
 const times = results.flatMap((r) => r.times).sort((a, b) => a - b);
 
@@ -143,4 +143,9 @@ if (times.length) {
   console.log(`live clicks: median ${times[times.length >> 1]} ms, slowest ${times[times.length - 1]} ms`);
 }
 for (const href of new Set(dead)) console.log(`  dead: ${href}`);
-process.exit(dead.length ? 1 : 0);
+if (skipped) console.log(`${skipped} attempts never became a click (list failed to load, or link hidden or covered)`);
+
+// "0 dead" from a handful of clicks is not a pass.
+const tooFew = clicks < (CLICKS * BROWSERS) / 2;
+if (tooFew) console.log(`Too few clicks to mean anything: ${clicks} of ${CLICKS * BROWSERS} attempted.`);
+process.exit(dead.length ? 1 : tooFew ? 2 : 0);
