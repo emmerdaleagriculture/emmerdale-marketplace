@@ -76,11 +76,11 @@ describe('receipt rules', () => {
     expect(blockingReasons(fieldsFromRead(r, registered, accounts, '1200'), r, registered, accounts, { sameEntryExists: false })).toHaveLength(1);
   });
 
-  it('unpaid invoices go to debtors or creditors, not the bank', () => {
-    expect(fieldsFromRead(read({ is_paid: false }), registered, accounts, '1200').payment_account_code).toBe('2100');
+  it('an invoice not marked paid is still assumed paid from the bank', () => {
+    expect(fieldsFromRead(read({ is_paid: false }), registered, accounts, '1200').payment_account_code).toBe('1200');
     const sale = read({ is_paid: false, document_type: 'sale', account_code: '4000', vat_code: 'STD', net_amount: 100, vat_amount: 20, gross_amount: 120 });
     const f = fieldsFromRead(sale, registered, accounts, '1200');
-    expect(f.payment_account_code).toBe('1100');
+    expect(f.payment_account_code).toBe('1200');
     expect(blockingReasons(f, sale, registered, accounts, { sameEntryExists: false })).toEqual([]);
   });
 

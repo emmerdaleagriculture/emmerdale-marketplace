@@ -78,8 +78,10 @@ export function fieldsFromRead(
     gross_pence: amounts.gross,
     vat_code: vatCode,
     account_code: account,
-    // Not paid yet: owed to us (debtors) or by us (creditors), not the bank.
-    payment_account_code: r.is_paid === false ? (docType === 'sale' ? '1100' : '2100') : defaultPayment,
+    // Assumed paid, whatever the document says: an invoice still due is paid
+    // within days more often than not. A bank statement that shows no payment
+    // moves it to creditors (or debtors): moveUnpaidReceipts in bank.server.
+    payment_account_code: defaultPayment,
   };
 }
 

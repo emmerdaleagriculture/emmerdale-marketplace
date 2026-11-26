@@ -18,6 +18,7 @@ import { addDays } from './period';
 import { MATCH_DAYS } from './bank';
 import { ruleFor } from './rules';
 import { loadRules } from './rules.server';
+import { checkReceiptAgainstStatements } from './bank.server';
 
 export const RECEIPTS_BUCKET = 'books-receipts';
 /** AI reads per set of books per calendar month; past it, receipts wait for hand entry. */
@@ -246,10 +247,12 @@ export async function postReceiptFields(
       return null;
     }
     await supersedeBankRow(ledger.id, f, entryId);
+    await checkReceiptAgainstStatements(ledger, f);
     return null;
   }
   await update(receiptId, patch);
   await supersedeBankRow(ledger.id, f, entryId);
+  await checkReceiptAgainstStatements(ledger, f);
   return null;
 }
 
@@ -322,6 +325,12 @@ export async function processReceipt(receiptId: number): Promise<void> {
     }
     if (f.payment_account_code === '2100' || f.payment_account_code === '1100') {
       notes.push(f.doc_type === 'sale' ? 'Not paid yet: recorded as owed to you (1100 Trade debtors).' : 'Not paid yet: recorded as owed by you (2100 Trade creditors).');
+    } else if (read.is_paid === false) {
+      notes.push(
+        f.doc_type === 'sale'
+          ? 'Not marked as paid: assumed paid into your bank. A statement that shows no payment will move it to money owed to you.'
+          : 'Not marked as paid: assumed paid from your bank. A statement that shows no payment will move it to bills still to pay.',
+      );
     }
     const reasons: string[] = [];
     const base = { extracted: read as unknown as Json, confidence, extraction_error: null };
