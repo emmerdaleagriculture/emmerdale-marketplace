@@ -63,7 +63,9 @@
 .iconWrap {
   display: grid;
   place-items: center;
+  /* 44px, less on a narrow phone with seven tabs and Back. */
   width: 44px;
+  max-width: 100%;
   height: 28px;
   border-radius: 14px;
 }
@@ -106,8 +108,8 @@
   transition: max-width 0.25s ease, opacity 0.2s ease;
 }
 .backTabOn {
-  /* A sixth share beside five tabs (contractors); the icon carries it. */
-  max-width: 16%;
+  /* An eighth share beside up to seven tabs (a contractor with Books); the icon carries it. */
+  max-width: 12.5%;
   opacity: 1;
   pointer-events: auto;
 }

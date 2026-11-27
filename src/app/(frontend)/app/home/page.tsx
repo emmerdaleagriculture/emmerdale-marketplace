@@ -10,7 +10,6 @@ import { jobAcres } from '@/lib/jobParse/geometry';
 import { CUSTOMER_LIVE_STATUSES, CUSTOMER_STATUS_LABEL, greeting } from '@/lib/customers/statusLabels';
 import { ServiceTileIcon, POPULAR_SERVICES } from './popular';
 import { listSites } from '@/lib/customers/sites';
-import { InfoLink } from '@/components/app/AppKit';
 import ui from '../app-ui.module.css';
 
 export const metadata: Metadata = { title: 'Home', robots: { index: false, follow: false } };
@@ -70,12 +69,9 @@ export default async function AppHomePage() {
           <div className={ui.greeting}>{greeting()}</div>
           <h1 className={ui.who}>{firstName ?? 'Welcome'}</h1>
         </div>
-        <div className={ui.headEnd}>
-          <InfoLink />
-          <Link href="/app/account" className={ui.avatar} aria-label="Account">
-            {initial}
-          </Link>
-        </div>
+        <Link href="/app/account" className={ui.avatar} aria-label="Account">
+          {initial}
+        </Link>
       </header>
 
       <Link href="/app/new-job" className={ui.ctaCard}>
