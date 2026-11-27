@@ -31,10 +31,15 @@
  * arrived with the loading screens: every dead click in the test had a ping
  * thrown away this way, and none did once it was recorded.
  *
- * THE FIX is React's own. On React's main branch the empty `else` records
- * the ping, so the finished render is not marked as waiting and runs again:
+ * THE FIX is React's own: pull request 36134 in facebook/react, "Fix
+ * useDeferredValue getting stuck", merged to main on 2026-03-24, seven
+ * months after the copy bundled here was cut. It makes the empty `else`
+ * record the ping, so the finished render is not marked as waiting and runs
+ * again:
  *
  *     } else {
+ *       // ... In the meantime, record the pinged lanes so markRootSuspended
+ *       // won't mark them as suspended, allowing a retry.
  *       workInProgressRootPingedLanes = mergeLanes(
  *         workInProgressRootPingedLanes,
  *         pingedLanes,
@@ -46,15 +51,17 @@
  *
  * WHEN NEXT IS UPGRADED the bundled React changes with it. If the line this
  * looks for is gone the build stops here rather than quietly shipping
- * without the fix, and next.config.mjs stops it if no bundled React reached
- * this loader at all. Neither can see a Turbopack build, which ignores
- * webpack loaders altogether: the test beside this pins the bundler and the
- * Next major for that reason. Then: read pingSuspendedRoot in
+ * without the fix. next.config.mjs stops it if no bundled React reached this
+ * loader at all, or if the build is Turbopack's, which runs no webpack
+ * loaders and says nothing about it. Then: read pingSuspendedRoot in
  * node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.production.js.
- * If the render-phase branch now records the ping, delete this file, its rule
- * in next.config.mjs and its test. If it is still empty, update the patterns
- * below. Either way, run scripts/deadClickProbe.mjs against a production
- * build before believing it.
+ * If the render-phase branch now records the ping (any React cut after March
+ * 2026 should), delete four things: this file, its rule in next.config.mjs,
+ * the ReactRenderPhasePing plugin under that rule (left behind, it fails
+ * every build), and src/lib/reactRenderPhasePing.test.ts. The Turbopack
+ * check at the top of next.config.mjs can go with them. If the branch is
+ * still empty, update the patterns below. Either way, run
+ * scripts/deadClickProbe.mjs against a production build before believing it.
  */
 
 /** The same line as it is written in each build of react-dom-client. */
@@ -78,16 +85,34 @@ const BUILDS = [
 ];
 
 const FUNCTION = 'function pingSuspendedRoot(';
-/** Comfortably more than the function is long (about 800 characters, 1,500 in development). */
-const FUNCTION_WINDOW = 2500;
+/** Over twice its longest today (about 2,100 characters, in the experimental development build). */
+const FUNCTION_MAX = 5000;
 
 function changed(resourcePath, what) {
   return new Error(
     `reactRenderPhasePing: ${what} in ${resourcePath}. The React bundled with Next has changed ` +
       `(a Next upgrade?). If pingSuspendedRoot now records a ping that arrives during the render phase, delete ` +
-      `webpack/reactRenderPhasePing.cjs, its rule in next.config.mjs and its test; if not, update the patterns. ` +
-      `See the comment at the top of the loader.`,
+      `webpack/reactRenderPhasePing.cjs, its rule and the ReactRenderPhasePing plugin in next.config.mjs, and its ` +
+      `test; if not, update the patterns. See the comment at the top of the loader.`,
   );
+}
+
+/**
+ * Where pingSuspendedRoot starts and ends in `source`. These files are
+ * pretty-printed, so the function ends at the first line that is a closing
+ * brace at the function's own indentation.
+ */
+function functionSpan(source, resourcePath) {
+  const start = source.indexOf(FUNCTION);
+  if (start === -1 || source.indexOf(FUNCTION, start + 1) !== -1) {
+    throw changed(resourcePath, 'expected exactly one pingSuspendedRoot');
+  }
+  const indent = source.slice(source.lastIndexOf('\n', start) + 1, start);
+  const close = /^[ \t]*$/.test(indent) ? source.indexOf(`\n${indent}}`, start) : -1;
+  if (close === -1 || close - start > FUNCTION_MAX) {
+    throw changed(resourcePath, 'could not tell where pingSuspendedRoot ends');
+  }
+  return [start, close + indent.length + 2];
 }
 
 /**
@@ -101,11 +126,8 @@ function patchReactDomClient(source, resourcePath) {
   if (!build) {
     throw new Error(`reactRenderPhasePing: no pattern for ${resourcePath}. See webpack/reactRenderPhasePing.cjs.`);
   }
-  const start = source.indexOf(FUNCTION);
-  if (start === -1 || source.indexOf(FUNCTION, start + 1) !== -1) {
-    throw changed(resourcePath, 'expected exactly one pingSuspendedRoot');
-  }
-  const body = source.slice(start, start + FUNCTION_WINDOW);
+  const [start, end] = functionSpan(source, resourcePath);
+  const body = source.slice(start, end);
   const found = body.match(build.dropped);
   if (!found || found.length !== 1) {
     throw changed(
@@ -113,7 +135,7 @@ function patchReactDomClient(source, resourcePath) {
       `expected pingSuspendedRoot to drop a render-phase ping exactly once, found ${found ? found.length : 0}`,
     );
   }
-  return source.slice(0, start) + body.replace(build.dropped, build.recorded) + source.slice(start + FUNCTION_WINDOW);
+  return source.slice(0, start) + body.replace(build.dropped, build.recorded) + source.slice(end);
 }
 
 module.exports = function reactRenderPhasePingLoader(source) {
