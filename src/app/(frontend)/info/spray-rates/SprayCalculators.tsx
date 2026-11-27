@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { ACRES_PER_HA, fig, kmhFrom100m, knapsack, litresPerHa, nozzleOutput, tankMix, toHa } from '@/lib/info/sprayMaths';
+import { useAcresParam } from '@/lib/info/useAcresParam';
 import c from '../calc.module.css';
 
 /**
@@ -31,6 +32,10 @@ function Field({ label, value, onChange, unit, children }: { label: string; valu
 function TankMix() {
   const [area, setArea] = useState('');
   const [areaUnit, setAreaUnit] = useState<'acre' | 'ha'>('acre');
+  useAcresParam((a) => {
+    setArea(a);
+    setAreaUnit('acre');
+  });
   const [dose, setDose] = useState('');
   const [doseUnit, setDoseUnit] = useState<'L' | 'kg'>('L');
   const [water, setWater] = useState('200');

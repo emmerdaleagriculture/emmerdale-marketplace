@@ -1,0 +1,210 @@
+/* /info/area-map. Site tokens only, so the app's dark mode follows. */
+
+.tool {
+  margin: 0 0 8px;
+}
+
+.find {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+}
+.input {
+  flex: 1 1 140px;
+  min-width: 0;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  /* 16px or iOS zooms the page on focus. */
+  font: 600 17px var(--font-body-stack);
+  text-transform: uppercase;
+}
+.input::placeholder {
+  color: var(--ink-3);
+  font-weight: 400;
+  text-transform: none;
+}
+.btn,
+.btnGhost,
+.btnStop {
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font: 700 15.5px var(--font-body-stack);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn {
+  border: 0;
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
+}
+.btnGhost {
+  border: 1px solid var(--rule-strong);
+  background: var(--white);
+  color: var(--ink);
+}
+.btnStop {
+  border: 0;
+  background: var(--error);
+  color: #fff;
+}
+.btn:disabled,
+.btnGhost:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.error {
+  margin: 0 0 10px;
+  color: var(--error);
+  font-size: 15px;
+}
+
+/* Area or length */
+.modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 10px;
+  border-radius: 14px;
+  background: var(--grey-pale);
+  max-width: 360px;
+}
+.mode,
+.modeOn {
+  padding: 10px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: 600 15px var(--font-body-stack);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.modeOn {
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
+}
+
+.map {
+  width: 100%;
+  height: min(62vh, 520px);
+  min-height: 320px;
+  border-radius: 14px;
+  border: 1px solid var(--rule);
+  overflow: hidden;
+  /* Holds the space before Leaflet arrives. */
+  background: var(--jd-green-pale);
+  cursor: crosshair;
+}
+.map :global(.leaflet-control-zoom a) {
+  /* !important: leaflet.css loads after module CSS and wins the tie. */
+  width: 38px !important;
+  height: 38px !important;
+  line-height: 38px !important;
+  font-size: 20px !important;
+}
+
+/* A corner: a 26px touch target around a small dot. */
+.corner {
+  cursor: grab;
+}
+/* Absolute, not grid: leaflet.css sets display on marker icons and loads last. */
+.corner::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #ffde00;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0 0;
+}
+.hint {
+  margin: 8px 0 0;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+
+.result {
+  margin: 12px 0 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--green-wash);
+  border: 1px solid var(--green-line);
+}
+.resultLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 2px;
+}
+.resultMain {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--jd-green-deep);
+  font-variant-numeric: tabular-nums;
+}
+.resultMain span {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.resultList {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.resultList strong {
+  color: var(--jd-green-deep);
+}
+.empty {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.use {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin: 12px 0 0;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.use a {
+  color: var(--jd-green);
+  font-weight: 600;
+}
+
+.unavailable {
+  padding: 16px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: 14px;
+  color: var(--ink-2);
+}
