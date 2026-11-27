@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ACRES_PER_HA, fig, toHa } from '@/lib/info/sprayMaths';
+import { useAcresParam } from '@/lib/info/useAcresParam';
 import c from '../calc.module.css';
 
 const num = (s: string) => {
@@ -15,6 +16,10 @@ export function SeedCalculator({ presets }: { presets: { label: string; kgAcre: 
   const [rateUnit, setRateUnit] = useState<'acre' | 'ha'>('acre');
   const [area, setArea] = useState('');
   const [areaUnit, setAreaUnit] = useState<'acre' | 'ha'>('acre');
+  useAcresParam((a) => {
+    setArea(a);
+    setAreaUnit('acre');
+  });
   const [bag, setBag] = useState('20');
 
   const kgHa = rateUnit === 'ha' ? num(rate) : num(rate) * ACRES_PER_HA;

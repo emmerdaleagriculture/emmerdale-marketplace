@@ -7,7 +7,7 @@
  * before every page exists. To add a page: build it under /info/<slug>, give
  * its entry here an `href`, and add it to the sitemap.
  */
-export type InfoIcon = 'window' | 'calendar' | 'weed' | 'rates' | 'diary' | 'fertiliser' | 'seed';
+export type InfoIcon = 'window' | 'calendar' | 'weed' | 'rates' | 'diary' | 'fertiliser' | 'seed' | 'map';
 
 export type InfoTopic = {
   slug: string;
@@ -37,6 +37,18 @@ export const INFO_GROUPS: InfoGroup[] = [
         blurb: 'Which jobs belong in which month, and the dates the law closes for hedges, slurry and nitrogen.',
         icon: 'calendar',
         href: '/info/calendar',
+      },
+    ],
+  },
+  {
+    title: 'Measuring',
+    topics: [
+      {
+        slug: 'area-map',
+        title: 'Area map',
+        blurb: 'Tap round a field on the satellite map, or walk its edge with your phone, for the acres, hectares and the length round it.',
+        icon: 'map',
+        href: '/info/area-map',
       },
     ],
   },

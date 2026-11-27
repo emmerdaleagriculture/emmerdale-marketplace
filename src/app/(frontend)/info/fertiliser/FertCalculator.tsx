@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { GRADES, forArea, kgHaFromUnits, productRate, supplied, unitsPerAcre, type Analysis } from '@/lib/info/fertMaths';
 import { ACRES_PER_HA, fig, toHa } from '@/lib/info/sprayMaths';
+import { useAcresParam } from '@/lib/info/useAcresParam';
 import c from '../calc.module.css';
 
 /**
@@ -27,6 +28,10 @@ export function FertCalculator() {
   const [custom, setCustom] = useState({ n: '', p: '', k: '' });
   const [area, setArea] = useState('');
   const [areaUnit, setAreaUnit] = useState<'acre' | 'ha'>('acre');
+  useAcresParam((a) => {
+    setArea(a);
+    setAreaUnit('acre');
+  });
   const [bag, setBag] = useState('600');
 
   const isCustom = grade === GRADES.length;
