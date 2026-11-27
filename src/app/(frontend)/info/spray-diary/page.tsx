@@ -22,9 +22,10 @@ const SHOWN = 200;
  * The spray diary. Signed out it explains itself and asks for a sign-in;
  * signed in it is the form and the user's records, newest first
  * (spray_records, owner-only RLS). `?copy=<id>` starts the form from one of
- * their records.
+ * their records; `?run=<id>` from a saved coverage map run (field, date,
+ * times and area from the map, and the record linked to it).
  */
-export default async function SprayDiaryPage({ searchParams }: { searchParams: Promise<{ copy?: string }> }) {
+export default async function SprayDiaryPage({ searchParams }: { searchParams: Promise<{ copy?: string; run?: string }> }) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -49,11 +50,47 @@ export default async function SprayDiaryPage({ searchParams }: { searchParams: P
   const copied = copyId ? records.find((r) => r.id === copyId) : undefined;
   // Otherwise carry over what does not change from job to job.
   const last = records[0];
-  const start: Partial<SprayRecord> = copied
-    ? { ...copied, start_time: null, end_time: null }
+  let start: Partial<SprayRecord> = copied
+    ? {
+        ...copied,
+        start_time: null,
+        end_time: null,
+        sprayed_on: undefined,
+        // A copy made the same day is the next product in the tank: it stays on
+        // the same map. A copy for another day is a new job.
+        run_id: copied.sprayed_on === today ? copied.run_id : null,
+      }
     : last
       ? { operator: last.operator, certificate: last.certificate, equipment: last.equipment }
       : {};
+
+  // From a coverage map run: the map knows where, when and how much ground.
+  let fromRun: { id: string; label: string } | null = null;
+  const runId = user && typeof sp.run === 'string' && /^[0-9a-f-]{36}$/i.test(sp.run) ? sp.run : null;
+  if (user && runId) {
+    const { data: run } = await supabase
+      .from('coverage_runs')
+      .select('id, site, started_at, ended_at, covered_ha')
+      .eq('id', runId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (run) {
+      const ukDay = (iso: string) => new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
+      const ukTime = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/London' });
+      // A second product for the same run (a tank mix) starts from the first.
+      const sibling = records.find((r) => r.run_id === run.id);
+      start = {
+        ...(sibling ? { ...sibling, product: '', mapp: null, dose: undefined, notes: null } : start),
+        run_id: run.id,
+        site: run.site || sibling?.site || '',
+        sprayed_on: ukDay(run.started_at),
+        start_time: ukTime(run.started_at),
+        end_time: ukTime(run.ended_at),
+        area_ha: Math.round(Number(run.covered_ha) * 1000) / 1000,
+      };
+      fromRun = { id: run.id, label: `${run.site ? `${run.site}, ` : ''}${new Date(run.started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Europe/London' })}` };
+    }
+  }
 
   return (
     <InfoFrame
@@ -69,7 +106,7 @@ export default async function SprayDiaryPage({ searchParams }: { searchParams: P
     >
       {user ? (
         <>
-          <RecordForm key={copied?.id ?? 'new'} start={start} today={today} />
+          <RecordForm key={fromRun?.id ?? copied?.id ?? 'new'} start={start} today={today} fromRun={fromRun} />
           <section>
             <div className={css.listHead}>
               <h2 className={css.listTitle}>

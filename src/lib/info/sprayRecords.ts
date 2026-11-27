@@ -35,12 +35,14 @@ export type SprayRecord = {
   equipment: string | null;
   stock_out_until: string | null;
   notes: string | null;
+  /** The coverage map run the product went on with, if it was mapped. */
+  run_id: string | null;
 };
 
 export type SprayRecordInput = Omit<SprayRecord, 'id'>;
 
 export const RECORD_COLUMNS =
-  'id, sprayed_on, start_time, end_time, site, postcode, customer, situation, area_ha, product, mapp, dose, dose_unit, water_l_ha, target, wind_mph, wind_direction, temp_c, conditions, operator, certificate, equipment, stock_out_until, notes';
+  'id, sprayed_on, start_time, end_time, site, postcode, customer, situation, area_ha, product, mapp, dose, dose_unit, water_l_ha, target, wind_mph, wind_direction, temp_c, conditions, operator, certificate, equipment, stock_out_until, notes, run_id';
 
 /** "so51 0hn" to "SO51 0HN", "so51" to "SO51"; null when it is neither. */
 export function tidyPostcode(raw: string): string | null {
@@ -49,6 +51,7 @@ export function tidyPostcode(raw: string): string | null {
   return /^[A-Z]{1,2}[0-9][A-Z0-9]?$/.test(c) ? c : null;
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(`${s}T00:00:00Z`).getTime());
 const isTime = (s: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
 
@@ -127,6 +130,9 @@ export function readSprayRecord(fd: FormData, today: string): SprayRecordInput |
   if (stock && !isDay(stock)) return { error: 'The date stock can go back doesn’t look right.' };
   if (stock && stock < sprayed_on) return { error: 'Stock cannot go back before the day you sprayed.' };
 
+  const rawRun = String(fd.get('run_id') ?? '').trim();
+  if (rawRun && !UUID.test(rawRun)) return { error: 'That map link doesn’t look right. Open the run again and add the record from there.' };
+
   return {
     sprayed_on,
     start_time: times.start_time,
@@ -151,6 +157,7 @@ export function readSprayRecord(fd: FormData, today: string): SprayRecordInput |
     equipment: texts.equipment,
     stock_out_until: stock || null,
     notes: texts.notes,
+    run_id: rawRun ? rawRun.toLowerCase() : null,
   };
 }
 

@@ -46,7 +46,7 @@ describe('totals and the spreadsheet', () => {
   const row: SprayRecord = {
     id: '1', sprayed_on: '2026-06-10', start_time: '07:30:00', end_time: null, site: 'Top paddock, "the wet end"', postcode: 'SO51', customer: null,
     situation: 'Grazing paddock', area_ha: 2, product: '=HYPERLINK("x")', mapp: '15664', dose: 500, dose_unit: 'ml/ha', water_l_ha: 300, target: 'Docks',
-    wind_mph: 4, wind_direction: 'SW', temp_c: 14, conditions: null, operator: 'A. Sprayer', certificate: 'PA1, PA2', equipment: null, stock_out_until: '2026-06-17', notes: null,
+    wind_mph: 4, wind_direction: 'SW', temp_c: 14, conditions: null, operator: 'A. Sprayer', certificate: 'PA1, PA2', equipment: null, stock_out_until: '2026-06-17', notes: null, run_id: null,
   };
   it('adds up the product used', () => {
     expect(productUsed(row)).toEqual({ amount: 1, unit: 'L' });

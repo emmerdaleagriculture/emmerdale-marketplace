@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { emptyFormState } from '@/lib/form';
 import { DOSE_UNITS, WIND_DIRECTIONS, type SprayRecord } from '@/lib/info/sprayRecords';
 import { saveSprayRecordAction } from './actions';
@@ -12,7 +13,16 @@ import css from './sprayDiary.module.css';
  * details from their last record, or a whole record being copied (a second
  * product in the same tank, the same job next month).
  */
-export function RecordForm({ start, today }: { start: Partial<SprayRecord>; today: string }) {
+export function RecordForm({
+  start,
+  today,
+  fromRun = null,
+}: {
+  start: Partial<SprayRecord>;
+  today: string;
+  /** Set when the form was opened from a saved coverage map run. */
+  fromRun?: { id: string; label: string } | null;
+}) {
   const [state, action, pending] = useActionState(saveSprayRecordAction, emptyFormState);
   const form = useRef<HTMLFormElement>(null);
   const said = useRef<HTMLParagraphElement>(null);
@@ -27,13 +37,20 @@ export function RecordForm({ start, today }: { start: Partial<SprayRecord>; toda
     <form ref={form} action={action} className={c.calc} id="add">
       <h2 className={c.calcTitle}>Add a record</h2>
       <p className={c.calcLede}>One record for each product you applied. Starred boxes are the ones the law asks for.</p>
+      {start.run_id && <input type="hidden" name="run_id" value={start.run_id} />}
+      {fromRun && (
+        <p className={css.fromRun}>
+          From the <Link href={`/info/coverage-map/${fromRun.id}`}>coverage map of {fromRun.label}</Link>: the field, date, times and area covered
+          are filled in. Check them, then add the product.
+        </p>
+      )}
 
       <h3 className={css.part}>When and where</h3>
       <div className={c.fields}>
         <label className={c.field}>
           <span>Date *</span>
           <span className={c.inputRow}>
-            <input type="date" name="sprayed_on" defaultValue={today} max={today} required />
+            <input type="date" name="sprayed_on" defaultValue={start.sprayed_on ?? today} max={today} required />
           </span>
         </label>
         <label className={c.field}>

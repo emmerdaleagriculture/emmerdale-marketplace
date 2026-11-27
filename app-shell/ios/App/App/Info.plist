@@ -44,9 +44,9 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Photos you take of your land or the work are saved to your library when you choose to.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Used only when you tap Use my location, to find approved operators who cover your land.</string>
+	<string>Used when you ask: to find operators who cover your land, and to measure a field or map the ground you cover while the map is open on screen.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Used only when you tap Use my location, to find approved operators who cover your land. The app never tracks your location in the background.</string>
+	<string>Used when you ask: to find operators who cover your land, and to measure a field or map the ground you cover while the map is open on screen. The app never tracks your location in the background.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
