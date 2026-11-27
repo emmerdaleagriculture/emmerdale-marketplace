@@ -15,6 +15,12 @@
   gap: 12px;
   padding: 10px 0 14px;
 }
+.headEnd {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
 .greeting {
   font-size: 15px;
   color: var(--ink-3);

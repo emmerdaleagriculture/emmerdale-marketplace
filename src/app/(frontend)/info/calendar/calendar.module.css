@@ -1,0 +1,130 @@
+/* /info/calendar */
+
+.jump {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0 0 20px;
+}
+@media (max-width: 640px) {
+  .jump {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+.jump a {
+  padding: 10px 0;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--white);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.jump a[aria-current] {
+  background: var(--fill-green-deep);
+  border-color: var(--fill-green-deep);
+  color: var(--on-fill);
+}
+
+.month {
+  padding: 16px;
+  margin: 0 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--white);
+  /* Clear of the status bar when jumped to. */
+  scroll-margin-top: 16px;
+}
+.monthNow {
+  border-color: var(--jd-green);
+  border-width: 2px;
+}
+.monthTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-body-stack);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--jd-green-deep);
+  margin: 0 0 10px;
+}
+.nowTag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
+}
+.law,
+.jobs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.law li {
+  padding: 10px 12px;
+  margin: 0 0 8px;
+  border-radius: 10px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.lawTag {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--warn-ink);
+  margin: 0 0 2px;
+}
+.jobs li {
+  position: relative;
+  padding: 5px 0 5px 18px;
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.jobs li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 14px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--jd-green);
+}
+
+.sources {
+  margin: 28px 0 0;
+  max-width: 720px;
+}
+.sources h2 {
+  font-family: var(--font-display-stack);
+  font-weight: 400;
+  font-size: 24px;
+  color: var(--jd-green-deep);
+  margin: 0 0 8px;
+}
+.sources p,
+.sources li {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.sources ul {
+  margin: 10px 0 0;
+  padding: 0 0 0 20px;
+}
+.sources a {
+  color: var(--jd-green);
+}

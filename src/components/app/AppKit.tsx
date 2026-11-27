@@ -33,10 +33,26 @@ export function AppHero({ photo, name, title, tall, children }: { photo: HeroPho
     <header className={`${k.hero} ${tall ? k.heroTall : ''}`} style={style}>
       {/* eslint-disable-next-line @next/next/no-img-element -- a 2KB mark, no need for the optimiser */}
       <img className={k.heroMark} src="/images/brand/ea-mark-white.png" alt="" width={52} height={25} />
+      <InfoLink className={k.heroInfo} />
       {name && <div className={k.heroName}>{name}</div>}
       <h1 className={k.heroTitle}>{title}</h1>
       {children}
     </header>
+  );
+}
+
+/**
+ * The (i): the way in to Info (/info, src/lib/info/topics.ts), the facts and
+ * tools section. It sits in the corner of every tab's header instead of
+ * taking a slot in the tab bar, which is full (the user's choice, 2026-11-27).
+ */
+export function InfoLink({ className }: { className?: string }) {
+  return (
+    <Link href="/info" prefetch={false} className={`${k.info} ${className ?? ''}`} aria-label="Info: facts and tools">
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-5M12 8h.01" />
+      </svg>
+    </Link>
   );
 }
 

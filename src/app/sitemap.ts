@@ -8,6 +8,7 @@ import { EMPTY_SNAPSHOT } from '@/lib/costPerAcre/model';
 import { CURATED_TAGS, MIN_INDEXED_TAG_POSTS } from '@/lib/notes/tags';
 import { siteUrl } from '@/lib/site';
 import { SERVICE_PAGES } from '@/lib/services';
+import { LIVE_INFO_TOPICS } from '@/lib/info/topics';
 
 const SITE = siteUrl();
 
@@ -33,6 +34,8 @@ const DATES = {
   legal: new Date('2026-09-23'),
   /** The directory of Open members taking direct enquiries. */
   directory: new Date('2026-10-21'),
+  /** Info: the hub, work windows and the calendar, first published. */
+  info: new Date('2026-11-27'),
 } as const;
 
 // Refresh daily so covered-county entries track the network as it grows.
@@ -166,6 +169,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/service-charter`, lastModified: DATES.legal, changeFrequency: 'yearly', priority: 0.2 },
     ...servicePages,
     ...costPages,
+    { url: `${SITE}/info`, lastModified: DATES.info, changeFrequency: 'monthly' as const, priority: 0.7 },
+    ...LIVE_INFO_TOPICS.map((t) => ({
+      url: `${SITE}${t.href}`,
+      lastModified: DATES.info,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
     ...paddockCountyPages,
     ...countyPages,
     ...notePages,
