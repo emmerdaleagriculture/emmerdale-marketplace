@@ -45,7 +45,40 @@ const nextConfig = {
    * stylesheet agree. NEXT_DEPLOYMENT_ID is set by Vercel's build when skew
    * protection is on and absent otherwise, so locally this does nothing.
    */
-  webpack(config, { dev, webpack }) {
+  webpack(config, { dev, isServer, webpack }) {
+    // The React that Next bundles throws away a "data has arrived" ping that
+    // fires mid-render, which left clicks inside a section with a loading.tsx
+    // doing nothing (37 in 120, 2026-11-26). The loader makes React's own
+    // one-line correction as that file is compiled, and stops the build if a
+    // Next upgrade has changed the line. The whole story is at the top of it.
+    config.module.rules.push({
+      test: /[\\/]next[\\/]dist[\\/]compiled[\\/]react-dom(?:-experimental)?[\\/]cjs[\\/]react-dom-(?:client\.(?:production|development)|profiling\.profiling)\.js$/,
+      loader: fileURLToPath(new URL('./webpack/reactRenderPhasePing.cjs', import.meta.url)),
+    });
+    // The loader can only object to a file that reaches it. Should Next ever
+    // bundle its React from somewhere the rule above does not match, the
+    // browser build fails here instead of quietly shipping the fault back.
+    if (!dev && !isServer) {
+      config.plugins.push({
+        apply(compiler) {
+          compiler.hooks.thisCompilation.tap('ReactRenderPhasePing', (compilation) => {
+            compilation.hooks.finishModules.tap('ReactRenderPhasePing', (modules) => {
+              for (const m of modules) {
+                if (m.loaders?.some((l) => String(l.loader).endsWith('reactRenderPhasePing.cjs'))) return;
+              }
+              compilation.errors.push(
+                new webpack.WebpackError(
+                  'reactRenderPhasePing: no bundled react-dom-client went through webpack/reactRenderPhasePing.cjs, ' +
+                    'so the dead-click fix is not in this build. Next has moved its React: see the comment at the ' +
+                    'top of that loader.',
+                ),
+              );
+            });
+          });
+        },
+      });
+    }
+
     const dpl = process.env.NEXT_DEPLOYMENT_ID;
     if (!dev && dpl) {
       const { Compilation, sources } = webpack;
