@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type * as Leaflet from 'leaflet';
-import { isNativeApp } from '@/lib/app/isApp';
 import { acresParam, keepWalkPoint, measureArea, pathLengthM, type LngLat } from '@/lib/info/areaMaths';
 import { fig } from '@/lib/info/sprayMaths';
+import { onePosition, watchPosition, type Fix } from '@/lib/info/position';
 import css from './area.module.css';
 
 /**
@@ -31,61 +31,6 @@ function savedView() {
     if (v && Number.isFinite(v.lat) && Number.isFinite(v.lng) && Number.isFinite(v.zoom)) return v as typeof UK;
   } catch {}
   return null;
-}
-
-type Fix = { lat: number; lng: number; accuracy: number };
-
-/** Start following the phone's position; returns the function that stops it. */
-async function watchPosition(onFix: (f: Fix) => void, onFail: () => void): Promise<() => void> {
-  if (isNativeApp()) {
-    // Destructured from the module namespace: a Capacitor plugin proxy must
-    // never be returned from an async function (it looks like a thenable).
-    const { Geolocation } = await import('@capacitor/geolocation');
-    const perm = await Geolocation.requestPermissions().catch(() => null);
-    if (!perm || perm.location === 'denied') {
-      onFail();
-      return () => {};
-    }
-    const id = await Geolocation.watchPosition({ enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }, (pos, err) => {
-      if (err || !pos) return;
-      onFix({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
-    });
-    return () => void Geolocation.clearWatch({ id });
-  }
-  if (!('geolocation' in navigator)) {
-    onFail();
-    return () => {};
-  }
-  const id = navigator.geolocation.watchPosition(
-    (pos) => onFix({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
-    (err) => {
-      if (err.code === err.PERMISSION_DENIED) onFail();
-    },
-    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
-  );
-  return () => navigator.geolocation.clearWatch(id);
-}
-
-/** One position, for "Where I am". */
-function onePosition(): Promise<Fix | null> {
-  return new Promise((resolve) => {
-    let stop: (() => void) | null = null;
-    let done = false;
-    const finish = (f: Fix | null) => {
-      if (done) return;
-      done = true;
-      stop?.();
-      resolve(f);
-    };
-    setTimeout(() => finish(null), 15000);
-    watchPosition(
-      (f) => finish(f),
-      () => finish(null),
-    ).then((s) => {
-      stop = s;
-      if (done) s();
-    });
-  });
 }
 
 export function AreaMapper() {

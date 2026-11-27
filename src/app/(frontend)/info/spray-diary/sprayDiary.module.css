@@ -189,3 +189,18 @@
 .recordActions .danger {
   color: var(--error);
 }
+
+/* Opened from a coverage map run. */
+.fromRun {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--green-wash);
+  border: 1px solid var(--green-line);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.fromRun a {
+  color: var(--jd-green);
+  font-weight: 600;
+}

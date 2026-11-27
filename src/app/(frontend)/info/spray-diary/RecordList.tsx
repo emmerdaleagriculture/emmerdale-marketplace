@@ -59,6 +59,11 @@ export function RecordList({ records, today }: { records: SprayRecord[]; today: 
               <Link href={`/info/spray-diary?copy=${r.id}#add`} prefetch={false}>
                 Copy to a new record
               </Link>
+              {r.run_id && (
+                <Link href={`/info/coverage-map/${r.run_id}`} prefetch={false}>
+                  Map of the job
+                </Link>
+              )}
               {asking === r.id ? (
                 <>
                   <button

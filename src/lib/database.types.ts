@@ -1058,6 +1058,57 @@ export type Database = {
         }
         Relationships: []
       }
+      coverage_runs: {
+        Row: {
+          active_seconds: number
+          applied_ha: number
+          covered_ha: number
+          created_at: string
+          distance_m: number
+          ended_at: string
+          id: string
+          overlap_ha: number
+          site: string | null
+          started_at: string
+          task: string
+          track: Json
+          user_id: string
+          width_m: number
+        }
+        Insert: {
+          active_seconds: number
+          applied_ha: number
+          covered_ha: number
+          created_at?: string
+          distance_m: number
+          ended_at: string
+          id?: string
+          overlap_ha: number
+          site?: string | null
+          started_at: string
+          task?: string
+          track: Json
+          user_id: string
+          width_m: number
+        }
+        Update: {
+          active_seconds?: number
+          applied_ha?: number
+          covered_ha?: number
+          created_at?: string
+          distance_m?: number
+          ended_at?: string
+          id?: string
+          overlap_ha?: number
+          site?: string | null
+          started_at?: string
+          task?: string
+          track?: Json
+          user_id?: string
+          width_m?: number
+        }
+        Relationships: []
+      }
       cron_runs: {
         Row: {
           detail: Json | null
@@ -4264,6 +4315,7 @@ export type Database = {
           operator: string
           postcode: string | null
           product: string
+          run_id: string | null
           site: string
           situation: string
           sprayed_on: string
@@ -4292,6 +4344,7 @@ export type Database = {
           operator: string
           postcode?: string | null
           product: string
+          run_id?: string | null
           site: string
           situation: string
           sprayed_on: string
@@ -4320,6 +4373,7 @@ export type Database = {
           operator?: string
           postcode?: string | null
           product?: string
+          run_id?: string | null
           site?: string
           situation?: string
           sprayed_on?: string

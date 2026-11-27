@@ -70,6 +70,13 @@ export const INFO_GROUPS: InfoGroup[] = [
         href: '/info/spray-rates',
       },
       {
+        slug: 'coverage-map',
+        title: 'Coverage map',
+        blurb: 'Set the working width and watch the field fill in as you spray or spread, overlap and all. Pause to refill, save it with the spray record.',
+        icon: 'map',
+        href: '/info/coverage-map',
+      },
+      {
         slug: 'spray-diary',
         title: 'Spray diary',
         blurb: 'The record the law asks you to keep: product, rate, field, weather and operator, saved as you finish the job.',

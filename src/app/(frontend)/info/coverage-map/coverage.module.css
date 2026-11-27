@@ -1,0 +1,441 @@
+/* /info/coverage-map. Site tokens only, so the app's dark mode follows.
+   Buttons are big: this is used in a cab, often with gloves on. */
+
+.tool {
+  margin: 0 0 8px;
+}
+
+/* ---------- Setup ---------- */
+.setup {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+.tasks {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--grey-pale);
+}
+@media (max-width: 420px) {
+  .tasks {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.task,
+.taskOn {
+  padding: 10px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: 600 15px var(--font-body-stack);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.taskOn {
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
+}
+.setupRow {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 10px;
+}
+@media (max-width: 420px) {
+  .setupRow {
+    grid-template-columns: 1fr;
+  }
+}
+.field {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.inputRow {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  background: var(--white);
+  overflow: hidden;
+}
+.inputRow input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  /* 16px or more, or iOS zooms the page on focus. */
+  font: 700 18px var(--font-body-stack);
+}
+.unit {
+  padding: 0 14px 0 4px;
+  color: var(--ink-3);
+  font-size: 15px;
+}
+
+/* ---------- Buttons ---------- */
+.go,
+.pause,
+.finish,
+.ghost,
+.danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 0 22px;
+  border-radius: 14px;
+  font: 700 18px var(--font-body-stack);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.go {
+  border: 0;
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
+}
+.go:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pause {
+  border: 0;
+  background: var(--jd-yellow);
+  color: var(--on-yellow);
+}
+.finish,
+.ghost {
+  border: 1px solid var(--rule-strong);
+  background: var(--white);
+  color: var(--ink);
+}
+.danger {
+  border: 0;
+  background: var(--error);
+  color: #fff;
+}
+.controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0 0;
+}
+.controls > :first-child {
+  flex: 1 1 160px;
+}
+
+/* ---------- Working: the whole screen ---------- */
+/* While a run is going the map takes the screen, over the header and the
+   app's tab bar, so nothing else is a tap away from a bumpy thumb. */
+.inline {
+  display: contents;
+}
+.live {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  background: var(--cream);
+}
+.live .bar {
+  flex: none;
+}
+.live .mapWrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.live .map {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+.live .controls {
+  flex: none;
+  flex-wrap: nowrap;
+  margin-top: 10px;
+}
+.live .hint,
+.live .notice,
+.live .error {
+  flex: none;
+}
+
+/* ---------- The live figures ---------- */
+.bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 0 0 8px;
+}
+.stat {
+  display: grid;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--green-wash);
+  border: 1px solid var(--green-line);
+  min-width: 0;
+}
+.stat span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.stat strong {
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--jd-green-deep);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stat em {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.warn {
+  color: var(--error) !important;
+}
+
+/* ---------- The map ---------- */
+.mapWrap {
+  position: relative;
+}
+.map {
+  width: 100%;
+  height: min(50vh, 420px);
+  min-height: 280px;
+  border-radius: 14px;
+  border: 1px solid var(--rule);
+  overflow: hidden;
+  background: var(--jd-green-pale);
+}
+.map :global(.leaflet-control-zoom a) {
+  /* !important: leaflet.css loads after module CSS and wins the tie. */
+  width: 42px !important;
+  height: 42px !important;
+  line-height: 42px !important;
+  font-size: 22px !important;
+}
+/* Each coverage tile is a tiny canvas stretched over its ground: keep the cells square. */
+.coverTile {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+}
+
+.gps,
+.gpsGood,
+.gpsBad,
+.pausedTag {
+  position: absolute;
+  z-index: 500;
+  right: 10px;
+  top: 10px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font: 700 13px var(--font-body-stack);
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  pointer-events: none;
+}
+.gpsGood::before,
+.gps::before,
+.gpsBad::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: 1px;
+}
+.gpsGood::before {
+  background: #2fd16b;
+}
+.gps::before {
+  background: #ffde00;
+}
+.gpsBad::before {
+  background: #ff5a4a;
+}
+.pausedTag {
+  right: auto;
+  left: 50%;
+  top: auto;
+  bottom: 30px;
+  transform: translateX(-50%);
+  background: var(--jd-yellow);
+  color: #17330d;
+  white-space: nowrap;
+}
+.recentre {
+  position: absolute;
+  z-index: 500;
+  right: 10px;
+  bottom: 30px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  font: 700 15px var(--font-body-stack);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+/* ---------- Words ---------- */
+.hint {
+  margin: 8px 0 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.notice {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--grey-pale);
+  font-size: 15px;
+  color: var(--ink);
+}
+.error {
+  margin: 8px 0 0;
+  color: var(--error);
+  font-size: 15px;
+}
+.unavailable {
+  padding: 16px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: 14px;
+  color: var(--ink-2);
+}
+
+/* ---------- Finished ---------- */
+.done {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--green-wash);
+  border: 1px solid var(--green-line);
+}
+.doneLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.doneMain {
+  margin: -8px 0 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--jd-green-deep);
+  font-variant-numeric: tabular-nums;
+}
+.doneMain span {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.doneList {
+  list-style: none;
+  margin: -4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+  color: var(--ink);
+}
+.doneList strong {
+  color: var(--jd-green-deep);
+}
+
+/* ---------- Saved runs ---------- */
+.runs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.run {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  text-decoration: none;
+}
+.runTitle {
+  font-weight: 700;
+  font-size: 16px;
+}
+.runLine {
+  font-size: 14.5px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.runsHead {
+  margin: 28px 0 10px;
+  font-size: 20px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.legend i {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border-radius: 3px;
+  vertical-align: -2px;
+}
+.legendOnce {
+  background: rgb(30, 144, 255);
+}
+.legendTwice {
+  background: rgb(255, 86, 0);
+}
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 12px 0 0;
+  font-size: 15px;
+}
+.links a {
+  color: var(--jd-green);
+  font-weight: 600;
+}
+.legendBoom {
+  background: #ffde00;
+}
