@@ -264,7 +264,11 @@ export function AreaMapper() {
     setWalking(true);
     setWalkFix(null);
     let first = true;
-    stopWalkRef.current = await watchPosition(
+    const failWalk = () => {
+      setWalking(false);
+      setPlaceError('The phone won’t share its position. Allow location for this app or site, or tap the corners instead.');
+    };
+    const stop = await watchPosition(
       (f) => {
         setWalkFix(f.accuracy);
         showYou(f);
@@ -279,11 +283,14 @@ export function AreaMapper() {
           redrawRef.current();
         }
       },
-      () => {
-        setWalking(false);
-        setPlaceError('The phone won’t share its position. Allow location for this app or site, or tap the corners instead.');
-      },
-    );
+      failWalk,
+    ).catch(() => {
+      failWalk();
+      return null;
+    });
+    // Left the page while the watch was starting: stop it rather than leak it.
+    if (stop && !mapRef.current) stop();
+    else stopWalkRef.current = stop;
   };
 
   const stopWalk = () => {
