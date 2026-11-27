@@ -200,6 +200,12 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
         }
         setPhaseState(runRef.current.phase);
         if (runRef.current.phase === 'paused') setNotice('Picked up the run where it stopped. Tap Resume when you are back on the line.');
+        // The map shows the run; the position waits for Resume.
+        followRef.current = false;
+      } else {
+        // Nothing to pick up: find the phone straight away, so the map opens
+        // on the field rather than the whole country.
+        void startGpsRef.current();
       }
       setReady(true);
     })();
@@ -337,13 +343,15 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
         }
       },
     ).catch(() => null);
-    if (!stop || !ok || gen !== gpsGenRef.current || !mapRef.current || runRef.current?.phase !== 'working') {
+    if (!stop || !ok || gen !== gpsGenRef.current || !mapRef.current) {
       stop?.();
       return false;
     }
     stopGpsRef.current = stop;
     return true;
   };
+  const startGpsRef = useRef(startGps);
+  startGpsRef.current = startGps;
   const stopGps = () => {
     gpsGenRef.current++;
     stopGpsRef.current?.();
@@ -463,6 +471,8 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
     setNotice(null);
     setDiscarding(false);
     setPhaseState('setup');
+    setFollow(true);
+    void startGps();
   };
 
   const save = async () => {
@@ -506,14 +516,17 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
     return () => clearTimeout(t);
   }, [phase]);
 
-  // First fix of a run: zoom in to working height.
+  // First fix (on opening, or on Resume after a reopened run): zoom in to
+  // working height on the phone's position.
   const zoomedRef = useRef(false);
   useEffect(() => {
-    if (phase === 'working' && accuracy !== null && !zoomedRef.current && lastFixRef.current && mapRef.current) {
+    if ((phase === 'setup' || phase === 'working') && accuracy !== null && !zoomedRef.current && lastFixRef.current && mapRef.current) {
       zoomedRef.current = true;
-      if (mapRef.current.getZoom() < 17) mapRef.current.setView([lastFixRef.current.lat, lastFixRef.current.lng], 18);
+      if (followRef.current || mapRef.current.getZoom() < 15) {
+        setFollow(true);
+        mapRef.current.setView([lastFixRef.current.lat, lastFixRef.current.lng], Math.max(mapRef.current.getZoom(), 18));
+      }
     }
-    if (phase === 'setup') zoomedRef.current = false;
   }, [phase, accuracy]);
 
   if (failed) {
@@ -600,16 +613,16 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
           {/* One fixed class: Leaflet adds its own to this element, and a changing
             className would have React wipe them. The live size comes from .live. */}
         <div ref={containerRef} className={css.map} />
-          {live && (
+          {phase !== 'done' && (
             <span
               className={accuracy !== null && accuracy <= 3 ? css.gpsGood : accuracy !== null && accuracy <= MAX_ACCURACY_M ? css.gps : css.gpsBad}
             >
               {gpsWord}
             </span>
           )}
-          {live && !follow && (
+          {phase !== 'done' && !follow && accuracy !== null && (
             <button type="button" className={css.recentre} onClick={recentre}>
-              Follow the machine
+              {live ? 'Follow the machine' : 'Where I am'}
             </button>
           )}
           {phase === 'paused' && <span className={css.pausedTag}>Paused: nothing is being painted</span>}

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { TASK_LABEL, type RunTask } from '@/lib/info/coverage';
 import { ACRES_PER_HA, fig } from '@/lib/info/sprayMaths';
+import { InfoHelp } from '../InfoHelp';
 import { InfoFrame } from '../InfoFrame';
 import { CoverageMapper } from './CoverageMapper';
 import c from '../calc.module.css';
@@ -91,44 +92,46 @@ export default async function CoverageMapPage() {
         </section>
       )}
 
-      <section className={c.prose}>
-        <h2>Getting a good map</h2>
-        <ul>
-          <li>
-            <strong>Plug the GPS receiver in first.</strong> A receiver such as a Bad Elf, Garmin GLO or Dual XGPS hands its position to the phone,
-            and the map uses it without any setting. The figure in the corner of the map says how good the fix is: a receiver gives 1 to 3 metres, a
-            phone on its own 5 or more. Fixes worse than 10 metres are ignored.
-          </li>
-          <li>
-            <strong>Keep the screen open.</strong> The phone stops sending its position when it locks or you switch app. The map holds the screen on
-            while you work; if a gap does happen, the map carries on from where you are and leaves the gap unpainted rather than guess.
-          </li>
-          <li>
-            <strong>Working width</strong> is the width the machine actually treats: the boom’s spray width, or the spreader’s bout width from its
-            chart, not the width it spreads to the edges.
-          </li>
-          <li>
-            <strong>Pause to refill.</strong> Nothing is painted while paused, so driving to the bowser and back does not count. Resume when the
-            machine is back where it stopped.
-          </li>
-          <li>
-            The width is drawn centred on the phone or receiver. Put the receiver on the middle of the cab roof, or as near the centre line as you
-            can.
-          </li>
-          <li>
-            <strong>Overlap</strong> is ground gone over twice or more. A little on headlands is normal; more than a tenth of the field usually means
-            the bouts are too close.
-          </li>
-        </ul>
-        <p>
-          A saved run can be added to the <Link href="/info/spray-diary">spray diary</Link>: the field, the date, the times and the area covered are
-          filled in from the map, and the record links back to it.
-        </p>
-        <p className={c.fine}>
-          The run is kept on your phone while you work and only sent when you save it. Saved runs are private to your account. The map is a record of
-          where the machine went, not proof of what it applied: section control, nozzles and spread pattern are yours to check.
-        </p>
-      </section>
+      <InfoHelp title="Getting a good map">
+        <section className={c.prose}>
+          <h2>Getting a good map</h2>
+          <ul>
+            <li>
+              <strong>Plug the GPS receiver in first.</strong> A receiver such as a Bad Elf, Garmin GLO or Dual XGPS hands its position to the phone,
+              and the map uses it without any setting. The figure in the corner of the map says how good the fix is: a receiver gives 1 to 3 metres, a
+              phone on its own 5 or more. Fixes worse than 10 metres are ignored.
+            </li>
+            <li>
+              <strong>Keep the screen open.</strong> The phone stops sending its position when it locks or you switch app. The map holds the screen on
+              while you work; if a gap does happen, the map carries on from where you are and leaves the gap unpainted rather than guess.
+            </li>
+            <li>
+              <strong>Working width</strong> is the width the machine actually treats: the boom’s spray width, or the spreader’s bout width from its
+              chart, not the width it spreads to the edges.
+            </li>
+            <li>
+              <strong>Pause to refill.</strong> Nothing is painted while paused, so driving to the bowser and back does not count. Resume when the
+              machine is back where it stopped.
+            </li>
+            <li>
+              The width is drawn centred on the phone or receiver. Put the receiver on the middle of the cab roof, or as near the centre line as you
+              can.
+            </li>
+            <li>
+              <strong>Overlap</strong> is ground gone over twice or more. A little on headlands is normal; more than a tenth of the field usually means
+              the bouts are too close.
+            </li>
+          </ul>
+          <p>
+            A saved run can be added to the <Link href="/info/spray-diary">spray diary</Link>: the field, the date, the times and the area covered are
+            filled in from the map, and the record links back to it.
+          </p>
+          <p className={c.fine}>
+            The run is kept on your phone while you work and only sent when you save it. Saved runs are private to your account. The map is a record of
+            where the machine went, not proof of what it applied: section control, nozzles and spread pattern are yours to check.
+          </p>
+        </section>
+      </InfoHelp>
     </InfoFrame>
   );
 }

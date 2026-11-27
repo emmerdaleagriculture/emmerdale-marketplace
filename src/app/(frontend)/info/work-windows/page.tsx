@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { fetchForecast, forecastSource, resolvePlace } from '@/lib/info/forecast';
 import { LIMITS, goodWindows, rate, type Job, type Level } from '@/lib/info/windows';
 import { groupDays, hourLabel, span, windowLabel, type Day } from '@/lib/info/windowsView';
+import { InfoHelp } from '../InfoHelp';
 import { InfoFrame } from '../InfoFrame';
 import { PlaceForm } from './PlaceForm';
 import css from './windows.module.css';
@@ -136,7 +137,9 @@ export default async function WorkWindowsPage({ searchParams }: { searchParams: 
         </>
       )}
 
-      <Method soil={source === 'open-meteo'} />
+      <InfoHelp title="How the ratings are worked out">
+        <Method soil={source === 'open-meteo'} />
+      </InfoHelp>
     </InfoFrame>
   );
 }

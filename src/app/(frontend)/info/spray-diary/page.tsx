@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { RECORD_COLUMNS, type SprayRecord } from '@/lib/info/sprayRecords';
+import { InfoHelp } from '../InfoHelp';
 import { InfoFrame } from '../InfoFrame';
 import { RecordForm } from './RecordForm';
 import { RecordList } from './RecordList';
@@ -137,38 +138,40 @@ export default async function SprayDiaryPage({ searchParams }: { searchParams: P
         </div>
       )}
 
-      <section className={c.prose}>
-        <h2>What the record has to say</h2>
-        <p>
-          The law asks professional users of plant protection products to record, for each application, the name of the product, the time and the dose
-          of application, and the area and crop it went on, and to keep the record for at least three years. The diary’s starred boxes cover those.
-        </p>
-        <p>
-          The rest is what makes the record worth having when a neighbour, a customer or an inspector asks a question: the MAPP number from the label,
-          the water volume, the wind and temperature at the time, who sprayed and with what certificate, and the day stock may go back.
-        </p>
-        <p>
-          In Northern Ireland the rules went further on 1 January 2026: the record must also carry the MAPP number, and from 1 January 2027 it has
-          to be kept in a form a computer can read, which a spreadsheet file is and a photograph of a notebook is not. A contractor there is
-          responsible for the record and must give the customer a copy. The diary’s download is a spreadsheet file with the MAPP number in it.
-        </p>
-        <p>
-          A business or sole trader using professional products in England, Scotland or Wales must also be registered with Defra as a user, within
-          three months of starting.
-        </p>
-        <h3>One record for each product</h3>
-        <p>
-          A tank mix of two products is two records. Save the first, then use “Copy to a new record” and change the product and dose.
-        </p>
-        <h3>Stock out until</h3>
-        <p>
-          Take the interval from the product label and enter the date it ends. Where ragwort or another poisonous weed was sprayed, stock stay out until
-          it has died down and been cleared, however long that takes: dying ragwort is more palatable, not less.
-        </p>
-        <p className={c.fine}>
-          Your records are private to your account. We do not share them, and deleting your account deletes them.
-        </p>
-      </section>
+      <InfoHelp title="What the record has to say">
+        <section className={c.prose}>
+          <h2>What the record has to say</h2>
+          <p>
+            The law asks professional users of plant protection products to record, for each application, the name of the product, the time and the dose
+            of application, and the area and crop it went on, and to keep the record for at least three years. The diary’s starred boxes cover those.
+          </p>
+          <p>
+            The rest is what makes the record worth having when a neighbour, a customer or an inspector asks a question: the MAPP number from the label,
+            the water volume, the wind and temperature at the time, who sprayed and with what certificate, and the day stock may go back.
+          </p>
+          <p>
+            In Northern Ireland the rules went further on 1 January 2026: the record must also carry the MAPP number, and from 1 January 2027 it has
+            to be kept in a form a computer can read, which a spreadsheet file is and a photograph of a notebook is not. A contractor there is
+            responsible for the record and must give the customer a copy. The diary’s download is a spreadsheet file with the MAPP number in it.
+          </p>
+          <p>
+            A business or sole trader using professional products in England, Scotland or Wales must also be registered with Defra as a user, within
+            three months of starting.
+          </p>
+          <h3>One record for each product</h3>
+          <p>
+            A tank mix of two products is two records. Save the first, then use “Copy to a new record” and change the product and dose.
+          </p>
+          <h3>Stock out until</h3>
+          <p>
+            Take the interval from the product label and enter the date it ends. Where ragwort or another poisonous weed was sprayed, stock stay out until
+            it has died down and been cleared, however long that takes: dying ragwort is more palatable, not less.
+          </p>
+          <p className={c.fine}>
+            Your records are private to your account. We do not share them, and deleting your account deletes them.
+          </p>
+        </section>
+      </InfoHelp>
     </InfoFrame>
   );
 }

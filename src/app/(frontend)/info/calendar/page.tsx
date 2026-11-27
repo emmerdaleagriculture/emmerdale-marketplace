@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ALL_YEAR, CALENDAR_SOURCES, MONTHS, ukMonth, type Month } from '@/lib/info/calendar';
+import { InfoHelp } from '../InfoHelp';
 import { InfoFrame } from '../InfoFrame';
 import css from './calendar.module.css';
 
@@ -76,25 +77,27 @@ export default function CalendarPage() {
         </ul>
       </section>
 
-      <section className={css.sources}>
-        <h2>Where this comes from</h2>
-        <p>
-          The legal dates were checked against the pages below on 27 November 2026. Rules differ between
-          England, Wales, Scotland and Northern Ireland, and Nitrate Vulnerable Zone rules apply only
-          inside a zone (in Wales, everywhere). The hedge dates are England’s and apply to hedges on or
-          beside farmland. Check your own position before relying on a date. The jobs are usual practice,
-          not instructions.
-        </p>
-        <ul>
-          {CALENDAR_SOURCES.map((s) => (
-            <li key={s.href}>
-              <a href={s.href} rel="noopener">
-                {s.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <InfoHelp title="Where this comes from">
+        <section className={css.sources}>
+          <h2>Where this comes from</h2>
+          <p>
+            The legal dates were checked against the pages below on 27 November 2026. Rules differ between
+            England, Wales, Scotland and Northern Ireland, and Nitrate Vulnerable Zone rules apply only
+            inside a zone (in Wales, everywhere). The hedge dates are England’s and apply to hedges on or
+            beside farmland. Check your own position before relying on a date. The jobs are usual practice,
+            not instructions.
+          </p>
+          <ul>
+            {CALENDAR_SOURCES.map((s) => (
+              <li key={s.href}>
+                <a href={s.href} rel="noopener">
+                  {s.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </InfoHelp>
     </InfoFrame>
   );
 }

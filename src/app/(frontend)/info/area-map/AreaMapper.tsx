@@ -139,6 +139,17 @@ export function AreaMapper() {
       redrawRef.current = redraw;
       redraw();
 
+      // Open on the phone's position rather than wherever the map was last
+      // left (or the whole country), unless the user moves the map first.
+      let moved = false;
+      const here = map;
+      here.on('dragstart zoomstart', () => (moved = true));
+      void onePosition().then((f) => {
+        if (!f || cancelled || moved || mapRef.current !== here) return;
+        showYouRef.current(f);
+        here.setView([f.lat, f.lng], Math.max(here.getZoom(), 17));
+      });
+
       map.on('click', (e: Leaflet.LeafletMouseEvent) => {
         // Letting go of a dragged corner must not also drop a new one there.
         if (Date.now() - lastDragEndAt < 300) return;
@@ -170,6 +181,9 @@ export function AreaMapper() {
       }).addTo(map);
     } else youRef.current.setLatLng([f.lat, f.lng]);
   };
+
+  const showYouRef = useRef(showYou);
+  showYouRef.current = showYou;
 
   const findPlace = async () => {
     const q = place.trim().toUpperCase();
