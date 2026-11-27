@@ -49,7 +49,7 @@ export default function AreaMapPage() {
               The area is flat map area. On a steep bank the ground itself is a little larger, and so is the spray or seed it takes.
             </li>
           </ul>
-  
+
           <h2>Conversions</h2>
           <div className={c.tableWrap}>
             <table className={c.table}>
@@ -73,7 +73,7 @@ export default function AreaMapPage() {
               </tbody>
             </table>
           </div>
-  
+
           <p>
             Once a field is measured, the links under the answer carry its acres into the <Link href="/info/spray-rates">spray</Link>,{' '}
             <Link href="/info/fertiliser">fertiliser</Link> and <Link href="/info/seeding">seed</Link> calculators.

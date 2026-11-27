@@ -110,6 +110,8 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [speedKmh, setSpeedKmh] = useState<number | null>(null);
   const [follow, setFollowState] = useState(true);
+  /** A position watch is running, so the badge has something to wait for. */
+  const [gpsOn, setGpsOn] = useState(false);
   const [screen, setScreen] = useState<ScreenHold['how'] | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -205,7 +207,7 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
       } else {
         // Nothing to pick up: find the phone straight away, so the map opens
         // on the field rather than the whole country.
-        void startGpsRef.current();
+        void startGpsRef.current(true);
       }
       setReady(true);
     })();
@@ -325,7 +327,8 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
   const gpsGenRef = useRef(0);
   const deniedText = 'The phone won’t share its position. Allow location for this app (Settings › Privacy › Location Services) and try again.';
 
-  const startGps = async () => {
+  /** `quiet`: the watch started on opening the page; a refusal then is not an error the user caused. */
+  const startGps = async (quiet = false) => {
     if (stopGpsRef.current) return true;
     const gen = ++gpsGenRef.current;
     let ok = true;
@@ -333,7 +336,7 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
       (f) => onFixRef.current(f),
       () => {
         ok = false;
-        setError(deniedText);
+        if (!quiet) setError(deniedText);
         // Refused after the watch had started (the browser asks, then says
         // no): stop it and pause, so Resume can ask again.
         if (gen === gpsGenRef.current && stopGpsRef.current) {
@@ -348,6 +351,7 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
       return false;
     }
     stopGpsRef.current = stop;
+    setGpsOn(true);
     return true;
   };
   const startGpsRef = useRef(startGps);
@@ -356,6 +360,7 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
     gpsGenRef.current++;
     stopGpsRef.current?.();
     stopGpsRef.current = null;
+    setGpsOn(false);
   };
 
   /** Whether the screen should be held now; a hold granted after it stopped being wanted is let go at once. */
@@ -391,6 +396,7 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
       return;
     }
     store(SETUP_KEY, { task, widthM });
+    zoomedRef.current = false;
     layerRef.current?.clear();
     boomRef.current?.remove();
     boomRef.current = null;
@@ -472,7 +478,8 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
     setDiscarding(false);
     setPhaseState('setup');
     setFollow(true);
-    void startGps();
+    zoomedRef.current = false;
+    void startGps(true);
   };
 
   const save = async () => {
@@ -522,8 +529,8 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
   useEffect(() => {
     if ((phase === 'setup' || phase === 'working') && accuracy !== null && !zoomedRef.current && lastFixRef.current && mapRef.current) {
       zoomedRef.current = true;
-      if (followRef.current || mapRef.current.getZoom() < 15) {
-        setFollow(true);
+      // Dragged before the GPS answered: the user has chosen where to look.
+      if (followRef.current) {
         mapRef.current.setView([lastFixRef.current.lat, lastFixRef.current.lng], Math.max(mapRef.current.getZoom(), 18));
       }
     }
@@ -613,7 +620,7 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
           {/* One fixed class: Leaflet adds its own to this element, and a changing
             className would have React wipe them. The live size comes from .live. */}
         <div ref={containerRef} className={css.map} />
-          {phase !== 'done' && (
+          {phase !== 'done' && (gpsOn || phase === 'working') && (
             <span
               className={accuracy !== null && accuracy <= 3 ? css.gpsGood : accuracy !== null && accuracy <= MAX_ACCURACY_M ? css.gps : css.gpsBad}
             >

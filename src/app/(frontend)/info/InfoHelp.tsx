@@ -14,7 +14,12 @@ export function InfoHelp({ title = 'Help and the detail', children }: { title?: 
 
   useEffect(() => {
     const openForHash = () => {
-      const id = decodeURIComponent(location.hash.slice(1));
+      let id = location.hash.slice(1);
+      try {
+        id = decodeURIComponent(id);
+      } catch {
+        // "#%" and the like: use it as it is rather than fail the page.
+      }
       if (!id || !ref.current) return;
       const target = document.getElementById(id);
       if (target && ref.current.contains(target)) {

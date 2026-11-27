@@ -81,7 +81,7 @@ export default function SeedingPage() {
             </table>
           </div>
           <p>With red clover in a grass mixture, AHDB’s figure is 7 kg/ha of clover to 22 kg/ha of grass.</p>
-  
+
           <h2>When</h2>
           <ul>
             <li>
@@ -91,7 +91,7 @@ export default function SeedingPage() {
             <li>White clover from April to August, and in a mixture no later than September. Red clover from April to late July.</li>
             <li>Overseeding does best from midsummer on.</li>
           </ul>
-  
+
           <h2>How</h2>
           <ul>
             <li>
@@ -109,14 +109,14 @@ export default function SeedingPage() {
               and no good on dry, hard ground. After spraying off an old sward, wait 7 to 10 days before cultivating.
             </li>
           </ul>
-  
+
           <h2>Afterwards</h2>
           <ul>
             <li>Graze when a seedling stays in the ground if you pull at it. The British Horse Society’s rule for horses is grass five to six inches long.</li>
             <li>Graze lightly at first, and take no silage in the first year.</li>
             <li>Weeds in a new ley are sprayed young, when the grass has two or three leaves and before the first grazing. Clover limits what you can use.</li>
           </ul>
-  
+
           <h2>For horses</h2>
           <p>
             The British Horse Society’s list for horse pasture is smooth-stalked meadow grass, the fescues (creeping red, chewings, sheep’s and tall),

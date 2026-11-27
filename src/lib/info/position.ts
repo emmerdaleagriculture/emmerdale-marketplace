@@ -42,8 +42,8 @@ export async function watchPosition(onFix: (f: Fix) => void, onFail: () => void)
   return () => navigator.geolocation.clearWatch(id);
 }
 
-/** One position, for "Where I am". */
-export function onePosition(): Promise<Fix | null> {
+/** One position, for "Where I am". An aborted signal stops the watch and gives null. */
+export function onePosition(signal?: AbortSignal): Promise<Fix | null> {
   return new Promise((resolve) => {
     let stop: (() => void) | null = null;
     let done = false;
@@ -54,6 +54,8 @@ export function onePosition(): Promise<Fix | null> {
       resolve(f);
     };
     setTimeout(() => finish(null), 15000);
+    if (signal?.aborted) return finish(null);
+    signal?.addEventListener('abort', () => finish(null), { once: true });
     watchPosition(
       (f) => finish(f),
       () => finish(null),

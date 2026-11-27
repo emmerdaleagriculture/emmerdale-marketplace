@@ -39,7 +39,7 @@ export default function FertiliserPage() {
             Rules for Water require a test no more than five years old before fertiliser or manure goes on cultivated land.
           </p>
           <p>The targets are phosphate index 2 and potash index 2-. At those you replace what the crop takes; below them you build up; above them you save your money.</p>
-  
+
           <h2>Phosphate and potash, by soil index</h2>
           <p>Kilograms a hectare for the season. Multiply by 0.8 for units an acre.</p>
           <div className={c.tableWrap}>
@@ -72,7 +72,7 @@ export default function FertiliserPage() {
             Hay takes a great deal of potash off the field: about 18 kg for every tonne carted away, against 6 kg of phosphate. A paddock cut for hay
             year after year and given nothing back runs down fast.
           </p>
-  
+
           <h2>Nitrogen</h2>
           <p>
             Nitrogen is put on for the grass you want to grow, not to a soil index. The figures assume a soil of moderate nitrogen supply and little
@@ -134,7 +134,7 @@ export default function FertiliserPage() {
           </div>
           <h3>Clover</h3>
           <p>A sward that is 30 to 40% clover grows about as much as pure grass given 180 kg N/ha. Bagged nitrogen on top of that mostly replaces the clover’s.</p>
-  
+
           <h2>Horse paddocks</h2>
           <p>
             RB209 has no figures for horses, and the rates above are for cattle and sheep making the most of the grass. For horses the aim is usually the
@@ -142,7 +142,7 @@ export default function FertiliserPage() {
             advice, and never to spread horse manure back on horse pasture. Teagasc’s equine advice is 25 to 40 kg N/ha a year on grazing, 25 of it in
             spring, and 100 kg N/ha for a hay or haylage crop. Phosphate, potash and lime still go on to the soil test.
           </p>
-  
+
           <h2>Lime</h2>
           <p>
             Grass on a mineral soil wants pH 6.0; 6.5 where clover matters. The lime to put on, in tonnes of ground limestone a hectare, is the gap
@@ -169,14 +169,14 @@ export default function FertiliserPage() {
             </table>
           </div>
           <p>So a clay loam at pH 5.6, wanted at 6.0: (6.2 − 5.6) × 6 = 3.6 t/ha, about 1.5 tonnes an acre.</p>
-  
+
           <h2>Sulphur and magnesium</h2>
           <p>
             On soils at risk of deficiency, grazing wants 20 to 30 kg SO₃/ha for every 100 kg of nitrogen applied, and
             silage 40 kg SO₃/ha before each cut. At magnesium index 0, 50 to 100 kg MgO/ha every three or four years. Where grass staggers is a risk,
             keep potash off in spring.
           </p>
-  
+
           <h2>What is in muck</h2>
           <p>Kilograms in each tonne or cubic metre as spread. The figure in brackets is what the next crop can use.</p>
           <div className={c.tableWrap}>
@@ -208,7 +208,7 @@ export default function FertiliserPage() {
             </table>
           </div>
           <p>Only about 5% of the nitrogen in farmyard manure spread on the surface reaches the next crop; its value is the phosphate and potash.</p>
-  
+
           <h2>The limits</h2>
           <ul>
             <li>

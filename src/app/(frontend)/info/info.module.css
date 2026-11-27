@@ -185,8 +185,18 @@ a.card:active {
 .helpBody > :first-child {
   margin-top: 14px;
 }
+/* Hidden from view only: screen readers still hear it, so the h3s under it
+   keep their parent heading. */
 .helpBody > section > h2:first-child {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 .helpBody > section > h2:first-child + * {
   margin-top: 0;

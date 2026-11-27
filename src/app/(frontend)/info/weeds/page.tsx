@@ -77,14 +77,14 @@ export default function WeedsPage() {
               you to be suitably qualified, and HSE’s expectation is a BASIS certificate.
             </li>
           </ul>
-  
+
           <h2>Injurious weeds</h2>
           <p>
             The Weeds Act 1959 names five: common ragwort, spear thistle, creeping thistle, curled dock and broad-leaved dock. You may have them on
             your land, but you should stop them spreading, and you can be served a notice to do so. If you keep horses or livestock you must not graze
             them where you know ragwort is present.
           </p>
-  
+
           <h2>Before and after</h2>
           <p>
             <Link href="/info/work-windows">Work windows</Link> rates the hours ahead for spraying, <Link href="/info/spray-rates">spray rates</Link>{' '}
