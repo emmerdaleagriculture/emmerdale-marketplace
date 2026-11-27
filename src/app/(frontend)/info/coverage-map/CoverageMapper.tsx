@@ -12,6 +12,7 @@ import {
   MIN_WIDTH_M,
   replay,
   RUN_TASKS,
+  trackBounds,
   simplifyTrack,
   TASK_LABEL,
   type CoverageStats,
@@ -177,21 +178,25 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
         setTask(saved.task);
         setSite(saved.site);
         setWidthText(String(saved.widthM));
-        const grid = replay(saved.track, saved.widthM);
-        gridRef.current = grid;
-        if (grid) {
-          layerRef.current.sync(grid);
-          setStats(grid.stats());
-          const pts = saved.track.flat();
-          const lats = pts.map((p) => p[1]);
-          const lngs = pts.map((p) => p[0]);
-          map.fitBounds(
-            [
-              [Math.min(...lats), Math.min(...lngs)],
-              [Math.max(...lats), Math.max(...lngs)],
-            ],
-            { padding: [30, 30], maxZoom: 19 },
-          );
+        try {
+          const grid = replay(saved.track, saved.widthM);
+          gridRef.current = grid;
+          const b = trackBounds(saved.track);
+          if (grid) {
+            layerRef.current.sync(grid);
+            setStats(grid.stats());
+          }
+          if (b)
+            map.fitBounds(
+              [
+                [b[0][1], b[0][0]],
+                [b[1][1], b[1][0]],
+              ],
+              { padding: [30, 30], maxZoom: 19 },
+            );
+        } catch (err) {
+          // Still offered back (Resume, Save, Discard); only the picture failed.
+          console.error('[coverageMap] could not redraw the unfinished run:', err);
         }
         setPhaseState(runRef.current.phase);
         if (runRef.current.phase === 'paused') setNotice('Picked up the run where it stopped. Tap Resume when you are back on the line.');
@@ -306,39 +311,60 @@ export function CoverageMapper({ signedIn }: { signedIn: boolean }) {
   const onFixRef = useRef(onFix);
   onFixRef.current = onFix;
 
+  /**
+   * Every start and stop moves this on. A watch that finishes starting after
+   * Finish or Discard was pressed, or a refusal the browser reports after the
+   * watch began, belongs to an older number and is stopped rather than kept.
+   */
+  const gpsGenRef = useRef(0);
+  const deniedText = 'The phone won’t share its position. Allow location for this app (Settings › Privacy › Location Services) and try again.';
+
   const startGps = async () => {
     if (stopGpsRef.current) return true;
+    const gen = ++gpsGenRef.current;
     let ok = true;
     const stop = await watchPosition(
       (f) => onFixRef.current(f),
       () => {
         ok = false;
-        setError('The phone won’t share its position. Allow location for this app (Settings › Privacy › Location Services) and try again.');
+        setError(deniedText);
+        // Refused after the watch had started (the browser asks, then says
+        // no): stop it and pause, so Resume can ask again.
+        if (gen === gpsGenRef.current && stopGpsRef.current) {
+          stopGps();
+          releaseScreen();
+          if (runRef.current?.phase === 'working') setPhase('paused');
+        }
       },
     ).catch(() => null);
-    if (!stop || !ok) {
+    if (!stop || !ok || gen !== gpsGenRef.current || !mapRef.current || runRef.current?.phase !== 'working') {
       stop?.();
-      return false;
-    }
-    if (!mapRef.current) {
-      stop();
       return false;
     }
     stopGpsRef.current = stop;
     return true;
   };
   const stopGps = () => {
+    gpsGenRef.current++;
     stopGpsRef.current?.();
     stopGpsRef.current = null;
   };
 
+  /** Whether the screen should be held now; a hold granted after it stopped being wanted is let go at once. */
+  const wantScreenRef = useRef(false);
   const holdScreen = async () => {
+    wantScreenRef.current = true;
     if (holdRef.current) return;
     const hold = await holdScreenOn();
+    if (!wantScreenRef.current || holdRef.current) {
+      hold.release();
+      return;
+    }
     holdRef.current = hold;
     setScreen(hold.how);
   };
   const releaseScreen = () => {
+    wantScreenRef.current = false;
     holdRef.current?.release();
     holdRef.current = null;
     setScreen(null);

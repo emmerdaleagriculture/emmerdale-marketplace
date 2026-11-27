@@ -54,14 +54,15 @@ export async function saveCoverageRunAction(input: SaveRunInput): Promise<SaveRu
       .trim()
       .slice(0, 200) || null;
 
-  const started = Number(input.startedAt);
-  const ended = Number(input.endedAt);
   const now = Date.now();
-  if (!Number.isFinite(started) || !Number.isFinite(ended) || ended < started || ended > now + 5 * 60000 || ended - started > 2 * DAY_MS) {
-    return {
-      ok: false,
-      error: 'The run’s start and finish times don’t look right. Check the phone’s clock.',
-    };
+  // A phone clock running a little fast is no reason to lose the run: pull
+  // the times back to now rather than refuse them.
+  const ended = Math.min(Number(input.endedAt), now);
+  const rawStart = Number(input.startedAt);
+  const started = rawStart > now + 10 * 60000 ? NaN : Math.min(rawStart, ended);
+  // A run left paused on the phone can be carried on days later.
+  if (!Number.isFinite(started) || !Number.isFinite(ended) || ended - started > 31 * DAY_MS) {
+    return { ok: false, error: 'The run’s start and finish times don’t look right. Check the phone’s clock.' };
   }
 
   const raw = parseTrack(input.track);

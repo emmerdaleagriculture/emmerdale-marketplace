@@ -27,7 +27,10 @@ export async function holdScreenOn(): Promise<ScreenHold> {
     let released = false;
     const ask = async () => {
       try {
-        sentinel = await navigator.wakeLock.request('screen');
+        const got = await navigator.wakeLock.request('screen');
+        // Released while the request was out: let this one go too.
+        if (released) void got.release().catch(() => {});
+        else sentinel = got;
       } catch {
         sentinel = null;
       }

@@ -85,7 +85,8 @@ export default async function SprayDiaryPage({ searchParams }: { searchParams: P
         site: run.site || sibling?.site || '',
         sprayed_on: ukDay(run.started_at),
         start_time: ukTime(run.started_at),
-        end_time: ukTime(run.ended_at),
+        // Past midnight, the finish is on another day: leave it to be typed.
+        end_time: ukDay(run.ended_at) === ukDay(run.started_at) ? ukTime(run.ended_at) : null,
         area_ha: Math.round(Number(run.covered_ha) * 1000) / 1000,
       };
       fromRun = { id: run.id, label: `${run.site ? `${run.site}, ` : ''}${new Date(run.started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Europe/London' })}` };

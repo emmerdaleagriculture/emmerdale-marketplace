@@ -28,8 +28,9 @@ const clock = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Europe/London',
 });
 const duration = (s: number) => {
-  const h = Math.floor(s / 3600);
-  const m = Math.round((s % 3600) / 60);
+  const total = Math.round(s / 60);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
   return h ? `${h} h ${m} min` : `${m} min`;
 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
