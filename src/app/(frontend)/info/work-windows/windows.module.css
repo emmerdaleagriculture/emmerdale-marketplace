@@ -1,0 +1,306 @@
+/* /info/work-windows */
+
+.form {
+  margin: 0 0 22px;
+  max-width: 460px;
+}
+.label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin: 0 0 6px;
+}
+.formRow {
+  display: flex;
+  gap: 8px;
+}
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 50px;
+  padding: 0 14px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  /* 16px or iOS zooms the page on focus. */
+  font: 600 17px var(--font-body-stack);
+  text-transform: uppercase;
+}
+.input::placeholder {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+.btn {
+  height: 50px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
+  font: 700 16px var(--font-body-stack);
+  cursor: pointer;
+}
+.locate {
+  margin: 10px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--jd-green);
+  font: 600 15px var(--font-body-stack);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.locate:disabled {
+  color: var(--ink-3);
+}
+.error {
+  margin: 10px 0 0;
+  color: var(--error);
+  font-size: 15px;
+}
+
+/* Which job */
+.jobs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 14px;
+  border-radius: 14px;
+  background: var(--grey-pale);
+}
+.jobs a {
+  padding: 10px 4px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.jobs a[aria-current='page'] {
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
+}
+
+/* The answer */
+.summary {
+  padding: 16px;
+  border-radius: 16px;
+  margin: 0 0 14px;
+  background: var(--green-wash);
+  border: 1px solid var(--green-line);
+}
+.summary[data-level='no'] {
+  background: var(--warn-bg);
+  border-color: var(--warn-line);
+}
+.summaryKicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 4px;
+}
+.summaryMain {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--jd-green-deep);
+}
+.summary[data-level='no'] .summaryMain {
+  color: var(--warn-ink);
+}
+.summaryMore {
+  margin: 4px 0 0;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+
+/* Rating colours, in one place. The words are always printed beside them. */
+.key li,
+.cell,
+.run {
+  --lv: var(--fill-green);
+}
+.key li[data-level='care'],
+.cell[data-level='care'],
+.run[data-level='care'] {
+  --lv: #d99a00;
+}
+.key li[data-level='no'],
+.cell[data-level='no'],
+.run[data-level='no'] {
+  --lv: var(--fill-error);
+}
+
+.key {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0 0 18px;
+  padding: 0;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.key li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.key li::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--lv);
+}
+.key li[data-night]::before {
+  background: var(--lv);
+  opacity: 0.25;
+}
+
+.day {
+  margin: 0 0 22px;
+}
+.dayTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body-stack);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+.outlook {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--grey-pale);
+  color: var(--ink-2);
+}
+.strip {
+  display: flex;
+  gap: 2px;
+  height: 22px;
+}
+.cell {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 3px;
+  background: var(--lv);
+}
+.cell[data-night] {
+  opacity: 0.25;
+}
+.ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  margin: 3px 0 8px;
+}
+.none {
+  font-size: 14.5px;
+  color: var(--ink-3);
+  margin: 0;
+}
+.runs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.run {
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-left: 5px solid var(--lv);
+  border-radius: 10px;
+  background: var(--white);
+}
+.runHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.runTime {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--ink);
+}
+.runLevel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.runWhy {
+  margin: 3px 0 0;
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.runFigures {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.credit {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin: 0 0 8px;
+}
+.credit a {
+  color: inherit;
+}
+
+/* The method */
+.method {
+  margin: 34px 0 0;
+  padding: 22px 0 0;
+  border-top: 1px solid var(--rule);
+  max-width: 720px;
+}
+.method h2 {
+  font-family: var(--font-display-stack);
+  font-weight: 400;
+  font-size: 26px;
+  color: var(--jd-green-deep);
+  margin: 0 0 12px;
+}
+.method h3 {
+  font-family: var(--font-body-stack);
+  font-size: 17px;
+  font-weight: 700;
+  margin: 18px 0 6px;
+  color: var(--ink);
+}
+.method ul {
+  margin: 0;
+  padding: 0 0 0 20px;
+}
+.method li {
+  margin: 0 0 8px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.method a {
+  color: var(--jd-green);
+}
+.fine {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  margin: 18px 0 0;
+}

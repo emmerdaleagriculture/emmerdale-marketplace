@@ -1,0 +1,191 @@
+/* /info/spray-diary */
+
+.part {
+  font-family: var(--font-body-stack);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 18px 0 8px;
+}
+.notes {
+  margin: 12px 0 0;
+}
+.notes textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  font: 400 16px/1.45 var(--font-body-stack);
+  resize: vertical;
+}
+.submitRow {
+  display: flex;
+  margin: 16px 0 0;
+}
+.save,
+.second {
+  display: inline-grid;
+  place-items: center;
+  min-height: 50px;
+  padding: 0 24px;
+  border-radius: 12px;
+  font: 700 16px var(--font-body-stack);
+  text-decoration: none;
+  cursor: pointer;
+}
+.save {
+  border: 0;
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
+}
+.save:disabled {
+  opacity: 0.6;
+}
+.second {
+  border: 1px solid var(--rule-strong);
+  background: var(--white);
+  color: var(--jd-green-deep);
+}
+.ok,
+.error {
+  margin: 10px 0 0;
+  font-size: 15px;
+  min-height: 1px;
+}
+.ok {
+  color: var(--jd-green);
+  font-weight: 600;
+}
+.error {
+  color: var(--error);
+}
+.ok:empty,
+.error:empty {
+  margin: 0;
+}
+
+.signIn {
+  padding: 18px 16px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--white);
+}
+.signIn p {
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.signInRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.listHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 26px 0 10px;
+}
+.listTitle {
+  font-family: var(--font-body-stack);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+.download {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--jd-green);
+}
+.note {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin: 0 0 10px;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.record {
+  padding: 14px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--white);
+}
+.recordHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+.recordDay {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.stock {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  color: var(--warn-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.recordProduct {
+  margin: 4px 0 2px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--jd-green-deep);
+  overflow-wrap: anywhere;
+}
+.mapp {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.recordLine {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.recordMeta {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+.recordActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 8px 0 0;
+}
+.recordActions a,
+.recordActions button {
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  font: 600 14.5px var(--font-body-stack);
+  color: var(--jd-green);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.recordActions .danger {
+  color: var(--error);
+}

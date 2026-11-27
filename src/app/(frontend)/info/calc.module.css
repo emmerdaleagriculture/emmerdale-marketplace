@@ -1,0 +1,197 @@
+/* Calculators on the Info pages: fields in a card, the answer beneath. */
+
+.calc {
+  padding: 16px;
+  margin: 0 0 16px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--white);
+}
+.calcTitle {
+  font-family: var(--font-body-stack);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--jd-green-deep);
+  margin: 0 0 4px;
+}
+.calcLede {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  margin: 0 0 14px;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.field > span {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.inputRow {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  background: var(--white);
+  overflow: hidden;
+}
+.inputRow:focus-within {
+  border-color: var(--jd-green);
+  box-shadow: 0 0 0 2px var(--jd-green-pale);
+}
+.inputRow input,
+.inputRow select {
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  /* 16px or iOS zooms the page on focus. */
+  font: 600 17px var(--font-body-stack);
+}
+.inputRow input {
+  flex: 1;
+  width: 100%;
+  padding: 0 4px 0 12px;
+  outline: none;
+}
+.inputRow select {
+  flex: none;
+  padding: 0 8px;
+  border-left: 1px solid var(--rule);
+  color: var(--ink-2);
+  font-size: 16px;
+  outline: none;
+}
+.unit {
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0 12px 0 4px;
+  font-size: 14px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.result {
+  margin: 14px 0 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--green-wash);
+  border: 1px solid var(--green-line);
+}
+.resultMain {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--jd-green-deep);
+  font-variant-numeric: tabular-nums;
+}
+.resultLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 2px;
+}
+.resultList {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.resultList strong {
+  color: var(--jd-green-deep);
+}
+.empty {
+  margin: 14px 0 0;
+  font-size: 14.5px;
+  color: var(--ink-3);
+}
+
+/* Prose and tables under the calculators. */
+.prose {
+  max-width: 720px;
+  margin: 26px 0 0;
+}
+.prose h2 {
+  font-family: var(--font-display-stack);
+  font-weight: 400;
+  font-size: 24px;
+  color: var(--jd-green-deep);
+  margin: 24px 0 8px;
+}
+.prose h3 {
+  font-family: var(--font-body-stack);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 16px 0 4px;
+}
+.prose p,
+.prose li {
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.prose p {
+  margin: 0 0 10px;
+}
+.prose ul,
+.prose ol {
+  margin: 0 0 10px;
+  padding: 0 0 0 20px;
+}
+.prose li {
+  margin: 0 0 6px;
+}
+.prose a {
+  color: var(--jd-green);
+}
+.tableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 0 12px;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+  color: var(--ink);
+}
+.table th {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.fine {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  margin: 16px 0 0;
+}

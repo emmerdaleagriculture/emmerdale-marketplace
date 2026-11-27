@@ -1,0 +1,371 @@
+/* /info/weeds and /info/weeds/[slug] */
+
+.h2 {
+  font-family: var(--font-body-stack);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 22px 0 8px;
+}
+.note {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  margin: 12px 0 0;
+}
+
+/* Photo identification */
+.photo {
+  padding: 16px;
+  border: 1px solid var(--member-line);
+  border-radius: 16px;
+  background: var(--member-bg);
+}
+.photoTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body-stack);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.members {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--member-line);
+  color: var(--member-ink);
+}
+.photoText {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0 0 10px;
+}
+.photoText a {
+  color: var(--jd-green);
+  font-weight: 600;
+}
+.photoBtn,
+.photoLink {
+  display: inline-grid;
+  place-items: center;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
+  font: 700 16px var(--font-body-stack);
+  text-decoration: none;
+  cursor: pointer;
+}
+.photoBtn:disabled {
+  opacity: 0.6;
+}
+.left {
+  margin-left: 12px;
+  font-size: 13.5px;
+  color: var(--member-ink);
+}
+.answer {
+  display: flex;
+  gap: 14px;
+  margin: 14px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--member-line);
+}
+.thumb {
+  flex: none;
+  width: 88px;
+  height: 88px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.answerText {
+  min-width: 0;
+  flex: 1;
+}
+.answerSure {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--member-ink);
+}
+.answerName {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.answerName em {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+.caveat {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-2);
+  margin: 10px 0 0;
+}
+.error {
+  color: var(--error);
+  font-size: 15px;
+  margin: 0;
+}
+
+/* The list of weeds */
+.weedList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 8px;
+}
+.weedLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 60px;
+  padding: 10px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--white);
+  color: var(--ink);
+  text-decoration: none;
+}
+.weedLink:hover {
+  border-color: var(--jd-green);
+}
+.weedName {
+  display: block;
+  font-size: 16.5px;
+  font-weight: 700;
+  color: var(--jd-green-deep);
+}
+.weedLatin {
+  display: block;
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+.weedTags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  font-size: 22px;
+  color: var(--jd-green);
+}
+.tag,
+.tagPoison {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--grey-pale);
+  color: var(--ink-2);
+}
+.tagPoison {
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+}
+
+/* One weed */
+.poison,
+.warning {
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 15.5px;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+.poison {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-line);
+  color: var(--danger-ink);
+  font-weight: 600;
+}
+.warning {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  color: var(--ink);
+}
+.when p {
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0;
+  max-width: 720px;
+}
+.stock {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--grey-pale);
+  max-width: 520px;
+}
+.stock button {
+  padding: 11px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: 600 15px var(--font-body-stack);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.stock button[aria-pressed='true'] {
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
+}
+.ragwort {
+  max-width: 720px;
+  margin: 12px 0 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.products {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.product {
+  padding: 16px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--white);
+}
+.productOut {
+  background: transparent;
+  border-style: dashed;
+}
+.productHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+}
+.productName {
+  font-family: var(--font-body-stack);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--jd-green-deep);
+  margin: 0;
+}
+.productOut .productName {
+  color: var(--ink-2);
+}
+.basis {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--grey-pale);
+  color: var(--ink-2);
+}
+.basis[data-basis='label'] {
+  background: var(--fill-green-deep);
+  color: var(--on-fill);
+}
+.productMeta {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+.optionNote {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.outWhy {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.stockBox {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+}
+.stockDays {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--warn-ink);
+}
+.stockBox p {
+  margin: 3px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.facts {
+  margin: 10px 0 0;
+  display: grid;
+  gap: 6px;
+}
+.facts div {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 8px;
+}
+.facts dt {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-top: 2px;
+}
+.facts dd {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.productNote {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.labelLink {
+  display: inline-block;
+  margin: 10px 0 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--jd-green);
+}
+:global(html[data-app]) .weedList,
+:global(html[data-app]) .products {
+  grid-template-columns: 1fr;
+}
+.answerText .photoBtn {
+  margin: 0 0 10px;
+}

@@ -40,6 +40,7 @@ export function SiteFooter() {
             <div className={styles.colTitle}>The network</div>
             <Link href="/#how-it-works">How it works</Link>
             <Link href="/notes">Notes from the field</Link>
+            <Link href="/info">Info: facts and tools</Link>
             <a href={IOS_APP_URL}>iPhone app</a>
             <a href={ANDROID_APP_URL}>Android app</a>
             <FooterAccountLinks />
