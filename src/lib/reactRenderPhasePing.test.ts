@@ -16,27 +16,33 @@ const { patchReactDomClient } = require('../../webpack/reactRenderPhasePing.cjs'
 };
 
 const nextRoot = path.dirname(require.resolve('next/package.json'));
-const bundled = (file: string) => path.join(nextRoot, 'dist/compiled/react-dom/cjs', file);
+const bundled = (file: string, channel = 'react-dom') => path.join(nextRoot, 'dist/compiled', channel, 'cjs', file);
+
+// Every copy the rule in next.config.mjs sends to the loader: the three
+// builds, in the channel Next uses by default and in the experimental one it
+// switches to when a flag such as `ppr` is turned on.
+const COPIES = ['react-dom', 'react-dom-experimental'].flatMap((channel) =>
+  ['react-dom-client.production.js', 'react-dom-client.development.js', 'react-dom-profiling.profiling.js'].map(
+    (file) => [channel, file] as const,
+  ),
+);
 
 describe('reactRenderPhasePing loader', () => {
-  it.each(['react-dom-client.production.js', 'react-dom-client.development.js', 'react-dom-profiling.profiling.js'])(
-    'records the dropped ping in the bundled %s',
-    (file) => {
-      const resourcePath = bundled(file);
-      const source = readFileSync(resourcePath, 'utf8');
-      const patched = patchReactDomClient(source, resourcePath);
+  it.each(COPIES)('records the dropped ping in the bundled %s/cjs/%s', (channel, file) => {
+    const resourcePath = bundled(file, channel);
+    const source = readFileSync(resourcePath, 'utf8');
+    const patched = patchReactDomClient(source, resourcePath);
 
-      // One small change, inside pingSuspendedRoot, and it is the recording branch.
-      expect(patched).not.toBe(source);
-      expect(patched.length - source.length).toBeLessThan(120);
-      const body = patched.slice(patched.indexOf('function pingSuspendedRoot('));
-      expect(body.slice(0, 2500)).toMatch(
-        /\? prepareFreshStack\(root, 0\) : \(workInProgressRootPingedLanes \|= pingedLanes\)\)\s*: \(workInProgressRootPingedLanes \|= pingedLanes\)/,
-      );
-      // Nothing left to fix: a second pass has no line to find.
-      expect(() => patchReactDomClient(patched, resourcePath)).toThrow(/found 0/);
-    },
-  );
+    // One small change, inside pingSuspendedRoot, and it is the recording branch.
+    expect(patched).not.toBe(source);
+    expect(patched.length - source.length).toBeLessThan(120);
+    const body = patched.slice(patched.indexOf('function pingSuspendedRoot('));
+    expect(body.slice(0, 2500)).toMatch(
+      /\? prepareFreshStack\(root, 0\) : \(workInProgressRootPingedLanes \|= pingedLanes\)\)\s*: \(workInProgressRootPingedLanes \|= pingedLanes\)/,
+    );
+    // Nothing left to fix: a second pass has no line to find.
+    expect(() => patchReactDomClient(patched, resourcePath)).toThrow(/found 0/);
+  });
 
   it('stops the build on a React it does not recognise', () => {
     const production = bundled('react-dom-client.production.js');
@@ -46,16 +52,24 @@ describe('reactRenderPhasePing loader', () => {
   });
 
   it('only ever rewrites pingSuspendedRoot', () => {
-    // The same expression in some other function is not the line to change.
-    const elsewhere =
-      'function other() {\n  x\n      ? 0 === (executionContext & 2) && prepareFreshStack(root, 0)\n' +
-      '      : (workInProgressRootPingedLanes |= pingedLanes);\n}\n' +
-      `${' '.repeat(3000)}\nfunction pingSuspendedRoot(root, wakeable, pingedLanes) {\n  ensureRootIsScheduled(root);\n}\n`;
-    expect(() => patchReactDomClient(elsewhere, bundled('react-dom-client.production.js'))).toThrow(/found 0/);
+    // The same expression in another function, before it or straight after
+    // it, is not the line to change: a React whose pingSuspendedRoot already
+    // records the ping has to stop the build, not be patched somewhere else.
+    const lookalike =
+      '  x\n      ? 0 === (executionContext & 2) && prepareFreshStack(root, 0)\n' +
+      '      : (workInProgressRootPingedLanes |= pingedLanes);\n';
+    const alreadyFixed = 'function pingSuspendedRoot(root, wakeable, pingedLanes) {\n  ensureRootIsScheduled(root);\n}\n';
+    const production = bundled('react-dom-client.production.js');
+    expect(() => patchReactDomClient(`function before() {\n${lookalike}}\n${alreadyFixed}`, production)).toThrow(/found 0/);
+    expect(() => patchReactDomClient(`${alreadyFixed}function after() {\n${lookalike}}\n`, production)).toThrow(/found 0/);
+    // And the same line inside it is found, so the two above are not passing by accident.
+    const dropping = `function pingSuspendedRoot(root, wakeable, pingedLanes) {\n${lookalike}}\n`;
+    expect(patchReactDomClient(dropping, production)).toContain('? prepareFreshStack(root, 0) : (workInProgressRootPingedLanes |= pingedLanes))');
   });
 
   // The loader is a webpack loader. Turbopack does not run it and gives no
-  // error, so the fix would vanish without a word. These two fail first.
+  // error. next.config.mjs refuses a Turbopack build for that reason; these
+  // two say so sooner, in the test run, before anything is built.
   it('is still being built by webpack', () => {
     const { scripts } = JSON.parse(readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')) as {
       scripts: Record<string, string>;

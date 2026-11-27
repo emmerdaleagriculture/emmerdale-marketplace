@@ -12,6 +12,22 @@ const SUPABASE_HOST = (() => {
   }
 })();
 
+/**
+ * Turbopack runs no webpack loaders and does not say so: the webpack() hook
+ * below is never called, and React's dropped ping comes back with no error
+ * anywhere (webpack/reactRenderPhasePing.cjs has the story). Next sets
+ * TURBOPACK before it reads this file, so a Turbopack build stops here and
+ * `npm run dev:turbo` starts with the warning.
+ */
+if (process.env.TURBOPACK) {
+  const message =
+    'Turbopack does not run webpack/reactRenderPhasePing.cjs, so React drops pings mid-render again and a click ' +
+    'inside a section with a loading.tsx can do nothing. Use webpack (`npm run dev`, `npm run build`), or read ' +
+    'the comment at the top of that loader first.';
+  if (process.env.NODE_ENV !== 'development') throw new Error(message);
+  console.warn(`\n ⚠ ${message}\n`);
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Pin file-tracing to this project. Without it, a stray lockfile in a parent
@@ -37,13 +53,9 @@ const nextConfig = {
   reactStrictMode: true,
 
   /**
-   * Vercel's skew protection tags every asset URL in the HTML with the
-   * deployment (`?dpl=…`), font preloads included, but the `url()` inside the
-   * built CSS has no tag — so the browser fetched each preloaded font twice,
-   * once per URL (46KB and two requests on every first visit, measured
-   * 2026-10-20). This gives the CSS the same tag, so the preload and the
-   * stylesheet agree. NEXT_DEPLOYMENT_ID is set by Vercel's build when skew
-   * protection is on and absent otherwise, so locally this does nothing.
+   * Two changes to the build, each explained where it is made: React's
+   * dropped ping is corrected in the copy Next bundles (in every build, local
+   * ones included), and on Vercel the fonts in the CSS get the deployment tag.
    */
   webpack(config, { dev, isServer, webpack }) {
     // The React that Next bundles throws away a "data has arrived" ping that
@@ -55,9 +67,12 @@ const nextConfig = {
       test: /[\\/]next[\\/]dist[\\/]compiled[\\/]react-dom(?:-experimental)?[\\/]cjs[\\/]react-dom-(?:client\.(?:production|development)|profiling\.profiling)\.js$/,
       loader: fileURLToPath(new URL('./webpack/reactRenderPhasePing.cjs', import.meta.url)),
     });
-    // The loader can only object to a file that reaches it. Should Next ever
-    // bundle its React from somewhere the rule above does not match, the
-    // browser build fails here instead of quietly shipping the fault back.
+    // The loader can only object to a file that reaches it. If no bundled
+    // react-dom-client went through it at all (Next has moved its React, or
+    // the rule above no longer matches), the browser build fails here instead
+    // of quietly shipping the fault back. One patched copy is enough to pass.
+    // The Pages Router's own React (node_modules/react-dom, in the
+    // framework-*.js chunk) is not patched: this site has no Pages routes.
     if (!dev && !isServer) {
       config.plugins.push({
         apply(compiler) {
@@ -69,8 +84,8 @@ const nextConfig = {
               compilation.errors.push(
                 new webpack.WebpackError(
                   'reactRenderPhasePing: no bundled react-dom-client went through webpack/reactRenderPhasePing.cjs, ' +
-                    'so the dead-click fix is not in this build. Next has moved its React: see the comment at the ' +
-                    'top of that loader.',
+                    'so the dead-click fix is not in this build. Either Next has moved its React (see the comment ' +
+                    'at the top of that loader), or the loader was removed on purpose and this plugin should go too.',
                 ),
               );
             });
@@ -79,6 +94,13 @@ const nextConfig = {
       });
     }
 
+    // Vercel's skew protection tags every asset URL in the HTML with the
+    // deployment (`?dpl=…`), font preloads included, but the `url()` inside the
+    // built CSS has no tag — so the browser fetched each preloaded font twice,
+    // once per URL (46KB and two requests on every first visit, measured
+    // 2026-10-20). This gives the CSS the same tag, so the preload and the
+    // stylesheet agree. NEXT_DEPLOYMENT_ID is set by Vercel's build when skew
+    // protection is on and absent otherwise, so locally this part does nothing.
     const dpl = process.env.NEXT_DEPLOYMENT_ID;
     if (!dev && dpl) {
       const { Compilation, sources } = webpack;
