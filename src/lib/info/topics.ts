@@ -1,6 +1,6 @@
 /**
  * The Info section (2026-11-27): facts and tools for anyone doing land work,
- * reached from the (i) on the app's screens and from the website footer.
+ * reached from the (i) tab on the app's bottom bar and from the website footer.
  *
  * One list drives the hub. A topic with `href` is built and linked; one
  * without is shown as on its way, so the hub says what the section is for

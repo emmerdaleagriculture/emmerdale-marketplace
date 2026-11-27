@@ -3,8 +3,8 @@ import type { ViewerRole } from '@/components/useViewer';
 /**
  * The app's bottom tabs (PRD task 1).
  *
- *   Customers:    Home · My jobs · Messages · Account
- *   Contractors:  Dashboard · Earnings · [Books] · Diary · Messages · Jobs
+ *   Customers:    Home · My jobs · Messages · Info · Account
+ *   Contractors:  Dashboard · Earnings · [Books] · Diary · Info · Messages · Jobs
  *                 (Books for every contractor since 2026-11-20; Jobs at the right,
  *                 beside the Back slot AppShell adds on inner screens)
  *
@@ -13,10 +13,14 @@ import type { ViewerRole } from '@/components/useViewer';
  * row at the top of it and keeps the tab lit. "Earnings" is the contractor
  * dashboard, which carries the money numbers.
  *
+ * "Info" (2026-11-27) is the facts-and-tools section, /info and every page
+ * under it. It first shipped as an (i) in the corner of each tab's header;
+ * the user wanted it on the bar itself, as an icon like the rest.
+ *
  * `badge` names the count from /api/app/badges that sits on the icon.
  */
 export type BadgeKey = 'invites' | 'prices' | 'messages';
-export type TabIcon = 'home' | 'jobs' | 'messages' | 'account' | 'board' | 'diary' | 'earnings' | 'dashboard' | 'books';
+export type TabIcon = 'home' | 'jobs' | 'messages' | 'account' | 'board' | 'diary' | 'earnings' | 'dashboard' | 'books' | 'info';
 
 export type Tab = {
   key: string;
@@ -28,10 +32,13 @@ export type Tab = {
   also?: string[];
 };
 
+export const INFO_TAB: Tab = { key: 'info', label: 'Info', href: '/info', icon: 'info' };
+
 export const CUSTOMER_TABS: Tab[] = [
   { key: 'home', label: 'Home', href: '/app/home', icon: 'home', also: ['/start'] },
   { key: 'jobs', label: 'My jobs', href: '/my', icon: 'jobs', badge: 'prices' },
   { key: 'messages', label: 'Messages', href: '/messages', icon: 'messages', badge: 'messages' },
+  INFO_TAB,
   { key: 'account', label: 'Account', href: '/app/account', icon: 'account' },
 ];
 
@@ -41,6 +48,7 @@ export const CONTRACTOR_TABS: Tab[] = [
   { key: 'dashboard', label: 'Dashboard', href: '/account', icon: 'dashboard' },
   { key: 'earnings', label: 'Earnings', href: '/app/earnings', icon: 'earnings', also: ['/onboarding'] },
   { key: 'diary', label: 'Diary', href: '/app/diary', icon: 'diary', also: ['/won'] },
+  INFO_TAB,
   { key: 'messages', label: 'Messages', href: '/messages', icon: 'messages', badge: 'messages' },
   { key: 'jobs', label: 'Jobs', href: '/invitations', icon: 'board', badge: 'invites', also: ['/jobs', '/quote'] },
 ];

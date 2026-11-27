@@ -49,26 +49,6 @@
   overflow-wrap: anywhere;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 2px 18px rgba(0, 0, 0, 0.5);
 }
-/* The (i) that opens Info: a 44px target, in the header's top right corner. */
-.info {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  color: var(--jd-green-deep);
-  -webkit-tap-highlight-color: transparent;
-}
-.info:active {
-  opacity: 0.7;
-}
-.heroInfo {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  color: #fff;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
-}
 /* In the app the header runs edge to edge under the status bar strip. */
 :global(html[data-app]) .hero {
   margin: 0 -16px 14px;
