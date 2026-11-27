@@ -7,12 +7,24 @@ import { InfoFrame } from '../InfoFrame';
 import { PlaceForm } from './PlaceForm';
 import css from './windows.module.css';
 
-export const metadata: Metadata = {
+const META: Metadata = {
   title: 'Spraying, Fertilising and Seeding Windows for Your Postcode',
   description:
     'When to spray, spread fertiliser or sow grass seed over the next nine days, rated hour by hour from the forecast for your postcode against the Code of Practice wind limits.',
   alternates: { canonical: '/info/work-windows' },
 };
+
+type Search = Promise<{ at?: string | string[]; job?: string | string[] }>;
+
+/**
+ * One page to index, not one per postcode: a forecast for a place is stale
+ * within the hour, and every such URL a crawler follows is a paid forecast
+ * call. The bare page is the canonical one; any ?at= version is noindex.
+ */
+export async function generateMetadata({ searchParams }: { searchParams: Search }): Promise<Metadata> {
+  const sp = await searchParams;
+  return sp.at ? { ...META, robots: { index: false, follow: false } } : META;
+}
 
 const JOBS: { key: Job; label: string; verb: string }[] = [
   { key: 'spray', label: 'Spraying', verb: 'spraying' },
@@ -22,7 +34,6 @@ const JOBS: { key: Job; label: string; verb: string }[] = [
 
 const LEVEL_WORD: Record<Level, string> = { good: 'Good', care: 'With care', no: 'No' };
 
-type Search = Promise<{ at?: string | string[]; job?: string | string[] }>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
 
 export default async function WorkWindowsPage({ searchParams }: { searchParams: Search }) {
