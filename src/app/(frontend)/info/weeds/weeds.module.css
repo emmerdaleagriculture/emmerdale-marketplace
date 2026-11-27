@@ -366,3 +366,6 @@
 :global(html[data-app]) .products {
   grid-template-columns: 1fr;
 }
+.answerText .photoBtn {
+  margin: 0 0 10px;
+}
