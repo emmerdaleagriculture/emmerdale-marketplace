@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { WEEDS, WEEDS_CHECKED } from '@/lib/info/weeds';
+import { InfoHelp } from '../../InfoHelp';
 import { InfoFrame } from '../../InfoFrame';
 import { WeedOptions } from '../WeedOptions';
 import c from '../../calc.module.css';
@@ -60,25 +61,27 @@ export default async function WeedPage({ params }: { params: Promise<{ slug: str
 
       <WeedOptions weed={w} />
 
-      <section className={c.prose}>
-        <h2>Reading these</h2>
-        <ul>
-          <li>
-            <strong>On the label</strong> means the maker names this weed on the product label. <strong>Maker’s rating</strong> is from the maker’s
-            technical sheet, which is guidance and not a label claim. <strong>Maker’s chart</strong> is a two or three star mark on a sales chart,
-            given as an indication only.
-          </li>
-          <li>
-            Every product here is for professional use: whoever sprays it needs a certificate of competence. No weedkiller sold to the public is
-            authorised for grassland. More on <Link href="/info/weeds#law">who may spray</Link>.
-          </li>
-          <li>All of them kill or damage clover unless it says otherwise.</li>
-        </ul>
-        <p className={c.fine}>
-          Checked against labels, makers’ sheets and the HSE register on {WEEDS_CHECKED}. Labels change and authorisations end. The label on the
-          container in your hand is the law; read it before you mix. <Link href="/info/weeds">All weeds</Link>.
-        </p>
-      </section>
+      <InfoHelp title="Reading these">
+        <section className={c.prose}>
+          <h2>Reading these</h2>
+          <ul>
+            <li>
+              <strong>On the label</strong> means the maker names this weed on the product label. <strong>Maker’s rating</strong> is from the maker’s
+              technical sheet, which is guidance and not a label claim. <strong>Maker’s chart</strong> is a two or three star mark on a sales chart,
+              given as an indication only.
+            </li>
+            <li>
+              Every product here is for professional use: whoever sprays it needs a certificate of competence. No weedkiller sold to the public is
+              authorised for grassland. More on <Link href="/info/weeds#law">who may spray</Link>.
+            </li>
+            <li>All of them kill or damage clover unless it says otherwise.</li>
+          </ul>
+          <p className={c.fine}>
+            Checked against labels, makers’ sheets and the HSE register on {WEEDS_CHECKED}. Labels change and authorisations end. The label on the
+            container in your hand is the law; read it before you mix. <Link href="/info/weeds">All weeds</Link>.
+          </p>
+        </section>
+      </InfoHelp>
     </InfoFrame>
   );
 }

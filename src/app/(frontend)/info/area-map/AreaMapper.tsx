@@ -42,6 +42,7 @@ export function AreaMapper() {
   const redrawRef = useRef<() => void>(() => {});
   const youRef = useRef<Leaflet.CircleMarker | null>(null);
   const stopWalkRef = useRef<(() => void) | null>(null);
+  const movedRef = useRef(false);
 
   const [points, setPoints] = useState<LngLat[]>([]);
   const [mode, setModeState] = useState<Mode>('area');
@@ -66,6 +67,8 @@ export function AreaMapper() {
   useEffect(() => {
     if (!MAPBOX_TOKEN) return;
     let cancelled = false;
+    // The opening position fix, stopped if the page is left before it lands.
+    const locating = new AbortController();
     let map: Leaflet.Map | null = null;
 
     (async () => {
@@ -139,6 +142,18 @@ export function AreaMapper() {
       redrawRef.current = redraw;
       redraw();
 
+      // Open on the phone's position rather than wherever the map was last
+      // left (or the whole country), unless the user moves the map first.
+      // Any move (a drag, a zoom, a postcode search) or a corner already
+      // tapped means the user has chosen where to look: leave it there.
+      const here = map;
+      here.on('movestart', () => (movedRef.current = true));
+      void onePosition(locating.signal).then((f) => {
+        if (!f || cancelled || movedRef.current || pointsRef.current.length > 0 || mapRef.current !== here) return;
+        showYouRef.current(f);
+        here.setView([f.lat, f.lng], Math.max(here.getZoom(), 17));
+      });
+
       map.on('click', (e: Leaflet.LeafletMouseEvent) => {
         // Letting go of a dragged corner must not also drop a new one there.
         if (Date.now() - lastDragEndAt < 300) return;
@@ -149,6 +164,7 @@ export function AreaMapper() {
 
     return () => {
       cancelled = true;
+      locating.abort();
       stopWalkRef.current?.();
       map?.remove();
       mapRef.current = null;
@@ -170,6 +186,9 @@ export function AreaMapper() {
       }).addTo(map);
     } else youRef.current.setLatLng([f.lat, f.lng]);
   };
+
+  const showYouRef = useRef(showYou);
+  showYouRef.current = showYou;
 
   const findPlace = async () => {
     const q = place.trim().toUpperCase();
