@@ -9,6 +9,7 @@ import { CURATED_TAGS, MIN_INDEXED_TAG_POSTS } from '@/lib/notes/tags';
 import { siteUrl } from '@/lib/site';
 import { SERVICE_PAGES } from '@/lib/services';
 import { LIVE_INFO_TOPICS } from '@/lib/info/topics';
+import { WEEDS } from '@/lib/info/weeds';
 
 const SITE = siteUrl();
 
@@ -175,6 +176,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: DATES.info,
       changeFrequency: 'monthly' as const,
       priority: 0.7,
+    })),
+    ...WEEDS.map((w) => ({
+      url: `${SITE}/info/weeds/${w.slug}`,
+      lastModified: DATES.info,
+      changeFrequency: 'yearly' as const,
+      priority: 0.6,
     })),
     ...paddockCountyPages,
     ...countyPages,

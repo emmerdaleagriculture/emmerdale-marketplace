@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Slot } from './forecast';
-import { slotsFromMet } from './forecast';
+import { slotsFromMet, slotsFromOpenMeteo } from './forecast';
 import { goodWindows, isDaylight, rainAhead, rate } from './windows';
 import { groupDays } from './windowsView';
 
@@ -106,5 +106,44 @@ describe('helpers', () => {
       { time: 'c', data: { instant: { details: { air_temperature: 7, wind_speed: 4 } } } },
     ]);
     expect(slots.map((s) => [s.t, s.hours, s.rainMm])).toEqual([['a', 1, 0.3], ['b', 6, 2]]);
+  });
+});
+
+describe('with Open-Meteo', () => {
+  it('reads rain and gusts from the following hour and drops hours gone by', () => {
+    const t = T0 / 1000;
+    const slots = slotsFromOpenMeteo(
+      {
+        time: [t, t + 3600, t + 7200, t + 10800],
+        temperature_2m: [10, 11, 12, 13],
+        relative_humidity_2m: [80, 80, 80, 80],
+        dew_point_2m: [6, 6, 6, 6],
+        precipitation: [9, 0.1, 0.2, 0.3],
+        wind_speed_10m: [2, 2, 2, 2],
+        wind_gusts_10m: [9, 4, 5, 6],
+        soil_temperature_6cm: [7, 7.1, 7.2, 7.3],
+      },
+      T0 + 3600000 + 60000,
+    );
+    // The first hour is over; the last has no following entry for its rain.
+    expect(slots.map((s) => [s.tempC, s.rainMm, s.gustMs, s.soilC])).toEqual([
+      [11, 0.2, 5, 7.1],
+      [12, 0.3, 6, 7.2],
+    ]);
+  });
+  it('rules spraying out in strong gusts and warns in moderate ones', () => {
+    // Mean 2.5 m/s is ideal; a 6 m/s gust is 10.8 km/h at the boom, 9 m/s is 16.2.
+    expect(levelAt(hours(12, { gustMs: 4 }), 'spray', 9).level).toBe('good');
+    expect(levelAt(hours(12, { gustMs: 6 }), 'spray', 9).level).toBe('care');
+    expect(levelAt(hours(12, { gustMs: 9 }), 'spray', 9).level).toBe('no');
+  });
+  it('uses soil temperature for seed and nitrogen when it has one', () => {
+    // Warm air over cold soil: an April morning.
+    const cold = hours(130, (i) => ({ soilC: 4, ...(i === 40 ? { rainMm: 8 } : {}) }));
+    expect(levelAt(cold, 'seed', 9).level).toBe('no');
+    expect(levelAt(cold, 'fertilise', 9).reasons.join(' ')).toContain('Cold soil');
+    const warm = hours(130, (i) => ({ soilC: 9, ...(i === 40 ? { rainMm: 8 } : {}) }));
+    expect(levelAt(warm, 'seed', 9).level).toBe('good');
+    expect(levelAt(hours(130, { soilC: -0.5 }), 'fertilise', 9).reasons[0]).toBe('Frozen ground');
   });
 });

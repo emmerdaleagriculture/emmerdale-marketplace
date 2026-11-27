@@ -252,7 +252,9 @@ export default function PrivacyPage() {
               to a job, to pick out a price or a decline. For Premium members using Books, it
               also reads the receipts, invoices and bank statement lines they add, to record
               them, and, when they use Ask, their question and the figures from their own books
-              and jobs needed to answer it. Customer job descriptions are not sent to it.
+              and jobs needed to answer it. When a Pro or Premium member photographs a weed in
+              Info, it reads that photograph to name the plant; we do not keep the photograph.
+              Customer job descriptions are not sent to it.
             </li>
             <li>
               <strong>Google</strong> and <strong>Meta</strong>: analytics and advertising, as

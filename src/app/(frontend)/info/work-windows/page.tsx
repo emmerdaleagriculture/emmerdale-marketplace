@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { fetchSlots, resolvePlace } from '@/lib/info/forecast';
+import { fetchForecast, forecastSource, resolvePlace } from '@/lib/info/forecast';
 import { LIMITS, goodWindows, rate, type Job, type Level } from '@/lib/info/windows';
 import { groupDays, hourLabel, span, windowLabel, type Day } from '@/lib/info/windowsView';
 import { InfoFrame } from '../InfoFrame';
@@ -31,7 +31,9 @@ export default async function WorkWindowsPage({ searchParams }: { searchParams: 
   const job = JOBS.find((j) => j.key === one(sp.job)) ?? JOBS[0];
 
   const place = at ? await resolvePlace(at) : null;
-  const slots = place ? await fetchSlots(place.lat, place.lng) : null;
+  const forecast = place ? await fetchForecast(place.lat, place.lng) : null;
+  const slots = forecast?.slots ?? null;
+  const source = forecast?.source ?? forecastSource();
   const now = new Date();
   const rated = place && slots ? rate(slots, job.key, place.lat, place.lng) : null;
   const days = rated ? groupDays(rated, now) : [];
@@ -47,7 +49,7 @@ export default async function WorkWindowsPage({ searchParams }: { searchParams: 
           When to spray, spread or sow, <em>from the forecast for your postcode.</em>
         </>
       }
-      sub="Each hour of the next two and a half days, and the week after in outline, rated against the limits the job is done to: wind at the boom, rain to come, frost and warmth."
+      sub="The days ahead, hour by hour, rated against the limits the job is done to: wind at the boom, rain to come, frost and warmth."
     >
       <PlaceForm at={at} job={job.key} shown={Boolean(rated)} />
 
@@ -109,13 +111,21 @@ export default async function WorkWindowsPage({ searchParams }: { searchParams: 
           ))}
 
           <p className={css.credit}>
-            Forecast data from <a href="https://www.met.no/en">MET Norway</a> (CC BY 4.0), refreshed
-            every half hour. Wind is the forecast mean; gusts will be higher.
+            {source === 'open-meteo' ? (
+              <>
+                <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a> (CC BY 4.0), refreshed every half hour.
+              </>
+            ) : (
+              <>
+                Forecast data from <a href="https://www.met.no/en">MET Norway</a> (CC BY 4.0), refreshed every half hour. Wind is
+                the forecast mean; gusts will be higher.
+              </>
+            )}
           </p>
         </>
       )}
 
-      <Method />
+      <Method soil={source === 'open-meteo'} />
     </InfoFrame>
   );
 }
@@ -165,7 +175,7 @@ function DayBlock({ day, job }: { day: Day; job: Job }) {
 }
 
 /** The rules in words, printed from the same constants the ratings use. */
-function Method() {
+function Method({ soil }: { soil: boolean }) {
   const L = LIMITS;
   return (
     <section className={css.method}>
@@ -183,6 +193,14 @@ function Method() {
           Forecast wind is measured ten metres up. The Code gives no sum for bringing that down to the
           boom, but its table pairs each wind force with a nozzle-height speed about half as fast, so
           half is what we use. Over bare ground the wind at the boom is higher.
+          {soil && (
+            <>
+              {' '}
+              Gusts are judged the same way: gusts over {L.sprayMaxKmh} km/h at the boom are marked “with
+              care”, and over {(L.sprayMaxKmh * L.sprayGustFactor).toFixed(1)} km/h rule the hour out. Those
+              two are our own figures.
+            </>
+          )}
         </li>
         <li>
           <strong>Rain.</strong> There is no general rule: the rainfast time is on the label, and two
@@ -215,8 +233,10 @@ function Method() {
         </li>
         <li>
           <strong>Warmth.</strong> Grass starts to grow, and to use nitrogen, when the soil reaches about{' '}
-          {L.fertGrowthC}°C at 10 cm (AHDB). The forecast carries no soil temperature, so the average air
-          temperature of the five days ahead stands in for it.
+          {L.fertGrowthC}°C at 10 cm (AHDB).{' '}
+          {soil
+            ? 'We use the forecast soil temperature at 6 cm, averaged over the day ahead, and rule out frozen ground.'
+            : 'The forecast carries no soil temperature, so the average air temperature of the five days ahead stands in for it.'}
         </li>
         <li>
           <strong>Wind.</strong> Above {L.fertWindMph} mph a spinning-disc spreader’s pattern suffers,
@@ -234,8 +254,11 @@ function Method() {
       <ul>
         <li>
           <strong>Warmth.</strong> The seed trade’s figure is soil at {L.seedGrassC}°C or more for grass
-          seed; clover wants at least as much. The average air temperature of the five days ahead stands
-          in for soil: below {L.seedMarginalC}°C is a no, between the two is slow.
+          seed; clover wants at least as much.{' '}
+          {soil
+            ? 'We use the forecast soil temperature at 6 cm, averaged over the day ahead'
+            : 'The average air temperature of the five days ahead stands in for soil'}
+          : below {L.seedMarginalC}°C is a no, between the two is slow.
         </li>
         <li>
           <strong>Moisture.</strong> Less than {L.seedMoistureMm} mm of rain in the five days ahead is

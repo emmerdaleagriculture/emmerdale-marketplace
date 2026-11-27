@@ -4247,6 +4247,93 @@ export type Database = {
         }
         Relationships: []
       }
+      spray_records: {
+        Row: {
+          area_ha: number
+          certificate: string | null
+          conditions: string | null
+          created_at: string
+          customer: string | null
+          dose: number
+          dose_unit: string
+          end_time: string | null
+          equipment: string | null
+          id: string
+          mapp: string | null
+          notes: string | null
+          operator: string
+          postcode: string | null
+          product: string
+          site: string
+          situation: string
+          sprayed_on: string
+          start_time: string | null
+          stock_out_until: string | null
+          target: string | null
+          temp_c: number | null
+          user_id: string
+          water_l_ha: number | null
+          wind_direction: string | null
+          wind_mph: number | null
+        }
+        Insert: {
+          area_ha: number
+          certificate?: string | null
+          conditions?: string | null
+          created_at?: string
+          customer?: string | null
+          dose: number
+          dose_unit?: string
+          end_time?: string | null
+          equipment?: string | null
+          id?: string
+          mapp?: string | null
+          notes?: string | null
+          operator: string
+          postcode?: string | null
+          product: string
+          site: string
+          situation: string
+          sprayed_on: string
+          start_time?: string | null
+          stock_out_until?: string | null
+          target?: string | null
+          temp_c?: number | null
+          user_id: string
+          water_l_ha?: number | null
+          wind_direction?: string | null
+          wind_mph?: number | null
+        }
+        Update: {
+          area_ha?: number
+          certificate?: string | null
+          conditions?: string | null
+          created_at?: string
+          customer?: string | null
+          dose?: number
+          dose_unit?: string
+          end_time?: string | null
+          equipment?: string | null
+          id?: string
+          mapp?: string | null
+          notes?: string | null
+          operator?: string
+          postcode?: string | null
+          product?: string
+          site?: string
+          situation?: string
+          sprayed_on?: string
+          start_time?: string | null
+          stock_out_until?: string | null
+          target?: string | null
+          temp_c?: number | null
+          user_id?: string
+          water_l_ha?: number | null
+          wind_direction?: string | null
+          wind_mph?: number | null
+        }
+        Relationships: []
+      }
       submission_notifications: {
         Row: {
           kind: string
@@ -4523,6 +4610,45 @@ export type Database = {
           last_detail?: string | null
           last_kind?: string | null
           last_seen_at?: string
+        }
+        Relationships: []
+      }
+      weed_id_events: {
+        Row: {
+          answer_name: string | null
+          confidence: number | null
+          cost_usd: number
+          created_at: string
+          error: string | null
+          id: number
+          input_tokens: number
+          output_tokens: number
+          user_id: string
+          weed_slug: string | null
+        }
+        Insert: {
+          answer_name?: string | null
+          confidence?: number | null
+          cost_usd?: number
+          created_at?: string
+          error?: string | null
+          id?: number
+          input_tokens?: number
+          output_tokens?: number
+          user_id: string
+          weed_slug?: string | null
+        }
+        Update: {
+          answer_name?: string | null
+          confidence?: number | null
+          cost_usd?: number
+          created_at?: string
+          error?: string | null
+          id?: number
+          input_tokens?: number
+          output_tokens?: number
+          user_id?: string
+          weed_slug?: string | null
         }
         Relationships: []
       }

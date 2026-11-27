@@ -75,6 +75,8 @@ export const LIMITS = {
   fertFrozenC: 0,
   /** AHDB: grass starts to grow, and to use nitrogen, at 5°C at 10 cm. */
   fertGrowthC: 5,
+  /** Gusts this many times the Code's "do not spray" speed at the boom rule an hour out. Ours. */
+  sprayGustFactor: 1.5,
   /** Rule of thumb: a spinner's pattern suffers above this at 10 m, mph. */
   fertWindMph: 15,
 
@@ -145,6 +147,24 @@ export function tempAhead(slots: Slot[], i: number, hours: number): { mean: numb
   return { mean: w ? sum / w : slots[i].tempC, min: Number.isFinite(min) ? min : slots[i].tempC };
 }
 
+/**
+ * Mean soil temperature over the hours ahead, or null when the forecast has
+ * none. A day's mean, because the top of the soil swings with the sun.
+ */
+export function soilAhead(slots: Slot[], i: number, hours: number): number | null {
+  const end = at(slots[i]) + hours * 3600000;
+  let sum = 0;
+  let n = 0;
+  for (let j = i; j < slots.length && at(slots[j]) < end; j++) {
+    const v = slots[j].soilC;
+    if (v !== undefined) {
+      sum += v;
+      n++;
+    }
+  }
+  return n ? sum / n : null;
+}
+
 type Verdict = { level: Level; reasons: string[] };
 
 function verdict(no: string[], care: string[]): Verdict {
@@ -174,6 +194,12 @@ function spray(slots: Slot[], i: number): Verdict {
   else if (wind > L.sprayIdealMaxKmh) care.push(`Breezy, about ${mph(wind)} mph at the boom: the Code says avoid herbicides in this`);
   else if (wind < L.sprayCalmKmh) care.push('Calm: medium or coarse spray only, fine spray hangs and drifts');
 
+  if (s.gustMs !== undefined && wind <= L.sprayMaxKmh) {
+    const gust = boomKmh(s.gustMs);
+    if (gust > L.sprayMaxKmh * L.sprayGustFactor) no.push(`Gusty: gusts of about ${mph(gust)} mph at the boom`);
+    else if (gust > L.sprayMaxKmh) care.push(`Gusts of about ${mph(gust)} mph at the boom: drift risk in the gusts`);
+  }
+
   if (s.tempC <= L.sprayFrostC) no.push('Frost');
   else if (s.tempC < L.sprayCoolC) care.push(`Cold (${Math.round(s.tempC)}°C): weeds are barely growing, so uptake is slow`);
   if (s.tempC > L.sprayHotC) no.push(`Too hot (${Math.round(s.tempC)}°C)`);
@@ -194,11 +220,15 @@ function fertilise(slots: Slot[], i: number): Verdict {
 
   const rain48 = rainAhead(slots, i, 0, 48);
   const { mean, min } = tempAhead(slots, i, 120);
-  if (s.tempC <= L.fertFrozenC) no.push('Freezing: no spreading on frozen ground');
+  const soil = soilAhead(slots, i, 24);
+  if (s.soilC !== undefined && s.soilC <= L.fertFrozenC) no.push('Frozen ground');
+  else if (s.tempC <= L.fertFrozenC) no.push('Freezing: no spreading on frozen ground');
   if (rain48 >= L.fertHeavyRainMm) no.push(`Heavy rain coming (${Math.round(rain48)} mm in 48 hours): run-off risk`);
   else if (rain48 >= L.fertWetRainMm) care.push(`${Math.round(rain48)} mm of rain in the next 48 hours: fine on level, free-draining ground only`);
   if (s.tempC > L.fertFrozenC && min <= L.fertFrozenC) care.push('Frost in the days ahead: check the ground is not frozen');
-  if (mean < L.fertGrowthC) care.push(`Cold spell (${mean.toFixed(1)}°C average ahead): grass will not use nitrogen yet`);
+  if (soil !== null) {
+    if (soil < L.fertGrowthC) care.push(`Cold soil (${soil.toFixed(1)}°C at 6 cm): grass will not use nitrogen yet`);
+  } else if (mean < L.fertGrowthC) care.push(`Cold spell (${mean.toFixed(1)}°C average ahead): grass will not use nitrogen yet`);
   const wind10 = s.windMs * MS_TO_KMH * KMH_TO_MPH;
   if (wind10 > L.fertWindMph) care.push(`Windy (${Math.round(wind10)} mph): a spinner's spread pattern suffers`);
   return verdict(no, care);
@@ -213,12 +243,16 @@ function seed(slots: Slot[], i: number): Verdict {
   const { mean, min } = tempAhead(slots, i, 120);
   const rain5d = rainAhead(slots, i, 0, 120);
   const rain24 = rainAhead(slots, i, 0, 24);
-  if (mean < L.seedMarginalC) no.push(`Too cold (${mean.toFixed(1)}°C average ahead): grass seed will sit, not grow`);
-  else if (mean < L.seedGrassC) care.push(`Cool (${mean.toFixed(1)}°C average ahead): slow to come up`);
+  const soil = soilAhead(slots, i, 24);
+  // Soil temperature where the forecast has it; otherwise the air ahead stands in.
+  const warmth = soil ?? mean;
+  const what = soil !== null ? 'soil at 6 cm' : 'average ahead';
+  if (warmth < L.seedMarginalC) no.push(`Too cold (${warmth.toFixed(1)}°C ${what}): grass seed will sit, not grow`);
+  else if (warmth < L.seedGrassC) care.push(`Cool (${warmth.toFixed(1)}°C ${what}): slow to come up`);
   if (s.rainMm / s.hours >= 1) no.push('Raining: wait for the ground to carry the drill');
   else if (rain24 >= L.seedWetDayMm) care.push(`${Math.round(rain24)} mm of rain in 24 hours: the ground may be too wet to travel`);
   if (min <= L.seedFrostC) care.push('Frost in the next five days: hard on new seedlings');
-  if (rain5d < L.seedMoistureMm && mean >= L.seedMarginalC) care.push('Little rain in the next five days: only sow into moist ground');
+  if (rain5d < L.seedMoistureMm && warmth >= L.seedMarginalC) care.push('Little rain in the next five days: only sow into moist ground');
   return verdict(no, care);
 }
 

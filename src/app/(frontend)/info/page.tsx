@@ -8,7 +8,7 @@ import css from './info.module.css';
 export const metadata: Metadata = {
   title: 'Info: Facts and Tools for Land Work',
   description:
-    'Free tools for contractors and landowners: spraying, fertilising and seeding windows from the forecast for your postcode, and the jobs of the year month by month.',
+    'Free tools for contractors and landowners: spraying windows from the forecast, weeds and what controls them, spray rates, a spray diary, fertiliser and seed rates, and the year month by month.',
   alternates: { canonical: '/info' },
 };
 
