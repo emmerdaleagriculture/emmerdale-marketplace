@@ -1,5 +1,6 @@
 import { gateWidthLabel } from '@/lib/jobParse/access';
 import { describeConditions } from '@/lib/jobParse/conditions';
+import { PhotoGallery } from '@/components/photos/PhotoGallery';
 import s from './JobSpecCard.module.css';
 
 export type JobSpecPhoto = { url: string; label: string };
@@ -109,14 +110,11 @@ export function JobSpecCard({ spec }: { spec: JobSpec }) {
         ))}
       </dl>
       {spec.photos && spec.photos.length > 0 && (
-        <div className={s.photos}>
-          {spec.photos.map((p) => (
-            <a key={p.url} href={p.url} target="_blank" rel="noreferrer">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt={p.label} className={s.photo} loading="lazy" />
-            </a>
-          ))}
-        </div>
+        <PhotoGallery
+          photos={spec.photos.map((p) => ({ url: p.url, alt: p.label }))}
+          className={s.photos}
+          imgClassName={s.photo}
+        />
       )}
     </div>
   );

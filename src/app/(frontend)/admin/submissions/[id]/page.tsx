@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { PhotoGallery } from '@/components/photos/PhotoGallery';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { balanceDueLabel, formatDate, formatDateTime, londonDay } from '@/lib/time';
 import { gateWidthLabel } from '@/lib/jobParse/access';
@@ -115,17 +116,13 @@ function MessageThreads({
                       </div>
                       {m.photo_paths.length > 0 && (
                         <>
-                          <div className={p.bubblePhotos}>
-                            {m.photo_paths.map((path, j) => {
+                          <PhotoGallery
+                            className={p.bubblePhotos}
+                            photos={m.photo_paths.flatMap((path, j) => {
                               const url = photoUrls.get(path);
-                              return url ? (
-                                <a key={path} href={url} target="_blank" rel="noopener noreferrer">
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img src={url} alt={`Photo ${j + 1}`} loading="lazy" />
-                                </a>
-                              ) : null;
+                              return url ? [{ url, alt: `Photo ${j + 1}` }] : [];
                             })}
-                          </div>
+                          />
                           {/* Words are checked for contact details before award; a
                               picture can't be, so it is shown for a person to look at. */}
                           {m.phase === 'pre_award' && (
@@ -398,18 +395,11 @@ export default async function SubmissionDetailPage({
       {photos.length > 0 && (
         <>
           <div className={s.sectionLabel}>Photos</div>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-            {photos.map((p) => (
-              <a key={p.path} href={p.url} target="_blank" rel="noreferrer">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={p.url}
-                  alt={p.path.includes('access') ? 'Gateway / access' : 'The field'}
-                  style={{ width: 180, height: 130, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--rule)' }}
-                />
-              </a>
-            ))}
-          </div>
+          <PhotoGallery
+            className={p.jobPhotos}
+            imgClassName={p.jobPhoto}
+            photos={photos.map((ph) => ({ url: ph.url, alt: ph.path.includes('access') ? 'Gateway / access' : 'The field' }))}
+          />
         </>
       )}
 

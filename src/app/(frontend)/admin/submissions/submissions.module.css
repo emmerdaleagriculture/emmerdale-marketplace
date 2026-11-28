@@ -681,3 +681,18 @@
   font-size: 11px;
   color: #8a5a00;
 }
+
+/* The job's own photos on the submission page. */
+.jobPhotos {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.jobPhoto {
+  width: 180px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+}
