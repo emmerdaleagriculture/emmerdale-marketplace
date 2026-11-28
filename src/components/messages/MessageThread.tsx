@@ -7,6 +7,7 @@ import { MESSAGE_MAX, type MessageSender } from '@/lib/sealedQuotes/messageText'
 import type { ThreadMessage } from '@/lib/sealedQuotes/messages';
 import type { ThreadVisit, VisitContact } from '@/lib/sealedQuotes/visits';
 import { Hidden, VisitCard, VisitProposer, type VisitAction } from './ThreadVisits';
+import { PhotoGallery } from '@/components/photos/PhotoGallery';
 import { openProblemReport } from '@/components/feedback/FeedbackWidget';
 import f from '@/components/forms/forms.module.css';
 import s from './messages.module.css';
@@ -186,15 +187,11 @@ function MessageBubble({ m, me, otherName }: { m: ThreadMessage; me: MessageSend
   return (
     <div className={`${s.msg} ${m.sender === me ? s.mine : s.theirs}`}>
       {m.photos.length > 0 && (
-        <div className={s.photos}>
-          {m.photos.map((url, i) => (
-            <a key={url} href={url} target="_blank" rel="noopener noreferrer" className={s.photo}>
-              {/* Signed, short-lived storage URLs: next/image would cache them past expiry. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt={`Photo ${i + 1} from ${m.sender === me ? 'you' : otherName}`} loading="lazy" />
-            </a>
-          ))}
-        </div>
+        <PhotoGallery
+          photos={m.photos.map((url, i) => ({ url, alt: `Photo ${i + 1} from ${m.sender === me ? 'you' : otherName}` }))}
+          className={s.photos}
+          itemClassName={s.photo}
+        />
       )}
       {m.body}
       <span className={s.meta}>
