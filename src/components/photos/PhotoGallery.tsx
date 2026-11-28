@@ -37,7 +37,7 @@ export function PhotoGallery({ photos, className, itemClassName, imgClassName }:
   useEffect(() => {
     if (!open || !track.current) return;
     const t = track.current;
-    t.scrollTo({ left: index * t.clientWidth, behavior: 'instant' as ScrollBehavior });
+    t.scrollTo({ left: index * t.clientWidth, behavior: 'auto' });
     // Only on opening: after that the scroll position drives `index`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
